@@ -26,10 +26,9 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const exchangeRate = getExchangeRate(sendCurrency, receiveCurrency)
   const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
-  const totalAmount = Number.parseFloat(sendAmount) || 0
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-white shadow-lg">
+    <Card className="w-full max-w-md mx-auto bg-white shadow-2xl border-0 ring-1 ring-gray-100">
       <CardContent className="p-6 space-y-6">
         {/* You Send Section */}
         <div className="space-y-4">
@@ -47,7 +46,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
                   >
                     <div className="flex items-center gap-2">
                       <div dangerouslySetInnerHTML={{ __html: sendCurrencyData?.flag || "" }} />
@@ -90,12 +89,12 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-xs">%</span>
+              <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                <span className="text-novapay-primary text-xs">%</span>
               </div>
               <span className="text-sm text-gray-600">Rate</span>
             </div>
-            <span className="font-medium text-blue-600">
+            <span className="font-medium text-novapay-primary">
               1 {sendCurrency} = {exchangeRate.toFixed(4)} {receiveCurrency}
             </span>
           </div>
@@ -104,14 +103,18 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         {/* Receiver Gets Section */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
-          <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="text-3xl font-bold text-gray-900">{formatCurrency(receiveAmount, receiveCurrency)}</div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap">
+                  {formatCurrency(receiveAmount, receiveCurrency)}
+                </div>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
                   >
                     <div className="flex items-center gap-2">
                       <div dangerouslySetInnerHTML={{ __html: receiveCurrencyData?.flag || "" }} />
@@ -145,7 +148,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
           <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide">DELIVERY METHOD</h4>
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-novapay-primary rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm">🏦</span>
               </div>
               <div>
@@ -160,7 +163,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         {/* Send Money Button */}
         <Button
           onClick={onSendMoney}
-          className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-full"
+          className="w-full h-12 bg-novapay-primary hover:bg-novapay-primary-600 text-white font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
         >
           Send Money
         </Button>
