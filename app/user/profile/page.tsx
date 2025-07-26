@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Mail, Shield, Eye, EyeOff, Edit, X, Globe } from "lucide-react"
+import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
 import { currencies } from "@/utils/currency"
 
 export default function UserProfilePage() {
@@ -148,10 +148,7 @@ export default function UserProfilePage() {
                             <SelectItem key={currency.code} value={currency.code}>
                               <div className="flex items-center gap-3">
                                 <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                                <div>
-                                  <div className="font-medium">{currency.code}</div>
-                                  <div className="text-sm text-muted-foreground">{currency.name}</div>
-                                </div>
+                                <div className="font-medium">{currency.code}</div>
                               </div>
                             </SelectItem>
                           ))}
@@ -197,7 +194,6 @@ export default function UserProfilePage() {
                       <div className="flex items-center gap-2 mt-1">
                         <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag || "" }} />
                         <span className="font-medium text-gray-900">{getSelectedCurrency()?.code}</span>
-                        <span className="text-sm text-gray-500">- {getSelectedCurrency()?.name}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Used for reporting your total sent amount in the dashboard
@@ -352,36 +348,6 @@ export default function UserProfilePage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Total sent</span>
                     <span>₦2,450,000</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Currency Preference Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  Currency Preference
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-gray-600 text-sm">Base Currency</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag || "" }} />
-                      <div>
-                        <p className="font-medium text-gray-900">{getSelectedCurrency()?.code}</p>
-                        <p className="text-xs text-gray-500">{getSelectedCurrency()?.name}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <p className="text-xs text-blue-700">
-                      Your dashboard statistics and total sent amounts will be displayed in{" "}
-                      <strong>{getSelectedCurrency()?.code}</strong>
-                    </p>
                   </div>
                 </div>
               </CardContent>

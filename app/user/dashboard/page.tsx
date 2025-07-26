@@ -3,7 +3,7 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, TrendingUp, Users, Clock } from "lucide-react"
+import { Send, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
 // Mock data
@@ -48,7 +48,7 @@ export default function UserDashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Sent</CardTitle>
@@ -68,28 +68,6 @@ export default function UserDashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">47</div>
               <p className="text-xs text-green-600">+3 this week</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Recipients</CardTitle>
-              <Users className="h-4 w-4 text-novapay-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">12</div>
-              <p className="text-xs text-gray-500">Active recipients</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Avg. Time</CardTitle>
-              <Clock className="h-4 w-4 text-novapay-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">3.2 min</div>
-              <p className="text-xs text-gray-500">Transfer time</p>
             </CardContent>
           </Card>
         </div>
