@@ -106,7 +106,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
           <div className="bg-gray-50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
+                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[180px] sm:max-w-none">
                   {formatCurrency(receiveAmount, receiveCurrency)}
                 </div>
               </div>
