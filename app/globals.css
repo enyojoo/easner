@@ -1,3 +1,10 @@
+/* NovaPay Brand Standards
+ * Primary Color: #007ACC (hsl(207 100% 40%))
+ * Font: Poppins (300, 400, 500, 600, 700, 800, 900)
+ * Logo: https://cldup.com/2AU2HSUjXc.svg
+ * Favicon: /favicon.png
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

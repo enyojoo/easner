@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PublicHeader } from "@/components/layout/public-header"
+import { Checkbox } from "@/components/ui/checkbox"
+import { BrandLogo } from "@/components/brand/brand-logo"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -19,6 +20,7 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   })
+  const [acceptTerms, setAcceptTerms] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,31 +36,39 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-green-50">
-      <PublicHeader />
+    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+      <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
+        {/* Logo */}
+        <div className="mb-8">
+          <BrandLogo size="md" />
+        </div>
 
-      <main className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Create account</CardTitle>
-            <CardDescription>Join Novapay and start sending money instantly</CardDescription>
+            <CardTitle className="text-2xl text-gray-900">Create account</CardTitle>
+            <CardDescription className="text-gray-600">Join Novapay and start sending money instantly</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-gray-700">
+                  Full Name
+                </Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Enter your full name"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-gray-700">
+                  Email
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -66,12 +76,15 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter your email"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-700">
+                  Password
+                </Label>
                 <Input
                   id="password"
                   name="password"
@@ -79,12 +92,15 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Create a password"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-gray-700">
+                  Confirm Password
+                </Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -92,11 +108,35 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your password"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={acceptTerms}
+                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                  className="mt-1"
+                />
+                <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                    Terms
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={!acceptTerms}
+                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Create Account
               </Button>
             </form>
@@ -104,7 +144,10 @@ export default function RegisterPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link href="/login" className="text-purple-600 hover:underline">
+                <Link
+                  href="/login"
+                  className="text-novapay-primary hover:text-novapay-primary-600 hover:underline font-medium"
+                >
                   Sign in
                 </Link>
               </p>

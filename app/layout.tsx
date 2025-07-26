@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
   icons: {
     icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
     generator: 'v0.dev'
 }

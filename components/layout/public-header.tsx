@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/brand/brand-logo"
 
 export function PublicHeader() {
   return (
@@ -9,7 +10,7 @@ export function PublicHeader() {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src="https://cldup.com/2AU2HSUjXc.svg" alt="NovaPay Logo" className="h-7 w-auto object-contain" />
+            <BrandLogo size="sm" className="h-7" />
           </Link>
 
           <div className="flex items-center space-x-3">
