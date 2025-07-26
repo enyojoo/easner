@@ -23,10 +23,10 @@ export default function HomePage() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-100 to-novapay-primary-100 rounded-full opacity-20 blur-3xl"></div>
         </div>
 
-        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[calc(100vh-200px)]">
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-200px)]">
             {/* Left Side - Hero Content */}
-            <div className="space-y-6 lg:space-y-8">
+            <div className="space-y-6 lg:space-y-8 w-full">
               <div className="space-y-4">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900">
                   Send Money
@@ -39,9 +39,9 @@ export default function HomePage() {
               </div>
 
               {/* Features Grid */}
-              <div className="grid sm:grid-cols-1 gap-2 lg:gap-2">
+              <div className="grid grid-cols-1 gap-2 lg:gap-2 w-full">
                 <div className="group flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/50 transition-all duration-300">
-                  <div className="flex-shrink-0 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center group-hover:scale-110 transition-transform duration-300 justify-center h-11 w-11">
+                  <div className="flex-shrink-0 w-11 h-11 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <span className="text-amber-600 text-2xl">⚡</span>
                   </div>
                   <div className="space-y-1">
@@ -51,7 +51,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="group flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/50 transition-all duration-300">
-                  <div className="flex-shrink-0 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 h-11 w-11">
+                  <div className="flex-shrink-0 w-11 h-11 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <span className="text-green-600 text-2xl">🔒</span>
                   </div>
                   <div className="space-y-1">
@@ -61,7 +61,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="group flex items-start space-x-4 p-4 rounded-2xl hover:bg-white/50 transition-all duration-300">
-                  <div className="flex-shrink-0 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 h-11 w-11">
+                  <div className="flex-shrink-0 w-11 h-11 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <span className="text-amber-600 text-2xl">💰</span>
                   </div>
                   <div className="space-y-1">
@@ -73,7 +73,7 @@ export default function HomePage() {
             </div>
 
             {/* Right Side - Currency Converter */}
-            <div className="flex justify-center lg:justify-end">
+            <div className="flex justify-center lg:justify-end w-full">
               <div className="w-full max-w-md">
                 <CurrencyConverter onSendMoney={handleSendMoney} />
               </div>
