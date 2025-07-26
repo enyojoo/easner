@@ -154,7 +154,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 <span className="text-white text-sm">🏦</span>
               </div>
               <div>
-                <div className="font-medium text-sm">Send to an {receiveCurrency} Bank Account</div>
+                <div className="font-medium text-sm">Send to {receiveCurrency} Bank Account</div>
                 <div className="text-xs text-gray-500">Transfers within minutes</div>
               </div>
             </div>
