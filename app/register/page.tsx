@@ -24,8 +24,8 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock registration - redirect to dashboard
-    router.push("/dashboard")
+    // Mock registration - redirect to user dashboard
+    router.push("/user/dashboard")
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

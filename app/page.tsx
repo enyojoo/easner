@@ -8,8 +8,14 @@ export default function HomePage() {
   const router = useRouter()
 
   const handleSendMoney = () => {
-    // Redirect to login if not authenticated
-    router.push("/login")
+    // Check if user is authenticated (mock check)
+    const isAuthenticated = false // This would be replaced with actual auth check
+
+    if (isAuthenticated) {
+      router.push("/user/send")
+    } else {
+      router.push("/login")
+    }
   }
 
   return (

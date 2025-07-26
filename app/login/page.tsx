@@ -20,8 +20,13 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock authentication - redirect to dashboard
-    router.push("/dashboard")
+    // Mock authentication - redirect based on user type
+    // For demo: admin@novapay.com goes to admin, others go to user
+    if (email === "admin@novapay.com") {
+      router.push("/admin/dashboard")
+    } else {
+      router.push("/user/dashboard")
+    }
   }
 
   return (
