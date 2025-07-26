@@ -9,6 +9,10 @@ export interface ExchangeRate {
   from: string
   to: string
   rate: number
+  fee: {
+    type: "free" | "fixed" | "percentage"
+    amount: number // For fixed: actual amount, for percentage: percentage value
+  }
 }
 
 export interface User {
@@ -23,6 +27,8 @@ export interface Transaction {
   fromCurrency: string
   toCurrency: string
   recipientAmount: number
+  fee: number
+  feeType: "free" | "fixed" | "percentage"
   status: "pending" | "processing" | "completed" | "failed"
   createdAt: Date
   recipientName: string

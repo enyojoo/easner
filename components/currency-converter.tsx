@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { convertCurrency, formatCurrency, getExchangeRate, currencies } from "@/utils/currency"
+import { convertCurrency, formatCurrency, getExchangeRate, calculateFee, currencies } from "@/utils/currency"
 
 interface CurrencyConverterProps {
   onSendMoney?: () => void
@@ -20,7 +20,9 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   useEffect(() => {
     const amount = Number.parseFloat(sendAmount) || 0
     const converted = convertCurrency(amount, sendCurrency, receiveCurrency)
+    const { fee } = calculateFee(amount, sendCurrency, receiveCurrency)
     setReceiveAmount(converted)
+    // Store fee for display (you might want to add a fee state)
   }, [sendAmount, sendCurrency, receiveCurrency])
 
   const exchangeRate = getExchangeRate(sendCurrency, receiveCurrency)
@@ -84,7 +86,16 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               </div>
               <span className="text-sm text-gray-600">Fee</span>
             </div>
-            <span className="font-medium text-green-600">FREE</span>
+            <span
+              className={`font-medium ${calculateFee(Number.parseFloat(sendAmount) || 0, sendCurrency, receiveCurrency).fee === 0 ? "text-green-600" : "text-gray-900"}`}
+            >
+              {calculateFee(Number.parseFloat(sendAmount) || 0, sendCurrency, receiveCurrency).fee === 0
+                ? "FREE"
+                : formatCurrency(
+                    calculateFee(Number.parseFloat(sendAmount) || 0, sendCurrency, receiveCurrency).fee,
+                    sendCurrency,
+                  )}
+            </span>
           </div>
 
           <div className="flex justify-between items-center">
@@ -95,7 +106,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               <span className="text-sm text-gray-600">Rate</span>
             </div>
             <span className="font-medium text-novapay-primary">
-              1 {sendCurrency} = {exchangeRate.toFixed(4)} {receiveCurrency}
+              1 {sendCurrency} = {exchangeRate?.rate?.toFixed(4) || "0.0000"} {receiveCurrency}
             </span>
           </div>
         </div>

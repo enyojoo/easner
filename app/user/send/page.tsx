@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { ChevronDown, Upload, Check, Clock, ArrowLeft, Copy, ChevronRight, Plus, Search } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { convertCurrency, formatCurrency, getExchangeRate, currencies } from "@/utils/currency"
+// Import the new calculateFee function
+import { convertCurrency, formatCurrency, getExchangeRate, calculateFee, currencies } from "@/utils/currency"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
@@ -56,6 +57,10 @@ export default function UserSendPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Add fee state
+  const [fee, setFee] = useState<number>(0)
+  const [feeType, setFeeType] = useState<string>("free")
 
   const filteredSavedRecipients = savedRecipients.filter(
     (recipient) =>
@@ -171,10 +176,14 @@ export default function UserSendPage() {
     fileInputRef.current?.click()
   }
 
+  // Update the useEffect to calculate fee
   useEffect(() => {
     const amount = Number.parseFloat(sendAmount) || 0
     const converted = convertCurrency(amount, sendCurrency, receiveCurrency)
+    const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
     setReceiveAmount(converted)
+    setFee(feeData.fee)
+    setFeeType(feeData.feeType)
   }, [sendAmount, sendCurrency, receiveCurrency])
 
   // Timer countdown
@@ -229,18 +238,26 @@ export default function UserSendPage() {
             <span className="font-semibold">{formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</span>
           </div>
           <div className="flex justify-between">
+            <span className="text-gray-600">Fee</span>
+            <span className={`font-semibold ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
+              {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between border-t pt-2">
+            <span className="text-gray-600">Total to Pay</span>
+            <span className="font-semibold text-lg">
+              {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-gray-600">Recipient Gets</span>
             <span className="font-semibold">{formatCurrency(receiveAmount, receiveCurrency)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Exchange Rate</span>
             <span className="text-sm">
-              1 {sendCurrency} = {exchangeRate.toFixed(4)} {receiveCurrency}
+              1 {sendCurrency} = {getExchangeRate(sendCurrency, receiveCurrency)?.rate.toFixed(4)} {receiveCurrency}
             </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Fee</span>
-            <span className="text-green-600 font-medium">FREE</span>
           </div>
         </div>
         {currentStep >= 2 && recipientData.fullName && (
@@ -363,7 +380,9 @@ export default function UserSendPage() {
                           </div>
                           <span className="text-sm text-gray-600">Fee</span>
                         </div>
-                        <span className="font-medium text-green-600">FREE</span>
+                        <span className={`font-medium ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
+                          {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
+                        </span>
                       </div>
 
                       <div className="flex justify-between items-center">
@@ -615,9 +634,13 @@ export default function UserSendPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-novapay-primary">
-                            Transfer {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}
+                            Transfer {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
                           </h3>
-                          <p className="text-xs text-gray-600">Send money to complete your transfer</p>
+                          <p className="text-xs text-gray-600">
+                            {fee > 0
+                              ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
+                              : "Send money to complete your transfer"}
+                          </p>
                         </div>
                       </div>
 
@@ -748,7 +771,15 @@ export default function UserSendPage() {
                                 <span className="text-amber-500 mt-0.5 text-xs">•</span>
                                 <span>
                                   Transfer exactly{" "}
-                                  <strong>{formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</strong>
+                                  <strong>
+                                    {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+                                  </strong>
+                                  {fee > 0 && (
+                                    <span className="text-xs block text-amber-600">
+                                      (Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee:{" "}
+                                      {formatCurrency(fee, sendCurrency)})
+                                    </span>
+                                  )}
                                 </span>
                               </li>
                               <li className="flex items-start gap-2">
