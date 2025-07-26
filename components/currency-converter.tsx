@@ -104,41 +104,43 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
           <div className="bg-gray-50 rounded-xl p-4">
-            <div className="flex justify-between items-center gap-4">
-              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-hide">
-                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
                   {formatCurrency(receiveAmount, receiveCurrency)}
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div dangerouslySetInnerHTML={{ __html: receiveCurrencyData?.flag || "" }} />
-                      <span className="font-medium text-sm">{receiveCurrency}</span>
-                      <ChevronDown className="h-3 w-3 text-gray-500" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {currencies.map((currency) => (
-                    <DropdownMenuItem
-                      key={currency.code}
-                      onClick={() => setReceiveCurrency(currency.code)}
-                      className="flex items-center gap-3"
+              <div className="flex-shrink-0">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
                     >
-                      <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                      <div>
-                        <div className="font-medium">{currency.code}</div>
-                        <div className="text-sm text-muted-foreground">{currency.name}</div>
+                      <div className="flex items-center gap-2">
+                        <div dangerouslySetInnerHTML={{ __html: receiveCurrencyData?.flag || "" }} />
+                        <span className="font-medium text-sm">{receiveCurrency}</span>
+                        <ChevronDown className="h-3 w-3 text-gray-500" />
                       </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {currencies.map((currency) => (
+                      <DropdownMenuItem
+                        key={currency.code}
+                        onClick={() => setReceiveCurrency(currency.code)}
+                        className="flex items-center gap-3"
+                      >
+                        <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                        <div>
+                          <div className="font-medium">{currency.code}</div>
+                          <div className="text-sm text-muted-foreground">{currency.name}</div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>
