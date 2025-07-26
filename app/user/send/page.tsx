@@ -181,6 +181,8 @@ export default function UserSendPage() {
     const amount = Number.parseFloat(sendAmount) || 0
     const converted = convertCurrency(amount, sendCurrency, receiveCurrency)
     const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
+    const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
+
     setReceiveAmount(converted)
     setFee(feeData.fee)
     setFeeType(feeData.feeType)
@@ -215,7 +217,8 @@ export default function UserSendPage() {
     }
   }
 
-  const exchangeRate = getExchangeRate(sendCurrency, receiveCurrency)
+  const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
+  const exchangeRate = exchangeRateData?.rate || 0
   const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
 
@@ -256,7 +259,7 @@ export default function UserSendPage() {
           <div className="flex justify-between">
             <span className="text-gray-600">Exchange Rate</span>
             <span className="text-sm">
-              1 {sendCurrency} = {getExchangeRate(sendCurrency, receiveCurrency)?.rate.toFixed(4)} {receiveCurrency}
+              1 {sendCurrency} = {exchangeRateData?.rate.toFixed(4)} {receiveCurrency}
             </span>
           </div>
         </div>
@@ -393,7 +396,7 @@ export default function UserSendPage() {
                           <span className="text-sm text-gray-600">Rate</span>
                         </div>
                         <span className="font-medium text-novapay-primary">
-                          1 {sendCurrency} = {exchangeRate.toFixed(4)} {receiveCurrency}
+                          1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
                         </span>
                       </div>
                     </div>
