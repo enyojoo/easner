@@ -34,12 +34,12 @@ export default function HomePage() {
             {/* Left Side - Hero Content */}
             <div className="space-y-6 lg:space-y-8 w-full text-center lg:text-left">
               <div className="space-y-4">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900">
+                <h1 className="sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 text-5xl">
                   Send Money
                   <span className="block text-novapay-primary">Instantly</span>
                 </h1>
 
-                <p className="text-xl lg:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                <p className="lg:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 text-lg">
                   Transfer money between supported currencies with the best exchange rates and zero fees
                 </p>
               </div>
