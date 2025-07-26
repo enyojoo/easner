@@ -1,18 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
-import { ChevronDown, Upload, Check, Clock, ArrowLeft, Copy } from "lucide-react"
+import { ChevronDown, Upload, Check, Clock, ArrowLeft, Copy, ChevronRight, Plus, Search } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { convertCurrency, formatCurrency, getExchangeRate, currencies } from "@/utils/currency"
 import { useRouter } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 // Mock saved recipients
 const savedRecipients = [
@@ -34,9 +35,141 @@ export default function UserSendPage() {
     phoneNumber: "",
   })
   const [saveRecipient, setSaveRecipient] = useState(false)
-  const [selectedRecipient, setSelectedRecipient] = useState<string>("")
   const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
   const [transactionId] = useState(`NP${Date.now()}`)
+
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string>("")
+  const [newRecipientData, setNewRecipientData] = useState({
+    fullName: "",
+    accountNumber: "",
+    bankName: "",
+    phoneNumber: "",
+  })
+
+  // Copy feedback states
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
+
+  // File upload states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const filteredSavedRecipients = savedRecipients.filter(
+    (recipient) =>
+      (recipient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipient.accountNumber.includes(searchTerm)) &&
+      recipient.currency === receiveCurrency,
+  )
+
+  const handleSelectRecipient = (recipient: any) => {
+    setSelectedRecipientId(recipient.id)
+    setRecipientData({
+      fullName: recipient.name,
+      accountNumber: recipient.accountNumber,
+      bankName: recipient.bankName,
+      phoneNumber: "",
+    })
+  }
+
+  const handleAddNewRecipient = () => {
+    const newRecipient = {
+      id: Date.now().toString(),
+      name: newRecipientData.fullName,
+      accountNumber: newRecipientData.accountNumber,
+      bankName: newRecipientData.bankName,
+      currency: receiveCurrency,
+    }
+
+    // Add to saved recipients (in real app, this would be an API call)
+    savedRecipients.push(newRecipient)
+
+    // Select the new recipient
+    handleSelectRecipient(newRecipient)
+
+    // Clear form and close dialog
+    setNewRecipientData({
+      fullName: "",
+      accountNumber: "",
+      bankName: "",
+      phoneNumber: "",
+    })
+  }
+
+  // Copy to clipboard with feedback
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedStates((prev) => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (err) {
+      console.error("Failed to copy text: ", err)
+    }
+  }
+
+  // File upload handlers
+  const handleFileSelect = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB")
+      return
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only JPG, PNG, and PDF files are allowed")
+      return
+    }
+
+    setUploadedFile(file)
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    // Simulate upload progress
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setIsUploading(false)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 200)
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
 
   useEffect(() => {
     const amount = Number.parseFloat(sendAmount) || 0
@@ -58,22 +191,12 @@ export default function UserSendPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  const handleRecipientSelect = (recipientId: string) => {
-    const recipient = savedRecipients.find((r) => r.id === recipientId)
-    if (recipient) {
-      setRecipientData({
-        fullName: recipient.name,
-        accountNumber: recipient.accountNumber,
-        bankName: recipient.bankName,
-        phoneNumber: "",
-      })
-      setSelectedRecipient(recipientId)
-    }
-  }
-
   const handleContinue = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
+    } else if (currentStep === 3) {
+      // Redirect to transaction status page
+      router.push(`/user/send/${transactionId.toLowerCase()}`)
     }
   }
 
@@ -88,10 +211,10 @@ export default function UserSendPage() {
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
 
   const steps = [
-    { number: 1, title: "Amount & Currency", completed: currentStep > 1 },
-    { number: 2, title: "Recipient Details", completed: currentStep > 2 },
-    { number: 3, title: "Payment Instructions", completed: currentStep > 3 },
-    { number: 4, title: "Processing Status", completed: false },
+    { number: 1, title: "Amount to Send", completed: currentStep > 1 },
+    { number: 2, title: "Add Recipient", completed: currentStep > 2 },
+    { number: 3, title: "Make Payment", completed: currentStep > 3 },
+    { number: 4, title: "Transaction Status", completed: false },
   ]
 
   const TransactionSummary = () => (
@@ -179,11 +302,11 @@ export default function UserSendPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {/* Step 1: Amount & Currency */}
+              {/* Step 1: Amount to Send */}
               {currentStep === 1 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Amount & Currency</CardTitle>
+                    <CardTitle>Amount to Send</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* You Send Section */}
@@ -308,88 +431,151 @@ export default function UserSendPage() {
                 </Card>
               )}
 
-              {/* Step 2: Recipient Details */}
+              {/* Step 2: Add Recipient */}
               {currentStep === 2 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recipient Details</CardTitle>
+                    <CardTitle>Add Recipient</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Saved Recipients Dropdown */}
-                    {savedRecipients.length > 0 && (
-                      <div className="space-y-2">
-                        <Label>Select Saved Recipient (Optional)</Label>
-                        <Select value={selectedRecipient} onValueChange={handleRecipientSelect}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose from saved recipients" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {savedRecipients.map((recipient) => (
-                              <SelectItem key={recipient.id} value={recipient.id}>
-                                {recipient.name} - {recipient.bankName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <Input
+                        placeholder="Search recipients"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 h-12 bg-gray-50 border-0 rounded-xl"
+                      />
+                    </div>
+
+                    {/* Add New Recipient Option */}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                              <Plus className="h-6 w-6 text-white" />
+                            </div>
+                            <span className="font-medium text-gray-900">Add new recipient</span>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Add New Recipient</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientName">Full Name *</Label>
+                            <Input
+                              id="newRecipientName"
+                              value={newRecipientData.fullName}
+                              onChange={(e) => setNewRecipientData({ ...newRecipientData, fullName: e.target.value })}
+                              placeholder="Enter recipient's full name"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientAccount">Account Number *</Label>
+                            <Input
+                              id="newRecipientAccount"
+                              value={newRecipientData.accountNumber}
+                              onChange={(e) =>
+                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                              }
+                              placeholder="Enter account number"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientBank">Bank Name *</Label>
+                            <Input
+                              id="newRecipientBank"
+                              value={newRecipientData.bankName}
+                              onChange={(e) => setNewRecipientData({ ...newRecipientData, bankName: e.target.value })}
+                              placeholder="Enter bank name"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientPhone">Phone Number (Optional)</Label>
+                            <Input
+                              id="newRecipientPhone"
+                              value={newRecipientData.phoneNumber}
+                              onChange={(e) =>
+                                setNewRecipientData({ ...newRecipientData, phoneNumber: e.target.value })
+                              }
+                              placeholder="Enter phone number"
+                            />
+                          </div>
+                          <Button
+                            onClick={handleAddNewRecipient}
+                            disabled={
+                              !newRecipientData.fullName ||
+                              !newRecipientData.accountNumber ||
+                              !newRecipientData.bankName
+                            }
+                            className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                          >
+                            Add Recipient
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Saved Recipients List */}
+                    <div className="space-y-3">
+                      {filteredSavedRecipients.map((recipient) => (
+                        <div
+                          key={recipient.id}
+                          onClick={() => handleSelectRecipient(recipient)}
+                          className={`flex items-center justify-between p-4 bg-white rounded-xl border cursor-pointer transition-colors ${
+                            selectedRecipientId === recipient.id
+                              ? "border-novapay-primary bg-novapay-primary-50"
+                              : "border-gray-100 hover:border-novapay-primary-200"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
+                              <span className="text-novapay-primary font-semibold text-sm">
+                                {recipient.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </span>
+                              <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: currencies.find((c) => c.code === recipient.currency)?.flag || "",
+                                  }}
+                                  className="w-full h-full"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{recipient.name}</p>
+                              <p className="text-sm text-gray-500">
+                                {recipient.bankName} - {recipient.accountNumber}
+                              </p>
+                            </div>
+                          </div>
+                          {selectedRecipientId === recipient.id && (
+                            <div className="w-6 h-6 bg-novapay-primary rounded-full flex items-center justify-center">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {filteredSavedRecipients.length === 0 && searchTerm && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recipients found matching "{searchTerm}"</p>
                       </div>
                     )}
-
-                    {/* Recipient Form */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="fullName">Full Name *</Label>
-                        <Input
-                          id="fullName"
-                          value={recipientData.fullName}
-                          onChange={(e) => setRecipientData({ ...recipientData, fullName: e.target.value })}
-                          placeholder="Enter recipient's full name"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="accountNumber">Account Number *</Label>
-                        <Input
-                          id="accountNumber"
-                          value={recipientData.accountNumber}
-                          onChange={(e) => setRecipientData({ ...recipientData, accountNumber: e.target.value })}
-                          placeholder="Enter account number"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="bankName">Bank Name *</Label>
-                        <Input
-                          id="bankName"
-                          value={recipientData.bankName}
-                          onChange={(e) => setRecipientData({ ...recipientData, bankName: e.target.value })}
-                          placeholder="Enter bank name"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
-                        <Input
-                          id="phoneNumber"
-                          value={recipientData.phoneNumber}
-                          onChange={(e) => setRecipientData({ ...recipientData, phoneNumber: e.target.value })}
-                          placeholder="Enter phone number"
-                        />
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="saveRecipient"
-                          checked={saveRecipient}
-                          onCheckedChange={(checked) => setSaveRecipient(checked as boolean)}
-                        />
-                        <Label htmlFor="saveRecipient" className="text-sm">
-                          Save this recipient for future transfers
-                        </Label>
-                      </div>
-                    </div>
 
                     <div className="flex gap-4">
                       <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
@@ -398,7 +584,7 @@ export default function UserSendPage() {
                       </Button>
                       <Button
                         onClick={handleContinue}
-                        disabled={!recipientData.fullName || !recipientData.accountNumber || !recipientData.bankName}
+                        disabled={!selectedRecipientId}
                         className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                       >
                         Continue
@@ -413,7 +599,7 @@ export default function UserSendPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      Payment Instructions
+                      Make Payment
                       <div className="flex items-center text-orange-600">
                         <Clock className="h-4 w-4 mr-1" />
                         <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
@@ -421,115 +607,262 @@ export default function UserSendPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Payment Method - Bank Transfer */}
-                    <div className="bg-novapay-primary-50 rounded-lg p-6 space-y-4">
-                      <h3 className="font-semibold text-novapay-primary">Transfer money to this account:</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Account Name:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Novapay Limited</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigator.clipboard.writeText("Novapay Limited")}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
+                    {/* Payment Method - Dynamic based on sending currency and admin settings */}
+                    <div className="bg-gradient-to-br from-novapay-primary-50 to-blue-50 rounded-xl p-4 border border-novapay-primary-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-novapay-primary rounded-lg flex items-center justify-center">
+                          <div dangerouslySetInnerHTML={{ __html: sendCurrencyData?.flag || "" }} className="w-5 h-5" />
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Account Number:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">1234567890</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigator.clipboard.writeText("1234567890")}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <div>
+                          <h3 className="font-semibold text-novapay-primary">
+                            Transfer {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}
+                          </h3>
+                          <p className="text-xs text-gray-600">Send money to complete your transfer</p>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Bank Name:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Sberbank Russia</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigator.clipboard.writeText("Sberbank Russia")}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Payment Method - Either Bank Transfer OR QR Code (admin configurable) */}
+                        <div className="space-y-3">
+                          {/* Bank Transfer Option (shown if admin configured for this currency) */}
+                          <div className="bg-white rounded-lg p-3 border border-gray-100">
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-xs">Account Name</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium text-sm">
+                                    {sendCurrency === "RUB" ? "Novapay Russia LLC" : "Novapay Nigeria Ltd"}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleCopy(
+                                        sendCurrency === "RUB" ? "Novapay Russia LLC" : "Novapay Nigeria Ltd",
+                                        "accountName",
+                                      )
+                                    }
+                                    className="h-5 w-5 p-0"
+                                  >
+                                    {copiedStates.accountName ? (
+                                      <Check className="h-3 w-3 text-green-600" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-xs">Account Number</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium font-mono text-sm">
+                                    {sendCurrency === "RUB" ? "40817810123456789012" : "1234567890"}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleCopy(
+                                        sendCurrency === "RUB" ? "40817810123456789012" : "1234567890",
+                                        "accountNumber",
+                                      )
+                                    }
+                                    className="h-5 w-5 p-0"
+                                  >
+                                    {copiedStates.accountNumber ? (
+                                      <Check className="h-3 w-3 text-green-600" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-xs">Bank Name</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium text-sm">
+                                    {sendCurrency === "RUB" ? "Sberbank Russia" : "First Bank Nigeria"}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleCopy(
+                                        sendCurrency === "RUB" ? "Sberbank Russia" : "First Bank Nigeria",
+                                        "bankName",
+                                      )
+                                    }
+                                    className="h-5 w-5 p-0"
+                                  >
+                                    {copiedStates.bankName ? (
+                                      <Check className="h-3 w-3 text-green-600" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span className="text-gray-600 text-xs">Reference</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium font-mono text-xs">{transactionId}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopy(transactionId, "reference")}
+                                    className="h-5 w-5 p-0"
+                                  >
+                                    {copiedStates.reference ? (
+                                      <Check className="h-3 w-3 text-green-600" />
+                                    ) : (
+                                      <Copy className="h-3 w-3" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* QR Code Option (alternative - shown if admin configured for this currency)
+                          <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
+                            <div className="w-24 h-24 bg-gray-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">QR Code</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-1">Scan to transfer</p>
+                            <div className="text-xs text-gray-600">
+                              <p className="font-mono">{transactionId}</p>
+                              <p>{formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</p>
+                            </div>
+                          </div>
+                          */}
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Reference:</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium font-mono">{transactionId}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigator.clipboard.writeText(transactionId)}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
+
+                        {/* Important Instructions */}
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-gray-900 text-xs uppercase tracking-wide">
+                            Important Instructions
+                          </h4>
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <ul className="text-xs text-amber-700 space-y-1.5">
+                              <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                <span>
+                                  Transfer exactly{" "}
+                                  <strong>{formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</strong>
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                <span>
+                                  Include reference <strong>{transactionId}</strong>
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                <span>
+                                  Complete within <strong>60 minutes</strong>
+                                </span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                <span>Upload receipt for faster processing</span>
+                              </li>
+                            </ul>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Alternative: QR Code Payment (commented out - admin configurable)
-                    <div className="text-center">
-                      <div className="w-48 h-48 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                        <span className="text-gray-500">QR Code</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Scan to transfer money</p>
-                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-2">Reference: <span className="font-mono">{transactionId}</span></p>
-                        <p className="text-sm text-gray-600">Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</p>
-                      </div>
-                    </div>
-                    */}
-
-                    {/* Upload Receipt */}
-                    <div className="space-y-4">
-                      <Button variant="outline" className="w-full bg-transparent">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Receipt
-                      </Button>
-                      <Button
-                        onClick={handleContinue}
-                        className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                    {/* Compact Upload Receipt Section */}
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileInputChange}
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        className="hidden"
+                      />
+                      <div
+                        onClick={handleUploadClick}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                          isDragOver
+                            ? "border-novapay-primary bg-novapay-primary-50"
+                            : uploadedFile
+                              ? "border-green-300 bg-green-50"
+                              : "border-gray-200 hover:border-novapay-primary-300"
+                        }`}
                       >
-                        I've Completed Payment
-                      </Button>
-                    </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                              uploadedFile
+                                ? "bg-green-100"
+                                : isDragOver
+                                  ? "bg-novapay-primary-100"
+                                  : "bg-gray-100 group-hover:bg-novapay-primary-50"
+                            }`}
+                          >
+                            {uploadedFile ? (
+                              <Check className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Upload
+                                className={`h-5 w-5 transition-colors ${
+                                  isDragOver ? "text-novapay-primary" : "text-gray-400"
+                                }`}
+                              />
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-medium text-gray-900 text-sm">
+                              {uploadedFile ? uploadedFile.name : "Upload Payment Receipt"}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {uploadedFile
+                                ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
+                                : "JPG, PNG or PDF (Max 5MB)"}
+                            </p>
+                          </div>
+                        </div>
 
-                    {/* Warnings */}
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <h4 className="font-medium text-yellow-800 mb-2">Important Instructions:</h4>
-                      <ul className="text-sm text-yellow-700 space-y-1">
-                        <li>• Transfer the exact amount shown above</li>
-                        <li>• Include the reference number in your transfer</li>
-                        <li>• Complete payment within 60 minutes</li>
-                        <li>• Upload your receipt for faster processing</li>
-                      </ul>
-                    </div>
+                        {/* Progress Bar (shown when uploading) */}
+                        {isUploading && (
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                              <span>Uploading...</span>
+                              <span>{uploadProgress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-novapay-primary h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${uploadProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="flex gap-4">
-                      <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                      </Button>
+                      <div className="flex gap-4">
+                        <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back
+                        </Button>
+                        <Button
+                          onClick={handleContinue}
+                          className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                        >
+                          I've Completed Payment
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
               {/* Step 4: Processing Status */}
-              {currentStep === 4 && (
+              {/*{currentStep === 4 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Processing Status</CardTitle>
@@ -543,7 +876,7 @@ export default function UserSendPage() {
                       <p className="text-gray-600">Your transfer is being processed</p>
                     </div>
 
-                    {/* Progress Steps */}
+                    {/* Progress Steps *}
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -595,7 +928,7 @@ export default function UserSendPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              )}*/}
             </div>
 
             {/* Transaction Summary Sidebar */}

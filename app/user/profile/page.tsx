@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { User, Mail, Shield, Eye, EyeOff, Edit, X, Globe } from "lucide-react"
+import { currencies } from "@/utils/currency"
 
 export default function UserProfilePage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false)
@@ -21,6 +23,7 @@ export default function UserProfilePage() {
     lastName: "Johnson",
     email: "alex.johnson@email.com",
     phone: "+1234567890",
+    baseCurrency: "NGN", // Default base currency
   })
 
   const [editProfileData, setEditProfileData] = useState(profileData)
@@ -54,6 +57,10 @@ export default function UserProfilePage() {
   const handleCancelPasswordChange = () => {
     setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
     setIsChangingPassword(false)
+  }
+
+  const getSelectedCurrency = () => {
+    return currencies.find((c) => c.code === profileData.baseCurrency)
   }
 
   return (
@@ -127,6 +134,33 @@ export default function UserProfilePage() {
                         />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="baseCurrency">Base Currency</Label>
+                      <Select
+                        value={editProfileData.baseCurrency}
+                        onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select base currency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {currencies.map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              <div className="flex items-center gap-3">
+                                <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                                <div>
+                                  <div className="font-medium">{currency.code}</div>
+                                  <div className="text-sm text-muted-foreground">{currency.name}</div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">
+                        This currency will be used for reporting your total sent amount in the dashboard
+                      </p>
+                    </div>
                     <div className="flex gap-3">
                       <Button onClick={handleProfileUpdate} className="bg-novapay-primary hover:bg-novapay-primary-600">
                         Save Changes
@@ -157,6 +191,17 @@ export default function UserProfilePage() {
                         <Label className="text-gray-600">Phone Number</Label>
                         <p className="font-medium text-gray-900">{profileData.phone}</p>
                       </div>
+                    </div>
+                    <div>
+                      <Label className="text-gray-600">Base Currency</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag || "" }} />
+                        <span className="font-medium text-gray-900">{getSelectedCurrency()?.code}</span>
+                        <span className="text-sm text-gray-500">- {getSelectedCurrency()?.name}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Used for reporting your total sent amount in the dashboard
+                      </p>
                     </div>
                   </div>
                 )}
@@ -250,7 +295,7 @@ export default function UserProfilePage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showConfirmPassword)}
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -307,6 +352,36 @@ export default function UserProfilePage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Total sent</span>
                     <span>₦2,450,000</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Currency Preference Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Currency Preference
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-gray-600 text-sm">Base Currency</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag || "" }} />
+                      <div>
+                        <p className="font-medium text-gray-900">{getSelectedCurrency()?.code}</p>
+                        <p className="text-xs text-gray-500">{getSelectedCurrency()?.name}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <p className="text-xs text-blue-700">
+                      Your dashboard statistics and total sent amounts will be displayed in{" "}
+                      <strong>{getSelectedCurrency()?.code}</strong>
+                    </p>
                   </div>
                 </div>
               </CardContent>

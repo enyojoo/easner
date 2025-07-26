@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Search, Download, Eye } from "lucide-react"
+import { Search, Download } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useRouter } from "next/navigation"
 
 // Mock transaction data
 const mockTransactions = [
@@ -68,10 +68,10 @@ const mockTransactions = [
 ]
 
 export default function UserTransactionsPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
 
   const filteredTransactions = mockTransactions.filter((transaction) => {
     const matchesSearch =
@@ -109,6 +109,10 @@ export default function UserTransactionsPage() {
     a.href = url
     a.download = "transactions.csv"
     a.click()
+  }
+
+  const handleViewTransaction = (transactionId: string) => {
+    router.push(`/user/send/${transactionId.toLowerCase()}`)
   }
 
   return (
@@ -183,60 +187,14 @@ export default function UserTransactionsPage() {
                     <TableCell className="font-semibold">{transaction.amount}</TableCell>
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                     <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedTransaction(transaction)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Transaction Details</DialogTitle>
-                          </DialogHeader>
-                          {selectedTransaction && (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p className="text-gray-600">Transaction ID</p>
-                                  <p className="font-mono">{selectedTransaction.id}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Date</p>
-                                  <p>{selectedTransaction.date}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Recipient</p>
-                                  <p className="font-medium">{selectedTransaction.recipient}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Status</p>
-                                  {getStatusBadge(selectedTransaction.status)}
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">You Sent</p>
-                                  <p className="font-semibold">{selectedTransaction.sendAmount}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Recipient Got</p>
-                                  <p className="font-semibold">{selectedTransaction.amount}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Bank</p>
-                                  <p>{selectedTransaction.bankName}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Account</p>
-                                  <p className="font-mono">{selectedTransaction.accountNumber}</p>
-                                </div>
-                                <div className="col-span-2">
-                                  <p className="text-gray-600">Reference</p>
-                                  <p className="font-mono">{selectedTransaction.reference}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewTransaction(transaction.id)}
+                        className="bg-transparent"
+                      >
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

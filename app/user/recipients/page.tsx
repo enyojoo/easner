@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Edit, Trash2, User, Clock } from "lucide-react"
+import { Plus, Edit, Trash2, Search, Globe } from "lucide-react"
+import { currencies } from "@/utils/currency"
 
 // Mock recipients data
 const mockRecipients = [
@@ -41,12 +41,12 @@ const mockRecipients = [
   },
 ]
 
-const recentRecipients = mockRecipients.slice(0, 2)
-
 export default function UserRecipientsPage() {
   const [recipients, setRecipients] = useState(mockRecipients)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currencyFilter, setCurrencyFilter] = useState("All")
   const [formData, setFormData] = useState({
     name: "",
     accountNumber: "",
@@ -54,12 +54,22 @@ export default function UserRecipientsPage() {
     currency: "NGN",
   })
 
+  const filteredRecipients = recipients.filter((recipient) => {
+    const matchesSearch =
+      recipient.name.toLowerCase().includes(searchTerm.toLowerCase()) || recipient.accountNumber.includes(searchTerm)
+    const matchesCurrency = currencyFilter === "All" || recipient.currency === currencyFilter
+    return matchesSearch && matchesCurrency
+  })
+
   const handleAddRecipient = () => {
     const newRecipient = {
       id: Date.now().toString(),
-      ...formData,
+      name: formData.name,
+      accountNumber: formData.accountNumber,
+      bankName: formData.bankName,
+      currency: formData.currency,
       lastUsed: new Date().toISOString().split("T")[0],
-      totalSent: "₦0.00",
+      totalSent: formData.currency === "NGN" ? "₦0.00" : "₽0.00",
     }
     setRecipients([...recipients, newRecipient])
     setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
@@ -161,68 +171,88 @@ export default function UserRecipientsPage() {
           </Dialog>
         </div>
 
-        {/* Recent Recipients */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Recent Recipients
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recentRecipients.map((recipient) => (
-                <div
-                  key={recipient.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-novapay-primary transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-novapay-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{recipient.name}</p>
-                        <p className="text-sm text-gray-500">{recipient.bankName}</p>
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {recipient.currency}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-right text-sm text-gray-500">
-                      <p>Last used: {recipient.lastUsed}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Search Bar and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search recipients"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary"
+            />
+          </div>
 
-        {/* All Recipients */}
+          {/* Currency Filter Badges */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setCurrencyFilter("All")}
+              className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors outline-none ${
+                currencyFilter === "All"
+                  ? "bg-novapay-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              <span className="font-medium">All</span>
+            </button>
+
+            {currencies.map((currency) => (
+              <button
+                key={currency.code}
+                onClick={() => setCurrencyFilter(currency.code)}
+                className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors outline-none ${
+                  currencyFilter === currency.code
+                    ? "bg-novapay-primary text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                <img
+                  src={`data:image/svg+xml,${encodeURIComponent(currency.flag)}`}
+                  alt={`${currency.name} flag`}
+                  className="w-4 h-3 mr-2 object-cover rounded-sm"
+                />
+                <span className="font-medium">{currency.code}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Recipients List */}
         <Card>
-          <CardHeader>
-            <CardTitle>All Recipients ({recipients.length})</CardTitle>
-          </CardHeader>
+          <CardHeader></CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recipients.map((recipient) => (
+            <div className="space-y-3">
+              {filteredRecipients.map((recipient) => (
                 <div
                   key={recipient.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 transition-colors"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-novapay-primary" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
+                      <span className="text-novapay-primary font-semibold text-sm">
+                        {recipient.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
+                        <img
+                          src={`data:image/svg+xml,${encodeURIComponent(
+                            currencies.find((c) => c.code === recipient.currency)?.flag || "",
+                          )}`}
+                          alt={`${recipient.currency} flag`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{recipient.name}</h3>
-                      <p className="text-sm text-gray-500">{recipient.bankName}</p>
-                      <p className="text-sm text-gray-500 font-mono">{recipient.accountNumber}</p>
+                      <p className="font-medium text-gray-900">{recipient.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {recipient.bankName} - {recipient.accountNumber}
+                      </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {recipient.currency}
-                        </Badge>
                         <span className="text-xs text-gray-500">Total sent: {recipient.totalSent}</span>
                       </div>
                     </div>
@@ -253,6 +283,15 @@ export default function UserRecipientsPage() {
                 </div>
               ))}
             </div>
+            {filteredRecipients.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>
+                  {searchTerm || currencyFilter !== "All"
+                    ? "No recipients found matching your criteria."
+                    : "No recipients added yet."}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
