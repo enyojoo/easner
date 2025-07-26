@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-100 to-novapay-primary-100 rounded-full opacity-20 blur-3xl"></div>
         </div>
 
-        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 lg:pt-10 lg:pb-16">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-200px)]">
             {/* Left Side - Hero Content */}
             <div className="space-y-6 lg:space-y-8 w-full text-center lg:text-left">
