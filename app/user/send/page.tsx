@@ -505,7 +505,6 @@ export default function UserSendPage() {
           feeAmount: fee,
           feeType: feeType,
           totalAmount: Number.parseFloat(sendAmount) + fee,
-          reference: transactionId,
         })
 
         // Upload receipt if file was selected and not already uploading
@@ -1120,16 +1119,16 @@ export default function UserSendPage() {
                                       </div>
                                     </div>
                                     <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                                      <span className="text-gray-600 text-xs">Reference</span>
+                                      <span className="text-gray-600 text-xs">Transaction ID</span>
                                       <div className="flex items-center gap-1">
                                         <span className="font-medium font-mono text-xs">{transactionId}</span>
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleCopy(transactionId, "reference")}
+                                          onClick={() => handleCopy(transactionId, "transactionId")}
                                           className="h-5 w-5 p-0"
                                         >
-                                          {copiedStates.reference ? (
+                                          {copiedStates.transactionId ? (
                                             <Check className="h-3 w-3 text-green-600" />
                                           ) : (
                                             <Copy className="h-3 w-3" />
@@ -1158,16 +1157,16 @@ export default function UserSendPage() {
                                   )}
                                   <div className="mt-2 pt-2 border-t border-gray-100">
                                     <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Reference</span>
+                                      <span className="text-gray-600 text-xs">Transaction ID</span>
                                       <div className="flex items-center gap-1">
                                         <span className="font-medium font-mono text-xs">{transactionId}</span>
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleCopy(transactionId, "reference")}
+                                          onClick={() => handleCopy(transactionId, "transactionId")}
                                           className="h-5 w-5 p-0"
                                         >
-                                          {copiedStates.reference ? (
+                                          {copiedStates.transactionId ? (
                                             <Check className="h-3 w-3 text-green-600" />
                                           ) : (
                                             <Copy className="h-3 w-3" />
@@ -1207,7 +1206,7 @@ export default function UserSendPage() {
                                   <li className="flex items-start gap-2">
                                     <span className="text-amber-500 mt-0.5 text-xs">•</span>
                                     <span>
-                                      Include reference <strong>{transactionId}</strong>
+                                      Include transaction ID <strong>{transactionId}</strong>
                                     </span>
                                   </li>
                                   <li className="flex items-start gap-2">
