@@ -2,19 +2,20 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "./supabase"
 import type { User } from "@supabase/supabase-js"
+import { supabase } from "./supabase"
 
 interface UserProfile {
   id: string
   email: string
-  first_name: string | null
-  last_name: string | null
-  phone: string | null
-  base_currency: string
-  created_at: string
-  updated_at: string
+  first_name?: string
+  last_name?: string
+  phone?: string
+  base_currency?: string
+  status?: string
+  verification_status?: string
+  created_at?: string
+  updated_at?: string
 }
 
 interface AuthContextType {
@@ -25,111 +26,109 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshUserProfile: () => Promise<void>
+  isAdmin: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  userProfile: null,
+  loading: true,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+  refreshUserProfile: async () => {},
+  isAdmin: false,
+})
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  // Load user profile from database
-  const loadUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
+      // Try to fetch from users table first
+      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
 
-      if (error) {
-        console.error("Error loading user profile:", error)
-        return null
+      if (userProfile && !userError) {
+        setUserProfile(userProfile)
+        setIsAdmin(false)
+        return userProfile
       }
 
-      return data
+      // If not found in users, check admin_users table
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("id", userId)
+        .single()
+
+      if (adminProfile && !adminError) {
+        setUserProfile(adminProfile)
+        setIsAdmin(true)
+        return adminProfile
+      }
+
+      return null
     } catch (error) {
-      console.error("Error loading user profile:", error)
+      console.error("Error fetching user profile:", error)
       return null
     }
   }
 
-  // Refresh user profile
   const refreshUserProfile = async () => {
-    if (user?.id) {
-      const profile = await loadUserProfile(user.id)
-      setUserProfile(profile)
+    if (user) {
+      await fetchUserProfile(user.id)
     }
   }
 
-  // Set auth cookies for middleware
-  const setAuthCookies = (session: any) => {
-    if (session?.access_token) {
-      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; secure; samesite=strict`
-    }
-    if (session?.refresh_token) {
-      document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=${60 * 60 * 24 * 30}; secure; samesite=strict`
-    }
-  }
-
-  // Clear auth cookies
-  const clearAuthCookies = () => {
-    document.cookie = "sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-    document.cookie = "sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-  }
-
-  // Initialize auth state
   useEffect(() => {
-    const initializeAuth = async () => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        // Get initial session
         const {
           data: { session },
-          error,
         } = await supabase.auth.getSession()
-
-        if (error) {
-          console.error("Error getting session:", error)
-          setLoading(false)
-          return
-        }
 
         if (session?.user) {
           setUser(session.user)
-
-          // Load user profile
-          const profile = await loadUserProfile(session.user.id)
-          setUserProfile(profile)
-
-          // Set auth cookies for middleware
-          setAuthCookies(session)
+          await fetchUserProfile(session.user.id)
         }
       } catch (error) {
-        console.error("Error initializing auth:", error)
+        console.error("Error getting initial session:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    initializeAuth()
+    getInitialSession()
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        setUser(session.user)
-
-        // Load user profile
-        const profile = await loadUserProfile(session.user.id)
-        setUserProfile(profile)
-
-        // Set auth cookies for middleware
-        setAuthCookies(session)
-      } else if (event === "SIGNED_OUT") {
-        setUser(null)
-        setUserProfile(null)
-
-        // Clear auth cookies
-        clearAuthCookies()
+      try {
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+        } else {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error("Error handling auth state change:", error)
+      } finally {
+        setLoading(false)
       }
     })
 
@@ -147,19 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
-      if (data.user && data.session) {
-        setUser(data.user)
-
-        // Load user profile
-        const profile = await loadUserProfile(data.user.id)
-        setUserProfile(profile)
-
-        // Set auth cookies for middleware
-        setAuthCookies(data.session)
-      }
-
+      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
+      console.error("Sign in error:", error)
       return { error }
     }
   }
@@ -169,42 +159,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            base_currency: userData.baseCurrency || "NGN",
+          },
+        },
       })
 
       if (error) {
         return { error }
       }
 
-      if (data.user) {
-        // Create user profile in database
-        const { error: profileError } = await supabase.from("users").insert({
-          id: data.user.id,
-          email: data.user.email,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          phone: userData.phone,
-          base_currency: userData.baseCurrency || "NGN",
-        })
-
-        if (profileError) {
-          console.error("Error creating user profile:", profileError)
-          return { error: profileError }
-        }
-
-        setUser(data.user)
-
-        // Load user profile
-        const profile = await loadUserProfile(data.user.id)
-        setUserProfile(profile)
-
-        // Set auth cookies for middleware if session exists
-        if (data.session) {
-          setAuthCookies(data.session)
-        }
-      }
-
       return { error: null }
     } catch (error) {
+      console.error("Sign up error:", error)
       return { error }
     }
   }
@@ -214,13 +184,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
-
-      // Clear auth cookies
-      clearAuthCookies()
-
-      router.push("/")
+      setIsAdmin(false)
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Sign out error:", error)
     }
   }
 
@@ -232,15 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshUserProfile,
+    isAdmin,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
 }
