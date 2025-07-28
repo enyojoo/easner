@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Edit, Trash2, Search, Globe } from "lucide-react"
-import { recipientService, currencyService } from "@/lib/database"
+import { currencies } from "@/utils/currency"
+import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 
 export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
   const [recipients, setRecipients] = useState([])
-  const [currencies, setCurrencies] = useState([])
   const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
@@ -29,38 +29,16 @@ export default function UserRecipientsPage() {
   })
   const [submitting, setSubmitting] = useState(false)
 
-  // Load recipients and currencies on component mount
+  // Load recipients on component mount
   useEffect(() => {
-    loadInitialData()
-  }, [userProfile])
-
-  const loadInitialData = async () => {
-    try {
-      setLoading(true)
-
-      // Load currencies first
-      const currenciesData = await currencyService.getAll()
-      setCurrencies(currenciesData)
-
-      // Set default currency to first available currency
-      if (currenciesData.length > 0 && !formData.currency) {
-        setFormData((prev) => ({ ...prev, currency: currenciesData[0].code }))
-      }
-
-      // Load recipients if user is authenticated
-      if (userProfile?.id) {
-        await loadRecipients()
-      }
-    } catch (error) {
-      console.error("Error loading initial data:", error)
-      alert("Failed to load data")
-    } finally {
-      setLoading(false)
+    if (userProfile?.id) {
+      loadRecipients()
     }
-  }
+  }, [userProfile])
 
   const loadRecipients = async () => {
     try {
+      setLoading(true)
       const data = await recipientService.getByUserId(userProfile.id)
 
       // Transform data to match the expected format
@@ -79,6 +57,8 @@ export default function UserRecipientsPage() {
     } catch (error) {
       console.error("Error loading recipients:", error)
       alert("Failed to load recipients")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -114,13 +94,7 @@ export default function UserRecipientsPage() {
       await loadRecipients()
 
       // Reset form and close dialog
-      setFormData({
-        name: "",
-        accountNumber: "",
-        bankName: "",
-        currency: currencies.length > 0 ? currencies[0].code : "NGN",
-        phoneNumber: "",
-      })
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN", phoneNumber: "" })
       setIsAddDialogOpen(false)
 
       alert("Recipient added successfully!")
@@ -163,13 +137,7 @@ export default function UserRecipientsPage() {
 
       // Reset form and close dialog
       setEditingRecipient(null)
-      setFormData({
-        name: "",
-        accountNumber: "",
-        bankName: "",
-        currency: currencies.length > 0 ? currencies[0].code : "NGN",
-        phoneNumber: "",
-      })
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN", phoneNumber: "" })
 
       alert("Recipient updated successfully!")
     } catch (error) {
@@ -249,11 +217,10 @@ export default function UserRecipientsPage() {
           className="w-full p-2 border border-gray-300 rounded-md"
           disabled={submitting}
         >
-          {currencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.code} - {currency.name}
-            </option>
-          ))}
+          <option value="NGN">NGN - Nigerian Naira</option>
+          <option value="RUB">RUB - Russian Ruble</option>
+          <option value="USD">USD - US Dollar</option>
+          <option value="EUR">EUR - Euro</option>
         </select>
       </div>
       <Button
