@@ -18,7 +18,6 @@ export default function TransactionStatusPage() {
   const transactionId = params.id as string
 
   const [transaction, setTransaction] = useState<Transaction | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [countdownTime, setCountdownTime] = useState(1800) // 30 minutes in seconds
 
@@ -28,7 +27,6 @@ export default function TransactionStatusPage() {
       if (!transactionId || !userProfile?.id) return
 
       try {
-        setLoading(true)
         setError(null)
 
         const transactionData = await transactionService.getById(transactionId.toUpperCase())
@@ -43,8 +41,6 @@ export default function TransactionStatusPage() {
       } catch (error) {
         console.error("Error loading transaction:", error)
         setError("Failed to load transaction details")
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -208,23 +204,6 @@ export default function TransactionStatusPage() {
           isCompleted: false,
         }
     }
-  }
-
-  if (loading) {
-    return (
-      <UserDashboardLayout>
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading transaction details...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    )
   }
 
   if (error || !transaction) {
