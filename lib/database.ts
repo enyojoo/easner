@@ -68,6 +68,7 @@ export const userService = {
         last_name: updates.lastName,
         phone: updates.phone,
         base_currency: updates.baseCurrency,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", userId)
       .select()
