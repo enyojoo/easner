@@ -10,11 +10,26 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Settings, Mail, Shield, Save, Eye, Edit, Plus, Trash2, CreditCard, QrCode, Building2 } from "lucide-react"
+import {
+  Settings,
+  Mail,
+  Shield,
+  Save,
+  Eye,
+  Edit,
+  Plus,
+  Trash2,
+  CreditCard,
+  QrCode,
+  Building2,
+  MoreHorizontal,
+} from "lucide-react"
 import { currencies } from "@/utils/currency"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Mock data
 const mockPlatformConfig = {
@@ -110,6 +125,8 @@ export default function AdminSettingsPage() {
   const [paymentMethods, setPaymentMethods] = useState(mockPaymentMethods)
   const [activeTab, setActiveTab] = useState("platform")
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
+  const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState<any>(null)
   const [newPaymentMethod, setNewPaymentMethod] = useState({
     currency: "",
     type: "bank_account",
@@ -119,6 +136,7 @@ export default function AdminSettingsPage() {
     bankName: "",
     qrCodeData: "",
     instructions: "",
+    isDefault: false,
   })
 
   const handleSaveSecuritySettings = () => {
@@ -137,11 +155,22 @@ export default function AdminSettingsPage() {
       qrCodeData: newPaymentMethod.qrCodeData,
       instructions: newPaymentMethod.instructions,
       status: "active",
-      isDefault: false,
+      isDefault: newPaymentMethod.isDefault,
       createdAt: new Date().toISOString().split("T")[0],
     }
 
-    setPaymentMethods([...paymentMethods, paymentMethod])
+    let updatedMethods = [...paymentMethods, paymentMethod]
+
+    // If this is set as default, unset other defaults for the same currency
+    if (newPaymentMethod.isDefault) {
+      updatedMethods = updatedMethods.map((method) =>
+        method.currency === newPaymentMethod.currency && method.id !== paymentMethod.id
+          ? { ...method, isDefault: false }
+          : method,
+      )
+    }
+
+    setPaymentMethods(updatedMethods)
     setNewPaymentMethod({
       currency: "",
       type: "bank_account",
@@ -151,8 +180,34 @@ export default function AdminSettingsPage() {
       bankName: "",
       qrCodeData: "",
       instructions: "",
+      isDefault: false,
     })
     setIsAddPaymentMethodOpen(false)
+  }
+
+  const handleEditPaymentMethod = () => {
+    if (!editingPaymentMethod) return
+
+    let updatedMethods = paymentMethods.map((method) =>
+      method.id === editingPaymentMethod.id
+        ? {
+            ...editingPaymentMethod,
+          }
+        : method,
+    )
+
+    // If this is set as default, unset other defaults for the same currency
+    if (editingPaymentMethod.isDefault) {
+      updatedMethods = updatedMethods.map((method) =>
+        method.currency === editingPaymentMethod.currency && method.id !== editingPaymentMethod.id
+          ? { ...method, isDefault: false }
+          : method,
+      )
+    }
+
+    setPaymentMethods(updatedMethods)
+    setEditingPaymentMethod(null)
+    setIsEditPaymentMethodOpen(false)
   }
 
   const handleTogglePaymentMethodStatus = (id: number) => {
@@ -177,6 +232,11 @@ export default function AdminSettingsPage() {
 
   const handleDeletePaymentMethod = (id: number) => {
     setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
+  }
+
+  const handleEditClick = (method: any) => {
+    setEditingPaymentMethod({ ...method })
+    setIsEditPaymentMethodOpen(true)
   }
 
   const getPaymentMethodIcon = (type: string) => {
@@ -449,6 +509,19 @@ export default function AdminSettingsPage() {
                           </>
                         )}
 
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="isDefault"
+                            checked={newPaymentMethod.isDefault}
+                            onCheckedChange={(checked) =>
+                              setNewPaymentMethod({ ...newPaymentMethod, isDefault: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="isDefault" className="text-sm font-medium">
+                            Set as default payment method for this currency
+                          </Label>
+                        </div>
+
                         <div className="flex gap-4 pt-4">
                           <Button variant="outline" onClick={() => setIsAddPaymentMethodOpen(false)} className="flex-1">
                             Cancel
@@ -470,6 +543,194 @@ export default function AdminSettingsPage() {
                           </Button>
                         </div>
                       </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Edit Payment Method Dialog */}
+                  <Dialog open={isEditPaymentMethodOpen} onOpenChange={setIsEditPaymentMethodOpen}>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Edit Payment Method</DialogTitle>
+                      </DialogHeader>
+                      {editingPaymentMethod && (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="editCurrency">Currency *</Label>
+                              <Select
+                                value={editingPaymentMethod.currency}
+                                onValueChange={(value) =>
+                                  setEditingPaymentMethod({ ...editingPaymentMethod, currency: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {currencies.map((currency) => (
+                                    <SelectItem key={currency.code} value={currency.code}>
+                                      <div className="flex items-center gap-3">
+                                        <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                                        <div className="font-medium">
+                                          {currency.code} - {currency.name}
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="editType">Type *</Label>
+                              <Select
+                                value={editingPaymentMethod.type}
+                                onValueChange={(value) =>
+                                  setEditingPaymentMethod({ ...editingPaymentMethod, type: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="bank_account">
+                                    <div className="flex items-center gap-2">
+                                      <Building2 className="h-4 w-4" />
+                                      Bank Account
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="qr_code">
+                                    <div className="flex items-center gap-2">
+                                      <QrCode className="h-4 w-4" />
+                                      QR Code
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editName">Display Name *</Label>
+                            <Input
+                              id="editName"
+                              value={editingPaymentMethod.name}
+                              onChange={(e) =>
+                                setEditingPaymentMethod({ ...editingPaymentMethod, name: e.target.value })
+                              }
+                              placeholder="e.g., Sberbank Russia, SberPay QR"
+                            />
+                          </div>
+
+                          {editingPaymentMethod.type === "bank_account" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="editAccountName">Account Name *</Label>
+                                <Input
+                                  id="editAccountName"
+                                  value={editingPaymentMethod.accountName}
+                                  onChange={(e) =>
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, accountName: e.target.value })
+                                  }
+                                  placeholder="e.g., Novapay Russia LLC"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="editAccountNumber">Account Number *</Label>
+                                  <Input
+                                    id="editAccountNumber"
+                                    value={editingPaymentMethod.accountNumber}
+                                    onChange={(e) =>
+                                      setEditingPaymentMethod({
+                                        ...editingPaymentMethod,
+                                        accountNumber: e.target.value,
+                                      })
+                                    }
+                                    placeholder="e.g., 40817810123456789012"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="editBankName">Bank Name *</Label>
+                                  <Input
+                                    id="editBankName"
+                                    value={editingPaymentMethod.bankName}
+                                    onChange={(e) =>
+                                      setEditingPaymentMethod({ ...editingPaymentMethod, bankName: e.target.value })
+                                    }
+                                    placeholder="e.g., Sberbank Russia"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {editingPaymentMethod.type === "qr_code" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="editQrCodeData">QR Code Data/URL *</Label>
+                                <Input
+                                  id="editQrCodeData"
+                                  value={editingPaymentMethod.qrCodeData}
+                                  onChange={(e) =>
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, qrCodeData: e.target.value })
+                                  }
+                                  placeholder="e.g., https://qr.sber.ru/pay/12345 or payment data"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="editInstructions">Instructions</Label>
+                                <Textarea
+                                  id="editInstructions"
+                                  value={editingPaymentMethod.instructions}
+                                  onChange={(e) =>
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, instructions: e.target.value })
+                                  }
+                                  placeholder="Instructions for users on how to use this QR code"
+                                  rows={3}
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="editIsDefault"
+                              checked={editingPaymentMethod.isDefault}
+                              onCheckedChange={(checked) =>
+                                setEditingPaymentMethod({ ...editingPaymentMethod, isDefault: checked as boolean })
+                              }
+                            />
+                            <Label htmlFor="editIsDefault" className="text-sm font-medium">
+                              Set as default payment method for this currency
+                            </Label>
+                          </div>
+
+                          <div className="flex gap-4 pt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsEditPaymentMethodOpen(false)}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleEditPaymentMethod}
+                              disabled={
+                                !editingPaymentMethod.currency ||
+                                !editingPaymentMethod.name ||
+                                (editingPaymentMethod.type === "bank_account" &&
+                                  (!editingPaymentMethod.accountName ||
+                                    !editingPaymentMethod.accountNumber ||
+                                    !editingPaymentMethod.bankName)) ||
+                                (editingPaymentMethod.type === "qr_code" && !editingPaymentMethod.qrCodeData)
+                              }
+                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -532,32 +793,34 @@ export default function AdminSettingsPage() {
                           {method.isDefault && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleTogglePaymentMethodStatus(method.id)}
-                            >
-                              {method.status === "active" ? "Disable" : "Enable"}
-                            </Button>
-                            {method.status === "active" && !method.isDefault && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleSetDefaultPaymentMethod(method.id)}
-                              >
-                                Set Default
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeletePaymentMethod(method.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(method)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleTogglePaymentMethodStatus(method.id)}>
+                                {method.status === "active" ? "Disable" : "Enable"}
+                              </DropdownMenuItem>
+                              {method.status === "active" && !method.isDefault && (
+                                <DropdownMenuItem onClick={() => handleSetDefaultPaymentMethod(method.id)}>
+                                  Make Default
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => handleDeletePaymentMethod(method.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
