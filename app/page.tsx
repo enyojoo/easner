@@ -3,17 +3,51 @@
 import { useRouter } from "next/navigation"
 import { PublicHeader } from "@/components/layout/public-header"
 import { CurrencyConverter } from "@/components/currency-converter"
+import { useAuth } from "@/lib/auth-context"
 
 export default function HomePage() {
   const router = useRouter()
+  const { user, isAdmin } = useAuth()
 
-  const handleSendMoney = () => {
-    // Check if user is authenticated (mock check)
-    const isAuthenticated = false // This would be replaced with actual auth check
-
-    if (isAuthenticated) {
-      router.push("/user/send")
+  const handleSendMoney = (data: {
+    sendAmount: string
+    sendCurrency: string
+    receiveCurrency: string
+    receiveAmount: number
+    exchangeRate: number
+    fee: number
+  }) => {
+    if (user) {
+      if (isAdmin) {
+        router.push("/admin/dashboard")
+      } else {
+        // User is logged in, go directly to step 2 with pre-filled data
+        const params = new URLSearchParams({
+          sendAmount: data.sendAmount,
+          sendCurrency: data.sendCurrency,
+          receiveCurrency: data.receiveCurrency,
+          receiveAmount: data.receiveAmount.toString(),
+          exchangeRate: data.exchangeRate.toString(),
+          fee: data.fee.toString(),
+          step: "2",
+        })
+        router.push(`/user/send?${params.toString()}`)
+      }
     } else {
+      // User is not logged in, store data and redirect to login
+      const conversionData = {
+        sendAmount: data.sendAmount,
+        sendCurrency: data.sendCurrency,
+        receiveCurrency: data.receiveCurrency,
+        receiveAmount: data.receiveAmount,
+        exchangeRate: data.exchangeRate,
+        fee: data.fee,
+      }
+
+      // Store in sessionStorage to persist through login
+      sessionStorage.setItem("conversionData", JSON.stringify(conversionData))
+      sessionStorage.setItem("redirectAfterLogin", "/user/send?step=2")
+
       router.push("/login")
     }
   }

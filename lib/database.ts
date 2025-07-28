@@ -98,10 +98,21 @@ export const userService = {
 // Currency operations
 export const currencyService = {
   async getAll() {
-    const { data, error } = await supabase.from("currencies").select("*").eq("status", "active").order("code")
+    const { data, error } = await supabase
+      .from("currencies")
+      .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
+      .eq("status", "active")
+      .order("code")
 
     if (error) throw error
-    return data
+
+    // Map flag_svg to flag for frontend compatibility
+    return (
+      data?.map((currency) => ({
+        ...currency,
+        flag: currency.flag_svg,
+      })) || []
+    )
   },
 
   async getExchangeRates() {
@@ -109,13 +120,31 @@ export const currencyService = {
       .from("exchange_rates")
       .select(`
         *,
-        from_currency_info:currencies!exchange_rates_from_currency_fkey(*),
-        to_currency_info:currencies!exchange_rates_to_currency_fkey(*)
+        from_currency_info:currencies!exchange_rates_from_currency_fkey(id, code, name, symbol, flag_svg),
+        to_currency_info:currencies!exchange_rates_to_currency_fkey(id, code, name, symbol, flag_svg)
       `)
       .eq("status", "active")
 
     if (error) throw error
-    return data
+
+    // Map flag_svg to flag for frontend compatibility
+    return (
+      data?.map((rate) => ({
+        ...rate,
+        from_currency_info: rate.from_currency_info
+          ? {
+              ...rate.from_currency_info,
+              flag: rate.from_currency_info.flag_svg,
+            }
+          : undefined,
+        to_currency_info: rate.to_currency_info
+          ? {
+              ...rate.to_currency_info,
+              flag: rate.to_currency_info.flag_svg,
+            }
+          : undefined,
+      })) || []
+    )
   },
 
   async getRate(fromCurrency: string, toCurrency: string) {
@@ -128,6 +157,25 @@ export const currencyService = {
       .single()
 
     if (error && error.code !== "PGRST116") throw error
+    return data
+  },
+
+  async updateRate(fromCurrency: string, toCurrency: string, rate: number, feeType = "free", feeAmount = 0) {
+    const { data, error } = await supabase
+      .from("exchange_rates")
+      .upsert({
+        from_currency: fromCurrency,
+        to_currency: toCurrency,
+        rate,
+        fee_type: feeType,
+        fee_amount: feeAmount,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) throw error
     return data
   },
 }

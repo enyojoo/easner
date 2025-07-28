@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -11,21 +10,68 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
+import { useAuth } from "@/lib/auth-context"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { signIn } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock authentication - redirect based on user type
-    // For demo: admin@novapay.com goes to admin, others go to user
-    if (email === "admin@novapay.com") {
-      router.push("/admin/dashboard")
-    } else {
-      router.push("/user/dashboard")
+    setLoading(true)
+    setError("")
+
+    try {
+      const { user, error: signInError } = await signIn(email, password)
+
+      if (signInError) {
+        setError(signInError.message)
+        return
+      }
+
+      if (user) {
+        // Check if user is admin by email (temporary check)
+        if (email === "admin@novapay.com") {
+          router.push("/admin/dashboard")
+        } else {
+          // Check for stored redirect and conversion data
+          const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+          const conversionData = sessionStorage.getItem("conversionData")
+
+          if (redirectPath && conversionData) {
+            // Clear stored data
+            sessionStorage.removeItem("redirectAfterLogin")
+            sessionStorage.removeItem("conversionData")
+
+            // Parse conversion data and add to URL
+            const data = JSON.parse(conversionData)
+            const params = new URLSearchParams({
+              sendAmount: data.sendAmount,
+              sendCurrency: data.sendCurrency,
+              receiveCurrency: data.receiveCurrency,
+              receiveAmount: data.receiveAmount.toString(),
+              exchangeRate: data.exchangeRate.toString(),
+              fee: data.fee.toString(),
+              step: "2",
+            })
+
+            router.push(`/user/send?${params.toString()}`)
+          } else {
+            router.push("/user/dashboard")
+          }
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during login")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -43,6 +89,13 @@ export default function LoginPage() {
             <CardDescription className="text-gray-600">Sign in to your Novapay account</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <Alert className="mb-4" variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-gray-700">
@@ -56,6 +109,7 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -71,6 +125,7 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -80,6 +135,7 @@ export default function LoginPage() {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    disabled={loading}
                   />
                   <Label htmlFor="remember" className="text-sm text-gray-600">
                     Remember me
@@ -95,9 +151,10 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                Sign In
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
