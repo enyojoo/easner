@@ -29,43 +29,41 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const { user, error: signInError } = await signIn(email, password)
+      const { error: signInError } = await signIn(email, password)
 
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      if (user) {
+      // Check for stored redirect and conversion data
+      const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+      const conversionData = sessionStorage.getItem("conversionData")
+
+      if (redirectPath && conversionData) {
+        // Clear stored data
+        sessionStorage.removeItem("redirectAfterLogin")
+        sessionStorage.removeItem("conversionData")
+
+        // Parse conversion data and add to URL
+        const data = JSON.parse(conversionData)
+        const params = new URLSearchParams({
+          sendAmount: data.sendAmount,
+          sendCurrency: data.sendCurrency,
+          receiveCurrency: data.receiveCurrency,
+          receiveAmount: data.receiveAmount.toString(),
+          exchangeRate: data.exchangeRate.toString(),
+          fee: data.fee.toString(),
+          step: "2",
+        })
+
+        router.push(`/user/send?${params.toString()}`)
+      } else {
         // Check if user is admin by email (temporary check)
         if (email === "admin@novapay.com") {
           router.push("/admin/dashboard")
         } else {
-          // Check for stored redirect and conversion data
-          const redirectPath = sessionStorage.getItem("redirectAfterLogin")
-          const conversionData = sessionStorage.getItem("conversionData")
-
-          if (redirectPath && conversionData) {
-            // Clear stored data
-            sessionStorage.removeItem("redirectAfterLogin")
-            sessionStorage.removeItem("conversionData")
-
-            // Parse conversion data and add to URL
-            const data = JSON.parse(conversionData)
-            const params = new URLSearchParams({
-              sendAmount: data.sendAmount,
-              sendCurrency: data.sendCurrency,
-              receiveCurrency: data.receiveCurrency,
-              receiveAmount: data.receiveAmount.toString(),
-              exchangeRate: data.exchangeRate.toString(),
-              fee: data.fee.toString(),
-              step: "2",
-            })
-
-            router.push(`/user/send?${params.toString()}`)
-          } else {
-            router.push("/user/dashboard")
-          }
+          router.push("/user/dashboard")
         }
       }
     } catch (err: any) {

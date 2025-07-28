@@ -178,17 +178,6 @@ export default function UserProfilePage() {
     return `${currencyInfo?.symbol || ""}${amount.toLocaleString()}`
   }
 
-  // Get email verification status from user profile
-  const getEmailVerificationStatus = () => {
-    if (userProfile?.verification_status === "verified") {
-      return { status: "Verified", color: "bg-green-100 text-green-800" }
-    } else if (user?.email_confirmed_at) {
-      return { status: "Verified", color: "bg-green-100 text-green-800" }
-    } else {
-      return { status: "Pending", color: "bg-yellow-100 text-yellow-800" }
-    }
-  }
-
   if (!user || !userProfile) {
     return (
       <UserDashboardLayout>
@@ -201,8 +190,6 @@ export default function UserProfilePage() {
       </UserDashboardLayout>
     )
   }
-
-  const emailVerification = getEmailVerificationStatus()
 
   return (
     <UserDashboardLayout>
@@ -468,13 +455,11 @@ export default function UserProfilePage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Mail
-                      className={`h-4 w-4 ${emailVerification.status === "Verified" ? "text-green-600" : "text-yellow-600"}`}
-                    />
+                    <Mail className="h-4 w-4 text-green-600" />
                     <span className="text-sm">Email</span>
                   </div>
-                  <Badge className={`${emailVerification.color} hover:${emailVerification.color}`}>
-                    {emailVerification.status}
+                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                    {user?.email_confirmed_at ? "Verified" : "Pending"}
                   </Badge>
                 </div>
                 <div className="border-t pt-4 space-y-3">
