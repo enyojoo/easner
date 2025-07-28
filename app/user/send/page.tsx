@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { Suspense } from "react"
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
@@ -71,7 +71,7 @@ const mockPaymentMethods = [
   },
 ]
 
-export default function UserSendPage() {
+function UserSendPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -1227,5 +1227,36 @@ export default function UserSendPage() {
         </div>
       </div>
     </UserDashboardLayout>
+  )
+}
+
+// Loading component for Suspense fallback
+function SendPageLoading() {
+  return (
+    <UserDashboardLayout>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="h-96 bg-gray-200 rounded-lg"></div>
+              </div>
+              <div className="lg:col-span-1">
+                <div className="h-64 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </UserDashboardLayout>
+  )
+}
+
+export default function UserSendPage() {
+  return (
+    <Suspense fallback={<SendPageLoading />}>
+      <UserSendPageContent />
+    </Suspense>
   )
 }
