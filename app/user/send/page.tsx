@@ -22,6 +22,8 @@ import {
   Search,
   QrCode,
   Building2,
+  AlertCircle,
+  X,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
@@ -95,6 +97,7 @@ export default function UserSendPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [feeType, setFeeType] = useState<string>("free")
@@ -248,14 +251,17 @@ export default function UserSendPage() {
 
   // File upload handlers
   const handleFileSelect = async (file: File) => {
+    // Clear previous errors
+    setUploadError(null)
+
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB")
+      setUploadError("File size must be less than 5MB")
       return
     }
 
     const allowedTypes = ["image/jpeg", "image/png", "application/pdf"]
     if (!allowedTypes.includes(file.type)) {
-      alert("Only JPG, PNG, and PDF files are allowed")
+      setUploadError("Only JPG, PNG, and PDF files are allowed")
       return
     }
 
@@ -286,7 +292,7 @@ export default function UserSendPage() {
       setIsUploading(false)
     } catch (error) {
       console.error("Error uploading file:", error)
-      setError("Failed to upload receipt. Please try again.")
+      setUploadError("Upload failed. Please try again.")
       setIsUploading(false)
       setUploadedFile(null)
       setUploadProgress(0)
@@ -321,6 +327,19 @@ export default function UserSendPage() {
 
   const handleUploadClick = () => {
     fileInputRef.current?.click()
+  }
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null)
+    setUploadProgress(0)
+    setUploadError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const handleDismissUploadError = () => {
+    setUploadError(null)
   }
 
   // Exchange rate and fee calculation functions
@@ -489,8 +508,8 @@ export default function UserSendPage() {
           reference: transactionId,
         })
 
-        // Upload receipt if file was selected
-        if (uploadedFile && !isUploading) {
+        // Upload receipt if file was selected and not already uploading
+        if (uploadedFile && !isUploading && uploadProgress === 100) {
           try {
             await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
           } catch (uploadError) {
@@ -1221,7 +1240,7 @@ export default function UserSendPage() {
                       })()}
                     </div>
 
-                    {/* Compact Upload Receipt Section */}
+                    {/* Upload Receipt Section with Better Error Handling */}
                     <div className="space-y-3">
                       <input
                         type="file"
@@ -1230,6 +1249,28 @@ export default function UserSendPage() {
                         accept=".jpg,.jpeg,.png,.pdf"
                         className="hidden"
                       />
+
+                      {/* Upload Error Alert */}
+                      {uploadError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm text-red-700 font-medium">Upload Error</p>
+                              <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleDismissUploadError}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       <div
                         onClick={handleUploadClick}
                         onDragOver={handleDragOver}
@@ -1240,7 +1281,9 @@ export default function UserSendPage() {
                             ? "border-novapay-primary bg-novapay-primary-50"
                             : uploadedFile
                               ? "border-green-300 bg-green-50"
-                              : "border-gray-200 hover:border-novapay-primary-300"
+                              : uploadError
+                                ? "border-red-300 bg-red-50"
+                                : "border-gray-200 hover:border-novapay-primary-300"
                         }`}
                       >
                         <div className="flex items-center justify-center gap-3">
@@ -1248,13 +1291,17 @@ export default function UserSendPage() {
                             className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                               uploadedFile
                                 ? "bg-green-100"
-                                : isDragOver
-                                  ? "bg-novapay-primary-100"
-                                  : "bg-gray-100 group-hover:bg-novapay-primary-50"
+                                : uploadError
+                                  ? "bg-red-100"
+                                  : isDragOver
+                                    ? "bg-novapay-primary-100"
+                                    : "bg-gray-100 group-hover:bg-novapay-primary-50"
                             }`}
                           >
                             {uploadedFile ? (
                               <Check className="h-5 w-5 text-green-600" />
+                            ) : uploadError ? (
+                              <AlertCircle className="h-5 w-5 text-red-600" />
                             ) : (
                               <Upload
                                 className={`h-5 w-5 transition-colors ${
@@ -1265,14 +1312,33 @@ export default function UserSendPage() {
                           </div>
                           <div className="text-left">
                             <h3 className="font-medium text-gray-900 text-sm">
-                              {uploadedFile ? uploadedFile.name : "Upload Payment Receipt"}
+                              {uploadedFile
+                                ? uploadedFile.name
+                                : uploadError
+                                  ? "Upload Failed"
+                                  : "Upload Payment Receipt"}
                             </h3>
                             <p className="text-xs text-gray-500">
                               {uploadedFile
                                 ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
-                                : "JPG, PNG or PDF (Max 5MB)"}
+                                : uploadError
+                                  ? "Click to try again"
+                                  : "JPG, PNG or PDF (Max 5MB)"}
                             </p>
                           </div>
+                          {uploadedFile && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRemoveFile()
+                              }}
+                              className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
 
                         {/* Progress Bar (shown when uploading) */}

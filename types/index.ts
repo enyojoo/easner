@@ -1,9 +1,12 @@
 export interface User {
   id: string
   email: string
-  full_name: string
-  phone_number?: string
-  is_verified: boolean
+  first_name: string
+  last_name: string
+  phone?: string
+  base_currency: string
+  status: "active" | "inactive" | "suspended"
+  verification_status: "pending" | "verified" | "rejected"
   created_at: string
   updated_at: string
 }
@@ -14,7 +17,7 @@ export interface Currency {
   name: string
   symbol: string
   flag: string
-  is_active: boolean
+  status: "active" | "inactive"
   created_at: string
   updated_at: string
 }
@@ -26,9 +29,11 @@ export interface ExchangeRate {
   rate: number
   fee_type: "free" | "fixed" | "percentage"
   fee_amount: number
-  is_active: boolean
+  status: "active" | "inactive"
   created_at: string
   updated_at: string
+  from_currency_info?: Currency
+  to_currency_info?: Currency
 }
 
 export interface Recipient {
@@ -37,15 +42,15 @@ export interface Recipient {
   full_name: string
   account_number: string
   bank_name: string
-  currency: string
   phone_number?: string
-  is_active: boolean
+  currency: string
   created_at: string
   updated_at: string
 }
 
 export interface Transaction {
   id: string
+  transaction_id: string
   user_id: string
   recipient_id: string
   send_amount: number
@@ -54,12 +59,32 @@ export interface Transaction {
   receive_currency: string
   exchange_rate: number
   fee_amount: number
+  fee_type: string
   total_amount: number
   status: "pending" | "processing" | "completed" | "failed" | "cancelled"
-  payment_method: string
-  reference_number: string
+  reference?: string
   receipt_url?: string
   receipt_filename?: string
+  receipt_uploaded_at?: string
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  recipient?: Recipient
+  user?: User
+}
+
+export interface PaymentMethod {
+  id: string
+  currency: string
+  type: "bank_account" | "qr_code"
+  name: string
+  account_name?: string
+  account_number?: string
+  bank_name?: string
+  qr_code_data?: string
+  instructions?: string
+  is_default: boolean
+  status: "active" | "inactive"
   created_at: string
   updated_at: string
 }
@@ -67,18 +92,22 @@ export interface Transaction {
 export interface AdminUser {
   id: string
   email: string
-  full_name: string
+  first_name: string
+  last_name: string
   role: "super_admin" | "admin" | "support"
-  is_active: boolean
+  status: "active" | "inactive"
   created_at: string
   updated_at: string
 }
 
-export interface Settings {
+export interface SystemSetting {
   id: string
   key: string
   value: string
+  data_type: "string" | "number" | "boolean" | "json"
+  category?: string
   description?: string
+  is_active: boolean
   created_at: string
   updated_at: string
 }
