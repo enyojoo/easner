@@ -103,64 +103,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
-    try {
-      console.log("Starting sign up process...", { email, userData })
-
-      // First, create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      })
-
-      console.log("Auth signup result:", { authData, authError })
-
-      if (authError) {
-        console.error("Auth signup error:", authError)
-        return { user: null, error: authError }
-      }
-
-      // If auth user was created successfully, create the profile
-      if (authData.user) {
-        console.log("Creating user profile for:", authData.user.id)
-
-        const profileData = {
-          id: authData.user.id,
-          email: authData.user.email,
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           first_name: userData.firstName,
           last_name: userData.lastName,
-          phone: userData.phone || null,
           base_currency: userData.baseCurrency || "NGN",
-          country: userData.country || null,
-          status: "active",
-          verification_status: "pending",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
+        },
+      },
+    })
 
-        console.log("Profile data to insert:", profileData)
-
-        const { data: profileResult, error: profileError } = await supabase
-          .from("users")
-          .insert(profileData)
-          .select()
-          .single()
-
-        console.log("Profile creation result:", { profileResult, profileError })
-
-        if (profileError) {
-          console.error("Error creating user profile:", profileError)
-          // Return the error so we can handle it in the UI
-          return { user: null, error: { message: `Profile creation failed: ${profileError.message}` } }
-        }
-
-        console.log("User profile created successfully:", profileResult)
-      }
-
-      return { user: authData.user, error: null }
-    } catch (error) {
-      console.error("Sign up error:", error)
-      return { user: null, error: { message: "An unexpected error occurred during registration" } }
+    if (error) {
+      return { user: null, error }
     }
+
+    return { user: data.user, error: null }
   }
 
   const signOut = async () => {
