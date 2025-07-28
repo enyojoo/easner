@@ -34,6 +34,8 @@ export default function RegisterPage() {
     setLoading(true)
     setError("")
 
+    console.log("Form submitted with data:", formData)
+
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
@@ -54,18 +56,27 @@ export default function RegisterPage() {
     }
 
     try {
-      const { user, error: signUpError } = await signUp(formData.email, formData.password, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+      const userData = {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
         baseCurrency: "NGN", // Default base currency
-      })
+      }
+
+      console.log("Calling signUp with:", { email: formData.email, userData })
+
+      const { user, error: signUpError } = await signUp(formData.email.trim(), formData.password, userData)
+
+      console.log("SignUp result:", { user, signUpError })
 
       if (signUpError) {
-        setError(signUpError.message)
+        console.error("SignUp error:", signUpError)
+        setError(signUpError.message || "Registration failed")
+        setLoading(false)
         return
       }
 
       if (user) {
+        console.log("Registration successful, user created:", user.id)
         setSuccess(true)
         // Redirect after a short delay to show success message
         setTimeout(() => {
@@ -97,6 +108,7 @@ export default function RegisterPage() {
         }, 2000)
       }
     } catch (err: any) {
+      console.error("Registration error:", err)
       setError(err.message || "An error occurred during registration")
     } finally {
       setLoading(false)
