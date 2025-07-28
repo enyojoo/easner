@@ -97,7 +97,10 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="flex-1"></div>
+            <div className="flex-1 flex justify-center lg:hidden">
+              <BrandLogo size="sm" />
+            </div>
+            <div className="flex-1 hidden lg:block"></div>
           </div>
         </div>
 
