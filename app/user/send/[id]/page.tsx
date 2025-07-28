@@ -397,15 +397,7 @@ export default function TransactionStatusPage() {
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <h4 className="font-medium text-orange-800 mb-1">Transaction Taking Longer Than Expected</h4>
-                          <p className="text-sm text-orange-700 mb-3">
-                            Your transaction is taking longer than the usual 30 minutes to complete. This can happen due
-                            to high network traffic or additional verification requirements.
-                          </p>
-                          <p className="text-sm text-orange-700">
-                            If your transaction doesn't complete within the next hour, please contact our support team
-                            for assistance.
-                          </p>
+                          <h4 className="font-medium text-orange-800 mb-1">Please contact support </h4
                         </div>
                       </div>
                     </div>
