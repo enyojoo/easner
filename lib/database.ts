@@ -1,29 +1,26 @@
 import { supabase, createServerClient } from "./supabase"
-import bcrypt from "bcryptjs"
 
 // User operations
 export const userService = {
   async create(userData: {
     email: string
-    password: string
     firstName: string
     lastName: string
     phone?: string
     baseCurrency?: string
     country?: string
   }) {
-    const passwordHash = await bcrypt.hash(userData.password, 10)
-
     const { data, error } = await supabase
       .from("users")
       .insert({
         email: userData.email,
-        password_hash: passwordHash,
         first_name: userData.firstName,
         last_name: userData.lastName,
         phone: userData.phone,
         base_currency: userData.baseCurrency || "NGN",
         country: userData.country,
+        status: "active",
+        verification_status: "pending",
       })
       .select()
       .single()
@@ -37,19 +34,6 @@ export const userService = {
 
     if (error && error.code !== "PGRST116") throw error
     return data
-  },
-
-  async verifyPassword(email: string, password: string) {
-    const user = await this.findByEmail(email)
-    if (!user) return null
-
-    const isValid = await bcrypt.compare(password, user.password_hash)
-    if (!isValid) return null
-
-    // Update last login
-    await supabase.from("users").update({ last_login: new Date().toISOString() }).eq("id", user.id)
-
-    return user
   },
 
   async updateProfile(
@@ -542,22 +526,28 @@ export const paymentMethodService = {
 // Admin operations
 export const adminService = {
   async verifyAdmin(email: string, password: string) {
-    const serverClient = createServerClient()
+    // Since we removed password_hash, we'll need to use Supabase Auth for admin login too
+    // For now, we'll check if the user exists in admin_users table after auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    const { data: admin, error } = await serverClient
+    if (error || !data.user) return null
+
+    // Check if user is in admin_users table
+    const { data: admin, error: adminError } = await supabase
       .from("admin_users")
       .select("*")
-      .eq("email", email)
+      .eq("id", data.user.id)
       .eq("status", "active")
       .single()
 
-    if (error || !admin) return null
-
-    const isValid = await bcrypt.compare(password, admin.password_hash)
-    if (!isValid) return null
-
-    // Update last login
-    await serverClient.from("admin_users").update({ last_login: new Date().toISOString() }).eq("id", admin.id)
+    if (adminError || !admin) {
+      // Sign out if not an admin
+      await supabase.auth.signOut()
+      return null
+    }
 
     return admin
   },

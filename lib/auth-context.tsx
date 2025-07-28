@@ -133,6 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           country: userData.country || null,
           status: "active",
           verification_status: "pending",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }
 
         console.log("Profile data to insert:", profileData)
