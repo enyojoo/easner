@@ -59,12 +59,8 @@ export default function LoginPage() {
 
         router.push(`/user/send?${params.toString()}`)
       } else {
-        // Check if user is admin by email (temporary check)
-        if (email === "admin@novapay.com") {
-          router.push("/admin/dashboard")
-        } else {
-          router.push("/user/dashboard")
-        }
+        // Regular users always go to user dashboard
+        router.push("/user/dashboard")
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
