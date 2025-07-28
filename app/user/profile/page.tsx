@@ -10,9 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { userService } from "@/lib/database"
+import { userService, currencyService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
-import { currencies } from "@/utils/currency"
 
 export default function UserProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth()
@@ -22,6 +21,7 @@ export default function UserProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [currencies, setCurrencies] = useState<any[]>([])
   const [userStats, setUserStats] = useState({
     totalTransactions: 0,
     totalSent: 0,
@@ -43,6 +43,27 @@ export default function UserProfilePage() {
     newPassword: "",
     confirmPassword: "",
   })
+
+  // Load currencies from database
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const currenciesData = await currencyService.getAll()
+        setCurrencies(currenciesData)
+      } catch (error) {
+        console.error("Error loading currencies:", error)
+        // Fallback to default currencies if database fails
+        setCurrencies([
+          { code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: "🇳🇬" },
+          { code: "RUB", name: "Russian Ruble", symbol: "₽", flag: "🇷🇺" },
+          { code: "USD", name: "US Dollar", symbol: "$", flag: "🇺🇸" },
+          { code: "EUR", name: "Euro", symbol: "€", flag: "🇪🇺" },
+        ])
+      }
+    }
+
+    loadCurrencies()
+  }, [])
 
   // Load user profile data
   useEffect(() => {
