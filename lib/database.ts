@@ -298,42 +298,52 @@ export const transactionService = {
   },
 
   async uploadReceipt(transactionId: string, file: File) {
-    const serverClient = createServerClient()
+    try {
+      // Generate unique filename
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${transactionId}_${Date.now()}.${fileExt}`
+      const filePath = `receipts/${fileName}`
 
-    // Generate unique filename
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${transactionId}_${Date.now()}.${fileExt}`
-    const filePath = `receipts/${fileName}`
+      // Upload file to Supabase Storage using client-side upload
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("transaction-receipts")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        })
 
-    // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await serverClient.storage
-      .from("transaction-receipts")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      })
+      if (uploadError) {
+        console.error("Upload error:", uploadError)
+        throw new Error(`Upload failed: ${uploadError.message}`)
+      }
 
-    if (uploadError) throw uploadError
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("transaction-receipts").getPublicUrl(filePath)
 
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = serverClient.storage.from("transaction-receipts").getPublicUrl(filePath)
+      // Update transaction with receipt URL
+      const { data, error } = await supabase
+        .from("transactions")
+        .update({
+          receipt_url: publicUrl,
+          receipt_filename: fileName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("transaction_id", transactionId)
+        .select()
+        .single()
 
-    // Update transaction with receipt URL
-    const { data, error } = await serverClient
-      .from("transactions")
-      .update({
-        receipt_url: publicUrl,
-        receipt_filename: fileName,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("transaction_id", transactionId)
-      .select()
-      .single()
+      if (error) {
+        console.error("Database update error:", error)
+        throw new Error(`Database update failed: ${error.message}`)
+      }
 
-    if (error) throw error
-    return { ...data, receipt_url: publicUrl }
+      return { ...data, receipt_url: publicUrl }
+    } catch (error) {
+      console.error("Receipt upload error:", error)
+      throw error
+    }
   },
 
   async getStats(timeRange = "today") {

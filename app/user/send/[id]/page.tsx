@@ -5,31 +5,53 @@ import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Check, Clock } from "lucide-react"
+import { Check, Clock, ExternalLink } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
+import { transactionService } from "@/lib/database"
+import { useAuth } from "@/lib/auth-context"
+import type { Transaction } from "@/types"
 
 export default function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
+  const { userProfile } = useAuth()
   const transactionId = params.id as string
 
-  // Mock transaction data - in real app, this would be fetched based on ID
-  const [transactionData] = useState({
-    id: transactionId,
-    sendAmount: "100",
-    sendCurrency: "RUB",
-    receiveAmount: 2245,
-    receiveCurrency: "NGN",
-    recipientName: "John Doe",
-    recipientAccount: "1234567890",
-    recipientBank: "First Bank",
-    status: "processing", // pending, processing, completed, failed
-    createdAt: new Date().toISOString(),
-    estimatedCompletion: "15-30 minutes",
-  })
-
+  const [transaction, setTransaction] = useState<Transaction | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentStatus, setCurrentStatus] = useState("processing")
   const [countdownTime, setCountdownTime] = useState(300) // 5 minutes in seconds
+
+  // Load transaction data from Supabase
+  useEffect(() => {
+    const loadTransaction = async () => {
+      if (!transactionId || !userProfile?.id) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const transactionData = await transactionService.getById(transactionId.toUpperCase())
+
+        // Verify this transaction belongs to the current user
+        if (transactionData.user_id !== userProfile.id) {
+          setError("Transaction not found or access denied")
+          return
+        }
+
+        setTransaction(transactionData)
+        setCurrentStatus(transactionData.status)
+      } catch (error) {
+        console.error("Error loading transaction:", error)
+        setError("Failed to load transaction details")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadTransaction()
+  }, [transactionId, userProfile?.id])
 
   // Countdown timer effect
   useEffect(() => {
@@ -45,22 +67,25 @@ export default function TransactionStatusPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  // Simulate status updates
+  // Simulate status updates for demo purposes
   useEffect(() => {
+    if (!transaction || transaction.status === "completed") return
+
     const statusUpdates = ["processing", "verified", "initiated", "completed"]
-    let currentIndex = 0
+    const currentIndex = statusUpdates.indexOf(currentStatus)
 
-    const interval = setInterval(() => {
-      if (currentIndex < statusUpdates.length - 1) {
-        currentIndex++
-        setCurrentStatus(statusUpdates[currentIndex])
-      } else {
-        clearInterval(interval)
-      }
-    }, 10000) // Update every 10 seconds for demo
+    if (currentIndex < statusUpdates.length - 1) {
+      const timer = setTimeout(() => {
+        const nextStatus = statusUpdates[currentIndex + 1]
+        setCurrentStatus(nextStatus)
 
-    return () => clearInterval(interval)
-  }, [])
+        // Update transaction status in database
+        transactionService.updateStatus(transaction.transaction_id, nextStatus).catch(console.error)
+      }, 10000) // Update every 10 seconds for demo
+
+      return () => clearTimeout(timer)
+    }
+  }, [currentStatus, transaction])
 
   const steps = [
     { number: 1, title: "Amount to Send", completed: true },
@@ -135,8 +160,51 @@ export default function TransactionStatusPage() {
 
   const formatCurrency = (amount: number | string, currency: string) => {
     const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount
-    const symbol = currency === "RUB" ? "₽" : "₦"
+    const symbol = currency === "RUB" ? "₽" : currency === "NGN" ? "₦" : currency
     return `${symbol}${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  const handleViewReceipt = () => {
+    if (transaction?.receipt_url) {
+      window.open(transaction.receipt_url, "_blank")
+    }
+  }
+
+  if (loading) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading transaction details...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (error || !transaction) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <p className="text-red-700 mb-4">{error || "Transaction not found"}</p>
+              <Button
+                onClick={() => router.push("/user/dashboard")}
+                className="bg-novapay-primary hover:bg-novapay-primary-600"
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
   }
 
   return (
@@ -225,14 +293,42 @@ export default function TransactionStatusPage() {
                         {currentStatus === "completed" ? "Completed:" : "Estimated completion:"}
                       </span>
                       <span className="font-medium">
-                        {currentStatus === "completed" ? new Date().toLocaleString() : formatCountdown(countdownTime)}
+                        {currentStatus === "completed"
+                          ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
+                          : formatCountdown(countdownTime)}
                       </span>
                     </div>
                   </div>
 
+                  {/* Receipt Section */}
+                  {transaction.receipt_url && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Check className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">Payment Receipt Uploaded</p>
+                            <p className="text-sm text-gray-600">{transaction.receipt_filename}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleViewReceipt}
+                          className="flex items-center gap-2 bg-transparent"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={() => router.push("/user/send")} className="flex-1">
-                      Repeat
+                      Send Again
                     </Button>
                     <Button
                       onClick={() => router.push("/user/dashboard")}
@@ -256,33 +352,54 @@ export default function TransactionStatusPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">You Sent</span>
                       <span className="font-semibold">
-                        {formatCurrency(transactionData.sendAmount, transactionData.sendCurrency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Recipient Got</span>
-                      <span className="font-semibold">
-                        {formatCurrency(transactionData.receiveAmount, transactionData.receiveCurrency)}
+                        {formatCurrency(transaction.send_amount, transaction.send_currency)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Fee</span>
-                      <span className="text-green-600 font-medium">FREE</span>
+                      <span
+                        className={`font-medium ${transaction.fee_amount === 0 ? "text-green-600" : "text-gray-900"}`}
+                      >
+                        {transaction.fee_amount === 0
+                          ? "FREE"
+                          : formatCurrency(transaction.fee_amount, transaction.send_currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-gray-600">Total Paid</span>
+                      <span className="font-semibold">
+                        {formatCurrency(transaction.total_amount, transaction.send_currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Recipient Gets</span>
+                      <span className="font-semibold">
+                        {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Exchange Rate</span>
+                      <span className="text-sm">
+                        1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(4)}{" "}
+                        {transaction.receive_currency}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium mb-2">Recipient</h4>
-                    <div className="space-y-1 text-sm">
-                      <p className="font-medium">{transactionData.recipientName}</p>
-                      <p className="text-gray-600">{transactionData.recipientAccount}</p>
-                      <p className="text-gray-600">{transactionData.recipientBank}</p>
+                  {transaction.recipient && (
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium mb-2">Recipient</h4>
+                      <div className="space-y-1 text-sm">
+                        <p className="font-medium">{transaction.recipient.full_name}</p>
+                        <p className="text-gray-600">{transaction.recipient.account_number}</p>
+                        <p className="text-gray-600">{transaction.recipient.bank_name}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="pt-4 border-t">
                     <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="font-mono text-sm">{transactionData.id.toUpperCase()}</p>
+                    <p className="font-mono text-sm">{transaction.transaction_id}</p>
                   </div>
 
                   <div className="pt-4 border-t">
@@ -294,6 +411,11 @@ export default function TransactionStatusPage() {
                     >
                       {currentStatus === "completed" ? "Completed" : "Processing"}
                     </span>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-gray-600">Created</p>
+                    <p className="text-sm">{new Date(transaction.created_at).toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>

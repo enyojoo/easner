@@ -1,23 +1,11 @@
-export interface User {
-  id: string
-  email: string
-  first_name: string
-  last_name: string
-  phone?: string
-  base_currency: string
-  status: "active" | "inactive" | "suspended"
-  verification_status: "pending" | "verified" | "rejected"
-  created_at: string
-  updated_at: string
-}
-
 export interface Currency {
   id: string
   code: string
   name: string
   symbol: string
   flag: string
-  status: "active" | "inactive"
+  flag_svg?: string
+  status: string
   created_at: string
   updated_at: string
 }
@@ -29,7 +17,7 @@ export interface ExchangeRate {
   rate: number
   fee_type: "free" | "fixed" | "percentage"
   fee_amount: number
-  status: "active" | "inactive"
+  status: string
   created_at: string
   updated_at: string
   from_currency_info?: Currency
@@ -61,16 +49,19 @@ export interface Transaction {
   fee_amount: number
   fee_type: string
   total_amount: number
-  status: "pending" | "processing" | "completed" | "failed" | "cancelled"
+  status: "pending" | "processing" | "completed" | "failed"
   reference?: string
   receipt_url?: string
   receipt_filename?: string
-  receipt_uploaded_at?: string
   created_at: string
   updated_at: string
   completed_at?: string
   recipient?: Recipient
-  user?: User
+  user?: {
+    first_name: string
+    last_name: string
+    email: string
+  }
 }
 
 export interface PaymentMethod {
@@ -89,25 +80,15 @@ export interface PaymentMethod {
   updated_at: string
 }
 
-export interface AdminUser {
+export interface User {
   id: string
   email: string
   first_name: string
   last_name: string
-  role: "super_admin" | "admin" | "support"
+  phone?: string
+  base_currency: string
   status: "active" | "inactive"
-  created_at: string
-  updated_at: string
-}
-
-export interface SystemSetting {
-  id: string
-  key: string
-  value: string
-  data_type: "string" | "number" | "boolean" | "json"
-  category?: string
-  description?: string
-  is_active: boolean
+  verification_status: "pending" | "verified" | "rejected"
   created_at: string
   updated_at: string
 }
