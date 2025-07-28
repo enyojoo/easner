@@ -220,19 +220,6 @@ export default function UserProfilePage() {
     return `${currencyInfo?.symbol || ""}${amount.toLocaleString()}`
   }
 
-  if (!user || !userProfile) {
-    return (
-      <UserDashboardLayout>
-        <div className="p-6 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading profile...</p>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
-
   return (
     <UserDashboardLayout>
       <div className="p-6 space-y-6">

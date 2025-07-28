@@ -26,7 +26,7 @@ export default function UserDashboardPage() {
   const { userProfile } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalSent, setTotalSent] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -86,7 +86,8 @@ export default function UserDashboardPage() {
 
   const userName = userProfile?.first_name || "User"
   const baseCurrency = userProfile?.base_currency || "NGN"
-  const completedTransactions = transactions.filter((t) => t.status === "completed").length
+  const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
+  const totalSentValue = totalSent || 0
 
   return (
     <UserDashboardLayout>
@@ -106,7 +107,7 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {loading ? "Loading..." : formatCurrency(totalSent, baseCurrency)}
+                {loading ? "Loading..." : formatCurrency(totalSentValue, baseCurrency)}
               </div>
               <p className="text-xs text-green-600">+12% from last month</p>
             </CardContent>

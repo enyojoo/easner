@@ -42,11 +42,55 @@ export default function UserSendPage() {
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [fee, setFee] = useState<number>(0)
 
-  const [currencies, setCurrencies] = useState<Currency[]>([])
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
+  const [currencies, setCurrencies] = useState<Currency[]>([
+    {
+      id: "1",
+      code: "RUB",
+      name: "Russian Ruble",
+      symbol: "₽",
+      flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path></svg>`,
+      status: "active",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      code: "NGN",
+      name: "Nigerian Naira",
+      symbol: "₦",
+      flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path></svg>`,
+      status: "active",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ])
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([
+    {
+      id: "1",
+      from_currency: "RUB",
+      to_currency: "NGN",
+      rate: 22.45,
+      fee_type: "free",
+      fee_amount: 0,
+      status: "active",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      from_currency: "NGN",
+      to_currency: "RUB",
+      rate: 0.0445,
+      fee_type: "percentage",
+      fee_amount: 1.5,
+      status: "active",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ])
   const [recipients, setRecipients] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [recipientData, setRecipientData] = useState({
@@ -86,7 +130,6 @@ export default function UserSendPage() {
       if (!userProfile?.id) return
 
       try {
-        setLoading(true)
         setError(null)
 
         const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
@@ -96,63 +139,13 @@ export default function UserSendPage() {
           paymentMethodService.getAll(),
         ])
 
-        setCurrencies(currenciesData || [])
-        setExchangeRates(ratesData || [])
-        setRecipients(recipientsData || [])
-        setPaymentMethods(paymentMethodsData || [])
+        if (currenciesData) setCurrencies(currenciesData)
+        if (ratesData) setExchangeRates(ratesData)
+        if (recipientsData) setRecipients(recipientsData)
+        if (paymentMethodsData) setPaymentMethods(paymentMethodsData)
       } catch (error) {
         console.error("Error loading data:", error)
         setError("Failed to load data. Please refresh the page.")
-
-        // Fallback to static data if Supabase fails
-        setCurrencies([
-          {
-            id: "1",
-            code: "RUB",
-            name: "Russian Ruble",
-            symbol: "₽",
-            flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path></svg>`,
-            status: "active",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            code: "NGN",
-            name: "Nigerian Naira",
-            symbol: "₦",
-            flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path></svg>`,
-            status: "active",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
-        setExchangeRates([
-          {
-            id: "1",
-            from_currency: "RUB",
-            to_currency: "NGN",
-            rate: 22.45,
-            fee_type: "free",
-            fee_amount: 0,
-            status: "active",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            from_currency: "NGN",
-            to_currency: "RUB",
-            rate: 0.0445,
-            fee_type: "percentage",
-            fee_amount: 1.5,
-            status: "active",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -584,23 +577,6 @@ export default function UserSendPage() {
       </CardContent>
     </Card>
   )
-
-  if (loading) {
-    return (
-      <UserDashboardLayout>
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
 
   if (error) {
     return (

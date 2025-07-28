@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth-context"
 export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
   const [recipients, setRecipients] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -38,14 +38,12 @@ export default function UserRecipientsPage() {
 
   const loadRecipients = async () => {
     try {
-      setLoading(true)
       const data = await recipientService.getByUserId(userProfile.id)
       setRecipients(data || [])
     } catch (error) {
       console.error("Error loading recipients:", error)
       setError("Failed to load recipients")
     } finally {
-      setLoading(false)
     }
   }
 
@@ -209,21 +207,6 @@ export default function UserRecipientsPage() {
       </Button>
     </div>
   )
-
-  if (loading) {
-    return (
-      <UserDashboardLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading recipients...</p>
-            </div>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
 
   return (
     <UserDashboardLayout>

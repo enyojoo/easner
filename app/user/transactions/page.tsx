@@ -33,7 +33,7 @@ export default function UserTransactionsPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -49,7 +49,6 @@ export default function UserTransactionsPage() {
     if (!userProfile?.id) return
 
     try {
-      setLoading(true)
       setError(null)
       const data = await transactionService.getByUserId(userProfile.id)
       setTransactions(data || [])
@@ -211,12 +210,7 @@ export default function UserTransactionsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p className="text-gray-600">Loading transactions...</p>
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
                 <Button onClick={loadTransactions} variant="outline">
