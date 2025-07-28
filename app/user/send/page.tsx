@@ -121,7 +121,6 @@ export default function UserSendPage() {
     fullName: "",
     accountNumber: "",
     bankName: "",
-    phoneNumber: "",
   })
 
   // Copy feedback states
@@ -239,7 +238,6 @@ export default function UserSendPage() {
       fullName: "",
       accountNumber: "",
       bankName: "",
-      phoneNumber: "",
     })
   }
 
@@ -762,6 +760,7 @@ export default function UserSendPage() {
                           <ChevronRight className="h-5 w-5 text-gray-400" />
                         </div>
                       </DialogTrigger>
+
                       <DialogContent className="max-w-md">
                         <DialogHeader>
                           <DialogTitle>Add New Recipient</DialogTitle>
@@ -800,15 +799,15 @@ export default function UserSendPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="newRecipientPhone">Phone Number (Optional)</Label>
-                            <Input
-                              id="newRecipientPhone"
-                              value={newRecipientData.phoneNumber}
-                              onChange={(e) =>
-                                setNewRecipientData({ ...newRecipientData, phoneNumber: e.target.value })
-                              }
-                              placeholder="Enter phone number"
-                            />
+                            <Label htmlFor="newRecipientCurrency">Currency</Label>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+                              {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
+                              <div>
+                                <div className="font-medium">{receiveCurrency}</div>
+                                <div className="text-sm text-gray-500">{receiveCurrencyData?.name}</div>
+                              </div>
+                              <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
+                            </div>
                           </div>
                           <Button
                             onClick={handleAddNewRecipient}

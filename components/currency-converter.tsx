@@ -273,16 +273,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         </div>
 
         {/* Swap Button */}
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSwapCurrencies}
-            className="rounded-full w-10 h-10 p-0 border-2 border-gray-200 hover:border-novapay-primary hover:bg-novapay-primary-50 bg-transparent"
-          >
-            <ArrowUpDown className="h-4 w-4 text-gray-600" />
-          </Button>
-        </div>
+        
 
         {/* Fee and Rate Information */}
         <div className="space-y-3">
