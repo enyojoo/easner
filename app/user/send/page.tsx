@@ -185,7 +185,7 @@ export default function UserSendPage() {
   // Generate transaction ID when moving to step 3
   useEffect(() => {
     if (currentStep === 3 && !transactionId) {
-      const newTransactionId = `NP${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+      const newTransactionId = `NP${Date.now()}`
       setTransactionId(newTransactionId)
     }
   }, [currentStep, transactionId])
