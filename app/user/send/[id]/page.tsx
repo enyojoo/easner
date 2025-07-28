@@ -232,13 +232,13 @@ export default function TransactionStatusPage() {
 
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={() => router.push("/user/send")} className="flex-1">
-                      Send Another Transfer
+                      Repeat
                     </Button>
                     <Button
                       onClick={() => router.push("/user/dashboard")}
                       className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                     >
-                      Go to Dashboard
+                      Dashboard
                     </Button>
                   </div>
                 </CardContent>
