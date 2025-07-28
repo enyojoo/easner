@@ -15,7 +15,7 @@ import { supabase } from "@/lib/supabase"
 import { currencies } from "@/utils/currency"
 
 export default function UserProfilePage() {
-  const { user, userProfile } = useAuth()
+  const { user, userProfile, refreshUserProfile } = useAuth()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -102,6 +102,7 @@ export default function UserProfilePage() {
 
     setLoading(true)
     try {
+      // Update profile in database
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
         lastName: editProfileData.lastName,
@@ -109,8 +110,16 @@ export default function UserProfilePage() {
         baseCurrency: editProfileData.baseCurrency,
       })
 
+      // Update local state
       setProfileData(editProfileData)
+
+      // Refresh user profile from auth context to get updated data
+      if (refreshUserProfile) {
+        await refreshUserProfile()
+      }
+
       setIsEditingProfile(false)
+      alert("Profile updated successfully!")
     } catch (error) {
       console.error("Error updating profile:", error)
       alert("Failed to update profile. Please try again.")

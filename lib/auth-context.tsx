@@ -5,26 +5,75 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
-import { useRouter } from "next/navigation"
+
+interface UserProfile {
+  id: string
+  email: string
+  first_name?: string
+  last_name?: string
+  phone?: string
+  base_currency?: string
+  status?: string
+  verification_status?: string
+  created_at?: string
+  updated_at?: string
+}
 
 interface AuthContextType {
   user: User | null
-  userProfile: any | null
+  userProfile: UserProfile | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ user: User | null; error: any }>
-  signUp: (email: string, password: string, userData: any) => Promise<{ user: User | null; error: any }>
+  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
-  isAdmin: boolean
+  refreshUserProfile: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  userProfile: null,
+  loading: true,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+  refreshUserProfile: async () => {},
+})
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [userProfile, setUserProfile] = useState<any>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const router = useRouter()
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
+
+      if (error) {
+        console.error("Error fetching user profile:", error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      return null
+    }
+  }
+
+  const refreshUserProfile = async () => {
+    if (user) {
+      const profile = await fetchUserProfile(user.id)
+      setUserProfile(profile)
+    }
+  }
 
   useEffect(() => {
     // Get initial session
@@ -32,10 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
 
       if (session?.user) {
-        await fetchUserProfile(session.user.id)
+        setUser(session.user)
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
       }
 
       setLoading(false)
@@ -47,63 +97,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null)
-
       if (session?.user) {
-        await fetchUserProfile(session.user.id)
+        setUser(session.user)
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
       } else {
+        setUser(null)
         setUserProfile(null)
-        setIsAdmin(false)
       }
-
       setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      // Try to fetch from users table first
-      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
-
-      if (userProfile && !userError) {
-        setUserProfile(userProfile)
-        setIsAdmin(false)
-        return
-      }
-
-      // If not found in users, check admin_users table
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("id", userId)
-        .single()
-
-      if (adminProfile && !adminError) {
-        setUserProfile(adminProfile)
-        setIsAdmin(true)
-      }
-    } catch (error) {
-      console.error("Error fetching user profile:", error)
-    }
-  }
-
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
-
-    if (error) {
-      return { user: null, error }
-    }
-
-    return { user: data.user, error: null }
+    return { error }
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -114,20 +131,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       },
     })
-
-    if (error) {
-      return { user: null, error }
-    }
-
-    return { user: data.user, error: null }
+    return { error }
   }
 
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
     setUserProfile(null)
-    setIsAdmin(false)
-    router.push("/")
   }
 
   const value = {
@@ -137,16 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    isAdmin,
+    refreshUserProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
 }
