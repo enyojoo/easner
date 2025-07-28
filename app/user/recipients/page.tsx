@@ -330,12 +330,6 @@ export default function UserRecipientsPage() {
                       <p className="text-sm text-gray-500">
                         {recipient.bank_name} - {recipient.account_number}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">Total sent: {formatTotalSent(recipient)}</span>
-                        <span className="text-xs text-gray-400">
-                          Added {new Date(recipient.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
