@@ -1,9 +1,7 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "next/navigation"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,36 +32,15 @@ import type { Currency, ExchangeRate } from "@/types"
 
 export default function UserSendPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { userProfile } = useAuth()
 
-  // Initialize state from URL parameters if available
-  const [currentStep, setCurrentStep] = useState(() => {
-    const step = searchParams.get("step")
-    return step ? Number.parseInt(step) : 1
-  })
-
-  const [sendAmount, setSendAmount] = useState<string>(() => {
-    return searchParams.get("sendAmount") || "100"
-  })
-
-  const [sendCurrency, setSendCurrency] = useState<string>(() => {
-    return searchParams.get("sendCurrency") || "RUB"
-  })
-
-  const [receiveCurrency, setReceiveCurrency] = useState<string>(() => {
-    return searchParams.get("receiveCurrency") || "NGN"
-  })
-
-  const [receiveAmount, setReceiveAmount] = useState<number>(() => {
-    const amount = searchParams.get("receiveAmount")
-    return amount ? Number.parseFloat(amount) : 0
-  })
-
-  const [fee, setFee] = useState<number>(() => {
-    const feeParam = searchParams.get("fee")
-    return feeParam ? Number.parseFloat(feeParam) : 0
-  })
+  // Initialize state with default values (no URL parameters)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [sendAmount, setSendAmount] = useState<string>("100")
+  const [sendCurrency, setSendCurrency] = useState<string>("RUB")
+  const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
+  const [receiveAmount, setReceiveAmount] = useState<number>(0)
+  const [fee, setFee] = useState<number>(0)
 
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
@@ -434,13 +411,8 @@ export default function UserSendPage() {
     return methods.find((pm) => pm.is_default) || methods[0]
   }
 
-  // Update the useEffect to calculate fee and conversion only if not pre-filled
+  // Update the useEffect to calculate fee and conversion without searchParams
   useEffect(() => {
-    // Skip calculation if data is pre-filled from URL params
-    if (searchParams.get("receiveAmount") && searchParams.get("fee")) {
-      return
-    }
-
     const amount = Number.parseFloat(sendAmount) || 0
 
     // If same currency, 1:1 conversion
@@ -463,7 +435,7 @@ export default function UserSendPage() {
 
     setFee(feeData.fee)
     setFeeType(feeData.feeType)
-  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates, searchParams])
+  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
 
   // Timer countdown
   useEffect(() => {
