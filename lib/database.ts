@@ -389,6 +389,155 @@ export const transactionService = {
   },
 }
 
+// Payment Methods operations
+export const paymentMethodService = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .order("currency", { ascending: true })
+      .order("is_default", { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  async getByCurrency(currency: string) {
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .eq("currency", currency)
+      .eq("status", "active")
+      .order("is_default", { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  async create(paymentMethodData: {
+    currency: string
+    type: string
+    name: string
+    accountName?: string
+    accountNumber?: string
+    bankName?: string
+    qrCodeData?: string
+    instructions?: string
+    isDefault?: boolean
+  }) {
+    const serverClient = createServerClient()
+
+    // If setting as default, unset other defaults for the same currency
+    if (paymentMethodData.isDefault) {
+      await serverClient
+        .from("payment_methods")
+        .update({ is_default: false })
+        .eq("currency", paymentMethodData.currency)
+    }
+
+    const { data, error } = await serverClient
+      .from("payment_methods")
+      .insert({
+        currency: paymentMethodData.currency,
+        type: paymentMethodData.type,
+        name: paymentMethodData.name,
+        account_name: paymentMethodData.accountName,
+        account_number: paymentMethodData.accountNumber,
+        bank_name: paymentMethodData.bankName,
+        qr_code_data: paymentMethodData.qrCodeData,
+        instructions: paymentMethodData.instructions,
+        is_default: paymentMethodData.isDefault || false,
+        status: "active",
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(
+    id: string,
+    updates: {
+      currency?: string
+      type?: string
+      name?: string
+      accountName?: string
+      accountNumber?: string
+      bankName?: string
+      qrCodeData?: string
+      instructions?: string
+      isDefault?: boolean
+    },
+  ) {
+    const serverClient = createServerClient()
+
+    // If setting as default, unset other defaults for the same currency
+    if (updates.isDefault && updates.currency) {
+      await serverClient
+        .from("payment_methods")
+        .update({ is_default: false })
+        .eq("currency", updates.currency)
+        .neq("id", id)
+    }
+
+    const { data, error } = await serverClient
+      .from("payment_methods")
+      .update({
+        currency: updates.currency,
+        type: updates.type,
+        name: updates.name,
+        account_name: updates.accountName,
+        account_number: updates.accountNumber,
+        bank_name: updates.bankName,
+        qr_code_data: updates.qrCodeData,
+        instructions: updates.instructions,
+        is_default: updates.isDefault,
+      })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateStatus(id: string, status: string) {
+    const serverClient = createServerClient()
+
+    const { data, error } = await serverClient.from("payment_methods").update({ status }).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async setDefault(id: string, currency: string) {
+    const serverClient = createServerClient()
+
+    // Unset other defaults for the same currency
+    await serverClient.from("payment_methods").update({ is_default: false }).eq("currency", currency)
+
+    // Set this one as default
+    const { data, error } = await serverClient
+      .from("payment_methods")
+      .update({ is_default: true })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const serverClient = createServerClient()
+
+    const { error } = await serverClient.from("payment_methods").delete().eq("id", id)
+
+    if (error) throw error
+  },
+}
+
 // Admin operations
 export const adminService = {
   async verifyAdmin(email: string, password: string) {
@@ -480,14 +629,53 @@ export const adminService = {
 // System settings operations
 export const settingsService = {
   async get(key: string) {
-    const { data, error } = await supabase.from("system_settings").select("value").eq("key", key).single()
+    const { data, error } = await supabase.from("system_settings").select("value, data_type").eq("key", key).single()
 
     if (error && error.code !== "PGRST116") throw error
-    return data?.value
+
+    if (!data) return null
+
+    // Parse value based on data type
+    switch (data.data_type) {
+      case "boolean":
+        return data.value === "true"
+      case "number":
+        return Number(data.value)
+      case "json":
+        return JSON.parse(data.value)
+      default:
+        return data.value
+    }
   },
 
-  async set(key: string, value: string) {
-    const { data, error } = await supabase.from("system_settings").upsert({ key, value }).select().single()
+  async set(key: string, value: any, dataType = "string") {
+    const serverClient = createServerClient()
+
+    // Convert value to string for storage
+    let stringValue: string
+    switch (dataType) {
+      case "boolean":
+        stringValue = value ? "true" : "false"
+        break
+      case "number":
+        stringValue = String(value)
+        break
+      case "json":
+        stringValue = JSON.stringify(value)
+        break
+      default:
+        stringValue = String(value)
+    }
+
+    const { data, error } = await serverClient
+      .from("system_settings")
+      .upsert({
+        key,
+        value: stringValue,
+        data_type: dataType,
+      })
+      .select()
+      .single()
 
     if (error) throw error
     return data
@@ -495,6 +683,46 @@ export const settingsService = {
 
   async getAll() {
     const { data, error } = await supabase.from("system_settings").select("*").order("key")
+
+    if (error) throw error
+    return data
+  },
+
+  async getByCategory(category: string) {
+    const { data, error } = await supabase
+      .from("system_settings")
+      .select("*")
+      .eq("category", category)
+      .eq("is_active", true)
+      .order("key")
+
+    if (error) throw error
+    return data
+  },
+
+  async updateMultiple(settings: Array<{ key: string; value: any; dataType?: string }>) {
+    const serverClient = createServerClient()
+
+    const updates = settings.map(({ key, value, dataType = "string" }) => {
+      let stringValue: string
+      switch (dataType) {
+        case "boolean":
+          stringValue = value ? "true" : "false"
+          break
+        case "number":
+          stringValue = String(value)
+          break
+        case "json":
+          stringValue = JSON.stringify(value)
+          break
+        default:
+          stringValue = String(value)
+      }
+
+      return { key, value: stringValue, data_type: dataType }
+    })
+
+    const { data, error } = await serverClient.from("system_settings").upsert(updates).select()
 
     if (error) throw error
     return data
