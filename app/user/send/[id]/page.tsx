@@ -5,7 +5,7 @@ import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Check, Clock, ExternalLink, XCircle } from "lucide-react"
+import { Check, Clock, ExternalLink, XCircle, AlertTriangle } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { transactionService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
@@ -20,7 +20,17 @@ export default function TransactionStatusPage() {
   const [transaction, setTransaction] = useState<Transaction | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [countdownTime, setCountdownTime] = useState(1800) // 30 minutes in seconds
+  const [currentTime, setCurrentTime] = useState(Date.now())
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   // Load transaction data from Supabase
   useEffect(() => {
@@ -35,13 +45,16 @@ export default function TransactionStatusPage() {
         // Verify this transaction belongs to the current user
         if (transactionData.user_id !== userProfile.id) {
           setError("Transaction not found or access denied")
+          setHasAttemptedLoad(true)
           return
         }
 
         setTransaction(transactionData)
+        setHasAttemptedLoad(true)
       } catch (error) {
         console.error("Error loading transaction:", error)
         setError("Failed to load transaction details")
+        setHasAttemptedLoad(true)
       }
     }
 
@@ -66,15 +79,24 @@ export default function TransactionStatusPage() {
     return () => clearInterval(pollInterval)
   }, [transaction, userProfile?.id])
 
-  // Countdown timer effect (only for non-completed transactions)
-  useEffect(() => {
-    if (transaction?.status !== "completed" && countdownTime > 0) {
-      const timer = setTimeout(() => setCountdownTime(countdownTime - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [transaction?.status, countdownTime])
+  const getTimeInfo = () => {
+    if (!transaction) return { timeRemaining: 0, isOverdue: false, elapsedTime: 0 }
 
-  const formatCountdown = (seconds: number) => {
+    const createdAt = new Date(transaction.created_at).getTime()
+    const estimatedCompletionTime = 30 * 60 * 1000 // 30 minutes in milliseconds
+    const targetCompletionTime = createdAt + estimatedCompletionTime
+    const elapsedTime = currentTime - createdAt
+    const timeRemaining = Math.max(0, targetCompletionTime - currentTime)
+    const isOverdue = currentTime > targetCompletionTime
+
+    return {
+      timeRemaining: Math.floor(timeRemaining / 1000), // in seconds
+      isOverdue,
+      elapsedTime: Math.floor(elapsedTime / 1000), // in seconds
+    }
+  }
+
+  const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const remainingSeconds = seconds % 60
@@ -207,7 +229,7 @@ export default function TransactionStatusPage() {
     }
   }
 
-  if (error || !transaction) {
+  if (hasAttemptedLoad && (error || !transaction)) {
     return (
       <UserDashboardLayout>
         <div className="p-6">
@@ -227,8 +249,24 @@ export default function TransactionStatusPage() {
     )
   }
 
+  if (!transaction) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
   const statusMessage = getStatusMessage(transaction.status)
   const statusSteps = getStatusSteps(transaction.status)
+  const { timeRemaining, isOverdue } = getTimeInfo()
 
   return (
     <UserDashboardLayout>
@@ -281,13 +319,17 @@ export default function TransactionStatusPage() {
                           ? "bg-green-100"
                           : transaction.status === "failed"
                             ? "bg-red-100"
-                            : "bg-yellow-100"
+                            : isOverdue && transaction.status !== "completed"
+                              ? "bg-orange-100"
+                              : "bg-yellow-100"
                       }`}
                     >
                       {statusMessage.isCompleted ? (
                         <Check className="h-8 w-8 text-green-600" />
                       ) : transaction.status === "failed" ? (
                         <XCircle className="h-8 w-8 text-red-600" />
+                      ) : isOverdue && transaction.status !== "completed" ? (
+                        <AlertTriangle className="h-8 w-8 text-orange-600" />
                       ) : (
                         <Clock className="h-8 w-8 text-yellow-600" />
                       )}
@@ -322,7 +364,9 @@ export default function TransactionStatusPage() {
                         ? "bg-green-50"
                         : transaction.status === "failed"
                           ? "bg-red-50"
-                          : "bg-blue-50"
+                          : isOverdue && transaction.status !== "completed"
+                            ? "bg-orange-50"
+                            : "bg-blue-50"
                     }`}
                   >
                     <div className="flex justify-between items-center">
@@ -331,17 +375,41 @@ export default function TransactionStatusPage() {
                           ? "Completed:"
                           : transaction.status === "failed"
                             ? "Failed:"
-                            : "Estimated completion:"}
+                            : isOverdue && transaction.status !== "completed"
+                              ? "Status:"
+                              : "Estimated completion:"}
                       </span>
                       <span className="font-medium">
                         {statusMessage.isCompleted
                           ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
                           : transaction.status === "failed"
                             ? new Date(transaction.updated_at).toLocaleString()
-                            : formatCountdown(countdownTime)}
+                            : isOverdue && transaction.status !== "completed"
+                              ? "Taking longer than expected"
+                              : formatTime(timeRemaining)}
                       </span>
                     </div>
                   </div>
+
+                  {/* Overdue Message */}
+                  {isOverdue && transaction.status !== "completed" && transaction.status !== "failed" && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-medium text-orange-800 mb-1">Transaction Taking Longer Than Expected</h4>
+                          <p className="text-sm text-orange-700 mb-3">
+                            Your transaction is taking longer than the usual 30 minutes to complete. This can happen due
+                            to high network traffic or additional verification requirements.
+                          </p>
+                          <p className="text-sm text-orange-700">
+                            If your transaction doesn't complete within the next hour, please contact our support team
+                            for assistance.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
@@ -374,12 +442,21 @@ export default function TransactionStatusPage() {
                     <Button variant="outline" onClick={() => router.push("/user/send")} className="flex-1">
                       Send Again
                     </Button>
-                    <Button
-                      onClick={() => router.push("/user/dashboard")}
-                      className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
-                    >
-                      Dashboard
-                    </Button>
+                    {isOverdue && transaction.status !== "completed" && transaction.status !== "failed" ? (
+                      <Button
+                        onClick={() => router.push("/user/support")}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700"
+                      >
+                        Contact Support
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => router.push("/user/dashboard")}
+                        className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                      >
+                        Dashboard
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -444,6 +521,11 @@ export default function TransactionStatusPage() {
                   <div className="pt-4 border-t">
                     <p className="text-sm text-gray-600">Transaction ID</p>
                     <p className="font-mono text-sm">{transaction.transaction_id}</p>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-gray-600">Created</p>
+                    <p className="text-sm">{new Date(transaction.created_at).toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>
