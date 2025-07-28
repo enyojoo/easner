@@ -28,6 +28,7 @@ export default function TransactionStatusPage() {
 
       try {
         setError(null)
+
         const transactionData = await transactionService.getById(transactionId.toUpperCase())
 
         // Verify this transaction belongs to the current user
@@ -225,16 +226,8 @@ export default function TransactionStatusPage() {
     )
   }
 
-  if (!transaction) {
-    return (
-      <UserDashboardLayout>
-        <div></div>
-      </UserDashboardLayout>
-    )
-  }
-
-  const statusMessage = getStatusMessage(transaction.status)
-  const statusSteps = getStatusSteps(transaction.status)
+  const statusMessage = getStatusMessage(transaction?.status || "pending")
+  const statusSteps = getStatusSteps(transaction?.status || "pending")
 
   return (
     <UserDashboardLayout>
@@ -285,14 +278,14 @@ export default function TransactionStatusPage() {
                       className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
                         statusMessage.isCompleted
                           ? "bg-green-100"
-                          : transaction.status === "failed"
+                          : transaction?.status === "failed"
                             ? "bg-red-100"
                             : "bg-yellow-100"
                       }`}
                     >
                       {statusMessage.isCompleted ? (
                         <Check className="h-8 w-8 text-green-600" />
-                      ) : transaction.status === "failed" ? (
+                      ) : transaction?.status === "failed" ? (
                         <XCircle className="h-8 w-8 text-red-600" />
                       ) : (
                         <Clock className="h-8 w-8 text-yellow-600" />
@@ -309,12 +302,12 @@ export default function TransactionStatusPage() {
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center ${getStatusColor(
                             step,
-                            transaction.status,
+                            transaction?.status || "pending",
                           )}`}
                         >
                           {step.icon}
                         </div>
-                        <span className={`font-medium ${getStatusTextColor(step, transaction.status)}`}>
+                        <span className={`font-medium ${getStatusTextColor(step, transaction?.status || "pending")}`}>
                           {step.title}
                         </span>
                       </div>
@@ -326,7 +319,7 @@ export default function TransactionStatusPage() {
                     className={`rounded-lg p-4 ${
                       statusMessage.isCompleted
                         ? "bg-green-50"
-                        : transaction.status === "failed"
+                        : transaction?.status === "failed"
                           ? "bg-red-50"
                           : "bg-blue-50"
                     }`}
@@ -335,14 +328,14 @@ export default function TransactionStatusPage() {
                       <span className="text-gray-600">
                         {statusMessage.isCompleted
                           ? "Completed:"
-                          : transaction.status === "failed"
+                          : transaction?.status === "failed"
                             ? "Failed:"
                             : "Estimated completion:"}
                       </span>
                       <span className="font-medium">
-                        {statusMessage.isCompleted
+                        {statusMessage.isCompleted && transaction
                           ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
-                          : transaction.status === "failed"
+                          : transaction?.status === "failed" && transaction
                             ? new Date(transaction.updated_at).toLocaleString()
                             : formatCountdown(countdownTime)}
                       </span>
@@ -350,7 +343,7 @@ export default function TransactionStatusPage() {
                   </div>
 
                   {/* Receipt Section */}
-                  {transaction.receipt_url && (
+                  {transaction?.receipt_url && (
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -398,59 +391,71 @@ export default function TransactionStatusPage() {
                   <CardTitle className="text-lg">Transaction Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">You Sent</span>
-                      <span className="font-semibold">
-                        {formatCurrency(transaction.send_amount, transaction.send_currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Fee</span>
-                      <span
-                        className={`font-medium ${transaction.fee_amount === 0 ? "text-green-600" : "text-gray-900"}`}
-                      >
-                        {transaction.fee_amount === 0
-                          ? "FREE"
-                          : formatCurrency(transaction.fee_amount, transaction.send_currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span className="text-gray-600">Total Paid</span>
-                      <span className="font-semibold">
-                        {formatCurrency(transaction.total_amount, transaction.send_currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Recipient Gets</span>
-                      <span className="font-semibold">
-                        {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Exchange Rate</span>
-                      <span className="text-sm">
-                        1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(4)}{" "}
-                        {transaction.receive_currency}
-                      </span>
-                    </div>
-                  </div>
+                  {transaction ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">You Sent</span>
+                          <span className="font-semibold">
+                            {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Fee</span>
+                          <span
+                            className={`font-medium ${transaction.fee_amount === 0 ? "text-green-600" : "text-gray-900"}`}
+                          >
+                            {transaction.fee_amount === 0
+                              ? "FREE"
+                              : formatCurrency(transaction.fee_amount, transaction.send_currency)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="text-gray-600">Total Paid</span>
+                          <span className="font-semibold">
+                            {formatCurrency(transaction.total_amount, transaction.send_currency)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Recipient Gets</span>
+                          <span className="font-semibold">
+                            {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Exchange Rate</span>
+                          <span className="text-sm">
+                            1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(4)}{" "}
+                            {transaction.receive_currency}
+                          </span>
+                        </div>
+                      </div>
 
-                  {transaction.recipient && (
-                    <div className="pt-4 border-t">
-                      <h4 className="font-medium mb-2">Recipient</h4>
-                      <div className="space-y-1 text-sm">
-                        <p className="font-medium">{transaction.recipient.full_name}</p>
-                        <p className="text-gray-600">{transaction.recipient.account_number}</p>
-                        <p className="text-gray-600">{transaction.recipient.bank_name}</p>
+                      {transaction.recipient && (
+                        <div className="pt-4 border-t">
+                          <h4 className="font-medium mb-2">Recipient</h4>
+                          <div className="space-y-1 text-sm">
+                            <p className="font-medium">{transaction.recipient.full_name}</p>
+                            <p className="text-gray-600">{transaction.recipient.account_number}</p>
+                            <p className="text-gray-600">{transaction.recipient.bank_name}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-4 border-t">
+                        <p className="text-sm text-gray-600">Transaction ID</p>
+                        <p className="font-mono text-sm">{transaction.transaction_id}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="animate-pulse space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                       </div>
                     </div>
                   )}
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="font-mono text-sm">{transaction.transaction_id}</p>
-                  </div>
                 </CardContent>
               </Card>
             </div>
