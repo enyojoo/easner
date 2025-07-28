@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { userService } from "@/lib/database"
+import { userService, transactionService, currencyService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
 import { currencies } from "@/utils/currency"
 
@@ -65,30 +65,72 @@ export default function UserProfilePage() {
       if (!user) return
 
       try {
-        // Get user transactions
-        const { data: transactions, error } = await supabase
-          .from("transactions")
-          .select("send_amount, send_currency, created_at")
-          .eq("user_id", user.id)
+        // Get all user transactions
+        const allTransactions = await transactionService.getByUserId(user.id)
 
-        if (error) throw error
+        if (allTransactions && allTransactions.length > 0) {
+          const baseCurrency = userProfile?.base_currency || "NGN"
+          const exchangeRates = await currencyService.getExchangeRates()
 
-        // Calculate total sent in base currency (simplified - would need exchange rates for accurate conversion)
-        const totalSent = transactions?.reduce((sum, t) => sum + Number(t.send_amount), 0) || 0
+          let totalSentInBaseCurrency = 0
 
-        // Get member since date
-        const memberSince = userProfile?.created_at
-          ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              year: "numeric",
-            })
-          : "N/A"
+          // Calculate total sent in base currency for completed transactions
+          for (const transaction of allTransactions) {
+            if (transaction.status === "completed") {
+              let amountInBaseCurrency = transaction.send_amount
 
-        setUserStats({
-          totalTransactions: transactions?.length || 0,
-          totalSent,
-          memberSince,
-        })
+              // If transaction currency is different from base currency, convert it
+              if (transaction.send_currency !== baseCurrency) {
+                // Find exchange rate from transaction currency to base currency
+                const rate = exchangeRates.find(
+                  (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+                )
+
+                if (rate) {
+                  amountInBaseCurrency = transaction.send_amount * rate.rate
+                } else {
+                  // If direct rate not found, try reverse rate
+                  const reverseRate = exchangeRates.find(
+                    (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+                  )
+                  if (reverseRate && reverseRate.rate > 0) {
+                    amountInBaseCurrency = transaction.send_amount / reverseRate.rate
+                  }
+                }
+              }
+
+              totalSentInBaseCurrency += amountInBaseCurrency
+            }
+          }
+
+          // Get member since date
+          const memberSince = userProfile?.created_at
+            ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A"
+
+          setUserStats({
+            totalTransactions: allTransactions.filter((t) => t.status === "completed").length,
+            totalSent: totalSentInBaseCurrency,
+            memberSince,
+          })
+        } else {
+          // No transactions found
+          const memberSince = userProfile?.created_at
+            ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A"
+
+          setUserStats({
+            totalTransactions: 0,
+            totalSent: 0,
+            memberSince,
+          })
+        }
       } catch (error) {
         console.error("Error loading user stats:", error)
       }
