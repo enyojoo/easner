@@ -103,33 +103,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    if (error) {
-      return { user: null, error }
-    }
-
-    // Create user profile
-    if (data.user) {
-      const { error: profileError } = await supabase.from("users").insert({
-        id: data.user.id,
-        email: data.user.email,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        phone: userData.phone,
-        base_currency: userData.baseCurrency || "NGN",
-        country: userData.country,
+    try {
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
       })
 
-      if (profileError) {
-        console.error("Error creating user profile:", profileError)
+      if (authError) {
+        return { user: null, error: authError }
       }
-    }
 
-    return { user: data.user, error: null }
+      // If auth user was created successfully, create the profile
+      if (authData.user) {
+        const { error: profileError } = await supabase.from("users").insert({
+          id: authData.user.id,
+          email: authData.user.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          phone: userData.phone || null,
+          base_currency: userData.baseCurrency || "NGN",
+          country: userData.country || null,
+          status: "active",
+          verification_status: "pending",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        if (profileError) {
+          console.error("Error creating user profile:", profileError)
+          // Don't return error here as auth user was created successfully
+          // The profile will be created on next login attempt or can be handled separately
+        }
+      }
+
+      return { user: authData.user, error: null }
+    } catch (error) {
+      console.error("Sign up error:", error)
+      return { user: null, error }
+    }
   }
 
   const signOut = async () => {

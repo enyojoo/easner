@@ -57,6 +57,7 @@ export default function RegisterPage() {
       const { user, error: signUpError } = await signUp(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        baseCurrency: "NGN", // Default base currency
       })
 
       if (signUpError) {
