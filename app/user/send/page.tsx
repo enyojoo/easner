@@ -24,56 +24,16 @@ import {
   Building2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { currencyService } from "@/lib/database"
+import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAuth } from "@/lib/auth-context"
 import type { Currency, ExchangeRate } from "@/types"
-
-// Mock saved recipients
-const savedRecipients = [
-  { id: "1", name: "John Doe", accountNumber: "1234567890", bankName: "First Bank", currency: "NGN" },
-  { id: "2", name: "Jane Smith", accountNumber: "0987654321", bankName: "Sberbank", currency: "RUB" },
-]
-
-// Mock payment methods (in real app, this would come from admin settings)
-const mockPaymentMethods = [
-  {
-    id: 1,
-    currency: "RUB",
-    type: "bank_account",
-    name: "Sberbank Russia",
-    accountName: "Novapay Russia LLC",
-    accountNumber: "40817810123456789012",
-    bankName: "Sberbank Russia",
-    status: "active",
-    isDefault: true,
-  },
-  {
-    id: 2,
-    currency: "NGN",
-    type: "bank_account",
-    name: "First Bank Nigeria",
-    accountName: "Novapay Nigeria Ltd",
-    accountNumber: "1234567890",
-    bankName: "First Bank Nigeria",
-    status: "active",
-    isDefault: true,
-  },
-  {
-    id: 3,
-    currency: "RUB",
-    type: "qr_code",
-    name: "SberPay QR",
-    qrCodeData: "https://qr.sber.ru/pay/12345",
-    instructions: "Scan this QR code with your SberPay app to complete the payment",
-    status: "active",
-    isDefault: false,
-  },
-]
 
 export default function UserSendPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { userProfile } = useAuth()
 
   // Initialize state from URL parameters if available
   const [currentStep, setCurrentStep] = useState(() => {
@@ -105,15 +65,19 @@ export default function UserSendPage() {
 
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
+  const [recipients, setRecipients] = useState<any[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [recipientData, setRecipientData] = useState({
     fullName: "",
     accountNumber: "",
     bankName: "",
     phoneNumber: "",
   })
-  const [saveRecipient, setSaveRecipient] = useState(false)
   const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
-  const [transactionId] = useState(`NP${Date.now()}`)
+  const [transactionId, setTransactionId] = useState<string>("")
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedRecipientId, setSelectedRecipientId] = useState<string>("")
@@ -134,20 +98,32 @@ export default function UserSendPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [feeType, setFeeType] = useState<string>("free")
+  const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // Load currencies and exchange rates from Supabase
+  // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
+      if (!userProfile?.id) return
+
       try {
-        const [currenciesData, ratesData] = await Promise.all([
+        setLoading(true)
+        setError(null)
+
+        const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
           currencyService.getAll(),
           currencyService.getExchangeRates(),
+          recipientService.getByUserId(userProfile.id),
+          paymentMethodService.getAll(),
         ])
 
         setCurrencies(currenciesData || [])
         setExchangeRates(ratesData || [])
+        setRecipients(recipientsData || [])
+        setPaymentMethods(paymentMethodsData || [])
       } catch (error) {
-        console.error("Error loading currency data:", error)
+        console.error("Error loading data:", error)
+        setError("Failed to load data. Please refresh the page.")
+
         // Fallback to static data if Supabase fails
         setCurrencies([
           {
@@ -195,50 +171,66 @@ export default function UserSendPage() {
             updated_at: new Date().toISOString(),
           },
         ])
+      } finally {
+        setLoading(false)
       }
     }
 
     loadData()
-  }, [])
+  }, [userProfile?.id])
 
-  const filteredSavedRecipients = savedRecipients.filter(
+  // Generate transaction ID when moving to step 3
+  useEffect(() => {
+    if (currentStep === 3 && !transactionId) {
+      const newTransactionId = `NP${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+      setTransactionId(newTransactionId)
+    }
+  }, [currentStep, transactionId])
+
+  const filteredSavedRecipients = recipients.filter(
     (recipient) =>
-      (recipient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        recipient.accountNumber.includes(searchTerm)) &&
+      (recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipient.account_number.includes(searchTerm)) &&
       recipient.currency === receiveCurrency,
   )
 
   const handleSelectRecipient = (recipient: any) => {
     setSelectedRecipientId(recipient.id)
     setRecipientData({
-      fullName: recipient.name,
-      accountNumber: recipient.accountNumber,
-      bankName: recipient.bankName,
-      phoneNumber: "",
+      fullName: recipient.full_name,
+      accountNumber: recipient.account_number,
+      bankName: recipient.bank_name,
+      phoneNumber: recipient.phone_number || "",
     })
   }
 
-  const handleAddNewRecipient = () => {
-    const newRecipient = {
-      id: Date.now().toString(),
-      name: newRecipientData.fullName,
-      accountNumber: newRecipientData.accountNumber,
-      bankName: newRecipientData.bankName,
-      currency: receiveCurrency,
+  const handleAddNewRecipient = async () => {
+    if (!userProfile?.id) return
+
+    try {
+      const newRecipient = await recipientService.create(userProfile.id, {
+        fullName: newRecipientData.fullName,
+        accountNumber: newRecipientData.accountNumber,
+        bankName: newRecipientData.bankName,
+        currency: receiveCurrency,
+      })
+
+      // Add to local state
+      setRecipients((prev) => [newRecipient, ...prev])
+
+      // Select the new recipient
+      handleSelectRecipient(newRecipient)
+
+      // Clear form and close dialog
+      setNewRecipientData({
+        fullName: "",
+        accountNumber: "",
+        bankName: "",
+      })
+    } catch (error) {
+      console.error("Error adding recipient:", error)
+      setError("Failed to add recipient. Please try again.")
     }
-
-    // Add to saved recipients (in real app, this would be an API call)
-    savedRecipients.push(newRecipient)
-
-    // Select the new recipient
-    handleSelectRecipient(newRecipient)
-
-    // Clear form and close dialog
-    setNewRecipientData({
-      fullName: "",
-      accountNumber: "",
-      bankName: "",
-    })
   }
 
   // Copy to clipboard with feedback
@@ -255,7 +247,7 @@ export default function UserSendPage() {
   }
 
   // File upload handlers
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       alert("File size must be less than 5MB")
       return
@@ -271,17 +263,34 @@ export default function UserSendPage() {
     setIsUploading(true)
     setUploadProgress(0)
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setIsUploading(false)
-          return 100
-        }
-        return prev + 10
-      })
-    }, 200)
+    try {
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 100)
+
+      // Upload to Supabase if transaction exists
+      if (transactionId) {
+        await transactionService.uploadReceipt(transactionId, file)
+      }
+
+      // Complete progress
+      clearInterval(progressInterval)
+      setUploadProgress(100)
+      setIsUploading(false)
+    } catch (error) {
+      console.error("Error uploading file:", error)
+      setError("Failed to upload receipt. Please try again.")
+      setIsUploading(false)
+      setUploadedFile(null)
+      setUploadProgress(0)
+    }
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -398,12 +407,12 @@ export default function UserSendPage() {
 
   // Get payment methods for the sending currency
   const getPaymentMethodsForCurrency = (currency: string) => {
-    return mockPaymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
+    return paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
   }
 
   const getDefaultPaymentMethod = (currency: string) => {
     const methods = getPaymentMethodsForCurrency(currency)
-    return methods.find((pm) => pm.isDefault) || methods[0]
+    return methods.find((pm) => pm.is_default) || methods[0]
   }
 
   // Update the useEffect to calculate fee and conversion only if not pre-filled
@@ -451,12 +460,53 @@ export default function UserSendPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     } else if (currentStep === 3) {
-      // Redirect to transaction status page
-      router.push(`/user/send/${transactionId.toLowerCase()}`)
+      // Create transaction in database
+      if (!userProfile?.id || !selectedRecipientId) return
+
+      try {
+        setIsCreatingTransaction(true)
+
+        const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
+        if (!exchangeRateData) {
+          throw new Error("Exchange rate not available")
+        }
+
+        const transaction = await transactionService.create({
+          userId: userProfile.id,
+          recipientId: selectedRecipientId,
+          sendAmount: Number.parseFloat(sendAmount),
+          sendCurrency,
+          receiveAmount,
+          receiveCurrency,
+          exchangeRate: exchangeRateData.rate,
+          feeAmount: fee,
+          feeType: feeType,
+          totalAmount: Number.parseFloat(sendAmount) + fee,
+          reference: transactionId,
+        })
+
+        // Upload receipt if file was selected
+        if (uploadedFile && !isUploading) {
+          try {
+            await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
+          } catch (uploadError) {
+            console.error("Error uploading receipt:", uploadError)
+            // Don't block transaction creation if receipt upload fails
+          }
+        }
+
+        // Redirect to transaction status page
+        router.push(`/user/send/${transaction.transaction_id.toLowerCase()}`)
+      } catch (error) {
+        console.error("Error creating transaction:", error)
+        setError("Failed to create transaction. Please try again.")
+      } finally {
+        setIsCreatingTransaction(false)
+      }
     }
   }
 
@@ -535,7 +585,7 @@ export default function UserSendPage() {
             </div>
           </div>
         )}
-        {currentStep >= 3 && (
+        {currentStep >= 3 && transactionId && (
           <div className="pt-4 border-t">
             <p className="text-sm text-gray-600">Transaction ID</p>
             <p className="font-mono text-sm">{transactionId}</p>
@@ -544,6 +594,40 @@ export default function UserSendPage() {
       </CardContent>
     </Card>
   )
+
+  if (loading) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700">{error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-2">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
 
   return (
     <UserDashboardLayout>
@@ -839,9 +923,9 @@ export default function UserSendPage() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
                               <span className="text-novapay-primary font-semibold text-sm">
-                                {recipient.name
+                                {recipient.full_name
                                   .split(" ")
-                                  .map((n) => n[0])
+                                  .map((n: string) => n[0])
                                   .join("")
                                   .toUpperCase()}
                               </span>
@@ -855,9 +939,9 @@ export default function UserSendPage() {
                               </div>
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{recipient.name}</p>
+                              <p className="font-medium text-gray-900">{recipient.full_name}</p>
                               <p className="text-sm text-gray-500">
-                                {recipient.bankName} - {recipient.accountNumber}
+                                {recipient.bank_name} - {recipient.account_number}
                               </p>
                             </div>
                           </div>
@@ -873,6 +957,13 @@ export default function UserSendPage() {
                     {filteredSavedRecipients.length === 0 && searchTerm && (
                       <div className="text-center py-8 text-gray-500">
                         <p>No recipients found matching "{searchTerm}"</p>
+                      </div>
+                    )}
+
+                    {filteredSavedRecipients.length === 0 && !searchTerm && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recipients found for {receiveCurrency}</p>
+                        <p className="text-sm">Add a new recipient to get started</p>
                       </div>
                     )}
 
@@ -930,10 +1021,10 @@ export default function UserSendPage() {
 
                       {/* Render payment methods based on admin configuration */}
                       {(() => {
-                        const paymentMethods = getPaymentMethodsForCurrency(sendCurrency)
+                        const paymentMethodsForCurrency = getPaymentMethodsForCurrency(sendCurrency)
                         const defaultMethod = getDefaultPaymentMethod(sendCurrency)
 
-                        if (paymentMethods.length === 0) {
+                        if (paymentMethodsForCurrency.length === 0) {
                           return (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                               <p className="text-red-700">No payment methods configured for {sendCurrency}</p>
@@ -956,11 +1047,11 @@ export default function UserSendPage() {
                                     <div className="flex justify-between items-center">
                                       <span className="text-gray-600 text-xs">Account Name</span>
                                       <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.accountName}</span>
+                                        <span className="font-medium text-sm">{defaultMethod.account_name}</span>
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleCopy(defaultMethod.accountName, "accountName")}
+                                          onClick={() => handleCopy(defaultMethod.account_name, "accountName")}
                                           className="h-5 w-5 p-0"
                                         >
                                           {copiedStates.accountName ? (
@@ -975,12 +1066,12 @@ export default function UserSendPage() {
                                       <span className="text-gray-600 text-xs">Account Number</span>
                                       <div className="flex items-center gap-1">
                                         <span className="font-medium font-mono text-sm">
-                                          {defaultMethod.accountNumber}
+                                          {defaultMethod.account_number}
                                         </span>
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleCopy(defaultMethod.accountNumber, "accountNumber")}
+                                          onClick={() => handleCopy(defaultMethod.account_number, "accountNumber")}
                                           className="h-5 w-5 p-0"
                                         >
                                           {copiedStates.accountNumber ? (
@@ -994,11 +1085,11 @@ export default function UserSendPage() {
                                     <div className="flex justify-between items-center">
                                       <span className="text-gray-600 text-xs">Bank Name</span>
                                       <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.bankName}</span>
+                                        <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleCopy(defaultMethod.bankName, "bankName")}
+                                          onClick={() => handleCopy(defaultMethod.bank_name, "bankName")}
                                           className="h-5 w-5 p-0"
                                         >
                                           {copiedStates.bankName ? (
@@ -1041,7 +1132,7 @@ export default function UserSendPage() {
                                     <QrCode className="h-16 w-16 text-gray-400" />
                                   </div>
                                   <div className="text-xs text-gray-600 mb-2">
-                                    <p className="font-mono break-all">{defaultMethod.qrCodeData}</p>
+                                    <p className="font-mono break-all">{defaultMethod.qr_code_data}</p>
                                   </div>
                                   {defaultMethod.instructions && (
                                     <p className="text-xs text-gray-500">{defaultMethod.instructions}</p>
@@ -1208,9 +1299,10 @@ export default function UserSendPage() {
                         </Button>
                         <Button
                           onClick={handleContinue}
+                          disabled={isCreatingTransaction}
                           className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                         >
-                          I've Completed Payment
+                          {isCreatingTransaction ? "Creating Transaction..." : "I've Completed Payment"}
                         </Button>
                       </div>
                     </div>

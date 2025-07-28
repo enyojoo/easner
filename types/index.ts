@@ -59,6 +59,7 @@ export interface Transaction {
   payment_method: string
   reference_number: string
   receipt_url?: string
+  receipt_filename?: string
   created_at: string
   updated_at: string
 }

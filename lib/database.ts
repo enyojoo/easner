@@ -297,19 +297,43 @@ export const transactionService = {
     return data
   },
 
-  async uploadReceipt(transactionId: string, receiptUrl: string, filename: string) {
-    const { data, error } = await supabase
+  async uploadReceipt(transactionId: string, file: File) {
+    const serverClient = createServerClient()
+
+    // Generate unique filename
+    const fileExt = file.name.split(".").pop()
+    const fileName = `${transactionId}_${Date.now()}.${fileExt}`
+    const filePath = `receipts/${fileName}`
+
+    // Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await serverClient.storage
+      .from("transaction-receipts")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      })
+
+    if (uploadError) throw uploadError
+
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = serverClient.storage.from("transaction-receipts").getPublicUrl(filePath)
+
+    // Update transaction with receipt URL
+    const { data, error } = await serverClient
       .from("transactions")
       .update({
-        receipt_url: receiptUrl,
-        receipt_filename: filename,
+        receipt_url: publicUrl,
+        receipt_filename: fileName,
+        updated_at: new Date().toISOString(),
       })
       .eq("transaction_id", transactionId)
       .select()
       .single()
 
     if (error) throw error
-    return data
+    return { ...data, receipt_url: publicUrl }
   },
 
   async getStats(timeRange = "today") {
