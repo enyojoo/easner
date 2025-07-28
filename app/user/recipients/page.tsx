@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,42 +9,15 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Edit, Trash2, Search, Globe } from "lucide-react"
 import { currencies } from "@/utils/currency"
-
-// Mock recipients data
-const mockRecipients = [
-  {
-    id: "1",
-    name: "John Doe",
-    accountNumber: "1234567890",
-    bankName: "First Bank",
-    currency: "NGN",
-    lastUsed: "2024-01-15",
-    totalSent: "₦145,000.00",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    accountNumber: "0987654321",
-    bankName: "Sberbank",
-    currency: "RUB",
-    lastUsed: "2024-01-14",
-    totalSent: "₽25,500.00",
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    accountNumber: "1122334455",
-    bankName: "GTBank",
-    currency: "NGN",
-    lastUsed: "2024-01-13",
-    totalSent: "₦78,900.00",
-  },
-]
+import { recipientService } from "@/lib/database"
+import { useAuth } from "@/lib/auth-context"
 
 export default function UserRecipientsPage() {
-  const [recipients, setRecipients] = useState(mockRecipients)
+  const { userProfile } = useAuth()
+  const [recipients, setRecipients] = useState([])
+  const [loading, setLoading] = useState(true)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingRecipient, setEditingRecipient] = useState<any>(null)
+  const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currencyFilter, setCurrencyFilter] = useState("All")
   const [formData, setFormData] = useState({
@@ -53,51 +26,133 @@ export default function UserRecipientsPage() {
     bankName: "",
     currency: "NGN",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  // Load recipients from database
+  useEffect(() => {
+    if (userProfile?.id) {
+      loadRecipients()
+    }
+  }, [userProfile?.id])
+
+  const loadRecipients = async () => {
+    try {
+      setLoading(true)
+      const data = await recipientService.getByUserId(userProfile.id)
+      setRecipients(data || [])
+    } catch (error) {
+      console.error("Error loading recipients:", error)
+      setError("Failed to load recipients")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredRecipients = recipients.filter((recipient) => {
     const matchesSearch =
-      recipient.name.toLowerCase().includes(searchTerm.toLowerCase()) || recipient.accountNumber.includes(searchTerm)
+      recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      recipient.account_number.includes(searchTerm)
     const matchesCurrency = currencyFilter === "All" || recipient.currency === currencyFilter
     return matchesSearch && matchesCurrency
   })
 
-  const handleAddRecipient = () => {
-    const newRecipient = {
-      id: Date.now().toString(),
-      name: formData.name,
-      accountNumber: formData.accountNumber,
-      bankName: formData.bankName,
-      currency: formData.currency,
-      lastUsed: new Date().toISOString().split("T")[0],
-      totalSent: formData.currency === "NGN" ? "₦0.00" : "₽0.00",
+  const handleAddRecipient = async () => {
+    if (!userProfile?.id) return
+
+    try {
+      setIsSubmitting(true)
+      setError("")
+
+      await recipientService.create(userProfile.id, {
+        fullName: formData.name,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+        currency: formData.currency,
+      })
+
+      // Reload recipients
+      await loadRecipients()
+
+      // Reset form and close dialog
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+      setIsAddDialogOpen(false)
+    } catch (error) {
+      console.error("Error adding recipient:", error)
+      setError("Failed to add recipient")
+    } finally {
+      setIsSubmitting(false)
     }
-    setRecipients([...recipients, newRecipient])
-    setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
-    setIsAddDialogOpen(false)
   }
 
-  const handleEditRecipient = (recipient: any) => {
+  const handleEditRecipient = (recipient) => {
     setEditingRecipient(recipient)
     setFormData({
-      name: recipient.name,
-      accountNumber: recipient.accountNumber,
-      bankName: recipient.bankName,
+      name: recipient.full_name,
+      accountNumber: recipient.account_number,
+      bankName: recipient.bank_name,
       currency: recipient.currency,
     })
   }
 
-  const handleUpdateRecipient = () => {
-    setRecipients(recipients.map((r) => (r.id === editingRecipient.id ? { ...r, ...formData } : r)))
-    setEditingRecipient(null)
-    setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+  const handleUpdateRecipient = async () => {
+    if (!editingRecipient) return
+
+    try {
+      setIsSubmitting(true)
+      setError("")
+
+      await recipientService.update(editingRecipient.id, {
+        fullName: formData.name,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+      })
+
+      // Reload recipients
+      await loadRecipients()
+
+      // Reset form and close dialog
+      setEditingRecipient(null)
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+    } catch (error) {
+      console.error("Error updating recipient:", error)
+      setError("Failed to update recipient")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleDeleteRecipient = (id: string) => {
-    setRecipients(recipients.filter((r) => r.id !== id))
+  const handleDeleteRecipient = async (id) => {
+    if (!confirm("Are you sure you want to delete this recipient?")) return
+
+    try {
+      await recipientService.delete(id)
+      await loadRecipients()
+    } catch (error) {
+      console.error("Error deleting recipient:", error)
+      setError("Failed to delete recipient")
+    }
   }
 
-  const RecipientForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+  const getCurrencySymbol = (currencyCode) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return currency?.symbol || currencyCode
+  }
+
+  const formatTotalSent = (recipient) => {
+    // This would come from transaction data in a real implementation
+    const symbol = getCurrencySymbol(recipient.currency)
+    return `${symbol}0.00`
+  }
+
+  const RecipientForm = ({ isEdit = false }) => (
     <div className="space-y-4">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name">Full Name</Label>
         <Input
@@ -105,8 +160,10 @@ export default function UserRecipientsPage() {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Enter recipient's full name"
+          disabled={isSubmitting}
         />
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="accountNumber">Account Number</Label>
         <Input
@@ -114,8 +171,10 @@ export default function UserRecipientsPage() {
           value={formData.accountNumber}
           onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
           placeholder="Enter account number"
+          disabled={isSubmitting}
         />
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="bankName">Bank Name</Label>
         <Input
@@ -123,8 +182,10 @@ export default function UserRecipientsPage() {
           value={formData.bankName}
           onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
           placeholder="Enter bank name"
+          disabled={isSubmitting}
         />
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="currency">Currency</Label>
         <select
@@ -132,20 +193,37 @@ export default function UserRecipientsPage() {
           value={formData.currency}
           onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
           className="w-full p-2 border border-gray-300 rounded-md"
+          disabled={isEdit || isSubmitting}
         >
           <option value="NGN">NGN - Nigerian Naira</option>
           <option value="RUB">RUB - Russian Ruble</option>
         </select>
       </div>
+
       <Button
         onClick={isEdit ? handleUpdateRecipient : handleAddRecipient}
         className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-        disabled={!formData.name || !formData.accountNumber || !formData.bankName}
+        disabled={!formData.name || !formData.accountNumber || !formData.bankName || isSubmitting}
       >
-        {isEdit ? "Update Recipient" : "Add Recipient"}
+        {isSubmitting ? "Saving..." : isEdit ? "Update Recipient" : "Add Recipient"}
       </Button>
     </div>
   )
+
+  if (loading) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading recipients...</p>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
 
   return (
     <UserDashboardLayout>
@@ -231,7 +309,7 @@ export default function UserRecipientsPage() {
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
                       <span className="text-novapay-primary font-semibold text-sm">
-                        {recipient.name
+                        {recipient.full_name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")
@@ -248,12 +326,15 @@ export default function UserRecipientsPage() {
                       </div>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{recipient.name}</p>
+                      <p className="font-medium text-gray-900">{recipient.full_name}</p>
                       <p className="text-sm text-gray-500">
-                        {recipient.bankName} - {recipient.accountNumber}
+                        {recipient.bank_name} - {recipient.account_number}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">Total sent: {recipient.totalSent}</span>
+                        <span className="text-xs text-gray-500">Total sent: {formatTotalSent(recipient)}</span>
+                        <span className="text-xs text-gray-400">
+                          Added {new Date(recipient.created_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -283,7 +364,7 @@ export default function UserRecipientsPage() {
                 </div>
               ))}
             </div>
-            {filteredRecipients.length === 0 && (
+            {filteredRecipients.length === 0 && !loading && (
               <div className="text-center py-8 text-gray-500">
                 <p>
                   {searchTerm || currencyFilter !== "All"
