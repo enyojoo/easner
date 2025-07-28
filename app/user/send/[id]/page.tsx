@@ -28,7 +28,6 @@ export default function TransactionStatusPage() {
 
       try {
         setError(null)
-
         const transactionData = await transactionService.getById(transactionId.toUpperCase())
 
         // Verify this transaction belongs to the current user
@@ -206,7 +205,7 @@ export default function TransactionStatusPage() {
     }
   }
 
-  if (error || !transaction) {
+  if (error || (!transaction && userProfile?.id)) {
     return (
       <UserDashboardLayout>
         <div className="p-6">
@@ -222,6 +221,14 @@ export default function TransactionStatusPage() {
             </div>
           </div>
         </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (!transaction) {
+    return (
+      <UserDashboardLayout>
+        <div></div>
       </UserDashboardLayout>
     )
   }
