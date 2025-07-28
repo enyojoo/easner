@@ -83,7 +83,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      
             <SidebarGroupContent>
               <SidebarMenu>
                 {navigation.map((item) => (

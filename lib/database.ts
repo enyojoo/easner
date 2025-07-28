@@ -1,11 +1,42 @@
-import { supabase, createServerClient } from "./supabase"
+import { supabase } from "./supabase"
+
+// Cache system for database queries
+const cache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_DURATIONS = {
+  transactions: 2 * 60 * 1000, // 2 minutes
+  recipients: 5 * 60 * 1000, // 5 minutes
+  rates: 10 * 60 * 1000, // 10 minutes
+  users: 5 * 60 * 1000, // 5 minutes
+}
+
+function getCacheKey(table: string, filters: any = {}) {
+  return `${table}_${JSON.stringify(filters)}`
+}
+
+function getFromCache(key: string, maxAge: number) {
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.timestamp < maxAge) {
+    return cached.data
+  }
+  return null
+}
+
+function setCache(key: string, data: any) {
+  cache.set(key, { data, timestamp: Date.now() })
+}
 
 // User operations
 export const userService = {
   async findByEmail(email: string) {
+    const cacheKey = `user:email:${email}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.users)
+    if (cached) return cached
+
     const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
     if (error && error.code !== "PGRST116") throw error
+
+    if (data) setCache(cacheKey, data)
     return data
   },
 
@@ -32,30 +63,43 @@ export const userService = {
       .single()
 
     if (error) throw error
+
+    // Clear user cache
+    invalidateCache(`user:${userId}`)
+
     return data
   },
 
   async getStats() {
+    const cacheKey = "user:stats"
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.users)
+    if (cached) return cached
+
     const { data: totalUsers } = await supabase.from("users").select("id", { count: "exact" })
-
     const { data: activeUsers } = await supabase.from("users").select("id", { count: "exact" }).eq("status", "active")
-
     const { data: verifiedUsers } = await supabase
       .from("users")
       .select("id", { count: "exact" })
       .eq("verification_status", "verified")
 
-    return {
+    const stats = {
       total: totalUsers?.length || 0,
       active: activeUsers?.length || 0,
       verified: verifiedUsers?.length || 0,
     }
+
+    setCache(cacheKey, stats)
+    return stats
   },
 }
 
 // Currency operations
 export const currencyService = {
   async getAll() {
+    const cacheKey = "currencies:all"
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("currencies")
       .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
@@ -64,16 +108,21 @@ export const currencyService = {
 
     if (error) throw error
 
-    // Map flag_svg to flag for frontend compatibility
-    return (
+    const currencies =
       data?.map((currency) => ({
         ...currency,
         flag: currency.flag_svg,
       })) || []
-    )
+
+    setCache(cacheKey, currencies)
+    return currencies
   },
 
   async getExchangeRates() {
+    const cacheKey = "exchange_rates:all"
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("exchange_rates")
       .select(`
@@ -85,8 +134,7 @@ export const currencyService = {
 
     if (error) throw error
 
-    // Map flag_svg to flag for frontend compatibility
-    return (
+    const rates =
       data?.map((rate) => ({
         ...rate,
         from_currency_info: rate.from_currency_info
@@ -102,10 +150,16 @@ export const currencyService = {
             }
           : undefined,
       })) || []
-    )
+
+    setCache(cacheKey, rates)
+    return rates
   },
 
   async getRate(fromCurrency: string, toCurrency: string) {
+    const cacheKey = `rate:${fromCurrency}:${toCurrency}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("exchange_rates")
       .select("*")
@@ -115,6 +169,8 @@ export const currencyService = {
       .single()
 
     if (error && error.code !== "PGRST116") throw error
+
+    if (data) setCache(cacheKey, data)
     return data
   },
 
@@ -134,6 +190,11 @@ export const currencyService = {
       .single()
 
     if (error) throw error
+
+    // Clear rate cache
+    invalidateCache("rate:")
+    invalidateCache("exchange_rates:all")
+
     return data
   },
 }
@@ -164,10 +225,18 @@ export const recipientService = {
       .single()
 
     if (error) throw error
+
+    // Clear recipients cache for this user
+    invalidateRecipientsCache(userId)
+
     return data
   },
 
   async getByUserId(userId: string) {
+    const cacheKey = `recipients:${userId}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.recipients)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("recipients")
       .select("*")
@@ -175,6 +244,8 @@ export const recipientService = {
       .order("created_at", { ascending: false })
 
     if (error) throw error
+
+    setCache(cacheKey, data)
     return data
   },
 
@@ -200,6 +271,10 @@ export const recipientService = {
       .single()
 
     if (error) throw error
+
+    // Clear recipients cache
+    invalidateRecipientsCache("")
+
     return data
   },
 
@@ -207,6 +282,9 @@ export const recipientService = {
     const { error } = await supabase.from("recipients").delete().eq("id", recipientId)
 
     if (error) throw error
+
+    // Clear recipients cache
+    invalidateRecipientsCache("")
   },
 }
 
@@ -231,7 +309,7 @@ export const transactionService = {
       .from("transactions")
       .insert({
         transaction_id: transactionId,
-        user_id: transactionData.userId,
+        sender_id: transactionData.userId,
         recipient_id: transactionData.recipientId,
         send_amount: transactionData.sendAmount,
         send_currency: transactionData.sendCurrency,
@@ -247,36 +325,53 @@ export const transactionService = {
       .single()
 
     if (error) throw error
+
+    // Clear transactions cache for this user
+    invalidateTransactionsCache(transactionData.userId)
+
     return data
   },
 
   async getByUserId(userId: string, limit = 50) {
+    const cacheKey = `transactions:${userId}:${limit}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.transactions)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("transactions")
       .select(`
         *,
+        sender:users!transactions_sender_id_fkey(first_name, last_name, email),
         recipient:recipients(*)
       `)
-      .eq("user_id", userId)
+      .eq("sender_id", userId)
       .order("created_at", { ascending: false })
       .limit(limit)
 
     if (error) throw error
+
+    setCache(cacheKey, data)
     return data
   },
 
   async getById(transactionId: string) {
+    const cacheKey = `transaction:${transactionId}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.transactions)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("transactions")
       .select(`
         *,
-        recipient:recipients(*),
-        user:users(first_name, last_name, email)
+        sender:users!transactions_sender_id_fkey(first_name, last_name, email),
+        recipient:recipients(*)
       `)
       .eq("transaction_id", transactionId)
       .single()
 
     if (error) throw error
+
+    setCache(cacheKey, data)
     return data
   },
 
@@ -294,6 +389,11 @@ export const transactionService = {
       .single()
 
     if (error) throw error
+
+    // Clear transaction cache
+    invalidateCache(`transaction:${transactionId}`)
+    invalidateTransactionsCache("")
+
     return data
   },
 
@@ -339,6 +439,9 @@ export const transactionService = {
         throw new Error(`Database update failed: ${error.message}`)
       }
 
+      // Clear transaction cache
+      invalidateCache(`transaction:${transactionId}`)
+
       return { ...data, receipt_url: publicUrl }
     } catch (error) {
       console.error("Receipt upload error:", error)
@@ -347,6 +450,10 @@ export const transactionService = {
   },
 
   async getStats(timeRange = "today") {
+    const cacheKey = `transaction_stats:${timeRange}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.transactions)
+    if (cached) return cached
+
     const dateFilter = new Date()
 
     switch (timeRange) {
@@ -373,17 +480,24 @@ export const transactionService = {
 
     const totalVolume = transactions?.reduce((sum, t) => sum + Number(t.send_amount), 0) || 0
 
-    return {
+    const stats = {
       totalTransactions: transactions?.length || 0,
       totalVolume,
       pendingTransactions: pendingTransactions?.length || 0,
     }
+
+    setCache(cacheKey, stats)
+    return stats
   },
 }
 
 // Payment Methods operations
 export const paymentMethodService = {
   async getAll() {
+    const cacheKey = "payment_methods:all"
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
@@ -391,10 +505,16 @@ export const paymentMethodService = {
       .order("is_default", { ascending: false })
 
     if (error) throw error
+
+    setCache(cacheKey, data || [])
     return data || []
   },
 
   async getByCurrency(currency: string) {
+    const cacheKey = `payment_methods:${currency}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
@@ -403,6 +523,8 @@ export const paymentMethodService = {
       .order("is_default", { ascending: false })
 
     if (error) throw error
+
+    setCache(cacheKey, data || [])
     return data || []
   },
 
@@ -417,17 +539,7 @@ export const paymentMethodService = {
     instructions?: string
     isDefault?: boolean
   }) {
-    const serverClient = createServerClient()
-
-    // If setting as default, unset other defaults for the same currency
-    if (paymentMethodData.isDefault) {
-      await serverClient
-        .from("payment_methods")
-        .update({ is_default: false })
-        .eq("currency", paymentMethodData.currency)
-    }
-
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("payment_methods")
       .insert({
         currency: paymentMethodData.currency,
@@ -445,6 +557,10 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Clear payment methods cache
+    invalidateCache("payment_methods:")
+
     return data
   },
 
@@ -462,18 +578,7 @@ export const paymentMethodService = {
       isDefault?: boolean
     },
   ) {
-    const serverClient = createServerClient()
-
-    // If setting as default, unset other defaults for the same currency
-    if (updates.isDefault && updates.currency) {
-      await serverClient
-        .from("payment_methods")
-        .update({ is_default: false })
-        .eq("currency", updates.currency)
-        .neq("id", id)
-    }
-
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("payment_methods")
       .update({
         currency: updates.currency,
@@ -491,26 +596,30 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Clear payment methods cache
+    invalidateCache("payment_methods:")
+
     return data
   },
 
   async updateStatus(id: string, status: string) {
-    const serverClient = createServerClient()
-
-    const { data, error } = await serverClient.from("payment_methods").update({ status }).eq("id", id).select().single()
+    const { data, error } = await supabase.from("payment_methods").update({ status }).eq("id", id).select().single()
 
     if (error) throw error
+
+    // Clear payment methods cache
+    invalidateCache("payment_methods:")
+
     return data
   },
 
   async setDefault(id: string, currency: string) {
-    const serverClient = createServerClient()
-
     // Unset other defaults for the same currency
-    await serverClient.from("payment_methods").update({ is_default: false }).eq("currency", currency)
+    await supabase.from("payment_methods").update({ is_default: false }).eq("currency", currency).neq("id", id)
 
     // Set this one as default
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("payment_methods")
       .update({ is_default: true })
       .eq("id", id)
@@ -518,24 +627,27 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Clear payment methods cache
+    invalidateCache("payment_methods:")
+
     return data
   },
 
   async delete(id: string) {
-    const serverClient = createServerClient()
-
-    const { error } = await serverClient.from("payment_methods").delete().eq("id", id)
+    const { error } = await supabase.from("payment_methods").delete().eq("id", id)
 
     if (error) throw error
+
+    // Clear payment methods cache
+    invalidateCache("payment_methods:")
   },
 }
 
 // Admin operations
 export const adminService = {
   async verifyAdmin(email: string, password: string) {
-    const serverClient = createServerClient()
-
-    const { data: admin, error } = await serverClient
+    const { data: admin, error } = await supabase
       .from("admin_users")
       .select("*")
       .eq("email", email)
@@ -557,11 +669,10 @@ export const adminService = {
       limit?: number
     } = {},
   ) {
-    const serverClient = createServerClient()
-    let query = serverClient.from("transactions").select(`
+    let query = supabase.from("transactions").select(`
         *,
-        recipient:recipients(*),
-        user:users(first_name, last_name, email)
+        sender:users!transactions_sender_id_fkey(first_name, last_name, email),
+        recipient:recipients(*)
       `)
 
     if (filters.status && filters.status !== "all") {
@@ -573,7 +684,7 @@ export const adminService = {
     }
 
     if (filters.search) {
-      query = query.or(`transaction_id.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`)
+      query = query.or(`transaction_id.ilike.%${filters.search}%,sender.email.ilike.%${filters.search}%`)
     }
 
     const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 100)
@@ -590,8 +701,7 @@ export const adminService = {
       limit?: number
     } = {},
   ) {
-    const serverClient = createServerClient()
-    let query = serverClient.from("users").select("*")
+    let query = supabase.from("users").select("*")
 
     if (filters.status && filters.status !== "all") {
       query = query.eq("status", filters.status)
@@ -617,6 +727,10 @@ export const adminService = {
 // System settings operations
 export const settingsService = {
   async get(key: string) {
+    const cacheKey = `setting:${key}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached !== null) return cached
+
     const { data, error } = await supabase.from("system_settings").select("value, data_type").eq("key", key).single()
 
     if (error && error.code !== "PGRST116") throw error
@@ -624,21 +738,26 @@ export const settingsService = {
     if (!data) return null
 
     // Parse value based on data type
+    let parsedValue
     switch (data.data_type) {
       case "boolean":
-        return data.value === "true"
+        parsedValue = data.value === "true"
+        break
       case "number":
-        return Number(data.value)
+        parsedValue = Number(data.value)
+        break
       case "json":
-        return JSON.parse(data.value)
+        parsedValue = JSON.parse(data.value)
+        break
       default:
-        return data.value
+        parsedValue = data.value
     }
+
+    setCache(cacheKey, parsedValue)
+    return parsedValue
   },
 
   async set(key: string, value: any, dataType = "string") {
-    const serverClient = createServerClient()
-
     // Convert value to string for storage
     let stringValue: string
     switch (dataType) {
@@ -655,7 +774,7 @@ export const settingsService = {
         stringValue = String(value)
     }
 
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("system_settings")
       .upsert({
         key,
@@ -666,17 +785,31 @@ export const settingsService = {
       .single()
 
     if (error) throw error
+
+    // Clear settings cache
+    invalidateCache(`setting:${key}`)
+
     return data
   },
 
   async getAll() {
+    const cacheKey = "settings:all"
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase.from("system_settings").select("*").order("key")
 
     if (error) throw error
+
+    setCache(cacheKey, data)
     return data
   },
 
   async getByCategory(category: string) {
+    const cacheKey = `settings:category:${category}`
+    const cached = getFromCache(cacheKey, CACHE_DURATIONS.rates)
+    if (cached) return cached
+
     const { data, error } = await supabase
       .from("system_settings")
       .select("*")
@@ -685,12 +818,12 @@ export const settingsService = {
       .order("key")
 
     if (error) throw error
+
+    setCache(cacheKey, data)
     return data
   },
 
   async updateMultiple(settings: Array<{ key: string; value: any; dataType?: string }>) {
-    const serverClient = createServerClient()
-
     const updates = settings.map(({ key, value, dataType = "string" }) => {
       let stringValue: string
       switch (dataType) {
@@ -710,9 +843,34 @@ export const settingsService = {
       return { key, value: stringValue, data_type: dataType }
     })
 
-    const { data, error } = await serverClient.from("system_settings").upsert(updates).select()
+    const { data, error } = await supabase.from("system_settings").upsert(updates).select()
 
     if (error) throw error
+
+    // Clear settings cache
+    invalidateCache("settings:")
+
     return data
   },
+}
+
+// Cache invalidation functions
+export function invalidateCache(pattern?: string) {
+  if (pattern) {
+    for (const key of cache.keys()) {
+      if (key.includes(pattern)) {
+        cache.delete(key)
+      }
+    }
+  } else {
+    cache.clear()
+  }
+}
+
+export function invalidateTransactionsCache(userId?: string) {
+  invalidateCache("transactions")
+}
+
+export function invalidateRecipientsCache(userId: string) {
+  invalidateCache(`recipients_${JSON.stringify({ userId })}`)
 }
