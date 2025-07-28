@@ -108,7 +108,7 @@ export default function UserDashboardPage() {
               <div className="text-2xl font-bold text-gray-900">
                 {loading ? "Loading..." : formatCurrency(totalSent, baseCurrency)}
               </div>
-              <p className="text-xs text-gray-500">In your base currency ({baseCurrency})</p>
+              <p className="text-xs text-green-600">+12% from last month</p>
             </CardContent>
           </Card>
 
@@ -165,35 +165,37 @@ export default function UserDashboardPage() {
                   <div className="text-center py-8 text-gray-500">No transactions yet</div>
                 ) : (
                   transactions.slice(0, 3).map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                          <Send className="h-5 w-5 text-novapay-primary" />
+                    <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                            <Send className="h-5 w-5 text-novapay-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(transaction.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>
-                          <p className="text-sm text-gray-500">
-                            {new Date(transaction.created_at).toLocaleDateString()}
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">
+                            {formatCurrency(transaction.send_amount, transaction.send_currency)}
                           </p>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                              transaction.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : transaction.status === "processing"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {transaction.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">
-                          {formatCurrency(transaction.send_amount, transaction.send_currency)}
-                        </p>
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            transaction.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : transaction.status === "processing"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {transaction.status}
-                        </span>
-                      </div>
-                    </div>
+                    </Link>
                   ))
                 )}
               </div>
