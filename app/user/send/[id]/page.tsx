@@ -465,37 +465,6 @@ export default function TransactionStatusPage() {
                     <p className="text-sm text-gray-600">Transaction ID</p>
                     <p className="font-mono text-sm">{transaction.transaction_id}</p>
                   </div>
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600">Status</p>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        transaction.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : transaction.status === "failed"
-                            ? "bg-red-100 text-red-800"
-                            : transaction.status === "initiated"
-                              ? "bg-purple-100 text-purple-800"
-                              : transaction.status === "processing"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                    </span>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600">Created</p>
-                    <p className="text-sm">{new Date(transaction.created_at).toLocaleString()}</p>
-                  </div>
-
-                  {transaction.updated_at !== transaction.created_at && (
-                    <div className="pt-2">
-                      <p className="text-sm text-gray-600">Last Updated</p>
-                      <p className="text-sm">{new Date(transaction.updated_at).toLocaleString()}</p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>

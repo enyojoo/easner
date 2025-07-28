@@ -275,40 +275,6 @@ export default function UserTransactionsPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Transaction Summary */}
-        {transactions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
-                  <p className="text-sm text-gray-600">Total Transactions</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
-                    {transactions.filter((t) => t.status === "completed").length}
-                  </p>
-                  <p className="text-sm text-gray-600">Completed</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {transactions.filter((t) => ["pending", "processing"].includes(t.status)).length}
-                  </p>
-                  <p className="text-sm text-gray-600">In Progress</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </UserDashboardLayout>
   )
