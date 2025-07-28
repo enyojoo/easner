@@ -27,6 +27,8 @@ const mockCurrencies = [
         rate: 22.45,
         feeType: "free",
         feeAmount: 0,
+        minAmount: 100,
+        maxAmount: 500000,
       },
     ],
   },
@@ -44,6 +46,8 @@ const mockCurrencies = [
         rate: 0.0445,
         feeType: "percentage",
         feeAmount: 1.5,
+        minAmount: 1000,
+        maxAmount: 10000000,
       },
     ],
   },
@@ -78,6 +82,8 @@ const AdminRatesPage = () => {
         rate: 1,
         feeType: "free",
         feeAmount: 0,
+        minAmount: 10,
+        maxAmount: 1000000,
       })),
     }
 
@@ -91,6 +97,8 @@ const AdminRatesPage = () => {
           rate: 1,
           feeType: "free",
           feeAmount: 0,
+          minAmount: 10,
+          maxAmount: 1000000,
         },
       ],
     }))
@@ -108,6 +116,8 @@ const AdminRatesPage = () => {
         rate: rate.rate.toString(),
         feeType: rate.feeType,
         feeAmount: rate.feeAmount.toString(),
+        minAmount: rate.minAmount?.toString() || "0",
+        maxAmount: rate.maxAmount?.toString() || "1000000",
       }
     })
     setRateUpdates(updates)
@@ -125,6 +135,8 @@ const AdminRatesPage = () => {
                 rate: Number.parseFloat(rateUpdates[rate.toCurrency]?.rate || rate.rate),
                 feeType: rateUpdates[rate.toCurrency]?.feeType || rate.feeType,
                 feeAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.feeAmount || rate.feeAmount),
+                minAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0),
+                maxAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000),
               })),
             }
           : currency,
@@ -307,7 +319,7 @@ const AdminRatesPage = () => {
 
         {/* Edit Rates Dialog */}
         <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
@@ -322,7 +334,7 @@ const AdminRatesPage = () => {
                     <span>{rate.toCurrency}</span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label>Exchange Rate</Label>
                       <Input
@@ -365,6 +377,44 @@ const AdminRatesPage = () => {
                         disabled={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "free"}
                       />
                     </div>
+
+                    <div className="space-y-2">
+                      <Label>Min Amount ({selectedCurrency.code})</Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        value={rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0}
+                        onChange={(e) => updateRateField(rate.toCurrency, "minAmount", e.target.value)}
+                        placeholder="100"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Amount ({selectedCurrency.code})</Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        value={rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000}
+                        onChange={(e) => updateRateField(rate.toCurrency, "maxAmount", e.target.value)}
+                        placeholder="1000000"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      <strong>Transaction Limits:</strong> Users can send between{" "}
+                      <span className="font-medium">
+                        {selectedCurrency.symbol}
+                        {(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0).toLocaleString()}
+                      </span>{" "}
+                      and{" "}
+                      <span className="font-medium">
+                        {selectedCurrency.symbol}
+                        {(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000).toLocaleString()}
+                      </span>{" "}
+                      when converting from {selectedCurrency.code} to {rate.toCurrency}
+                    </p>
                   </div>
                 </div>
               ))}

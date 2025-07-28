@@ -4,22 +4,20 @@ import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Users,
   CreditCard,
   TrendingUp,
   AlertCircle,
-  DollarSign,
   Activity,
   ArrowUpRight,
   Clock,
   CheckCircle,
   XCircle,
-  Plus,
   RefreshCw,
 } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 // Mock data
 const mockRecentActivity = [
@@ -67,6 +65,13 @@ const mockRecentActivity = [
   },
 ]
 
+const mockCurrencyPairs = [
+  { pair: "RUB → NGN", volume: 45.2, transactions: 1250, revenue: 8500 },
+  { pair: "NGN → RUB", volume: 32.8, transactions: 890, revenue: 6200 },
+  { pair: "USD → NGN", volume: 15.5, transactions: 420, revenue: 2800 },
+  { pair: "NGN → USD", volume: 6.5, transactions: 180, revenue: 1200 },
+]
+
 export default function AdminDashboardPage() {
   const [timeRange, setTimeRange] = useState("today")
 
@@ -77,8 +82,8 @@ export default function AdminDashboardPage() {
         transactionsChange: "+12%",
         volume: "₦45.2M",
         volumeChange: "+8%",
-        revenue: "₦452K",
-        revenueChange: "+15%",
+        users: 125,
+        usersChange: "+5%",
         pending: 23,
       },
       week: {
@@ -86,8 +91,8 @@ export default function AdminDashboardPage() {
         transactionsChange: "+18%",
         volume: "₦324.8M",
         volumeChange: "+22%",
-        revenue: "₦3.2M",
-        revenueChange: "+19%",
+        users: 957,
+        usersChange: "+7%",
         pending: 67,
       },
       month: {
@@ -95,8 +100,8 @@ export default function AdminDashboardPage() {
         transactionsChange: "+25%",
         volume: "₦1.2B",
         volumeChange: "+28%",
-        revenue: "₦12.4M",
-        revenueChange: "+31%",
+        users: 3852,
+        usersChange: "+11%",
         pending: 156,
       },
     }
@@ -122,21 +127,6 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const getActivityBadgeColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "bg-green-100 text-green-800"
-      case "error":
-        return "bg-red-100 text-red-800"
-      case "warning":
-        return "bg-yellow-100 text-yellow-800"
-      case "info":
-        return "bg-blue-100 text-blue-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
   return (
     <AdminDashboardLayout>
       <div className="p-6 space-y-6">
@@ -146,6 +136,10 @@ export default function AdminDashboardPage() {
             <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -156,10 +150,6 @@ export default function AdminDashboardPage() {
                 <SelectItem value="month">This Month</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-              <Plus className="h-4 w-4 mr-2" />
-              Quick Action
-            </Button>
           </div>
         </div>
 
@@ -199,15 +189,15 @@ export default function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-novapay-primary" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.revenue}</div>
+              <div className="text-2xl font-bold text-gray-900">{metrics.users}</div>
               <div className="flex items-center text-xs">
                 <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
                 <span className="text-green-600">
-                  {metrics.revenueChange} from last {timeRange}
+                  {metrics.usersChange} from last {timeRange}
                 </span>
               </div>
             </CardContent>
@@ -215,32 +205,26 @@ export default function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Pending Reviews</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Transactions Pending</CardTitle>
               <AlertCircle className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{metrics.pending}</div>
-              <p className="text-xs text-orange-600">Requires attention</p>
+              <p className="text-xs text-orange-600">Awaiting processing</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activity Feed */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-1">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Latest platform activities and events</CardDescription>
-                </div>
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
+              <div>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest platform activities and events</CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
                 {mockRecentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -258,9 +242,6 @@ export default function AdminDashboardPage() {
                           )}
                         </div>
                       )}
-                      <Badge className={`mt-2 text-xs ${getActivityBadgeColor(activity.status)}`}>
-                        {activity.status}
-                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -269,65 +250,42 @@ export default function AdminDashboardPage() {
           </Card>
 
           {/* Quick Actions & System Status */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Common administrative tasks</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start bg-novapay-primary hover:bg-novapay-primary-600">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Review Pending Transactions
-                </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage Users
-                </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Update Exchange Rates
-                </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Generate Reports
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* System Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle>System Status</CardTitle>
-                <CardDescription>Platform health monitoring</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">API Status</span>
-                    <Badge className="bg-green-100 text-green-800">Operational</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Database</span>
-                    <Badge className="bg-green-100 text-green-800">Healthy</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Payment Gateway</span>
-                    <Badge className="bg-green-100 text-green-800">Connected</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Exchange Rate API</span>
-                    <Badge className="bg-yellow-100 text-yellow-800">Delayed</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Server Load</span>
-                    <Badge className="bg-green-100 text-green-800">Normal</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Currency Pair Popularity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Currency Pair Popularity</CardTitle>
+              <CardDescription>Most popular trading pairs</CardDescription>
+            </CardHeader>
+            <CardContent className="max-h-80 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Currency Pair</TableHead>
+                    <TableHead>Volume %</TableHead>
+                    <TableHead>Transactions</TableHead>
+                    <TableHead>Revenue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockCurrencyPairs.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.pair}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
+                          </div>
+                          <span className="text-sm">{item.volume}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.transactions}</TableCell>
+                      <TableCell>${item.revenue.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AdminDashboardLayout>

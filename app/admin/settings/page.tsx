@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Settings, DollarSign, Mail, Shield, Code, Save, Eye, Edit, Plus, Trash2 } from "lucide-react"
+import { Settings, Mail, Shield, Save, Eye, Edit, Plus, Trash2 } from "lucide-react"
+import { currencies } from "@/utils/currency"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Mock data
 const mockPlatformConfig = {
@@ -22,40 +24,8 @@ const mockPlatformConfig = {
   maxTransactionAmount: 50000,
   minTransactionAmount: 10,
   dailyTransactionLimit: 100000,
+  baseCurrency: "NGN", // Add this line
 }
-
-const mockFeeStructures = [
-  {
-    id: 1,
-    name: "Standard Transfer Fee",
-    type: "percentage",
-    value: 1.5,
-    minAmount: 5,
-    maxAmount: 100,
-    currencyPair: "RUB → NGN",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Express Transfer Fee",
-    type: "fixed",
-    value: 25,
-    minAmount: 25,
-    maxAmount: 25,
-    currencyPair: "NGN → RUB",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Premium Fee",
-    type: "percentage",
-    value: 0.8,
-    minAmount: 2,
-    maxAmount: 50,
-    currencyPair: "USD → NGN",
-    status: "inactive",
-  },
-]
 
 const mockEmailTemplates = [
   {
@@ -93,42 +63,11 @@ const mockSecuritySettings = {
   accountLockoutDuration: 15,
 }
 
-const mockApiConfigs = [
-  {
-    id: 1,
-    name: "Payment Gateway API",
-    endpoint: "https://api.paymentgateway.com/v1",
-    status: "active",
-    lastUsed: "2024-01-15 14:30:00",
-  },
-  {
-    id: 2,
-    name: "SMS Service API",
-    endpoint: "https://api.smsservice.com/v2",
-    status: "active",
-    lastUsed: "2024-01-15 12:15:00",
-  },
-  {
-    id: 3,
-    name: "Email Service API",
-    endpoint: "https://api.emailservice.com/v1",
-    status: "inactive",
-    lastUsed: "2024-01-10 09:45:00",
-  },
-]
-
 export default function AdminSettingsPage() {
   const [platformConfig, setPlatformConfig] = useState(mockPlatformConfig)
-  const [feeStructures, setFeeStructures] = useState(mockFeeStructures)
   const [emailTemplates, setEmailTemplates] = useState(mockEmailTemplates)
   const [securitySettings, setSecuritySettings] = useState(mockSecuritySettings)
-  const [apiConfigs, setApiConfigs] = useState(mockApiConfigs)
   const [activeTab, setActiveTab] = useState("platform")
-
-  const handleSavePlatformConfig = () => {
-    // Save platform configuration
-    console.log("Saving platform config:", platformConfig)
-  }
 
   const handleSaveSecuritySettings = () => {
     // Save security settings
@@ -146,14 +85,10 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="platform" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Platform
-            </TabsTrigger>
-            <TabsTrigger value="fees" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Fees
             </TabsTrigger>
             <TabsTrigger value="email" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
@@ -162,10 +97,6 @@ export default function AdminSettingsPage() {
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Security
-            </TabsTrigger>
-            <TabsTrigger value="api" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              API
             </TabsTrigger>
           </TabsList>
 
@@ -176,62 +107,6 @@ export default function AdminSettingsPage() {
                 <CardTitle>Platform Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="platformName">Platform Name</Label>
-                    <Input
-                      id="platformName"
-                      value={platformConfig.platformName}
-                      onChange={(e) => setPlatformConfig({ ...platformConfig, platformName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="supportEmail">Support Email</Label>
-                    <Input
-                      id="supportEmail"
-                      type="email"
-                      value={platformConfig.supportEmail}
-                      onChange={(e) => setPlatformConfig({ ...platformConfig, supportEmail: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="maxTransaction">Max Transaction Amount</Label>
-                    <Input
-                      id="maxTransaction"
-                      type="number"
-                      value={platformConfig.maxTransactionAmount}
-                      onChange={(e) =>
-                        setPlatformConfig({ ...platformConfig, maxTransactionAmount: Number(e.target.value) })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="minTransaction">Min Transaction Amount</Label>
-                    <Input
-                      id="minTransaction"
-                      type="number"
-                      value={platformConfig.minTransactionAmount}
-                      onChange={(e) =>
-                        setPlatformConfig({ ...platformConfig, minTransactionAmount: Number(e.target.value) })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dailyLimit">Daily Transaction Limit</Label>
-                    <Input
-                      id="dailyLimit"
-                      type="number"
-                      value={platformConfig.dailyTransactionLimit}
-                      onChange={(e) =>
-                        setPlatformConfig({ ...platformConfig, dailyTransactionLimit: Number(e.target.value) })
-                      }
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -270,78 +145,37 @@ export default function AdminSettingsPage() {
                       }
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="baseCurrency">Base Currency for Reporting</Label>
+                      <p className="text-sm text-gray-500">
+                        Default currency for displaying transaction amounts and reports
+                      </p>
+                    </div>
+                    <Select
+                      value={platformConfig.baseCurrency}
+                      onValueChange={(value) => {
+                        setPlatformConfig({ ...platformConfig, baseCurrency: value })
+                        // Auto-save functionality
+                        console.log("Auto-saving base currency:", value)
+                      }}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select base currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            <div className="flex items-center gap-3">
+                              <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                              <div className="font-medium">{currency.code}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-
-                <Button onClick={handleSavePlatformConfig} className="bg-novapay-primary hover:bg-novapay-primary-600">
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Configuration
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Fee Structures */}
-          <TabsContent value="fees">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Fee Structures</CardTitle>
-                  <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Fee Structure
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Min/Max</TableHead>
-                      <TableHead>Currency Pair</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {feeStructures.map((fee) => (
-                      <TableRow key={fee.id}>
-                        <TableCell className="font-medium">{fee.name}</TableCell>
-                        <TableCell>
-                          <Badge className="bg-blue-100 text-blue-800">
-                            {fee.type === "percentage" ? "%" : "Fixed"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{fee.type === "percentage" ? `${fee.value}%` : `$${fee.value}`}</TableCell>
-                        <TableCell>
-                          ${fee.minAmount} - ${fee.maxAmount}
-                        </TableCell>
-                        <TableCell>{fee.currencyPair}</TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              fee.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                            }
-                          >
-                            {fee.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 bg-transparent">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
               </CardContent>
             </Card>
           </TabsContent>
@@ -463,35 +297,6 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="twoFactor">Two-Factor Authentication Required</Label>
-                      <p className="text-sm text-gray-500">Require 2FA for all admin accounts</p>
-                    </div>
-                    <Switch
-                      id="twoFactor"
-                      checked={securitySettings.twoFactorRequired}
-                      onCheckedChange={(checked) =>
-                        setSecuritySettings({ ...securitySettings, twoFactorRequired: checked })
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="specialChars">Password Require Special Characters</Label>
-                      <p className="text-sm text-gray-500">Enforce special characters in passwords</p>
-                    </div>
-                    <Switch
-                      id="specialChars"
-                      checked={securitySettings.passwordRequireSpecialChars}
-                      onCheckedChange={(checked) =>
-                        setSecuritySettings({ ...securitySettings, passwordRequireSpecialChars: checked })
-                      }
-                    />
-                  </div>
-                </div>
-
                 <Button
                   onClick={handleSaveSecuritySettings}
                   className="bg-novapay-primary hover:bg-novapay-primary-600"
@@ -499,62 +304,6 @@ export default function AdminSettingsPage() {
                   <Save className="h-4 w-4 mr-2" />
                   Save Security Settings
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* API Configurations */}
-          <TabsContent value="api">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>API Configurations</CardTitle>
-                  <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add API Config
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Endpoint</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last Used</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {apiConfigs.map((config) => (
-                      <TableRow key={config.id}>
-                        <TableCell className="font-medium">{config.name}</TableCell>
-                        <TableCell className="font-mono text-sm">{config.endpoint}</TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              config.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                            }
-                          >
-                            {config.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{config.lastUsed}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-red-600 bg-transparent">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
               </CardContent>
             </Card>
           </TabsContent>

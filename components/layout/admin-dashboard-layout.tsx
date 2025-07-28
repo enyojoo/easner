@@ -4,18 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  LayoutDashboard,
-  CreditCard,
-  Users,
-  TrendingUp,
-  BarChart3,
-  Settings,
-  User,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react"
+import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 
@@ -28,9 +17,7 @@ const navigation = [
   { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Rates", href: "/admin/rates", icon: TrendingUp },
-  { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "Profile", href: "/admin/profile", icon: User },
 ]
 
 export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
