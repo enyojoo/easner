@@ -1,256 +1,285 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { useAuth } from "@/lib/auth-context"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ChevronDown } from "lucide-react"
-
-const SUPPORTED_CURRENCIES = [
-  { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
-  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
-  { code: "USD", name: "US Dollar", symbol: "$" },
-  { code: "EUR", name: "Euro", symbol: "€" },
-  { code: "GBP", name: "British Pound", symbol: "£" },
-]
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { signUp, user, loading } = useAuth()
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [baseCurrency, setBaseCurrency] = useState("NGN")
+  const { signUp } = useAuth()
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-
-  const redirectParam = searchParams.get("redirect")
-
-  useEffect(() => {
-    if (user && !loading) {
-      // If user is already logged in, redirect appropriately
-      if (redirectParam === "send") {
-        router.push("/user/send")
-      } else {
-        router.push("/user/dashboard")
-      }
-    }
-  }, [user, loading, router, redirectParam])
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     setError("")
 
-    if (password !== confirmPassword) {
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setLoading(false)
       return
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long")
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      setLoading(false)
       return
     }
 
-    setIsLoading(true)
+    if (!acceptTerms) {
+      setError("Please accept the terms and conditions")
+      setLoading(false)
+      return
+    }
 
     try {
-      const { error } = await signUp(email, password, {
-        firstName,
-        lastName,
-        baseCurrency,
+      const { user, error: signUpError } = await signUp(formData.email, formData.password, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        baseCurrency: "NGN", // Default base currency
       })
 
-      if (error) {
-        setError(error.message || "Failed to create account")
-      } else {
-        // Account created successfully
-        if (redirectParam === "send") {
-          router.push("/user/send")
-        } else {
-          router.push("/user/dashboard")
-        }
+      if (signUpError) {
+        setError(signUpError.message)
+        return
       }
-    } catch (err) {
-      setError("An unexpected error occurred")
+
+      if (user) {
+        setSuccess(true)
+        // Redirect after a short delay to show success message
+        setTimeout(() => {
+          // Check for stored redirect and conversion data
+          const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+          const conversionData = sessionStorage.getItem("conversionData")
+
+          if (redirectPath && conversionData) {
+            // Clear stored data
+            sessionStorage.removeItem("redirectAfterLogin")
+            sessionStorage.removeItem("conversionData")
+
+            // Parse conversion data and add to URL
+            const data = JSON.parse(conversionData)
+            const params = new URLSearchParams({
+              sendAmount: data.sendAmount,
+              sendCurrency: data.sendCurrency,
+              receiveCurrency: data.receiveCurrency,
+              receiveAmount: data.receiveAmount.toString(),
+              exchangeRate: data.exchangeRate.toString(),
+              fee: data.fee.toString(),
+              step: "2",
+            })
+
+            router.push(`/user/send?${params.toString()}`)
+          } else {
+            router.push("/user/dashboard")
+          }
+        }, 2000)
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during registration")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const selectedCurrency = SUPPORTED_CURRENCIES.find((c) => c.code === baseCurrency)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }))
+  }
 
-  if (loading) {
+  if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+        <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
+          <div className="mb-8">
+            <BrandLogo size="md" />
+          </div>
+          <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
+            <CardContent className="pt-6 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
+              <p className="text-gray-600 mb-4">Welcome to Novapay! You can now start sending money instantly.</p>
+              <p className="text-sm text-gray-500">Redirecting...</p>
+            </CardContent>
+          </Card>
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 p-4">
-      <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-        <CardHeader className="space-y-4 text-center">
-          <div className="flex justify-center">
-            <BrandLogo className="h-12" />
-          </div>
-          <div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Create your account</CardTitle>
-            <CardDescription className="text-gray-600">
-              {redirectParam === "send"
-                ? "Sign up to continue with your money transfer"
-                : "Join thousands of users sending money globally"}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+      <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
+        {/* Logo */}
+        <div className="mb-8">
+          <BrandLogo size="md" />
+        </div>
+
+        <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-gray-900">Create account</CardTitle>
+            <CardDescription className="text-gray-600">Join Novapay and start sending money instantly</CardDescription>
+          </CardHeader>
+          <CardContent>
             {error && (
-              <Alert variant="destructive">
+              <Alert className="mb-4" variant="destructive">
+                <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName" className="text-gray-700">
+                  First Name
+                </Label>
                 <Input
                   id="firstName"
-                  type="text"
-                  placeholder="John"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Enter your first name"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  className="h-12"
+                  disabled={loading}
                 />
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName" className="text-gray-700">
+                  Last Name
+                </Label>
                 <Input
                   id="lastName"
-                  type="text"
-                  placeholder="Doe"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Enter your last name"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  className="h-12"
+                  disabled={loading}
                 />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="baseCurrency">Base Currency</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 justify-between bg-white border-gray-200 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{selectedCurrency?.symbol}</span>
-                      <span>{selectedCurrency?.code}</span>
-                      <span className="text-gray-500">- {selectedCurrency?.name}</span>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-full">
-                  {SUPPORTED_CURRENCIES.map((currency) => (
-                    <DropdownMenuItem
-                      key={currency.code}
-                      onClick={() => setBaseCurrency(currency.code)}
-                      className="flex items-center gap-3"
-                    >
-                      <span className="font-medium">{currency.symbol}</span>
-                      <div>
-                        <div className="font-medium">{currency.code}</div>
-                        <div className="text-sm text-muted-foreground">{currency.name}</div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-700">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Create a password (min 8 characters)"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-12"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-gray-700">
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  required
+                  disabled={loading}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="h-12"
-              />
-            </div>
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={acceptTerms}
+                  onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                  className="mt-1"
+                  disabled={loading}
+                />
+                <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                    Terms
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 bg-novapay-primary hover:bg-novapay-primary-600 text-white font-semibold"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating account..." : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link
-                href={redirectParam ? `/login?redirect=${redirectParam}` : "/login"}
-                className="font-medium text-novapay-primary hover:text-novapay-primary-600"
+              <Button
+                type="submit"
+                disabled={loading || !acceptTerms}
+                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign in
-              </Link>
-            </p>
-          </div>
+                {loading ? "Creating Account..." : "Create Account"}
+              </Button>
+            </form>
 
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
-              ← Back to home
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-novapay-primary hover:text-novapay-primary-600 hover:underline font-medium"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }

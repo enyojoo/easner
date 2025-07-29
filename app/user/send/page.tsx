@@ -1,686 +1,1370 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
+import type React from "react"
+import { useState, useEffect, useRef } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowRight, ArrowLeft, Plus, User, CreditCard, CheckCircle } from "lucide-react"
-import { currencyService, recipientService, paymentMethodService, transactionService } from "@/lib/database"
+import { Progress } from "@/components/ui/progress"
+import {
+  ChevronDown,
+  Upload,
+  Check,
+  Clock,
+  ArrowLeft,
+  Copy,
+  ChevronRight,
+  Plus,
+  Search,
+  QrCode,
+  Building2,
+  AlertCircle,
+  X,
+} from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
+import { useRouter } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAuth } from "@/lib/auth-context"
+import type { Currency, ExchangeRate } from "@/types"
 
-interface Currency {
-  id: string
-  code: string
-  name: string
-  symbol: string
-  flag: string
-}
-
-interface ExchangeRate {
-  id: string
-  from_currency: string
-  to_currency: string
-  rate: number
-  fee_type: string
-  fee_amount: number
-}
-
-interface Recipient {
-  id: string
-  full_name: string
-  account_number: string
-  bank_name: string
-  currency: string
-  phone_number?: string
-}
-
-interface PaymentMethod {
-  id: string
-  currency: string
-  type: string
-  name: string
-  account_name?: string
-  account_number?: string
-  bank_name?: string
-  qr_code_data?: string
-  instructions?: string
-  is_default: boolean
-  status: string
-}
-
-function SendPageContent() {
-  const { user } = useAuth()
+export default function UserSendPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const { userProfile } = useAuth()
 
-  // Step management
+  // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [sendAmount, setSendAmount] = useState<string>("100")
+  const [sendCurrency, setSendCurrency] = useState<string>("")
+  const [receiveCurrency, setReceiveCurrency] = useState<string>("")
+  const [receiveAmount, setReceiveAmount] = useState<number>(0)
+  const [fee, setFee] = useState<number>(0)
 
-  // Data state
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
-  const [recipients, setRecipients] = useState<Recipient[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [recipients, setRecipients] = useState<any[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Form state
-  const [sendAmount, setSendAmount] = useState("")
-  const [sendCurrency, setSendCurrency] = useState("USD")
-  const [receiveCurrency, setReceiveCurrency] = useState("NGN")
-  const [receiveAmount, setReceiveAmount] = useState("")
-  const [exchangeRate, setExchangeRate] = useState(0)
-  const [feeAmount, setFeeAmount] = useState(0)
-  const [totalAmount, setTotalAmount] = useState(0)
-
-  // Recipient state
-  const [selectedRecipient, setSelectedRecipient] = useState<string>("")
-  const [newRecipient, setNewRecipient] = useState({
+  const [recipientData, setRecipientData] = useState({
     fullName: "",
     accountNumber: "",
     bankName: "",
     phoneNumber: "",
   })
-  const [showNewRecipientForm, setShowNewRecipientForm] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
+  const [transactionId, setTransactionId] = useState<string>("")
 
-  // Payment state
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("")
-  const [paymentReference, setPaymentReference] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string>("")
+  const [newRecipientData, setNewRecipientData] = useState({
+    fullName: "",
+    accountNumber: "",
+    bankName: "",
+  })
 
-  // Transaction state
-  const [transactionId, setTransactionId] = useState("")
+  // Copy feedback states
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
 
-  // Load initial data
+  // File upload states
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [feeType, setFeeType] = useState<string>("free")
+  const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
+
+  // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
-      if (!user) return
+      if (!userProfile?.id) return
 
       try {
         setLoading(true)
+        setError(null)
+
         const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
           currencyService.getAll(),
           currencyService.getExchangeRates(),
-          recipientService.getByUserId(user.id),
+          recipientService.getByUserId(userProfile.id),
           paymentMethodService.getAll(),
         ])
 
-        setCurrencies(currenciesData)
-        setExchangeRates(ratesData)
-        setRecipients(recipientsData)
-        setPaymentMethods(paymentMethodsData)
+        setCurrencies(currenciesData || [])
+        setExchangeRates(ratesData || [])
+        setRecipients(recipientsData || [])
+        setPaymentMethods(paymentMethodsData || [])
 
-        // Set smart defaults based on user's base currency
-        if (user.base_currency) {
-          setSendCurrency(user.base_currency)
+        // Set default currencies if available
+        if (currenciesData && currenciesData.length > 0) {
+          // Set user's base currency as default send currency, or first available
+          const userBaseCurrency = userProfile.base_currency || "NGN"
+          const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
+
+          if (baseCurrencyExists) {
+            setSendCurrency(userBaseCurrency)
+            // Set receive currency to a different one
+            const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
+            if (otherCurrency) {
+              setReceiveCurrency(otherCurrency.code)
+            }
+          } else {
+            // Fallback to first two currencies
+            setSendCurrency(currenciesData[0].code)
+            if (currenciesData.length > 1) {
+              setReceiveCurrency(currenciesData[1].code)
+            }
+          }
         }
       } catch (error) {
         console.error("Error loading data:", error)
         setError("Failed to load data. Please refresh the page.")
-
-        // Fallback to static data
-        setCurrencies([
-          { id: "1", code: "USD", name: "US Dollar", symbol: "$", flag: "/flags/usa.svg" },
-          { id: "2", code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: "/flags/nigeria.svg" },
-          { id: "3", code: "GBP", name: "British Pound", symbol: "£", flag: "/flags/uk.svg" },
-          { id: "4", code: "EUR", name: "Euro", symbol: "€", flag: "/flags/eu.svg" },
-          { id: "5", code: "CAD", name: "Canadian Dollar", symbol: "C$", flag: "/flags/canada.svg" },
-        ])
-        setExchangeRates([
-          { id: "1", from_currency: "USD", to_currency: "NGN", rate: 1650, fee_type: "free", fee_amount: 0 },
-          { id: "2", from_currency: "GBP", to_currency: "NGN", rate: 2100, fee_type: "free", fee_amount: 0 },
-          { id: "3", from_currency: "EUR", to_currency: "NGN", rate: 1800, fee_type: "free", fee_amount: 0 },
-          { id: "4", from_currency: "CAD", to_currency: "NGN", rate: 1200, fee_type: "free", fee_amount: 0 },
-        ])
       } finally {
         setLoading(false)
       }
     }
 
     loadData()
-  }, [user])
+  }, [userProfile?.id, userProfile?.base_currency])
 
-  // Handle URL parameters from homepage
+  // Generate transaction ID when moving to step 3
   useEffect(() => {
-    const urlSendAmount = searchParams.get("sendAmount")
-    const urlSendCurrency = searchParams.get("sendCurrency")
-    const urlReceiveAmount = searchParams.get("receiveAmount")
-    const urlReceiveCurrency = searchParams.get("receiveCurrency")
-    const urlExchangeRate = searchParams.get("exchangeRate")
+    if (currentStep === 3 && !transactionId) {
+      const newTransactionId = `NP${Date.now()}`
+      setTransactionId(newTransactionId)
+    }
+  }, [currentStep, transactionId])
 
-    if (urlSendAmount && urlSendCurrency && urlReceiveAmount && urlReceiveCurrency && urlExchangeRate) {
+  // Add this useEffect after the existing useEffects, around line 80
+  useEffect(() => {
+    // Handle URL parameters from home page conversion
+    const urlParams = new URLSearchParams(window.location.search)
+    const step = urlParams.get("step")
+    const urlSendAmount = urlParams.get("sendAmount")
+    const urlSendCurrency = urlParams.get("sendCurrency")
+    const urlReceiveCurrency = urlParams.get("receiveCurrency")
+    const urlReceiveAmount = urlParams.get("receiveAmount")
+    const urlExchangeRate = urlParams.get("exchangeRate")
+    const urlFee = urlParams.get("fee")
+
+    if (step && urlSendAmount && urlSendCurrency && urlReceiveCurrency) {
       setSendAmount(urlSendAmount)
       setSendCurrency(urlSendCurrency)
-      setReceiveAmount(urlReceiveAmount)
       setReceiveCurrency(urlReceiveCurrency)
-      setExchangeRate(Number.parseFloat(urlExchangeRate))
-      setCurrentStep(2) // Skip to recipient selection
-    }
-  }, [searchParams])
 
-  // Handle session storage data (from login redirect)
-  useEffect(() => {
-    const pendingTransaction = sessionStorage.getItem("pendingTransaction")
-    if (pendingTransaction) {
-      try {
-        const data = JSON.parse(pendingTransaction)
-        setSendAmount(data.sendAmount.toString())
-        setSendCurrency(data.sendCurrency)
-        setReceiveAmount(data.receiveAmount.toString())
-        setReceiveCurrency(data.receiveCurrency)
-        setExchangeRate(data.exchangeRate)
-        setCurrentStep(2) // Skip to recipient selection
-        sessionStorage.removeItem("pendingTransaction")
-      } catch (error) {
-        console.error("Error parsing pending transaction:", error)
+      if (urlReceiveAmount) {
+        setReceiveAmount(Number.parseFloat(urlReceiveAmount))
       }
+      if (urlFee) {
+        setFee(Number.parseFloat(urlFee))
+      }
+
+      // Set the step from URL
+      if (step === "2") {
+        setCurrentStep(2)
+      }
+
+      // Clean up URL parameters
+      window.history.replaceState({}, "", "/user/send")
     }
   }, [])
 
-  // Calculate exchange rate and amounts
-  useEffect(() => {
-    if (!sendAmount || sendCurrency === receiveCurrency) {
-      setReceiveAmount("")
-      setExchangeRate(0)
-      setFeeAmount(0)
-      setTotalAmount(0)
-      return
-    }
+  const filteredSavedRecipients = recipients.filter(
+    (recipient) =>
+      (recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipient.account_number.includes(searchTerm)) &&
+      recipient.currency === receiveCurrency,
+  )
 
-    const rate = exchangeRates.find((r) => r.from_currency === sendCurrency && r.to_currency === receiveCurrency)
-
-    if (rate) {
-      const amount = Number.parseFloat(sendAmount)
-      if (!isNaN(amount)) {
-        const converted = amount * rate.rate
-        const fee = rate.fee_type === "percentage" ? amount * (rate.fee_amount / 100) : rate.fee_amount
-
-        setReceiveAmount(converted.toFixed(2))
-        setExchangeRate(rate.rate)
-        setFeeAmount(fee)
-        setTotalAmount(amount + fee)
-      }
-    }
-  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
-
-  const handleNextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 4))
+  const handleSelectRecipient = (recipient: any) => {
+    setSelectedRecipientId(recipient.id)
+    setRecipientData({
+      fullName: recipient.full_name,
+      accountNumber: recipient.account_number,
+      bankName: recipient.bank_name,
+      phoneNumber: recipient.phone_number || "",
+    })
   }
 
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1))
-  }
-
-  const handleCreateRecipient = async () => {
-    if (!user || !newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName) {
-      setError("Please fill in all required recipient fields")
-      return
-    }
+  const handleAddNewRecipient = async () => {
+    if (!userProfile?.id) return
 
     try {
-      setLoading(true)
-      const recipient = await recipientService.create(user.id, {
-        fullName: newRecipient.fullName,
-        accountNumber: newRecipient.accountNumber,
-        bankName: newRecipient.bankName,
-        phoneNumber: newRecipient.phoneNumber,
+      const newRecipient = await recipientService.create(userProfile.id, {
+        fullName: newRecipientData.fullName,
+        accountNumber: newRecipientData.accountNumber,
+        bankName: newRecipientData.bankName,
         currency: receiveCurrency,
       })
 
-      setRecipients((prev) => [recipient, ...prev])
-      setSelectedRecipient(recipient.id)
-      setShowNewRecipientForm(false)
-      setNewRecipient({ fullName: "", accountNumber: "", bankName: "", phoneNumber: "" })
-      setError("")
+      // Add to local state
+      setRecipients((prev) => [newRecipient, ...prev])
+
+      // Select the new recipient
+      handleSelectRecipient(newRecipient)
+
+      // Clear form and close dialog
+      setNewRecipientData({
+        fullName: "",
+        accountNumber: "",
+        bankName: "",
+      })
     } catch (error) {
-      console.error("Error creating recipient:", error)
-      setError("Failed to create recipient. Please try again.")
-    } finally {
-      setLoading(false)
+      console.error("Error adding recipient:", error)
+      setError("Failed to add recipient. Please try again.")
     }
   }
 
-  const handleCreateTransaction = async () => {
-    if (!user || !selectedRecipient) {
-      setError("Please select a recipient")
+  // Copy to clipboard with feedback
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedStates((prev) => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (err) {
+      console.error("Failed to copy text: ", err)
+    }
+  }
+
+  // File upload handlers
+  const handleFileSelect = async (file: File) => {
+    // Clear previous errors
+    setUploadError(null)
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("File size must be less than 5MB")
       return
     }
 
-    try {
-      setLoading(true)
-      const transaction = await transactionService.create({
-        userId: user.id,
-        recipientId: selectedRecipient,
-        sendAmount: Number.parseFloat(sendAmount),
-        sendCurrency,
-        receiveAmount: Number.parseFloat(receiveAmount),
-        receiveCurrency,
-        exchangeRate,
-        feeAmount,
-        feeType: "free",
-        totalAmount,
-      })
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError("Only JPG, PNG, and PDF files are allowed")
+      return
+    }
 
-      setTransactionId(transaction.transaction_id)
-      handleNextStep()
-    } catch (error) {
-      console.error("Error creating transaction:", error)
-      setError("Failed to create transaction. Please try again.")
-    } finally {
-      setLoading(false)
+    setUploadedFile(file)
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    // Simulate progress for better UX (don't actually upload until transaction exists)
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(progressInterval)
+          setIsUploading(false)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 100)
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
     }
   }
 
-  const getSendCurrencySymbol = () => {
-    const currency = currencies.find((c) => c.code === sendCurrency)
-    return currency?.symbol || "$"
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
   }
 
-  const getReceiveCurrencySymbol = () => {
-    const currency = currencies.find((c) => c.code === receiveCurrency)
-    return currency?.symbol || "₦"
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
   }
 
-  const getAvailablePaymentMethods = () => {
-    return paymentMethods.filter((pm) => pm.currency === sendCurrency && pm.status === "active")
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      handleFileSelect(file)
+    }
   }
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Please log in to send money</h2>
-          <Button onClick={() => router.push("/login")}>Go to Login</Button>
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null)
+    setUploadProgress(0)
+    setUploadError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  const handleDismissUploadError = () => {
+    setUploadError(null)
+  }
+
+  // Exchange rate and fee calculation functions
+  const getExchangeRate = (from: string, to: string) => {
+    // Same currency pair returns 1:1 rate
+    if (from === to) {
+      return {
+        id: "same",
+        from_currency: from,
+        to_currency: to,
+        rate: 1,
+        fee_type: "free" as const,
+        fee_amount: 0,
+        status: "active",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    }
+
+    return exchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
+  }
+
+  const calculateFee = (amount: number, from: string, to: string) => {
+    // Same currency pair has no fee
+    if (from === to) {
+      return { fee: 0, feeType: "free" }
+    }
+
+    const rateData = getExchangeRate(from, to)
+    if (!rateData || rateData.fee_type === "free") {
+      return { fee: 0, feeType: "free" }
+    }
+
+    if (rateData.fee_type === "fixed") {
+      return { fee: rateData.fee_amount, feeType: "fixed" }
+    }
+
+    if (rateData.fee_type === "percentage") {
+      return { fee: (amount * rateData.fee_amount) / 100, feeType: "percentage" }
+    }
+
+    return { fee: 0, feeType: "free" }
+  }
+
+  const formatCurrency = (amount: number, currency: string): string => {
+    const curr = currencies.find((c) => c.code === currency)
+    return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  // Component to render flag SVG safely
+  const FlagIcon = ({ currency }: { currency: Currency }) => {
+    if (!currency.flag) return null
+
+    // If flag is already an SVG string, render it directly
+    if (currency.flag.startsWith("<svg")) {
+      return <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+    }
+
+    // If flag is a URL or path, render as img
+    if (currency.flag.startsWith("http") || currency.flag.startsWith("/")) {
+      return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={20} height={20} />
+    }
+
+    // Fallback to text
+    return <span className="text-xs">{currency.code}</span>
+  }
+
+  // Handle currency selection with same currency prevention
+  const handleSendCurrencyChange = (newCurrency: string) => {
+    setSendCurrency(newCurrency)
+    // If user selects same currency as receive, swap them
+    if (newCurrency === receiveCurrency) {
+      setReceiveCurrency(sendCurrency)
+    }
+  }
+
+  const handleReceiveCurrencyChange = (newCurrency: string) => {
+    setReceiveCurrency(newCurrency)
+    // If user selects same currency as send, swap them
+    if (newCurrency === sendCurrency) {
+      setSendCurrency(receiveCurrency)
+    }
+  }
+
+  // Get payment methods for the sending currency
+  const getPaymentMethodsForCurrency = (currency: string) => {
+    return paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
+  }
+
+  const getDefaultPaymentMethod = (currency: string) => {
+    const methods = getPaymentMethodsForCurrency(currency)
+    return methods.find((pm) => pm.is_default) || methods[0]
+  }
+
+  // Update the useEffect to calculate fee and conversion
+  useEffect(() => {
+    if (!sendCurrency || !receiveCurrency) return
+
+    const amount = Number.parseFloat(sendAmount) || 0
+
+    // If same currency, 1:1 conversion
+    if (sendCurrency === receiveCurrency) {
+      setReceiveAmount(amount)
+      setFee(0)
+      setFeeType("free")
+      return
+    }
+
+    const rate = getExchangeRate(sendCurrency, receiveCurrency)
+    const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
+
+    if (rate) {
+      const converted = amount * rate.rate
+      setReceiveAmount(converted)
+    } else {
+      setReceiveAmount(0)
+    }
+
+    setFee(feeData.fee)
+    setFeeType(feeData.feeType)
+  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
+
+  // Timer countdown
+  useEffect(() => {
+    if (currentStep === 3 && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [currentStep, timeLeft])
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+  }
+
+  const handleContinue = async () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1)
+    } else if (currentStep === 3) {
+      // Create transaction in database
+      if (!userProfile?.id || !selectedRecipientId) return
+
+      try {
+        setIsCreatingTransaction(true)
+
+        const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
+        if (!exchangeRateData) {
+          throw new Error("Exchange rate not available")
+        }
+
+        const transaction = await transactionService.create({
+          userId: userProfile.id,
+          recipientId: selectedRecipientId,
+          sendAmount: Number.parseFloat(sendAmount),
+          sendCurrency,
+          receiveAmount,
+          receiveCurrency,
+          exchangeRate: exchangeRateData.rate,
+          feeAmount: fee,
+          feeType: feeType,
+          totalAmount: Number.parseFloat(sendAmount) + fee,
+        })
+
+        // Upload receipt if file was selected and upload completed successfully
+        if (uploadedFile && uploadProgress === 100 && !isUploading) {
+          try {
+            await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
+          } catch (uploadError) {
+            console.error("Error uploading receipt:", uploadError)
+            // Don't block transaction creation if receipt upload fails
+            setUploadError("Receipt upload failed, but transaction was created successfully")
+          }
+        }
+
+        // Redirect to transaction status page
+        router.push(`/user/send/${transaction.transaction_id.toLowerCase()}`)
+      } catch (error) {
+        console.error("Error creating transaction:", error)
+        setError("Failed to create transaction. Please try again.")
+      } finally {
+        setIsCreatingTransaction(false)
+      }
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
+  const exchangeRate = exchangeRateData?.rate || 0
+  const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
+  const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
+
+  const steps = [
+    { number: 1, title: "Amount to Send", completed: currentStep > 1 },
+    { number: 2, title: "Add Recipient", completed: currentStep > 2 },
+    { number: 3, title: "Make Payment", completed: currentStep > 3 },
+    { number: 4, title: "Transaction Status", completed: false },
+  ]
+
+  const TransactionSummary = () => (
+    <Card className="sticky top-6">
+      <CardHeader>
+        <CardTitle className="text-lg">Transaction Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-gray-600">You Send</span>
+            <span className="font-semibold">{formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Fee</span>
+            <span className={`font-semibold ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
+              {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between border-t pt-2">
+            <span className="text-gray-600">Total to Pay</span>
+            <span className="font-semibold text-lg">
+              {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Recipient Gets</span>
+            <span className="font-semibold">{formatCurrency(receiveAmount, receiveCurrency)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Exchange Rate</span>
+            <span className="text-sm">
+              1 {sendCurrency} = {exchangeRateData?.rate.toFixed(4)} {receiveCurrency}
+            </span>
+          </div>
         </div>
-      </div>
+
+        {/* Same Currency Notice */}
+        {sendCurrency === receiveCurrency && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-xs">ℹ</span>
+              </div>
+              <span className="text-sm text-blue-700">Same currency transfer - 1:1 conversion</span>
+            </div>
+          </div>
+        )}
+
+        {currentStep >= 2 && recipientData.fullName && (
+          <div className="pt-4 border-t">
+            <h4 className="font-medium mb-2">Recipient</h4>
+            <div className="space-y-1 text-sm">
+              <p className="font-medium">{recipientData.fullName}</p>
+              <p className="text-gray-600">{recipientData.accountNumber}</p>
+              <p className="text-gray-600">{recipientData.bankName}</p>
+            </div>
+          </div>
+        )}
+        {currentStep >= 3 && transactionId && (
+          <div className="pt-4 border-t">
+            <p className="text-sm text-gray-600">Transaction ID</p>
+            <p className="font-mono text-sm">{transactionId}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+
+  if (loading) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700">{error}</p>
+              <Button onClick={() => window.location.reload()} className="mt-2">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (currencies.length === 0) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              <p className="text-yellow-700">No currencies available. Please contact support.</p>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
     )
   }
 
   return (
     <UserDashboardLayout>
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step <= currentStep ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                  }`}
-                >
-                  {step < currentStep ? <CheckCircle className="h-5 w-5" /> : step}
-                </div>
-                {step < 4 && (
-                  <div className={`flex-1 h-1 mx-4 ${step < currentStep ? "bg-blue-600" : "bg-gray-200"}`} />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2 text-sm text-gray-600">
-            <span>Amount</span>
-            <span>Recipient</span>
-            <span>Payment</span>
-            <span>Complete</span>
-          </div>
-        </div>
-
-        {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Step 1: Amount */}
-        {currentStep === 1 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>How much do you want to send?</CardTitle>
-              <CardDescription>Enter the amount and select currencies</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>You Send</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      value={sendAmount}
-                      onChange={(e) => setSendAmount(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Select value={sendCurrency} onValueChange={setSendCurrency}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.id} value={currency.code}>
-                            {currency.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* Progress Indicator */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {steps.map((step, index) => (
+                <div key={step.number} className="flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                      step.completed
+                        ? "bg-green-500 text-white"
+                        : currentStep === step.number
+                          ? "bg-novapay-primary text-white"
+                          : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {step.completed ? <Check className="h-4 w-4" /> : step.number}
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Recipient Gets</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="text"
-                      value={
-                        receiveAmount
-                          ? `${getReceiveCurrencySymbol()}${Number.parseFloat(receiveAmount).toLocaleString()}`
-                          : ""
-                      }
-                      readOnly
-                      className="flex-1 bg-gray-50"
-                      placeholder="0.00"
-                    />
-                    <Select value={receiveCurrency} onValueChange={setReceiveCurrency}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.id} value={currency.code}>
-                            {currency.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {exchangeRate > 0 && (
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Exchange Rate:</span>
-                    <span>
-                      1 {sendCurrency} = {exchangeRate.toLocaleString()} {receiveCurrency}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Fee:</span>
-                    <span>
-                      {getSendCurrencySymbol()}
-                      {feeAmount.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm font-medium border-t pt-2 mt-2">
-                    <span>Total:</span>
-                    <span>
-                      {getSendCurrencySymbol()}
-                      {totalAmount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <Button onClick={handleNextStep} disabled={!sendAmount || !receiveAmount}>
-                  Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 2: Recipient */}
-        {currentStep === 2 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Who are you sending money to?</CardTitle>
-              <CardDescription>Select an existing recipient or add a new one</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {recipients.length > 0 && !showNewRecipientForm && (
-                <div className="space-y-4">
-                  <Label>Select Recipient</Label>
-                  <div className="grid gap-4">
-                    {recipients.map((recipient) => (
+                  <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
+                  {index < steps.length - 1 && (
+                    <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
                       <div
-                        key={recipient.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                          selectedRecipient === recipient.id
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                        className={`h-full transition-all duration-300 ${
+                          step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
                         }`}
-                        onClick={() => setSelectedRecipient(recipient.id)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-600" />
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Progress value={(currentStep / 4) * 100} className="h-2" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {/* Step 1: Amount to Send */}
+              {currentStep === 1 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Amount to Send</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* You Send Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-gray-700">You Send</h3>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex justify-between items-center">
+                          <input
+                            type="number"
+                            value={sendAmount}
+                            onChange={(e) => setSendAmount(e.target.value)}
+                            className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
+                            placeholder="0.00"
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
+                              >
+                                <div className="flex items-center gap-2">
+                                  {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
+                                  <span className="font-medium text-sm">{sendCurrency}</span>
+                                  <ChevronDown className="h-3 w-3 text-gray-500" />
+                                </div>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {currencies.map((currency) => (
+                                <DropdownMenuItem
+                                  key={currency.code}
+                                  onClick={() => handleSendCurrencyChange(currency.code)}
+                                  className="flex items-center gap-3"
+                                >
+                                  <FlagIcon currency={currency} />
+                                  <div>
+                                    <div className="font-medium">{currency.code}</div>
+                                    <div className="text-sm text-muted-foreground">{currency.name}</div>
+                                  </div>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fee and Rate Information */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-green-600 text-xs">✓</span>
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium">{recipient.full_name}</h3>
-                            <p className="text-sm text-gray-600">
-                              {recipient.bank_name} • {recipient.account_number}
-                            </p>
+                          <span className="text-sm text-gray-600">Fee</span>
+                        </div>
+                        <span className={`font-medium ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
+                          {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-novapay-primary text-xs">%</span>
+                          </div>
+                          <span className="text-sm text-gray-600">Rate</span>
+                        </div>
+                        <span className="font-medium text-novapay-primary">
+                          1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Same Currency Warning */}
+                    {sendCurrency === receiveCurrency && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 text-xs">ℹ</span>
+                          </div>
+                          <span className="text-sm text-blue-700">
+                            Same currency transfer - 1:1 conversion with no fees
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Receiver Gets Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
+                              {formatCurrency(receiveAmount, receiveCurrency)}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
+                                    <span className="font-medium text-sm">{receiveCurrency}</span>
+                                    <ChevronDown className="h-3 w-3 text-gray-500" />
+                                  </div>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                {currencies.map((currency) => (
+                                  <DropdownMenuItem
+                                    key={currency.code}
+                                    onClick={() => handleReceiveCurrencyChange(currency.code)}
+                                    className="flex items-center gap-3"
+                                  >
+                                    <FlagIcon currency={currency} />
+                                    <div>
+                                      <div className="font-medium">{currency.code}</div>
+                                      <div className="text-sm text-muted-foreground">{currency.name}</div>
+                                    </div>
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
 
-              {!showNewRecipientForm && (
-                <Button variant="outline" onClick={() => setShowNewRecipientForm(true)} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add New Recipient
-                </Button>
-              )}
-
-              {showNewRecipientForm && (
-                <div className="space-y-4 border-t pt-6">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-lg">Add New Recipient</Label>
-                    <Button variant="ghost" size="sm" onClick={() => setShowNewRecipientForm(false)}>
-                      Cancel
+                    <Button
+                      onClick={handleContinue}
+                      className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                      disabled={!sendCurrency || !receiveCurrency || !sendAmount}
+                    >
+                      Continue
                     </Button>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Full Name *</Label>
-                      <Input
-                        value={newRecipient.fullName}
-                        onChange={(e) => setNewRecipient((prev) => ({ ...prev, fullName: e.target.value }))}
-                        placeholder="Enter recipient's full name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone Number</Label>
-                      <Input
-                        value={newRecipient.phoneNumber}
-                        onChange={(e) => setNewRecipient((prev) => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="Enter phone number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Account Number *</Label>
-                      <Input
-                        value={newRecipient.accountNumber}
-                        onChange={(e) => setNewRecipient((prev) => ({ ...prev, accountNumber: e.target.value }))}
-                        placeholder="Enter account number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Bank Name *</Label>
-                      <Input
-                        value={newRecipient.bankName}
-                        onChange={(e) => setNewRecipient((prev) => ({ ...prev, bankName: e.target.value }))}
-                        placeholder="Enter bank name"
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleCreateRecipient}
-                    disabled={
-                      loading || !newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName
-                    }
-                    className="w-full"
-                  >
-                    {loading ? "Creating..." : "Add Recipient"}
-                  </Button>
-                </div>
+                  </CardContent>
+                </Card>
               )}
 
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleNextStep} disabled={!selectedRecipient}>
-                  Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              {/* Step 2: Add Recipient */}
+              {currentStep === 2 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add Recipient</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <Input
+                        placeholder="Search recipients"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 h-12 bg-gray-50 border-0 rounded-xl"
+                      />
+                    </div>
 
-        {/* Step 3: Payment */}
-        {currentStep === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>How would you like to pay?</CardTitle>
-              <CardDescription>Select a payment method</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {getAvailablePaymentMethods().map((method) => (
-                  <div
-                    key={method.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedPaymentMethod === method.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => setSelectedPaymentMethod(method.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                        <CreditCard className="h-5 w-5 text-gray-600" />
+                    {/* Add New Recipient Option */}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                              <Plus className="h-6 w-6 text-white" />
+                            </div>
+                            <span className="font-medium text-gray-900">Add new recipient</span>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                        </div>
+                      </DialogTrigger>
+
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Add New Recipient</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientName">Full Name *</Label>
+                            <Input
+                              id="newRecipientName"
+                              value={newRecipientData.fullName}
+                              onChange={(e) => setNewRecipientData({ ...newRecipientData, fullName: e.target.value })}
+                              placeholder="Enter recipient's full name"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientAccount">Account Number *</Label>
+                            <Input
+                              id="newRecipientAccount"
+                              value={newRecipientData.accountNumber}
+                              onChange={(e) =>
+                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                              }
+                              placeholder="Enter account number"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientBank">Bank Name *</Label>
+                            <Input
+                              id="newRecipientBank"
+                              value={newRecipientData.bankName}
+                              onChange={(e) => setNewRecipientData({ ...newRecipientData, bankName: e.target.value })}
+                              placeholder="Enter bank name"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientCurrency">Currency</Label>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+                              {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
+                              <div>
+                                <div className="font-medium">{receiveCurrency}</div>
+                                <div className="text-sm text-gray-500">{receiveCurrencyData?.name}</div>
+                              </div>
+                              <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleAddNewRecipient}
+                            disabled={
+                              !newRecipientData.fullName ||
+                              !newRecipientData.accountNumber ||
+                              !newRecipientData.bankName
+                            }
+                            className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                          >
+                            Add Recipient
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Saved Recipients List */}
+                    <div className="space-y-3">
+                      {filteredSavedRecipients.map((recipient) => (
+                        <div
+                          key={recipient.id}
+                          onClick={() => handleSelectRecipient(recipient)}
+                          className={`flex items-center justify-between p-4 bg-white rounded-xl border cursor-pointer transition-colors ${
+                            selectedRecipientId === recipient.id
+                              ? "border-novapay-primary bg-novapay-primary-50"
+                              : "border-gray-100 hover:border-novapay-primary-200"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
+                              <span className="text-novapay-primary font-semibold text-sm">
+                                {recipient.full_name
+                                  .split(" ")
+                                  .map((n: string) => n[0])
+                                  .join("")
+                                  .toUpperCase()}
+                              </span>
+                              <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: currencies.find((c) => c.code === recipient.currency)?.flag || "",
+                                  }}
+                                  className="w-full h-full"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{recipient.full_name}</p>
+                              <p className="text-sm text-gray-500">
+                                {recipient.bank_name} - {recipient.account_number}
+                              </p>
+                            </div>
+                          </div>
+                          {selectedRecipientId === recipient.id && (
+                            <div className="w-6 h-6 bg-novapay-primary rounded-full flex items-center justify-center">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {filteredSavedRecipients.length === 0 && searchTerm && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recipients found matching "{searchTerm}"</p>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium">{method.name}</h3>
-                        <p className="text-sm text-gray-600">{method.type}</p>
-                        {method.instructions && <p className="text-sm text-gray-500 mt-1">{method.instructions}</p>}
+                    )}
+
+                    {filteredSavedRecipients.length === 0 && !searchTerm && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recipients found for {receiveCurrency}</p>
+                        <p className="text-sm">Add a new recipient to get started</p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                      </Button>
+                      <Button
+                        onClick={handleContinue}
+                        disabled={!selectedRecipientId}
+                        className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 3: Payment Instructions */}
+              {currentStep === 3 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      Make Payment
+                      <div className="flex items-center text-orange-600">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Payment Method - Dynamic based on admin settings */}
+                    <div className="bg-gradient-to-br from-novapay-primary-50 to-blue-50 rounded-xl p-4 border border-novapay-primary-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-novapay-primary rounded-lg flex items-center justify-center">
+                          {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-novapay-primary">
+                            {sendCurrency === receiveCurrency
+                              ? `Transfer ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}`
+                              : `Transfer ${formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}`}
+                          </h3>
+                          <p className="text-xs text-gray-600">
+                            {sendCurrency === receiveCurrency
+                              ? "Same currency transfer - no conversion needed"
+                              : fee > 0
+                                ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
+                                : "Send money to complete your transfer"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Render payment methods based on admin configuration */}
+                      {(() => {
+                        const paymentMethodsForCurrency = getPaymentMethodsForCurrency(sendCurrency)
+                        const defaultMethod = getDefaultPaymentMethod(sendCurrency)
+
+                        if (paymentMethodsForCurrency.length === 0) {
+                          return (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                              <p className="text-red-700">No payment methods configured for {sendCurrency}</p>
+                              <p className="text-red-600 text-sm">Please contact support</p>
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {/* Payment Method Details */}
+                            <div className="space-y-3">
+                              {defaultMethod?.type === "bank_account" && (
+                                <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="h-4 w-4 text-gray-600" />
+                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-600 text-xs">Account Name</span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-medium text-sm">{defaultMethod.account_name}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(defaultMethod.account_name, "accountName")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.accountName ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-600 text-xs">Account Number</span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-medium font-mono text-sm">
+                                          {defaultMethod.account_number}
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(defaultMethod.account_number, "accountNumber")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.accountNumber ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-600 text-xs">Bank Name</span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(defaultMethod.bank_name, "bankName")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.bankName ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                      <span className="text-gray-600 text-xs">Transaction ID</span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(transactionId, "transactionId")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.transactionId ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {defaultMethod?.type === "qr_code" && (
+                                <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
+                                  <div className="flex items-center justify-center gap-2 mb-3">
+                                    <QrCode className="h-4 w-4 text-gray-600" />
+                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
+                                  </div>
+                                  <div className="w-32 h-32 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                    <QrCode className="h-16 w-16 text-gray-400" />
+                                  </div>
+                                  <div className="text-xs text-gray-600 mb-2">
+                                    <p className="font-mono break-all">{defaultMethod.qr_code_data}</p>
+                                  </div>
+                                  {defaultMethod.instructions && (
+                                    <p className="text-xs text-gray-500">{defaultMethod.instructions}</p>
+                                  )}
+                                  <div className="mt-2 pt-2 border-t border-gray-100">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-600 text-xs">Transaction ID</span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(transactionId, "transactionId")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.transactionId ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Important Instructions */}
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-900 text-xs uppercase tracking-wide">
+                                Important Instructions
+                              </h4>
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <ul className="text-xs text-amber-700 space-y-1.5">
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                    <span>
+                                      Transfer exactly{" "}
+                                      <strong>
+                                        {sendCurrency === receiveCurrency
+                                          ? formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)
+                                          : formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+                                      </strong>
+                                      {sendCurrency !== receiveCurrency && fee > 0 && (
+                                        <span className="text-xs block text-amber-600">
+                                          (Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} +
+                                          Fee: {formatCurrency(fee, sendCurrency)})
+                                        </span>
+                                      )}
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                    <span>
+                                      Include transaction ID <strong>{transactionId}</strong>
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                    <span>
+                                      Complete within <strong>60 minutes</strong>
+                                    </span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                    <span>Upload receipt for faster processing</span>
+                                  </li>
+                                  {sendCurrency === receiveCurrency && (
+                                    <li className="flex items-start gap-2">
+                                      <span className="text-blue-500 mt-0.5 text-xs">•</span>
+                                      <span className="text-blue-700">Same currency transfer - instant processing</span>
+                                    </li>
+                                  )}
+                                  {defaultMethod?.type === "qr_code" && (
+                                    <li className="flex items-start gap-2">
+                                      <span className="text-amber-500 mt-0.5 text-xs">•</span>
+                                      <span>Scan QR code with your mobile banking app</span>
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+
+                    {/* Upload Receipt Section with Better Error Handling */}
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileInputChange}
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        className="hidden"
+                      />
+
+                      {/* Upload Error Alert */}
+                      {uploadError && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-sm text-red-700 font-medium">Upload Error</p>
+                              <p className="text-xs text-red-600 mt-1">{uploadError}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleDismissUploadError}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div
+                        onClick={handleUploadClick}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                          isDragOver
+                            ? "border-novapay-primary bg-novapay-primary-50"
+                            : uploadedFile
+                              ? "border-green-300 bg-green-50"
+                              : uploadError
+                                ? "border-red-300 bg-red-50"
+                                : "border-gray-200 hover:border-novapay-primary-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                              uploadedFile
+                                ? "bg-green-100"
+                                : uploadError
+                                  ? "bg-red-100"
+                                  : isDragOver
+                                    ? "bg-novapay-primary-100"
+                                    : "bg-gray-100 group-hover:bg-novapay-primary-50"
+                            }`}
+                          >
+                            {uploadedFile ? (
+                              <Check className="h-5 w-5 text-green-600" />
+                            ) : uploadError ? (
+                              <AlertCircle className="h-5 w-5 text-red-600" />
+                            ) : (
+                              <Upload
+                                className={`h-5 w-5 transition-colors ${
+                                  isDragOver ? "text-novapay-primary" : "text-gray-400"
+                                }`}
+                              />
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-medium text-gray-900 text-sm">
+                              {uploadedFile
+                                ? uploadedFile.name
+                                : uploadError
+                                  ? "Upload Failed"
+                                  : "Upload Payment Receipt"}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {uploadedFile
+                                ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
+                                : uploadError
+                                  ? "Click to try again"
+                                  : "JPG, PNG or PDF (Max 5MB)"}
+                            </p>
+                          </div>
+                          {uploadedFile && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRemoveFile()
+                              }}
+                              className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Progress Bar (shown when uploading) */}
+                        {isUploading && (
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                              <span>Uploading...</span>
+                              <span>{uploadProgress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-novapay-primary h-1.5 rounded-full transition-all duration-300"
+                                style={{ width: `${uploadProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-4">
+                        <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back
+                        </Button>
+                        <Button
+                          onClick={handleContinue}
+                          disabled={isCreatingTransaction}
+                          className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                        >
+                          {isCreatingTransaction ? "Creating Transaction..." : "I've Completed Payment"}
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label>Payment Reference (Optional)</Label>
-                <Textarea
-                  value={paymentReference}
-                  onChange={(e) => setPaymentReference(e.target.value)}
-                  placeholder="Add a note for this payment"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button onClick={handleCreateTransaction} disabled={loading || !selectedPaymentMethod}>
-                  {loading ? "Processing..." : "Create Transaction"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 4: Complete */}
-        {currentStep === 4 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-center text-green-600">Transaction Created Successfully!</CardTitle>
-              <CardDescription className="text-center">
-                Your transaction has been created. Please complete the payment to process your transfer.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-medium mb-2">Transaction ID: {transactionId}</h3>
-                <p className="text-gray-600">You will receive email updates about your transaction status.</p>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Send Amount:</span>
-                  <span>
-                    {getSendCurrencySymbol()}
-                    {Number.parseFloat(sendAmount).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Exchange Rate:</span>
-                  <span>
-                    1 {sendCurrency} = {exchangeRate.toLocaleString()} {receiveCurrency}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Fee:</span>
-                  <span>
-                    {getSendCurrencySymbol()}
-                    {feeAmount.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between font-medium border-t pt-2">
-                  <span>Total:</span>
-                  <span>
-                    {getSendCurrencySymbol()}
-                    {totalAmount.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-green-600 font-medium">
-                  <span>Recipient Gets:</span>
-                  <span>
-                    {getReceiveCurrencySymbol()}
-                    {Number.parseFloat(receiveAmount).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-center space-x-4">
-                <Button onClick={() => router.push("/user/transactions")}>View Transactions</Button>
-                <Button variant="outline" onClick={() => router.push(`/user/send/${transactionId}`)}>
-                  View Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            {/* Transaction Summary Sidebar */}
+            <div className="lg:col-span-1">
+              <TransactionSummary />
+            </div>
+          </div>
+        </div>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function SendPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SendPageContent />
-    </Suspense>
   )
 }
