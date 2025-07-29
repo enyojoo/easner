@@ -121,11 +121,11 @@ export default function AdminDashboardPage() {
       // Process stats
       const formattedStats: DashboardStats = {
         transactions: transactionStats.totalTransactions,
-        transactionsChange: "+12%", // You can calculate this based on previous period
+        transactionsChange: "", // Remove "+12%"
         volume: formatCurrency(totalVolumeInNGN, "NGN"),
-        volumeChange: "+8%",
+        volumeChange: "", // Remove "+8%"
         users: userStats.total,
-        usersChange: "+5%",
+        usersChange: "", // Remove "+5%"
         pending: transactionStats.pendingTransactions,
       }
 
@@ -309,12 +309,14 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.transactions.toLocaleString()}</div>
-              <div className="flex items-center text-xs">
-                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                <span className="text-green-600">
-                  {stats.transactionsChange} from last {timeRange}
-                </span>
-              </div>
+              {stats.transactionsChange && (
+                <div className="flex items-center text-xs">
+                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                  <span className="text-green-600">
+                    {stats.transactionsChange} from last {timeRange}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -325,12 +327,14 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.volume}</div>
-              <div className="flex items-center text-xs">
-                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                <span className="text-green-600">
-                  {stats.volumeChange} from last {timeRange}
-                </span>
-              </div>
+              {stats.volumeChange && (
+                <div className="flex items-center text-xs">
+                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                  <span className="text-green-600">
+                    {stats.volumeChange} from last {timeRange}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -341,12 +345,14 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.users}</div>
-              <div className="flex items-center text-xs">
-                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                <span className="text-green-600">
-                  {stats.usersChange} from last {timeRange}
-                </span>
-              </div>
+              {stats.usersChange && (
+                <div className="flex items-center text-xs">
+                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                  <span className="text-green-600">
+                    {stats.usersChange} from last {timeRange}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
