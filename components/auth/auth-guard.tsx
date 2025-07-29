@@ -9,40 +9,35 @@ import { useEffect } from "react"
 interface AuthGuardProps {
   children: React.ReactNode
   requireAdmin?: boolean
-  fallbackPath?: string
 }
 
-export function AuthGuard({ children, requireAdmin = false, fallbackPath }: AuthGuardProps) {
-  const { user, userProfile, loading, isAdmin } = useAuth()
+export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
+  const { user, userProfile, adminProfile, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // Not authenticated
-        const redirectPath = requireAdmin ? "/admin/login" : "/login"
-        router.push(fallbackPath || redirectPath)
+        router.push(requireAdmin ? "/admin/login" : "/login")
         return
       }
 
-      if (requireAdmin && !isAdmin) {
-        // User is authenticated but not admin
+      if (requireAdmin && !adminProfile) {
         router.push("/admin/login")
         return
       }
 
-      if (!requireAdmin && isAdmin) {
-        // Admin trying to access user routes
-        router.push("/admin/dashboard")
+      if (!requireAdmin && !userProfile) {
+        router.push("/login")
         return
       }
     }
-  }, [user, userProfile, loading, isAdmin, requireAdmin, router, fallbackPath])
+  }, [user, userProfile, adminProfile, loading, requireAdmin, router])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
       </div>
     )
   }
@@ -51,11 +46,11 @@ export function AuthGuard({ children, requireAdmin = false, fallbackPath }: Auth
     return null
   }
 
-  if (requireAdmin && !isAdmin) {
+  if (requireAdmin && !adminProfile) {
     return null
   }
 
-  if (!requireAdmin && isAdmin) {
+  if (!requireAdmin && !userProfile) {
     return null
   }
 

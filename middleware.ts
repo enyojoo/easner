@@ -10,24 +10,14 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const { pathname } = req.nextUrl
+  // Check if the route is protected
+  const isUserRoute = req.nextUrl.pathname.startsWith("/user")
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin")
+  const isAdminLoginRoute = req.nextUrl.pathname === "/admin/login"
+  const isLoginRoute = req.nextUrl.pathname === "/login"
 
-  // Admin routes protection
-  if (pathname.startsWith("/admin")) {
-    if (pathname === "/admin/login") {
-      // If already logged in and trying to access admin login, redirect to admin dashboard
-      if (session) {
-        // Check if user is admin by checking admin_users table
-        const { data: adminUser } = await supabase.from("admin_users").select("id").eq("id", session.user.id).single()
-
-        if (adminUser) {
-          return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-        }
-      }
-      return res
-    }
-
-    // For all other admin routes, require authentication and admin role
+  // If accessing admin routes
+  if (isAdminRoute && !isAdminLoginRoute) {
     if (!session) {
       return NextResponse.redirect(new URL("/admin/login", req.url))
     }
@@ -38,12 +28,10 @@ export async function middleware(req: NextRequest) {
     if (!adminUser) {
       return NextResponse.redirect(new URL("/admin/login", req.url))
     }
-
-    return res
   }
 
-  // User routes protection
-  if (pathname.startsWith("/user")) {
+  // If accessing user routes
+  if (isUserRoute) {
     if (!session) {
       return NextResponse.redirect(new URL("/login", req.url))
     }
@@ -54,18 +42,16 @@ export async function middleware(req: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", req.url))
     }
-
-    return res
   }
 
-  // Redirect authenticated users away from login/register pages
-  if (session && (pathname === "/login" || pathname === "/register")) {
+  // Redirect authenticated users away from login pages
+  if (session && (isLoginRoute || isAdminLoginRoute)) {
     // Check if user is admin
     const { data: adminUser } = await supabase.from("admin_users").select("id").eq("id", session.user.id).single()
 
-    if (adminUser) {
+    if (adminUser && isLoginRoute) {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url))
-    } else {
+    } else if (!adminUser && isAdminLoginRoute) {
       return NextResponse.redirect(new URL("/user/dashboard", req.url))
     }
   }
@@ -74,5 +60,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/user/:path*", "/login", "/register"],
+  matcher: ["/user/:path*", "/admin/:path*", "/login", "/admin/login"],
 }
