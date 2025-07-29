@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(10)
+        .limit(20)
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -629,7 +629,7 @@ export default function AdminUsersPage() {
                                 {/* Transaction History */}
                                 <div>
                                   <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
-                                  <div className="mt-2">
+                                  <div className="mt-2 max-h-64 overflow-y-auto">
                                     <Table>
                                       <TableHeader>
                                         <TableRow>
