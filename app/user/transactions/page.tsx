@@ -1,233 +1,275 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, Search, Eye } from "lucide-react"
+import { Search, Download, Loader2 } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { transactionService } from "@/lib/database"
-import { AuthGuard } from "@/components/auth/auth-guard"
+
+interface Transaction {
+  id: string
+  transaction_id: string
+  send_amount: number
+  send_currency: string
+  receive_amount: number
+  receive_currency: string
+  status: string
+  created_at: string
+  recipient: {
+    full_name: string
+    account_number: string
+    bank_name: string
+  }
+}
 
 export default function UserTransactionsPage() {
+  const router = useRouter()
   const { userProfile } = useAuth()
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [currencyFilter, setCurrencyFilter] = useState("all")
 
   useEffect(() => {
-    const loadTransactions = async () => {
-      if (!userProfile?.id) return
-
-      try {
-        const userTransactions = await transactionService.getByUserId(userProfile.id)
-        setTransactions(userTransactions)
-      } catch (error) {
-        console.error("Error loading transactions:", error)
-      } finally {
-        setLoading(false)
-      }
+    if (userProfile?.id) {
+      loadTransactions()
     }
-
-    loadTransactions()
   }, [userProfile?.id])
 
-  const formatCurrency = (amount: number, currency: string) => {
-    const symbols: { [key: string]: string } = {
-      RUB: "₽",
-      NGN: "₦",
-      USD: "$",
-      EUR: "€",
-    }
-    return `${symbols[currency] || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
+  const loadTransactions = async () => {
+    if (!userProfile?.id) return
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "failed":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+    try {
+      setError(null)
+      const data = await transactionService.getByUserId(userProfile.id)
+      setTransactions(data || [])
+    } catch (err) {
+      console.error("Failed to load transactions:", err)
+      setError("Failed to load transactions. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
-      transaction.recipients?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.recipient?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesCurrency =
+      currencyFilter === "all" ||
+      transaction.send_currency === currencyFilter ||
+      transaction.receive_currency === currencyFilter
+
+    return matchesSearch && matchesStatus && matchesCurrency
   })
 
-  if (loading) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>
+      case "processing":
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Processing</Badge>
+      case "pending":
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Pending</Badge>
+      case "failed":
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Failed</Badge>
+      case "cancelled":
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>
+      default:
+        return <Badge variant="secondary">{status}</Badge>
+    }
+  }
+
+  const formatAmount = (amount: number, currency: string) => {
+    const symbols: { [key: string]: string } = {
+      NGN: "₦",
+      RUB: "₽",
+      USD: "$",
+      EUR: "€",
+    }
+    return `${symbols[currency] || currency}${amount.toLocaleString()}`
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
+
+  const handleExport = () => {
+    if (filteredTransactions.length === 0) {
+      alert("No transactions to export")
+      return
+    }
+
+    const csvContent = [
+      ["Transaction ID", "Date", "Recipient", "Send Amount", "Receive Amount", "Status"].join(","),
+      ...filteredTransactions.map((t) =>
+        [
+          t.transaction_id,
+          formatDate(t.created_at),
+          t.recipient?.full_name || "N/A",
+          `${formatAmount(t.send_amount, t.send_currency)}`,
+          `${formatAmount(t.receive_amount, t.receive_currency)}`,
+          t.status,
+        ].join(","),
+      ),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `novapay-transactions-${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const handleViewTransaction = (transactionId: string) => {
+    router.push(`/user/send/${transactionId.toLowerCase()}`)
+  }
+
+  if (!userProfile) {
     return (
-      <AuthGuard requireAuth={true}>
-        <UserDashboardLayout>
-          <div className="p-6">
-            <div className="max-w-6xl mx-auto">
-              <div className="animate-pulse space-y-6">
-                <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-                <div className="h-12 bg-gray-200 rounded"></div>
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
-                  ))}
-                </div>
-              </div>
-            </div>
+      <UserDashboardLayout>
+        <div className="p-6 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Loading user profile...</p>
           </div>
-        </UserDashboardLayout>
-      </AuthGuard>
+        </div>
+      </UserDashboardLayout>
     )
   }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <UserDashboardLayout>
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-                <p className="text-gray-600">View and manage your money transfers</p>
+    <UserDashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
+            <p className="text-gray-600">View and manage your money transfers</p>
+          </div>
+          <Button onClick={handleExport} variant="outline" disabled={filteredTransactions.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                <ArrowUpRight className="h-4 w-4 mr-2" />
-                Send Money
-              </Button>
+              <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Currency</SelectItem>
+                    <SelectItem value="NGN">NGN</SelectItem>
+                    <SelectItem value="RUB">RUB</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            {/* Filters */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search by recipient name or transaction ID"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={statusFilter === "all" ? "default" : "outline"}
-                      onClick={() => setStatusFilter("all")}
-                      size="sm"
-                    >
-                      All
-                    </Button>
-                    <Button
-                      variant={statusFilter === "pending" ? "default" : "outline"}
-                      onClick={() => setStatusFilter("pending")}
-                      size="sm"
-                    >
-                      Pending
-                    </Button>
-                    <Button
-                      variant={statusFilter === "completed" ? "default" : "outline"}
-                      onClick={() => setStatusFilter("completed")}
-                      size="sm"
-                    >
-                      Completed
-                    </Button>
-                    <Button
-                      variant={statusFilter === "failed" ? "default" : "outline"}
-                      onClick={() => setStatusFilter("failed")}
-                      size="sm"
-                    >
-                      Failed
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Transactions List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Transaction History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredTransactions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <ArrowUpRight className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
-                    <p className="text-gray-600 mb-4">
-                      {searchTerm || statusFilter !== "all"
-                        ? "Try adjusting your search or filter criteria"
-                        : "Start by sending your first money transfer"}
-                    </p>
-                    <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                      <ArrowUpRight className="h-4 w-4 mr-2" />
-                      Send Money
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
+          </CardHeader>
+          <CardContent>
+            {error ? (
+              <div className="text-center py-8">
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={loadTransactions} variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Transaction ID</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Recipient</TableHead>
+                      <TableHead>Send Amount</TableHead>
+                      <TableHead>Receive Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredTransactions.map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                            <ArrowUpRight className="h-6 w-6 text-novapay-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              To {transaction.recipients?.full_name || "Unknown Recipient"}
-                            </p>
-                            <p className="text-sm text-gray-600">ID: {transaction.transaction_id}</p>
-                            <p className="text-sm text-gray-600">
-                              {new Date(transaction.created_at).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-2 mb-2">
-                            <p className="font-medium text-gray-900">
-                              {formatCurrency(transaction.send_amount, transaction.send_currency)}
-                            </p>
-                            <span className="text-gray-400">→</span>
-                            <p className="font-medium text-gray-900">
-                              {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusColor(transaction.status)}>
-                              {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                            </Badge>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
+                        <TableCell>{formatDate(transaction.created_at)}</TableCell>
+                        <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
+                        <TableCell className="font-semibold">
+                          {formatAmount(transaction.send_amount, transaction.send_currency)}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewTransaction(transaction.transaction_id)}
+                            className="bg-transparent"
+                          >
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+                {filteredTransactions.length === 0 && !loading && (
+                  <div className="text-center py-8 text-gray-500">
+                    {transactions.length === 0
+                      ? "No transactions found. Start by sending money to create your first transaction."
+                      : "No transactions found matching your criteria."}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    </AuthGuard>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </UserDashboardLayout>
   )
 }
