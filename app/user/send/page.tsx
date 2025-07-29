@@ -30,9 +30,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/lib/auth-context"
 import type { Currency, ExchangeRate } from "@/types"
 
-// Add these imports at the top
-import { useSearchParams } from "next/navigation"
-
 export default function UserSendPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
@@ -83,13 +80,7 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // Add this state for tracking data loading
-  const [dataLoaded, setDataLoaded] = useState(false)
-
-  // Get URL parameters
-  const searchParams = useSearchParams()
-
-  // Update the data loading useEffect to fix the reload issue
+  // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
       if (!userProfile?.id) return
@@ -110,49 +101,27 @@ export default function UserSendPage() {
         setRecipients(recipientsData || [])
         setPaymentMethods(paymentMethodsData || [])
 
-        // Handle URL parameters for currency selection
-        const urlSendCurrency = searchParams.get("sendCurrency")
-        const urlReceiveCurrency = searchParams.get("receiveCurrency")
-        const urlSendAmount = searchParams.get("sendAmount")
-        const urlStep = searchParams.get("step")
-
-        if (urlSendCurrency && urlReceiveCurrency && currenciesData) {
-          // Validate currencies exist in the data
-          const sendCurrencyExists = currenciesData.find((c) => c.code === urlSendCurrency)
-          const receiveCurrencyExists = currenciesData.find((c) => c.code === urlReceiveCurrency)
-
-          if (sendCurrencyExists && receiveCurrencyExists) {
-            setSendCurrency(urlSendCurrency)
-            setReceiveCurrency(urlReceiveCurrency)
-
-            if (urlSendAmount) {
-              setSendAmount(urlSendAmount)
-            }
-
-            if (urlStep) {
-              setCurrentStep(Number.parseInt(urlStep))
-            }
-          }
-        } else if (currenciesData && currenciesData.length > 0) {
-          // Set default currencies if no URL params
+        // Set default currencies if available
+        if (currenciesData && currenciesData.length > 0) {
+          // Set user's base currency as default send currency, or first available
           const userBaseCurrency = userProfile.base_currency || "NGN"
           const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
 
           if (baseCurrencyExists) {
             setSendCurrency(userBaseCurrency)
+            // Set receive currency to a different one
             const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
             if (otherCurrency) {
               setReceiveCurrency(otherCurrency.code)
             }
           } else {
+            // Fallback to first two currencies
             setSendCurrency(currenciesData[0].code)
             if (currenciesData.length > 1) {
               setReceiveCurrency(currenciesData[1].code)
             }
           }
         }
-
-        setDataLoaded(true)
       } catch (error) {
         console.error("Error loading data:", error)
         setError("Failed to load data. Please refresh the page.")
@@ -161,19 +130,8 @@ export default function UserSendPage() {
       }
     }
 
-    // Always load data when userProfile changes or when component mounts
     loadData()
-  }, [userProfile?.id, userProfile?.base_currency, searchParams])
-
-  // Add a separate useEffect to clear URL params after they're processed
-  useEffect(() => {
-    if (dataLoaded && searchParams.get("sendCurrency")) {
-      // Clear URL params after processing to avoid issues with navigation
-      const url = new URL(window.location.href)
-      url.search = ""
-      window.history.replaceState({}, "", url.toString())
-    }
-  }, [dataLoaded, searchParams])
+  }, [userProfile?.id, userProfile?.base_currency])
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
