@@ -415,7 +415,6 @@ export default function AdminDashboardPage() {
                     <TableHead>Currency Pair</TableHead>
                     <TableHead>Volume %</TableHead>
                     <TableHead>Transactions</TableHead>
-                    <TableHead>Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -431,7 +430,6 @@ export default function AdminDashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell>{item.transactions}</TableCell>
-                      <TableCell>${item.revenue.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
