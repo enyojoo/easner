@@ -80,7 +80,7 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // Handle URL parameters from home page conversion - run this first
+  // Handle URL parameters from home page conversion - run this first and set initial state
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const step = urlParams.get("step")
@@ -91,7 +91,18 @@ export default function UserSendPage() {
     const urlExchangeRate = urlParams.get("exchangeRate")
     const urlFee = urlParams.get("fee")
 
+    console.log("URL Params:", {
+      step,
+      urlSendAmount,
+      urlSendCurrency,
+      urlReceiveCurrency,
+      urlReceiveAmount,
+      urlExchangeRate,
+      urlFee,
+    })
+
     if (step && urlSendAmount && urlSendCurrency && urlReceiveCurrency) {
+      console.log("Setting state from URL params")
       setSendAmount(urlSendAmount)
       setSendCurrency(urlSendCurrency)
       setReceiveCurrency(urlReceiveCurrency)
@@ -134,16 +145,16 @@ export default function UserSendPage() {
         setRecipients(recipientsData || [])
         setPaymentMethods(paymentMethodsData || [])
 
-        // Only set default currencies if no URL parameters are present
-        const urlParams = new URLSearchParams(window.location.search)
-        const hasUrlParams = urlParams.get("sendCurrency") && urlParams.get("receiveCurrency")
-
-        if (!hasUrlParams && currenciesData && currenciesData.length > 0) {
+        // Only set default currencies if they haven't been set from URL parameters
+        if (!sendCurrency && !receiveCurrency && currenciesData && currenciesData.length > 0) {
+          console.log("Setting default currencies")
           // Set first two different currencies as defaults
           setSendCurrency(currenciesData[0].code)
           if (currenciesData.length > 1) {
             setReceiveCurrency(currenciesData[1].code)
           }
+        } else {
+          console.log("Currencies already set:", { sendCurrency, receiveCurrency })
         }
       } catch (error) {
         console.error("Error loading data:", error)
@@ -154,7 +165,7 @@ export default function UserSendPage() {
     }
 
     loadData()
-  }, [userProfile?.id])
+  }, [userProfile?.id, sendCurrency, receiveCurrency])
 
   // Add this useEffect after the existing data loading useEffect
 
