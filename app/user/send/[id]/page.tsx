@@ -338,25 +338,6 @@ export default function TransactionStatusPage() {
                     <p className="text-gray-600">{statusMessage.description}</p>
                   </div>
 
-                  {/* Progress Steps */}
-                  <div className="space-y-4">
-                    {statusSteps.map((step) => (
-                      <div key={step.id} className="flex items-center space-x-3">
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center ${getStatusColor(
-                            step,
-                            transaction.status,
-                          )}`}
-                        >
-                          {step.icon}
-                        </div>
-                        <span className={`font-medium ${getStatusTextColor(step, transaction.status)}`}>
-                          {step.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Status Information */}
                   <div
                     className={`rounded-lg p-4 ${
@@ -390,7 +371,6 @@ export default function TransactionStatusPage() {
                       </span>
                     </div>
                   </div>
-
 
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
