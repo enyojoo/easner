@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
       setUsers(usersWithStats)
     } catch (err) {
       console.error("Error fetching users:", err)
-      setError("Failed to load users")
+      setError(err instanceof Error ? err.message : "Failed to fetch users")
     } finally {
       setLoading(false)
     }
@@ -626,57 +626,52 @@ export default function AdminUsersPage() {
                                             </TableRow>
                                           </TableHeader>
                                           <TableBody>
-                                            {userTransactions.length > 0 ? (
-                                              userTransactions.map((transaction) => (
-                                                <TableRow key={transaction.id}>
-                                                  <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
-                                                  <TableCell>
-                                                    {new Date(transaction.created_at).toLocaleDateString()}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    {transaction.from_currency} → {transaction.to_currency}
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    <div>
-                                                      <div className="font-medium">
-                                                        {formatCurrency(
-                                                          transaction.send_amount,
-                                                          transaction.from_currency,
-                                                        )}
-                                                      </div>
-                                                      <div className="text-sm text-gray-500">
-                                                        →{" "}
-                                                        {formatCurrency(
-                                                          transaction.receive_amount,
-                                                          transaction.to_currency,
-                                                        )}
-                                                      </div>
+                                            {userTransactions.map((transaction) => (
+                                              <TableRow key={transaction.id}>
+                                                <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
+                                                <TableCell>
+                                                  {new Date(transaction.created_at).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                  {transaction.from_currency} → {transaction.to_currency}
+                                                </TableCell>
+                                                <TableCell>
+                                                  <div>
+                                                    <div className="font-medium">
+                                                      {formatCurrency(
+                                                        transaction.send_amount,
+                                                        transaction.from_currency,
+                                                      )}
                                                     </div>
-                                                  </TableCell>
-                                                  <TableCell>
-                                                    <Badge
-                                                      className={
-                                                        transaction.status === "completed"
-                                                          ? "bg-green-100 text-green-800"
-                                                          : transaction.status === "processing"
-                                                            ? "bg-yellow-100 text-yellow-800"
-                                                            : "bg-red-100 text-red-800"
-                                                      }
-                                                    >
-                                                      {transaction.status}
-                                                    </Badge>
-                                                  </TableCell>
-                                                </TableRow>
-                                              ))
-                                            ) : (
-                                              <TableRow>
-                                                <TableCell colSpan={5} className="text-center text-gray-500">
-                                                  No transactions found
+                                                    <div className="text-sm text-gray-500">
+                                                      →{" "}
+                                                      {formatCurrency(
+                                                        transaction.receive_amount,
+                                                        transaction.to_currency,
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                  <Badge
+                                                    className={
+                                                      transaction.status === "completed"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : transaction.status === "processing"
+                                                          ? "bg-yellow-100 text-yellow-800"
+                                                          : "bg-red-100 text-red-800"
+                                                    }
+                                                  >
+                                                    {transaction.status}
+                                                  </Badge>
                                                 </TableCell>
                                               </TableRow>
-                                            )}
+                                            ))}
                                           </TableBody>
                                         </Table>
+                                        {userTransactions.length === 0 && (
+                                          <div className="text-center py-8 text-gray-500">No transactions found</div>
+                                        )}
                                       </ScrollArea>
                                     )}
                                   </div>
