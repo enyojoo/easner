@@ -166,7 +166,8 @@ const AdminRatesPage = () => {
       const currency = currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
-      const newStatus = currency.status === "active" ? "inactive" : "active"
+      // Use 'suspended' instead of 'inactive' to match the database constraint
+      const newStatus = currency.status === "active" ? "suspended" : "active"
 
       const { error } = await supabase
         .from("currencies")
