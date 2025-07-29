@@ -80,62 +80,8 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // Load data from Supabase
+  // Handle URL parameters from home page conversion - run this first
   useEffect(() => {
-    const loadData = async () => {
-      if (!userProfile?.id) return
-
-      try {
-        setLoading(true)
-        setError(null)
-
-        const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
-          currencyService.getAll(),
-          currencyService.getExchangeRates(),
-          recipientService.getByUserId(userProfile.id),
-          paymentMethodService.getAll(),
-        ])
-
-        setCurrencies(currenciesData || [])
-        setExchangeRates(ratesData || [])
-        setRecipients(recipientsData || [])
-        setPaymentMethods(paymentMethodsData || [])
-
-        // Set default currencies if available
-        if (currenciesData && currenciesData.length > 0) {
-          // Set user's base currency as default send currency, or first available
-          const userBaseCurrency = userProfile.base_currency || "NGN"
-          const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
-
-          if (baseCurrencyExists) {
-            setSendCurrency(userBaseCurrency)
-            // Set receive currency to a different one
-            const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
-            if (otherCurrency) {
-              setReceiveCurrency(otherCurrency.code)
-            }
-          } else {
-            // Fallback to first two currencies
-            setSendCurrency(currenciesData[0].code)
-            if (currenciesData.length > 1) {
-              setReceiveCurrency(currenciesData[1].code)
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error loading data:", error)
-        setError("Failed to load data. Please refresh the page.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadData()
-  }, [userProfile?.id, userProfile?.base_currency])
-
-  // Add this useEffect after the existing data loading useEffect
-  useEffect(() => {
-    // Handle URL parameters from home page conversion
     const urlParams = new URLSearchParams(window.location.search)
     const step = urlParams.get("step")
     const urlSendAmount = urlParams.get("sendAmount")
@@ -165,7 +111,52 @@ export default function UserSendPage() {
       // Clear URL parameters after setting state
       window.history.replaceState({}, "", "/user/send")
     }
-  }, [])
+  }, []) // Run only once on mount
+
+  // Load data from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      if (!userProfile?.id) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
+          currencyService.getAll(),
+          currencyService.getExchangeRates(),
+          recipientService.getByUserId(userProfile.id),
+          paymentMethodService.getAll(),
+        ])
+
+        setCurrencies(currenciesData || [])
+        setExchangeRates(ratesData || [])
+        setRecipients(recipientsData || [])
+        setPaymentMethods(paymentMethodsData || [])
+
+        // Only set default currencies if no URL parameters are present
+        const urlParams = new URLSearchParams(window.location.search)
+        const hasUrlParams = urlParams.get("sendCurrency") && urlParams.get("receiveCurrency")
+
+        if (!hasUrlParams && currenciesData && currenciesData.length > 0) {
+          // Set first two different currencies as defaults
+          setSendCurrency(currenciesData[0].code)
+          if (currenciesData.length > 1) {
+            setReceiveCurrency(currenciesData[1].code)
+          }
+        }
+      } catch (error) {
+        console.error("Error loading data:", error)
+        setError("Failed to load data. Please refresh the page.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [userProfile?.id])
+
+  // Add this useEffect after the existing data loading useEffect
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
