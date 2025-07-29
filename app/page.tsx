@@ -1,8 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { PublicHeader } from "@/components/layout/public-header"
-import { CurrencyConverter } from "@/components/currency-converter"
+import PublicHeader from "@/components/layout/public-header"
+import CurrencyConverter from "@/components/currency-converter"
 import { useAuth } from "@/lib/auth-context"
 
 export default function HomePage() {
