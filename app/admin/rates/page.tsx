@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,52 +9,13 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, MoreHorizontal, Edit, Pause, Trash2 } from "lucide-react"
-
-// Mock currencies data with exchange rates
-const mockCurrencies = [
-  {
-    id: "RUB",
-    code: "RUB",
-    name: "Russian Ruble",
-    symbol: "₽",
-    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(16 24)" fill="#c53a28"></path></svg>`,
-    status: "active",
-    createdAt: "2024-01-01",
-    rates: [
-      {
-        toCurrency: "NGN",
-        rate: 22.45,
-        feeType: "free",
-        feeAmount: 0,
-        minAmount: 100,
-        maxAmount: 500000,
-      },
-    ],
-  },
-  {
-    id: "NGN",
-    code: "NGN",
-    name: "Nigerian Naira",
-    symbol: "₦",
-    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path><path d="M27,4H5c-2.209,0-4,1.791-4,4V24c0,2.209,1.791,4,4,4H27c2.209,0,4-1.791,4-4V8c0-2.209-1.791-4-4-4Zm3,20c0,1.654-1.346,3-3,3H5c-1.654,0-3-1.346-3-3V8c0-1.654,1.346-3,3-3H27c1.657,0,3,1.346,3,3V24Z" opacity=".15"></path><path d="M27,5H5c-1.657,0-3,1.343-3,3v1c0-1.657,1.343-3,3-3H27c1.657,0,3,1.343,3,3v-1c0-1.657-1.343-3-3-3Z" fill="#fff" opacity=".2"></path></svg>`,
-    status: "active",
-    createdAt: "2024-01-01",
-    rates: [
-      {
-        toCurrency: "RUB",
-        rate: 0.0445,
-        feeType: "percentage",
-        feeAmount: 1.5,
-        minAmount: 1000,
-        maxAmount: 10000000,
-      },
-    ],
-  },
-]
+import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 const AdminRatesPage = () => {
-  const [currencies, setCurrencies] = useState(mockCurrencies)
+  const [currencies, setCurrencies] = useState<any[]>([])
+  const [exchangeRates, setExchangeRates] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
@@ -62,115 +23,216 @@ const AdminRatesPage = () => {
     code: "",
     name: "",
     symbol: "",
-    flag: "",
+    flag_svg: "",
   })
   const [rateUpdates, setRateUpdates] = useState<any>({})
+  const [saving, setSaving] = useState(false)
 
-  const handleAddCurrency = () => {
-    const newCurrency = {
-      id: newCurrencyData.code.toUpperCase(),
-      code: newCurrencyData.code.toUpperCase(),
-      name: newCurrencyData.name,
-      symbol: newCurrencyData.symbol,
-      flag:
-        newCurrencyData.flag ||
-        `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
-      status: "active",
-      createdAt: new Date().toISOString().split("T")[0],
-      rates: currencies.map((currency) => ({
-        toCurrency: currency.code,
-        rate: 1,
-        feeType: "free",
-        feeAmount: 0,
-        minAmount: 10,
-        maxAmount: 1000000,
-      })),
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [currenciesData, ratesData] = await Promise.all([loadCurrencies(), loadExchangeRates()])
+      setCurrencies(currenciesData)
+      setExchangeRates(ratesData)
+    } catch (error) {
+      console.error("Error loading data:", error)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    // Add rates for existing currencies to include the new currency
-    const updatedCurrencies = currencies.map((currency) => ({
-      ...currency,
-      rates: [
-        ...currency.rates,
-        {
-          toCurrency: newCurrency.code,
+  const loadCurrencies = async () => {
+    const { data, error } = await supabase.from("currencies").select("*").order("code")
+
+    if (error) throw error
+    return data || []
+  }
+
+  const loadExchangeRates = async () => {
+    const { data, error } = await supabase.from("exchange_rates").select(`
+        *,
+        from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+        to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+      `)
+
+    if (error) throw error
+    return data || []
+  }
+
+  const handleAddCurrency = async () => {
+    try {
+      setSaving(true)
+      const { data, error } = await supabase
+        .from("currencies")
+        .insert({
+          code: newCurrencyData.code.toUpperCase(),
+          name: newCurrencyData.name,
+          symbol: newCurrencyData.symbol,
+          flag_svg:
+            newCurrencyData.flag_svg ||
+            `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
+          status: "active",
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Create default exchange rates for the new currency
+      const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
+      const newRates = []
+
+      // Add rates FROM new currency TO existing currencies
+      for (const currency of existingCurrencies) {
+        newRates.push({
+          from_currency: newCurrencyData.code.toUpperCase(),
+          to_currency: currency.code,
           rate: 1,
-          feeType: "free",
-          feeAmount: 0,
-          minAmount: 10,
-          maxAmount: 1000000,
-        },
-      ],
-    }))
+          fee_type: "free",
+          fee_amount: 0,
+          min_amount: 10,
+          max_amount: 1000000,
+          status: "active",
+        })
+      }
 
-    setCurrencies([...updatedCurrencies, newCurrency])
-    setNewCurrencyData({ code: "", name: "", symbol: "", flag: "" })
-    setIsAddingCurrency(false)
+      // Add rates FROM existing currencies TO new currency
+      for (const currency of existingCurrencies) {
+        newRates.push({
+          from_currency: currency.code,
+          to_currency: newCurrencyData.code.toUpperCase(),
+          rate: 1,
+          fee_type: "free",
+          fee_amount: 0,
+          min_amount: 10,
+          max_amount: 1000000,
+          status: "active",
+        })
+      }
+
+      if (newRates.length > 0) {
+        const { error: ratesError } = await supabase.from("exchange_rates").insert(newRates)
+
+        if (ratesError) throw ratesError
+      }
+
+      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
+      setIsAddingCurrency(false)
+      await loadData()
+    } catch (error) {
+      console.error("Error adding currency:", error)
+      alert("Failed to add currency")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleEditRates = (currency: any) => {
     setSelectedCurrency(currency)
+    const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
     const updates: any = {}
-    currency.rates.forEach((rate: any) => {
-      updates[rate.toCurrency] = {
+
+    currencyRates.forEach((rate: any) => {
+      updates[rate.to_currency] = {
         rate: rate.rate.toString(),
-        feeType: rate.feeType,
-        feeAmount: rate.feeAmount.toString(),
-        minAmount: rate.minAmount?.toString() || "0",
-        maxAmount: rate.maxAmount?.toString() || "1000000",
+        feeType: rate.fee_type,
+        feeAmount: rate.fee_amount.toString(),
+        minAmount: rate.min_amount?.toString() || "0",
+        maxAmount: rate.max_amount?.toString() || "1000000",
       }
     })
+
     setRateUpdates(updates)
     setIsEditingRates(true)
   }
 
-  const handleSaveRates = () => {
-    setCurrencies((prev) =>
-      prev.map((currency) =>
-        currency.id === selectedCurrency.id
-          ? {
-              ...currency,
-              rates: currency.rates.map((rate: any) => ({
-                ...rate,
-                rate: Number.parseFloat(rateUpdates[rate.toCurrency]?.rate || rate.rate),
-                feeType: rateUpdates[rate.toCurrency]?.feeType || rate.feeType,
-                feeAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.feeAmount || rate.feeAmount),
-                minAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0),
-                maxAmount: Number.parseFloat(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000),
-              })),
-            }
-          : currency,
-      ),
-    )
-    setIsEditingRates(false)
-    setSelectedCurrency(null)
-    setRateUpdates({})
+  const handleSaveRates = async () => {
+    try {
+      setSaving(true)
+      const updates = []
+
+      for (const [toCurrency, rateData] of Object.entries(rateUpdates)) {
+        const rateInfo = rateData as any
+        updates.push({
+          from_currency: selectedCurrency.code,
+          to_currency: toCurrency,
+          rate: Number.parseFloat(rateInfo.rate),
+          fee_type: rateInfo.feeType,
+          fee_amount: Number.parseFloat(rateInfo.feeAmount),
+          min_amount: Number.parseFloat(rateInfo.minAmount),
+          max_amount: Number.parseFloat(rateInfo.maxAmount),
+          status: "active",
+        })
+      }
+
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
+      })
+
+      if (error) throw error
+
+      setIsEditingRates(false)
+      setSelectedCurrency(null)
+      setRateUpdates({})
+      await loadData()
+    } catch (error) {
+      console.error("Error saving rates:", error)
+      alert("Failed to save rates")
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleSuspendCurrency = (currencyId: string) => {
-    setCurrencies((prev) =>
-      prev.map((currency) =>
-        currency.id === currencyId
-          ? { ...currency, status: currency.status === "active" ? "suspended" : "active" }
-          : currency,
-      ),
-    )
+  const handleSuspendCurrency = async (currencyId: string) => {
+    try {
+      const currency = currencies.find((c) => c.id === currencyId)
+      const newStatus = currency.status === "active" ? "inactive" : "active"
+
+      const { error } = await supabase.from("currencies").update({ status: newStatus }).eq("id", currencyId)
+
+      if (error) throw error
+
+      await loadData()
+    } catch (error) {
+      console.error("Error updating currency status:", error)
+      alert("Failed to update currency status")
+    }
   }
 
-  const handleDeleteCurrency = (currencyId: string) => {
+  const handleDeleteCurrency = async (currencyId: string) => {
     if (currencies.length <= 2) {
       alert("Cannot delete currency. At least 2 currencies are required.")
       return
     }
 
-    setCurrencies((prev) => {
-      const filtered = prev.filter((currency) => currency.id !== currencyId)
-      // Remove rates for deleted currency from other currencies
-      return filtered.map((currency) => ({
-        ...currency,
-        rates: currency.rates.filter((rate: any) => rate.toCurrency !== currencyId),
-      }))
-    })
+    if (!confirm("Are you sure you want to delete this currency? This will also delete all related exchange rates.")) {
+      return
+    }
+
+    try {
+      const currency = currencies.find((c) => c.id === currencyId)
+
+      // Delete exchange rates first
+      await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
+
+      await loadData()
+    } catch (error) {
+      console.error("Error deleting currency:", error)
+      alert("Failed to delete currency")
+    }
   }
 
   const updateRateField = (toCurrency: string, field: string, value: string) => {
@@ -181,6 +243,20 @@ const AdminRatesPage = () => {
         [field]: value,
       },
     }))
+  }
+
+  const getCurrencyRates = (currencyCode: string) => {
+    return exchangeRates.filter((rate) => rate.from_currency === currencyCode)
+  }
+
+  if (loading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminDashboardLayout>
+    )
   }
 
   return (
@@ -235,16 +311,17 @@ const AdminRatesPage = () => {
                   <Label htmlFor="currencyFlag">Flag SVG (Optional)</Label>
                   <Input
                     id="currencyFlag"
-                    value={newCurrencyData.flag}
-                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, flag: e.target.value })}
+                    value={newCurrencyData.flag_svg}
+                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, flag_svg: e.target.value })}
                     placeholder="SVG code for flag"
                   />
                 </div>
                 <Button
                   onClick={handleAddCurrency}
-                  disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol}
+                  disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol || saving}
                   className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
                 >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Add Currency
                 </Button>
               </div>
@@ -271,7 +348,7 @@ const AdminRatesPage = () => {
                   <TableRow key={currency.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                        <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
                         <span className="font-medium">{currency.name}</span>
                       </div>
                     </TableCell>
@@ -286,7 +363,7 @@ const AdminRatesPage = () => {
                         {currency.status === "active" ? "Active" : "Suspended"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{currency.createdAt}</TableCell>
+                    <TableCell>{new Date(currency.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -326,12 +403,12 @@ const AdminRatesPage = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              {selectedCurrency?.rates.map((rate: any) => (
-                <div key={rate.toCurrency} className="border rounded-lg p-4 space-y-4">
+              {getCurrencyRates(selectedCurrency?.code || "").map((rate: any) => (
+                <div key={rate.to_currency} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <span>{selectedCurrency.code}</span>
                     <span>→</span>
-                    <span>{rate.toCurrency}</span>
+                    <span>{rate.to_currency}</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -340,8 +417,8 @@ const AdminRatesPage = () => {
                       <Input
                         type="number"
                         step="0.0001"
-                        value={rateUpdates[rate.toCurrency]?.rate || rate.rate}
-                        onChange={(e) => updateRateField(rate.toCurrency, "rate", e.target.value)}
+                        value={rateUpdates[rate.to_currency]?.rate || rate.rate}
+                        onChange={(e) => updateRateField(rate.to_currency, "rate", e.target.value)}
                         placeholder="0.0000"
                       />
                     </div>
@@ -349,8 +426,8 @@ const AdminRatesPage = () => {
                     <div className="space-y-2">
                       <Label>Fee Type</Label>
                       <select
-                        value={rateUpdates[rate.toCurrency]?.feeType || rate.feeType}
-                        onChange={(e) => updateRateField(rate.toCurrency, "feeType", e.target.value)}
+                        value={rateUpdates[rate.to_currency]?.feeType || rate.fee_type}
+                        onChange={(e) => updateRateField(rate.to_currency, "feeType", e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-md"
                       >
                         <option value="free">Free</option>
@@ -362,19 +439,21 @@ const AdminRatesPage = () => {
                     <div className="space-y-2">
                       <Label>
                         Fee Amount{" "}
-                        {(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage"
+                        {(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage"
                           ? "(%)"
                           : `(${selectedCurrency.code})`}
                       </Label>
                       <Input
                         type="number"
-                        step={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "0.1" : "0.01"}
-                        value={rateUpdates[rate.toCurrency]?.feeAmount || rate.feeAmount}
-                        onChange={(e) => updateRateField(rate.toCurrency, "feeAmount", e.target.value)}
-                        placeholder={
-                          (rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "1.5" : "10.00"
+                        step={
+                          (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "0.1" : "0.01"
                         }
-                        disabled={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "free"}
+                        value={rateUpdates[rate.to_currency]?.feeAmount || rate.fee_amount}
+                        onChange={(e) => updateRateField(rate.to_currency, "feeAmount", e.target.value)}
+                        placeholder={
+                          (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "1.5" : "10.00"
+                        }
+                        disabled={(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "free"}
                       />
                     </div>
 
@@ -383,8 +462,8 @@ const AdminRatesPage = () => {
                       <Input
                         type="number"
                         step="1"
-                        value={rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0}
-                        onChange={(e) => updateRateField(rate.toCurrency, "minAmount", e.target.value)}
+                        value={rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0}
+                        onChange={(e) => updateRateField(rate.to_currency, "minAmount", e.target.value)}
                         placeholder="100"
                       />
                     </div>
@@ -394,8 +473,8 @@ const AdminRatesPage = () => {
                       <Input
                         type="number"
                         step="1"
-                        value={rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000}
-                        onChange={(e) => updateRateField(rate.toCurrency, "maxAmount", e.target.value)}
+                        value={rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000}
+                        onChange={(e) => updateRateField(rate.to_currency, "maxAmount", e.target.value)}
                         placeholder="1000000"
                       />
                     </div>
@@ -406,24 +485,29 @@ const AdminRatesPage = () => {
                       <strong>Transaction Limits:</strong> Users can send between{" "}
                       <span className="font-medium">
                         {selectedCurrency.symbol}
-                        {(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0).toLocaleString()}
+                        {(rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0).toLocaleString()}
                       </span>{" "}
                       and{" "}
                       <span className="font-medium">
                         {selectedCurrency.symbol}
-                        {(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000).toLocaleString()}
+                        {(rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000).toLocaleString()}
                       </span>{" "}
-                      when converting from {selectedCurrency.code} to {rate.toCurrency}
+                      when converting from {selectedCurrency.code} to {rate.to_currency}
                     </p>
                   </div>
                 </div>
               ))}
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditingRates(false)}>
+                <Button variant="outline" onClick={() => setIsEditingRates(false)} disabled={saving}>
                   Cancel
                 </Button>
-                <Button onClick={handleSaveRates} className="bg-novapay-primary hover:bg-novapay-primary-600">
+                <Button
+                  onClick={handleSaveRates}
+                  className="bg-novapay-primary hover:bg-novapay-primary-600"
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Save Changes
                 </Button>
               </div>
