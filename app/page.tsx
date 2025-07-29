@@ -21,22 +21,24 @@ export default function HomePage() {
       if (isAdmin) {
         router.push("/admin/dashboard")
       } else {
-        // User is logged in, go to send page step 2 with data
+        // User is logged in, go to send page with currency data
         const params = new URLSearchParams({
-          sendAmount: data.sendAmount,
           sendCurrency: data.sendCurrency,
           receiveCurrency: data.receiveCurrency,
-          receiveAmount: data.receiveAmount.toString(),
-          exchangeRate: data.exchangeRate.toString(),
-          fee: data.fee.toString(),
-          step: "2",
+          sendAmount: data.sendAmount,
         })
         router.push(`/user/send?${params.toString()}`)
       }
     } else {
-      // User is not logged in, store data and redirect to login
-      sessionStorage.setItem("redirectAfterLogin", "/user/send")
-      sessionStorage.setItem("conversionData", JSON.stringify(data))
+      // User is not logged in, store data in sessionStorage and redirect to login
+      sessionStorage.setItem(
+        "pendingSendData",
+        JSON.stringify({
+          sendCurrency: data.sendCurrency,
+          receiveCurrency: data.receiveCurrency,
+          sendAmount: data.sendAmount,
+        }),
+      )
       router.push("/login")
     }
   }
