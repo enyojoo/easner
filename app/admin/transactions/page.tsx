@@ -16,7 +16,6 @@ import {
   Filter,
   Eye,
   MoreHorizontal,
-  Calendar,
   CheckCircle,
   Clock,
   XCircle,
@@ -71,9 +70,7 @@ export default function AdminTransactionsPage() {
       }
 
       if (searchTerm) {
-        query = query.or(
-          `transaction_id.ilike.%${searchTerm}%,users.first_name.ilike.%${searchTerm}%,users.last_name.ilike.%${searchTerm}%,users.email.ilike.%${searchTerm}%`,
-        )
+        query = query.or(`transaction_id.ilike.%${searchTerm}%`)
       }
 
       const { data, error } = await query
@@ -90,22 +87,13 @@ export default function AdminTransactionsPage() {
   }
 
   const filteredTransactions = transactions.filter((transaction) => {
-    const matchesSearch =
-      !searchTerm ||
-      transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (transaction.user?.first_name + " " + transaction.user?.last_name)
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      transaction.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.recipient?.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
     const matchesCurrency =
       currencyFilter === "all" ||
       transaction.send_currency === currencyFilter ||
       transaction.receive_currency === currencyFilter
 
-    return matchesSearch && matchesStatus && matchesCurrency
+    return matchesStatus && matchesCurrency
   })
 
   const getStatusBadge = (status: string) => {
@@ -250,7 +238,7 @@ export default function AdminTransactionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -297,11 +285,6 @@ export default function AdminTransactionsPage() {
                   <SelectItem value="month">This Month</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Button variant="outline" className="w-full bg-transparent">
-                <Calendar className="h-4 w-4 mr-2" />
-                Custom Range
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -315,6 +298,9 @@ export default function AdminTransactionsPage() {
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("processing")}>
                     Mark as Processing
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("initiated")}>
+                    Mark as Initiated
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("completed")}>
                     Mark as Completed
@@ -518,6 +504,15 @@ export default function AdminTransactionsPage() {
                                         size="sm"
                                         variant="outline"
                                         onClick={() =>
+                                          handleStatusUpdate(selectedTransaction.transaction_id, "initiated")
+                                        }
+                                      >
+                                        Transfer Initiated
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
                                           handleStatusUpdate(selectedTransaction.transaction_id, "completed")
                                         }
                                       >
@@ -549,6 +544,11 @@ export default function AdminTransactionsPage() {
                                 onClick={() => handleStatusUpdate(transaction.transaction_id, "processing")}
                               >
                                 Payment Received
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusUpdate(transaction.transaction_id, "initiated")}
+                              >
+                                Transfer Initiated
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleStatusUpdate(transaction.transaction_id, "completed")}

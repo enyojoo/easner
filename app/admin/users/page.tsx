@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createClient } from "@supabase/supabase-js"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,103 +31,11 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-// Mock user data
-const mockUsers = [
-  {
-    id: "USR001",
-    name: "John Doe",
-    email: "john@email.com",
-    phone: "+1234567890",
-    registrationDate: "2024-01-10",
-    status: "active",
-    verificationStatus: "verified",
-    totalTransactions: 15,
-    totalVolume: "₦2,450,000",
-    lastActivity: "2024-01-15 14:30",
-    country: "Nigeria",
-    baseCurrency: "NGN",
-  },
-  {
-    id: "USR002",
-    name: "Alice Johnson",
-    email: "alice@email.com",
-    phone: "+1987654321",
-    registrationDate: "2024-01-08",
-    status: "active",
-    verificationStatus: "pending",
-    totalTransactions: 8,
-    totalVolume: "₽125,000",
-    lastActivity: "2024-01-15 13:45",
-    country: "Russia",
-    baseCurrency: "RUB",
-  },
-  {
-    id: "USR003",
-    name: "Mike Brown",
-    email: "mike@email.com",
-    phone: "+1122334455",
-    registrationDate: "2024-01-05",
-    status: "suspended",
-    verificationStatus: "verified",
-    totalTransactions: 3,
-    totalVolume: "₦450,000",
-    lastActivity: "2024-01-12 10:20",
-    country: "Nigeria",
-    baseCurrency: "NGN",
-  },
-  {
-    id: "USR004",
-    name: "Emma Wilson",
-    email: "emma@email.com",
-    phone: "+1555666777",
-    registrationDate: "2024-01-12",
-    status: "active",
-    verificationStatus: "rejected",
-    totalTransactions: 1,
-    totalVolume: "₽15,000",
-    lastActivity: "2024-01-14 16:15",
-    country: "Russia",
-    baseCurrency: "RUB",
-  },
-  {
-    id: "USR005",
-    name: "David Lee",
-    email: "david@email.com",
-    phone: "+1999888777",
-    registrationDate: "2024-01-14",
-    status: "active",
-    verificationStatus: "verified",
-    totalTransactions: 12,
-    totalVolume: "₦1,890,000",
-    lastActivity: "2024-01-15 09:30",
-    country: "Nigeria",
-    baseCurrency: "NGN",
-  },
-]
+// Initialize Supabase client
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
-// Mock user transactions for details view
-const mockUserTransactions = [
-  {
-    id: "NP1705123456789",
-    date: "2024-01-15 14:30",
-    fromCurrency: "RUB",
-    toCurrency: "NGN",
-    sendAmount: "₽2,000.00",
-    receiveAmount: "₦44,900.00",
-    status: "completed",
-    recipient: "Jane Smith",
-  },
-  {
-    id: "NP1705123456790",
-    date: "2024-01-14 13:45",
-    fromCurrency: "NGN",
-    toCurrency: "RUB",
-    sendAmount: "₦280,000.00",
-    receiveAmount: "₽12,444.00",
-    status: "processing",
-    recipient: "Bob Wilson",
-  },
-]
+// Remove mockUsers array and replace with empty array initially
+const initialUsers: any[] = []
 
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -135,7 +44,77 @@ export default function AdminUsersPage() {
   const [countryFilter, setCountryFilter] = useState("all")
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<any>(null)
-  const [users, setUsers] = useState(mockUsers)
+  const [users, setUsers] = useState(initialUsers)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [userTransactions, setUserTransactions] = useState<any[]>([])
+
+  // Add useEffect to fetch users from Supabase
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (usersError) throw usersError
+
+      // Transform the data to match the expected format
+      const transformedUsers =
+        usersData?.map((user) => ({
+          id: user.id,
+          name: user.full_name || "N/A",
+          email: user.email,
+          phone: user.phone || "N/A",
+          registrationDate: new Date(user.created_at).toISOString().split("T")[0],
+          status: user.status || "active",
+          verificationStatus: user.verification_status || "unverified",
+          totalTransactions: 0, // Will be calculated from transactions
+          totalVolume: "₦0.00",
+          lastActivity: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : "Never",
+          country: user.country || "N/A",
+          baseCurrency: user.base_currency || "NGN",
+        })) || []
+
+      // Fetch transaction counts and volumes for each user
+      for (const user of transformedUsers) {
+        const { data: transactions, error: transError } = await supabase
+          .from("transactions")
+          .select("amount, from_currency, status")
+          .eq("user_id", user.id)
+
+        if (!transError && transactions) {
+          user.totalTransactions = transactions.length
+
+          // Calculate total volume in NGN
+          const totalVolume = transactions
+            .filter((t) => t.status === "completed")
+            .reduce((sum, t) => {
+              const amount = Number.parseFloat(t.amount)
+              // Convert to NGN if needed (using 22.45 rate for RUB)
+              const amountInNGN = t.from_currency === "RUB" ? amount * 22.45 : amount
+              return sum + amountInNGN
+            }, 0)
+
+          user.totalVolume = `₦${totalVolume.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        }
+      }
+
+      setUsers(transformedUsers)
+    } catch (err) {
+      console.error("Error fetching users:", err)
+      setError(err instanceof Error ? err.message : "Failed to load users")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -201,23 +180,50 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleStatusUpdate = (userId: string, newStatus: string) => {
-    setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, status: newStatus } : user)))
-    if (selectedUser?.id === userId) {
-      setSelectedUser((prev) => ({ ...prev, status: newStatus }))
+  const handleStatusUpdate = async (userId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ status: newStatus }).eq("id", userId)
+
+      if (error) throw error
+
+      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, status: newStatus } : user)))
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev) => ({ ...prev, status: newStatus }))
+      }
+    } catch (err) {
+      console.error("Error updating user status:", err)
+      alert("Failed to update user status")
     }
   }
 
-  const handleVerificationUpdate = (userId: string, newStatus: string) => {
-    setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, verificationStatus: newStatus } : user)))
-    if (selectedUser?.id === userId) {
-      setSelectedUser((prev) => ({ ...prev, verificationStatus: newStatus }))
+  const handleVerificationUpdate = async (userId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ verification_status: newStatus }).eq("id", userId)
+
+      if (error) throw error
+
+      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, verificationStatus: newStatus } : user)))
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev) => ({ ...prev, verificationStatus: newStatus }))
+      }
+    } catch (err) {
+      console.error("Error updating verification status:", err)
+      alert("Failed to update verification status")
     }
   }
 
-  const handleBulkStatusUpdate = (newStatus: string) => {
-    setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
-    setSelectedUsers([])
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    try {
+      const { error } = await supabase.from("users").update({ status: newStatus }).in("id", selectedUsers)
+
+      if (error) throw error
+
+      setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
+      setSelectedUsers([])
+    } catch (err) {
+      console.error("Error updating user statuses:", err)
+      alert("Failed to update user statuses")
+    }
   }
 
   const handleExport = () => {
@@ -242,6 +248,37 @@ export default function AdminUsersPage() {
     activeUsers: users.filter((u) => u.status === "active").length,
     verifiedUsers: users.filter((u) => u.verificationStatus === "verified").length,
     newThisWeek: users.filter((u) => new Date(u.registrationDate) > new Date("2024-01-08")).length,
+  }
+
+  // Add this function to fetch user transactions
+  const fetchUserTransactions = async (userId: string) => {
+    try {
+      const { data: transactions, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      if (error) throw error
+
+      const transformedTransactions =
+        transactions?.map((t) => ({
+          id: t.id,
+          date: new Date(t.created_at).toLocaleString(),
+          fromCurrency: t.from_currency,
+          toCurrency: t.to_currency,
+          sendAmount: `${t.from_currency === "RUB" ? "₽" : "₦"}${Number.parseFloat(t.amount).toLocaleString()}`,
+          receiveAmount: `${t.to_currency === "RUB" ? "₽" : "₦"}${Number.parseFloat(t.converted_amount).toLocaleString()}`,
+          status: t.status,
+          recipient: t.recipient_name || "N/A",
+        })) || []
+
+      setUserTransactions(transformedTransactions)
+    } catch (err) {
+      console.error("Error fetching user transactions:", err)
+      setUserTransactions([])
+    }
   }
 
   return (
@@ -373,6 +410,23 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
 
+        {/* Loading and Error States */}
+        {loading && (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-gray-500">Loading users...</div>
+            </CardContent>
+          </Card>
+        )}
+
+        {error && (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-red-500">Error loading users: {error}</div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Bulk Actions */}
         {selectedUsers.length > 0 && (
           <Card>
@@ -439,7 +493,14 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-2">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                fetchUserTransactions(user.id)
+                              }}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
@@ -536,7 +597,7 @@ export default function AdminUsersPage() {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {mockUserTransactions.map((transaction) => (
+                                        {userTransactions.map((transaction) => (
                                           <TableRow key={transaction.id}>
                                             <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
                                             <TableCell>{transaction.date}</TableCell>
@@ -556,7 +617,9 @@ export default function AdminUsersPage() {
                                                 className={
                                                   transaction.status === "completed"
                                                     ? "bg-green-100 text-green-800"
-                                                    : "bg-yellow-100 text-yellow-800"
+                                                    : transaction.status === "processing"
+                                                      ? "bg-yellow-100 text-yellow-800"
+                                                      : "bg-red-100 text-red-800"
                                                 }
                                               >
                                                 {transaction.status}
@@ -564,6 +627,13 @@ export default function AdminUsersPage() {
                                             </TableCell>
                                           </TableRow>
                                         ))}
+                                        {userTransactions.length === 0 && (
+                                          <TableRow>
+                                            <TableCell colSpan={5} className="text-center text-gray-500">
+                                              No transactions found
+                                            </TableCell>
+                                          </TableRow>
+                                        )}
                                       </TableBody>
                                     </Table>
                                   </div>
