@@ -18,7 +18,7 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { transactionService, userService } from "@/lib/database"
+import { transactionService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
 
 interface DashboardStats {
@@ -74,8 +74,19 @@ export default function AdminDashboardPage() {
       // Load transaction stats
       const transactionStats = await transactionService.getStats(timeRange)
 
-      // Load user stats
-      const userStats = await userService.getStats()
+      // Load user stats using server client to avoid 406 error
+      const { data: totalUsersData } = await supabase.from("users").select("id", { count: "exact", head: true })
+
+      const { data: activeUsersData } = await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active")
+
+      const userStats = {
+        total: totalUsersData?.length || 0,
+        active: activeUsersData?.length || 0,
+        verified: 0,
+      }
 
       // Load recent transactions for activity feed
       const { data: recentTransactions } = await supabase
@@ -121,11 +132,11 @@ export default function AdminDashboardPage() {
       // Process stats
       const formattedStats: DashboardStats = {
         transactions: transactionStats.totalTransactions,
-        transactionsChange: "", // Remove "+12%"
+        transactionsChange: "",
         volume: formatCurrency(totalVolumeInNGN, "NGN"),
-        volumeChange: "", // Remove "+8%"
+        volumeChange: "",
         users: userStats.total,
-        usersChange: "", // Remove "+5%"
+        usersChange: "",
         pending: transactionStats.pendingTransactions,
       }
 
