@@ -10,13 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const { signIn } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -29,21 +28,38 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      const { user, error: signInError } = await signIn(email, password)
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      if (user) {
-        // Check if this is an admin user
-        // For now, we'll check by email domain or specific emails
-        if (email.includes("admin@novapay.com") || email.includes("@admin.novapay.com")) {
-          router.push("/admin/dashboard")
-        } else {
+      if (data.user) {
+        // Check if user exists in admin_users table
+        const { data: adminUser, error: adminError } = await supabase
+          .from("admin_users")
+          .select("*")
+          .eq("id", data.user.id)
+          .single()
+
+        if (adminError || !adminUser) {
           setError("Access denied. Admin credentials required.")
+          await supabase.auth.signOut()
+          return
         }
+
+        // Check if admin account is active
+        if (adminUser.status !== "active") {
+          setError("Admin account is not active. Please contact support.")
+          await supabase.auth.signOut()
+          return
+        }
+
+        router.push("/admin/dashboard")
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
