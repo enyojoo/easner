@@ -161,7 +161,7 @@ export default function UserProfilePage() {
       }
 
       setIsEditingProfile(false)
-      alert("Profile updated successfully!")
+      // alert("Profile updated successfully!")
     } catch (error) {
       console.error("Error updating profile:", error)
       alert("Failed to update profile. Please try again.")
