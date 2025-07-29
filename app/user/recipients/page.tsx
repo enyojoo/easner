@@ -1,28 +1,18 @@
 "use client"
 
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import UserDashboardLayout from "@/components/layouts/user-dashboard-layout"
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Input,
-  Label,
-} from "@/components/ui"
-import { useAuth } from "@/hooks/use-auth"
-import { recipientService } from "@/services/recipient.service"
-import { currencies } from "@/utils/constants"
-import { Edit, Globe, Plus, Search, Trash2 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Plus, Edit, Trash2, Search, Globe } from "lucide-react"
+import { currencies } from "@/utils/currency"
+import { recipientService } from "@/lib/database"
+import { useAuth } from "@/lib/auth-context"
 
-function UserRecipientsContent() {
-  // All the existing component code stays exactly the same
+export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
   const [recipients, setRecipients] = useState([])
   const [loading, setLoading] = useState(false)
@@ -364,13 +354,5 @@ function UserRecipientsContent() {
         </Card>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function UserRecipientsPage() {
-  return (
-    <ProtectedRoute>
-      <UserRecipientsContent />
-    </ProtectedRoute>
   )
 }

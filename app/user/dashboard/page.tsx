@@ -1,15 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Send, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { useEffect, useState } from "react"
 import { transactionService, currencyService } from "@/lib/database"
 import { formatCurrency } from "@/utils/currency"
-import { ProtectedRoute } from "@/components/auth/protected-route"
 
 interface Transaction {
   id: string
@@ -23,7 +22,7 @@ interface Transaction {
   }
 }
 
-function UserDashboardContent() {
+export default function UserDashboardPage() {
   const { userProfile } = useAuth()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalSent, setTotalSent] = useState(0)
@@ -206,13 +205,5 @@ function UserDashboardContent() {
         </div>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function UserDashboardPage() {
-  return (
-    <ProtectedRoute>
-      <UserDashboardContent />
-    </ProtectedRoute>
   )
 }

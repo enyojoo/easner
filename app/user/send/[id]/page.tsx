@@ -1,19 +1,17 @@
 "use client"
 
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import UserDashboardLayout from "@/components/layouts/user-dashboard-layout"
+import { useState, useEffect } from "react"
+import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, Check, Clock, ExternalLink, XCircle } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useAuth } from "@/hooks/use-auth"
-import { transactionService } from "@/services/transaction"
+import { Progress } from "@/components/ui/progress"
+import { Check, Clock, ExternalLink, XCircle, AlertTriangle } from "lucide-react"
+import { useRouter, useParams } from "next/navigation"
+import { transactionService } from "@/lib/database"
+import { useAuth } from "@/lib/auth-context"
 import type { Transaction } from "@/types"
 
-function TransactionStatusContent() {
-  // All the existing component code stays exactly the same
+export default function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
   const { userProfile } = useAuth()
@@ -497,13 +495,5 @@ function TransactionStatusContent() {
         </div>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function TransactionStatusPage() {
-  return (
-    <ProtectedRoute>
-      <TransactionStatusContent />
-    </ProtectedRoute>
   )
 }

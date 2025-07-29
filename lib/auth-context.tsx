@@ -4,88 +4,138 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
-import { userService } from "./database"
 
 interface UserProfile {
   id: string
   email: string
-  first_name: string
-  last_name: string
-  phone: string
-  base_currency: string
-  created_at: string
-  updated_at: string
+  first_name?: string
+  last_name?: string
+  phone?: string
+  base_currency?: string
+  status?: string
+  verification_status?: string
+  created_at?: string
+  updated_at?: string
 }
 
 interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  register: (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-  ) => Promise<{ success: boolean; error?: string }>
-  logout: () => Promise<void>
+  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
+  signOut: () => Promise<void>
   refreshUserProfile: () => Promise<void>
+  isAdmin: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  userProfile: null,
+  loading: true,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+  refreshUserProfile: async () => {},
+  isAdmin: false,
+})
 
-const SESSION_DURATION = 60 * 60 * 1000 // 1 hour in milliseconds
-const SESSION_KEY = "novapay_session"
-const SESSION_EXPIRY_KEY = "novapay_session_expiry"
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  // Check if session is expired
-  const isSessionExpired = () => {
-    const expiry = localStorage.getItem(SESSION_EXPIRY_KEY)
-    if (!expiry) return true
-    return Date.now() > Number.parseInt(expiry)
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      // Try to fetch from users table first
+      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
+
+      if (userProfile && !userError) {
+        setUserProfile(userProfile)
+        setIsAdmin(false)
+        return userProfile
+      }
+
+      // If not found in users, check admin_users table
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("id", userId)
+        .single()
+
+      if (adminProfile && !adminError) {
+        setUserProfile(adminProfile)
+        setIsAdmin(true)
+        return adminProfile
+      }
+
+      return null
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      return null
+    }
   }
 
-  // Set session expiry
-  const setSessionExpiry = () => {
-    const expiry = Date.now() + SESSION_DURATION
-    localStorage.setItem(SESSION_EXPIRY_KEY, expiry.toString())
+  const refreshUserProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id)
+    }
   }
 
-  // Clear session
-  const clearSession = () => {
-    localStorage.removeItem(SESSION_KEY)
-    localStorage.removeItem(SESSION_EXPIRY_KEY)
-  }
-
-  // Check session expiry every minute
   useEffect(() => {
-    const checkSession = () => {
-      if (user && isSessionExpired()) {
-        logout()
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
-    const interval = setInterval(checkSession, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [user])
+    getInitialSession()
 
-  const refreshUserProfile = async () => {
-    if (!user) return
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      try {
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+        } else {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error("Error handling auth state change:", error)
+      } finally {
+        setLoading(false)
+      }
+    })
 
-    try {
-      const profile = await userService.getProfile(user.id)
-      setUserProfile(profile)
-    } catch (error) {
-      console.error("Error refreshing user profile:", error)
-    }
-  }
+    return () => subscription.unsubscribe()
+  }, [])
 
-  const login = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -93,148 +143,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        return { success: false, error: error.message }
+        return { error }
       }
 
-      if (data.user) {
-        setUser(data.user)
-        setSessionExpiry()
-        localStorage.setItem(SESSION_KEY, "active")
-
-        // Fetch user profile
-        const profile = await userService.getProfile(data.user.id)
-        setUserProfile(profile)
-      }
-
-      return { success: true }
+      // The auth state change listener will handle setting user and profile
+      return { error: null }
     } catch (error) {
-      return { success: false, error: "An unexpected error occurred" }
+      console.error("Sign in error:", error)
+      return { error }
     }
   }
 
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, userData: any) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            base_currency: userData.baseCurrency || "NGN",
+          },
+        },
       })
 
       if (error) {
-        return { success: false, error: error.message }
+        return { error }
       }
 
-      if (data.user) {
-        // Create user profile
-        await userService.createProfile(data.user.id, {
-          email,
-          firstName,
-          lastName,
-          phone: "",
-          baseCurrency: "NGN",
-        })
-
-        setUser(data.user)
-        setSessionExpiry()
-        localStorage.setItem(SESSION_KEY, "active")
-
-        // Fetch user profile
-        const profile = await userService.getProfile(data.user.id)
-        setUserProfile(profile)
-      }
-
-      return { success: true }
+      return { error: null }
     } catch (error) {
-      return { success: false, error: "An unexpected error occurred" }
+      console.error("Sign up error:", error)
+      return { error }
     }
   }
 
-  const logout = async () => {
+  const signOut = async () => {
     try {
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
-      clearSession()
+      setIsAdmin(false)
     } catch (error) {
-      console.error("Error during logout:", error)
+      console.error("Sign out error:", error)
     }
   }
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Check if session is expired
-        if (isSessionExpired()) {
-          clearSession()
-          setLoading(false)
-          return
-        }
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session?.user) {
-          setUser(session.user)
-          setSessionExpiry() // Refresh session expiry
-          localStorage.setItem(SESSION_KEY, "active")
-
-          // Fetch user profile
-          const profile = await userService.getProfile(session.user.id)
-          setUserProfile(profile)
-        } else {
-          clearSession()
-        }
-      } catch (error) {
-        console.error("Error initializing auth:", error)
-        clearSession()
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    initializeAuth()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
-        setUser(null)
-        setUserProfile(null)
-        clearSession()
-      } else if (session?.user) {
-        setUser(session.user)
-        setSessionExpiry()
-        localStorage.setItem(SESSION_KEY, "active")
-
-        try {
-          const profile = await userService.getProfile(session.user.id)
-          setUserProfile(profile)
-        } catch (error) {
-          console.error("Error fetching user profile:", error)
-        }
-      }
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
 
   const value = {
     user,
     userProfile,
     loading,
-    login,
-    register,
-    logout,
+    signIn,
+    signUp,
+    signOut,
     refreshUserProfile,
+    isAdmin,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
 }

@@ -1,39 +1,36 @@
 "use client"
 
 import type React from "react"
-
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import UserDashboardLayout from "@/components/layouts/user-dashboard-layout"
+import { useState, useEffect, useRef } from "react"
+import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import {
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  Plus,
-  Search,
-  Upload,
-  X,
-  ArrowLeft,
-  Check,
-  Clock,
-  AlertCircle,
-  QrCode,
-  Building2,
-} from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { useState, useEffect, useRef } from "react"
-import type { Currency, ExchangeRate } from "@/types"
-import { currencyService, recipientService, paymentMethodService, transactionService } from "@/services"
-import { useAuth } from "@/hooks/use-auth"
-import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
+import {
+  ChevronDown,
+  Upload,
+  Check,
+  Clock,
+  ArrowLeft,
+  Copy,
+  ChevronRight,
+  Plus,
+  Search,
+  QrCode,
+  Building2,
+  AlertCircle,
+  X,
+} from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
+import { useRouter } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAuth } from "@/lib/auth-context"
+import type { Currency, ExchangeRate } from "@/types"
 
-function UserSendContent() {
-  // All the existing component code stays exactly the same
+export default function UserSendPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
 
@@ -83,7 +80,6 @@ function UserSendContent() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // All the existing useEffect hooks and functions stay exactly the same
   // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
@@ -1336,13 +1332,5 @@ function UserSendContent() {
         </div>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function UserSendPage() {
-  return (
-    <ProtectedRoute>
-      <UserSendContent />
-    </ProtectedRoute>
   )
 }

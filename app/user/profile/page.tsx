@@ -1,22 +1,20 @@
 "use client"
 
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import UserDashboardLayout from "@/components/layouts/user-dashboard-layout"
+import { useState, useEffect } from "react"
+import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { currencies } from "@/lib/constants"
-import { useAuth } from "@/lib/hooks/use-auth"
-import { currencyService, transactionService, userService } from "@/services"
-import { Edit, Eye, EyeOff, Mail, Shield, User, X } from "lucide-react"
-import { useEffect, useState } from "react"
-import { supabase } from "@/supabase"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import { userService, transactionService, currencyService } from "@/lib/database"
+import { supabase } from "@/lib/supabase"
+import { currencies } from "@/utils/currency"
 
-function UserProfileContent() {
-  // All the existing component code stays exactly the same
+export default function UserProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
@@ -513,13 +511,5 @@ function UserProfileContent() {
         </div>
       </div>
     </UserDashboardLayout>
-  )
-}
-
-export default function UserProfilePage() {
-  return (
-    <ProtectedRoute>
-      <UserProfileContent />
-    </ProtectedRoute>
   )
 }
