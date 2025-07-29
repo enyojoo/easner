@@ -1,445 +1,403 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Search,
-  Download,
-  Filter,
-  Edit,
-  MoreHorizontal,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Trash2,
-} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { currencies } from "@/utils/currency"
-import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
-interface ExchangeRate {
-  id: string
-  from_currency: string
-  to_currency: string
-  rate: number
-  fee_type: string
-  fee_amount: number
-  status: string
-  created_at: string
-  updated_at: string
-  from_currency_info?: {
-    code: string
-    name: string
-    symbol: string
-    flag: string
-  }
-  to_currency_info?: {
-    code: string
-    name: string
-    symbol: string
-    flag: string
-  }
-}
-
-export default function AdminRatesPage() {
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingRates, setEditingRates] = useState<{ [key: string]: number }>({})
+const AdminRatesPage = () => {
+  const [currencies, setCurrencies] = useState<any[]>([])
+  const [exchangeRates, setExchangeRates] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
+  const [isEditingRates, setIsEditingRates] = useState(false)
+  const [isAddingCurrency, setIsAddingCurrency] = useState(false)
+  const [newCurrencyData, setNewCurrencyData] = useState({
+    code: "",
+    name: "",
+    symbol: "",
+    flag_svg: "",
+  })
+  const [rateUpdates, setRateUpdates] = useState<any>({})
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadExchangeRates()
-
-    // Set up auto-refresh
-    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.EXCHANGE_RATES, fetchExchangeRates, 5 * 60 * 1000)
-
-    return () => {
-      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-    }
+    loadData()
   }, [])
 
-  const fetchExchangeRates = async (): Promise<ExchangeRate[]> => {
-    const { data, error } = await supabase
-      .from("exchange_rates")
-      .select(`
-        *,
-        from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol, flag_svg),
-        to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol, flag_svg)
-      `)
-      .order("from_currency", { ascending: true })
-
-    if (error) throw error
-
-    // Map flag_svg to flag for frontend compatibility
-    const rates =
-      data?.map((rate) => ({
-        ...rate,
-        from_currency_info: rate.from_currency_info
-          ? {
-              ...rate.from_currency_info,
-              flag: rate.from_currency_info.flag_svg,
-            }
-          : undefined,
-        to_currency_info: rate.to_currency_info
-          ? {
-              ...rate.to_currency_info,
-              flag: rate.to_currency_info.flag_svg,
-            }
-          : undefined,
-      })) || []
-
-    return rates
-  }
-
-  const loadExchangeRates = async () => {
+  const loadData = async () => {
     try {
-      // Check cache first
-      const cachedData = adminCache.get<ExchangeRate[]>(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-      if (cachedData) {
-        setExchangeRates(cachedData)
-        return
-      }
-
       setLoading(true)
-      setError(null)
-
-      const data = await fetchExchangeRates()
-
-      // Cache the data
-      adminCache.set(ADMIN_CACHE_KEYS.EXCHANGE_RATES, data)
-
-      setExchangeRates(data)
-    } catch (err) {
-      console.error("Error loading exchange rates:", err)
-      setError("Failed to load exchange rates")
+      const [currenciesData, ratesData] = await Promise.all([loadCurrencies(), loadExchangeRates()])
+      setCurrencies(currenciesData)
+      setExchangeRates(ratesData)
+    } catch (error) {
+      console.error("Error loading data:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredRates = exchangeRates.filter((rate) => {
-    const matchesSearch =
-      rate.from_currency.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rate.to_currency.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || rate.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const loadCurrencies = async () => {
+    const { data, error } = await supabase.from("currencies").select("*").order("code")
 
-  const handleEditRates = () => {
-    const initialRates: { [key: string]: number } = {}
-    exchangeRates.forEach((rate) => {
-      const key = `${rate.from_currency}_${rate.to_currency}`
-      initialRates[key] = rate.rate
+    if (error) throw error
+    return data || []
+  }
+
+  const loadExchangeRates = async () => {
+    const { data, error } = await supabase.from("exchange_rates").select(`
+        *,
+        from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+        to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+      `)
+
+    if (error) throw error
+    return data || []
+  }
+
+  const handleAddCurrency = async () => {
+    try {
+      setSaving(true)
+      const { data, error } = await supabase
+        .from("currencies")
+        .insert({
+          code: newCurrencyData.code.toUpperCase(),
+          name: newCurrencyData.name,
+          symbol: newCurrencyData.symbol,
+          flag_svg:
+            newCurrencyData.flag_svg ||
+            `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
+          status: "active",
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Create default exchange rates for the new currency
+      const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
+      const newRates = []
+
+      // Add rates FROM new currency TO existing currencies
+      for (const currency of existingCurrencies) {
+        newRates.push({
+          from_currency: newCurrencyData.code.toUpperCase(),
+          to_currency: currency.code,
+          rate: 1,
+          fee_type: "free",
+          fee_amount: 0,
+          min_amount: 10,
+          max_amount: 1000000,
+          status: "active",
+        })
+      }
+
+      // Add rates FROM existing currencies TO new currency
+      for (const currency of existingCurrencies) {
+        newRates.push({
+          from_currency: currency.code,
+          to_currency: newCurrencyData.code.toUpperCase(),
+          rate: 1,
+          fee_type: "free",
+          fee_amount: 0,
+          min_amount: 10,
+          max_amount: 1000000,
+          status: "active",
+        })
+      }
+
+      if (newRates.length > 0) {
+        const { error: ratesError } = await supabase.from("exchange_rates").insert(newRates)
+
+        if (ratesError) throw ratesError
+      }
+
+      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
+      setIsAddingCurrency(false)
+      await loadData()
+    } catch (error) {
+      console.error("Error adding currency:", error)
+      alert("Failed to add currency")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditRates = (currency: any) => {
+    setSelectedCurrency(currency)
+    const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
+    const updates: any = {}
+
+    currencyRates.forEach((rate: any) => {
+      updates[rate.to_currency] = {
+        rate: rate.rate.toString(),
+        feeType: rate.fee_type,
+        feeAmount: rate.fee_amount.toString(),
+        minAmount: (rate.min_amount || 0).toString(),
+        maxAmount: (rate.max_amount || 1000000).toString(),
+      }
     })
-    setEditingRates(initialRates)
-    setIsEditDialogOpen(true)
+
+    setRateUpdates(updates)
+    setIsEditingRates(true)
   }
 
   const handleSaveRates = async () => {
     try {
-      setLoading(true)
+      setSaving(true)
+      const updates = []
 
-      const updates = Object.entries(editingRates).map(([key, rate]) => {
-        const [fromCurrency, toCurrency] = key.split("_")
-        return {
-          from_currency: fromCurrency,
+      for (const [toCurrency, rateData] of Object.entries(rateUpdates)) {
+        const rateInfo = rateData as any
+        updates.push({
+          from_currency: selectedCurrency.code,
           to_currency: toCurrency,
-          rate: Number.parseFloat(rate.toString()),
+          rate: Number.parseFloat(rateInfo.rate),
+          fee_type: rateInfo.feeType,
+          fee_amount: Number.parseFloat(rateInfo.feeAmount || "0"),
+          min_amount: Number.parseFloat(rateInfo.minAmount || "0"),
+          max_amount: Number.parseFloat(rateInfo.maxAmount || "1000000"),
+          status: "active",
           updated_at: new Date().toISOString(),
-        }
-      })
+        })
+      }
 
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("exchange_rates")
-          .update({
-            rate: update.rate,
-            updated_at: update.updated_at,
-          })
-          .eq("from_currency", update.from_currency)
-          .eq("to_currency", update.to_currency)
+      if (updates.length > 0) {
+        const { error } = await supabase.from("exchange_rates").upsert(updates, {
+          onConflict: "from_currency,to_currency",
+          ignoreDuplicates: false,
+        })
 
         if (error) throw error
       }
 
-      // Invalidate cache and reload
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-      await loadExchangeRates()
-
-      setIsEditDialogOpen(false)
-    } catch (err) {
-      console.error("Error saving exchange rates:", err)
-      setError("Failed to save exchange rates")
+      setIsEditingRates(false)
+      setSelectedCurrency(null)
+      setRateUpdates({})
+      await loadData()
+      alert("Exchange rates updated successfully!")
+    } catch (error) {
+      console.error("Error saving rates:", error)
+      alert("Failed to save rates: " + (error as any).message)
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  const handleStatusUpdate = async (rateId: string, newStatus: string) => {
+  const handleSuspendCurrency = async (currencyId: string) => {
     try {
+      const currency = currencies.find((c) => c.id === currencyId)
+      if (!currency) return
+
+      const newStatus = currency.status === "active" ? "inactive" : "active"
+
       const { error } = await supabase
-        .from("exchange_rates")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", rateId)
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
 
       if (error) throw error
 
-      setExchangeRates((prev) => prev.map((rate) => (rate.id === rateId ? { ...rate, status: newStatus } : rate)))
-
-      // Invalidate cache
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-    } catch (err) {
-      console.error("Error updating rate status:", err)
-      setError("Failed to update rate status")
+      await loadData()
+      alert(`Currency ${newStatus === "active" ? "activated" : "suspended"} successfully!`)
+    } catch (error) {
+      console.error("Error updating currency status:", error)
+      alert("Failed to update currency status: " + (error as any).message)
     }
   }
 
-  const handleDeleteRate = async (rateId: string) => {
+  const handleDeleteCurrency = async (currencyId: string) => {
+    if (currencies.length <= 2) {
+      alert("Cannot delete currency. At least 2 currencies are required.")
+      return
+    }
+
+    if (!confirm("Are you sure you want to delete this currency? This will also delete all related exchange rates.")) {
+      return
+    }
+
     try {
-      const { error } = await supabase.from("exchange_rates").delete().eq("id", rateId)
+      const currency = currencies.find((c) => c.id === currencyId)
+      if (!currency) return
+
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
 
       if (error) throw error
 
-      setExchangeRates((prev) => prev.filter((rate) => rate.id !== rateId))
-
-      // Invalidate cache
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-    } catch (err) {
-      console.error("Error deleting rate:", err)
-      setError("Failed to delete rate")
+      await loadData()
+      alert("Currency deleted successfully!")
+    } catch (error) {
+      console.error("Error deleting currency:", error)
+      alert("Failed to delete currency: " + (error as any).message)
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      active: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
-      inactive: { color: "bg-gray-100 text-gray-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
-      suspended: { color: "bg-red-100 text-red-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
-    }
+  const updateRateField = (toCurrency: string, field: string, value: string) => {
+    setRateUpdates((prev: any) => ({
+      ...prev,
+      [toCurrency]: {
+        ...prev[toCurrency],
+        [field]: value,
+      },
+    }))
+  }
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive
+  const getCurrencyRates = (currencyCode: string) => {
+    return exchangeRates.filter((rate) => rate.from_currency === currencyCode)
+  }
 
+  if (loading) {
     return (
-      <Badge className={`${config.color} hover:${config.color} flex items-center`}>
-        {config.icon}
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
+      <AdminDashboardLayout>
+        <div className="p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminDashboardLayout>
     )
   }
-
-  const getCurrencyFlag = (currencyCode: string) => {
-    const currency = currencies.find((c) => c.code === currencyCode)
-    return currency ? <div dangerouslySetInnerHTML={{ __html: currency.flag }} /> : null
-  }
-
-  const handleExport = () => {
-    const csvContent = [
-      ["From Currency", "To Currency", "Rate", "Fee Type", "Fee Amount", "Status", "Last Updated"].join(","),
-      ...filteredRates.map((rate) =>
-        [
-          rate.from_currency,
-          rate.to_currency,
-          rate.rate,
-          rate.fee_type,
-          rate.fee_amount,
-          rate.status,
-          new Date(rate.updated_at).toLocaleString(),
-        ].join(","),
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "exchange_rates.csv"
-    a.click()
-  }
-
-  // Get first two currency pairs for main display
-  const mainCurrencyPairs = filteredRates.slice(0, 2)
-  const remainingCurrencyPairs = filteredRates.slice(2)
 
   return (
     <AdminDashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Exchange Rate Management</h1>
-            <p className="text-gray-600">Manage currency exchange rates and fees</p>
+            <h1 className="text-2xl font-bold text-gray-900">Currency & Exchange Rates</h1>
+            <p className="text-gray-600">Manage currencies, exchange rates and transaction fees</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleEditRates} className="bg-novapay-primary hover:bg-novapay-primary-600">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Exchange Rates
-            </Button>
-            <Button onClick={handleExport} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export Data
-            </Button>
-          </div>
+          <Dialog open={isAddingCurrency} onOpenChange={setIsAddingCurrency}>
+            <DialogTrigger asChild>
+              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Currency
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Currency</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currencyCode">Currency Code *</Label>
+                  <Input
+                    id="currencyCode"
+                    value={newCurrencyData.code}
+                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, code: e.target.value })}
+                    placeholder="e.g., USD"
+                    maxLength={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currencyName">Currency Name *</Label>
+                  <Input
+                    id="currencyName"
+                    value={newCurrencyData.name}
+                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, name: e.target.value })}
+                    placeholder="e.g., US Dollar"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currencySymbol">Currency Symbol *</Label>
+                  <Input
+                    id="currencySymbol"
+                    value={newCurrencyData.symbol}
+                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, symbol: e.target.value })}
+                    placeholder="e.g., $"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currencyFlag">Flag SVG (Optional)</Label>
+                  <Input
+                    id="currencyFlag"
+                    value={newCurrencyData.flag_svg}
+                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, flag_svg: e.target.value })}
+                    placeholder="SVG code for flag"
+                  />
+                </div>
+                <Button
+                  onClick={handleAddCurrency}
+                  disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol || saving}
+                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Add Currency
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Active Rates</CardTitle>
-              <TrendingUp className="h-4 w-4 text-novapay-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {exchangeRates.filter((r) => r.status === "active").length}
-              </div>
-              <p className="text-xs text-green-600">Currently active</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Currency Pairs</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{exchangeRates.length}</div>
-              <p className="text-xs text-gray-600">Total pairs configured</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Last Updated</CardTitle>
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {exchangeRates.length > 0
-                  ? new Date(
-                      Math.max(...exchangeRates.map((r) => new Date(r.updated_at).getTime())),
-                    ).toLocaleDateString()
-                  : "N/A"}
-              </div>
-              <p className="text-xs text-gray-600">Most recent update</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
+        {/* Currency Management Table */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search currency pairs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Exchange Rates Table */}
-        <Card>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Currency Pair</TableHead>
-                  <TableHead>Exchange Rate</TableHead>
-                  <TableHead>Fee Structure</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Symbol</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="w-[50px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRates.map((rate) => (
-                  <TableRow key={rate.id}>
+                {currencies.map((currency) => (
+                  <TableRow key={currency.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          {getCurrencyFlag(rate.from_currency)}
-                          <span className="font-medium">{rate.from_currency}</span>
-                        </div>
-                        <span className="text-gray-400">→</span>
-                        <div className="flex items-center gap-2">
-                          {getCurrencyFlag(rate.to_currency)}
-                          <span className="font-medium">{rate.to_currency}</span>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                        <span className="font-medium">{currency.name}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="font-mono">{currency.code}</TableCell>
+                    <TableCell className="font-medium">{currency.symbol}</TableCell>
                     <TableCell>
-                      <div className="font-medium">
-                        1 {rate.from_currency} = {rate.rate.toFixed(4)} {rate.to_currency}
-                      </div>
+                      <Badge
+                        className={
+                          currency.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }
+                      >
+                        {currency.status === "active" ? "Active" : "Suspended"}
+                      </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium capitalize">{rate.fee_type}</div>
-                        {rate.fee_amount > 0 && (
-                          <div className="text-sm text-gray-500">
-                            {rate.fee_type === "percentage"
-                              ? `${rate.fee_amount}%`
-                              : `${rate.fee_amount} ${rate.to_currency}`}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(rate.status)}</TableCell>
-                    <TableCell>{new Date(rate.updated_at).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(currency.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
+                          <Button variant="ghost" size="sm">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditRates()}>
+                          <DropdownMenuItem onClick={() => handleEditRates(currency)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit Rate
+                            Edit Rates
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleStatusUpdate(rate.id, rate.status === "active" ? "inactive" : "active")
-                            }
-                          >
-                            {rate.status === "active" ? "Suspend" : "Activate"}
+                          <DropdownMenuItem onClick={() => handleSuspendCurrency(currency.id)}>
+                            <Pause className="h-4 w-4 mr-2" />
+                            {currency.status === "active" ? "Suspend" : "Activate"}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteRate(rate.id)} className="text-red-600">
+                          <DropdownMenuItem onClick={() => handleDeleteCurrency(currency.id)} className="text-red-600">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
@@ -450,89 +408,126 @@ export default function AdminRatesPage() {
                 ))}
               </TableBody>
             </Table>
-
-            {filteredRates.length === 0 && (
-              <div className="text-center py-8 text-gray-500">No exchange rates found matching your criteria.</div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Edit Exchange Rates Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+        {/* Edit Rates Dialog */}
+        <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
+          <DialogContent className="max-w-4xl max-h-[80vh]">
             <DialogHeader>
-              <DialogTitle>Edit Exchange Rates</DialogTitle>
+              <DialogTitle>
+                Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              {/* First two currency pairs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mainCurrencyPairs.map((rate) => {
-                  const key = `${rate.from_currency}_${rate.to_currency}`
-                  return (
-                    <div key={key} className="space-y-2">
-                      <label className="text-sm font-medium text-gray-600">
-                        {rate.from_currency} → {rate.to_currency}
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.0001"
-                        value={editingRates[key] || rate.rate}
-                        onChange={(e) =>
-                          setEditingRates((prev) => ({
-                            ...prev,
-                            [key]: Number.parseFloat(e.target.value) || 0,
-                          }))
-                        }
-                        placeholder="Enter exchange rate"
-                      />
+            <div className="space-y-6">
+              <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
+                {getCurrencyRates(selectedCurrency?.code || "").map((rate: any) => (
+                  <div key={rate.to_currency} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-lg font-medium">
+                      <span>{selectedCurrency.code}</span>
+                      <span>→</span>
+                      <span>{rate.to_currency}</span>
                     </div>
-                  )
-                })}
-              </div>
 
-              {/* Remaining currency pairs in scrollable section */}
-              {remainingCurrencyPairs.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-600 mb-3">Additional Currency Pairs</h4>
-                  <div className="max-h-64 overflow-y-auto space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {remainingCurrencyPairs.map((rate) => {
-                        const key = `${rate.from_currency}_${rate.to_currency}`
-                        return (
-                          <div key={key} className="space-y-2">
-                            <label className="text-sm font-medium text-gray-600">
-                              {rate.from_currency} → {rate.to_currency}
-                            </label>
-                            <Input
-                              type="number"
-                              step="0.0001"
-                              value={editingRates[key] || rate.rate}
-                              onChange={(e) =>
-                                setEditingRates((prev) => ({
-                                  ...prev,
-                                  [key]: Number.parseFloat(e.target.value) || 0,
-                                }))
-                              }
-                              placeholder="Enter exchange rate"
-                            />
-                          </div>
-                        )
-                      })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label>Exchange Rate</Label>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          value={rateUpdates[rate.to_currency]?.rate || rate.rate}
+                          onChange={(e) => updateRateField(rate.to_currency, "rate", e.target.value)}
+                          placeholder="0.0000"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Fee Type</Label>
+                        <select
+                          value={rateUpdates[rate.to_currency]?.feeType || rate.fee_type}
+                          onChange={(e) => updateRateField(rate.to_currency, "feeType", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="free">Free</option>
+                          <option value="fixed">Fixed Amount</option>
+                          <option value="percentage">Percentage</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>
+                          Fee Amount{" "}
+                          {(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage"
+                            ? "(%)"
+                            : `(${selectedCurrency.code})`}
+                        </Label>
+                        <Input
+                          type="number"
+                          step={
+                            (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "0.1" : "0.01"
+                          }
+                          value={rateUpdates[rate.to_currency]?.feeAmount || rate.fee_amount}
+                          onChange={(e) => updateRateField(rate.to_currency, "feeAmount", e.target.value)}
+                          placeholder={
+                            (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "1.5" : "10.00"
+                          }
+                          disabled={(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "free"}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Min Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0}
+                          onChange={(e) => updateRateField(rate.to_currency, "minAmount", e.target.value)}
+                          placeholder="100"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Max Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000}
+                          onChange={(e) => updateRateField(rate.to_currency, "maxAmount", e.target.value)}
+                          placeholder="1000000"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        <strong>Transaction Limits:</strong> Users can send between{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0).toLocaleString()}
+                        </span>{" "}
+                        and{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000).toLocaleString()}
+                        </span>{" "}
+                        when converting from {selectedCurrency.code} to {rate.to_currency}
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
 
-              <div className="flex gap-4 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsEditingRates(false)} disabled={saving}>
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSaveRates}
-                  disabled={loading}
-                  className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="bg-novapay-primary hover:bg-novapay-primary-600"
+                  disabled={saving}
                 >
-                  {loading ? "Saving..." : "Save Changes"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save Changes
                 </Button>
               </div>
             </div>
@@ -542,3 +537,5 @@ export default function AdminRatesPage() {
     </AdminDashboardLayout>
   )
 }
+
+export default AdminRatesPage
