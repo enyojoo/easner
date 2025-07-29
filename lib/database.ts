@@ -332,14 +332,19 @@ export const transactionService = {
         })
         .eq("transaction_id", transactionId)
         .select()
-        .single()
 
       if (error) {
         console.error("Database update error:", error)
         throw new Error(`Database update failed: ${error.message}`)
       }
 
-      return { ...data, receipt_url: publicUrl }
+      if (!data || data.length === 0) {
+        throw new Error("Transaction not found")
+      }
+
+      const updatedTransaction = data[0]
+
+      return { ...updatedTransaction, receipt_url: publicUrl }
     } catch (error) {
       console.error("Receipt upload error:", error)
       throw error
