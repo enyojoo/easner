@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
   QrCode,
   Building2,
   MoreHorizontal,
+  RefreshCw,
 } from "lucide-react"
 import { currencies } from "@/utils/currency"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -30,20 +31,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { settingsService, paymentMethodService } from "@/lib/database"
+import { useToast } from "@/hooks/use-toast"
 
-// Mock data
-const mockPlatformConfig = {
-  platformName: "Novapay",
-  supportEmail: "support@novapay.com",
-  maintenanceMode: false,
-  registrationEnabled: true,
-  emailVerificationRequired: true,
-  maxTransactionAmount: 50000,
-  minTransactionAmount: 10,
-  dailyTransactionLimit: 100000,
-  baseCurrency: "NGN",
-}
-
+// Mock data for email templates and security settings
 const mockEmailTemplates = [
   {
     id: 1,
@@ -80,49 +71,22 @@ const mockSecuritySettings = {
   accountLockoutDuration: 15,
 }
 
-const mockPaymentMethods = [
-  {
-    id: 1,
-    currency: "RUB",
-    type: "bank_account",
-    name: "Sberbank Russia",
-    accountName: "Novapay Russia LLC",
-    accountNumber: "40817810123456789012",
-    bankName: "Sberbank Russia",
-    status: "active",
-    isDefault: true,
-    createdAt: "2024-01-15",
-  },
-  {
-    id: 2,
-    currency: "NGN",
-    type: "bank_account",
-    name: "First Bank Nigeria",
-    accountName: "Novapay Nigeria Ltd",
-    accountNumber: "1234567890",
-    bankName: "First Bank Nigeria",
-    status: "active",
-    isDefault: true,
-    createdAt: "2024-01-14",
-  },
-  {
-    id: 3,
-    currency: "RUB",
-    type: "qr_code",
-    name: "SberPay QR",
-    qrCodeData: "https://qr.sber.ru/pay/12345",
-    instructions: "Scan this QR code with your SberPay app to complete the payment",
-    status: "inactive",
-    isDefault: false,
-    createdAt: "2024-01-13",
-  },
-]
-
 export default function AdminSettingsPage() {
-  const [platformConfig, setPlatformConfig] = useState(mockPlatformConfig)
+  const { toast } = useToast()
+  const [platformConfig, setPlatformConfig] = useState({
+    platformName: "Novapay",
+    supportEmail: "support@novapay.com",
+    maintenanceMode: false,
+    registrationEnabled: true,
+    emailVerificationRequired: true,
+    maxTransactionAmount: 50000,
+    minTransactionAmount: 10,
+    dailyTransactionLimit: 100000,
+    baseCurrency: "NGN",
+  })
   const [emailTemplates, setEmailTemplates] = useState(mockEmailTemplates)
   const [securitySettings, setSecuritySettings] = useState(mockSecuritySettings)
-  const [paymentMethods, setPaymentMethods] = useState(mockPaymentMethods)
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState("platform")
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
   const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
@@ -138,100 +102,257 @@ export default function AdminSettingsPage() {
     instructions: "",
     isDefault: false,
   })
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    loadSettings()
+    loadPaymentMethods()
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      setIsLoading(true)
+
+      // Load platform settings from Supabase
+      const [
+        platformName,
+        supportEmail,
+        maintenanceMode,
+        registrationEnabled,
+        emailVerificationRequired,
+        maxTransactionAmount,
+        minTransactionAmount,
+        dailyTransactionLimit,
+        baseCurrency,
+      ] = await Promise.all([
+        settingsService.get("platform_name"),
+        settingsService.get("support_email"),
+        settingsService.get("maintenance_mode"),
+        settingsService.get("registration_enabled"),
+        settingsService.get("email_verification_required"),
+        settingsService.get("max_transaction_amount"),
+        settingsService.get("min_transaction_amount"),
+        settingsService.get("daily_transaction_limit"),
+        settingsService.get("base_currency"),
+      ])
+
+      setPlatformConfig({
+        platformName: platformName || "Novapay",
+        supportEmail: supportEmail || "support@novapay.com",
+        maintenanceMode: maintenanceMode || false,
+        registrationEnabled: registrationEnabled !== false, // Default to true
+        emailVerificationRequired: emailVerificationRequired !== false, // Default to true
+        maxTransactionAmount: maxTransactionAmount || 50000,
+        minTransactionAmount: minTransactionAmount || 10,
+        dailyTransactionLimit: dailyTransactionLimit || 100000,
+        baseCurrency: baseCurrency || "NGN",
+      })
+    } catch (error) {
+      console.error("Error loading settings:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load platform settings",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadPaymentMethods = async () => {
+    try {
+      const methods = await paymentMethodService.getAll()
+      setPaymentMethods(methods)
+    } catch (error) {
+      console.error("Error loading payment methods:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load payment methods",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const savePlatformSettings = async () => {
+    try {
+      setIsSaving(true)
+
+      // Save all platform settings to Supabase
+      await settingsService.updateMultiple([
+        { key: "platform_name", value: platformConfig.platformName, dataType: "string" },
+        { key: "support_email", value: platformConfig.supportEmail, dataType: "string" },
+        { key: "maintenance_mode", value: platformConfig.maintenanceMode, dataType: "boolean" },
+        { key: "registration_enabled", value: platformConfig.registrationEnabled, dataType: "boolean" },
+        { key: "email_verification_required", value: platformConfig.emailVerificationRequired, dataType: "boolean" },
+        { key: "max_transaction_amount", value: platformConfig.maxTransactionAmount, dataType: "number" },
+        { key: "min_transaction_amount", value: platformConfig.minTransactionAmount, dataType: "number" },
+        { key: "daily_transaction_limit", value: platformConfig.dailyTransactionLimit, dataType: "number" },
+        { key: "base_currency", value: platformConfig.baseCurrency, dataType: "string" },
+      ])
+
+      toast({
+        title: "Success",
+        description: "Platform settings saved successfully",
+      })
+    } catch (error) {
+      console.error("Error saving settings:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save platform settings",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const handleSaveSecuritySettings = () => {
     console.log("Saving security settings:", securitySettings)
-  }
-
-  const handleAddPaymentMethod = () => {
-    const paymentMethod = {
-      id: Date.now(),
-      currency: newPaymentMethod.currency,
-      type: newPaymentMethod.type,
-      name: newPaymentMethod.name,
-      accountName: newPaymentMethod.accountName,
-      accountNumber: newPaymentMethod.accountNumber,
-      bankName: newPaymentMethod.bankName,
-      qrCodeData: newPaymentMethod.qrCodeData,
-      instructions: newPaymentMethod.instructions,
-      status: "active",
-      isDefault: newPaymentMethod.isDefault,
-      createdAt: new Date().toISOString().split("T")[0],
-    }
-
-    let updatedMethods = [...paymentMethods, paymentMethod]
-
-    // If this is set as default, unset other defaults for the same currency
-    if (newPaymentMethod.isDefault) {
-      updatedMethods = updatedMethods.map((method) =>
-        method.currency === newPaymentMethod.currency && method.id !== paymentMethod.id
-          ? { ...method, isDefault: false }
-          : method,
-      )
-    }
-
-    setPaymentMethods(updatedMethods)
-    setNewPaymentMethod({
-      currency: "",
-      type: "bank_account",
-      name: "",
-      accountName: "",
-      accountNumber: "",
-      bankName: "",
-      qrCodeData: "",
-      instructions: "",
-      isDefault: false,
+    toast({
+      title: "Success",
+      description: "Security settings saved successfully",
     })
-    setIsAddPaymentMethodOpen(false)
   }
 
-  const handleEditPaymentMethod = () => {
+  const handleAddPaymentMethod = async () => {
+    try {
+      await paymentMethodService.create({
+        currency: newPaymentMethod.currency,
+        type: newPaymentMethod.type,
+        name: newPaymentMethod.name,
+        accountName: newPaymentMethod.accountName,
+        accountNumber: newPaymentMethod.accountNumber,
+        bankName: newPaymentMethod.bankName,
+        qrCodeData: newPaymentMethod.qrCodeData,
+        instructions: newPaymentMethod.instructions,
+        isDefault: newPaymentMethod.isDefault,
+      })
+
+      await loadPaymentMethods()
+      setNewPaymentMethod({
+        currency: "",
+        type: "bank_account",
+        name: "",
+        accountName: "",
+        accountNumber: "",
+        bankName: "",
+        qrCodeData: "",
+        instructions: "",
+        isDefault: false,
+      })
+      setIsAddPaymentMethodOpen(false)
+
+      toast({
+        title: "Success",
+        description: "Payment method added successfully",
+      })
+    } catch (error) {
+      console.error("Error adding payment method:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add payment method",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEditPaymentMethod = async () => {
     if (!editingPaymentMethod) return
 
-    let updatedMethods = paymentMethods.map((method) =>
-      method.id === editingPaymentMethod.id
-        ? {
-            ...editingPaymentMethod,
-          }
-        : method,
-    )
+    try {
+      await paymentMethodService.update(editingPaymentMethod.id, {
+        currency: editingPaymentMethod.currency,
+        type: editingPaymentMethod.type,
+        name: editingPaymentMethod.name,
+        accountName: editingPaymentMethod.account_name,
+        accountNumber: editingPaymentMethod.account_number,
+        bankName: editingPaymentMethod.bank_name,
+        qrCodeData: editingPaymentMethod.qr_code_data,
+        instructions: editingPaymentMethod.instructions,
+        isDefault: editingPaymentMethod.is_default,
+      })
 
-    // If this is set as default, unset other defaults for the same currency
-    if (editingPaymentMethod.isDefault) {
-      updatedMethods = updatedMethods.map((method) =>
-        method.currency === editingPaymentMethod.currency && method.id !== editingPaymentMethod.id
-          ? { ...method, isDefault: false }
-          : method,
-      )
+      await loadPaymentMethods()
+      setEditingPaymentMethod(null)
+      setIsEditPaymentMethodOpen(false)
+
+      toast({
+        title: "Success",
+        description: "Payment method updated successfully",
+      })
+    } catch (error) {
+      console.error("Error updating payment method:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update payment method",
+        variant: "destructive",
+      })
     }
-
-    setPaymentMethods(updatedMethods)
-    setEditingPaymentMethod(null)
-    setIsEditPaymentMethodOpen(false)
   }
 
-  const handleTogglePaymentMethodStatus = (id: number) => {
-    setPaymentMethods(
-      paymentMethods.map((pm) =>
-        pm.id === id ? { ...pm, status: pm.status === "active" ? "inactive" : "active" } : pm,
-      ),
-    )
+  const handleTogglePaymentMethodStatus = async (id: string) => {
+    try {
+      const method = paymentMethods.find((pm) => pm.id === id)
+      if (!method) return
+
+      const newStatus = method.status === "active" ? "inactive" : "active"
+      await paymentMethodService.updateStatus(id, newStatus)
+      await loadPaymentMethods()
+
+      toast({
+        title: "Success",
+        description: `Payment method ${newStatus === "active" ? "enabled" : "disabled"} successfully`,
+      })
+    } catch (error) {
+      console.error("Error toggling payment method status:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update payment method status",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleSetDefaultPaymentMethod = (id: number) => {
-    const targetMethod = paymentMethods.find((pm) => pm.id === id)
-    if (!targetMethod) return
+  const handleSetDefaultPaymentMethod = async (id: string) => {
+    try {
+      const method = paymentMethods.find((pm) => pm.id === id)
+      if (!method) return
 
-    setPaymentMethods(
-      paymentMethods.map((pm) => ({
-        ...pm,
-        isDefault: pm.currency === targetMethod.currency ? pm.id === id : pm.isDefault,
-      })),
-    )
+      await paymentMethodService.setDefault(id, method.currency)
+      await loadPaymentMethods()
+
+      toast({
+        title: "Success",
+        description: "Default payment method updated successfully",
+      })
+    } catch (error) {
+      console.error("Error setting default payment method:", error)
+      toast({
+        title: "Error",
+        description: "Failed to set default payment method",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleDeletePaymentMethod = (id: number) => {
-    setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
+  const handleDeletePaymentMethod = async (id: string) => {
+    try {
+      await paymentMethodService.delete(id)
+      await loadPaymentMethods()
+
+      toast({
+        title: "Success",
+        description: "Payment method deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting payment method:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete payment method",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleEditClick = (method: any) => {
@@ -246,6 +367,18 @@ export default function AdminSettingsPage() {
   const getCurrencyFlag = (currencyCode: string) => {
     const currency = currencies.find((c) => c.code === currencyCode)
     return currency ? <div dangerouslySetInnerHTML={{ __html: currency.flag }} /> : null
+  }
+
+  if (isLoading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-novapay-primary" />
+          </div>
+        </div>
+      </AdminDashboardLayout>
+    )
   }
 
   return (
@@ -285,6 +418,26 @@ export default function AdminSettingsPage() {
                 <CardTitle>Platform Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="platformName">Platform Name</Label>
+                    <Input
+                      id="platformName"
+                      value={platformConfig.platformName}
+                      onChange={(e) => setPlatformConfig({ ...platformConfig, platformName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supportEmail">Support Email</Label>
+                    <Input
+                      id="supportEmail"
+                      type="email"
+                      value={platformConfig.supportEmail}
+                      onChange={(e) => setPlatformConfig({ ...platformConfig, supportEmail: e.target.value })}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -334,7 +487,6 @@ export default function AdminSettingsPage() {
                       value={platformConfig.baseCurrency}
                       onValueChange={(value) => {
                         setPlatformConfig({ ...platformConfig, baseCurrency: value })
-                        console.log("Auto-saving base currency:", value)
                       }}
                     >
                       <SelectTrigger className="w-48">
@@ -353,6 +505,51 @@ export default function AdminSettingsPage() {
                     </Select>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="minAmount">Min Transaction Amount</Label>
+                    <Input
+                      id="minAmount"
+                      type="number"
+                      value={platformConfig.minTransactionAmount}
+                      onChange={(e) =>
+                        setPlatformConfig({ ...platformConfig, minTransactionAmount: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxAmount">Max Transaction Amount</Label>
+                    <Input
+                      id="maxAmount"
+                      type="number"
+                      value={platformConfig.maxTransactionAmount}
+                      onChange={(e) =>
+                        setPlatformConfig({ ...platformConfig, maxTransactionAmount: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dailyLimit">Daily Transaction Limit</Label>
+                    <Input
+                      id="dailyLimit"
+                      type="number"
+                      value={platformConfig.dailyTransactionLimit}
+                      onChange={(e) =>
+                        setPlatformConfig({ ...platformConfig, dailyTransactionLimit: Number(e.target.value) })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={savePlatformSettings}
+                  disabled={isSaving}
+                  className="bg-novapay-primary hover:bg-novapay-primary-600"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save Platform Settings"}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -627,9 +824,9 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="editAccountName">Account Name *</Label>
                                 <Input
                                   id="editAccountName"
-                                  value={editingPaymentMethod.accountName}
+                                  value={editingPaymentMethod.account_name || ""}
                                   onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, accountName: e.target.value })
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, account_name: e.target.value })
                                   }
                                   placeholder="e.g., Novapay Russia LLC"
                                 />
@@ -639,11 +836,11 @@ export default function AdminSettingsPage() {
                                   <Label htmlFor="editAccountNumber">Account Number *</Label>
                                   <Input
                                     id="editAccountNumber"
-                                    value={editingPaymentMethod.accountNumber}
+                                    value={editingPaymentMethod.account_number || ""}
                                     onChange={(e) =>
                                       setEditingPaymentMethod({
                                         ...editingPaymentMethod,
-                                        accountNumber: e.target.value,
+                                        account_number: e.target.value,
                                       })
                                     }
                                     placeholder="e.g., 40817810123456789012"
@@ -653,9 +850,9 @@ export default function AdminSettingsPage() {
                                   <Label htmlFor="editBankName">Bank Name *</Label>
                                   <Input
                                     id="editBankName"
-                                    value={editingPaymentMethod.bankName}
+                                    value={editingPaymentMethod.bank_name || ""}
                                     onChange={(e) =>
-                                      setEditingPaymentMethod({ ...editingPaymentMethod, bankName: e.target.value })
+                                      setEditingPaymentMethod({ ...editingPaymentMethod, bank_name: e.target.value })
                                     }
                                     placeholder="e.g., Sberbank Russia"
                                   />
@@ -670,9 +867,9 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="editQrCodeData">QR Code Data/URL *</Label>
                                 <Input
                                   id="editQrCodeData"
-                                  value={editingPaymentMethod.qrCodeData}
+                                  value={editingPaymentMethod.qr_code_data || ""}
                                   onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, qrCodeData: e.target.value })
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, qr_code_data: e.target.value })
                                   }
                                   placeholder="e.g., https://qr.sber.ru/pay/12345 or payment data"
                                 />
@@ -681,7 +878,7 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="editInstructions">Instructions</Label>
                                 <Textarea
                                   id="editInstructions"
-                                  value={editingPaymentMethod.instructions}
+                                  value={editingPaymentMethod.instructions || ""}
                                   onChange={(e) =>
                                     setEditingPaymentMethod({ ...editingPaymentMethod, instructions: e.target.value })
                                   }
@@ -695,9 +892,9 @@ export default function AdminSettingsPage() {
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id="editIsDefault"
-                              checked={editingPaymentMethod.isDefault}
+                              checked={editingPaymentMethod.is_default || false}
                               onCheckedChange={(checked) =>
-                                setEditingPaymentMethod({ ...editingPaymentMethod, isDefault: checked as boolean })
+                                setEditingPaymentMethod({ ...editingPaymentMethod, is_default: checked as boolean })
                               }
                             />
                             <Label htmlFor="editIsDefault" className="text-sm font-medium">
@@ -719,10 +916,10 @@ export default function AdminSettingsPage() {
                                 !editingPaymentMethod.currency ||
                                 !editingPaymentMethod.name ||
                                 (editingPaymentMethod.type === "bank_account" &&
-                                  (!editingPaymentMethod.accountName ||
-                                    !editingPaymentMethod.accountNumber ||
-                                    !editingPaymentMethod.bankName)) ||
-                                (editingPaymentMethod.type === "qr_code" && !editingPaymentMethod.qrCodeData)
+                                  (!editingPaymentMethod.account_name ||
+                                    !editingPaymentMethod.account_number ||
+                                    !editingPaymentMethod.bank_name)) ||
+                                (editingPaymentMethod.type === "qr_code" && !editingPaymentMethod.qr_code_data)
                               }
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
@@ -767,13 +964,13 @@ export default function AdminSettingsPage() {
                         <TableCell>
                           {method.type === "bank_account" ? (
                             <div className="text-sm text-gray-600">
-                              <div>{method.accountName}</div>
-                              <div className="font-mono">{method.accountNumber}</div>
-                              <div>{method.bankName}</div>
+                              <div>{method.account_name}</div>
+                              <div className="font-mono">{method.account_number}</div>
+                              <div>{method.bank_name}</div>
                             </div>
                           ) : (
                             <div className="text-sm text-gray-600">
-                              <div className="font-mono text-xs">{method.qrCodeData}</div>
+                              <div className="font-mono text-xs">{method.qr_code_data}</div>
                               {method.instructions && (
                                 <div className="mt-1 text-xs">{method.instructions.substring(0, 50)}...</div>
                               )}
@@ -790,7 +987,7 @@ export default function AdminSettingsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {method.isDefault && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
+                          {method.is_default && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -807,7 +1004,7 @@ export default function AdminSettingsPage() {
                               <DropdownMenuItem onClick={() => handleTogglePaymentMethodStatus(method.id)}>
                                 {method.status === "active" ? "Disable" : "Enable"}
                               </DropdownMenuItem>
-                              {method.status === "active" && !method.isDefault && (
+                              {method.status === "active" && !method.is_default && (
                                 <DropdownMenuItem onClick={() => handleSetDefaultPaymentMethod(method.id)}>
                                   Make Default
                                 </DropdownMenuItem>

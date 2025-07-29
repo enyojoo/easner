@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,97 +18,331 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { userService, currencyService, settingsService } from "@/lib/database"
+import { supabase } from "@/lib/supabase"
 
-// Mock data
-const mockRecentActivity = [
-  {
-    id: "1",
-    type: "transaction_completed",
-    message: "Transaction NP1705123456789 completed successfully",
-    user: "John Doe",
-    amount: "₦45,000.00",
-    time: "2 minutes ago",
-    status: "success",
-  },
-  {
-    id: "2",
-    type: "user_registered",
-    message: "New user registration",
-    user: "Jane Smith",
-    time: "5 minutes ago",
-    status: "info",
-  },
-  {
-    id: "3",
-    type: "transaction_failed",
-    message: "Transaction NP1705123456790 failed - insufficient funds",
-    user: "Mike Johnson",
-    amount: "₽12,500.00",
-    time: "8 minutes ago",
-    status: "error",
-  },
-  {
-    id: "4",
-    type: "rate_updated",
-    message: "Exchange rate updated: RUB to NGN",
-    time: "15 minutes ago",
-    status: "info",
-  },
-  {
-    id: "5",
-    type: "transaction_pending",
-    message: "New transaction awaiting verification",
-    user: "Sarah Wilson",
-    amount: "₦78,900.00",
-    time: "20 minutes ago",
-    status: "warning",
-  },
-]
+interface DashboardStats {
+  transactions: number
+  transactionsChange: string
+  volume: string
+  volumeChange: string
+  users: number
+  usersChange: string
+  pending: number
+}
 
-const mockCurrencyPairs = [
-  { pair: "RUB → NGN", volume: 45.2, transactions: 1250, revenue: 8500 },
-  { pair: "NGN → RUB", volume: 32.8, transactions: 890, revenue: 6200 },
-  { pair: "USD → NGN", volume: 15.5, transactions: 420, revenue: 2800 },
-  { pair: "NGN → USD", volume: 6.5, transactions: 180, revenue: 1200 },
-]
+interface RecentActivity {
+  id: string
+  type: string
+  message: string
+  user?: string
+  amount?: string
+  time: string
+  status: string
+}
+
+interface CurrencyPair {
+  pair: string
+  volume: number
+  transactions: number
+  revenue: number
+}
 
 export default function AdminDashboardPage() {
   const [timeRange, setTimeRange] = useState("today")
+  const [baseCurrency, setBaseCurrency] = useState("NGN")
+  const [stats, setStats] = useState<DashboardStats>({
+    transactions: 0,
+    transactionsChange: "+0%",
+    volume: "₦0",
+    volumeChange: "+0%",
+    users: 0,
+    usersChange: "+0%",
+    pending: 0,
+  })
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
+  const [currencyPairs, setCurrencyPairs] = useState<CurrencyPair[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const getMetricsForTimeRange = (range: string) => {
-    const baseMetrics = {
-      today: {
-        transactions: 234,
-        transactionsChange: "+12%",
-        volume: "₦45.2M",
-        volumeChange: "+8%",
-        users: 125,
-        usersChange: "+5%",
-        pending: 23,
-      },
-      week: {
-        transactions: 1847,
-        transactionsChange: "+18%",
-        volume: "₦324.8M",
-        volumeChange: "+22%",
-        users: 957,
-        usersChange: "+7%",
-        pending: 67,
-      },
-      month: {
-        transactions: 7234,
-        transactionsChange: "+25%",
-        volume: "₦1.2B",
-        volumeChange: "+28%",
-        users: 3852,
-        usersChange: "+11%",
-        pending: 156,
-      },
+  useEffect(() => {
+    loadBaseCurrency()
+  }, [])
+
+  useEffect(() => {
+    if (baseCurrency) {
+      loadDashboardData()
     }
-    return baseMetrics[range as keyof typeof baseMetrics] || baseMetrics.today
+  }, [timeRange, baseCurrency])
+
+  const loadBaseCurrency = async () => {
+    try {
+      const savedBaseCurrency = await settingsService.get("base_currency")
+      if (savedBaseCurrency) {
+        setBaseCurrency(savedBaseCurrency)
+      }
+    } catch (error) {
+      console.error("Error loading base currency:", error)
+    }
   }
 
-  const metrics = getMetricsForTimeRange(timeRange)
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true)
+
+      // Load exchange rates for currency conversion
+      const exchangeRates = await currencyService.getExchangeRates()
+
+      // Load transaction stats with currency conversion
+      const transactionStats = await getTransactionStatsWithConversion(timeRange, baseCurrency, exchangeRates)
+
+      // Load user stats
+      const userStats = await userService.getStats()
+
+      // Load recent transactions for activity feed
+      const { data: recentTransactions } = await supabase
+        .from("transactions")
+        .select(`
+          *,
+          recipient:recipients(*),
+          user:users(first_name, last_name, email)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
+      // Load currency pair data
+      const { data: currencyData } = await supabase
+        .from("transactions")
+        .select("send_currency, receive_currency, send_amount, status")
+        .eq("status", "completed")
+        .gte("created_at", getDateFilter(timeRange))
+
+      // Process stats
+      const formattedStats: DashboardStats = {
+        transactions: transactionStats.totalTransactions,
+        transactionsChange: "+12%", // You can calculate this based on previous period
+        volume: formatCurrency(transactionStats.totalVolume, baseCurrency),
+        volumeChange: "+8%",
+        users: userStats.total,
+        usersChange: "+5%",
+        pending: transactionStats.pendingTransactions,
+      }
+
+      // Process recent activity
+      const activities: RecentActivity[] =
+        recentTransactions?.map((tx, index) => ({
+          id: tx.id,
+          type: getActivityType(tx.status),
+          message: getActivityMessage(tx),
+          user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
+          amount: formatCurrency(tx.send_amount, tx.send_currency),
+          time: getRelativeTime(tx.created_at),
+          status: getActivityStatus(tx.status),
+        })) || []
+
+      // Process currency pairs
+      const pairs = processCurrencyPairs(currencyData || [], baseCurrency, exchangeRates)
+
+      setStats(formattedStats)
+      setRecentActivity(activities)
+      setCurrencyPairs(pairs)
+    } catch (error) {
+      console.error("Error loading dashboard data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getTransactionStatsWithConversion = async (timeRange: string, baseCurrency: string, exchangeRates: any[]) => {
+    const { data: transactions } = await supabase
+      .from("transactions")
+      .select("*")
+      .gte("created_at", getDateFilter(timeRange))
+
+    const { data: pendingTransactions } = await supabase
+      .from("transactions")
+      .select("id", { count: "exact" })
+      .in("status", ["pending", "processing"])
+
+    // Convert all transaction amounts to base currency
+    let totalVolumeInBaseCurrency = 0
+
+    if (transactions) {
+      for (const tx of transactions) {
+        const convertedAmount = await convertToBaseCurrency(
+          tx.send_amount,
+          tx.send_currency,
+          baseCurrency,
+          exchangeRates,
+        )
+        totalVolumeInBaseCurrency += convertedAmount
+      }
+    }
+
+    return {
+      totalTransactions: transactions?.length || 0,
+      totalVolume: totalVolumeInBaseCurrency,
+      pendingTransactions: pendingTransactions?.length || 0,
+    }
+  }
+
+  const convertToBaseCurrency = async (
+    amount: number,
+    fromCurrency: string,
+    baseCurrency: string,
+    exchangeRates: any[],
+  ) => {
+    if (fromCurrency === baseCurrency) {
+      return amount
+    }
+
+    // Find direct rate
+    let rate = exchangeRates.find(
+      (r) => r.from_currency === fromCurrency && r.to_currency === baseCurrency && r.status === "active",
+    )
+
+    if (rate) {
+      return amount * rate.rate
+    }
+
+    // Find reverse rate
+    rate = exchangeRates.find(
+      (r) => r.from_currency === baseCurrency && r.to_currency === fromCurrency && r.status === "active",
+    )
+
+    if (rate && rate.rate > 0) {
+      return amount / rate.rate
+    }
+
+    // If no direct conversion available, try via NGN as intermediate
+    if (baseCurrency !== "NGN" && fromCurrency !== "NGN") {
+      const toNGNRate = exchangeRates.find(
+        (r) => r.from_currency === fromCurrency && r.to_currency === "NGN" && r.status === "active",
+      )
+      const fromNGNRate = exchangeRates.find(
+        (r) => r.from_currency === "NGN" && r.to_currency === baseCurrency && r.status === "active",
+      )
+
+      if (toNGNRate && fromNGNRate) {
+        const ngnAmount = amount * toNGNRate.rate
+        return ngnAmount * fromNGNRate.rate
+      }
+    }
+
+    // Fallback: return original amount if no conversion possible
+    console.warn(`No exchange rate found for ${fromCurrency} to ${baseCurrency}`)
+    return amount
+  }
+
+  const getDateFilter = (range: string) => {
+    const date = new Date()
+    switch (range) {
+      case "today":
+        date.setHours(0, 0, 0, 0)
+        break
+      case "week":
+        date.setDate(date.getDate() - 7)
+        break
+      case "month":
+        date.setMonth(date.getMonth() - 1)
+        break
+    }
+    return date.toISOString()
+  }
+
+  const formatCurrency = (amount: number, currency = "NGN") => {
+    const symbols: { [key: string]: string } = {
+      NGN: "₦",
+      RUB: "₽",
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+    }
+    return `${symbols[currency] || currency + " "}${amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+  }
+
+  const getActivityType = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "transaction_completed"
+      case "failed":
+        return "transaction_failed"
+      case "pending":
+      case "processing":
+        return "transaction_pending"
+      default:
+        return "transaction_pending"
+    }
+  }
+
+  const getActivityMessage = (transaction: any) => {
+    switch (transaction.status) {
+      case "completed":
+        return `Transaction ${transaction.transaction_id} completed successfully`
+      case "failed":
+        return `Transaction ${transaction.transaction_id} failed`
+      case "pending":
+        return `New transaction ${transaction.transaction_id} awaiting verification`
+      default:
+        return `Transaction ${transaction.transaction_id} is being processed`
+    }
+  }
+
+  const getActivityStatus = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "success"
+      case "failed":
+        return "error"
+      case "pending":
+      case "processing":
+        return "warning"
+      default:
+        return "info"
+    }
+  }
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`
+    return `${Math.floor(diffInMinutes / 1440)} days ago`
+  }
+
+  const processCurrencyPairs = (transactions: any[], baseCurrency: string, exchangeRates: any[]) => {
+    const pairStats: { [key: string]: { volume: number; count: number; revenue: number } } = {}
+
+    transactions.forEach((tx) => {
+      const pair = `${tx.send_currency} → ${tx.receive_currency}`
+      if (!pairStats[pair]) {
+        pairStats[pair] = { volume: 0, count: 0, revenue: 0 }
+      }
+
+      // Convert volume to base currency
+      const convertedVolume = convertToBaseCurrency(tx.send_amount, tx.send_currency, baseCurrency, exchangeRates)
+      pairStats[pair].volume += convertedVolume
+      pairStats[pair].count += 1
+      pairStats[pair].revenue += convertedVolume * 0.02 // Assuming 2% fee
+    })
+
+    const totalVolume = Object.values(pairStats).reduce((sum, stat) => sum + stat.volume, 0)
+
+    return Object.entries(pairStats)
+      .map(([pair, stats]) => ({
+        pair,
+        volume: totalVolume > 0 ? (stats.volume / totalVolume) * 100 : 0,
+        transactions: stats.count,
+        revenue: Math.round(stats.revenue),
+      }))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 4)
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -133,11 +367,13 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-            <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
+            <p className="text-gray-600">
+              Monitor your platform's performance and key metrics (Base Currency: {baseCurrency})
+            </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -161,11 +397,11 @@ export default function AdminDashboardPage() {
               <CreditCard className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.transactions.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.transactions.toLocaleString()}</div>
               <div className="flex items-center text-xs">
                 <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
                 <span className="text-green-600">
-                  {metrics.transactionsChange} from last {timeRange}
+                  {stats.transactionsChange} from last {timeRange}
                 </span>
               </div>
             </CardContent>
@@ -177,11 +413,11 @@ export default function AdminDashboardPage() {
               <TrendingUp className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.volume}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.volume}</div>
               <div className="flex items-center text-xs">
                 <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
                 <span className="text-green-600">
-                  {metrics.volumeChange} from last {timeRange}
+                  {stats.volumeChange} from last {timeRange}
                 </span>
               </div>
             </CardContent>
@@ -193,11 +429,11 @@ export default function AdminDashboardPage() {
               <Users className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.users}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.users}</div>
               <div className="flex items-center text-xs">
                 <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
                 <span className="text-green-600">
-                  {metrics.usersChange} from last {timeRange}
+                  {stats.usersChange} from last {timeRange}
                 </span>
               </div>
             </CardContent>
@@ -209,7 +445,7 @@ export default function AdminDashboardPage() {
               <AlertCircle className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.pending}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.pending}</div>
               <p className="text-xs text-orange-600">Awaiting processing</p>
             </CardContent>
           </Card>
@@ -226,7 +462,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
-                {mockRecentActivity.map((activity) => (
+                {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
                     <div className="flex-1 min-w-0">
@@ -249,12 +485,11 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Quick Actions & System Status */}
           {/* Currency Pair Popularity */}
           <Card>
             <CardHeader>
               <CardTitle>Currency Pair Popularity</CardTitle>
-              <CardDescription>Most popular trading pairs</CardDescription>
+              <CardDescription>Most popular trading pairs (Volume in {baseCurrency})</CardDescription>
             </CardHeader>
             <CardContent className="max-h-80 overflow-y-auto">
               <Table>
@@ -263,11 +498,11 @@ export default function AdminDashboardPage() {
                     <TableHead>Currency Pair</TableHead>
                     <TableHead>Volume %</TableHead>
                     <TableHead>Transactions</TableHead>
-                    <TableHead>Revenue</TableHead>
+                    <TableHead>Revenue ({baseCurrency})</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockCurrencyPairs.map((item, index) => (
+                  {currencyPairs.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.pair}</TableCell>
                       <TableCell>
@@ -275,11 +510,11 @@ export default function AdminDashboardPage() {
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
                           </div>
-                          <span className="text-sm">{item.volume}%</span>
+                          <span className="text-sm">{item.volume.toFixed(1)}%</span>
                         </div>
                       </TableCell>
                       <TableCell>{item.transactions}</TableCell>
-                      <TableCell>${item.revenue.toLocaleString()}</TableCell>
+                      <TableCell>{formatCurrency(item.revenue, baseCurrency)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
