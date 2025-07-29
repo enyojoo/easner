@@ -308,7 +308,9 @@ export default function TransactionStatusPage() {
             {/* Main Content */}
             <div className="lg:col-span-2">
               <Card>
-               
+                <CardHeader>
+             
+                </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="text-center">
                     <div
@@ -388,6 +390,7 @@ export default function TransactionStatusPage() {
                       </span>
                     </div>
                   </div>
+
 
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
