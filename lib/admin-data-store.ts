@@ -3,6 +3,8 @@ import { supabase } from "./supabase"
 interface AdminData {
   users: any[]
   transactions: any[]
+  currencies: any[]
+  exchangeRates: any[]
   stats: {
     totalUsers: number
     activeUsers: number
@@ -21,9 +23,19 @@ class AdminDataStore {
   private loading = false
   private refreshInterval: NodeJS.Timeout | null = null
   private listeners: Set<() => void> = new Set()
+  private initialized = false
 
   constructor() {
-    // Start auto-refresh when store is created
+    // Preload data immediately when store is created
+    this.initialize()
+  }
+
+  private async initialize() {
+    if (this.initialized) return
+    this.initialized = true
+
+    // Start loading data immediately
+    this.loadData().catch(console.error)
     this.startAutoRefresh()
   }
 
@@ -36,21 +48,12 @@ class AdminDataStore {
     this.listeners.forEach((callback) => callback())
   }
 
-  async getData(): Promise<AdminData> {
-    if (this.data && Date.now() - this.data.lastUpdated < 30000) {
-      // 30 seconds cache
-      return this.data
-    }
+  getData(): AdminData | null {
+    return this.data
+  }
 
-    if (this.loading) {
-      // Wait for current loading to complete
-      while (this.loading) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
-      return this.data!
-    }
-
-    return this.loadData()
+  isLoading(): boolean {
+    return this.loading && !this.data
   }
 
   private async loadData(): Promise<AdminData> {
@@ -58,7 +61,12 @@ class AdminDataStore {
 
     try {
       // Load all data in parallel
-      const [usersResult, transactionsResult] = await Promise.all([this.loadUsers(), this.loadTransactions()])
+      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult] = await Promise.all([
+        this.loadUsers(),
+        this.loadTransactions(),
+        this.loadCurrencies(),
+        this.loadExchangeRates(),
+      ])
 
       const stats = this.calculateStats(usersResult, transactionsResult)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
@@ -67,6 +75,8 @@ class AdminDataStore {
       this.data = {
         users: usersResult,
         transactions: transactionsResult,
+        currencies: currenciesResult,
+        exchangeRates: exchangeRatesResult,
         stats,
         recentActivity,
         currencyPairs,
@@ -124,6 +134,22 @@ class AdminDataStore {
       .order("created_at", { ascending: false })
       .limit(200)
 
+    if (error) throw error
+    return data || []
+  }
+
+  private async loadCurrencies() {
+    const { data, error } = await supabase.from("currencies").select("*").order("code")
+    if (error) throw error
+    return data || []
+  }
+
+  private async loadExchangeRates() {
+    const { data, error } = await supabase.from("exchange_rates").select(`
+      *,
+      from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+      to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+    `)
     if (error) throw error
     return data || []
   }
@@ -260,9 +286,7 @@ class AdminDataStore {
     // Refresh data every 5 minutes in background
     this.refreshInterval = setInterval(
       () => {
-        if (this.data) {
-          this.loadData().catch(console.error)
-        }
+        this.loadData().catch(console.error)
       },
       5 * 60 * 1000,
     )
@@ -323,6 +347,20 @@ class AdminDataStore {
           user.id === userId ? { ...user, verification_status: newStatus } : user,
         )
         this.data.stats = this.calculateStats(this.data.users, this.data.transactions)
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateCurrencies() {
+    try {
+      const [currencies, exchangeRates] = await Promise.all([this.loadCurrencies(), this.loadExchangeRates()])
+
+      if (this.data) {
+        this.data.currencies = currencies
+        this.data.exchangeRates = exchangeRates
         this.notify()
       }
     } catch (error) {

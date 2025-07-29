@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 const AdminRatesPage = () => {
-  const [currencies, setCurrencies] = useState<any[]>([])
-  const [exchangeRates, setExchangeRates] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const { data } = useAdminData()
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
@@ -29,40 +29,8 @@ const AdminRatesPage = () => {
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      setLoading(true)
-      const [currenciesData, ratesData] = await Promise.all([loadCurrencies(), loadExchangeRates()])
-      setCurrencies(currenciesData)
-      setExchangeRates(ratesData)
-    } catch (error) {
-      console.error("Error loading data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadCurrencies = async () => {
-    const { data, error } = await supabase.from("currencies").select("*").order("code")
-
-    if (error) throw error
-    return data || []
-  }
-
-  const loadExchangeRates = async () => {
-    const { data, error } = await supabase.from("exchange_rates").select(`
-        *,
-        from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
-        to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
-      `)
-
-    if (error) throw error
-    return data || []
-  }
+  const currencies = data?.currencies || []
+  const exchangeRates = data?.exchangeRates || []
 
   const handleAddCurrency = async () => {
     try {
@@ -123,7 +91,7 @@ const AdminRatesPage = () => {
 
       setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
       setIsAddingCurrency(false)
-      await loadData()
+      await adminDataStore.updateCurrencies()
     } catch (error) {
       console.error("Error adding currency:", error)
       alert("Failed to add currency")
@@ -183,7 +151,7 @@ const AdminRatesPage = () => {
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
-      await loadData()
+      await adminDataStore.updateCurrencies()
       alert("Exchange rates updated successfully!")
     } catch (error) {
       console.error("Error saving rates:", error)
@@ -210,7 +178,7 @@ const AdminRatesPage = () => {
 
       if (error) throw error
 
-      await loadData()
+      await adminDataStore.updateCurrencies()
       alert(`Currency ${newStatus === "active" ? "activated" : "suspended"} successfully!`)
     } catch (error) {
       console.error("Error updating currency status:", error)
@@ -245,7 +213,7 @@ const AdminRatesPage = () => {
 
       if (error) throw error
 
-      await loadData()
+      await adminDataStore.updateCurrencies()
       alert("Currency deleted successfully!")
     } catch (error) {
       console.error("Error deleting currency:", error)
@@ -265,21 +233,6 @@ const AdminRatesPage = () => {
 
   const getCurrencyRates = (currencyCode: string) => {
     return exchangeRates.filter((rate) => rate.from_currency === currencyCode)
-  }
-
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading rates...</p>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
   }
 
   return (

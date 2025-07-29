@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAdminData } from "@/hooks/use-admin-data"
 
 export default function AdminDashboardPage() {
-  const { data, loading, error } = useAdminData()
+  const { data } = useAdminData()
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -36,41 +36,6 @@ export default function AdminDashboardPage() {
     })}`
   }
 
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading dashboard...</p>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <XCircle className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading dashboard</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
-  }
-
   return (
     <AdminDashboardLayout>
       <div className="p-6 space-y-6">
@@ -89,7 +54,9 @@ export default function AdminDashboardPage() {
               <CreditCard className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{data?.stats.totalTransactions.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {data?.stats.totalTransactions.toLocaleString() || 0}
+              </div>
             </CardContent>
           </Card>
 
@@ -109,7 +76,7 @@ export default function AdminDashboardPage() {
               <Users className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{data?.stats.totalUsers}</div>
+              <div className="text-2xl font-bold text-gray-900">{data?.stats.totalUsers || 0}</div>
             </CardContent>
           </Card>
 
@@ -119,7 +86,7 @@ export default function AdminDashboardPage() {
               <AlertCircle className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{data?.stats.pendingTransactions}</div>
+              <div className="text-2xl font-bold text-gray-900">{data?.stats.pendingTransactions || 0}</div>
               <p className="text-xs text-orange-600">Awaiting processing</p>
             </CardContent>
           </Card>
@@ -136,7 +103,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
-                {data?.recentActivity.map((activity: any) => (
+                {data?.recentActivity?.map((activity: any) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
                     <div className="flex-1 min-w-0">
@@ -154,7 +121,7 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                )) || []}
               </div>
             </CardContent>
           </Card>
@@ -175,7 +142,7 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.currencyPairs.map((item: any, index: number) => (
+                  {data?.currencyPairs?.map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.pair}</TableCell>
                       <TableCell>
@@ -188,7 +155,7 @@ export default function AdminDashboardPage() {
                       </TableCell>
                       <TableCell>{item.transactions}</TableCell>
                     </TableRow>
-                  ))}
+                  )) || []}
                 </TableBody>
               </Table>
             </CardContent>

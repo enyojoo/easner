@@ -63,7 +63,7 @@ interface TransactionData {
 }
 
 export default function AdminUsersPage() {
-  const { data, loading, error } = useAdminData()
+  const { data } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
@@ -227,41 +227,6 @@ export default function AdminUsersPage() {
     newThisWeek: (data?.users || []).filter(
       (u: UserData) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     ).length,
-  }
-
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading users...</p>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <XCircle className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading users</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
   }
 
   return (
