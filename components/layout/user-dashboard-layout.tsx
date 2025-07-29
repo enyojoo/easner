@@ -4,59 +4,73 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, Menu, X } from "lucide-react"
-import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/brand/brand-logo"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Home, Send, History, Users, User, HelpCircle, LogOut, Menu, X, ChevronDown } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
-  { name: "Send Money", href: "/user/send", icon: Send },
-  { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Recipients", href: "/user/recipients", icon: Users },
-  { name: "Profile", href: "/user/profile", icon: User },
-  { name: "Support", href: "/user/support", icon: HelpCircle },
-]
-
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { signOut } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { userProfile, signOut } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
       await signOut()
-      router.push("/")
+      router.push("/login")
     } catch (error) {
       console.error("Error signing out:", error)
-      // Force redirect even if signOut fails
-      router.push("/")
     }
   }
 
+  const navigation = [
+    { name: "Dashboard", href: "/user/dashboard", icon: Home },
+    { name: "Send Money", href: "/user/send", icon: Send },
+    { name: "Transactions", href: "/user/transactions", icon: History },
+    { name: "Recipients", href: "/user/recipients", icon: Users },
+    { name: "Support", href: "/user/support", icon: HelpCircle },
+  ]
+
+  const isActive = (href: string) => {
+    if (href === "/user/dashboard") {
+      return pathname === href
+    }
+    return pathname.startsWith(href)
+  }
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile menu overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
-            <BrandLogo size="sm" />
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+            <BrandLogo />
+            <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden">
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -64,56 +78,116 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => {
-              const isActive = pathname === item.href
+              const Icon = item.icon
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-novapay-primary-100 text-novapay-primary"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    isActive(item.href) ? "bg-novapay-primary text-white" : "text-gray-700 hover:bg-gray-100"
                   }`}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <Icon className="h-5 w-5 mr-3" />
                   {item.name}
                 </Link>
               )
             })}
           </nav>
 
-          {/* Logout */}
-          <div className="px-4 py-4 border-t border-gray-200">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </Button>
+          {/* User Profile */}
+          <div className="p-4 border-t border-gray-200">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start p-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                      <span className="text-novapay-primary font-semibold text-sm">
+                        {userProfile?.full_name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase() || "U"}
+                      </span>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-gray-900">{userProfile?.full_name || "User"}</p>
+                      <p className="text-xs text-gray-500">{userProfile?.email}</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href="/user/profile" className="flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content */}
+      <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="bg-white border-b border-gray-200 px-4 h-16 flex items-center sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between w-full">
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div className="flex-1 flex justify-center lg:hidden">
-              <BrandLogo size="sm" />
+        <div className="sticky top-0 z-30 flex h-16 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+          <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden">
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+            <div className="flex flex-1"></div>
+            <div className="flex items-center gap-x-4 lg:gap-x-6">
+              {/* User menu for desktop */}
+              <div className="hidden lg:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                        <span className="text-novapay-primary font-semibold text-sm">
+                          {userProfile?.full_name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase() || "U"}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {userProfile?.full_name?.split(" ")[0] || "User"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem asChild>
+                      <Link href="/user/profile" className="flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        Profile Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-            <div className="flex-1 hidden lg:block"></div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   )

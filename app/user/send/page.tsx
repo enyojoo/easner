@@ -1318,5 +1318,5 @@ export default function UserSendPage() {
         </div>
       </UserDashboardLayout>
     </AuthGuard>
-  )
-}\
+  )\
+}

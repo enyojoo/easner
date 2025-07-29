@@ -1,209 +1,233 @@
 "use client"
-
+import { useState, useEffect } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, TrendingUp } from "lucide-react"
-import Link from "next/link"
+import { ArrowUpRight, ArrowDownLeft, DollarSign, Activity } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useEffect, useState } from "react"
-import { transactionService, currencyService } from "@/lib/database"
-import { formatCurrency } from "@/utils/currency"
+import { transactionService } from "@/lib/database"
 import { AuthGuard } from "@/components/auth/auth-guard"
-
-interface Transaction {
-  id: string
-  transaction_id: string
-  send_amount: number
-  send_currency: string
-  status: string
-  created_at: string
-  recipient: {
-    full_name: string
-  }
-}
 
 export default function UserDashboardPage() {
   const { userProfile } = useAuth()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [totalSent, setTotalSent] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalSent: 0,
+    totalReceived: 0,
+    pendingTransactions: 0,
+    completedTransactions: 0,
+  })
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const loadDashboardData = async () => {
       if (!userProfile?.id) return
 
       try {
-        // Fetch user transactions
-        const userTransactions = await transactionService.getByUserId(userProfile.id, 10)
-        setTransactions(userTransactions || [])
+        const userTransactions = await transactionService.getByUserId(userProfile.id)
+        setTransactions(userTransactions.slice(0, 5)) // Show only recent 5
 
-        // Calculate total sent in base currency
-        if (userTransactions && userTransactions.length > 0) {
-          const exchangeRates = await currencyService.getExchangeRates()
-          const baseCurrency = userProfile.base_currency || "NGN"
+        // Calculate stats
+        const totalSent = userTransactions
+          .filter((t) => t.status === "completed")
+          .reduce((sum, t) => sum + t.send_amount, 0)
 
-          let totalInBaseCurrency = 0
+        const totalReceived = userTransactions
+          .filter((t) => t.status === "completed")
+          .reduce((sum, t) => sum + t.receive_amount, 0)
 
-          for (const transaction of userTransactions) {
-            if (transaction.status === "completed") {
-              let amountInBaseCurrency = transaction.send_amount
+        const pendingTransactions = userTransactions.filter((t) => t.status === "pending").length
 
-              // If transaction currency is different from base currency, convert it
-              if (transaction.send_currency !== baseCurrency) {
-                // Find exchange rate from transaction currency to base currency
-                const rate = exchangeRates.find(
-                  (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-                )
+        const completedTransactions = userTransactions.filter((t) => t.status === "completed").length
 
-                if (rate) {
-                  amountInBaseCurrency = transaction.send_amount * rate.rate
-                } else {
-                  // If direct rate not found, try reverse rate
-                  const reverseRate = exchangeRates.find(
-                    (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-                  )
-                  if (reverseRate && reverseRate.rate > 0) {
-                    amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-                  }
-                }
-              }
-
-              totalInBaseCurrency += amountInBaseCurrency
-            }
-          }
-
-          setTotalSent(totalInBaseCurrency)
-        }
+        setStats({
+          totalSent,
+          totalReceived,
+          pendingTransactions,
+          completedTransactions,
+        })
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
+        console.error("Error loading dashboard data:", error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchDashboardData()
-  }, [userProfile])
+    loadDashboardData()
+  }, [userProfile?.id])
 
-  const userName = userProfile?.first_name || "User"
-  const baseCurrency = userProfile?.base_currency || "NGN"
-  const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
-  const totalSentValue = totalSent || 0
+  const formatCurrency = (amount: number, currency: string) => {
+    const symbols: { [key: string]: string } = {
+      RUB: "₽",
+      NGN: "₦",
+      USD: "$",
+      EUR: "€",
+    }
+    return `${symbols[currency] || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "text-green-600 bg-green-50"
+      case "pending":
+        return "text-yellow-600 bg-yellow-50"
+      case "failed":
+        return "text-red-600 bg-red-50"
+      default:
+        return "text-gray-600 bg-gray-50"
+    }
+  }
+
+  if (loading) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <UserDashboardLayout>
+          <div className="p-6">
+            <div className="max-w-6xl mx-auto">
+              <div className="animate-pulse space-y-6">
+                <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+                  ))}
+                </div>
+                <div className="h-96 bg-gray-200 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+        </UserDashboardLayout>
+      </AuthGuard>
+    )
+  }
 
   return (
     <AuthGuard requireAuth={true}>
       <UserDashboardLayout>
-        <div className="p-6 space-y-6">
-          {/* Page Header */}
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
-            <p className="text-gray-600">Overview of your account and recent activity</p>
-          </div>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Welcome Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Welcome back, {userProfile?.full_name?.split(" ")[0] || "User"}!
+                </h1>
+                <p className="text-gray-600">Here's what's happening with your money transfers</p>
+              </div>
+              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                <ArrowUpRight className="h-4 w-4 mr-2" />
+                Send Money
+              </Button>
+            </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Sent</CardTitle>
-                <TrendingUp className="h-4 w-4 text-novapay-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  {loading ? "Loading..." : formatCurrency(totalSentValue, baseCurrency)}
-                </div>
-                <p className="text-xs text-gray-500">From all currencies in your base currency</p>
-              </CardContent>
-            </Card>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Sent</CardTitle>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(stats.totalSent, "RUB")}</div>
+                  <p className="text-xs text-muted-foreground">From all currencies in your base currency</p>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Transactions</CardTitle>
-                <Send className="h-4 w-4 text-novapay-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{completedTransactions}</div>
-                <p className="text-xs text-green-600">Completed transactions</p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Received</CardTitle>
+                  <ArrowDownLeft className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(stats.totalReceived, "NGN")}</div>
+                  <p className="text-xs text-muted-foreground">From all currencies in your base currency</p>
+                </CardContent>
+              </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Quick Send Money Card */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">Quick Send</CardTitle>
-                <CardDescription>Send money instantly</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-6">
-                  <div className="w-16 h-16 bg-novapay-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Send className="h-8 w-8 text-novapay-primary" />
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">Start a new money transfer</p>
-                  <Link href="/user/send">
-                    <Button className="w-full bg-novapay-primary hover:bg-novapay-primary-600">Send Money</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.pendingTransactions}</div>
+                  <p className="text-xs text-muted-foreground">Transactions in progress</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.completedTransactions}</div>
+                  <p className="text-xs text-muted-foreground">Successful transfers</p>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Recent Transactions */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">Recent Transactions</CardTitle>
-                  <CardDescription>Your latest money transfers</CardDescription>
-                </div>
-                <Link href="/user/transactions">
-                  <Button variant="outline" size="sm">
-                    View All
-                  </Button>
-                </Link>
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {loading ? (
-                    <div className="text-center py-8 text-gray-500">Loading transactions...</div>
-                  ) : transactions.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">No transactions yet</div>
-                  ) : (
-                    transactions.slice(0, 3).map((transaction) => (
-                      <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                              <Send className="h-5 w-5 text-novapay-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {transaction.recipient?.full_name || "Unknown"}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {new Date(transaction.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
+                {transactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Activity className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
+                    <p className="text-gray-600 mb-4">Start by sending your first money transfer</p>
+                    <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                      <ArrowUpRight className="h-4 w-4 mr-2" />
+                      Send Money
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {transactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                            <ArrowUpRight className="h-5 w-5 text-novapay-primary" />
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gray-900">
-                              {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              To {transaction.recipients?.full_name || "Unknown Recipient"}
                             </p>
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                transaction.status === "completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : transaction.status === "processing"
-                                    ? "bg-yellow-100 text-yellow-800"
-                                    : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {transaction.status}
-                            </span>
+                            <p className="text-sm text-gray-600">
+                              {new Date(transaction.created_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </p>
                           </div>
                         </div>
-                      </Link>
-                    ))
-                  )}
-                </div>
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900">
+                            {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                          </p>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              transaction.status,
+                            )}`}
+                          >
+                            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-center pt-4">
+                      <Button variant="outline">View All Transactions</Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
