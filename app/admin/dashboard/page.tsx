@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { supabase } from "@/lib/supabase"
+import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 interface DashboardStats {
   transactions: number
@@ -40,6 +41,12 @@ interface CurrencyPair {
   transactions: number
 }
 
+interface DashboardData {
+  stats: DashboardStats
+  recentActivity: RecentActivity[]
+  currencyPairs: CurrencyPair[]
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     transactions: 0,
@@ -49,101 +56,120 @@ export default function AdminDashboardPage() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [currencyPairs, setCurrencyPairs] = useState<CurrencyPair[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
 
-    // Set up auto-refresh every 5 minutes
-    const interval = setInterval(
-      () => {
-        loadDashboardData()
-      },
-      5 * 60 * 1000,
-    ) // 5 minutes
+    // Set up auto-refresh
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS, fetchDashboardData, 5 * 60 * 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS)
+    }
   }, [])
 
-  const loadDashboardData = async () => {
-    try {
-      setIsLoading(true)
+  const fetchDashboardData = async (): Promise<DashboardData> => {
+    // Load all transaction stats (no time filter)
+    const { data: allTransactions } = await supabase.from("transactions").select("*")
 
-      // Load all transaction stats (no time filter)
-      const { data: allTransactions } = await supabase.from("transactions").select("*")
+    // Load user stats
+    const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
 
-      // Load user stats
-      const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
-
-      // Load recent transactions for activity feed
-      const { data: recentTransactions } = await supabase
-        .from("transactions")
-        .select(`
+    // Load recent transactions for activity feed
+    const { data: recentTransactions } = await supabase
+      .from("transactions")
+      .select(`
         *,
         recipient:recipients(*),
         user:users(first_name, last_name, email)
       `)
-        .order("created_at", { ascending: false })
-        .limit(10)
+      .order("created_at", { ascending: false })
+      .limit(10)
 
-      // Load all completed transactions for volume calculation
-      const { data: completedTransactions } = await supabase
-        .from("transactions")
-        .select("send_amount, send_currency, receive_amount, receive_currency, status")
-        .eq("status", "completed")
+    // Load all completed transactions for volume calculation
+    const { data: completedTransactions } = await supabase
+      .from("transactions")
+      .select("send_amount, send_currency, receive_amount, receive_currency, status")
+      .eq("status", "completed")
 
-      // Load currency pair data
-      const { data: currencyData } = await supabase
-        .from("transactions")
-        .select("send_currency, receive_currency, send_amount, status")
-        .eq("status", "completed")
+    // Load currency pair data
+    const { data: currencyData } = await supabase
+      .from("transactions")
+      .select("send_currency, receive_currency, send_amount, status")
+      .eq("status", "completed")
 
-      // Calculate total volume in NGN (base currency)
-      let totalVolumeInNGN = 0
-      if (completedTransactions) {
-        for (const tx of completedTransactions) {
-          if (tx.send_currency === "NGN") {
-            totalVolumeInNGN += tx.send_amount
-          } else if (tx.send_currency === "RUB") {
-            // Convert RUB to NGN using exchange rate (22.45)
-            totalVolumeInNGN += tx.send_amount * 22.45
-          } else {
-            // For other currencies, use send amount as fallback
-            totalVolumeInNGN += tx.send_amount
-          }
+    // Calculate total volume in NGN (base currency)
+    let totalVolumeInNGN = 0
+    if (completedTransactions) {
+      for (const tx of completedTransactions) {
+        if (tx.send_currency === "NGN") {
+          totalVolumeInNGN += tx.send_amount
+        } else if (tx.send_currency === "RUB") {
+          // Convert RUB to NGN using exchange rate (22.45)
+          totalVolumeInNGN += tx.send_amount * 22.45
+        } else {
+          // For other currencies, use send amount as fallback
+          totalVolumeInNGN += tx.send_amount
         }
       }
+    }
 
-      // Count pending transactions
-      const pendingCount =
-        allTransactions?.filter((tx) => tx.status === "pending" || tx.status === "processing").length || 0
+    // Count pending transactions
+    const pendingCount =
+      allTransactions?.filter((tx) => tx.status === "pending" || tx.status === "processing").length || 0
 
-      // Process stats
-      const formattedStats: DashboardStats = {
-        transactions: allTransactions?.length || 0,
-        volume: formatCurrency(totalVolumeInNGN, "NGN"),
-        users: allUsers?.length || 0,
-        pending: pendingCount,
+    // Process stats
+    const formattedStats: DashboardStats = {
+      transactions: allTransactions?.length || 0,
+      volume: formatCurrency(totalVolumeInNGN, "NGN"),
+      users: allUsers?.length || 0,
+      pending: pendingCount,
+    }
+
+    // Process recent activity
+    const activities: RecentActivity[] =
+      recentTransactions?.map((tx) => ({
+        id: tx.id,
+        type: getActivityType(tx.status),
+        message: getActivityMessage(tx),
+        user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
+        amount: formatCurrency(tx.send_amount, tx.send_currency),
+        time: getRelativeTime(tx.created_at),
+        status: getActivityStatus(tx.status),
+      })) || []
+
+    // Process currency pairs
+    const pairs = processCurrencyPairs(currencyData || [])
+
+    return {
+      stats: formattedStats,
+      recentActivity: activities,
+      currencyPairs: pairs,
+    }
+  }
+
+  const loadDashboardData = async () => {
+    try {
+      // Check cache first
+      const cachedData = adminCache.get<DashboardData>(ADMIN_CACHE_KEYS.DASHBOARD_STATS)
+
+      if (cachedData) {
+        setStats(cachedData.stats)
+        setRecentActivity(cachedData.recentActivity)
+        setCurrencyPairs(cachedData.currencyPairs)
+        return
       }
 
-      // Process recent activity
-      const activities: RecentActivity[] =
-        recentTransactions?.map((tx) => ({
-          id: tx.id,
-          type: getActivityType(tx.status),
-          message: getActivityMessage(tx),
-          user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
-          amount: formatCurrency(tx.send_amount, tx.send_currency),
-          time: getRelativeTime(tx.created_at),
-          status: getActivityStatus(tx.status),
-        })) || []
+      setIsLoading(true)
+      const data = await fetchDashboardData()
 
-      // Process currency pairs
-      const pairs = processCurrencyPairs(currencyData || [])
+      // Cache the data
+      adminCache.set(ADMIN_CACHE_KEYS.DASHBOARD_STATS, data)
 
-      setStats(formattedStats)
-      setRecentActivity(activities)
-      setCurrencyPairs(pairs)
+      setStats(data.stats)
+      setRecentActivity(data.recentActivity)
+      setCurrencyPairs(data.currencyPairs)
     } catch (error) {
       console.error("Error loading dashboard data:", error)
     } finally {
@@ -260,10 +286,6 @@ export default function AdminDashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
             <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Auto-refreshes every 5 minutes
           </div>
         </div>
 

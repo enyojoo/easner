@@ -31,6 +31,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
+import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 interface UserData {
   id: string
@@ -62,7 +63,7 @@ interface TransactionData {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserData[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -73,61 +74,84 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
+
+    // Set up auto-refresh
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.USERS, fetchUsersData, 5 * 60 * 1000)
+
+    return () => {
+      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.USERS)
+    }
   }, [])
+
+  const fetchUsersData = async (): Promise<UserData[]> => {
+    // Fetch users
+    const { data: usersData, error: usersError } = await supabase
+      .from("users")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (usersError) throw usersError
+
+    // Fetch transaction counts and volumes for each user
+    const usersWithStats = await Promise.all(
+      (usersData || []).map(async (user) => {
+        const { data: transactions, error: transError } = await supabase
+          .from("transactions")
+          .select("send_amount, send_currency, status")
+          .eq("user_id", user.id)
+
+        if (transError) {
+          console.error("Error fetching transactions for user:", user.id, transError)
+          return {
+            ...user,
+            totalTransactions: 0,
+            totalVolume: 0,
+          }
+        }
+
+        const totalTransactions = transactions?.length || 0
+
+        // Calculate total volume in NGN (base currency)
+        const totalVolume = (transactions || []).reduce((sum, transaction) => {
+          let amount = Number(transaction.send_amount)
+
+          // Convert to NGN if needed
+          if (transaction.send_currency === "RUB") {
+            amount = amount * 22.45 // RUB to NGN rate
+          }
+
+          return sum + amount
+        }, 0)
+
+        return {
+          ...user,
+          totalTransactions,
+          totalVolume,
+        }
+      }),
+    )
+
+    return usersWithStats
+  }
 
   const fetchUsers = async () => {
     try {
+      // Check cache first
+      const cachedData = adminCache.get<UserData[]>(ADMIN_CACHE_KEYS.USERS)
+      if (cachedData) {
+        setUsers(cachedData)
+        return
+      }
+
       setLoading(true)
       setError(null)
 
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false })
+      const data = await fetchUsersData()
 
-      if (usersError) throw usersError
+      // Cache the data
+      adminCache.set(ADMIN_CACHE_KEYS.USERS, data)
 
-      // Fetch transaction counts and volumes for each user
-      const usersWithStats = await Promise.all(
-        (usersData || []).map(async (user) => {
-          const { data: transactions, error: transError } = await supabase
-            .from("transactions")
-            .select("send_amount, send_currency, status")
-            .eq("user_id", user.id)
-
-          if (transError) {
-            console.error("Error fetching transactions for user:", user.id, transError)
-            return {
-              ...user,
-              totalTransactions: 0,
-              totalVolume: 0,
-            }
-          }
-
-          const totalTransactions = transactions?.length || 0
-
-          // Calculate total volume in NGN (base currency)
-          const totalVolume = (transactions || []).reduce((sum, transaction) => {
-            let amount = Number(transaction.send_amount)
-
-            // Convert to NGN if needed
-            if (transaction.send_currency === "RUB") {
-              amount = amount * 22.45 // RUB to NGN rate
-            }
-
-            return sum + amount
-          }, 0)
-
-          return {
-            ...user,
-            totalTransactions,
-            totalVolume,
-          }
-        }),
-      )
-
-      setUsers(usersWithStats)
+      setUsers(data)
     } catch (err) {
       console.error("Error fetching users:", err)
       setError(err instanceof Error ? err.message : "Failed to load users")
@@ -152,7 +176,7 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(20)
+        .limit(5)
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -234,6 +258,9 @@ export default function AdminUsersPage() {
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
+
+      // Invalidate cache
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error updating user status:", err)
     }
@@ -249,6 +276,9 @@ export default function AdminUsersPage() {
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
+
+      // Invalidate cache
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error updating user verification:", err)
     }
@@ -262,6 +292,9 @@ export default function AdminUsersPage() {
 
       setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
       setSelectedUsers([])
+
+      // Invalidate cache
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error bulk updating user status:", err)
     }
@@ -302,21 +335,6 @@ export default function AdminUsersPage() {
     activeUsers: users.filter((u) => u.status === "active").length,
     verifiedUsers: users.filter((u) => u.verification_status === "verified").length,
     newThisWeek: users.filter((u) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length,
-  }
-
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading users...</p>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
   }
 
   if (error) {
