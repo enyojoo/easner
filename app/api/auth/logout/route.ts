@@ -4,7 +4,7 @@ export async function POST(request: NextRequest) {
   try {
     const response = NextResponse.json({ success: true })
 
-    // Clear both user and admin auth cookies
+    // Clear both auth cookies
     response.cookies.set("auth-token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Logout error:", error)
     return NextResponse.json({ error: "Logout failed" }, { status: 500 })
   }
 }
