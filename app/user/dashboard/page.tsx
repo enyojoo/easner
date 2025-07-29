@@ -109,7 +109,7 @@ export default function UserDashboardPage() {
               <div className="text-2xl font-bold text-gray-900">
                 {loading ? "Loading..." : formatCurrency(totalSentValue, baseCurrency)}
               </div>
-              <p className="text-xs text-green-600">+12% from last month</p>
+              <p className="text-xs text-gray-500">From all currencies in your base currency</p>
             </CardContent>
           </Card>
 
