@@ -1,4 +1,5 @@
 import { supabase, createServerClient } from "./supabase"
+import { dataCache, CACHE_KEYS } from "./cache"
 
 // User operations
 export const userService = {
@@ -32,6 +33,10 @@ export const userService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate user profile cache
+    dataCache.invalidate(CACHE_KEYS.USER_PROFILE(userId))
+
     return data
   },
 
@@ -53,9 +58,15 @@ export const userService = {
   },
 }
 
-// Currency operations
+// Currency operations with caching
 export const currencyService = {
   async getAll() {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("currencies")
       .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
@@ -65,15 +76,25 @@ export const currencyService = {
     if (error) throw error
 
     // Map flag_svg to flag for frontend compatibility
-    return (
+    const currencies =
       data?.map((currency) => ({
         ...currency,
         flag: currency.flag_svg,
       })) || []
-    )
+
+    // Cache the result
+    dataCache.set(CACHE_KEYS.CURRENCIES, currencies)
+
+    return currencies
   },
 
   async getExchangeRates() {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("exchange_rates")
       .select(`
@@ -86,7 +107,7 @@ export const currencyService = {
     if (error) throw error
 
     // Map flag_svg to flag for frontend compatibility
-    return (
+    const rates =
       data?.map((rate) => ({
         ...rate,
         from_currency_info: rate.from_currency_info
@@ -102,7 +123,11 @@ export const currencyService = {
             }
           : undefined,
       })) || []
-    )
+
+    // Cache the result
+    dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates)
+
+    return rates
   },
 
   async getRate(fromCurrency: string, toCurrency: string) {
@@ -134,11 +159,15 @@ export const currencyService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate exchange rates cache
+    dataCache.invalidate(CACHE_KEYS.EXCHANGE_RATES)
+
     return data
   },
 }
 
-// Recipient operations
+// Recipient operations with caching
 export const recipientService = {
   async create(
     userId: string,
@@ -164,10 +193,20 @@ export const recipientService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate user recipients cache
+    dataCache.invalidate(CACHE_KEYS.USER_RECIPIENTS(userId))
+
     return data
   },
 
   async getByUserId(userId: string) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.USER_RECIPIENTS(userId))
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("recipients")
       .select("*")
@@ -175,6 +214,10 @@ export const recipientService = {
       .order("created_at", { ascending: false })
 
     if (error) throw error
+
+    // Cache the result
+    dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), data || [])
+
     return data
   },
 
@@ -200,6 +243,10 @@ export const recipientService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate related caches
+    dataCache.invalidatePattern("user_recipients_")
+
     return data
   },
 
@@ -207,10 +254,13 @@ export const recipientService = {
     const { error } = await supabase.from("recipients").delete().eq("id", recipientId)
 
     if (error) throw error
+
+    // Invalidate related caches
+    dataCache.invalidatePattern("user_recipients_")
   },
 }
 
-// Transaction operations
+// Transaction operations with caching
 export const transactionService = {
   async create(transactionData: {
     userId: string
@@ -247,10 +297,20 @@ export const transactionService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate user transactions cache
+    dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
+
     return data
   },
 
   async getByUserId(userId: string, limit = 50) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.USER_TRANSACTIONS(userId))
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("transactions")
       .select(`
@@ -262,10 +322,20 @@ export const transactionService = {
       .limit(limit)
 
     if (error) throw error
+
+    // Cache the result
+    dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), data || [])
+
     return data
   },
 
   async getById(transactionId: string) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.TRANSACTION(transactionId))
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("transactions")
       .select(`
@@ -277,6 +347,11 @@ export const transactionService = {
       .single()
 
     if (error) throw error
+
+    // Cache the result with shorter TTL for active transactions
+    const ttl = data.status === "completed" ? 30 * 60 * 1000 : 2 * 60 * 1000 // 30 min for completed, 2 min for active
+    dataCache.set(CACHE_KEYS.TRANSACTION(transactionId), data, ttl)
+
     return data
   },
 
@@ -294,6 +369,11 @@ export const transactionService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate transaction cache
+    dataCache.invalidate(CACHE_KEYS.TRANSACTION(transactionId))
+    dataCache.invalidatePattern("user_transactions_")
+
     return data
   },
 
@@ -355,6 +435,10 @@ export const transactionService = {
       }
 
       const updatedTransaction = data[0]
+
+      // Invalidate transaction cache
+      dataCache.invalidate(CACHE_KEYS.TRANSACTION(transactionId))
+
       return { ...updatedTransaction, receipt_url: publicUrl }
     } catch (error) {
       console.error("Receipt upload error:", error)
@@ -397,9 +481,15 @@ export const transactionService = {
   },
 }
 
-// Payment Methods operations
+// Payment Methods operations with caching
 export const paymentMethodService = {
   async getAll() {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.PAYMENT_METHODS)
+    if (cached) {
+      return cached
+    }
+
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
@@ -407,19 +497,16 @@ export const paymentMethodService = {
       .order("is_default", { ascending: false })
 
     if (error) throw error
+
+    // Cache the result
+    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [])
+
     return data || []
   },
 
   async getByCurrency(currency: string) {
-    const { data, error } = await supabase
-      .from("payment_methods")
-      .select("*")
-      .eq("currency", currency)
-      .eq("status", "active")
-      .order("is_default", { ascending: false })
-
-    if (error) throw error
-    return data || []
+    const allMethods = await this.getAll()
+    return allMethods.filter((pm) => pm.currency === currency && pm.status === "active")
   },
 
   async create(paymentMethodData: {
@@ -461,6 +548,10 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate payment methods cache
+    dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
+
     return data
   },
 
@@ -507,6 +598,10 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate payment methods cache
+    dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
+
     return data
   },
 
@@ -516,6 +611,10 @@ export const paymentMethodService = {
     const { data, error } = await serverClient.from("payment_methods").update({ status }).eq("id", id).select().single()
 
     if (error) throw error
+
+    // Invalidate payment methods cache
+    dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
+
     return data
   },
 
@@ -534,6 +633,10 @@ export const paymentMethodService = {
       .single()
 
     if (error) throw error
+
+    // Invalidate payment methods cache
+    dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
+
     return data
   },
 
@@ -543,6 +646,9 @@ export const paymentMethodService = {
     const { error } = await serverClient.from("payment_methods").delete().eq("id", id)
 
     if (error) throw error
+
+    // Invalidate payment methods cache
+    dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
   },
 }
 

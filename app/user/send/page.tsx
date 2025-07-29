@@ -34,63 +34,19 @@ export default function UserSendPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
 
-  // Initialize state with default values (no URL parameters)
+  // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
   const [sendAmount, setSendAmount] = useState<string>("100")
-  const [sendCurrency, setSendCurrency] = useState<string>("RUB")
-  const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
+  const [sendCurrency, setSendCurrency] = useState<string>("")
+  const [receiveCurrency, setReceiveCurrency] = useState<string>("")
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [fee, setFee] = useState<number>(0)
 
-  const [currencies, setCurrencies] = useState<Currency[]>([
-    {
-      id: "1",
-      code: "RUB",
-      name: "Russian Ruble",
-      symbol: "₽",
-      flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path></svg>`,
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      code: "NGN",
-      name: "Nigerian Naira",
-      symbol: "₦",
-      flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path></svg>`,
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ])
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([
-    {
-      id: "1",
-      from_currency: "RUB",
-      to_currency: "NGN",
-      rate: 22.45,
-      fee_type: "free",
-      fee_amount: 0,
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      from_currency: "NGN",
-      to_currency: "RUB",
-      rate: 0.0445,
-      fee_type: "percentage",
-      fee_amount: 1.5,
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ])
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
   const [recipients, setRecipients] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [recipientData, setRecipientData] = useState({
@@ -130,6 +86,7 @@ export default function UserSendPage() {
       if (!userProfile?.id) return
 
       try {
+        setLoading(true)
         setError(null)
 
         const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
@@ -139,18 +96,42 @@ export default function UserSendPage() {
           paymentMethodService.getAll(),
         ])
 
-        if (currenciesData) setCurrencies(currenciesData)
-        if (ratesData) setExchangeRates(ratesData)
-        if (recipientsData) setRecipients(recipientsData)
-        if (paymentMethodsData) setPaymentMethods(paymentMethodsData)
+        setCurrencies(currenciesData || [])
+        setExchangeRates(ratesData || [])
+        setRecipients(recipientsData || [])
+        setPaymentMethods(paymentMethodsData || [])
+
+        // Set default currencies if available
+        if (currenciesData && currenciesData.length > 0) {
+          // Set user's base currency as default send currency, or first available
+          const userBaseCurrency = userProfile.base_currency || "NGN"
+          const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
+
+          if (baseCurrencyExists) {
+            setSendCurrency(userBaseCurrency)
+            // Set receive currency to a different one
+            const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
+            if (otherCurrency) {
+              setReceiveCurrency(otherCurrency.code)
+            }
+          } else {
+            // Fallback to first two currencies
+            setSendCurrency(currenciesData[0].code)
+            if (currenciesData.length > 1) {
+              setReceiveCurrency(currenciesData[1].code)
+            }
+          }
+        }
       } catch (error) {
         console.error("Error loading data:", error)
         setError("Failed to load data. Please refresh the page.")
+      } finally {
+        setLoading(false)
       }
     }
 
     loadData()
-  }, [userProfile?.id])
+  }, [userProfile?.id, userProfile?.base_currency])
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
@@ -387,8 +368,10 @@ export default function UserSendPage() {
     return methods.find((pm) => pm.is_default) || methods[0]
   }
 
-  // Update the useEffect to calculate fee and conversion without searchParams
+  // Update the useEffect to calculate fee and conversion
   useEffect(() => {
+    if (!sendCurrency || !receiveCurrency) return
+
     const amount = Number.parseFloat(sendAmount) || 0
 
     // If same currency, 1:1 conversion
@@ -562,6 +545,21 @@ export default function UserSendPage() {
     </Card>
   )
 
+  if (loading) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-4"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
   if (error) {
     return (
       <UserDashboardLayout>
@@ -572,6 +570,20 @@ export default function UserSendPage() {
               <Button onClick={() => window.location.reload()} className="mt-2">
                 Retry
               </Button>
+            </div>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  if (currencies.length === 0) {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+              <p className="text-yellow-700">No currencies available. Please contact support.</p>
             </div>
           </div>
         </div>
@@ -756,7 +768,11 @@ export default function UserSendPage() {
                       </div>
                     </div>
 
-                    <Button onClick={handleContinue} className="w-full bg-novapay-primary hover:bg-novapay-primary-600">
+                    <Button
+                      onClick={handleContinue}
+                      className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                      disabled={!sendCurrency || !receiveCurrency || !sendAmount}
+                    >
                       Continue
                     </Button>
                   </CardContent>
