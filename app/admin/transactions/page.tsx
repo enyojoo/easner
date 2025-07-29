@@ -22,6 +22,7 @@ import {
   AlertCircle,
   ArrowUpDown,
   Loader2,
+  RefreshCw,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Transaction } from "@/types"
@@ -32,7 +33,6 @@ export default function AdminTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
-  const [dateRange, setDateRange] = useState("all")
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -40,6 +40,21 @@ export default function AdminTransactionsPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Load transactions from Supabase
+  useEffect(() => {
+    loadTransactions()
+
+    // Set up auto-refresh every 5 minutes
+    const interval = setInterval(
+      () => {
+        loadTransactions()
+      },
+      5 * 60 * 1000,
+    ) // 5 minutes
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Reload when filters change
   useEffect(() => {
     loadTransactions()
   }, [statusFilter, currencyFilter, searchTerm])
@@ -223,10 +238,16 @@ export default function AdminTransactionsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Transaction Management</h1>
             <p className="text-gray-600">Monitor and manage all platform transactions</p>
           </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Auto-refreshes every 5 minutes
+            </div>
+            <Button onClick={handleExport} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -238,7 +259,7 @@ export default function AdminTransactionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -271,18 +292,6 @@ export default function AdminTransactionsPage() {
                   <SelectItem value="all">All Currencies</SelectItem>
                   <SelectItem value="NGN">NGN</SelectItem>
                   <SelectItem value="RUB">RUB</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
                 </SelectContent>
               </Select>
             </div>

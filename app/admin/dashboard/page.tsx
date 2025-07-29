@@ -3,31 +3,24 @@
 import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Users,
   CreditCard,
   TrendingUp,
   AlertCircle,
   Activity,
-  ArrowUpRight,
   Clock,
   CheckCircle,
   XCircle,
   RefreshCw,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { transactionService, userService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
 
 interface DashboardStats {
   transactions: number
-  transactionsChange: string
   volume: string
-  volumeChange: string
   users: number
-  usersChange: string
   pending: number
 }
 
@@ -45,18 +38,13 @@ interface CurrencyPair {
   pair: string
   volume: number
   transactions: number
-  revenue: number
 }
 
 export default function AdminDashboardPage() {
-  const [timeRange, setTimeRange] = useState("today")
   const [stats, setStats] = useState<DashboardStats>({
     transactions: 0,
-    transactionsChange: "+0%",
     volume: "₦0",
-    volumeChange: "+0%",
     users: 0,
-    usersChange: "+0%",
     pending: 0,
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
@@ -65,17 +53,27 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadDashboardData()
-  }, [timeRange])
+
+    // Set up auto-refresh every 5 minutes
+    const interval = setInterval(
+      () => {
+        loadDashboardData()
+      },
+      5 * 60 * 1000,
+    ) // 5 minutes
+
+    return () => clearInterval(interval)
+  }, [])
 
   const loadDashboardData = async () => {
     try {
       setIsLoading(true)
 
-      // Load transaction stats
-      const transactionStats = await transactionService.getStats(timeRange)
+      // Load all transaction stats (no time filter)
+      const { data: allTransactions } = await supabase.from("transactions").select("*")
 
       // Load user stats
-      const userStats = await userService.getStats()
+      const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
 
       // Load recent transactions for activity feed
       const { data: recentTransactions } = await supabase
@@ -93,14 +91,12 @@ export default function AdminDashboardPage() {
         .from("transactions")
         .select("send_amount, send_currency, receive_amount, receive_currency, status")
         .eq("status", "completed")
-        .gte("created_at", getDateFilter(timeRange))
 
       // Load currency pair data
       const { data: currencyData } = await supabase
         .from("transactions")
         .select("send_currency, receive_currency, send_amount, status")
         .eq("status", "completed")
-        .gte("created_at", getDateFilter(timeRange))
 
       // Calculate total volume in NGN (base currency)
       let totalVolumeInNGN = 0
@@ -118,20 +114,21 @@ export default function AdminDashboardPage() {
         }
       }
 
+      // Count pending transactions
+      const pendingCount =
+        allTransactions?.filter((tx) => tx.status === "pending" || tx.status === "processing").length || 0
+
       // Process stats
       const formattedStats: DashboardStats = {
-        transactions: transactionStats.totalTransactions,
-        transactionsChange: "", // Remove "+12%"
+        transactions: allTransactions?.length || 0,
         volume: formatCurrency(totalVolumeInNGN, "NGN"),
-        volumeChange: "", // Remove "+8%"
-        users: userStats.total,
-        usersChange: "", // Remove "+5%"
-        pending: transactionStats.pendingTransactions,
+        users: allUsers?.length || 0,
+        pending: pendingCount,
       }
 
       // Process recent activity
       const activities: RecentActivity[] =
-        recentTransactions?.map((tx, index) => ({
+        recentTransactions?.map((tx) => ({
           id: tx.id,
           type: getActivityType(tx.status),
           message: getActivityMessage(tx),
@@ -152,22 +149,6 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const getDateFilter = (range: string) => {
-    const date = new Date()
-    switch (range) {
-      case "today":
-        date.setHours(0, 0, 0, 0)
-        break
-      case "week":
-        date.setDate(date.getDate() - 7)
-        break
-      case "month":
-        date.setMonth(date.getMonth() - 1)
-        break
-    }
-    return date.toISOString()
   }
 
   const formatCurrency = (amount: number, currency = "NGN") => {
@@ -232,16 +213,15 @@ export default function AdminDashboardPage() {
   }
 
   const processCurrencyPairs = (transactions: any[]) => {
-    const pairStats: { [key: string]: { volume: number; count: number; revenue: number } } = {}
+    const pairStats: { [key: string]: { volume: number; count: number } } = {}
 
     transactions.forEach((tx) => {
       const pair = `${tx.send_currency} → ${tx.receive_currency}`
       if (!pairStats[pair]) {
-        pairStats[pair] = { volume: 0, count: 0, revenue: 0 }
+        pairStats[pair] = { volume: 0, count: 0 }
       }
       pairStats[pair].volume += tx.send_amount
       pairStats[pair].count += 1
-      pairStats[pair].revenue += tx.send_amount * 0.02 // Assuming 2% fee
     })
 
     const totalVolume = Object.values(pairStats).reduce((sum, stat) => sum + stat.volume, 0)
@@ -251,7 +231,6 @@ export default function AdminDashboardPage() {
         pair,
         volume: totalVolume > 0 ? (stats.volume / totalVolume) * 100 : 0,
         transactions: stats.count,
-        revenue: Math.round(stats.revenue),
       }))
       .sort((a, b) => b.volume - a.volume)
       .slice(0, 4)
@@ -282,21 +261,9 @@ export default function AdminDashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
             <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            Auto-refreshes every 5 minutes
           </div>
         </div>
 
@@ -309,14 +276,6 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.transactions.toLocaleString()}</div>
-              {stats.transactionsChange && (
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {stats.transactionsChange} from last {timeRange}
-                  </span>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -327,14 +286,6 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.volume}</div>
-              {stats.volumeChange && (
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {stats.volumeChange} from last {timeRange}
-                  </span>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -345,14 +296,6 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.users}</div>
-              {stats.usersChange && (
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {stats.usersChange} from last {timeRange}
-                  </span>
-                </div>
-              )}
             </CardContent>
           </Card>
 
