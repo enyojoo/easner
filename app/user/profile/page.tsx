@@ -236,7 +236,7 @@ export default function UserProfilePage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    Personal Information
+                    Personal
                   </CardTitle>
                   {!isEditingProfile && (
                     <Button
@@ -376,7 +376,7 @@ export default function UserProfilePage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
-                    Password & Security
+                    Password
                   </CardTitle>
                   {!isChangingPassword && (
                     <Button
