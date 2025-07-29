@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,6 +31,8 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 interface UserData {
   id: string
@@ -61,80 +63,13 @@ interface TransactionData {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data, loading, error } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
-
-  useEffect(() => {
-    fetchUsers()
-  }, [])
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false })
-
-      if (usersError) throw usersError
-
-      // Fetch transaction counts and volumes for each user
-      const usersWithStats = await Promise.all(
-        (usersData || []).map(async (user) => {
-          const { data: transactions, error: transError } = await supabase
-            .from("transactions")
-            .select("send_amount, send_currency, status")
-            .eq("user_id", user.id)
-
-          if (transError) {
-            console.error("Error fetching transactions for user:", user.id, transError)
-            return {
-              ...user,
-              totalTransactions: 0,
-              totalVolume: 0,
-            }
-          }
-
-          const totalTransactions = transactions?.length || 0
-
-          // Calculate total volume in NGN (base currency)
-          const totalVolume = (transactions || []).reduce((sum, transaction) => {
-            let amount = Number(transaction.send_amount)
-
-            // Convert to NGN if needed
-            if (transaction.send_currency === "RUB") {
-              amount = amount * 22.45 // RUB to NGN rate
-            }
-
-            return sum + amount
-          }, 0)
-
-          return {
-            ...user,
-            totalTransactions,
-            totalVolume,
-          }
-        }),
-      )
-
-      setUsers(usersWithStats)
-    } catch (err) {
-      console.error("Error fetching users:", err)
-      setError(err instanceof Error ? err.message : "Failed to load users")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const fetchUserTransactions = async (userId: string) => {
     try {
@@ -162,7 +97,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = (data?.users || []).filter((user: UserData) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -210,7 +145,7 @@ export default function AdminUsersPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUsers(filteredUsers.map((u) => u.id))
+      setSelectedUsers(filteredUsers.map((u: UserData) => u.id))
     } else {
       setSelectedUsers([])
     }
@@ -226,11 +161,7 @@ export default function AdminUsersPage() {
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from("users").update({ status: newStatus }).eq("id", userId)
-
-      if (error) throw error
-
-      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, status: newStatus } : user)))
+      await adminDataStore.updateUserStatus(userId, newStatus)
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
@@ -241,11 +172,7 @@ export default function AdminUsersPage() {
 
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.from("users").update({ verification_status: newStatus }).eq("id", userId)
-
-      if (error) throw error
-
-      setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, verification_status: newStatus } : user)))
+      await adminDataStore.updateUserVerification(userId, newStatus)
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
@@ -256,11 +183,7 @@ export default function AdminUsersPage() {
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
     try {
-      const { error } = await supabase.from("users").update({ status: newStatus }).in("id", selectedUsers)
-
-      if (error) throw error
-
-      setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
+      await Promise.all(selectedUsers.map((userId) => adminDataStore.updateUserStatus(userId, newStatus)))
       setSelectedUsers([])
     } catch (err) {
       console.error("Error bulk updating user status:", err)
@@ -270,7 +193,7 @@ export default function AdminUsersPage() {
   const handleExport = () => {
     const csvContent = [
       ["Name", "Email", "Phone", "Status", "Verification", "Registration Date", "Total Volume"].join(","),
-      ...filteredUsers.map((u) =>
+      ...filteredUsers.map((u: UserData) =>
         [
           `${u.first_name} ${u.last_name}`,
           u.email,
@@ -298,10 +221,12 @@ export default function AdminUsersPage() {
 
   // Registration analytics data
   const registrationStats = {
-    totalUsers: users.length,
-    activeUsers: users.filter((u) => u.status === "active").length,
-    verifiedUsers: users.filter((u) => u.verification_status === "verified").length,
-    newThisWeek: users.filter((u) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length,
+    totalUsers: data?.stats.totalUsers || 0,
+    activeUsers: data?.stats.activeUsers || 0,
+    verifiedUsers: data?.stats.verifiedUsers || 0,
+    newThisWeek: (data?.users || []).filter(
+      (u: UserData) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    ).length,
   }
 
   if (loading) {
@@ -330,11 +255,6 @@ export default function AdminUsersPage() {
                 <h3 className="text-sm font-medium text-red-800">Error loading users</h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p>{error}</p>
-                </div>
-                <div className="mt-4">
-                  <Button onClick={fetchUsers} size="sm" variant="outline">
-                    Try Again
-                  </Button>
                 </div>
               </div>
             </div>
@@ -509,7 +429,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: UserData) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <Checkbox
@@ -641,7 +561,7 @@ export default function AdminUsersPage() {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {userTransactions.map((transaction) => (
+                                        {userTransactions.slice(0, 5).map((transaction) => (
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}

@@ -31,7 +31,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 
-// Mock data
+// Mock data - this would normally come from the admin data store
 const mockPlatformConfig = {
   maintenanceMode: false,
   registrationEnabled: true,
