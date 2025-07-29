@@ -133,15 +133,7 @@ export default function UserSendPage() {
     loadData()
   }, [userProfile?.id, userProfile?.base_currency])
 
-  // Generate transaction ID when moving to step 3
-  useEffect(() => {
-    if (currentStep === 3 && !transactionId) {
-      const newTransactionId = `NP${Date.now()}`
-      setTransactionId(newTransactionId)
-    }
-  }, [currentStep, transactionId])
-
-  // Add this useEffect after the existing useEffects, around line 80
+  // Add this useEffect after the existing data loading useEffect
   useEffect(() => {
     // Handle URL parameters from home page conversion
     const urlParams = new URLSearchParams(window.location.search)
@@ -165,15 +157,23 @@ export default function UserSendPage() {
         setFee(Number.parseFloat(urlFee))
       }
 
-      // Set the step from URL
+      // Set current step based on URL parameter
       if (step === "2") {
         setCurrentStep(2)
       }
 
-      // Clean up URL parameters
+      // Clear URL parameters after setting state
       window.history.replaceState({}, "", "/user/send")
     }
   }, [])
+
+  // Generate transaction ID when moving to step 3
+  useEffect(() => {
+    if (currentStep === 3 && !transactionId) {
+      const newTransactionId = `NP${Date.now()}`
+      setTransactionId(newTransactionId)
+    }
+  }, [currentStep, transactionId])
 
   const filteredSavedRecipients = recipients.filter(
     (recipient) =>

@@ -1,8 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import PublicHeader from "@/components/layout/public-header"
-import CurrencyConverter from "@/components/currency-converter"
+import { PublicHeader } from "@/components/layout/public-header"
+import { CurrencyConverter } from "@/components/currency-converter"
 import { useAuth } from "@/lib/auth-context"
 
 export default function HomePage() {
@@ -21,7 +21,7 @@ export default function HomePage() {
       if (isAdmin) {
         router.push("/admin/dashboard")
       } else {
-        // User is logged in, go directly to send page step 2 with data
+        // User is logged in, go to send page step 2 with data
         const params = new URLSearchParams({
           sendAmount: data.sendAmount,
           sendCurrency: data.sendCurrency,
