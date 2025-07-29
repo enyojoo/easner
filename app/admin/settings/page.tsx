@@ -1255,7 +1255,7 @@ export default function AdminSettingsPage() {
                               <Label htmlFor="editTemplateType">Type *</Label>
                               <Select
                                 value={editingEmailTemplate.template_type}
-                                onChange={(value) => setEditingEmailTemplate({ ...editingEmailTemplate, template_type: value })}
+                                onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, template_type: e.target.value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
