@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode
@@ -24,10 +25,15 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useAuth()
 
-  const handleLogout = () => {
-    // Mock logout - redirect to admin login
-    router.push("/admin/login")
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      router.push("/admin/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
   }
 
   return (
