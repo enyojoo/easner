@@ -356,6 +356,7 @@ class AdminDataStore {
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
+      // Update database first
       const { error } = await supabase
         .from("currencies")
         .update({
@@ -366,10 +367,85 @@ class AdminDataStore {
 
       if (error) throw error
 
-      // Update local data immediately
+      // Update local data immediately after successful database update
       if (this.data) {
         this.data.currencies = this.data.currencies.map((currency) =>
-          currency.id === currencyId ? { ...currency, status: newStatus } : currency,
+          currency.id === currencyId
+            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
+            : currency,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateExchangeRates(updates: any[]) {
+    try {
+      // Update database first
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
+      })
+
+      if (error) throw error
+
+      // Reload exchange rates to get the latest data
+      const freshExchangeRates = await this.loadExchangeRates()
+
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.exchangeRates = freshExchangeRates
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async addCurrency(currencyData: any) {
+    try {
+      // Insert new currency
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = [...this.data.currencies, newCurrency]
+        this.notify()
+      }
+
+      return newCurrency
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async deleteCurrency(currencyId: string) {
+    try {
+      const currency = this.data?.currencies.find((c) => c.id === currencyId)
+      if (!currency) return
+
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
+        this.data.exchangeRates = this.data.exchangeRates.filter(
+          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
         )
         this.notify()
       }

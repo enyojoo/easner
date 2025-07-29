@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 
@@ -35,21 +34,18 @@ const AdminRatesPage = () => {
   const handleAddCurrency = async () => {
     try {
       setSaving(true)
-      const { data, error } = await supabase
-        .from("currencies")
-        .insert({
-          code: newCurrencyData.code.toUpperCase(),
-          name: newCurrencyData.name,
-          symbol: newCurrencyData.symbol,
-          flag_svg:
-            newCurrencyData.flag_svg ||
-            `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
-          status: "active",
-        })
-        .select()
-        .single()
 
-      if (error) throw error
+      const currencyData = {
+        code: newCurrencyData.code.toUpperCase(),
+        name: newCurrencyData.name,
+        symbol: newCurrencyData.symbol,
+        flag_svg:
+          newCurrencyData.flag_svg ||
+          `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
+        status: "active",
+      }
+
+      const newCurrency = await adminDataStore.addCurrency(currencyData)
 
       // Create default exchange rates for the new currency
       const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
@@ -84,14 +80,11 @@ const AdminRatesPage = () => {
       }
 
       if (newRates.length > 0) {
-        const { error: ratesError } = await supabase.from("exchange_rates").insert(newRates)
-
-        if (ratesError) throw ratesError
+        await adminDataStore.updateExchangeRates(newRates)
       }
 
       setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
       setIsAddingCurrency(false)
-      await adminDataStore.updateCurrencies()
     } catch (error) {
       console.error("Error adding currency:", error)
     } finally {
@@ -139,18 +132,12 @@ const AdminRatesPage = () => {
       }
 
       if (updates.length > 0) {
-        const { error } = await supabase.from("exchange_rates").upsert(updates, {
-          onConflict: "from_currency,to_currency",
-          ignoreDuplicates: false,
-        })
-
-        if (error) throw error
+        await adminDataStore.updateExchangeRates(updates)
       }
 
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
-      await adminDataStore.updateCurrencies()
     } catch (error) {
       console.error("Error saving rates:", error)
     } finally {
@@ -163,9 +150,7 @@ const AdminRatesPage = () => {
       const currency = currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
-      // Use 'suspended' instead of 'inactive' to match the database constraint
       const newStatus = currency.status === "active" ? "suspended" : "active"
-
       await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
     } catch (error) {
       console.error("Error updating currency status:", error)
@@ -182,23 +167,7 @@ const AdminRatesPage = () => {
     }
 
     try {
-      const currency = currencies.find((c) => c.id === currencyId)
-      if (!currency) return
-
-      // Delete exchange rates first
-      const { error: ratesError } = await supabase
-        .from("exchange_rates")
-        .delete()
-        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
-
-      if (ratesError) throw ratesError
-
-      // Delete currency
-      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
-
-      if (error) throw error
-
-      await adminDataStore.updateCurrencies()
+      await adminDataStore.deleteCurrency(currencyId)
     } catch (error) {
       console.error("Error deleting currency:", error)
     }
