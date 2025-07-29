@@ -18,9 +18,20 @@ interface UserProfile {
   updated_at?: string
 }
 
+interface AdminProfile {
+  id: string
+  email: string
+  name: string
+  role: string
+  status: string
+  created_at?: string
+  updated_at?: string
+}
+
 interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
+  adminProfile: AdminProfile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
@@ -32,6 +43,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
+  adminProfile: null,
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
@@ -51,6 +63,7 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -61,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userProfile && !userError) {
         setUserProfile(userProfile)
+        setAdminProfile(null)
         setIsAdmin(false)
         return userProfile
       }
@@ -73,7 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (adminProfile && !adminError) {
-        setUserProfile(adminProfile)
+        setAdminProfile(adminProfile)
+        setUserProfile(null)
         setIsAdmin(true)
         return adminProfile
       }
@@ -123,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUser(null)
           setUserProfile(null)
+          setAdminProfile(null)
           setIsAdmin(false)
         }
       } catch (error) {
@@ -184,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
+      setAdminProfile(null)
       setIsAdmin(false)
     } catch (error) {
       console.error("Sign out error:", error)
@@ -193,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     userProfile,
+    adminProfile,
     loading,
     signIn,
     signUp,
