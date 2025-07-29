@@ -4,7 +4,6 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
-import { useRouter } from "next/navigation"
 
 interface UserProfile {
   id: string
@@ -28,6 +27,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   refreshUserProfile: () => Promise<void>
   isAdmin: boolean
+  isSessionExpired: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,6 +39,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   refreshUserProfile: async () => {},
   isAdmin: false,
+  isSessionExpired: () => false,
 })
 
 export const useAuth = () => {
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const router = useRouter()
+  const [sessionExpiry, setSessionExpiry] = useState<number | null>(null)
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -93,41 +94,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut()
-      setUser(null)
-      setUserProfile(null)
-      setIsAdmin(false)
-
-      // Clear any stored session data
-      localStorage.removeItem("session_timestamp")
-
-      // Redirect to login page
-      router.push("/login")
-    } catch (error) {
-      console.error("Sign out error:", error)
-    }
+  const isSessionExpired = () => {
+    if (!sessionExpiry) return false
+    return Date.now() > sessionExpiry
   }
 
-  // Check session expiration (1 hour = 3600000 ms)
-  const checkSessionExpiration = () => {
-    const sessionTimestamp = localStorage.getItem("session_timestamp")
-    if (sessionTimestamp) {
-      const now = Date.now()
-      const sessionTime = Number.parseInt(sessionTimestamp)
-      const oneHour = 60 * 60 * 1000 // 1 hour in milliseconds
+  const setSessionExpiryTime = () => {
+    const expiryTime = Date.now() + 60 * 60 * 1000 // 1 hour
+    setSessionExpiry(expiryTime)
+    localStorage.setItem("session_expiry", expiryTime.toString())
+  }
 
-      if (now - sessionTime > oneHour) {
-        // Session expired, sign out
-        signOut()
-        return false
-      }
-    }
-    return true
+  const clearSessionExpiry = () => {
+    setSessionExpiry(null)
+    localStorage.removeItem("session_expiry")
   }
 
   useEffect(() => {
+    // Check session expiry on load
+    const storedExpiry = localStorage.getItem("session_expiry")
+    if (storedExpiry) {
+      const expiryTime = Number.parseInt(storedExpiry)
+      if (Date.now() > expiryTime) {
+        // Session expired, sign out
+        signOut()
+        return
+      }
+      setSessionExpiry(expiryTime)
+    }
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -136,13 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession()
 
         if (session?.user) {
-          // Check if session is still valid
-          if (checkSessionExpiration()) {
-            setUser(session.user)
-            await fetchUserProfile(session.user.id)
-            // Update session timestamp
-            localStorage.setItem("session_timestamp", Date.now().toString())
-          }
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
@@ -161,13 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           setUser(session.user)
           await fetchUserProfile(session.user.id)
-          // Set session timestamp on login
-          localStorage.setItem("session_timestamp", Date.now().toString())
         } else {
           setUser(null)
           setUserProfile(null)
           setIsAdmin(false)
-          localStorage.removeItem("session_timestamp")
+          clearSessionExpiry()
         }
       } catch (error) {
         console.error("Error handling auth state change:", error)
@@ -176,21 +164,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    // Set up session expiration check interval (check every 5 minutes)
-    const sessionCheckInterval = setInterval(
-      () => {
-        if (user && !checkSessionExpiration()) {
-          // Session expired, user will be signed out by checkSessionExpiration
-        }
-      },
-      5 * 60 * 1000,
-    ) // 5 minutes
+    return () => subscription.unsubscribe()
+  }, [])
 
-    return () => {
-      subscription.unsubscribe()
-      clearInterval(sessionCheckInterval)
-    }
-  }, [user])
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isSessionExpired() && user) {
+        signOut()
+      }
+    }, 60000) // Check every minute
+
+    return () => clearInterval(interval)
+  }, [user, sessionExpiry])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -203,10 +188,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
-      // Set session timestamp on successful login
-      localStorage.setItem("session_timestamp", Date.now().toString())
+      // Set session expiry
+      setSessionExpiryTime()
 
-      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
@@ -239,6 +223,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setUserProfile(null)
+      setIsAdmin(false)
+      clearSessionExpiry()
+    } catch (error) {
+      console.error("Sign out error:", error)
+    }
+  }
+
   const value = {
     user,
     userProfile,
@@ -248,6 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     refreshUserProfile,
     isAdmin,
+    isSessionExpired,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

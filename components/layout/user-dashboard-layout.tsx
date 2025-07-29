@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, Menu, X } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
@@ -24,11 +24,13 @@ const navigation = [
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
-  const { signOut } = useAuth()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useAuth()
 
   const handleLogout = async () => {
     await signOut()
+    router.push("/login")
   }
 
   return (
