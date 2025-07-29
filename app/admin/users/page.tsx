@@ -31,7 +31,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
 
 interface UserData {
@@ -72,8 +72,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [loadingTransactions, setLoadingTransactions] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const supabase = createClient()
 
   useEffect(() => {
     fetchUsers()
