@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
+import { useRouter } from "next/navigation"
 
 interface UserProfile {
   id: string
@@ -18,20 +19,9 @@ interface UserProfile {
   updated_at?: string
 }
 
-interface AdminProfile {
-  id: string
-  email: string
-  name: string
-  role: string
-  status: string
-  created_at?: string
-  updated_at?: string
-}
-
 interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
-  adminProfile: AdminProfile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
@@ -43,7 +33,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
-  adminProfile: null,
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
@@ -63,9 +52,9 @@ export const useAuth = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const router = useRouter()
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -74,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userProfile && !userError) {
         setUserProfile(userProfile)
-        setAdminProfile(null)
         setIsAdmin(false)
         return userProfile
       }
@@ -87,8 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (adminProfile && !adminError) {
-        setAdminProfile(adminProfile)
-        setUserProfile(null)
+        setUserProfile(adminProfile)
         setIsAdmin(true)
         return adminProfile
       }
@@ -106,6 +93,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setUserProfile(null)
+      setIsAdmin(false)
+
+      // Clear any stored session data
+      localStorage.removeItem("session_timestamp")
+
+      // Redirect to login page
+      router.push("/login")
+    } catch (error) {
+      console.error("Sign out error:", error)
+    }
+  }
+
+  // Check session expiration (1 hour = 3600000 ms)
+  const checkSessionExpiration = () => {
+    const sessionTimestamp = localStorage.getItem("session_timestamp")
+    if (sessionTimestamp) {
+      const now = Date.now()
+      const sessionTime = Number.parseInt(sessionTimestamp)
+      const oneHour = 60 * 60 * 1000 // 1 hour in milliseconds
+
+      if (now - sessionTime > oneHour) {
+        // Session expired, sign out
+        signOut()
+        return false
+      }
+    }
+    return true
+  }
+
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
@@ -115,8 +136,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession()
 
         if (session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
+          // Check if session is still valid
+          if (checkSessionExpiration()) {
+            setUser(session.user)
+            await fetchUserProfile(session.user.id)
+            // Update session timestamp
+            localStorage.setItem("session_timestamp", Date.now().toString())
+          }
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
@@ -135,11 +161,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           setUser(session.user)
           await fetchUserProfile(session.user.id)
+          // Set session timestamp on login
+          localStorage.setItem("session_timestamp", Date.now().toString())
         } else {
           setUser(null)
           setUserProfile(null)
-          setAdminProfile(null)
           setIsAdmin(false)
+          localStorage.removeItem("session_timestamp")
         }
       } catch (error) {
         console.error("Error handling auth state change:", error)
@@ -148,8 +176,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    // Set up session expiration check interval (check every 5 minutes)
+    const sessionCheckInterval = setInterval(
+      () => {
+        if (user && !checkSessionExpiration()) {
+          // Session expired, user will be signed out by checkSessionExpiration
+        }
+      },
+      5 * 60 * 1000,
+    ) // 5 minutes
+
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(sessionCheckInterval)
+    }
+  }, [user])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -161,6 +202,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         return { error }
       }
+
+      // Set session timestamp on successful login
+      localStorage.setItem("session_timestamp", Date.now().toString())
 
       // The auth state change listener will handle setting user and profile
       return { error: null }
@@ -195,22 +239,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut()
-      setUser(null)
-      setUserProfile(null)
-      setAdminProfile(null)
-      setIsAdmin(false)
-    } catch (error) {
-      console.error("Sign out error:", error)
-    }
-  }
-
   const value = {
     user,
     userProfile,
-    adminProfile,
     loading,
     signIn,
     signUp,

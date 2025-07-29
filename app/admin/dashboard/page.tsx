@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { AuthGuard } from "@/components/auth/auth-guard"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -129,171 +128,166 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <AuthGuard requireAdmin>
-      <AdminDashboardLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-              <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <AdminDashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+            <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
-                <CreditCard className="h-4 w-4 text-novapay-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{metrics.transactions.toLocaleString()}</div>
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {metrics.transactionsChange} from last {timeRange}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Volume</CardTitle>
-                <TrendingUp className="h-4 w-4 text-novapay-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{metrics.volume}</div>
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {metrics.volumeChange} from last {timeRange}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-novapay-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{metrics.users}</div>
-                <div className="flex items-center text-xs">
-                  <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-green-600">
-                    {metrics.usersChange} from last {timeRange}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Transactions Pending</CardTitle>
-                <AlertCircle className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{metrics.pending}</div>
-                <p className="text-xs text-orange-600">Awaiting processing</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Activity Feed */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <div>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Latest platform activities and events</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="max-h-80 overflow-y-auto">
-                <div className="space-y-4">
-                  {mockRecentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                          <span className="text-xs text-gray-500">{activity.time}</span>
-                        </div>
-                        {activity.user && (
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-gray-600">User: {activity.user}</p>
-                            {activity.amount && (
-                              <span className="text-xs font-medium text-gray-900">{activity.amount}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions & System Status */}
-            {/* Currency Pair Popularity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Currency Pair Popularity</CardTitle>
-                <CardDescription>Most popular trading pairs</CardDescription>
-              </CardHeader>
-              <CardContent className="max-h-80 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Currency Pair</TableHead>
-                      <TableHead>Volume %</TableHead>
-                      <TableHead>Transactions</TableHead>
-                      <TableHead>Revenue</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockCurrencyPairs.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{item.pair}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-novapay-primary h-2 rounded-full"
-                                style={{ width: `${item.volume}%` }}
-                              />
-                            </div>
-                            <span className="text-sm">{item.volume}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.transactions}</TableCell>
-                        <TableCell>${item.revenue.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </AdminDashboardLayout>
-    </AuthGuard>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
+              <CreditCard className="h-4 w-4 text-novapay-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{metrics.transactions.toLocaleString()}</div>
+              <div className="flex items-center text-xs">
+                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                <span className="text-green-600">
+                  {metrics.transactionsChange} from last {timeRange}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Volume</CardTitle>
+              <TrendingUp className="h-4 w-4 text-novapay-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{metrics.volume}</div>
+              <div className="flex items-center text-xs">
+                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                <span className="text-green-600">
+                  {metrics.volumeChange} from last {timeRange}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-novapay-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{metrics.users}</div>
+              <div className="flex items-center text-xs">
+                <ArrowUpRight className="h-3 w-3 text-green-600 mr-1" />
+                <span className="text-green-600">
+                  {metrics.usersChange} from last {timeRange}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Transactions Pending</CardTitle>
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{metrics.pending}</div>
+              <p className="text-xs text-orange-600">Awaiting processing</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activity Feed */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <div>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest platform activities and events</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="max-h-80 overflow-y-auto">
+              <div className="space-y-4">
+                {mockRecentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                        <span className="text-xs text-gray-500">{activity.time}</span>
+                      </div>
+                      {activity.user && (
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-600">User: {activity.user}</p>
+                          {activity.amount && (
+                            <span className="text-xs font-medium text-gray-900">{activity.amount}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions & System Status */}
+          {/* Currency Pair Popularity */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Currency Pair Popularity</CardTitle>
+              <CardDescription>Most popular trading pairs</CardDescription>
+            </CardHeader>
+            <CardContent className="max-h-80 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Currency Pair</TableHead>
+                    <TableHead>Volume %</TableHead>
+                    <TableHead>Transactions</TableHead>
+                    <TableHead>Revenue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockCurrencyPairs.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.pair}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
+                          </div>
+                          <span className="text-sm">{item.volume}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.transactions}</TableCell>
+                      <TableCell>${item.revenue.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AdminDashboardLayout>
   )
 }

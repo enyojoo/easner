@@ -1,7 +1,7 @@
 "use client"
 
-import { AuthGuard } from "@/components/auth/auth-guard"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Send, TrendingUp } from "lucide-react"
@@ -91,7 +91,7 @@ export default function UserDashboardPage() {
   const totalSentValue = totalSent || 0
 
   return (
-    <AuthGuard>
+    <ProtectedRoute>
       <UserDashboardLayout>
         <div className="p-6 space-y-6">
           {/* Page Header */}
@@ -209,6 +209,6 @@ export default function UserDashboardPage() {
           </div>
         </div>
       </UserDashboardLayout>
-    </AuthGuard>
+    </ProtectedRoute>
   )
 }

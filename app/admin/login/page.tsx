@@ -16,7 +16,7 @@ import { AlertCircle } from "lucide-react"
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const { signIn, loading: authLoading } = useAuth()
+  const { signIn } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -29,28 +29,27 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      const { error: signInError } = await signIn(email, password)
+      const { user, error: signInError } = await signIn(email, password)
 
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      // The auth context will handle the redirect based on user type
-      router.push("/admin/dashboard")
+      if (user) {
+        // Check if this is an admin user
+        // For now, we'll check by email domain or specific emails
+        if (email.includes("admin@novapay.com") || email.includes("@admin.novapay.com")) {
+          router.push("/admin/dashboard")
+        } else {
+          setError("Access denied. Admin credentials required.")
+        }
+      }
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
     } finally {
       setLoading(false)
     }
-  }
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
   }
 
   return (

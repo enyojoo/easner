@@ -16,7 +16,7 @@ import { AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, loading: authLoading } = useAuth()
+  const { signIn } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -67,14 +67,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
   }
 
   return (
