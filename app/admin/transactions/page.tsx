@@ -25,9 +25,9 @@ import {
   Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { adminService, transactionService } from "@/lib/database"
 import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
+import { supabase } from "@/lib/supabase"
 
 export default function AdminTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -50,12 +50,35 @@ export default function AdminTransactionsPage() {
       setLoading(true)
       setError(null)
 
-      const data = await adminService.getAllTransactions({
-        status: statusFilter !== "all" ? statusFilter : undefined,
-        currency: currencyFilter !== "all" ? currencyFilter : undefined,
-        search: searchTerm || undefined,
-        limit: 100,
-      })
+      // Build query
+      let query = supabase
+        .from("transactions")
+        .select(`
+        *,
+        user:users(first_name, last_name, email),
+        recipient:recipients(full_name, bank_name, account_number)
+      `)
+        .order("created_at", { ascending: false })
+        .limit(100)
+
+      // Apply filters
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter)
+      }
+
+      if (currencyFilter !== "all") {
+        query = query.or(`send_currency.eq.${currencyFilter},receive_currency.eq.${currencyFilter}`)
+      }
+
+      if (searchTerm) {
+        query = query.or(
+          `transaction_id.ilike.%${searchTerm}%,users.first_name.ilike.%${searchTerm}%,users.last_name.ilike.%${searchTerm}%,users.email.ilike.%${searchTerm}%`,
+        )
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
 
       setTransactions(data || [])
     } catch (err) {
@@ -122,7 +145,15 @@ export default function AdminTransactionsPage() {
 
   const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
     try {
-      await transactionService.updateStatus(transactionId, newStatus)
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("transaction_id", transactionId)
+
+      if (error) throw error
 
       // Update local state
       setTransactions((prev) =>
@@ -143,10 +174,15 @@ export default function AdminTransactionsPage() {
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
     try {
-      // Update all selected transactions
-      await Promise.all(
-        selectedTransactions.map((transactionId) => transactionService.updateStatus(transactionId, newStatus)),
-      )
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .in("transaction_id", selectedTransactions)
+
+      if (error) throw error
 
       // Update local state
       setTransactions((prev) =>
