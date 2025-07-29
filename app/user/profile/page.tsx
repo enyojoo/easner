@@ -246,7 +246,7 @@ export default function UserProfilePage() {
                       className="bg-transparent"
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Profile
+                      Edit
                     </Button>
                   )}
                 </div>
@@ -385,7 +385,7 @@ export default function UserProfilePage() {
                       onClick={() => setIsChangingPassword(true)}
                       className="bg-transparent"
                     >
-                      Change Password
+                      Change
                     </Button>
                   )}
                   {isChangingPassword && (
@@ -479,7 +479,7 @@ export default function UserProfilePage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Account Status</CardTitle>
+                <CardTitle>Status</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
