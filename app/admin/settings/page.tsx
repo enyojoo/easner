@@ -22,6 +22,7 @@ import {
   QrCode,
   Building2,
   MoreHorizontal,
+  X,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -87,12 +88,14 @@ export default function AdminSettingsPage() {
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([])
   const [activeTab, setActiveTab] = useState("platform")
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
   const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
   const [isAddTemplateOpen, setIsAddTemplateOpen] = useState(false)
   const [isEditTemplateOpen, setIsEditTemplateOpen] = useState(false)
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<PaymentMethod | null>(null)
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null)
+  const [isEditingSecuritySettings, setIsEditingSecuritySettings] = useState(false)
   const [newPaymentMethod, setNewPaymentMethod] = useState({
     currency: "",
     type: "bank_account",
@@ -127,6 +130,13 @@ export default function AdminSettingsPage() {
     accountLockoutDuration: 15,
   })
 
+  const [originalSecuritySettings, setOriginalSecuritySettings] = useState({
+    sessionTimeout: 30,
+    passwordMinLength: 8,
+    maxLoginAttempts: 5,
+    accountLockoutDuration: 15,
+  })
+
   useEffect(() => {
     loadAllData()
   }, [])
@@ -143,118 +153,131 @@ export default function AdminSettingsPage() {
   }
 
   const loadSystemSettings = async () => {
-    const { data, error } = await supabase
-      .from("system_settings")
-      .select("*")
-      .eq("is_active", true)
-      .order("category", { ascending: true })
+    try {
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("*")
+        .eq("is_active", true)
+        .order("category", { ascending: true })
 
-    if (error) {
+      if (error) throw error
+
+      setSystemSettings(data || [])
+
+      // Update platform config from settings
+      const settings = data || []
+      const newPlatformConfig = { ...platformConfig }
+      const newSecuritySettings = { ...securitySettings }
+
+      settings.forEach((setting) => {
+        switch (setting.key) {
+          case "maintenance_mode":
+            newPlatformConfig.maintenanceMode = setting.value === "true"
+            break
+          case "registration_enabled":
+            newPlatformConfig.registrationEnabled = setting.value === "true"
+            break
+          case "email_verification_required":
+            newPlatformConfig.emailVerificationRequired = setting.value === "true"
+            break
+          case "base_currency":
+            newPlatformConfig.baseCurrency = setting.value
+            break
+          case "session_timeout":
+            newSecuritySettings.sessionTimeout = Number.parseInt(setting.value)
+            break
+          case "password_min_length":
+            newSecuritySettings.passwordMinLength = Number.parseInt(setting.value)
+            break
+          case "max_login_attempts":
+            newSecuritySettings.maxLoginAttempts = Number.parseInt(setting.value)
+            break
+          case "account_lockout_duration":
+            newSecuritySettings.accountLockoutDuration = Number.parseInt(setting.value)
+            break
+        }
+      })
+
+      setPlatformConfig(newPlatformConfig)
+      setSecuritySettings(newSecuritySettings)
+      setOriginalSecuritySettings(newSecuritySettings)
+    } catch (error) {
       console.error("Error loading system settings:", error)
-      return
     }
-
-    setSystemSettings(data || [])
-
-    // Update platform config from settings
-    const settings = data || []
-    const newPlatformConfig = { ...platformConfig }
-    const newSecuritySettings = { ...securitySettings }
-
-    settings.forEach((setting) => {
-      switch (setting.key) {
-        case "maintenance_mode":
-          newPlatformConfig.maintenanceMode = setting.value === "true"
-          break
-        case "registration_enabled":
-          newPlatformConfig.registrationEnabled = setting.value === "true"
-          break
-        case "email_verification_required":
-          newPlatformConfig.emailVerificationRequired = setting.value === "true"
-          break
-        case "base_currency":
-          newPlatformConfig.baseCurrency = setting.value
-          break
-        case "session_timeout":
-          newSecuritySettings.sessionTimeout = Number.parseInt(setting.value)
-          break
-        case "password_min_length":
-          newSecuritySettings.passwordMinLength = Number.parseInt(setting.value)
-          break
-        case "max_login_attempts":
-          newSecuritySettings.maxLoginAttempts = Number.parseInt(setting.value)
-          break
-        case "account_lockout_duration":
-          newSecuritySettings.accountLockoutDuration = Number.parseInt(setting.value)
-          break
-      }
-    })
-
-    setPlatformConfig(newPlatformConfig)
-    setSecuritySettings(newSecuritySettings)
   }
 
   const loadCurrencies = async () => {
-    const { data, error } = await supabase.from("currencies").select("*").order("code", { ascending: true })
+    try {
+      const { data, error } = await supabase.from("currencies").select("*").order("code", { ascending: true })
 
-    if (error) {
+      if (error) throw error
+      setCurrencies(data || [])
+    } catch (error) {
       console.error("Error loading currencies:", error)
-      return
     }
-
-    setCurrencies(data || [])
   }
 
   const loadPaymentMethods = async () => {
-    const { data, error } = await supabase
-      .from("payment_methods")
-      .select("*")
-      .order("currency", { ascending: true })
-      .order("is_default", { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .order("currency", { ascending: true })
+        .order("is_default", { ascending: false })
 
-    if (error) {
+      if (error) throw error
+      setPaymentMethods(data || [])
+    } catch (error) {
       console.error("Error loading payment methods:", error)
-      return
     }
-
-    setPaymentMethods(data || [])
   }
 
   const loadEmailTemplates = async () => {
-    const { data, error } = await supabase.from("email_templates").select("*").order("type", { ascending: true })
+    try {
+      const { data, error } = await supabase.from("email_templates").select("*").order("type", { ascending: true })
 
-    if (error) {
+      if (error) throw error
+      setEmailTemplates(data || [])
+    } catch (error) {
       console.error("Error loading email templates:", error)
-      return
     }
-
-    setEmailTemplates(data || [])
   }
 
   const updateSystemSetting = async (key: string, value: any, dataType = "string") => {
     try {
-      const { error } = await supabase.from("system_settings").upsert({
-        key,
-        value: String(value),
-        data_type: dataType,
-        category: "platform",
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
+      const { error } = await supabase.from("system_settings").upsert(
+        {
+          key,
+          value: String(value),
+          data_type: dataType,
+          category: "platform",
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "key",
+        },
+      )
 
       if (error) throw error
+      console.log(`Setting ${key} updated successfully`)
     } catch (error) {
       console.error("Error updating system setting:", error)
+      throw error
     }
   }
 
   const handlePlatformConfigChange = async (key: string, value: any) => {
-    setPlatformConfig({ ...platformConfig, [key]: value })
-    await updateSystemSetting(
-      key === "baseCurrency" ? "base_currency" : key.replace(/([A-Z])/g, "_$1").toLowerCase(),
-      value,
-      typeof value === "boolean" ? "boolean" : "string",
-    )
+    try {
+      setPlatformConfig({ ...platformConfig, [key]: value })
+
+      const settingKey = key === "baseCurrency" ? "base_currency" : key.replace(/([A-Z])/g, "_$1").toLowerCase()
+      await updateSystemSetting(settingKey, value, typeof value === "boolean" ? "boolean" : "string")
+    } catch (error) {
+      console.error("Error updating platform config:", error)
+      // Revert the change if it failed
+      setPlatformConfig(platformConfig)
+    }
   }
 
   const handleSecuritySettingsChange = (key: string, value: number) => {
@@ -262,6 +285,7 @@ export default function AdminSettingsPage() {
   }
 
   const handleSaveSecuritySettings = async () => {
+    setSaving(true)
     try {
       const updates = [
         { key: "session_timeout", value: securitySettings.sessionTimeout, data_type: "number" },
@@ -274,13 +298,23 @@ export default function AdminSettingsPage() {
         await updateSystemSetting(update.key, update.value, update.data_type)
       }
 
+      setOriginalSecuritySettings(securitySettings)
+      setIsEditingSecuritySettings(false)
       console.log("Security settings saved successfully")
     } catch (error) {
       console.error("Error saving security settings:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
+  const handleCancelSecuritySettings = () => {
+    setSecuritySettings(originalSecuritySettings)
+    setIsEditingSecuritySettings(false)
+  }
+
   const handleAddPaymentMethod = async () => {
+    setSaving(true)
     try {
       // If setting as default, unset other defaults for the same currency
       if (newPaymentMethod.is_default) {
@@ -319,14 +353,18 @@ export default function AdminSettingsPage() {
         is_default: false,
       })
       setIsAddPaymentMethodOpen(false)
+      console.log("Payment method added successfully")
     } catch (error) {
       console.error("Error adding payment method:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleEditPaymentMethod = async () => {
     if (!editingPaymentMethod) return
 
+    setSaving(true)
     try {
       // If setting as default, unset other defaults for the same currency
       if (editingPaymentMethod.is_default) {
@@ -360,8 +398,11 @@ export default function AdminSettingsPage() {
       setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? data : pm)))
       setEditingPaymentMethod(null)
       setIsEditPaymentMethodOpen(false)
+      console.log("Payment method updated successfully")
     } catch (error) {
       console.error("Error updating payment method:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -380,6 +421,7 @@ export default function AdminSettingsPage() {
       if (error) throw error
 
       setPaymentMethods(paymentMethods.map((pm) => (pm.id === id ? { ...pm, status: newStatus } : pm)))
+      console.log("Payment method status updated successfully")
     } catch (error) {
       console.error("Error updating payment method status:", error)
     }
@@ -407,6 +449,7 @@ export default function AdminSettingsPage() {
           is_default: pm.currency === targetMethod.currency ? pm.id === id : pm.is_default,
         })),
       )
+      console.log("Default payment method updated successfully")
     } catch (error) {
       console.error("Error setting default payment method:", error)
     }
@@ -419,12 +462,14 @@ export default function AdminSettingsPage() {
       if (error) throw error
 
       setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
+      console.log("Payment method deleted successfully")
     } catch (error) {
       console.error("Error deleting payment method:", error)
     }
   }
 
   const handleAddEmailTemplate = async () => {
+    setSaving(true)
     try {
       const { data, error } = await supabase
         .from("email_templates")
@@ -448,14 +493,18 @@ export default function AdminSettingsPage() {
         content: "",
       })
       setIsAddTemplateOpen(false)
+      console.log("Email template added successfully")
     } catch (error) {
       console.error("Error adding email template:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleEditEmailTemplate = async () => {
     if (!editingTemplate) return
 
+    setSaving(true)
     try {
       const { data, error } = await supabase
         .from("email_templates")
@@ -475,8 +524,11 @@ export default function AdminSettingsPage() {
       setEmailTemplates(emailTemplates.map((template) => (template.id === editingTemplate.id ? data : template)))
       setEditingTemplate(null)
       setIsEditTemplateOpen(false)
+      console.log("Email template updated successfully")
     } catch (error) {
       console.error("Error updating email template:", error)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -495,6 +547,7 @@ export default function AdminSettingsPage() {
       if (error) throw error
 
       setEmailTemplates(emailTemplates.map((t) => (t.id === id ? { ...t, status: newStatus } : t)))
+      console.log("Email template status updated successfully")
     } catch (error) {
       console.error("Error updating template status:", error)
     }
@@ -507,6 +560,7 @@ export default function AdminSettingsPage() {
       if (error) throw error
 
       setEmailTemplates(emailTemplates.filter((t) => t.id !== id))
+      console.log("Email template deleted successfully")
     } catch (error) {
       console.error("Error deleting email template:", error)
     }
@@ -824,6 +878,7 @@ export default function AdminSettingsPage() {
                           <Button
                             onClick={handleAddPaymentMethod}
                             disabled={
+                              saving ||
                               !newPaymentMethod.currency ||
                               !newPaymentMethod.name ||
                               (newPaymentMethod.type === "bank_account" &&
@@ -834,7 +889,7 @@ export default function AdminSettingsPage() {
                             }
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
-                            Add Payment Method
+                            {saving ? "Adding..." : "Add Payment Method"}
                           </Button>
                         </div>
                       </div>
@@ -1013,6 +1068,7 @@ export default function AdminSettingsPage() {
                             <Button
                               onClick={handleEditPaymentMethod}
                               disabled={
+                                saving ||
                                 !editingPaymentMethod.currency ||
                                 !editingPaymentMethod.name ||
                                 (editingPaymentMethod.type === "bank_account" &&
@@ -1023,7 +1079,7 @@ export default function AdminSettingsPage() {
                               }
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
-                              Save Changes
+                              {saving ? "Saving..." : "Save Changes"}
                             </Button>
                           </div>
                         </div>
@@ -1209,10 +1265,10 @@ export default function AdminSettingsPage() {
                           </Button>
                           <Button
                             onClick={handleAddEmailTemplate}
-                            disabled={!newTemplate.name || !newTemplate.subject || !newTemplate.content}
+                            disabled={saving || !newTemplate.name || !newTemplate.subject || !newTemplate.content}
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
-                            Add Template
+                            {saving ? "Adding..." : "Add Template"}
                           </Button>
                         </div>
                       </div>
@@ -1241,7 +1297,7 @@ export default function AdminSettingsPage() {
                               <Label htmlFor="editTemplateType">Type *</Label>
                               <Select
                                 value={editingTemplate.type}
-                                onChange={(value) => setEditingTemplate({ ...editingTemplate, type: value })}
+                                onValueChange={(value) => setEditingTemplate({ ...editingTemplate, type: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -1283,10 +1339,12 @@ export default function AdminSettingsPage() {
                             </Button>
                             <Button
                               onClick={handleEditEmailTemplate}
-                              disabled={!editingTemplate.name || !editingTemplate.subject || !editingTemplate.content}
+                              disabled={
+                                saving || !editingTemplate.name || !editingTemplate.subject || !editingTemplate.content
+                              }
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
-                              Save Changes
+                              {saving ? "Saving..." : "Save Changes"}
                             </Button>
                           </div>
                         </div>
@@ -1363,7 +1421,18 @@ export default function AdminSettingsPage() {
           <TabsContent value="security">
             <Card>
               <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Security Settings</CardTitle>
+                  {!isEditingSecuritySettings && (
+                    <Button
+                      onClick={() => setIsEditingSecuritySettings(true)}
+                      className="bg-novapay-primary hover:bg-novapay-primary-600"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Settings
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1374,6 +1443,7 @@ export default function AdminSettingsPage() {
                       type="number"
                       value={securitySettings.sessionTimeout}
                       onChange={(e) => handleSecuritySettingsChange("sessionTimeout", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1383,6 +1453,7 @@ export default function AdminSettingsPage() {
                       type="number"
                       value={securitySettings.passwordMinLength}
                       onChange={(e) => handleSecuritySettingsChange("passwordMinLength", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1392,6 +1463,7 @@ export default function AdminSettingsPage() {
                       type="number"
                       value={securitySettings.maxLoginAttempts}
                       onChange={(e) => handleSecuritySettingsChange("maxLoginAttempts", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1401,17 +1473,32 @@ export default function AdminSettingsPage() {
                       type="number"
                       value={securitySettings.accountLockoutDuration}
                       onChange={(e) => handleSecuritySettingsChange("accountLockoutDuration", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
                     />
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSaveSecuritySettings}
-                  className="bg-novapay-primary hover:bg-novapay-primary-600"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Security Settings
-                </Button>
+                {isEditingSecuritySettings && (
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelSecuritySettings}
+                      className="flex-1 bg-transparent"
+                      disabled={saving}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveSecuritySettings}
+                      disabled={saving}
+                      className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? "Saving..." : "Save Security Settings"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
