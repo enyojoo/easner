@@ -309,7 +309,7 @@ export default function TransactionStatusPage() {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-             
+                  <CardTitle>Transaction Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="text-center">
