@@ -299,6 +299,18 @@ export const transactionService = {
 
   async uploadReceipt(transactionId: string, file: File) {
     try {
+      // First check if transaction exists
+      const { data: existingTransaction, error: checkError } = await supabase
+        .from("transactions")
+        .select("id, transaction_id")
+        .eq("transaction_id", transactionId)
+        .single()
+
+      if (checkError || !existingTransaction) {
+        console.error("Transaction check error:", checkError)
+        throw new Error("Transaction not found. Please create the transaction first.")
+      }
+
       // Generate unique filename
       const fileExt = file.name.split(".").pop()
       const fileName = `${transactionId}_${Date.now()}.${fileExt}`
@@ -339,11 +351,10 @@ export const transactionService = {
       }
 
       if (!data || data.length === 0) {
-        throw new Error("Transaction not found")
+        throw new Error("Failed to update transaction with receipt")
       }
 
       const updatedTransaction = data[0]
-
       return { ...updatedTransaction, receipt_url: publicUrl }
     } catch (error) {
       console.error("Receipt upload error:", error)

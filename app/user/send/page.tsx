@@ -239,34 +239,17 @@ export default function UserSendPage() {
     setIsUploading(true)
     setUploadProgress(0)
 
-    try {
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
-          }
-          return prev + 10
-        })
-      }, 100)
-
-      // Upload to Supabase if transaction exists
-      if (transactionId) {
-        await transactionService.uploadReceipt(transactionId, file)
-      }
-
-      // Complete progress
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-      setIsUploading(false)
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      setUploadError("Upload failed. Please try again.")
-      setIsUploading(false)
-      setUploadedFile(null)
-      setUploadProgress(0)
-    }
+    // Simulate progress for better UX (don't actually upload until transaction exists)
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(progressInterval)
+          setIsUploading(false)
+          return 100
+        }
+        return prev + 10
+      })
+    }, 100)
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -472,13 +455,14 @@ export default function UserSendPage() {
           totalAmount: Number.parseFloat(sendAmount) + fee,
         })
 
-        // Upload receipt if file was selected and not already uploading
-        if (uploadedFile && !isUploading && uploadProgress === 100) {
+        // Upload receipt if file was selected and upload completed successfully
+        if (uploadedFile && uploadProgress === 100 && !isUploading) {
           try {
             await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
           } catch (uploadError) {
             console.error("Error uploading receipt:", uploadError)
             // Don't block transaction creation if receipt upload fails
+            setUploadError("Receipt upload failed, but transaction was created successfully")
           }
         }
 
