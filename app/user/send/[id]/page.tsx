@@ -375,7 +375,7 @@ export default function TransactionStatusPage() {
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                             <Check className="h-5 w-5 text-green-600" />
@@ -389,7 +389,7 @@ export default function TransactionStatusPage() {
                           variant="outline"
                           size="sm"
                           onClick={handleViewReceipt}
-                          className="flex items-center gap-2 bg-transparent"
+                          className="flex items-center gap-2 bg-transparent w-full sm:w-auto"
                         >
                           <ExternalLink className="h-4 w-4" />
                           View
