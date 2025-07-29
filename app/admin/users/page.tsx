@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Search,
   Download,
@@ -28,7 +27,6 @@ import {
   Ban,
   UserCheck,
   TrendingUp,
-  Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
@@ -37,41 +35,41 @@ import { formatCurrency } from "@/utils/currency"
 interface UserData {
   id: string
   email: string
-  full_name: string
-  phone: string
-  created_at: string
+  first_name: string
+  last_name: string
+  phone?: string
   status: string
   verification_status: string
-  country: string
   base_currency: string
-  last_activity: string
+  created_at: string
+  last_login?: string
   totalTransactions: number
   totalVolume: number
 }
 
-interface Transaction {
-  id: string
+interface TransactionData {
+  transaction_id: string
   created_at: string
-  from_currency: string
-  to_currency: string
+  send_currency: string
+  receive_currency: string
   send_amount: number
   receive_amount: number
   status: string
-  recipient_name: string
+  recipient: {
+    full_name: string
+  }
 }
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<UserData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
-  const [countryFilter, setCountryFilter] = useState("all")
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
-  const [users, setUsers] = useState<UserData[]>([])
-  const [userTransactions, setUserTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingTransactions, setLoadingTransactions] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
 
   useEffect(() => {
     fetchUsers()
@@ -82,7 +80,7 @@ export default function AdminUsersPage() {
       setLoading(true)
       setError(null)
 
-      // Fetch users data
+      // Fetch users
       const { data: usersData, error: usersError } = await supabase
         .from("users")
         .select("*")
@@ -90,47 +88,49 @@ export default function AdminUsersPage() {
 
       if (usersError) throw usersError
 
-      // Fetch transactions to calculate user stats
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from("transactions")
-        .select("user_id, send_amount, from_currency, status")
+      // Fetch transaction counts and volumes for each user
+      const usersWithStats = await Promise.all(
+        (usersData || []).map(async (user) => {
+          const { data: transactions, error: transError } = await supabase
+            .from("transactions")
+            .select("send_amount, send_currency, status")
+            .eq("user_id", user.id)
 
-      if (transactionsError) throw transactionsError
-
-      // Calculate user statistics
-      const usersWithStats = usersData.map((user) => {
-        const userTransactions = transactionsData.filter((t) => t.user_id === user.id)
-        const completedTransactions = userTransactions.filter((t) => t.status === "completed")
-
-        // Convert all amounts to NGN for total volume calculation
-        const totalVolume = completedTransactions.reduce((sum, transaction) => {
-          let amountInNGN = transaction.send_amount
-          if (transaction.from_currency === "RUB") {
-            amountInNGN = transaction.send_amount * 22.45 // RUB to NGN rate
+          if (transError) {
+            console.error("Error fetching transactions for user:", user.id, transError)
+            return {
+              ...user,
+              totalTransactions: 0,
+              totalVolume: 0,
+            }
           }
-          return sum + amountInNGN
-        }, 0)
 
-        return {
-          id: user.id,
-          email: user.email,
-          full_name: user.full_name || "N/A",
-          phone: user.phone || "N/A",
-          created_at: user.created_at,
-          status: user.status || "active",
-          verification_status: user.verification_status || "unverified",
-          country: user.country || "N/A",
-          base_currency: user.base_currency || "NGN",
-          last_activity: user.last_activity || user.created_at,
-          totalTransactions: userTransactions.length,
-          totalVolume,
-        }
-      })
+          const totalTransactions = transactions?.length || 0
+
+          // Calculate total volume in NGN (base currency)
+          const totalVolume = (transactions || []).reduce((sum, transaction) => {
+            let amount = Number(transaction.send_amount)
+
+            // Convert to NGN if needed
+            if (transaction.send_currency === "RUB") {
+              amount = amount * 22.45 // RUB to NGN rate
+            }
+
+            return sum + amount
+          }, 0)
+
+          return {
+            ...user,
+            totalTransactions,
+            totalVolume,
+          }
+        }),
+      )
 
       setUsers(usersWithStats)
     } catch (err) {
       console.error("Error fetching users:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch users")
+      setError(err instanceof Error ? err.message : "Failed to load users")
     } finally {
       setLoading(false)
     }
@@ -138,35 +138,39 @@ export default function AdminUsersPage() {
 
   const fetchUserTransactions = async (userId: string) => {
     try {
-      setLoadingTransactions(true)
-
       const { data, error } = await supabase
         .from("transactions")
-        .select("*")
+        .select(`
+          transaction_id,
+          created_at,
+          send_currency,
+          receive_currency,
+          send_amount,
+          receive_amount,
+          status,
+          recipient:recipients(full_name)
+        `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(20)
+        .limit(10)
 
       if (error) throw error
-
       setUserTransactions(data || [])
     } catch (err) {
       console.error("Error fetching user transactions:", err)
-    } finally {
-      setLoadingTransactions(false)
+      setUserTransactions([])
     }
   }
 
   const filteredUsers = users.filter((user) => {
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     const matchesSearch =
-      user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || user.status === statusFilter
     const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
-    const matchesCountry = countryFilter === "all" || user.country === countryFilter
 
-    return matchesSearch && matchesStatus && matchesVerification && matchesCountry
+    return matchesSearch && matchesStatus && matchesVerification
   })
 
   const getStatusBadge = (status: string) => {
@@ -246,7 +250,7 @@ export default function AdminUsersPage() {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
     } catch (err) {
-      console.error("Error updating verification status:", err)
+      console.error("Error updating user verification:", err)
     }
   }
 
@@ -259,7 +263,7 @@ export default function AdminUsersPage() {
       setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
       setSelectedUsers([])
     } catch (err) {
-      console.error("Error bulk updating status:", err)
+      console.error("Error bulk updating user status:", err)
     }
   }
 
@@ -268,12 +272,12 @@ export default function AdminUsersPage() {
       ["Name", "Email", "Phone", "Status", "Verification", "Registration Date", "Total Volume"].join(","),
       ...filteredUsers.map((u) =>
         [
-          u.full_name,
+          `${u.first_name} ${u.last_name}`,
           u.email,
-          u.phone,
+          u.phone || "",
           u.status,
           u.verification_status,
-          u.created_at,
+          new Date(u.created_at).toLocaleDateString(),
           formatCurrency(u.totalVolume, "NGN"),
         ].join(","),
       ),
@@ -303,8 +307,13 @@ export default function AdminUsersPage() {
   if (loading) {
     return (
       <AdminDashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading users...</p>
+            </div>
+          </div>
         </div>
       </AdminDashboardLayout>
     )
@@ -314,7 +323,22 @@ export default function AdminUsersPage() {
     return (
       <AdminDashboardLayout>
         <div className="p-6">
-          <div className="text-center text-red-600">Error loading users: {error}</div>
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <XCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error loading users</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <Button onClick={fetchUsers} size="sm" variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </AdminDashboardLayout>
     )
@@ -400,7 +424,7 @@ export default function AdminUsersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -433,17 +457,6 @@ export default function AdminUsersPage() {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="unverified">Unverified</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
-                  <SelectItem value="Nigeria">Nigeria</SelectItem>
-                  <SelectItem value="Russia">Russia</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -506,8 +519,10 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{user.full_name}</div>
-                        <div className="text-sm text-gray-500">{user.country}</div>
+                        <div className="font-medium">
+                          {user.first_name} {user.last_name}
+                        </div>
+                        <div className="text-sm text-gray-500">{user.base_currency}</div>
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -525,7 +540,9 @@ export default function AdminUsersPage() {
                           </DialogTrigger>
                           <DialogContent className="max-w-4xl">
                             <DialogHeader>
-                              <DialogTitle>User Details - {selectedUser?.full_name}</DialogTitle>
+                              <DialogTitle>
+                                User Details - {selectedUser?.first_name} {selectedUser?.last_name}
+                              </DialogTitle>
                             </DialogHeader>
                             {selectedUser && (
                               <div className="space-y-6">
@@ -537,16 +554,20 @@ export default function AdminUsersPage() {
                                       <div className="mt-2 space-y-2">
                                         <div className="flex items-center gap-2">
                                           <User className="h-4 w-4 text-gray-400" />
-                                          <span>{selectedUser.full_name}</span>
+                                          <span>
+                                            {selectedUser.first_name} {selectedUser.last_name}
+                                          </span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                           <Mail className="h-4 w-4 text-gray-400" />
                                           <span>{selectedUser.email}</span>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                          <Phone className="h-4 w-4 text-gray-400" />
-                                          <span>{selectedUser.phone}</span>
-                                        </div>
+                                        {selectedUser.phone && (
+                                          <div className="flex items-center gap-2">
+                                            <Phone className="h-4 w-4 text-gray-400" />
+                                            <span>{selectedUser.phone}</span>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                     <div>
@@ -573,12 +594,14 @@ export default function AdminUsersPage() {
                                             {new Date(selectedUser.created_at).toLocaleDateString()}
                                           </span>
                                         </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Last Activity:</span>
-                                          <span className="text-sm">
-                                            {new Date(selectedUser.last_activity).toLocaleDateString()}
-                                          </span>
-                                        </div>
+                                        {selectedUser.last_login && (
+                                          <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600">Last Login:</span>
+                                            <span className="text-sm">
+                                              {new Date(selectedUser.last_login).toLocaleDateString()}
+                                            </span>
+                                          </div>
+                                        )}
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Base Currency:</span>
                                           <span className="text-sm font-medium">{selectedUser.base_currency}</span>
@@ -607,71 +630,66 @@ export default function AdminUsersPage() {
                                 <div>
                                   <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
                                   <div className="mt-2">
-                                    {loadingTransactions ? (
-                                      <div className="flex items-center justify-center h-32">
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                      </div>
-                                    ) : (
-                                      <ScrollArea className="h-64 w-full rounded-md border">
-                                        <Table>
-                                          <TableHeader>
-                                            <TableRow>
-                                              <TableHead>Transaction ID</TableHead>
-                                              <TableHead>Date</TableHead>
-                                              <TableHead>Currency Pair</TableHead>
-                                              <TableHead>Amount</TableHead>
-                                              <TableHead>Status</TableHead>
-                                            </TableRow>
-                                          </TableHeader>
-                                          <TableBody>
-                                            {userTransactions.map((transaction) => (
-                                              <TableRow key={transaction.id}>
-                                                <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
-                                                <TableCell>
-                                                  {new Date(transaction.created_at).toLocaleDateString()}
-                                                </TableCell>
-                                                <TableCell>
-                                                  {transaction.from_currency} → {transaction.to_currency}
-                                                </TableCell>
-                                                <TableCell>
-                                                  <div>
-                                                    <div className="font-medium">
-                                                      {formatCurrency(
-                                                        transaction.send_amount,
-                                                        transaction.from_currency,
-                                                      )}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                      →{" "}
-                                                      {formatCurrency(
-                                                        transaction.receive_amount,
-                                                        transaction.to_currency,
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                  <Badge
-                                                    className={
-                                                      transaction.status === "completed"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : transaction.status === "processing"
-                                                          ? "bg-yellow-100 text-yellow-800"
-                                                          : "bg-red-100 text-red-800"
-                                                    }
-                                                  >
-                                                    {transaction.status}
-                                                  </Badge>
-                                                </TableCell>
-                                              </TableRow>
-                                            ))}
-                                          </TableBody>
-                                        </Table>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Transaction ID</TableHead>
+                                          <TableHead>Date</TableHead>
+                                          <TableHead>Currency Pair</TableHead>
+                                          <TableHead>Amount</TableHead>
+                                          <TableHead>Status</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {userTransactions.map((transaction) => (
+                                          <TableRow key={transaction.transaction_id}>
+                                            <TableCell className="font-mono text-sm">
+                                              {transaction.transaction_id}
+                                            </TableCell>
+                                            <TableCell>
+                                              {new Date(transaction.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                              {transaction.send_currency} → {transaction.receive_currency}
+                                            </TableCell>
+                                            <TableCell>
+                                              <div>
+                                                <div className="font-medium">
+                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                  →{" "}
+                                                  {formatCurrency(
+                                                    transaction.receive_amount,
+                                                    transaction.receive_currency,
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </TableCell>
+                                            <TableCell>
+                                              <Badge
+                                                className={
+                                                  transaction.status === "completed"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : transaction.status === "processing"
+                                                      ? "bg-yellow-100 text-yellow-800"
+                                                      : "bg-gray-100 text-gray-800"
+                                                }
+                                              >
+                                                {transaction.status}
+                                              </Badge>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
                                         {userTransactions.length === 0 && (
-                                          <div className="text-center py-8 text-gray-500">No transactions found</div>
+                                          <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                                              No transactions found
+                                            </TableCell>
+                                          </TableRow>
                                         )}
-                                      </ScrollArea>
-                                    )}
+                                      </TableBody>
+                                    </Table>
                                   </div>
                                 </div>
 
