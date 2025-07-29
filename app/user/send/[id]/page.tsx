@@ -391,18 +391,6 @@ export default function TransactionStatusPage() {
                     </div>
                   </div>
 
-                  {/* Overdue Message */}
-                  {isOverdue && transaction.status !== "completed" && transaction.status !== "failed" && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <h4 className="font-medium text-orange-800 mb-1">Please contact support </h4
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
                     <div className="bg-gray-50 rounded-lg p-4">
