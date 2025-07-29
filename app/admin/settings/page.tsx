@@ -14,6 +14,7 @@ import {
   Settings,
   Mail,
   Shield,
+  Save,
   Edit,
   Plus,
   Trash2,
@@ -21,9 +22,7 @@ import {
   QrCode,
   Building2,
   MoreHorizontal,
-  Loader2,
 } from "lucide-react"
-import { currencies } from "@/utils/currency"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -38,18 +37,18 @@ interface SystemSetting {
   data_type: string
   category: string
   description?: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
-interface EmailTemplate {
+interface Currency {
   id: string
+  code: string
   name: string
-  subject: string
-  template_type: string
-  html_content: string
-  text_content?: string
-  variables: any
+  symbol: string
+  flag_svg: string
   status: string
-  is_default: boolean
   created_at: string
   updated_at: string
 }
@@ -67,25 +66,33 @@ interface PaymentMethod {
   is_default: boolean
   status: string
   created_at: string
+  updated_at: string
+}
+
+interface EmailTemplate {
+  id: string
+  name: string
+  subject: string
+  type: string
+  content: string
+  status: string
+  created_at: string
+  updated_at: string
 }
 
 export default function AdminSettingsPage() {
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([])
-  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([])
+  const [currencies, setCurrencies] = useState<Currency[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([])
   const [activeTab, setActiveTab] = useState("platform")
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  
-  // Dialog states
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
   const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
-  const [isAddEmailTemplateOpen, setIsAddEmailTemplateOpen] = useState(false)
-  const [isEditEmailTemplateOpen, setIsEditEmailTemplateOpen] = useState(false)
-  
-  // Form states
+  const [isAddTemplateOpen, setIsAddTemplateOpen] = useState(false)
+  const [isEditTemplateOpen, setIsEditTemplateOpen] = useState(false)
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<PaymentMethod | null>(null)
-  const [editingEmailTemplate, setEditingEmailTemplate] = useState<EmailTemplate | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null)
   const [newPaymentMethod, setNewPaymentMethod] = useState({
     currency: "",
     type: "bank_account",
@@ -97,159 +104,187 @@ export default function AdminSettingsPage() {
     instructions: "",
     is_default: false,
   })
-  const [newEmailTemplate, setNewEmailTemplate] = useState({
+  const [newTemplate, setNewTemplate] = useState({
     name: "",
     subject: "",
-    template_type: "registration",
-    html_content: "",
-    text_content: "",
-    variables: "{}",
+    type: "registration",
+    content: "",
   })
 
-  // Platform config derived from system settings
-  const platformConfig = {
-    maintenanceMode: getSettingValue("maintenance_mode", "boolean", false),
-    registrationEnabled: getSettingValue("registration_enabled", "boolean", true),
-    emailVerificationRequired: getSettingValue("email_verification_required", "boolean", true),
-    baseCurrency: getSettingValue("base_currency", "string", "NGN"),
-  }
+  // Platform configuration derived from system settings
+  const [platformConfig, setPlatformConfig] = useState({
+    maintenanceMode: false,
+    registrationEnabled: true,
+    emailVerificationRequired: true,
+    baseCurrency: "NGN",
+  })
 
   // Security settings derived from system settings
-  const securitySettings = {
-    twoFactorRequired: getSettingValue("two_factor_required", "boolean", true),
-    sessionTimeout: getSettingValue("session_timeout", "number", 30),
-    passwordMinLength: getSettingValue("password_min_length", "number", 8),
-    passwordRequireSpecialChars: getSettingValue("password_require_special_chars", "boolean", true),
-    maxLoginAttempts: getSettingValue("max_login_attempts", "number", 5),
-    accountLockoutDuration: getSettingValue("account_lockout_duration", "number", 15),
-  }
-
-  function getSettingValue(key: string, dataType: string, defaultValue: any) {
-    const setting = systemSettings.find(s => s.key === key)
-    if (!setting) return defaultValue
-    
-    switch (dataType) {
-      case "boolean":
-        return setting.value === "true"
-      case "number":
-        return Number(setting.value)
-      case "json":
-        try {
-          return JSON.parse(setting.value)
-        } catch {
-          return defaultValue
-        }
-      default:
-        return setting.value
-    }
-  }
+  const [securitySettings, setSecuritySettings] = useState({
+    sessionTimeout: 30,
+    passwordMinLength: 8,
+    maxLoginAttempts: 5,
+    accountLockoutDuration: 15,
+  })
 
   useEffect(() => {
     loadAllData()
   }, [])
 
-  async function loadAllData() {
+  const loadAllData = async () => {
     setLoading(true)
     try {
-      await Promise.all([
-        loadSystemSettings(),
-        loadEmailTemplates(),
-        loadPaymentMethods(),
-      ])
+      await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods(), loadEmailTemplates()])
     } catch (error) {
-      console.error("Error loading settings data:", error)
+      console.error("Error loading data:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  async function loadSystemSettings() {
+  const loadSystemSettings = async () => {
     const { data, error } = await supabase
       .from("system_settings")
       .select("*")
       .eq("is_active", true)
       .order("category", { ascending: true })
-      .order("key", { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      console.error("Error loading system settings:", error)
+      return
+    }
+
     setSystemSettings(data || [])
+
+    // Update platform config from settings
+    const settings = data || []
+    const newPlatformConfig = { ...platformConfig }
+    const newSecuritySettings = { ...securitySettings }
+
+    settings.forEach((setting) => {
+      switch (setting.key) {
+        case "maintenance_mode":
+          newPlatformConfig.maintenanceMode = setting.value === "true"
+          break
+        case "registration_enabled":
+          newPlatformConfig.registrationEnabled = setting.value === "true"
+          break
+        case "email_verification_required":
+          newPlatformConfig.emailVerificationRequired = setting.value === "true"
+          break
+        case "base_currency":
+          newPlatformConfig.baseCurrency = setting.value
+          break
+        case "session_timeout":
+          newSecuritySettings.sessionTimeout = Number.parseInt(setting.value)
+          break
+        case "password_min_length":
+          newSecuritySettings.passwordMinLength = Number.parseInt(setting.value)
+          break
+        case "max_login_attempts":
+          newSecuritySettings.maxLoginAttempts = Number.parseInt(setting.value)
+          break
+        case "account_lockout_duration":
+          newSecuritySettings.accountLockoutDuration = Number.parseInt(setting.value)
+          break
+      }
+    })
+
+    setPlatformConfig(newPlatformConfig)
+    setSecuritySettings(newSecuritySettings)
   }
 
-  async function loadEmailTemplates() {
-    const { data, error } = await supabase
-      .from("email_templates")
-      .select("*")
-      .order("template_type", { ascending: true })
-      .order("name", { ascending: true })
+  const loadCurrencies = async () => {
+    const { data, error } = await supabase.from("currencies").select("*").order("code", { ascending: true })
 
-    if (error) throw error
-    setEmailTemplates(data || [])
+    if (error) {
+      console.error("Error loading currencies:", error)
+      return
+    }
+
+    setCurrencies(data || [])
   }
 
-  async function loadPaymentMethods() {
+  const loadPaymentMethods = async () => {
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
       .order("currency", { ascending: true })
       .order("is_default", { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error("Error loading payment methods:", error)
+      return
+    }
+
     setPaymentMethods(data || [])
   }
 
-  async function updateSystemSetting(key: string, value: any, dataType = "string") {
-    setSaving(true)
-    try {
-      let stringValue: string
-      switch (dataType) {
-        case "boolean":
-          stringValue = value ? "true" : "false"
-          break
-        case "number":
-          stringValue = String(value)
-          break
-        case "json":
-          stringValue = JSON.stringify(value)
-          break
-        default:
-          stringValue = String(value)
-      }
+  const loadEmailTemplates = async () => {
+    const { data, error } = await supabase.from("email_templates").select("*").order("type", { ascending: true })
 
-      const { error } = await supabase
-        .from("system_settings")
-        .upsert({
-          key,
-          value: stringValue,
-          data_type: dataType,
-          updated_at: new Date().toISOString(),
-        })
+    if (error) {
+      console.error("Error loading email templates:", error)
+      return
+    }
+
+    setEmailTemplates(data || [])
+  }
+
+  const updateSystemSetting = async (key: string, value: any, dataType = "string") => {
+    try {
+      const { error } = await supabase.from("system_settings").upsert({
+        key,
+        value: String(value),
+        data_type: dataType,
+        category: "platform",
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
 
       if (error) throw error
-
-      // Update local state
-      setSystemSettings(prev => {
-        const existing = prev.find(s => s.key === key)
-        if (existing) {
-          return prev.map(s => s.key === key ? { ...s, value: stringValue } : s)
-        } else {
-          return [...prev, { id: "", key, value: stringValue, data_type: dataType, category: "general" }]
-        }
-      })
     } catch (error) {
       console.error("Error updating system setting:", error)
-    } finally {
-      setSaving(false)
     }
   }
 
-  async function handleAddPaymentMethod() {
+  const handlePlatformConfigChange = async (key: string, value: any) => {
+    setPlatformConfig({ ...platformConfig, [key]: value })
+    await updateSystemSetting(
+      key === "baseCurrency" ? "base_currency" : key.replace(/([A-Z])/g, "_$1").toLowerCase(),
+      value,
+      typeof value === "boolean" ? "boolean" : "string",
+    )
+  }
+
+  const handleSecuritySettingsChange = (key: string, value: number) => {
+    setSecuritySettings({ ...securitySettings, [key]: value })
+  }
+
+  const handleSaveSecuritySettings = async () => {
+    try {
+      const updates = [
+        { key: "session_timeout", value: securitySettings.sessionTimeout, data_type: "number" },
+        { key: "password_min_length", value: securitySettings.passwordMinLength, data_type: "number" },
+        { key: "max_login_attempts", value: securitySettings.maxLoginAttempts, data_type: "number" },
+        { key: "account_lockout_duration", value: securitySettings.accountLockoutDuration, data_type: "number" },
+      ]
+
+      for (const update of updates) {
+        await updateSystemSetting(update.key, update.value, update.data_type)
+      }
+
+      console.log("Security settings saved successfully")
+    } catch (error) {
+      console.error("Error saving security settings:", error)
+    }
+  }
+
+  const handleAddPaymentMethod = async () => {
     try {
       // If setting as default, unset other defaults for the same currency
       if (newPaymentMethod.is_default) {
-        await supabase
-          .from("payment_methods")
-          .update({ is_default: false })
-          .eq("currency", newPaymentMethod.currency)
+        await supabase.from("payment_methods").update({ is_default: false }).eq("currency", newPaymentMethod.currency)
       }
 
       const { data, error } = await supabase
@@ -271,7 +306,7 @@ export default function AdminSettingsPage() {
 
       if (error) throw error
 
-      setPaymentMethods(prev => [...prev, data])
+      setPaymentMethods([...paymentMethods, data])
       setNewPaymentMethod({
         currency: "",
         type: "bank_account",
@@ -289,7 +324,7 @@ export default function AdminSettingsPage() {
     }
   }
 
-  async function handleEditPaymentMethod() {
+  const handleEditPaymentMethod = async () => {
     if (!editingPaymentMethod) return
 
     try {
@@ -322,7 +357,7 @@ export default function AdminSettingsPage() {
 
       if (error) throw error
 
-      setPaymentMethods(prev => prev.map(pm => pm.id === editingPaymentMethod.id ? data : pm))
+      setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? data : pm)))
       setEditingPaymentMethod(null)
       setIsEditPaymentMethodOpen(false)
     } catch (error) {
@@ -330,8 +365,8 @@ export default function AdminSettingsPage() {
     }
   }
 
-  async function handleTogglePaymentMethodStatus(id: string) {
-    const method = paymentMethods.find(pm => pm.id === id)
+  const handleTogglePaymentMethodStatus = async (id: string) => {
+    const method = paymentMethods.find((pm) => pm.id === id)
     if (!method) return
 
     const newStatus = method.status === "active" ? "inactive" : "active"
@@ -339,78 +374,65 @@ export default function AdminSettingsPage() {
     try {
       const { error } = await supabase
         .from("payment_methods")
-        .update({ status: newStatus })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", id)
 
       if (error) throw error
 
-      setPaymentMethods(prev => prev.map(pm => pm.id === id ? { ...pm, status: newStatus } : pm))
+      setPaymentMethods(paymentMethods.map((pm) => (pm.id === id ? { ...pm, status: newStatus } : pm)))
     } catch (error) {
       console.error("Error updating payment method status:", error)
     }
   }
 
-  async function handleSetDefaultPaymentMethod(id: string) {
-    const targetMethod = paymentMethods.find(pm => pm.id === id)
+  const handleSetDefaultPaymentMethod = async (id: string) => {
+    const targetMethod = paymentMethods.find((pm) => pm.id === id)
     if (!targetMethod) return
 
     try {
       // Unset other defaults for the same currency
-      await supabase
-        .from("payment_methods")
-        .update({ is_default: false })
-        .eq("currency", targetMethod.currency)
+      await supabase.from("payment_methods").update({ is_default: false }).eq("currency", targetMethod.currency)
 
       // Set this one as default
       const { error } = await supabase
         .from("payment_methods")
-        .update({ is_default: true })
+        .update({ is_default: true, updated_at: new Date().toISOString() })
         .eq("id", id)
 
       if (error) throw error
 
-      setPaymentMethods(prev => prev.map(pm => ({
-        ...pm,
-        is_default: pm.currency === targetMethod.currency ? pm.id === id : pm.is_default,
-      })))
+      setPaymentMethods(
+        paymentMethods.map((pm) => ({
+          ...pm,
+          is_default: pm.currency === targetMethod.currency ? pm.id === id : pm.is_default,
+        })),
+      )
     } catch (error) {
       console.error("Error setting default payment method:", error)
     }
   }
 
-  async function handleDeletePaymentMethod(id: string) {
+  const handleDeletePaymentMethod = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("payment_methods")
-        .delete()
-        .eq("id", id)
+      const { error } = await supabase.from("payment_methods").delete().eq("id", id)
 
       if (error) throw error
 
-      setPaymentMethods(prev => prev.filter(pm => pm.id !== id))
+      setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
     } catch (error) {
       console.error("Error deleting payment method:", error)
     }
   }
 
-  async function handleAddEmailTemplate() {
+  const handleAddEmailTemplate = async () => {
     try {
-      let variables = {}
-      try {
-        variables = JSON.parse(newEmailTemplate.variables)
-      } catch {
-        variables = {}
-      }
-
       const { data, error } = await supabase
         .from("email_templates")
         .insert({
-          name: newEmailTemplate.name,
-          subject: newEmailTemplate.subject,
-          template_type: newEmailTemplate.template_type,
-          html_content: newEmailTemplate.html_content,
-          text_content: newEmailTemplate.text_content || null,
-          variables,
+          name: newTemplate.name,
+          subject: newTemplate.subject,
+          type: newTemplate.type,
+          content: newTemplate.content,
           status: "active",
         })
         .select()
@@ -418,59 +440,48 @@ export default function AdminSettingsPage() {
 
       if (error) throw error
 
-      setEmailTemplates(prev => [...prev, data])
-      setNewEmailTemplate({
+      setEmailTemplates([...emailTemplates, data])
+      setNewTemplate({
         name: "",
         subject: "",
-        template_type: "registration",
-        html_content: "",
-        text_content: "",
-        variables: "{}",
+        type: "registration",
+        content: "",
       })
-      setIsAddEmailTemplateOpen(false)
+      setIsAddTemplateOpen(false)
     } catch (error) {
       console.error("Error adding email template:", error)
     }
   }
 
-  async function handleEditEmailTemplate() {
-    if (!editingEmailTemplate) return
+  const handleEditEmailTemplate = async () => {
+    if (!editingTemplate) return
 
     try {
-      let variables = {}
-      try {
-        variables = JSON.parse(JSON.stringify(editingEmailTemplate.variables))
-      } catch {
-        variables = {}
-      }
-
       const { data, error } = await supabase
         .from("email_templates")
         .update({
-          name: editingEmailTemplate.name,
-          subject: editingEmailTemplate.subject,
-          template_type: editingEmailTemplate.template_type,
-          html_content: editingEmailTemplate.html_content,
-          text_content: editingEmailTemplate.text_content || null,
-          variables,
+          name: editingTemplate.name,
+          subject: editingTemplate.subject,
+          type: editingTemplate.type,
+          content: editingTemplate.content,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", editingEmailTemplate.id)
+        .eq("id", editingTemplate.id)
         .select()
         .single()
 
       if (error) throw error
 
-      setEmailTemplates(prev => prev.map(et => et.id === editingEmailTemplate.id ? data : et))
-      setEditingEmailTemplate(null)
-      setIsEditEmailTemplateOpen(false)
+      setEmailTemplates(emailTemplates.map((template) => (template.id === editingTemplate.id ? data : template)))
+      setEditingTemplate(null)
+      setIsEditTemplateOpen(false)
     } catch (error) {
       console.error("Error updating email template:", error)
     }
   }
 
-  async function handleToggleEmailTemplateStatus(id: string) {
-    const template = emailTemplates.find(et => et.id === id)
+  const handleToggleTemplateStatus = async (id: string) => {
+    const template = emailTemplates.find((t) => t.id === id)
     if (!template) return
 
     const newStatus = template.status === "active" ? "inactive" : "active"
@@ -478,43 +489,37 @@ export default function AdminSettingsPage() {
     try {
       const { error } = await supabase
         .from("email_templates")
-        .update({ status: newStatus })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", id)
 
       if (error) throw error
 
-      setEmailTemplates(prev => prev.map(et => et.id === id ? { ...et, status: newStatus } : et))
+      setEmailTemplates(emailTemplates.map((t) => (t.id === id ? { ...t, status: newStatus } : t)))
     } catch (error) {
-      console.error("Error updating email template status:", error)
+      console.error("Error updating template status:", error)
     }
   }
 
-  async function handleDeleteEmailTemplate(id: string) {
+  const handleDeleteEmailTemplate = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("email_templates")
-        .delete()
-        .eq("id", id)
+      const { error } = await supabase.from("email_templates").delete().eq("id", id)
 
       if (error) throw error
 
-      setEmailTemplates(prev => prev.filter(et => et.id !== id))
+      setEmailTemplates(emailTemplates.filter((t) => t.id !== id))
     } catch (error) {
       console.error("Error deleting email template:", error)
     }
   }
 
-  const handleEditPaymentMethodClick = (method: PaymentMethod) => {
+  const handleEditClick = (method: PaymentMethod) => {
     setEditingPaymentMethod({ ...method })
     setIsEditPaymentMethodOpen(true)
   }
 
-  const handleEditEmailTemplateClick = (template: EmailTemplate) => {
-    setEditingEmailTemplate({ 
-      ...template,
-      variables: typeof template.variables === 'object' ? JSON.stringify(template.variables, null, 2) : template.variables
-    })
-    setIsEditEmailTemplateOpen(true)
+  const handleEditTemplateClick = (template: EmailTemplate) => {
+    setEditingTemplate({ ...template })
+    setIsEditTemplateOpen(true)
   }
 
   const getPaymentMethodIcon = (type: string) => {
@@ -523,14 +528,19 @@ export default function AdminSettingsPage() {
 
   const getCurrencyFlag = (currencyCode: string) => {
     const currency = currencies.find((c) => c.code === currencyCode)
-    return currency ? <div dangerouslySetInnerHTML={{ __html: currency.flag }} /> : null
+    return currency?.flag_svg ? <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} /> : null
   }
 
   if (loading) {
     return (
       <AdminDashboardLayout>
-        <div className="p-6 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading settings...</p>
+            </div>
+          </div>
         </div>
       </AdminDashboardLayout>
     )
@@ -582,8 +592,7 @@ export default function AdminSettingsPage() {
                     <Switch
                       id="maintenance"
                       checked={platformConfig.maintenanceMode}
-                      onCheckedChange={(checked) => updateSystemSetting("maintenance_mode", checked, "boolean")}
-                      disabled={saving}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("maintenanceMode", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -594,8 +603,7 @@ export default function AdminSettingsPage() {
                     <Switch
                       id="registration"
                       checked={platformConfig.registrationEnabled}
-                      onCheckedChange={(checked) => updateSystemSetting("registration_enabled", checked, "boolean")}
-                      disabled={saving}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("registrationEnabled", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -606,8 +614,7 @@ export default function AdminSettingsPage() {
                     <Switch
                       id="emailVerification"
                       checked={platformConfig.emailVerificationRequired}
-                      onCheckedChange={(checked) => updateSystemSetting("email_verification_required", checked, "boolean")}
-                      disabled={saving}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("emailVerificationRequired", checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -619,21 +626,22 @@ export default function AdminSettingsPage() {
                     </div>
                     <Select
                       value={platformConfig.baseCurrency}
-                      onValueChange={(value) => updateSystemSetting("base_currency", value, "string")}
-                      disabled={saving}
+                      onValueChange={(value) => handlePlatformConfigChange("baseCurrency", value)}
                     >
                       <SelectTrigger className="w-48">
                         <SelectValue placeholder="Select base currency" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.code} value={currency.code}>
-                            <div className="flex items-center gap-3">
-                              <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                              <div className="font-medium">{currency.code}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {currencies
+                          .filter((c) => c.status === "active")
+                          .map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              <div className="flex items-center gap-3">
+                                <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                <div className="font-medium">{currency.code}</div>
+                              </div>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -676,16 +684,18 @@ export default function AdminSettingsPage() {
                                 <SelectValue placeholder="Select currency" />
                               </SelectTrigger>
                               <SelectContent>
-                                {currencies.map((currency) => (
-                                  <SelectItem key={currency.code} value={currency.code}>
-                                    <div className="flex items-center gap-3">
-                                      <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                                      <div className="font-medium">
-                                        {currency.code} - {currency.name}
+                                {currencies
+                                  .filter((c) => c.status === "active")
+                                  .map((currency) => (
+                                    <SelectItem key={currency.code} value={currency.code}>
+                                      <div className="flex items-center gap-3">
+                                        <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                        <div className="font-medium">
+                                          {currency.code} - {currency.name}
+                                        </div>
                                       </div>
-                                    </div>
-                                  </SelectItem>
-                                ))}
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                           </div>
@@ -852,16 +862,18 @@ export default function AdminSettingsPage() {
                                   <SelectValue placeholder="Select currency" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {currencies.map((currency) => (
-                                    <SelectItem key={currency.code} value={currency.code}>
-                                      <div className="flex items-center gap-3">
-                                        <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                                        <div className="font-medium">
-                                          {currency.code} - {currency.name}
+                                  {currencies
+                                    .filter((c) => c.status === "active")
+                                    .map((currency) => (
+                                      <SelectItem key={currency.code} value={currency.code}>
+                                        <div className="flex items-center gap-3">
+                                          <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                          <div className="font-medium">
+                                            {currency.code} - {currency.name}
+                                          </div>
                                         </div>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1085,7 +1097,7 @@ export default function AdminSettingsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditPaymentMethodClick(method)}>
+                              <DropdownMenuItem onClick={() => handleEditClick(method)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
@@ -1129,14 +1141,14 @@ export default function AdminSettingsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Email Templates</CardTitle>
-                  <Dialog open={isAddEmailTemplateOpen} onOpenChange={setIsAddEmailTemplateOpen}>
+                  <Dialog open={isAddTemplateOpen} onOpenChange={setIsAddTemplateOpen}>
                     <DialogTrigger asChild>
                       <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Template
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Add New Email Template</DialogTitle>
                       </DialogHeader>
@@ -1146,16 +1158,16 @@ export default function AdminSettingsPage() {
                             <Label htmlFor="templateName">Template Name *</Label>
                             <Input
                               id="templateName"
-                              value={newEmailTemplate.name}
-                              onChange={(e) => setNewEmailTemplate({ ...newEmailTemplate, name: e.target.value })}
+                              value={newTemplate.name}
+                              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
                               placeholder="e.g., Welcome Email"
                             />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="templateType">Type *</Label>
                             <Select
-                              value={newEmailTemplate.template_type}
-                              onValueChange={(value) => setNewEmailTemplate({ ...newEmailTemplate, template_type: value })}
+                              value={newTemplate.type}
+                              onValueChange={(value) => setNewTemplate({ ...newTemplate, type: value })}
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -1165,7 +1177,6 @@ export default function AdminSettingsPage() {
                                 <SelectItem value="transaction">Transaction</SelectItem>
                                 <SelectItem value="security">Security</SelectItem>
                                 <SelectItem value="notification">Notification</SelectItem>
-                                <SelectItem value="marketing">Marketing</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1175,55 +1186,30 @@ export default function AdminSettingsPage() {
                           <Label htmlFor="templateSubject">Subject *</Label>
                           <Input
                             id="templateSubject"
-                            value={newEmailTemplate.subject}
-                            onChange={(e) => setNewEmailTemplate({ ...newEmailTemplate, subject: e.target.value })}
+                            value={newTemplate.subject}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, subject: e.target.value })}
                             placeholder="e.g., Welcome to Novapay!"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="htmlContent">HTML Content *</Label>
+                          <Label htmlFor="templateContent">Content *</Label>
                           <Textarea
-                            id="htmlContent"
-                            value={newEmailTemplate.html_content}
-                            onChange={(e) => setNewEmailTemplate({ ...newEmailTemplate, html_content: e.target.value })}
-                            placeholder="HTML email content with variables like {{first_name}}"
+                            id="templateContent"
+                            value={newTemplate.content}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
+                            placeholder="Email template content..."
                             rows={8}
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="textContent">Text Content (Optional)</Label>
-                          <Textarea
-                            id="textContent"
-                            value={newEmailTemplate.text_content}
-                            onChange={(e) => setNewEmailTemplate({ ...newEmailTemplate, text_content: e.target.value })}
-                            placeholder="Plain text version of the email"
-                            rows={4}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="variables">Variables (JSON)</Label>
-                          <Textarea
-                            id="variables"
-                            value={newEmailTemplate.variables}
-                            onChange={(e) => setNewEmailTemplate({ ...newEmailTemplate, variables: e.target.value })}
-                            placeholder='{"first_name": "User\'s first name", \"email": "User\'s email"}'
-                            rows={3}
-                          />
-                          <p className="text-xs text-gray-500">
-                            Define available variables for this template in JSON format
-                          </p>
-                        </div>
-
                         <div className="flex gap-4 pt-4">
-                          <Button variant="outline" onClick={() => setIsAddEmailTemplateOpen(false)} className="flex-1">
+                          <Button variant="outline" onClick={() => setIsAddTemplateOpen(false)} className="flex-1">
                             Cancel
                           </Button>
                           <Button
                             onClick={handleAddEmailTemplate}
-                            disabled={!newEmailTemplate.name || !newEmailTemplate.subject || !newEmailTemplate.html_content}
+                            disabled={!newTemplate.name || !newTemplate.subject || !newTemplate.content}
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
                             Add Template
@@ -1234,28 +1220,28 @@ export default function AdminSettingsPage() {
                   </Dialog>
 
                   {/* Edit Email Template Dialog */}
-                  <Dialog open={isEditEmailTemplateOpen} onOpenChange={setIsEditEmailTemplateOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <Dialog open={isEditTemplateOpen} onOpenChange={setIsEditTemplateOpen}>
+                    <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Edit Email Template</DialogTitle>
                       </DialogHeader>
-                      {editingEmailTemplate && (
+                      {editingTemplate && (
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="editTemplateName">Template Name *</Label>
                               <Input
                                 id="editTemplateName"
-                                value={editingEmailTemplate.name}
-                                onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, name: e.target.value })}
+                                value={editingTemplate.name}
+                                onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
                                 placeholder="e.g., Welcome Email"
                               />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="editTemplateType">Type *</Label>
                               <Select
-                                value={editingEmailTemplate.template_type}
-                                onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, template_type: e.target.value })}
+                                value={editingTemplate.type}
+                                onChange={(value) => setEditingTemplate({ ...editingTemplate, type: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -1265,7 +1251,6 @@ export default function AdminSettingsPage() {
                                   <SelectItem value="transaction">Transaction</SelectItem>
                                   <SelectItem value="security">Security</SelectItem>
                                   <SelectItem value="notification">Notification</SelectItem>
-                                  <SelectItem value="marketing">Marketing</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1275,55 +1260,30 @@ export default function AdminSettingsPage() {
                             <Label htmlFor="editTemplateSubject">Subject *</Label>
                             <Input
                               id="editTemplateSubject"
-                              value={editingEmailTemplate.subject}
-                              onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, subject: e.target.value })}
+                              value={editingTemplate.subject}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
                               placeholder="e.g., Welcome to Novapay!"
                             />
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="editHtmlContent">HTML Content *</Label>
+                            <Label htmlFor="editTemplateContent">Content *</Label>
                             <Textarea
-                              id="editHtmlContent"
-                              value={editingEmailTemplate.html_content}
-                              onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, html_content: e.target.value })}
-                              placeholder="HTML email content with variables like {{first_name}}"
+                              id="editTemplateContent"
+                              value={editingTemplate.content}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, content: e.target.value })}
+                              placeholder="Email template content..."
                               rows={8}
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="editTextContent">Text Content (Optional)</Label>
-                            <Textarea
-                              id="editTextContent"
-                              value={editingEmailTemplate.text_content || ""}
-                              onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, text_content: e.target.value })}
-                              placeholder="Plain text version of the email"
-                              rows={4}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editVariables">Variables (JSON)</Label>
-                            <Textarea
-                              id="editVariables"
-                              value={typeof editingEmailTemplate.variables === 'string' ? editingEmailTemplate.variables : JSON.stringify(editingEmailTemplate.variables, null, 2)}
-                              onChange={(e) => setEditingEmailTemplate({ ...editingEmailTemplate, variables: e.target.value })}
-                              placeholder='{"first_name": "User\'s first name", \"email": "User\'s email"}'
-                              rows={3}
-                            />
-                            <p className="text-xs text-gray-500">
-                              Define available variables for this template in JSON format
-                            </p>
-                          </div>
-
                           <div className="flex gap-4 pt-4">
-                            <Button variant="outline" onClick={() => setIsEditEmailTemplateOpen(false)} className="flex-1">
+                            <Button variant="outline" onClick={() => setIsEditTemplateOpen(false)} className="flex-1">
                               Cancel
                             </Button>
                             <Button
                               onClick={handleEditEmailTemplate}
-                              disabled={!editingEmailTemplate.name || !editingEmailTemplate.subject || !editingEmailTemplate.html_content}
+                              disabled={!editingTemplate.name || !editingTemplate.subject || !editingTemplate.content}
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
                               Save Changes
@@ -1353,7 +1313,7 @@ export default function AdminSettingsPage() {
                         <TableCell className="font-medium">{template.name}</TableCell>
                         <TableCell>{template.subject}</TableCell>
                         <TableCell>
-                          <Badge className="bg-purple-100 text-purple-800 capitalize">{template.template_type}</Badge>
+                          <Badge className="bg-purple-100 text-purple-800">{template.type}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -1366,29 +1326,22 @@ export default function AdminSettingsPage() {
                         </TableCell>
                         <TableCell>{new Date(template.updated_at).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditEmailTemplateClick(template)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleEmailTemplateStatus(template.id)}>
-                                {template.status === "active" ? "Disable" : "Enable"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteEmailTemplate(template.id)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditTemplateClick(template)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleToggleTemplateStatus(template.id)}>
+                              {template.status === "active" ? "Disable" : "Enable"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 bg-transparent"
+                              onClick={() => handleDeleteEmailTemplate(template.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1420,8 +1373,7 @@ export default function AdminSettingsPage() {
                       id="sessionTimeout"
                       type="number"
                       value={securitySettings.sessionTimeout}
-                      onChange={(e) => updateSystemSetting("session_timeout", Number(e.target.value), "number")}
-                      disabled={saving}
+                      onChange={(e) => handleSecuritySettingsChange("sessionTimeout", Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1430,8 +1382,7 @@ export default function AdminSettingsPage() {
                       id="passwordLength"
                       type="number"
                       value={securitySettings.passwordMinLength}
-                      onChange={(e) => updateSystemSetting("password_min_length", Number(e.target.value), "number")}
-                      disabled={saving}
+                      onChange={(e) => handleSecuritySettingsChange("passwordMinLength", Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1440,8 +1391,7 @@ export default function AdminSettingsPage() {
                       id="maxAttempts"
                       type="number"
                       value={securitySettings.maxLoginAttempts}
-                      onChange={(e) => updateSystemSetting("max_login_attempts", Number(e.target.value), "number")}
-                      disabled={saving}
+                      onChange={(e) => handleSecuritySettingsChange("maxLoginAttempts", Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1450,43 +1400,23 @@ export default function AdminSettingsPage() {
                       id="lockoutDuration"
                       type="number"
                       value={securitySettings.accountLockoutDuration}
-                      onChange={(e) => updateSystemSetting("account_lockout_duration", Number(e.target.value), "number")}
-                      disabled={saving}
+                      onChange={(e) => handleSecuritySettingsChange("accountLockoutDuration", Number(e.target.value))}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="twoFactor">Two-Factor Authentication Required</Label>
-                      <p className="text-sm text-gray-500">Require 2FA for all user accounts</p>
-                    </div>
-                    <Switch
-                      id="twoFactor"
-                      checked={securitySettings.twoFactorRequired}
-                      onChange={(checked) => updateSystemSetting("two_factor_required", checked, "boolean")}
-                      disabled={saving}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="specialChars">Require Special Characters in Passwords</Label>
-                      <p className="text-sm text-gray-500">Enforce special character requirements</p>
-                    </div>
-                    <Switch
-                      id="specialChars"
-                      checked={securitySettings.passwordRequireSpecialChars}
-                      onChange={(checked) => updateSystemSetting("password_require_special_chars", checked, "boolean")}
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
+                <Button
+                  onClick={handleSaveSecuritySettings}
+                  className="bg-novapay-primary hover:bg-novapay-primary-600"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Security Settings
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
     </AdminDashboardLayout>
-  )\
+  )
 }
