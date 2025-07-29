@@ -22,12 +22,12 @@ import {
   AlertCircle,
   ArrowUpDown,
   Loader2,
-  RefreshCw,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
 import { supabase } from "@/lib/supabase"
+import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 export default function AdminTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -39,19 +39,16 @@ export default function AdminTransactionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Load transactions from Supabase
   useEffect(() => {
     loadTransactions()
 
-    // Set up auto-refresh every 5 minutes
-    const interval = setInterval(
-      () => {
-        loadTransactions()
-      },
-      5 * 60 * 1000,
-    ) // 5 minutes
+    // Set up auto-refresh every 5 minutes in background
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.TRANSACTIONS, fetchTransactions, 5 * 60 * 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      // Clean up auto-refresh when component unmounts
+      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.TRANSACTIONS)
+    }
   }, [])
 
   // Reload when filters change
@@ -59,40 +56,49 @@ export default function AdminTransactionsPage() {
     loadTransactions()
   }, [statusFilter, currencyFilter, searchTerm])
 
+  const fetchTransactions = async () => {
+    // Build query
+    const query = supabase
+      .from("transactions")
+      .select(`
+        *,
+        user:users(first_name, last_name, email),
+        recipient:recipients(full_name, bank_name, account_number)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(100)
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return data || []
+  }
+
   const loadTransactions = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Build query
-      let query = supabase
-        .from("transactions")
-        .select(`
-        *,
-        user:users(first_name, last_name, email),
-        recipient:recipients(full_name, bank_name, account_number)
-      `)
-        .order("created_at", { ascending: false })
-        .limit(100)
-
-      // Apply filters
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter)
+      // Check cache first (only if no filters are applied)
+      if (statusFilter === "all" && currencyFilter === "all" && !searchTerm) {
+        const cachedData = adminCache.get(ADMIN_CACHE_KEYS.TRANSACTIONS)
+        if (cachedData) {
+          setTransactions(cachedData)
+          setLoading(false)
+          return
+        }
       }
 
-      if (currencyFilter !== "all") {
-        query = query.or(`send_currency.eq.${currencyFilter},receive_currency.eq.${currencyFilter}`)
+      // Fetch fresh data
+      const data = await fetchTransactions()
+
+      // Cache only if no filters are applied
+      if (statusFilter === "all" && currencyFilter === "all" && !searchTerm) {
+        adminCache.set(ADMIN_CACHE_KEYS.TRANSACTIONS, data)
       }
 
-      if (searchTerm) {
-        query = query.or(`transaction_id.ilike.%${searchTerm}%`)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      setTransactions(data || [])
+      setTransactions(data)
     } catch (err) {
       console.error("Error loading transactions:", err)
       setError("Failed to load transactions")
@@ -108,7 +114,9 @@ export default function AdminTransactionsPage() {
       transaction.send_currency === currencyFilter ||
       transaction.receive_currency === currencyFilter
 
-    return matchesStatus && matchesCurrency
+    const matchesSearch = !searchTerm || transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return matchesStatus && matchesCurrency && matchesSearch
   })
 
   const getStatusBadge = (status: string) => {
@@ -169,6 +177,9 @@ export default function AdminTransactionsPage() {
       if (selectedTransaction?.transaction_id === transactionId) {
         setSelectedTransaction((prev) => (prev ? { ...prev, status: newStatus as any } : null))
       }
+
+      // Invalidate cache to force refresh
+      adminCache.invalidate(ADMIN_CACHE_KEYS.TRANSACTIONS)
     } catch (err) {
       console.error("Error updating transaction status:", err)
       setError("Failed to update transaction status")
@@ -196,6 +207,9 @@ export default function AdminTransactionsPage() {
         ),
       )
       setSelectedTransactions([])
+
+      // Invalidate cache to force refresh
+      adminCache.invalidate(ADMIN_CACHE_KEYS.TRANSACTIONS)
     } catch (err) {
       console.error("Error updating transaction statuses:", err)
       setError("Failed to update transaction statuses")
@@ -238,16 +252,10 @@ export default function AdminTransactionsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Transaction Management</h1>
             <p className="text-gray-600">Monitor and manage all platform transactions</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Auto-refreshes every 5 minutes
-            </div>
-            <Button onClick={handleExport} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export Data
-            </Button>
-          </div>
+          <Button onClick={handleExport} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export Data
+          </Button>
         </div>
 
         {/* Filters */}

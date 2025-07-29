@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { supabase } from "@/lib/supabase"
+import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 interface DashboardStats {
   transactions: number
@@ -54,49 +55,71 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadDashboardData()
 
-    // Set up auto-refresh every 5 minutes
-    const interval = setInterval(
-      () => {
-        loadDashboardData()
-      },
-      5 * 60 * 1000,
-    ) // 5 minutes
+    // Set up auto-refresh every 5 minutes in background
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS, fetchDashboardData, 5 * 60 * 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      // Clean up auto-refresh when component unmounts
+      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS)
+    }
   }, [])
+
+  const fetchDashboardData = async () => {
+    // Load all transaction stats (no time filter)
+    const { data: allTransactions } = await supabase.from("transactions").select("*")
+
+    // Load user stats
+    const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
+
+    // Load recent transactions for activity feed
+    const { data: recentTransactions } = await supabase
+      .from("transactions")
+      .select(`
+        *,
+        recipient:recipients(*),
+        user:users(first_name, last_name, email)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    // Load all completed transactions for volume calculation
+    const { data: completedTransactions } = await supabase
+      .from("transactions")
+      .select("send_amount, send_currency, receive_amount, receive_currency, status")
+      .eq("status", "completed")
+
+    // Load currency pair data
+    const { data: currencyData } = await supabase
+      .from("transactions")
+      .select("send_currency, receive_currency, send_amount, status")
+      .eq("status", "completed")
+
+    return {
+      allTransactions,
+      allUsers,
+      recentTransactions,
+      completedTransactions,
+      currencyData,
+    }
+  }
 
   const loadDashboardData = async () => {
     try {
       setIsLoading(true)
 
-      // Load all transaction stats (no time filter)
-      const { data: allTransactions } = await supabase.from("transactions").select("*")
+      // Check cache first
+      const cachedData = adminCache.get(ADMIN_CACHE_KEYS.DASHBOARD_STATS)
+      if (cachedData) {
+        setStats(cachedData.stats)
+        setRecentActivity(cachedData.recentActivity)
+        setCurrencyPairs(cachedData.currencyPairs)
+        setIsLoading(false)
+        return
+      }
 
-      // Load user stats
-      const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
-
-      // Load recent transactions for activity feed
-      const { data: recentTransactions } = await supabase
-        .from("transactions")
-        .select(`
-        *,
-        recipient:recipients(*),
-        user:users(first_name, last_name, email)
-      `)
-        .order("created_at", { ascending: false })
-        .limit(10)
-
-      // Load all completed transactions for volume calculation
-      const { data: completedTransactions } = await supabase
-        .from("transactions")
-        .select("send_amount, send_currency, receive_amount, receive_currency, status")
-        .eq("status", "completed")
-
-      // Load currency pair data
-      const { data: currencyData } = await supabase
-        .from("transactions")
-        .select("send_currency, receive_currency, send_amount, status")
-        .eq("status", "completed")
+      // Fetch fresh data
+      const data = await fetchDashboardData()
+      const { allTransactions, allUsers, recentTransactions, completedTransactions, currencyData } = data
 
       // Calculate total volume in NGN (base currency)
       let totalVolumeInNGN = 0
@@ -140,6 +163,13 @@ export default function AdminDashboardPage() {
 
       // Process currency pairs
       const pairs = processCurrencyPairs(currencyData || [])
+
+      // Cache the processed data
+      adminCache.set(ADMIN_CACHE_KEYS.DASHBOARD_STATS, {
+        stats: formattedStats,
+        recentActivity: activities,
+        currencyPairs: pairs,
+      })
 
       setStats(formattedStats)
       setRecentActivity(activities)
@@ -260,10 +290,6 @@ export default function AdminDashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
             <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Auto-refreshes every 5 minutes
           </div>
         </div>
 

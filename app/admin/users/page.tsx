@@ -31,6 +31,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
+import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 interface UserData {
   id: string
@@ -73,59 +74,85 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
+
+    // Set up auto-refresh every 5 minutes in background
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.USERS, fetchUsersData, 5 * 60 * 1000)
+
+    return () => {
+      // Clean up auto-refresh when component unmounts
+      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.USERS)
+    }
   }, [])
+
+  const fetchUsersData = async () => {
+    // Fetch users
+    const { data: usersData, error: usersError } = await supabase
+      .from("users")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (usersError) throw usersError
+
+    // Fetch transaction counts and volumes for each user
+    const usersWithStats = await Promise.all(
+      (usersData || []).map(async (user) => {
+        const { data: transactions, error: transError } = await supabase
+          .from("transactions")
+          .select("send_amount, send_currency, status")
+          .eq("user_id", user.id)
+
+        if (transError) {
+          console.error("Error fetching transactions for user:", user.id, transError)
+          return {
+            ...user,
+            totalTransactions: 0,
+            totalVolume: 0,
+          }
+        }
+
+        const totalTransactions = transactions?.length || 0
+
+        // Calculate total volume in NGN (base currency)
+        const totalVolume = (transactions || []).reduce((sum, transaction) => {
+          let amount = Number(transaction.send_amount)
+
+          // Convert to NGN if needed
+          if (transaction.send_currency === "RUB") {
+            amount = amount * 22.45 // RUB to NGN rate
+          }
+
+          return sum + amount
+        }, 0)
+
+        return {
+          ...user,
+          totalTransactions,
+          totalVolume,
+        }
+      }),
+    )
+
+    return usersWithStats
+  }
 
   const fetchUsers = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false })
+      // Check cache first
+      const cachedData = adminCache.get(ADMIN_CACHE_KEYS.USERS)
+      if (cachedData) {
+        setUsers(cachedData)
+        setLoading(false)
+        return
+      }
 
-      if (usersError) throw usersError
+      // Fetch fresh data
+      const usersWithStats = await fetchUsersData()
 
-      // Fetch transaction counts and volumes for each user
-      const usersWithStats = await Promise.all(
-        (usersData || []).map(async (user) => {
-          const { data: transactions, error: transError } = await supabase
-            .from("transactions")
-            .select("send_amount, send_currency, status")
-            .eq("user_id", user.id)
-
-          if (transError) {
-            console.error("Error fetching transactions for user:", user.id, transError)
-            return {
-              ...user,
-              totalTransactions: 0,
-              totalVolume: 0,
-            }
-          }
-
-          const totalTransactions = transactions?.length || 0
-
-          // Calculate total volume in NGN (base currency)
-          const totalVolume = (transactions || []).reduce((sum, transaction) => {
-            let amount = Number(transaction.send_amount)
-
-            // Convert to NGN if needed
-            if (transaction.send_currency === "RUB") {
-              amount = amount * 22.45 // RUB to NGN rate
-            }
-
-            return sum + amount
-          }, 0)
-
-          return {
-            ...user,
-            totalTransactions,
-            totalVolume,
-          }
-        }),
-      )
+      // Cache the result
+      adminCache.set(ADMIN_CACHE_KEYS.USERS, usersWithStats)
 
       setUsers(usersWithStats)
     } catch (err) {
@@ -152,7 +179,7 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(20)
+        .limit(5)
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -234,6 +261,9 @@ export default function AdminUsersPage() {
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
+
+      // Invalidate cache to force refresh
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error updating user status:", err)
     }
@@ -249,6 +279,9 @@ export default function AdminUsersPage() {
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
+
+      // Invalidate cache to force refresh
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error updating user verification:", err)
     }
@@ -262,6 +295,9 @@ export default function AdminUsersPage() {
 
       setUsers((prev) => prev.map((user) => (selectedUsers.includes(user.id) ? { ...user, status: newStatus } : user)))
       setSelectedUsers([])
+
+      // Invalidate cache to force refresh
+      adminCache.invalidate(ADMIN_CACHE_KEYS.USERS)
     } catch (err) {
       console.error("Error bulk updating user status:", err)
     }
