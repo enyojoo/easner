@@ -354,6 +354,30 @@ class AdminDataStore {
     }
   }
 
+  async updateCurrencyStatus(currencyId: string, newStatus: string) {
+    try {
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = this.data.currencies.map((currency) =>
+          currency.id === currencyId ? { ...currency, status: newStatus } : currency,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
   async updateCurrencies() {
     try {
       const [currencies, exchangeRates] = await Promise.all([this.loadCurrencies(), this.loadExchangeRates()])

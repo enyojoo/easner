@@ -94,7 +94,6 @@ const AdminRatesPage = () => {
       await adminDataStore.updateCurrencies()
     } catch (error) {
       console.error("Error adding currency:", error)
-      alert("Failed to add currency")
     } finally {
       setSaving(false)
     }
@@ -152,10 +151,8 @@ const AdminRatesPage = () => {
       setSelectedCurrency(null)
       setRateUpdates({})
       await adminDataStore.updateCurrencies()
-      alert("Exchange rates updated successfully!")
     } catch (error) {
       console.error("Error saving rates:", error)
-      alert("Failed to save rates: " + (error as any).message)
     } finally {
       setSaving(false)
     }
@@ -169,27 +166,14 @@ const AdminRatesPage = () => {
       // Use 'suspended' instead of 'inactive' to match the database constraint
       const newStatus = currency.status === "active" ? "suspended" : "active"
 
-      const { error } = await supabase
-        .from("currencies")
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", currencyId)
-
-      if (error) throw error
-
-      await adminDataStore.updateCurrencies()
-      alert(`Currency ${newStatus === "active" ? "activated" : "suspended"} successfully!`)
+      await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
     } catch (error) {
       console.error("Error updating currency status:", error)
-      alert("Failed to update currency status: " + (error as any).message)
     }
   }
 
   const handleDeleteCurrency = async (currencyId: string) => {
     if (currencies.length <= 2) {
-      alert("Cannot delete currency. At least 2 currencies are required.")
       return
     }
 
@@ -215,10 +199,8 @@ const AdminRatesPage = () => {
       if (error) throw error
 
       await adminDataStore.updateCurrencies()
-      alert("Currency deleted successfully!")
     } catch (error) {
       console.error("Error deleting currency:", error)
-      alert("Failed to delete currency: " + (error as any).message)
     }
   }
 
