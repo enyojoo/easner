@@ -21,12 +21,13 @@ interface CurrencyConverterProps {
 
 export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [sendAmount, setSendAmount] = useState<string>("100")
-  const [sendCurrency, setSendCurrency] = useState<string>("RUB")
-  const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
+  const [sendCurrency, setSendCurrency] = useState<string>("")
+  const [receiveCurrency, setReceiveCurrency] = useState<string>("")
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
   const [fee, setFee] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
 
   // Load currencies and exchange rates from Supabase
   useEffect(() => {
@@ -39,6 +40,27 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
         setCurrencies(currenciesData || [])
         setExchangeRates(ratesData || [])
+
+        // Set default currencies if available
+        if (currenciesData && currenciesData.length > 0) {
+          // Set RUB as default send currency if available, otherwise first currency
+          const rubCurrency = currenciesData.find((c) => c.code === "RUB")
+          const ngnCurrency = currenciesData.find((c) => c.code === "NGN")
+
+          if (rubCurrency) {
+            setSendCurrency("RUB")
+            if (ngnCurrency) {
+              setReceiveCurrency("NGN")
+            } else if (currenciesData.length > 1) {
+              setReceiveCurrency(currenciesData.find((c) => c.code !== "RUB")?.code || currenciesData[1].code)
+            }
+          } else {
+            setSendCurrency(currenciesData[0].code)
+            if (currenciesData.length > 1) {
+              setReceiveCurrency(currenciesData[1].code)
+            }
+          }
+        }
       } catch (error) {
         console.error("Error loading currency data:", error)
         // Fallback to static data if Supabase fails
@@ -49,7 +71,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
             name: "Russian Ruble",
             symbol: "₽",
             flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path></svg>`,
-            is_active: true,
+            status: "active",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
@@ -59,7 +81,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
             name: "Nigerian Naira",
             symbol: "₦",
             flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path></svg>`,
-            is_active: true,
+            status: "active",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
@@ -72,7 +94,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
             rate: 22.45,
             fee_type: "free",
             fee_amount: 0,
-            is_active: true,
+            status: "active",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
@@ -83,11 +105,15 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
             rate: 0.0445,
             fee_type: "percentage",
             fee_amount: 1.5,
-            is_active: true,
+            status: "active",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
         ])
+        setSendCurrency("RUB")
+        setReceiveCurrency("NGN")
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -105,7 +131,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         rate: 1,
         fee_type: "free" as const,
         fee_amount: 0,
-        is_active: true,
+        status: "active",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
@@ -185,6 +211,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
   // Update the useEffect to calculate fee and conversion
   useEffect(() => {
+    if (!sendCurrency || !receiveCurrency) return
+
     const amount = Number.parseFloat(sendAmount) || 0
 
     // If same currency, 1:1 conversion
@@ -223,6 +251,21 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
   const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
+
+  if (loading) {
+    return (
+      <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
+        <CardContent className="p-6 space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded mb-4"></div>
+            <div className="h-16 bg-gray-200 rounded mb-4"></div>
+            <div className="h-16 bg-gray-200 rounded mb-4"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
@@ -273,7 +316,16 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         </div>
 
         {/* Swap Button */}
-        
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSwapCurrencies}
+            className="rounded-full w-10 h-10 p-0 bg-white hover:bg-gray-50 border-gray-200"
+          >
+            <ArrowUpDown className="h-4 w-4 text-gray-500" />
+          </Button>
+        </div>
 
         {/* Fee and Rate Information */}
         <div className="space-y-3">
@@ -386,6 +438,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         <Button
           onClick={handleSendMoney}
           className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-12 text-lg font-semibold"
+          disabled={!sendCurrency || !receiveCurrency || !sendAmount}
         >
           Send Money
         </Button>
