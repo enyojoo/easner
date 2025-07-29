@@ -1,12 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode
@@ -23,29 +24,37 @@ const navigation = [
 export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const { user, isAdmin, signOut, loading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  // Redirect to admin login if not authenticated or not admin
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      router.push("/admin/login")
+    }
+  }, [user, isAdmin, loading, router])
 
   const handleLogout = async () => {
     try {
-      setIsLoggingOut(true)
-
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      })
-
-      if (response.ok) {
-        router.push("/admin/login")
-        router.refresh()
-      } else {
-        console.error("Logout failed")
-      }
+      await signOut()
+      router.push("/admin/login")
     } catch (error) {
-      console.error("Logout error:", error)
-    } finally {
-      setIsLoggingOut(false)
+      console.error("Error signing out:", error)
     }
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated or not admin (will redirect)
+  if (!user || !isAdmin) {
+    return null
   }
 
   return (
@@ -101,10 +110,9 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
               variant="ghost"
               className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               onClick={handleLogout}
-              disabled={isLoggingOut}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              {isLoggingOut ? "Logging out..." : "Logout"}
+              Logout
             </Button>
           </div>
         </div>

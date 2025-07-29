@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,16 +16,23 @@ import { AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/user/dashboard")
+    }
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError("")
 
     try {
@@ -65,8 +72,22 @@ export default function LoginPage() {
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render if already authenticated (will redirect)
+  if (user) {
+    return null
   }
 
   return (
@@ -103,7 +124,7 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -119,7 +140,7 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -129,7 +150,7 @@ export default function LoginPage() {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    disabled={loading}
+                    disabled={isLoading}
                   />
                   <Label htmlFor="remember" className="text-sm text-gray-600">
                     Remember me
@@ -145,10 +166,10 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 

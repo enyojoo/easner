@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { AlertCircle, CheckCircle } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { signUp } = useAuth()
+  const { signUp, user, loading } = useAuth()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -25,31 +25,38 @@ export default function RegisterPage() {
     confirmPassword: "",
   })
   const [acceptTerms, setAcceptTerms] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/user/dashboard")
+    }
+  }, [user, loading, router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError("")
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
-      setLoading(false)
+      setIsLoading(false)
       return
     }
 
     if (formData.password.length < 8) {
       setError("Password must be at least 8 characters long")
-      setLoading(false)
+      setIsLoading(false)
       return
     }
 
     if (!acceptTerms) {
       setError("Please accept the terms and conditions")
-      setLoading(false)
+      setIsLoading(false)
       return
     }
 
@@ -99,7 +106,7 @@ export default function RegisterPage() {
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -108,6 +115,20 @@ export default function RegisterPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }))
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render if already authenticated (will redirect)
+  if (user && !success) {
+    return null
   }
 
   if (success) {
@@ -166,7 +187,7 @@ export default function RegisterPage() {
                   placeholder="Enter your first name"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -182,7 +203,7 @@ export default function RegisterPage() {
                   placeholder="Enter your last name"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -199,7 +220,7 @@ export default function RegisterPage() {
                   placeholder="Enter your email"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -216,7 +237,7 @@ export default function RegisterPage() {
                   placeholder="Create a password (min 8 characters)"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -233,7 +254,7 @@ export default function RegisterPage() {
                   placeholder="Confirm your password"
                   className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -243,7 +264,7 @@ export default function RegisterPage() {
                   checked={acceptTerms}
                   onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
                   className="mt-1"
-                  disabled={loading}
+                  disabled={isLoading}
                 />
                 <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
                   I agree to the{" "}
@@ -259,10 +280,10 @@ export default function RegisterPage() {
 
               <Button
                 type="submit"
-                disabled={loading || !acceptTerms}
+                disabled={isLoading || !acceptTerms}
                 className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Creating Account..." : "Create Account"}
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 
