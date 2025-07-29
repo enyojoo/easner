@@ -2,61 +2,52 @@
 
 import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Users,
-  CreditCard,
+  ArrowUpRight,
+  DollarSign,
   TrendingUp,
-  AlertCircle,
   Activity,
   Clock,
   CheckCircle,
   XCircle,
-  RefreshCw,
+  AlertCircle,
 } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { supabase } from "@/lib/supabase"
 import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
 interface DashboardStats {
-  transactions: number
-  volume: string
-  users: number
-  pending: number
-}
-
-interface RecentActivity {
-  id: string
-  type: string
-  message: string
-  user?: string
-  amount?: string
-  time: string
-  status: string
-}
-
-interface CurrencyPair {
-  pair: string
-  volume: number
-  transactions: number
+  totalUsers: number
+  totalTransactions: number
+  totalVolume: number
+  pendingTransactions: number
+  completedTransactions: number
+  failedTransactions: number
+  recentTransactions: any[]
+  popularCurrencyPairs: any[]
 }
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
-    transactions: 0,
-    volume: "₦0",
-    users: 0,
-    pending: 0,
+    totalUsers: 0,
+    totalTransactions: 0,
+    totalVolume: 0,
+    pendingTransactions: 0,
+    completedTransactions: 0,
+    failedTransactions: 0,
+    recentTransactions: [],
+    popularCurrencyPairs: [],
   })
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
-  const [currencyPairs, setCurrencyPairs] = useState<CurrencyPair[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadDashboardData()
+    fetchDashboardData()
 
     // Set up auto-refresh every 5 minutes in background
-    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS, fetchDashboardData, 5 * 60 * 1000)
+    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.DASHBOARD_STATS, fetchStatsData, 5 * 60 * 1000)
 
     return () => {
       // Clean up auto-refresh when component unmounts
@@ -64,345 +55,282 @@ export default function AdminDashboardPage() {
     }
   }, [])
 
-  const fetchDashboardData = async () => {
-    // Load all transaction stats (no time filter)
-    const { data: allTransactions } = await supabase.from("transactions").select("*")
+  const fetchStatsData = async () => {
+    // Fetch users count
+    const { count: usersCount } = await supabase.from("users").select("*", { count: "exact", head: true })
 
-    // Load user stats
-    const { data: allUsers } = await supabase.from("users").select("id", { count: "exact" })
+    // Fetch transactions data
+    const { data: transactions, count: transactionsCount } = await supabase
+      .from("transactions")
+      .select("*", { count: "exact" })
 
-    // Load recent transactions for activity feed
+    // Calculate volume using the same logic as user dashboard
+    const totalVolume =
+      transactions?.reduce((sum, transaction) => {
+        return sum + (Number(transaction.amount) || 0)
+      }, 0) || 0
+
+    // Count transactions by status
+    const pendingCount = transactions?.filter((t) => t.status === "pending").length || 0
+    const completedCount = transactions?.filter((t) => t.status === "completed").length || 0
+    const failedCount = transactions?.filter((t) => t.status === "failed").length || 0
+
+    // Get recent transactions (last 10)
     const { data: recentTransactions } = await supabase
       .from("transactions")
       .select(`
         *,
-        recipient:recipients(*),
-        user:users(first_name, last_name, email)
+        sender:users!transactions_user_id_fkey(full_name, email),
+        recipient:recipients(full_name, email)
       `)
       .order("created_at", { ascending: false })
       .limit(10)
 
-    // Load all completed transactions for volume calculation
-    const { data: completedTransactions } = await supabase
-      .from("transactions")
-      .select("send_amount, send_currency, receive_amount, receive_currency, status")
-      .eq("status", "completed")
+    // Get popular currency pairs
+    const currencyPairCounts =
+      transactions?.reduce((acc: any, transaction) => {
+        const pair = `${transaction.from_currency}-${transaction.to_currency}`
+        acc[pair] = (acc[pair] || 0) + 1
+        return acc
+      }, {}) || {}
 
-    // Load currency pair data
-    const { data: currencyData } = await supabase
-      .from("transactions")
-      .select("send_currency, receive_currency, send_amount, status")
-      .eq("status", "completed")
+    const popularPairs = Object.entries(currencyPairCounts)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .map(([pair, count]) => ({ pair, count }))
 
     return {
-      allTransactions,
-      allUsers,
-      recentTransactions,
-      completedTransactions,
-      currencyData,
+      totalUsers: usersCount || 0,
+      totalTransactions: transactionsCount || 0,
+      totalVolume,
+      pendingTransactions: pendingCount,
+      completedTransactions: completedCount,
+      failedTransactions: failedCount,
+      recentTransactions: recentTransactions || [],
+      popularCurrencyPairs: popularPairs,
     }
   }
 
-  const loadDashboardData = async () => {
+  const fetchDashboardData = async () => {
     try {
-      setIsLoading(true)
+      setLoading(true)
 
       // Check cache first
       const cachedData = adminCache.get(ADMIN_CACHE_KEYS.DASHBOARD_STATS)
       if (cachedData) {
-        setStats(cachedData.stats)
-        setRecentActivity(cachedData.recentActivity)
-        setCurrencyPairs(cachedData.currencyPairs)
-        setIsLoading(false)
+        setStats(cachedData)
+        setLoading(false)
         return
       }
 
       // Fetch fresh data
-      const data = await fetchDashboardData()
-      const { allTransactions, allUsers, recentTransactions, completedTransactions, currencyData } = data
+      const data = await fetchStatsData()
 
-      // Calculate total volume in NGN (base currency)
-      let totalVolumeInNGN = 0
-      if (completedTransactions) {
-        for (const tx of completedTransactions) {
-          if (tx.send_currency === "NGN") {
-            totalVolumeInNGN += tx.send_amount
-          } else if (tx.send_currency === "RUB") {
-            // Convert RUB to NGN using exchange rate (22.45)
-            totalVolumeInNGN += tx.send_amount * 22.45
-          } else {
-            // For other currencies, use send amount as fallback
-            totalVolumeInNGN += tx.send_amount
-          }
-        }
-      }
+      // Cache the result
+      adminCache.set(ADMIN_CACHE_KEYS.DASHBOARD_STATS, data)
 
-      // Count pending transactions
-      const pendingCount =
-        allTransactions?.filter((tx) => tx.status === "pending" || tx.status === "processing").length || 0
-
-      // Process stats
-      const formattedStats: DashboardStats = {
-        transactions: allTransactions?.length || 0,
-        volume: formatCurrency(totalVolumeInNGN, "NGN"),
-        users: allUsers?.length || 0,
-        pending: pendingCount,
-      }
-
-      // Process recent activity
-      const activities: RecentActivity[] =
-        recentTransactions?.map((tx) => ({
-          id: tx.id,
-          type: getActivityType(tx.status),
-          message: getActivityMessage(tx),
-          user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
-          amount: formatCurrency(tx.send_amount, tx.send_currency),
-          time: getRelativeTime(tx.created_at),
-          status: getActivityStatus(tx.status),
-        })) || []
-
-      // Process currency pairs
-      const pairs = processCurrencyPairs(currencyData || [])
-
-      // Cache the processed data
-      adminCache.set(ADMIN_CACHE_KEYS.DASHBOARD_STATS, {
-        stats: formattedStats,
-        recentActivity: activities,
-        currencyPairs: pairs,
-      })
-
-      setStats(formattedStats)
-      setRecentActivity(activities)
-      setCurrencyPairs(pairs)
+      setStats(data)
     } catch (error) {
-      console.error("Error loading dashboard data:", error)
+      console.error("Error fetching dashboard data:", error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number, currency = "NGN") => {
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
+      completed: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      failed: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
+      cancelled: { color: "bg-gray-100 text-gray-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+
+    return (
+      <Badge className={`${config.color} hover:${config.color} flex items-center`}>
+        {config.icon}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    )
+  }
+
+  const formatCurrency = (amount: number, currency: string) => {
     const symbols: { [key: string]: string } = {
       NGN: "₦",
       RUB: "₽",
       USD: "$",
     }
-    return `${symbols[currency] || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `${symbols[currency] || ""}${amount.toLocaleString()}`
   }
 
-  const getActivityType = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "transaction_completed"
-      case "failed":
-        return "transaction_failed"
-      case "pending":
-      case "processing":
-        return "transaction_pending"
-      default:
-        return "transaction_pending"
-    }
-  }
-
-  const getActivityMessage = (transaction: any) => {
-    switch (transaction.status) {
-      case "completed":
-        return `Transaction ${transaction.transaction_id} completed successfully`
-      case "failed":
-        return `Transaction ${transaction.transaction_id} failed`
-      case "pending":
-        return `New transaction ${transaction.transaction_id} awaiting verification`
-      default:
-        return `Transaction ${transaction.transaction_id} is being processed`
-    }
-  }
-
-  const getActivityStatus = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "success"
-      case "failed":
-        return "error"
-      case "pending":
-      case "processing":
-        return "warning"
-      default:
-        return "info"
-    }
-  }
-
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-
-    if (diffInMinutes < 1) return "Just now"
-    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`
-    return `${Math.floor(diffInMinutes / 1440)} days ago`
-  }
-
-  const processCurrencyPairs = (transactions: any[]) => {
-    const pairStats: { [key: string]: { volume: number; count: number } } = {}
-
-    transactions.forEach((tx) => {
-      const pair = `${tx.send_currency} → ${tx.receive_currency}`
-      if (!pairStats[pair]) {
-        pairStats[pair] = { volume: 0, count: 0 }
-      }
-      pairStats[pair].volume += tx.send_amount
-      pairStats[pair].count += 1
-    })
-
-    const totalVolume = Object.values(pairStats).reduce((sum, stat) => sum + stat.volume, 0)
-
-    return Object.entries(pairStats)
-      .map(([pair, stats]) => ({
-        pair,
-        volume: totalVolume > 0 ? (stats.volume / totalVolume) * 100 : 0,
-        transactions: stats.count,
-      }))
-      .sort((a, b) => b.volume - a.volume)
-      .slice(0, 4)
-  }
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "transaction_completed":
-        return <CheckCircle className="h-4 w-4 text-green-600" />
-      case "transaction_failed":
-        return <XCircle className="h-4 w-4 text-red-600" />
-      case "transaction_pending":
-        return <Clock className="h-4 w-4 text-yellow-600" />
-      case "user_registered":
-        return <Users className="h-4 w-4 text-blue-600" />
-      case "rate_updated":
-        return <RefreshCw className="h-4 w-4 text-purple-600" />
-      default:
-        return <Activity className="h-4 w-4 text-gray-600" />
-    }
+  if (loading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </AdminDashboardLayout>
+    )
   }
 
   return (
     <AdminDashboardLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-            <p className="text-gray-600">Monitor your platform's performance and key metrics</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+          <p className="text-gray-600">Monitor your platform's performance and activity</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
-              <CreditCard className="h-4 w-4 text-novapay-primary" />
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.transactions.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Volume</CardTitle>
-              <TrendingUp className="h-4 w-4 text-novapay-primary" />
+              <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.volume}</div>
+              <div className="text-2xl font-bold">{stats.totalTransactions.toLocaleString()}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-novapay-primary" />
+              <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.users}</div>
+              <div className="text-2xl font-bold">₦{stats.totalVolume.toLocaleString()}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Transactions Pending</CardTitle>
-              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.pending}</div>
-              <p className="text-xs text-orange-600">Awaiting processing</p>
+              <div className="text-2xl font-bold">
+                {stats.totalTransactions > 0
+                  ? Math.round((stats.completedTransactions / stats.totalTransactions) * 100)
+                  : 0}
+                %
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Transaction Status Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{stats.pendingTransactions}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.completedTransactions}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Failed</CardTitle>
+              <XCircle className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.failedTransactions}</div>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity Feed */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <div>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Latest platform activities and events</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="max-h-80 overflow-y-auto">
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900">{activity.message}</p>
-                        <span className="text-xs text-gray-500">{activity.time}</span>
-                      </div>
-                      {activity.user && (
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-xs text-gray-600">User: {activity.user}</p>
-                          {activity.amount && (
-                            <span className="text-xs font-medium text-gray-900">{activity.amount}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Currency Pair Popularity */}
+          {/* Recent Transactions */}
           <Card>
             <CardHeader>
-              <CardTitle>Currency Pair Popularity</CardTitle>
-              <CardDescription>Most popular trading pairs</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Transactions
+              </CardTitle>
             </CardHeader>
-            <CardContent className="max-h-80 overflow-y-auto">
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Currency Pair</TableHead>
-                    <TableHead>Volume %</TableHead>
-                    <TableHead>Transactions</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currencyPairs.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">{item.pair}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
-                          </div>
-                          <span className="text-sm">{item.volume.toFixed(1)}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.transactions}</TableCell>
+                  {stats.recentTransactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-medium">{transaction.sender?.full_name || "Unknown User"}</TableCell>
+                      <TableCell>{formatCurrency(transaction.amount, transaction.from_currency)}</TableCell>
+                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+
+              {stats.recentTransactions.length === 0 && (
+                <div className="text-center py-8 text-gray-500">No recent transactions found.</div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Popular Currency Pairs */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Popular Currency Pairs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {stats.popularCurrencyPairs.map((pair, index) => (
+                  <div key={pair.pair} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-novapay-primary text-white text-xs flex items-center justify-center">
+                        {index + 1}
+                      </div>
+                      <span className="font-medium">{pair.pair.replace("-", " → ")}</span>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-800">{pair.count} transactions</Badge>
+                  </div>
+                ))}
+
+                {stats.popularCurrencyPairs.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">No currency pair data available.</div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
