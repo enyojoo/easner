@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import type { Currency, ExchangeRate } from "@/types"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 export default function UserSendPage() {
   const router = useRouter()
@@ -580,157 +581,73 @@ export default function UserSendPage() {
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.completed
-                        ? "bg-green-500 text-white"
-                        : currentStep === step.number
-                          ? "bg-novapay-primary text-white"
-                          : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {step.completed ? <Check className="h-4 w-4" /> : step.number}
-                  </div>
-                  <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
-                  {index < steps.length - 1 && (
-                    <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
-                        }`}
-                      />
+    <AuthGuard requireAuth={true}>
+      <UserDashboardLayout>
+        <div className="p-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Progress Indicator */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                {steps.map((step, index) => (
+                  <div key={step.number} className="flex items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        step.completed
+                          ? "bg-green-500 text-white"
+                          : currentStep === step.number
+                            ? "bg-novapay-primary text-white"
+                            : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {step.completed ? <Check className="h-4 w-4" /> : step.number}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Progress value={(currentStep / 4) * 100} className="h-2" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Step 1: Amount to Send */}
-              {currentStep === 1 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Amount to Send</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* You Send Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-gray-700">You Send</h3>
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex justify-between items-center">
-                          <input
-                            type="number"
-                            value={sendAmount}
-                            onChange={(e) => setSendAmount(e.target.value)}
-                            className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
-                            placeholder="0.00"
-                          />
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
-                                  <span className="font-medium text-sm">{sendCurrency}</span>
-                                  <ChevronDown className="h-3 w-3 text-gray-500" />
-                                </div>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {currencies.map((currency) => (
-                                <DropdownMenuItem
-                                  key={currency.code}
-                                  onClick={() => handleSendCurrencyChange(currency.code)}
-                                  className="flex items-center gap-3"
-                                >
-                                  <FlagIcon currency={currency} />
-                                  <div>
-                                    <div className="font-medium">{currency.code}</div>
-                                    <div className="text-sm text-muted-foreground">{currency.name}</div>
-                                  </div>
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Fee and Rate Information */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 text-xs">✓</span>
-                          </div>
-                          <span className="text-sm text-gray-600">Fee</span>
-                        </div>
-                        <span className={`font-medium ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
-                          {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                            <span className="text-novapay-primary text-xs">%</span>
-                          </div>
-                          <span className="text-sm text-gray-600">Rate</span>
-                        </div>
-                        <span className="font-medium text-novapay-primary">
-                          1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Same Currency Warning */}
-                    {sendCurrency === receiveCurrency && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 text-xs">ℹ</span>
-                          </div>
-                          <span className="text-sm text-blue-700">
-                            Same currency transfer - 1:1 conversion with no fees
-                          </span>
-                        </div>
+                    <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
+                    {index < steps.length - 1 && (
+                      <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
+                          }`}
+                        />
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+              <Progress value={(currentStep / 4) * 100} className="h-2" />
+            </div>
 
-                    {/* Receiver Gets Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
-                              {formatCurrency(receiveAmount, receiveCurrency)}
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                {/* Step 1: Amount to Send */}
+                {currentStep === 1 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Amount to Send</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* You Send Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-gray-700">You Send</h3>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <div className="flex justify-between items-center">
+                            <input
+                              type="number"
+                              value={sendAmount}
+                              onChange={(e) => setSendAmount(e.target.value)}
+                              className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
+                              placeholder="0.00"
+                            />
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+                                  className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
                                 >
                                   <div className="flex items-center gap-2">
-                                    {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
-                                    <span className="font-medium text-sm">{receiveCurrency}</span>
+                                    {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
+                                    <span className="font-medium text-sm">{sendCurrency}</span>
                                     <ChevronDown className="h-3 w-3 text-gray-500" />
                                   </div>
                                 </Button>
@@ -739,7 +656,7 @@ export default function UserSendPage() {
                                 {currencies.map((currency) => (
                                   <DropdownMenuItem
                                     key={currency.code}
-                                    onClick={() => handleReceiveCurrencyChange(currency.code)}
+                                    onClick={() => handleSendCurrencyChange(currency.code)}
                                     className="flex items-center gap-3"
                                   >
                                     <FlagIcon currency={currency} />
@@ -754,51 +671,136 @@ export default function UserSendPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <Button onClick={handleContinue} className="w-full bg-novapay-primary hover:bg-novapay-primary-600">
-                      Continue
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step 2: Add Recipient */}
-              {currentStep === 2 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Add Recipient</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Search Bar */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <Input
-                        placeholder="Search recipients"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 h-12 bg-gray-50 border-0 rounded-xl"
-                      />
-                    </div>
-
-                    {/* Add New Recipient Option */}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                              <Plus className="h-6 w-6 text-white" />
+                      {/* Fee and Rate Information */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                              <span className="text-green-600 text-xs">✓</span>
                             </div>
-                            <span className="font-medium text-gray-900">Add new recipient</span>
+                            <span className="text-sm text-gray-600">Fee</span>
                           </div>
-                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                          <span className={`font-medium ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
+                            {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
+                          </span>
                         </div>
-                      </DialogTrigger>
 
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Add New Recipient</DialogTitle>
-                        </DialogHeader>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                              <span className="text-novapay-primary text-xs">%</span>
+                            </div>
+                            <span className="text-sm text-gray-600">Rate</span>
+                          </div>
+                          <span className="font-medium text-novapay-primary">
+                            1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Same Currency Warning */}
+                      {sendCurrency === receiveCurrency && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-blue-600 text-xs">ℹ</span>
+                            </div>
+                            <span className="text-sm text-blue-700">
+                              Same currency transfer - 1:1 conversion with no fees
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Receiver Gets Section */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
+                                {formatCurrency(receiveAmount, receiveCurrency)}
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
+                                      <span className="font-medium text-sm">{receiveCurrency}</span>
+                                      <ChevronDown className="h-3 w-3 text-gray-500" />
+                                    </div>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  {currencies.map((currency) => (
+                                    <DropdownMenuItem
+                                      key={currency.code}
+                                      onClick={() => handleReceiveCurrencyChange(currency.code)}
+                                      className="flex items-center gap-3"
+                                    >
+                                      <FlagIcon currency={currency} />
+                                      <div>
+                                        <div className="font-medium">{currency.code}</div>
+                                        <div className="text-sm text-muted-foreground">{currency.name}</div>
+                                      </div>
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button onClick={handleContinue} className="w-full bg-novapay-primary hover:bg-novapay-primary-600">
+                        Continue
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Step 2: Add Recipient */}
+                {currentStep === 2 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Add Recipient</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Search Bar */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        <Input
+                          placeholder="Search recipients"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 h-12 bg-gray-50 border-0 rounded-xl"
+                        />
+                      </div>
+
+                      {/* Add New Recipient Option */}
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <Plus className="h-6 w-6 text-white" />
+                              </div>
+                              <span className="font-medium text-gray-900">Add new recipient</span>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                          </div>
+                        </DialogTrigger>
+
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Add New Recipient</DialogTitle>
+                          </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="newRecipientName">Full Name *</Label>
@@ -1314,7 +1316,7 @@ export default function UserSendPage() {
             </div>
           </div>
         </div>
-      </div>
-    </UserDashboardLayout>
+      </UserDashboardLayout>
+    </AuthGuard>
   )
-}
+}\

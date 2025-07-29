@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X } from "lucide-react"
@@ -24,15 +24,8 @@ const navigation = [
 export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, isAdmin, signOut, loading } = useAuth()
+  const { signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  // Redirect to admin login if not authenticated or not admin
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      router.push("/admin/login")
-    }
-  }, [user, isAdmin, loading, router])
 
   const handleLogout = async () => {
     try {
@@ -40,21 +33,9 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
       router.push("/admin/login")
     } catch (error) {
       console.error("Error signing out:", error)
+      // Force redirect even if signOut fails
+      router.push("/admin/login")
     }
-  }
-
-  // Show loading state while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
-  }
-
-  // Don't render if not authenticated or not admin (will redirect)
-  if (!user || !isAdmin) {
-    return null
   }
 
   return (

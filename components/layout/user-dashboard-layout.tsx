@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, Menu, X } from "lucide-react"
@@ -25,15 +25,8 @@ const navigation = [
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, signOut, loading } = useAuth()
+  const { signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
 
   const handleLogout = async () => {
     try {
@@ -41,21 +34,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
       router.push("/")
     } catch (error) {
       console.error("Error signing out:", error)
+      // Force redirect even if signOut fails
+      router.push("/")
     }
-  }
-
-  // Show loading state while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
-  }
-
-  // Don't render if not authenticated (will redirect)
-  if (!user) {
-    return null
   }
 
   return (

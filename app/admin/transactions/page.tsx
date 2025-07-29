@@ -24,6 +24,7 @@ import {
   ArrowUpDown,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 // Mock transaction data
 const mockTransactions = [
@@ -231,320 +232,322 @@ export default function AdminTransactionsPage() {
   }
 
   return (
-    <AdminDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transaction Management</h1>
-            <p className="text-gray-600">Monitor and manage all platform transactions</p>
-          </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="initiated">Initiated</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Currencies" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Currencies</SelectItem>
-                  <SelectItem value="NGN">NGN</SelectItem>
-                  <SelectItem value="RUB">RUB</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button variant="outline" className="w-full bg-transparent">
-                <Calendar className="h-4 w-4 mr-2" />
-                Custom Range
-              </Button>
+    <AuthGuard requireAuth={true} requireAdmin={true}>
+      <AdminDashboardLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Transaction Management</h1>
+              <p className="text-gray-600">Monitor and manage all platform transactions</p>
             </div>
-          </CardContent>
-        </Card>
+            <Button onClick={handleExport} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
 
-        {/* Bulk Actions */}
-        {selectedTransactions.length > 0 && (
+          {/* Filters */}
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{selectedTransactions.length} transaction(s) selected</span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("processing")}>
-                    Mark as Processing
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("initiated")}>
-                    Mark as Initiated
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("completed")}>
-                    Mark as Completed
-                  </Button>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="initiated">Initiated</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Currencies" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Currencies</SelectItem>
+                    <SelectItem value="NGN">NGN</SelectItem>
+                    <SelectItem value="RUB">RUB</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Date Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline" className="w-full bg-transparent">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Custom Range
+                </Button>
               </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Transactions Table */}
-        <Card>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedTransactions.length === filteredTransactions.length}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Currency Pair</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
+          {/* Bulk Actions */}
+          {selectedTransactions.length > 0 && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{selectedTransactions.length} transaction(s) selected</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("processing")}>
+                      Mark as Processing
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("initiated")}>
+                      Mark as Initiated
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("completed")}>
+                      Mark as Completed
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Transactions Table */}
+          <Card>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedTransactions.includes(transaction.id)}
-                        onCheckedChange={(checked) => handleSelectTransaction(transaction.id, checked as boolean)}
+                        checked={selectedTransactions.length === filteredTransactions.length}
+                        onCheckedChange={handleSelectAll}
                       />
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
-                    <TableCell>{transaction.date}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{transaction.user}</div>
-                        <div className="text-sm text-gray-500">{transaction.userEmail}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">
-                        {transaction.fromCurrency} → {transaction.toCurrency}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{transaction.sendAmount}</div>
-                        <div className="text-sm text-gray-500">→ {transaction.receiveAmount}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedTransaction(transaction)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Transaction Details</DialogTitle>
-                            </DialogHeader>
-                            {selectedTransaction && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Transaction ID</label>
-                                    <p className="font-mono">{selectedTransaction.id}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Status</label>
-                                    <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">User</label>
-                                    <p>{selectedTransaction.user}</p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.userEmail}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Date</label>
-                                    <p>{selectedTransaction.date}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Send Amount</label>
-                                    <p className="font-medium">{selectedTransaction.sendAmount}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Receive Amount</label>
-                                    <p className="font-medium">{selectedTransaction.receiveAmount}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Recipient</label>
-                                    <p>{selectedTransaction.recipient}</p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.recipientBank}</p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.recipientAccount}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
-                                    <p className="font-medium">
-                                      1 {selectedTransaction.fromCurrency} ={" "}
-                                      {selectedTransaction.fromCurrency === "RUB" ? "22.45" : "0.0445"}{" "}
-                                      {selectedTransaction.toCurrency}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <label className="text-sm font-medium text-gray-600">Receipt</label>
-                                  {selectedTransaction.receipt ? (
-                                    <div className="mt-1">
-                                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                          <CheckCircle className="h-4 w-4 text-green-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                          <p className="text-sm font-medium text-gray-900">
-                                            {selectedTransaction.receipt.name}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            {selectedTransaction.receipt.size} • Uploaded{" "}
-                                            {selectedTransaction.receipt.uploadedAt}
-                                          </p>
-                                        </div>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => window.open(selectedTransaction.receipt.url, "_blank")}
-                                        >
-                                          <Eye className="h-4 w-4 mr-1" />
-                                          View
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-500 mt-1">No receipt uploaded</p>
-                                  )}
-                                </div>
-
-                                <div className="border-t pt-4">
-                                  <label className="text-sm font-medium text-gray-600">Update Status</label>
-                                  <div className="flex gap-2 mt-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedTransaction.id, "processing")}
-                                    >
-                                      Payment Received
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedTransaction.id, "initiated")}
-                                    >
-                                      Transfer Initiated
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedTransaction.id, "completed")}
-                                    >
-                                      Transfer Complete
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedTransaction.id, "failed")}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      Mark Failed
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "processing")}>
-                              Payment Received
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "initiated")}>
-                              Transfer Initiated
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "completed")}>
-                              Transfer Complete
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(transaction.id, "failed")}
-                              className="text-red-600"
-                            >
-                              Mark as Failed
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Currency Pair</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredTransactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTransactions.includes(transaction.id)}
+                          onCheckedChange={(checked) => handleSelectTransaction(transaction.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{transaction.id}</TableCell>
+                      <TableCell>{transaction.date}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{transaction.user}</div>
+                          <div className="text-sm text-gray-500">{transaction.userEmail}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">
+                          {transaction.fromCurrency} → {transaction.toCurrency}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{transaction.sendAmount}</div>
+                          <div className="text-sm text-gray-500">→ {transaction.receiveAmount}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm" onClick={() => setSelectedTransaction(transaction)}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Transaction Details</DialogTitle>
+                              </DialogHeader>
+                              {selectedTransaction && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Transaction ID</label>
+                                      <p className="font-mono">{selectedTransaction.id}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Status</label>
+                                      <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">User</label>
+                                      <p>{selectedTransaction.user}</p>
+                                      <p className="text-sm text-gray-500">{selectedTransaction.userEmail}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Date</label>
+                                      <p>{selectedTransaction.date}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Send Amount</label>
+                                      <p className="font-medium">{selectedTransaction.sendAmount}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Receive Amount</label>
+                                      <p className="font-medium">{selectedTransaction.receiveAmount}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Recipient</label>
+                                      <p>{selectedTransaction.recipient}</p>
+                                      <p className="text-sm text-gray-500">{selectedTransaction.recipientBank}</p>
+                                      <p className="text-sm text-gray-500">{selectedTransaction.recipientAccount}</p>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
+                                      <p className="font-medium">
+                                        1 {selectedTransaction.fromCurrency} ={" "}
+                                        {selectedTransaction.fromCurrency === "RUB" ? "22.45" : "0.0445"}{" "}
+                                        {selectedTransaction.toCurrency}
+                                      </p>
+                                    </div>
+                                  </div>
 
-            {filteredTransactions.length === 0 && (
-              <div className="text-center py-8 text-gray-500">No transactions found matching your criteria.</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </AdminDashboardLayout>
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-600">Receipt</label>
+                                    {selectedTransaction.receipt ? (
+                                      <div className="mt-1">
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                          </div>
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-gray-900">
+                                              {selectedTransaction.receipt.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                              {selectedTransaction.receipt.size} • Uploaded{" "}
+                                              {selectedTransaction.receipt.uploadedAt}
+                                            </p>
+                                          </div>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => window.open(selectedTransaction.receipt.url, "_blank")}
+                                          >
+                                            <Eye className="h-4 w-4 mr-1" />
+                                            View
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-500 mt-1">No receipt uploaded</p>
+                                    )}
+                                  </div>
+
+                                  <div className="border-t pt-4">
+                                    <label className="text-sm font-medium text-gray-600">Update Status</label>
+                                    <div className="flex gap-2 mt-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleStatusUpdate(selectedTransaction.id, "processing")}
+                                      >
+                                        Payment Received
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleStatusUpdate(selectedTransaction.id, "initiated")}
+                                      >
+                                        Transfer Initiated
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleStatusUpdate(selectedTransaction.id, "completed")}
+                                      >
+                                        Transfer Complete
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleStatusUpdate(selectedTransaction.id, "failed")}
+                                        className="text-red-600 hover:text-red-700"
+                                      >
+                                        Mark Failed
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "processing")}>
+                                Payment Received
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "initiated")}>
+                                Transfer Initiated
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusUpdate(transaction.id, "completed")}>
+                                Transfer Complete
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleStatusUpdate(transaction.id, "failed")}
+                                className="text-red-600"
+                              >
+                                Mark as Failed
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {filteredTransactions.length === 0 && (
+                <div className="text-center py-8 text-gray-500">No transactions found matching your criteria.</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </AdminDashboardLayout>
+    </AuthGuard>
   )
 }

@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { transactionService } from "@/lib/database"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 interface Transaction {
   id: string
@@ -155,121 +156,123 @@ export default function UserTransactionsPage() {
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
-            <p className="text-gray-600">View and manage your money transfers</p>
-          </div>
-          <Button onClick={handleExport} variant="outline" disabled={filteredTransactions.length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Currency</SelectItem>
-                    <SelectItem value="NGN">NGN</SelectItem>
-                    <SelectItem value="RUB">RUB</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+    <AuthGuard requireAuth={true}>
+      <UserDashboardLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
+              <p className="text-gray-600">View and manage your money transfers</p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={loadTransactions} variant="outline">
-                  Try Again
-                </Button>
+            <Button onClick={handleExport} variant="outline" disabled={filteredTransactions.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Currency</SelectItem>
+                      <SelectItem value="NGN">NGN</SelectItem>
+                      <SelectItem value="RUB">RUB</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Recipient</TableHead>
-                      <TableHead>Send Amount</TableHead>
-                      <TableHead>Receive Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTransactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                        <TableCell>{formatDate(transaction.created_at)}</TableCell>
-                        <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
-                        <TableCell className="font-semibold">
-                          {formatAmount(transaction.send_amount, transaction.send_currency)}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatAmount(transaction.receive_amount, transaction.receive_currency)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewTransaction(transaction.transaction_id)}
-                            className="bg-transparent"
-                          >
-                            View
-                          </Button>
-                        </TableCell>
+            </CardHeader>
+            <CardContent>
+              {error ? (
+                <div className="text-center py-8">
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <Button onClick={loadTransactions} variant="outline">
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Recipient</TableHead>
+                        <TableHead>Send Amount</TableHead>
+                        <TableHead>Receive Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                {filteredTransactions.length === 0 && !loading && (
-                  <div className="text-center py-8 text-gray-500">
-                    {transactions.length === 0
-                      ? "No transactions found. Start by sending money to create your first transaction."
-                      : "No transactions found matching your criteria."}
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </UserDashboardLayout>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTransactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
+                          <TableCell>{formatDate(transaction.created_at)}</TableCell>
+                          <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
+                          <TableCell className="font-semibold">
+                            {formatAmount(transaction.send_amount, transaction.send_currency)}
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewTransaction(transaction.transaction_id)}
+                              className="bg-transparent"
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {filteredTransactions.length === 0 && !loading && (
+                    <div className="text-center py-8 text-gray-500">
+                      {transactions.length === 0
+                        ? "No transactions found. Start by sending money to create your first transaction."
+                        : "No transactions found matching your criteria."}
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </UserDashboardLayout>
+    </AuthGuard>
   )
 }

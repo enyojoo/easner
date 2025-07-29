@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2 } from "lucide-react"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 // Mock currencies data with exchange rates
 const mockCurrencies = [
@@ -184,254 +185,261 @@ const AdminRatesPage = () => {
   }
 
   return (
-    <AdminDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Currency & Exchange Rates</h1>
-            <p className="text-gray-600">Manage currencies, exchange rates and transaction fees</p>
-          </div>
-          <Dialog open={isAddingCurrency} onOpenChange={setIsAddingCurrency}>
-            <DialogTrigger asChild>
-              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Currency
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Currency</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currencyCode">Currency Code *</Label>
-                  <Input
-                    id="currencyCode"
-                    value={newCurrencyData.code}
-                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, code: e.target.value })}
-                    placeholder="e.g., USD"
-                    maxLength={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currencyName">Currency Name *</Label>
-                  <Input
-                    id="currencyName"
-                    value={newCurrencyData.name}
-                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, name: e.target.value })}
-                    placeholder="e.g., US Dollar"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currencySymbol">Currency Symbol *</Label>
-                  <Input
-                    id="currencySymbol"
-                    value={newCurrencyData.symbol}
-                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, symbol: e.target.value })}
-                    placeholder="e.g., $"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currencyFlag">Flag SVG (Optional)</Label>
-                  <Input
-                    id="currencyFlag"
-                    value={newCurrencyData.flag}
-                    onChange={(e) => setNewCurrencyData({ ...newCurrencyData, flag: e.target.value })}
-                    placeholder="SVG code for flag"
-                  />
-                </div>
-                <Button
-                  onClick={handleAddCurrency}
-                  disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol}
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-                >
+    <AuthGuard requireAuth={true} requireAdmin={true}>
+      <AdminDashboardLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Currency & Exchange Rates</h1>
+              <p className="text-gray-600">Manage currencies, exchange rates and transaction fees</p>
+            </div>
+            <Dialog open={isAddingCurrency} onOpenChange={setIsAddingCurrency}>
+              <DialogTrigger asChild>
+                <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Currency
                 </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Currency</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currencyCode">Currency Code *</Label>
+                    <Input
+                      id="currencyCode"
+                      value={newCurrencyData.code}
+                      onChange={(e) => setNewCurrencyData({ ...newCurrencyData, code: e.target.value })}
+                      placeholder="e.g., USD"
+                      maxLength={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currencyName">Currency Name *</Label>
+                    <Input
+                      id="currencyName"
+                      value={newCurrencyData.name}
+                      onChange={(e) => setNewCurrencyData({ ...newCurrencyData, name: e.target.value })}
+                      placeholder="e.g., US Dollar"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currencySymbol">Currency Symbol *</Label>
+                    <Input
+                      id="currencySymbol"
+                      value={newCurrencyData.symbol}
+                      onChange={(e) => setNewCurrencyData({ ...newCurrencyData, symbol: e.target.value })}
+                      placeholder="e.g., $"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currencyFlag">Flag SVG (Optional)</Label>
+                    <Input
+                      id="currencyFlag"
+                      value={newCurrencyData.flag}
+                      onChange={(e) => setNewCurrencyData({ ...newCurrencyData, flag: e.target.value })}
+                      placeholder="SVG code for flag"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleAddCurrency}
+                    disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol}
+                    className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  >
+                    Add Currency
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Currency Management Table */}
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Currency</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-[50px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currencies.map((currency) => (
+                    <TableRow key={currency.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                          <span className="font-medium">{currency.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono">{currency.code}</TableCell>
+                      <TableCell className="font-medium">{currency.symbol}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            currency.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          }
+                        >
+                          {currency.status === "active" ? "Active" : "Suspended"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{currency.createdAt}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditRates(currency)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Rates
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSuspendCurrency(currency.id)}>
+                              <Pause className="h-4 w-4 mr-2" />
+                              {currency.status === "active" ? "Suspend" : "Activate"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteCurrency(currency.id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Edit Rates Dialog */}
+          <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>
+                  Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
+                {selectedCurrency?.rates.map((rate: any) => (
+                  <div key={rate.toCurrency} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-lg font-medium">
+                      <span>{selectedCurrency.code}</span>
+                      <span>→</span>
+                      <span>{rate.toCurrency}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label>Exchange Rate</Label>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          value={rateUpdates[rate.toCurrency]?.rate || rate.rate}
+                          onChange={(e) => updateRateField(rate.toCurrency, "rate", e.target.value)}
+                          placeholder="0.0000"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Fee Type</Label>
+                        <select
+                          value={rateUpdates[rate.toCurrency]?.feeType || rate.feeType}
+                          onChange={(e) => updateRateField(rate.toCurrency, "feeType", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="free">Free</option>
+                          <option value="fixed">Fixed Amount</option>
+                          <option value="percentage">Percentage</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>
+                          Fee Amount{" "}
+                          {(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage"
+                            ? "(%)"
+                            : `(${selectedCurrency.code})`}
+                        </Label>
+                        <Input
+                          type="number"
+                          step={
+                            (rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "0.1" : "0.01"
+                          }
+                          value={rateUpdates[rate.toCurrency]?.feeAmount || rate.feeAmount}
+                          onChange={(e) => updateRateField(rate.toCurrency, "feeAmount", e.target.value)}
+                          placeholder={
+                            (rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "1.5" : "10.00"
+                          }
+                          disabled={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "free"}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Min Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0}
+                          onChange={(e) => updateRateField(rate.toCurrency, "minAmount", e.target.value)}
+                          placeholder="100"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Max Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000}
+                          onChange={(e) => updateRateField(rate.toCurrency, "maxAmount", e.target.value)}
+                          placeholder="1000000"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        <strong>Transaction Limits:</strong> Users can send between{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0).toLocaleString()}
+                        </span>{" "}
+                        and{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000).toLocaleString()}
+                        </span>{" "}
+                        when converting from {selectedCurrency.code} to {rate.toCurrency}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsEditingRates(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveRates} className="bg-novapay-primary hover:bg-novapay-primary-600">
+                    Save Changes
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-
-        {/* Currency Management Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Symbol</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[50px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currencies.map((currency) => (
-                  <TableRow key={currency.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
-                        <span className="font-medium">{currency.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono">{currency.code}</TableCell>
-                    <TableCell className="font-medium">{currency.symbol}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          currency.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        }
-                      >
-                        {currency.status === "active" ? "Active" : "Suspended"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{currency.createdAt}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditRates(currency)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Rates
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSuspendCurrency(currency.id)}>
-                            <Pause className="h-4 w-4 mr-2" />
-                            {currency.status === "active" ? "Suspend" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteCurrency(currency.id)} className="text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Edit Rates Dialog */}
-        <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>
-                Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              {selectedCurrency?.rates.map((rate: any) => (
-                <div key={rate.toCurrency} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center gap-2 text-lg font-medium">
-                    <span>{selectedCurrency.code}</span>
-                    <span>→</span>
-                    <span>{rate.toCurrency}</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div className="space-y-2">
-                      <Label>Exchange Rate</Label>
-                      <Input
-                        type="number"
-                        step="0.0001"
-                        value={rateUpdates[rate.toCurrency]?.rate || rate.rate}
-                        onChange={(e) => updateRateField(rate.toCurrency, "rate", e.target.value)}
-                        placeholder="0.0000"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Fee Type</Label>
-                      <select
-                        value={rateUpdates[rate.toCurrency]?.feeType || rate.feeType}
-                        onChange={(e) => updateRateField(rate.toCurrency, "feeType", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="free">Free</option>
-                        <option value="fixed">Fixed Amount</option>
-                        <option value="percentage">Percentage</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>
-                        Fee Amount{" "}
-                        {(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage"
-                          ? "(%)"
-                          : `(${selectedCurrency.code})`}
-                      </Label>
-                      <Input
-                        type="number"
-                        step={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "0.1" : "0.01"}
-                        value={rateUpdates[rate.toCurrency]?.feeAmount || rate.feeAmount}
-                        onChange={(e) => updateRateField(rate.toCurrency, "feeAmount", e.target.value)}
-                        placeholder={
-                          (rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "percentage" ? "1.5" : "10.00"
-                        }
-                        disabled={(rateUpdates[rate.toCurrency]?.feeType || rate.feeType) === "free"}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Min Amount ({selectedCurrency.code})</Label>
-                      <Input
-                        type="number"
-                        step="1"
-                        value={rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0}
-                        onChange={(e) => updateRateField(rate.toCurrency, "minAmount", e.target.value)}
-                        placeholder="100"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Max Amount ({selectedCurrency.code})</Label>
-                      <Input
-                        type="number"
-                        step="1"
-                        value={rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000}
-                        onChange={(e) => updateRateField(rate.toCurrency, "maxAmount", e.target.value)}
-                        placeholder="1000000"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                      <strong>Transaction Limits:</strong> Users can send between{" "}
-                      <span className="font-medium">
-                        {selectedCurrency.symbol}
-                        {(rateUpdates[rate.toCurrency]?.minAmount || rate.minAmount || 0).toLocaleString()}
-                      </span>{" "}
-                      and{" "}
-                      <span className="font-medium">
-                        {selectedCurrency.symbol}
-                        {(rateUpdates[rate.toCurrency]?.maxAmount || rate.maxAmount || 1000000).toLocaleString()}
-                      </span>{" "}
-                      when converting from {selectedCurrency.code} to {rate.toCurrency}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditingRates(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveRates} className="bg-novapay-primary hover:bg-novapay-primary-600">
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AdminDashboardLayout>
+      </AdminDashboardLayout>
+    </AuthGuard>
   )
 }
 
