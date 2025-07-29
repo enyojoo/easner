@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,7 +16,7 @@ import { supabase } from "@/lib/supabase"
 const AdminRatesPage = () => {
   const [currencies, setCurrencies] = useState<any[]>([])
   const [exchangeRates, setExchangeRates] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
@@ -269,8 +270,13 @@ const AdminRatesPage = () => {
   if (loading) {
     return (
       <AdminDashboardLayout>
-        <div className="p-6 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="p-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading rates...</p>
+            </div>
+          </div>
         </div>
       </AdminDashboardLayout>
     )
