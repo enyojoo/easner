@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,37 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { adminCache, ADMIN_CACHE_KEYS } from "@/lib/admin-cache"
 
-interface ExchangeRate {
-  id: string
-  from_currency: string
-  to_currency: string
-  rate: number
-  fee_type: string
-  fee_amount: number
-  status: string
-  created_at: string
-  updated_at: string
-  from_currency_info: { code: string; name: string; symbol: string }
-  to_currency_info: { code: string; name: string; symbol: string }
-}
-
-interface Currency {
-  id: string
-  code: string
-  name: string
-  symbol: string
-  flag_svg: string
-  status: string
-  created_at: string
-}
-
-export default function AdminRatesPage() {
-  const [currencies, setCurrencies] = useState<Currency[]>([])
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
+const AdminRatesPage = () => {
+  const [currencies, setCurrencies] = useState<any[]>([])
+  const [exchangeRates, setExchangeRates] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(null)
+  const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
   const [newCurrencyData, setNewCurrencyData] = useState({
@@ -51,47 +25,19 @@ export default function AdminRatesPage() {
     symbol: "",
     flag_svg: "",
   })
-  const [rateUpdates, setRateUpdates] = useState<{ [key: string]: any }>({})
+  const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     loadData()
-
-    // Set up auto-refresh every 5 minutes in background
-    adminCache.setupAutoRefresh(ADMIN_CACHE_KEYS.EXCHANGE_RATES, loadDataFromSupabase, 5 * 60 * 1000)
-
-    return () => {
-      // Clean up auto-refresh when component unmounts
-      adminCache.clearAutoRefresh(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-    }
   }, [])
-
-  const loadDataFromSupabase = async () => {
-    const [currenciesData, ratesData] = await Promise.all([loadCurrencies(), loadExchangeRates()])
-    return { currencies: currenciesData, rates: ratesData }
-  }
 
   const loadData = async () => {
     try {
       setLoading(true)
-
-      // Check cache first
-      const cachedData = adminCache.get(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
-      if (cachedData) {
-        setCurrencies(cachedData.currencies)
-        setExchangeRates(cachedData.rates)
-        setLoading(false)
-        return
-      }
-
-      // Fetch fresh data
-      const data = await loadDataFromSupabase()
-
-      // Cache the result
-      adminCache.set(ADMIN_CACHE_KEYS.EXCHANGE_RATES, data)
-
-      setCurrencies(data.currencies)
-      setExchangeRates(data.rates)
+      const [currenciesData, ratesData] = await Promise.all([loadCurrencies(), loadExchangeRates()])
+      setCurrencies(currenciesData)
+      setExchangeRates(ratesData)
     } catch (error) {
       console.error("Error loading data:", error)
     } finally {
@@ -176,9 +122,6 @@ export default function AdminRatesPage() {
 
       setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
       setIsAddingCurrency(false)
-
-      // Invalidate cache and reload
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
       await loadData()
     } catch (error) {
       console.error("Error adding currency:", error)
@@ -188,12 +131,12 @@ export default function AdminRatesPage() {
     }
   }
 
-  const handleEditRates = (currency: Currency) => {
+  const handleEditRates = (currency: any) => {
     setSelectedCurrency(currency)
     const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
     const updates: any = {}
 
-    currencyRates.forEach((rate: ExchangeRate) => {
+    currencyRates.forEach((rate: any) => {
       updates[rate.to_currency] = {
         rate: rate.rate.toString(),
         feeType: rate.fee_type,
@@ -215,7 +158,7 @@ export default function AdminRatesPage() {
       for (const [toCurrency, rateData] of Object.entries(rateUpdates)) {
         const rateInfo = rateData as any
         updates.push({
-          from_currency: selectedCurrency?.code,
+          from_currency: selectedCurrency.code,
           to_currency: toCurrency,
           rate: Number.parseFloat(rateInfo.rate),
           fee_type: rateInfo.feeType,
@@ -239,9 +182,6 @@ export default function AdminRatesPage() {
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
-
-      // Invalidate cache and reload
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
       await loadData()
       alert("Exchange rates updated successfully!")
     } catch (error) {
@@ -269,8 +209,6 @@ export default function AdminRatesPage() {
 
       if (error) throw error
 
-      // Invalidate cache and reload
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
       await loadData()
       alert(`Currency ${newStatus === "active" ? "activated" : "suspended"} successfully!`)
     } catch (error) {
@@ -306,8 +244,6 @@ export default function AdminRatesPage() {
 
       if (error) throw error
 
-      // Invalidate cache and reload
-      adminCache.invalidate(ADMIN_CACHE_KEYS.EXCHANGE_RATES)
       await loadData()
       alert("Currency deleted successfully!")
     } catch (error) {
@@ -485,10 +421,10 @@ export default function AdminRatesPage() {
             </DialogHeader>
             <div className="space-y-6">
               <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
-                {getCurrencyRates(selectedCurrency?.code || "").map((rate: ExchangeRate) => (
+                {getCurrencyRates(selectedCurrency?.code || "").map((rate: any) => (
                   <div key={rate.to_currency} className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center gap-2 text-lg font-medium">
-                      <span>{selectedCurrency?.code}</span>
+                      <span>{selectedCurrency.code}</span>
                       <span>→</span>
                       <span>{rate.to_currency}</span>
                     </div>
@@ -523,7 +459,7 @@ export default function AdminRatesPage() {
                           Fee Amount{" "}
                           {(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage"
                             ? "(%)"
-                            : `(${selectedCurrency?.code})`}
+                            : `(${selectedCurrency.code})`}
                         </Label>
                         <Input
                           type="number"
@@ -540,7 +476,7 @@ export default function AdminRatesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Min Amount ({selectedCurrency?.code})</Label>
+                        <Label>Min Amount ({selectedCurrency.code})</Label>
                         <Input
                           type="number"
                           step="1"
@@ -551,7 +487,7 @@ export default function AdminRatesPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Max Amount ({selectedCurrency?.code})</Label>
+                        <Label>Max Amount ({selectedCurrency.code})</Label>
                         <Input
                           type="number"
                           step="1"
@@ -566,15 +502,15 @@ export default function AdminRatesPage() {
                       <p className="text-sm text-gray-600">
                         <strong>Transaction Limits:</strong> Users can send between{" "}
                         <span className="font-medium">
-                          {selectedCurrency?.symbol}
+                          {selectedCurrency.symbol}
                           {(rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0).toLocaleString()}
                         </span>{" "}
                         and{" "}
                         <span className="font-medium">
-                          {selectedCurrency?.symbol}
+                          {selectedCurrency.symbol}
                           {(rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000).toLocaleString()}
                         </span>{" "}
-                        when converting from {selectedCurrency?.code} to {rate.to_currency}
+                        when converting from {selectedCurrency.code} to {rate.to_currency}
                       </p>
                     </div>
                   </div>
@@ -601,3 +537,5 @@ export default function AdminRatesPage() {
     </AdminDashboardLayout>
   )
 }
+
+export default AdminRatesPage
