@@ -60,11 +60,13 @@ export const userService = {
 
 // Currency operations with caching
 export const currencyService = {
-  async getAll() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
-    if (cached) {
-      return cached
+  async getAll(forceRefresh = false) {
+    // Check cache first unless force refresh is requested
+    if (!forceRefresh) {
+      const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
+      if (cached) {
+        return cached
+      }
     }
 
     const { data, error } = await supabase
@@ -88,20 +90,22 @@ export const currencyService = {
     return currencies
   },
 
-  async getExchangeRates() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
-    if (cached) {
-      return cached
+  async getExchangeRates(forceRefresh = false) {
+    // Check cache first unless force refresh is requested
+    if (!forceRefresh) {
+      const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
+      if (cached) {
+        return cached
+      }
     }
 
     const { data, error } = await supabase
       .from("exchange_rates")
       .select(`
-        *,
-        from_currency_info:currencies!exchange_rates_from_currency_fkey(id, code, name, symbol, flag_svg),
-        to_currency_info:currencies!exchange_rates_to_currency_fkey(id, code, name, symbol, flag_svg)
-      `)
+      *,
+      from_currency_info:currencies!exchange_rates_from_currency_fkey(id, code, name, symbol, flag_svg),
+      to_currency_info:currencies!exchange_rates_to_currency_fkey(id, code, name, symbol, flag_svg)
+    `)
       .eq("status", "active")
 
     if (error) throw error

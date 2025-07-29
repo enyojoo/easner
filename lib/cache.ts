@@ -56,6 +56,19 @@ class DataCache {
       keys: Array.from(this.cache.keys()),
     }
   }
+
+  // Add this method to the DataCache class
+  forceRefresh(key: string): void {
+    this.cache.delete(key)
+  }
+
+  // Add this method to refresh all user-specific data
+  refreshUserData(userId: string): void {
+    this.invalidatePattern(`user_.*_${userId}`)
+    this.invalidate(CACHE_KEYS.CURRENCIES)
+    this.invalidate(CACHE_KEYS.EXCHANGE_RATES)
+    this.invalidate(CACHE_KEYS.PAYMENT_METHODS)
+  }
 }
 
 export const dataCache = new DataCache()

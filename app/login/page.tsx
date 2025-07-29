@@ -9,7 +9,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     // Simulate login success
-    const loginSuccess = true // Replace with actual login logic
+    const loginSuccess = true
 
     if (loginSuccess) {
       // Check for pending send data
@@ -21,6 +21,7 @@ const LoginPage = () => {
           sendCurrency: data.sendCurrency,
           receiveCurrency: data.receiveCurrency,
           sendAmount: data.sendAmount,
+          step: data.step.toString(),
         })
         router.push(`/user/send?${params.toString()}`)
         return

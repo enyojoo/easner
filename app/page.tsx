@@ -26,19 +26,22 @@ export default function HomePage() {
           sendCurrency: data.sendCurrency,
           receiveCurrency: data.receiveCurrency,
           sendAmount: data.sendAmount,
+          step: "2", // Skip to step 2 since currencies are already selected
         })
         router.push(`/user/send?${params.toString()}`)
       }
     } else {
-      // User is not logged in, store data in sessionStorage and redirect to login
+      // Store currency data in sessionStorage for after login
       sessionStorage.setItem(
         "pendingSendData",
         JSON.stringify({
           sendCurrency: data.sendCurrency,
           receiveCurrency: data.receiveCurrency,
           sendAmount: data.sendAmount,
+          step: 2,
         }),
       )
+      // User is not logged in, redirect to login
       router.push("/login")
     }
   }

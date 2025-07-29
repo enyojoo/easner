@@ -25,10 +25,13 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import type { Currency, ExchangeRate } from "@/types"
+
+// Add these imports at the top
+import { useSearchParams } from "next/navigation"
 
 export default function UserSendPage() {
   const router = useRouter()
@@ -80,9 +83,13 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
+  // Add this state for tracking data loading
+  const [dataLoaded, setDataLoaded] = useState(false)
+
+  // Get URL parameters
   const searchParams = useSearchParams()
 
-  // Load data from Supabase
+  // Update the data loading useEffect to fix the reload issue
   useEffect(() => {
     const loadData = async () => {
       if (!userProfile?.id) return
@@ -103,47 +110,49 @@ export default function UserSendPage() {
         setRecipients(recipientsData || [])
         setPaymentMethods(paymentMethodsData || [])
 
-        // Handle URL parameters from currency converter
+        // Handle URL parameters for currency selection
         const urlSendCurrency = searchParams.get("sendCurrency")
         const urlReceiveCurrency = searchParams.get("receiveCurrency")
         const urlSendAmount = searchParams.get("sendAmount")
+        const urlStep = searchParams.get("step")
 
-        if (urlSendAmount) {
-          setSendAmount(urlSendAmount)
+        if (urlSendCurrency && urlReceiveCurrency && currenciesData) {
+          // Validate currencies exist in the data
+          const sendCurrencyExists = currenciesData.find((c) => c.code === urlSendCurrency)
+          const receiveCurrencyExists = currenciesData.find((c) => c.code === urlReceiveCurrency)
+
+          if (sendCurrencyExists && receiveCurrencyExists) {
+            setSendCurrency(urlSendCurrency)
+            setReceiveCurrency(urlReceiveCurrency)
+
+            if (urlSendAmount) {
+              setSendAmount(urlSendAmount)
+            }
+
+            if (urlStep) {
+              setCurrentStep(Number.parseInt(urlStep))
+            }
+          }
+        } else if (currenciesData && currenciesData.length > 0) {
+          // Set default currencies if no URL params
+          const userBaseCurrency = userProfile.base_currency || "NGN"
+          const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
+
+          if (baseCurrencyExists) {
+            setSendCurrency(userBaseCurrency)
+            const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
+            if (otherCurrency) {
+              setReceiveCurrency(otherCurrency.code)
+            }
+          } else {
+            setSendCurrency(currenciesData[0].code)
+            if (currenciesData.length > 1) {
+              setReceiveCurrency(currenciesData[1].code)
+            }
+          }
         }
 
-        // Set currencies from URL params or defaults
-        if (currenciesData && currenciesData.length > 0) {
-          let finalSendCurrency = ""
-          let finalReceiveCurrency = ""
-
-          // Priority: URL params > user base currency > first available
-          if (urlSendCurrency && currenciesData.find((c) => c.code === urlSendCurrency)) {
-            finalSendCurrency = urlSendCurrency
-          } else {
-            const userBaseCurrency = userProfile.base_currency || "NGN"
-            const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
-            finalSendCurrency = baseCurrencyExists ? userBaseCurrency : currenciesData[0].code
-          }
-
-          if (urlReceiveCurrency && currenciesData.find((c) => c.code === urlReceiveCurrency)) {
-            finalReceiveCurrency = urlReceiveCurrency
-          } else {
-            // Set receive currency to a different one than send currency
-            const otherCurrency = currenciesData.find((c) => c.code !== finalSendCurrency)
-            finalReceiveCurrency = otherCurrency
-              ? otherCurrency.code
-              : currenciesData[1]?.code || currenciesData[0].code
-          }
-
-          setSendCurrency(finalSendCurrency)
-          setReceiveCurrency(finalReceiveCurrency)
-
-          // If URL params were used, go directly to step 2
-          if (urlSendCurrency && urlReceiveCurrency) {
-            setCurrentStep(2)
-          }
-        }
+        setDataLoaded(true)
       } catch (error) {
         console.error("Error loading data:", error)
         setError("Failed to load data. Please refresh the page.")
@@ -152,41 +161,19 @@ export default function UserSendPage() {
       }
     }
 
+    // Always load data when userProfile changes or when component mounts
     loadData()
   }, [userProfile?.id, userProfile?.base_currency, searchParams])
 
-  // Add a separate effect to handle data refresh when navigating back to the page
+  // Add a separate useEffect to clear URL params after they're processed
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && userProfile?.id) {
-        // Refresh data when page becomes visible again
-        const refreshData = async () => {
-          try {
-            const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
-              currencyService.getAll(),
-              currencyService.getExchangeRates(),
-              currencyService.getAll(),
-              currencyService.getExchangeRates(),
-              recipientService.getByUserId(userProfile.id),
-              paymentMethodService.getAll(),
-            ])
-
-            setCurrencies(currenciesData || [])
-            setExchangeRates(ratesData || [])
-            setRecipients(recipientsData || [])
-            setPaymentMethods(paymentMethodsData || [])
-          } catch (error) {
-            console.error("Error refreshing data:", error)
-          }
-        }
-
-        refreshData()
-      }
+    if (dataLoaded && searchParams.get("sendCurrency")) {
+      // Clear URL params after processing to avoid issues with navigation
+      const url = new URL(window.location.href)
+      url.search = ""
+      window.history.replaceState({}, "", url.toString())
     }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [userProfile?.id])
+  }, [dataLoaded, searchParams])
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
