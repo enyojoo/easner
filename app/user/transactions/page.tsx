@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Search, Download, Loader2 } from "lucide-react"
+import { Search, Download } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { transactionService } from "@/lib/database"
+import { useUserData } from "@/hooks/use-user-data"
 
 interface Transaction {
   id: string
@@ -32,33 +32,11 @@ interface Transaction {
 export default function UserTransactionsPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(false)
+  const { transactions, currencies, loading } = useUserData()
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
-
-  useEffect(() => {
-    if (userProfile?.id) {
-      loadTransactions()
-    }
-  }, [userProfile?.id])
-
-  const loadTransactions = async () => {
-    if (!userProfile?.id) return
-
-    try {
-      setError(null)
-      const data = await transactionService.getByUserId(userProfile.id)
-      setTransactions(data || [])
-    } catch (err) {
-      console.error("Failed to load transactions:", err)
-      setError("Failed to load transactions. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
@@ -91,13 +69,9 @@ export default function UserTransactionsPage() {
   }
 
   const formatAmount = (amount: number, currency: string) => {
-    const symbols: { [key: string]: string } = {
-      NGN: "₦",
-      RUB: "₽",
-      USD: "$",
-      EUR: "€",
-    }
-    return `${symbols[currency] || currency}${amount.toLocaleString()}`
+    const currencyData = currencies.find((c) => c.code === currency)
+    const symbol = currencyData?.symbol || currency
+    return `${symbol}${amount.toLocaleString()}`
   }
 
   const formatDate = (dateString: string) => {
@@ -146,7 +120,6 @@ export default function UserTransactionsPage() {
       <UserDashboardLayout>
         <div className="p-6 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
             <p className="text-gray-600">Loading user profile...</p>
           </div>
         </div>
@@ -200,10 +173,11 @@ export default function UserTransactionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Currency</SelectItem>
-                    <SelectItem value="NGN">NGN</SelectItem>
-                    <SelectItem value="RUB">RUB</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
+                    {currencies.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.code}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -213,7 +187,7 @@ export default function UserTransactionsPage() {
             {error ? (
               <div className="text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={loadTransactions} variant="outline">
+                <Button onClick={() => setError(null)} variant="outline">
                   Try Again
                 </Button>
               </div>

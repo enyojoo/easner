@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { userService, transactionService, currencyService } from "@/lib/database"
+import { userService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
+import { useUserData } from "@/hooks/use-user-data"
 
 export default function UserProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth()
+  const { transactions, currencies, exchangeRates } = useUserData()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -43,9 +45,6 @@ export default function UserProfilePage() {
     confirmPassword: "",
   })
 
-  const [currencies, setCurrencies] = useState<any[]>([])
-  const [currenciesLoading, setCurrenciesLoading] = useState(true)
-
   // Load user profile data
   useEffect(() => {
     if (userProfile) {
@@ -63,99 +62,58 @@ export default function UserProfilePage() {
 
   // Load user statistics
   useEffect(() => {
-    const loadUserStats = async () => {
-      if (!user) return
+    if (!user || !transactions.length || !exchangeRates.length) return
 
-      try {
-        // Get all user transactions
-        const allTransactions = await transactionService.getByUserId(user.id)
+    const calculateUserStats = () => {
+      const baseCurrency = userProfile?.base_currency || "NGN"
+      let totalSentInBaseCurrency = 0
 
-        if (allTransactions && allTransactions.length > 0) {
-          const baseCurrency = userProfile?.base_currency || "NGN"
-          const exchangeRates = await currencyService.getExchangeRates()
+      // Calculate total sent in base currency for completed transactions
+      for (const transaction of transactions) {
+        if (transaction.status === "completed") {
+          let amountInBaseCurrency = transaction.send_amount
 
-          let totalSentInBaseCurrency = 0
+          // If transaction currency is different from base currency, convert it
+          if (transaction.send_currency !== baseCurrency) {
+            // Find exchange rate from transaction currency to base currency
+            const rate = exchangeRates.find(
+              (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+            )
 
-          // Calculate total sent in base currency for completed transactions
-          for (const transaction of allTransactions) {
-            if (transaction.status === "completed") {
-              let amountInBaseCurrency = transaction.send_amount
-
-              // If transaction currency is different from base currency, convert it
-              if (transaction.send_currency !== baseCurrency) {
-                // Find exchange rate from transaction currency to base currency
-                const rate = exchangeRates.find(
-                  (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-                )
-
-                if (rate) {
-                  amountInBaseCurrency = transaction.send_amount * rate.rate
-                } else {
-                  // If direct rate not found, try reverse rate
-                  const reverseRate = exchangeRates.find(
-                    (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-                  )
-                  if (reverseRate && reverseRate.rate > 0) {
-                    amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-                  }
-                }
+            if (rate) {
+              amountInBaseCurrency = transaction.send_amount * rate.rate
+            } else {
+              // If direct rate not found, try reverse rate
+              const reverseRate = exchangeRates.find(
+                (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+              )
+              if (reverseRate && reverseRate.rate > 0) {
+                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
               }
-
-              totalSentInBaseCurrency += amountInBaseCurrency
             }
           }
 
-          // Get member since date
-          const memberSince = userProfile?.created_at
-            ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric",
-              })
-            : "N/A"
-
-          setUserStats({
-            totalTransactions: allTransactions.filter((t) => t.status === "completed").length,
-            totalSent: totalSentInBaseCurrency,
-            memberSince,
-          })
-        } else {
-          // No transactions found
-          const memberSince = userProfile?.created_at
-            ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric",
-              })
-            : "N/A"
-
-          setUserStats({
-            totalTransactions: 0,
-            totalSent: 0,
-            memberSince,
-          })
+          totalSentInBaseCurrency += amountInBaseCurrency
         }
-      } catch (error) {
-        console.error("Error loading user stats:", error)
       }
+
+      // Get member since date
+      const memberSince = userProfile?.created_at
+        ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A"
+
+      setUserStats({
+        totalTransactions: transactions.filter((t) => t.status === "completed").length,
+        totalSent: totalSentInBaseCurrency,
+        memberSince,
+      })
     }
 
-    loadUserStats()
-  }, [user, userProfile])
-
-  // Load currencies from database
-  useEffect(() => {
-    const loadCurrencies = async () => {
-      try {
-        const currenciesData = await currencyService.getAll()
-        setCurrencies(currenciesData || [])
-      } catch (error) {
-        console.error("Error loading currencies:", error)
-      } finally {
-        setCurrenciesLoading(false)
-      }
-    }
-
-    loadCurrencies()
-  }, [])
+    calculateUserStats()
+  }, [user, userProfile, transactions, exchangeRates])
 
   const handleProfileUpdate = async () => {
     if (!user) return
@@ -313,7 +271,7 @@ export default function UserProfilePage() {
                       <Select
                         value={editProfileData.baseCurrency}
                         onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
-                        disabled={loading || currenciesLoading}
+                        disabled={loading}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select base currency" />
@@ -322,7 +280,7 @@ export default function UserProfilePage() {
                           {currencies.map((currency) => (
                             <SelectItem key={currency.code} value={currency.code}>
                               <div className="flex items-center gap-3">
-                                <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+                                <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
                                 <div className="font-medium">{currency.code}</div>
                               </div>
                             </SelectItem>
@@ -376,7 +334,7 @@ export default function UserProfilePage() {
                     <div>
                       <Label className="text-gray-600">Base Currency</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag || "" }} />
+                        <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag_svg || "" }} />
                         <span className="font-medium text-gray-900">{getSelectedCurrency()?.code}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">

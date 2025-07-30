@@ -7,7 +7,7 @@ import { Send, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
-import { transactionService, currencyService } from "@/lib/database"
+import { useUserData } from "@/hooks/use-user-data"
 
 interface Transaction {
   id: string
@@ -23,72 +23,49 @@ interface Transaction {
 
 export default function UserDashboardPage() {
   const { userProfile } = useAuth()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const { transactions, currencies, exchangeRates, loading } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [currencies, setCurrencies] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!userProfile?.id) return
+    if (!userProfile?.id || !transactions.length || !exchangeRates.length) return
 
-      try {
-        setLoading(true)
+    const calculateTotalSent = () => {
+      const baseCurrency = userProfile.base_currency || "NGN"
+      let totalInBaseCurrency = 0
 
-        // Load currencies from database
-        const currenciesData = await currencyService.getAll()
-        setCurrencies(currenciesData || [])
+      for (const transaction of transactions) {
+        if (transaction.status === "completed") {
+          let amountInBaseCurrency = transaction.send_amount
 
-        // Fetch user transactions
-        const userTransactions = await transactionService.getByUserId(userProfile.id, 10)
-        setTransactions(userTransactions || [])
+          // If transaction currency is different from base currency, convert it
+          if (transaction.send_currency !== baseCurrency) {
+            // Find exchange rate from transaction currency to base currency
+            const rate = exchangeRates.find(
+              (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+            )
 
-        // Calculate total sent in base currency
-        if (userTransactions && userTransactions.length > 0) {
-          const exchangeRates = await currencyService.getExchangeRates()
-          const baseCurrency = userProfile.base_currency || "NGN"
-
-          let totalInBaseCurrency = 0
-
-          for (const transaction of userTransactions) {
-            if (transaction.status === "completed") {
-              let amountInBaseCurrency = transaction.send_amount
-
-              // If transaction currency is different from base currency, convert it
-              if (transaction.send_currency !== baseCurrency) {
-                // Find exchange rate from transaction currency to base currency
-                const rate = exchangeRates.find(
-                  (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-                )
-
-                if (rate) {
-                  amountInBaseCurrency = transaction.send_amount * rate.rate
-                } else {
-                  // If direct rate not found, try reverse rate
-                  const reverseRate = exchangeRates.find(
-                    (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-                  )
-                  if (reverseRate && reverseRate.rate > 0) {
-                    amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-                  }
-                }
+            if (rate) {
+              amountInBaseCurrency = transaction.send_amount * rate.rate
+            } else {
+              // If direct rate not found, try reverse rate
+              const reverseRate = exchangeRates.find(
+                (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+              )
+              if (reverseRate && reverseRate.rate > 0) {
+                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
               }
-
-              totalInBaseCurrency += amountInBaseCurrency
             }
           }
 
-          setTotalSent(totalInBaseCurrency)
+          totalInBaseCurrency += amountInBaseCurrency
         }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error)
-      } finally {
-        setLoading(false)
       }
+
+      setTotalSent(totalInBaseCurrency)
     }
 
-    fetchDashboardData()
-  }, [userProfile])
+    calculateTotalSent()
+  }, [transactions, exchangeRates, userProfile])
 
   const userName = userProfile?.first_name || "User"
   const baseCurrency = userProfile?.base_currency || "NGN"

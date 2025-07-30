@@ -9,12 +9,14 @@ import { Check, Clock, ExternalLink, XCircle, AlertTriangle } from "lucide-react
 import { useRouter, useParams } from "next/navigation"
 import { transactionService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
+import { useUserData } from "@/hooks/use-user-data"
 import type { Transaction } from "@/types"
 
 export default function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
   const { userProfile } = useAuth()
+  const { currencies } = useUserData()
   const transactionId = params.id as string
 
   const [transaction, setTransaction] = useState<Transaction | null>(null)
@@ -178,7 +180,8 @@ export default function TransactionStatusPage() {
 
   const formatCurrency = (amount: number | string, currency: string) => {
     const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount
-    const symbol = currency === "RUB" ? "₽" : currency === "NGN" ? "₦" : currency
+    const currencyData = currencies.find((c) => c.code === currency)
+    const symbol = currencyData?.symbol || currency
     return `${symbol}${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 

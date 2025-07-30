@@ -24,15 +24,17 @@ import {
   X,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { currencyService, recipientService, transactionService, paymentMethodService } from "@/lib/database"
+import { transactionService, paymentMethodService, recipientService } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
-import type { Currency, ExchangeRate } from "@/types"
+import { useUserData } from "@/hooks/use-user-data"
+import type { Currency } from "@/types"
 
 export default function UserSendPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
+  const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()
 
   // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
@@ -42,9 +44,6 @@ export default function UserSendPage() {
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [fee, setFee] = useState<number>(0)
 
-  const [currencies, setCurrencies] = useState<Currency[]>([])
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
-  const [recipients, setRecipients] = useState<any[]>([])
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -80,58 +79,43 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
-  // Load data from Supabase
+  // Load payment methods
   useEffect(() => {
-    const loadData = async () => {
-      if (!userProfile?.id) return
-
+    const loadPaymentMethods = async () => {
       try {
-        setLoading(true)
-        setError(null)
-
-        const [currenciesData, ratesData, recipientsData, paymentMethodsData] = await Promise.all([
-          currencyService.getAll(),
-          currencyService.getExchangeRates(),
-          recipientService.getByUserId(userProfile.id),
-          paymentMethodService.getAll(),
-        ])
-
-        setCurrencies(currenciesData || [])
-        setExchangeRates(ratesData || [])
-        setRecipients(recipientsData || [])
+        const paymentMethodsData = await paymentMethodService.getAll()
         setPaymentMethods(paymentMethodsData || [])
-
-        // Set default currencies if available
-        if (currenciesData && currenciesData.length > 0) {
-          // Set user's base currency as default send currency, or first available
-          const userBaseCurrency = userProfile.base_currency || "NGN"
-          const baseCurrencyExists = currenciesData.find((c) => c.code === userBaseCurrency)
-
-          if (baseCurrencyExists) {
-            setSendCurrency(userBaseCurrency)
-            // Set receive currency to a different one
-            const otherCurrency = currenciesData.find((c) => c.code !== userBaseCurrency)
-            if (otherCurrency) {
-              setReceiveCurrency(otherCurrency.code)
-            }
-          } else {
-            // Fallback to first two currencies
-            setSendCurrency(currenciesData[0].code)
-            if (currenciesData.length > 1) {
-              setReceiveCurrency(currenciesData[1].code)
-            }
-          }
-        }
       } catch (error) {
-        console.error("Error loading data:", error)
-        setError("Failed to load data. Please refresh the page.")
-      } finally {
-        setLoading(false)
+        console.error("Error loading payment methods:", error)
       }
     }
 
-    loadData()
-  }, [userProfile?.id, userProfile?.base_currency])
+    loadPaymentMethods()
+  }, [])
+
+  // Set default currencies when data is loaded
+  useEffect(() => {
+    if (currencies.length > 0 && userProfile) {
+      const userBaseCurrency = userProfile.base_currency || "NGN"
+      const baseCurrencyExists = currencies.find((c) => c.code === userBaseCurrency)
+
+      if (baseCurrencyExists) {
+        setSendCurrency(userBaseCurrency)
+        // Set receive currency to a different one
+        const otherCurrency = currencies.find((c) => c.code !== userBaseCurrency)
+        if (otherCurrency) {
+          setReceiveCurrency(otherCurrency.code)
+        }
+      } else {
+        // Fallback to first two currencies
+        setSendCurrency(currencies[0].code)
+        if (currencies.length > 1) {
+          setReceiveCurrency(currencies[1].code)
+        }
+      }
+      setLoading(false)
+    }
+  }, [currencies, userProfile])
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
@@ -169,8 +153,8 @@ export default function UserSendPage() {
         currency: receiveCurrency,
       })
 
-      // Add to local state
-      setRecipients((prev) => [newRecipient, ...prev])
+      // Refresh recipients data
+      await refreshRecipients()
 
       // Select the new recipient
       handleSelectRecipient(newRecipient)

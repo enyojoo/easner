@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Edit, Trash2, Search, ChevronDown } from "lucide-react"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
-import { supabase } from "@/lib/supabase"
+import { useUserData } from "@/hooks/use-user-data"
 
 export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
-  const [recipients, setRecipients] = useState([])
-  const [loading, setLoading] = useState(false)
+  const { recipients, currencies, refreshRecipients } = useUserData()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -28,38 +27,7 @@ export default function UserRecipientsPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [currencies, setCurrencies] = useState([])
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
-
-  // Load recipients from database
-  useEffect(() => {
-    if (userProfile?.id) {
-      loadRecipients()
-      loadCurrencies()
-    }
-  }, [userProfile?.id])
-
-  const loadRecipients = async () => {
-    try {
-      const data = await recipientService.getByUserId(userProfile.id)
-      setRecipients(data || [])
-    } catch (error) {
-      console.error("Error loading recipients:", error)
-      setError("Failed to load recipients")
-    } finally {
-    }
-  }
-
-  const loadCurrencies = async () => {
-    try {
-      const { data, error } = await supabase.from("currencies").select("*").eq("status", "active").order("code")
-
-      if (error) throw error
-      setCurrencies(data || [])
-    } catch (error) {
-      console.error("Error loading currencies:", error)
-    }
-  }
 
   const filteredRecipients = recipients.filter((recipient) => {
     const matchesSearch =
@@ -83,8 +51,8 @@ export default function UserRecipientsPage() {
         currency: formData.currency,
       })
 
-      // Reload recipients
-      await loadRecipients()
+      // Refresh recipients data
+      await refreshRecipients()
 
       // Reset form and close dialog
       setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
@@ -120,8 +88,8 @@ export default function UserRecipientsPage() {
         bankName: formData.bankName,
       })
 
-      // Reload recipients
-      await loadRecipients()
+      // Refresh recipients data
+      await refreshRecipients()
 
       // Reset form and close dialog
       setEditingRecipient(null)
@@ -139,7 +107,7 @@ export default function UserRecipientsPage() {
 
     try {
       await recipientService.delete(id)
-      await loadRecipients()
+      await refreshRecipients()
     } catch (error) {
       console.error("Error deleting recipient:", error)
       setError("Failed to delete recipient")
@@ -154,12 +122,6 @@ export default function UserRecipientsPage() {
   const getCurrencyFlag = (currencyCode) => {
     const currency = currencies.find((c) => c.code === currencyCode)
     return currency?.flag_svg || ""
-  }
-
-  const formatTotalSent = (recipient) => {
-    // This would come from transaction data in a real implementation
-    const symbol = getCurrencySymbol(recipient.currency)
-    return `${symbol}0.00`
   }
 
   const selectedCurrency = currencies.find((c) => c.code === formData.currency)
@@ -376,7 +338,7 @@ export default function UserRecipientsPage() {
                 </div>
               ))}
             </div>
-            {filteredRecipients.length === 0 && !loading && (
+            {filteredRecipients.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <p>
                   {searchTerm || currencyFilter !== "All"
