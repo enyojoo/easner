@@ -150,6 +150,11 @@ export default function UserRecipientsPage() {
     return currency?.symbol || currencyCode
   }
 
+  const getCurrencyFlag = (currencyCode) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return currency?.flag || ""
+  }
+
   const formatTotalSent = (recipient) => {
     // This would come from transaction data in a real implementation
     const symbol = getCurrencySymbol(recipient.currency)
@@ -262,18 +267,25 @@ export default function UserRecipientsPage() {
 
           {/* Currency Filter Dropdown */}
           <div className="min-w-[200px]">
-            <select
-              value={currencyFilter}
-              onChange={(e) => setCurrencyFilter(e.target.value)}
-              className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary text-gray-700"
-            >
-              <option value="All">All</option>
-              {currencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} - {currency.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={currencyFilter}
+                onChange={(e) => setCurrencyFilter(e.target.value)}
+                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary text-gray-700 appearance-none"
+              >
+                <option value="All">All Currencies</option>
+                {currencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -296,18 +308,26 @@ export default function UserRecipientsPage() {
                           .join("")
                           .toUpperCase()}
                       </span>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
+                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden border border-white">
                         <img
-                          src={`data:image/svg+xml,${encodeURIComponent(
-                            currencies.find((c) => c.code === recipient.currency)?.flag || "",
-                          )}`}
+                          src={getCurrencyFlag(recipient.currency) || "/placeholder.svg"}
                           alt={`${recipient.currency} flag`}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{recipient.full_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{recipient.full_name}</p>
+                        <div className="flex items-center bg-gray-100 px-2 py-0.5 rounded-md">
+                          <img
+                            src={getCurrencyFlag(recipient.currency) || "/placeholder.svg"}
+                            alt={`${recipient.currency} flag`}
+                            className="w-4 h-3 mr-1 object-cover rounded-sm"
+                          />
+                          <span className="text-xs font-medium">{recipient.currency}</span>
+                        </div>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {recipient.bank_name} - {recipient.account_number}
                       </p>
