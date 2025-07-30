@@ -68,7 +68,7 @@ class AdminDataStore {
         this.loadExchangeRates(),
       ])
 
-      const stats = this.calculateStats(usersResult, transactionsResult)
+      const stats = await this.calculateStats(usersResult, transactionsResult)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
@@ -106,9 +106,27 @@ class AdminDataStore {
         const totalTransactions = transactions?.length || 0
         const totalVolume = (transactions || []).reduce((sum, tx) => {
           let amount = Number(tx.send_amount)
-          if (tx.send_currency === "RUB") {
-            amount = amount * 22.45 // Convert to NGN
+
+          // Convert to NGN based on actual currency
+          switch (tx.send_currency) {
+            case "RUB":
+              amount = amount * 0.011 // RUB to NGN rate
+              break
+            case "USD":
+              amount = amount * 1650 // USD to NGN rate
+              break
+            case "EUR":
+              amount = amount * 1750 // EUR to NGN rate
+              break
+            case "GBP":
+              amount = amount * 2000 // GBP to NGN rate
+              break
+            case "NGN":
+            default:
+              // Already in NGN, no conversion needed
+              break
           }
+
           return sum + amount
         }, 0)
 
@@ -154,7 +172,7 @@ class AdminDataStore {
     return data || []
   }
 
-  private calculateStats(users: any[], transactions: any[]) {
+  private async calculateStats(users: any[], transactions: any[]) {
     const totalUsers = users.length
     const activeUsers = users.filter((u) => u.status === "active").length
     const verifiedUsers = users.filter((u) => u.verification_status === "verified").length
@@ -162,15 +180,12 @@ class AdminDataStore {
     const totalTransactions = transactions.length
     const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
 
-    // Calculate total volume in NGN
+    // Get admin base currency from system settings (default to NGN)
+    const adminBaseCurrency = await this.getAdminBaseCurrency()
+
+    // Calculate total volume in admin's base currency
     const completedTransactions = transactions.filter((t) => t.status === "completed")
-    const totalVolume = completedTransactions.reduce((sum, tx) => {
-      let amount = Number(tx.send_amount)
-      if (tx.send_currency === "RUB") {
-        amount = amount * 22.45
-      }
-      return sum + amount
-    }, 0)
+    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, adminBaseCurrency)
 
     return {
       totalUsers,
@@ -180,6 +195,118 @@ class AdminDataStore {
       totalVolume,
       pendingTransactions,
     }
+  }
+
+  private async getAdminBaseCurrency(): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "admin_base_currency")
+        .single()
+
+      if (error || !data) return "NGN" // Default to NGN
+      return data.value
+    } catch {
+      return "NGN" // Default fallback
+    }
+  }
+
+  private async calculateVolumeInBaseCurrency(transactions: any[], baseCurrency: string): Promise<number> {
+    let totalVolume = 0
+
+    for (const tx of transactions) {
+      const amount = Number(tx.send_amount)
+      const fromCurrency = tx.send_currency
+
+      if (fromCurrency === baseCurrency) {
+        // Same currency, no conversion needed
+        totalVolume += amount
+      } else {
+        // Convert using exchange rate
+        const convertedAmount = await this.convertCurrency(amount, fromCurrency, baseCurrency)
+        totalVolume += convertedAmount
+      }
+    }
+
+    return totalVolume
+  }
+
+  private async convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
+    try {
+      // Get exchange rate from database
+      const { data: rate, error } = await supabase
+        .from("exchange_rates")
+        .select("rate")
+        .eq("from_currency", fromCurrency)
+        .eq("to_currency", toCurrency)
+        .eq("status", "active")
+        .single()
+
+      if (error || !rate) {
+        // Fallback to hardcoded rates if no rate found
+        return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
+      }
+
+      return amount * rate.rate
+    } catch {
+      // Fallback to hardcoded rates
+      return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
+    }
+  }
+
+  private convertWithFallbackRates(amount: number, fromCurrency: string, toCurrency: string): number {
+    // Fallback exchange rates (these should be updated regularly)
+    const rates: { [key: string]: { [key: string]: number } } = {
+      NGN: {
+        RUB: 0.011,
+        USD: 0.00061,
+        EUR: 0.00057,
+        GBP: 0.0005,
+      },
+      RUB: {
+        NGN: 91.0,
+        USD: 0.055,
+        EUR: 0.052,
+        GBP: 0.045,
+      },
+      USD: {
+        NGN: 1650,
+        RUB: 18.2,
+        EUR: 0.93,
+        GBP: 0.82,
+      },
+      EUR: {
+        NGN: 1750,
+        RUB: 19.5,
+        USD: 1.08,
+        GBP: 0.88,
+      },
+      GBP: {
+        NGN: 2000,
+        RUB: 22.2,
+        USD: 1.22,
+        EUR: 1.14,
+      },
+    }
+
+    if (fromCurrency === toCurrency) return amount
+
+    const rate = rates[fromCurrency]?.[toCurrency]
+    if (rate) {
+      return amount * rate
+    }
+
+    // If direct rate not found, convert through USD
+    const toUsdRate = rates[fromCurrency]?.["USD"]
+    const fromUsdRate = rates["USD"]?.[toCurrency]
+
+    if (toUsdRate && fromUsdRate) {
+      return amount * toUsdRate * fromUsdRate
+    }
+
+    // Last fallback - return original amount
+    return amount
   }
 
   private processRecentActivity(transactions: any[]) {
@@ -309,7 +436,7 @@ class AdminDataStore {
         this.data.transactions = this.data.transactions.map((tx) =>
           tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
         )
-        this.data.stats = this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
         this.data.recentActivity = this.processRecentActivity(this.data.transactions.slice(0, 10))
         this.notify()
       }
@@ -327,7 +454,7 @@ class AdminDataStore {
       // Update local data
       if (this.data) {
         this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
-        this.data.stats = this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
         this.notify()
       }
     } catch (error) {
@@ -346,7 +473,7 @@ class AdminDataStore {
         this.data.users = this.data.users.map((user) =>
           user.id === userId ? { ...user, verification_status: newStatus } : user,
         )
-        this.data.stats = this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
         this.notify()
       }
     } catch (error) {

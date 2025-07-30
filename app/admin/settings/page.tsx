@@ -74,9 +74,12 @@ interface EmailTemplate {
   id: string
   name: string
   subject: string
-  type: string
-  content: string
+  template_type: string
+  html_content: string
+  text_content: string
+  variables: string
   status: string
+  is_default: boolean
   created_at: string
   updated_at: string
 }
@@ -87,7 +90,6 @@ export default function AdminSettingsPage() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([])
   const [activeTab, setActiveTab] = useState("platform")
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
   const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
@@ -110,8 +112,11 @@ export default function AdminSettingsPage() {
   const [newTemplate, setNewTemplate] = useState({
     name: "",
     subject: "",
-    type: "registration",
-    content: "",
+    template_type: "registration",
+    html_content: "",
+    text_content: "",
+    variables: "",
+    is_default: false,
   })
 
   // Platform configuration derived from system settings
@@ -142,13 +147,10 @@ export default function AdminSettingsPage() {
   }, [])
 
   const loadAllData = async () => {
-    setLoading(true)
     try {
       await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods(), loadEmailTemplates()])
     } catch (error) {
       console.error("Error loading data:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -234,7 +236,10 @@ export default function AdminSettingsPage() {
 
   const loadEmailTemplates = async () => {
     try {
-      const { data, error } = await supabase.from("email_templates").select("*").order("type", { ascending: true })
+      const { data, error } = await supabase
+        .from("email_templates")
+        .select("*")
+        .order("template_type", { ascending: true })
 
       if (error) throw error
       setEmailTemplates(data || [])
@@ -471,13 +476,24 @@ export default function AdminSettingsPage() {
   const handleAddEmailTemplate = async () => {
     setSaving(true)
     try {
+      // If setting as default, unset other defaults for the same template type
+      if (newTemplate.is_default) {
+        await supabase
+          .from("email_templates")
+          .update({ is_default: false })
+          .eq("template_type", newTemplate.template_type)
+      }
+
       const { data, error } = await supabase
         .from("email_templates")
         .insert({
           name: newTemplate.name,
           subject: newTemplate.subject,
-          type: newTemplate.type,
-          content: newTemplate.content,
+          template_type: newTemplate.template_type,
+          html_content: newTemplate.html_content,
+          text_content: newTemplate.text_content,
+          variables: newTemplate.variables,
+          is_default: newTemplate.is_default,
           status: "active",
         })
         .select()
@@ -489,8 +505,11 @@ export default function AdminSettingsPage() {
       setNewTemplate({
         name: "",
         subject: "",
-        type: "registration",
-        content: "",
+        template_type: "registration",
+        html_content: "",
+        text_content: "",
+        variables: "",
+        is_default: false,
       })
       setIsAddTemplateOpen(false)
       console.log("Email template added successfully")
@@ -506,13 +525,25 @@ export default function AdminSettingsPage() {
 
     setSaving(true)
     try {
+      // If setting as default, unset other defaults for the same template type
+      if (editingTemplate.is_default) {
+        await supabase
+          .from("email_templates")
+          .update({ is_default: false })
+          .eq("template_type", editingTemplate.template_type)
+          .neq("id", editingTemplate.id)
+      }
+
       const { data, error } = await supabase
         .from("email_templates")
         .update({
           name: editingTemplate.name,
           subject: editingTemplate.subject,
-          type: editingTemplate.type,
-          content: editingTemplate.content,
+          template_type: editingTemplate.template_type,
+          html_content: editingTemplate.html_content,
+          text_content: editingTemplate.text_content,
+          variables: editingTemplate.variables,
+          is_default: editingTemplate.is_default,
           updated_at: new Date().toISOString(),
         })
         .eq("id", editingTemplate.id)
@@ -585,19 +616,35 @@ export default function AdminSettingsPage() {
     return currency?.flag_svg ? <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} /> : null
   }
 
-  if (loading) {
-    return (
-      <AdminDashboardLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading settings...</p>
-            </div>
-          </div>
-        </div>
-      </AdminDashboardLayout>
-    )
+  const handleSetDefaultTemplate = async (id: string) => {
+    const targetTemplate = emailTemplates.find((t) => t.id === id)
+    if (!targetTemplate) return
+
+    try {
+      // Unset other defaults for the same template type
+      await supabase
+        .from("email_templates")
+        .update({ is_default: false })
+        .eq("template_type", targetTemplate.template_type)
+
+      // Set this one as default
+      const { error } = await supabase
+        .from("email_templates")
+        .update({ is_default: true, updated_at: new Date().toISOString() })
+        .eq("id", id)
+
+      if (error) throw error
+
+      setEmailTemplates(
+        emailTemplates.map((t) => ({
+          ...t,
+          is_default: t.template_type === targetTemplate.template_type ? t.id === id : t.is_default,
+        })),
+      )
+      console.log("Default email template updated successfully")
+    } catch (error) {
+      console.error("Error setting default email template:", error)
+    }
   }
 
   return (
@@ -1204,7 +1251,7 @@ export default function AdminSettingsPage() {
                         Add Template
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Add New Email Template</DialogTitle>
                       </DialogHeader>
@@ -1220,10 +1267,10 @@ export default function AdminSettingsPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="templateType">Type *</Label>
+                            <Label htmlFor="templateType">Template Type *</Label>
                             <Select
-                              value={newTemplate.type}
-                              onValueChange={(value) => setNewTemplate({ ...newTemplate, type: value })}
+                              value={newTemplate.template_type}
+                              onValueChange={(value) => setNewTemplate({ ...newTemplate, template_type: value })}
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -1233,6 +1280,7 @@ export default function AdminSettingsPage() {
                                 <SelectItem value="transaction">Transaction</SelectItem>
                                 <SelectItem value="security">Security</SelectItem>
                                 <SelectItem value="notification">Notification</SelectItem>
+                                <SelectItem value="marketing">Marketing</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1249,14 +1297,48 @@ export default function AdminSettingsPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="templateContent">Content *</Label>
-                          <Textarea
-                            id="templateContent"
-                            value={newTemplate.content}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
-                            placeholder="Email template content..."
-                            rows={8}
+                          <Label htmlFor="templateVariables">Variables (JSON format)</Label>
+                          <Input
+                            id="templateVariables"
+                            value={newTemplate.variables}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, variables: e.target.value })}
+                            placeholder='e.g., {"user_name": "string", "amount": "number"}'
                           />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateHtmlContent">HTML Content *</Label>
+                          <Textarea
+                            id="templateHtmlContent"
+                            value={newTemplate.html_content}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, html_content: e.target.value })}
+                            placeholder="HTML email template content..."
+                            rows={6}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateTextContent">Text Content *</Label>
+                          <Textarea
+                            id="templateTextContent"
+                            value={newTemplate.text_content}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, text_content: e.target.value })}
+                            placeholder="Plain text email template content..."
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="isDefaultTemplate"
+                            checked={newTemplate.is_default}
+                            onCheckedChange={(checked) =>
+                              setNewTemplate({ ...newTemplate, is_default: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="isDefaultTemplate" className="text-sm font-medium">
+                            Set as default template for this type
+                          </Label>
                         </div>
 
                         <div className="flex gap-4 pt-4">
@@ -1265,7 +1347,13 @@ export default function AdminSettingsPage() {
                           </Button>
                           <Button
                             onClick={handleAddEmailTemplate}
-                            disabled={saving || !newTemplate.name || !newTemplate.subject || !newTemplate.content}
+                            disabled={
+                              saving ||
+                              !newTemplate.name ||
+                              !newTemplate.subject ||
+                              !newTemplate.html_content ||
+                              !newTemplate.text_content
+                            }
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
                             {saving ? "Adding..." : "Add Template"}
@@ -1277,7 +1365,7 @@ export default function AdminSettingsPage() {
 
                   {/* Edit Email Template Dialog */}
                   <Dialog open={isEditTemplateOpen} onOpenChange={setIsEditTemplateOpen}>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Edit Email Template</DialogTitle>
                       </DialogHeader>
@@ -1294,10 +1382,10 @@ export default function AdminSettingsPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="editTemplateType">Type *</Label>
+                              <Label htmlFor="editTemplateType">Template Type *</Label>
                               <Select
-                                value={editingTemplate.type}
-                                onValueChange={(value) => setEditingTemplate({ ...editingTemplate, type: value })}
+                                value={editingTemplate.template_type}
+                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -1307,6 +1395,7 @@ export default function AdminSettingsPage() {
                                   <SelectItem value="transaction">Transaction</SelectItem>
                                   <SelectItem value="security">Security</SelectItem>
                                   <SelectItem value="notification">Notification</SelectItem>
+                                  <SelectItem value="marketing">Marketing</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1323,14 +1412,48 @@ export default function AdminSettingsPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="editTemplateContent">Content *</Label>
-                            <Textarea
-                              id="editTemplateContent"
-                              value={editingTemplate.content}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, content: e.target.value })}
-                              placeholder="Email template content..."
-                              rows={8}
+                            <Label htmlFor="editTemplateVariables">Variables (JSON format)</Label>
+                            <Input
+                              id="editTemplateVariables"
+                              value={editingTemplate.variables}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, variables: e.target.value })}
+                              placeholder='e.g., {"user_name": "string", "amount": "number"}'
                             />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateHtmlContent">HTML Content *</Label>
+                            <Textarea
+                              id="editTemplateHtmlContent"
+                              value={editingTemplate.html_content}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                              placeholder="HTML email template content..."
+                              rows={6}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateTextContent">Text Content *</Label>
+                            <Textarea
+                              id="editTemplateTextContent"
+                              value={editingTemplate.text_content}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, text_content: e.target.value })}
+                              placeholder="Plain text email template content..."
+                              rows={4}
+                            />
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="editIsDefaultTemplate"
+                              checked={editingTemplate.is_default}
+                              onCheckedChange={(checked) =>
+                                setEditingTemplate({ ...editingTemplate, is_default: checked as boolean })
+                              }
+                            />
+                            <Label htmlFor="editIsDefaultTemplate" className="text-sm font-medium">
+                              Set as default template for this type
+                            </Label>
                           </div>
 
                           <div className="flex gap-4 pt-4">
@@ -1340,7 +1463,11 @@ export default function AdminSettingsPage() {
                             <Button
                               onClick={handleEditEmailTemplate}
                               disabled={
-                                saving || !editingTemplate.name || !editingTemplate.subject || !editingTemplate.content
+                                saving ||
+                                !editingTemplate.name ||
+                                !editingTemplate.subject ||
+                                !editingTemplate.html_content ||
+                                !editingTemplate.text_content
                               }
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
@@ -1361,6 +1488,7 @@ export default function AdminSettingsPage() {
                       <TableHead>Subject</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Default</TableHead>
                       <TableHead>Last Modified</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -1371,7 +1499,7 @@ export default function AdminSettingsPage() {
                         <TableCell className="font-medium">{template.name}</TableCell>
                         <TableCell>{template.subject}</TableCell>
                         <TableCell>
-                          <Badge className="bg-purple-100 text-purple-800">{template.type}</Badge>
+                          <Badge className="bg-purple-100 text-purple-800">{template.template_type}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -1382,24 +1510,39 @@ export default function AdminSettingsPage() {
                             {template.status}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          {template.is_default && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
+                        </TableCell>
                         <TableCell>{new Date(template.updated_at).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleEditTemplateClick(template)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleToggleTemplateStatus(template.id)}>
-                              {template.status === "active" ? "Disable" : "Enable"}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 bg-transparent"
-                              onClick={() => handleDeleteEmailTemplate(template.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditTemplateClick(template)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleTemplateStatus(template.id)}>
+                                {template.status === "active" ? "Disable" : "Enable"}
+                              </DropdownMenuItem>
+                              {template.status === "active" && !template.is_default && (
+                                <DropdownMenuItem onClick={() => handleSetDefaultTemplate(template.id)}>
+                                  Make Default
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteEmailTemplate(template.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
