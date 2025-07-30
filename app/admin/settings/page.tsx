@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
   Building2,
   MoreHorizontal,
   X,
+  Upload,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -119,6 +120,13 @@ export default function AdminSettingsPage() {
     variables: "",
     is_default: false,
   })
+
+  // Add these state variables after the existing state declarations
+  const [qrCodeFile, setQrCodeFile] = useState<File | null>(null)
+  const [editingQrCodeFile, setEditingQrCodeFile] = useState<File | null>(null)
+  const [uploadingQrCode, setUploadingQrCode] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
 
   // Platform configuration derived from system settings
   const [platformConfig, setPlatformConfig] = useState({
@@ -324,12 +332,58 @@ export default function AdminSettingsPage() {
     setIsEditingSecuritySettings(false)
   }
 
+  const handleQrCodeFileSelect = (file: File, isEditing = false) => {
+    const allowedTypes = ["image/svg+xml", "image/png", "image/jpeg"]
+    if (!allowedTypes.includes(file.type)) {
+      console.error("Only SVG, PNG, and JPEG, files are allowed for QR codes")
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("File size must be less than 5MB")
+      return
+    }
+
+    if (isEditing) {
+      setEditingQrCodeFile(file)
+    } else {
+      setQrCodeFile(file)
+    }
+  }
+
+  const uploadQrCodeFile = async (file: File): Promise<string> => {
+    const fileExt = file.name.split(".").pop()
+    const fileName = `qr_${Date.now()}.${fileExt}`
+    const filePath = `qr-codes/${fileName}`
+
+    const { data, error } = await supabase.storage.from("payment-qr-codes").upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+    })
+
+    if (error) throw error
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("payment-qr-codes").getPublicUrl(filePath)
+
+    return publicUrl
+  }
+
   const handleAddPaymentMethod = async () => {
     setSaving(true)
     try {
       // If setting as default, unset other defaults for the same currency
       if (newPaymentMethod.is_default) {
         await supabase.from("payment_methods").update({ is_default: false }).eq("currency", newPaymentMethod.currency)
+      }
+
+      let qrCodeData = newPaymentMethod.qr_code_data
+
+      // Upload QR code file if provided
+      if (newPaymentMethod.type === "qr_code" && qrCodeFile) {
+        setUploadingQrCode(true)
+        qrCodeData = await uploadQrCodeFile(qrCodeFile)
       }
 
       const { data, error } = await supabase
@@ -341,7 +395,7 @@ export default function AdminSettingsPage() {
           account_name: newPaymentMethod.account_name || null,
           account_number: newPaymentMethod.account_number || null,
           bank_name: newPaymentMethod.bank_name || null,
-          qr_code_data: newPaymentMethod.qr_code_data || null,
+          qr_code_data: qrCodeData || null,
           instructions: newPaymentMethod.instructions || null,
           is_default: newPaymentMethod.is_default,
           status: "active",
@@ -363,12 +417,14 @@ export default function AdminSettingsPage() {
         instructions: "",
         is_default: false,
       })
+      setQrCodeFile(null)
       setIsAddPaymentMethodOpen(false)
       console.log("Payment method added successfully")
     } catch (error) {
       console.error("Error adding payment method:", error)
     } finally {
       setSaving(false)
+      setUploadingQrCode(false)
     }
   }
 
@@ -386,6 +442,14 @@ export default function AdminSettingsPage() {
           .neq("id", editingPaymentMethod.id)
       }
 
+      let qrCodeData = editingPaymentMethod.qr_code_data
+
+      // Upload new QR code file if provided
+      if (editingPaymentMethod.type === "qr_code" && editingQrCodeFile) {
+        setUploadingQrCode(true)
+        qrCodeData = await uploadQrCodeFile(editingQrCodeFile)
+      }
+
       const { data, error } = await supabase
         .from("payment_methods")
         .update({
@@ -395,7 +459,7 @@ export default function AdminSettingsPage() {
           account_name: editingPaymentMethod.account_name || null,
           account_number: editingPaymentMethod.account_number || null,
           bank_name: editingPaymentMethod.bank_name || null,
-          qr_code_data: editingPaymentMethod.qr_code_data || null,
+          qr_code_data: qrCodeData || null,
           instructions: editingPaymentMethod.instructions || null,
           is_default: editingPaymentMethod.is_default,
           updated_at: new Date().toISOString(),
@@ -408,12 +472,14 @@ export default function AdminSettingsPage() {
 
       setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? data : pm)))
       setEditingPaymentMethod(null)
+      setEditingQrCodeFile(null)
       setIsEditPaymentMethodOpen(false)
       console.log("Payment method updated successfully")
     } catch (error) {
       console.error("Error updating payment method:", error)
     } finally {
       setSaving(false)
+      setUploadingQrCode(false)
     }
   }
 
@@ -886,15 +952,43 @@ export default function AdminSettingsPage() {
                         {newPaymentMethod.type === "qr_code" && (
                           <>
                             <div className="space-y-2">
-                              <Label htmlFor="qrCodeData">QR Code Data/URL *</Label>
-                              <Input
-                                id="qrCodeData"
-                                value={newPaymentMethod.qr_code_data}
-                                onChange={(e) =>
-                                  setNewPaymentMethod({ ...newPaymentMethod, qr_code_data: e.target.value })
-                                }
-                                placeholder="e.g., https://qr.sber.ru/pay/12345 or payment data"
+                              <Label htmlFor="qrCodeFile">Upload QR Code *</Label>
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handleQrCodeFileSelect(file)
+                                }}
+                                accept=".svg,.png,.jpg,.jpeg,.pdf"
+                                className="hidden"
                               />
+                              <div className="flex items-center gap-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {qrCodeFile ? "Change File" : "Select File"}
+                                </Button>
+                                {qrCodeFile && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <span>{qrCodeFile.name}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setQrCodeFile(null)}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG, PDF (Max 5MB)</p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="instructions">Instructions</Label>
@@ -932,13 +1026,14 @@ export default function AdminSettingsPage() {
                             onClick={handleAddPaymentMethod}
                             disabled={
                               saving ||
+                              uploadingQrCode ||
                               !newPaymentMethod.currency ||
                               !newPaymentMethod.name ||
                               (newPaymentMethod.type === "bank_account" &&
                                 (!newPaymentMethod.account_name ||
                                   !newPaymentMethod.account_number ||
                                   !newPaymentMethod.bank_name)) ||
-                              (newPaymentMethod.type === "qr_code" && !newPaymentMethod.qr_code_data)
+                              (newPaymentMethod.type === "qr_code" && !qrCodeFile && !newPaymentMethod.qr_code_data)
                             }
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
@@ -1072,15 +1167,52 @@ export default function AdminSettingsPage() {
                           {editingPaymentMethod.type === "qr_code" && (
                             <>
                               <div className="space-y-2">
-                                <Label htmlFor="editQrCodeData">QR Code Data/URL *</Label>
-                                <Input
-                                  id="editQrCodeData"
-                                  value={editingPaymentMethod.qr_code_data || ""}
-                                  onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, qr_code_data: e.target.value })
-                                  }
-                                  placeholder="e.g., https://qr.sber.ru/pay/12345 or payment data"
+                                <Label htmlFor="editQrCodeFile">Upload QR Code *</Label>
+                                <input
+                                  type="file"
+                                  ref={editFileInputRef}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleQrCodeFileSelect(file, true)
+                                  }}
+                                  accept=".svg,.png,.jpg,.jpeg,.pdf"
+                                  className="hidden"
                                 />
+                                <div className="flex items-center gap-4">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => editFileInputRef.current?.click()}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {editingQrCodeFile
+                                      ? "Change File"
+                                      : editingPaymentMethod.qr_code_data
+                                        ? "Replace File"
+                                        : "Select File"}
+                                  </Button>
+                                  {editingQrCodeFile && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                      <span>{editingQrCodeFile.name}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingQrCodeFile(null)}
+                                        className="h-6 w-6 p-0"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {!editingQrCodeFile && editingPaymentMethod.qr_code_data && (
+                                    <span className="text-sm text-gray-600">Current file uploaded</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                  Supported formats: SVG, PNG, JPEG, PDF (Max 5MB)
+                                </p>
                               </div>
                               <div className="space-y-2">
                                 <Label htmlFor="editInstructions">Instructions</Label>
@@ -1122,13 +1254,16 @@ export default function AdminSettingsPage() {
                               onClick={handleEditPaymentMethod}
                               disabled={
                                 saving ||
+                                uploadingQrCode ||
                                 !editingPaymentMethod.currency ||
                                 !editingPaymentMethod.name ||
                                 (editingPaymentMethod.type === "bank_account" &&
                                   (!editingPaymentMethod.account_name ||
                                     !editingPaymentMethod.account_number ||
                                     !editingPaymentMethod.bank_name)) ||
-                                (editingPaymentMethod.type === "qr_code" && !editingPaymentMethod.qr_code_data)
+                                (editingPaymentMethod.type === "qr_code" &&
+                                  !editingQrCodeFile &&
+                                  !editingPaymentMethod.qr_code_data)
                               }
                               className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                             >
@@ -1391,9 +1526,7 @@ export default function AdminSettingsPage() {
                               <Label htmlFor="editTemplateType">Template Type *</Label>
                               <Select
                                 value={editingTemplate.template_type}
-                                onValueChange={(value) =>
-                                  setEditingTemplate({ ...editingTemplate, template_type: value })
-                                }
+                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -1455,7 +1588,7 @@ export default function AdminSettingsPage() {
                             <Checkbox
                               id="editIsDefaultTemplate"
                               checked={editingTemplate.is_default}
-                              onCheckedChange={(checked) =>
+                              onChange={(checked) =>
                                 setEditingTemplate({ ...editingTemplate, is_default: checked as boolean })
                               }
                             />

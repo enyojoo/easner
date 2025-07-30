@@ -1094,14 +1094,39 @@ export default function UserSendPage() {
                                     <QrCode className="h-4 w-4 text-gray-600" />
                                     <span className="font-medium text-sm">{defaultMethod.name}</span>
                                   </div>
-                                  <div className="w-32 h-32 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center">
-                                    <QrCode className="h-16 w-16 text-gray-400" />
-                                  </div>
-                                  <div className="text-xs text-gray-600 mb-2">
-                                    <p className="font-mono break-all">{defaultMethod.qr_code_data}</p>
+                                  <div className="w-48 h-48 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                                    {defaultMethod.qr_code_data ? (
+                                      defaultMethod.qr_code_data.endsWith(".svg") ? (
+                                        <img
+                                          src={defaultMethod.qr_code_data || "/placeholder.svg"}
+                                          alt="QR Code"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      ) : defaultMethod.qr_code_data.endsWith(".pdf") ? (
+                                        <div className="text-center">
+                                          <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                                          <a
+                                            href={defaultMethod.qr_code_data}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                                          >
+                                            View QR Code PDF
+                                          </a>
+                                        </div>
+                                      ) : (
+                                        <img
+                                          src={defaultMethod.qr_code_data || "/placeholder.svg"}
+                                          alt="QR Code"
+                                          className="w-full h-full object-contain"
+                                        />
+                                      )
+                                    ) : (
+                                      <QrCode className="h-16 w-16 text-gray-400" />
+                                    )}
                                   </div>
                                   {defaultMethod.instructions && (
-                                    <p className="text-xs text-gray-500">{defaultMethod.instructions}</p>
+                                    <p className="text-xs text-gray-500 mb-2">{defaultMethod.instructions}</p>
                                   )}
                                   <div className="mt-2 pt-2 border-t border-gray-100">
                                     <div className="flex justify-between items-center">
