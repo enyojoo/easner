@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Search, Globe } from "lucide-react"
-import { currencies } from "@/utils/currency"
+import { Plus, Edit, Trash2, Search } from "lucide-react"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase"
 
 export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
@@ -28,11 +28,13 @@ export default function UserRecipientsPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [currencies, setCurrencies] = useState([])
 
   // Load recipients from database
   useEffect(() => {
     if (userProfile?.id) {
       loadRecipients()
+      loadCurrencies()
     }
   }, [userProfile?.id])
 
@@ -44,6 +46,17 @@ export default function UserRecipientsPage() {
       console.error("Error loading recipients:", error)
       setError("Failed to load recipients")
     } finally {
+    }
+  }
+
+  const loadCurrencies = async () => {
+    try {
+      const { data, error } = await supabase.from("currencies").select("*").eq("status", "active").order("code")
+
+      if (error) throw error
+      setCurrencies(data || [])
+    } catch (error) {
+      console.error("Error loading currencies:", error)
     }
   }
 
@@ -193,8 +206,11 @@ export default function UserRecipientsPage() {
           className="w-full p-2 border border-gray-300 rounded-md"
           disabled={isEdit || isSubmitting}
         >
-          <option value="NGN">NGN - Nigerian Naira</option>
-          <option value="RUB">RUB - Russian Ruble</option>
+          {currencies.map((currency) => (
+            <option key={currency.code} value={currency.code}>
+              {currency.code} - {currency.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -244,38 +260,20 @@ export default function UserRecipientsPage() {
             />
           </div>
 
-          {/* Currency Filter Badges */}
-          <div className="flex gap-3">
-            <button
-              onClick={() => setCurrencyFilter("All")}
-              className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors outline-none ${
-                currencyFilter === "All"
-                  ? "bg-novapay-primary text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+          {/* Currency Filter Dropdown */}
+          <div className="min-w-[200px]">
+            <select
+              value={currencyFilter}
+              onChange={(e) => setCurrencyFilter(e.target.value)}
+              className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary text-gray-700"
             >
-              <Globe className="w-4 h-4 mr-2" />
-              <span className="font-medium">All</span>
-            </button>
-
-            {currencies.map((currency) => (
-              <button
-                key={currency.code}
-                onClick={() => setCurrencyFilter(currency.code)}
-                className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors outline-none ${
-                  currencyFilter === currency.code
-                    ? "bg-novapay-primary text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <img
-                  src={`data:image/svg+xml,${encodeURIComponent(currency.flag)}`}
-                  alt={`${currency.name} flag`}
-                  className="w-4 h-3 mr-2 object-cover rounded-sm"
-                />
-                <span className="font-medium">{currency.code}</span>
-              </button>
-            ))}
+              <option value="All">All</option>
+              {currencies.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.code} - {currency.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
