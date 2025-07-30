@@ -12,7 +12,6 @@ import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService, transactionService, currencyService } from "@/lib/database"
 import { supabase } from "@/lib/supabase"
-import { currencies } from "@/utils/currency"
 
 export default function UserProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth()
@@ -43,6 +42,9 @@ export default function UserProfilePage() {
     newPassword: "",
     confirmPassword: "",
   })
+
+  const [currencies, setCurrencies] = useState<any[]>([])
+  const [currenciesLoading, setCurrenciesLoading] = useState(true)
 
   // Load user profile data
   useEffect(() => {
@@ -138,6 +140,22 @@ export default function UserProfilePage() {
 
     loadUserStats()
   }, [user, userProfile])
+
+  // Load currencies from database
+  useEffect(() => {
+    const loadCurrencies = async () => {
+      try {
+        const currenciesData = await currencyService.getAll()
+        setCurrencies(currenciesData || [])
+      } catch (error) {
+        console.error("Error loading currencies:", error)
+      } finally {
+        setCurrenciesLoading(false)
+      }
+    }
+
+    loadCurrencies()
+  }, [])
 
   const handleProfileUpdate = async () => {
     if (!user) return
@@ -295,7 +313,7 @@ export default function UserProfilePage() {
                       <Select
                         value={editProfileData.baseCurrency}
                         onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
-                        disabled={loading}
+                        disabled={loading || currenciesLoading}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select base currency" />

@@ -8,7 +8,6 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { transactionService, currencyService } from "@/lib/database"
-import { formatCurrency } from "@/utils/currency"
 
 interface Transaction {
   id: string
@@ -27,12 +26,19 @@ export default function UserDashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [totalSent, setTotalSent] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [currencies, setCurrencies] = useState<any[]>([])
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!userProfile?.id) return
 
       try {
+        setLoading(true)
+
+        // Load currencies from database
+        const currenciesData = await currencyService.getAll()
+        setCurrencies(currenciesData || [])
+
         // Fetch user transactions
         const userTransactions = await transactionService.getByUserId(userProfile.id, 10)
         setTransactions(userTransactions || [])
@@ -89,6 +95,11 @@ export default function UserDashboardPage() {
   const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
   const totalSentValue = totalSent || 0
 
+  const formatCurrencyValue = (amount: number, currencyCode: string) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   return (
     <UserDashboardLayout>
       <div className="p-6 space-y-6">
@@ -107,7 +118,7 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {loading ? "Loading..." : formatCurrency(totalSentValue, baseCurrency)}
+                {loading ? "Loading..." : formatCurrencyValue(totalSentValue, baseCurrency)}
               </div>
               <p className="text-xs text-gray-500">From all currencies in your base currency</p>
             </CardContent>
@@ -181,7 +192,7 @@ export default function UserDashboardPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                            {formatCurrencyValue(transaction.send_amount, transaction.send_currency)}
                           </p>
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${

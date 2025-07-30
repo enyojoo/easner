@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
               <div className="text-2xl font-bold text-gray-900">
                 {formatCurrency(data?.stats.totalVolume || 0, data?.baseCurrency)}
               </div>
-              <p className="text-xs text-gray-500 mt-1">From all currencies in your base currency.</p>
+              <p className="text-xs text-gray-500 mt-1">From all currencies.</p>
             </CardContent>
           </Card>
 

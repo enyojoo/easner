@@ -988,7 +988,7 @@ export default function AdminSettingsPage() {
                                   </div>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG, PDF (Max 5MB)</p>
+                              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG (Max 5MB)</p>
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="instructions">Instructions</Label>
@@ -1211,7 +1211,7 @@ export default function AdminSettingsPage() {
                                   )}
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                  Supported formats: SVG, PNG, JPEG, PDF (Max 5MB)
+                                  Supported formats: SVG, PNG, JPEG (Max 5MB)
                                 </p>
                               </div>
                               <div className="space-y-2">
