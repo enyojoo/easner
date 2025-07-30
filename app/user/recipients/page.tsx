@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
+import { Plus, Edit, Trash2, Search, ChevronDown } from "lucide-react"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
@@ -29,6 +29,7 @@ export default function UserRecipientsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [currencies, setCurrencies] = useState([])
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
 
   // Load recipients from database
   useEffect(() => {
@@ -152,7 +153,7 @@ export default function UserRecipientsPage() {
 
   const getCurrencyFlag = (currencyCode) => {
     const currency = currencies.find((c) => c.code === currencyCode)
-    return currency?.flag || ""
+    return currency?.flag_svg || ""
   }
 
   const formatTotalSent = (recipient) => {
@@ -160,6 +161,8 @@ export default function UserRecipientsPage() {
     const symbol = getCurrencySymbol(recipient.currency)
     return `${symbol}0.00`
   }
+
+  const selectedCurrency = currencies.find((c) => c.code === formData.currency)
 
   const RecipientForm = ({ isEdit = false }) => (
     <div className="space-y-4">
@@ -204,19 +207,51 @@ export default function UserRecipientsPage() {
 
       <div className="space-y-2">
         <Label htmlFor="currency">Currency</Label>
-        <select
-          id="currency"
-          value={formData.currency}
-          onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-          className="w-full p-2 border border-gray-300 rounded-md"
-          disabled={isEdit || isSubmitting}
-        >
-          {currencies.map((currency) => (
-            <option key={currency.code} value={currency.code}>
-              {currency.code} - {currency.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowCurrencyDropdown(!showCurrencyDropdown)}
+            disabled={isEdit || isSubmitting}
+            className="w-full p-3 border border-gray-300 rounded-md flex items-center justify-between bg-white hover:border-gray-400 focus:border-novapay-primary focus:ring-1 focus:ring-novapay-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="flex items-center gap-3">
+              {selectedCurrency && (
+                <div
+                  className="w-6 h-4 rounded-sm overflow-hidden"
+                  dangerouslySetInnerHTML={{ __html: selectedCurrency.flag_svg }}
+                />
+              )}
+              <span>
+                {selectedCurrency ? `${selectedCurrency.code} - ${selectedCurrency.name}` : "Select currency"}
+              </span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </button>
+
+          {showCurrencyDropdown && !isEdit && !isSubmitting && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {currencies.map((currency) => (
+                <button
+                  key={currency.code}
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, currency: currency.code })
+                    setShowCurrencyDropdown(false)
+                  }}
+                  className="w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                >
+                  <div
+                    className="w-6 h-4 rounded-sm overflow-hidden"
+                    dangerouslySetInnerHTML={{ __html: currency.flag_svg }}
+                  />
+                  <span>
+                    {currency.code} - {currency.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <Button
@@ -267,25 +302,18 @@ export default function UserRecipientsPage() {
 
           {/* Currency Filter Dropdown */}
           <div className="min-w-[200px]">
-            <div className="relative">
-              <select
-                value={currencyFilter}
-                onChange={(e) => setCurrencyFilter(e.target.value)}
-                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary text-gray-700 appearance-none"
-              >
-                <option value="All">All Currencies</option>
-                {currencies.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.code} - {currency.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
-              </div>
-            </div>
+            <select
+              value={currencyFilter}
+              onChange={(e) => setCurrencyFilter(e.target.value)}
+              className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-novapay-primary focus:ring-novapay-primary text-gray-700"
+            >
+              <option value="All">All Currencies</option>
+              {currencies.map((currency) => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.code} - {currency.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -308,26 +336,15 @@ export default function UserRecipientsPage() {
                           .join("")
                           .toUpperCase()}
                       </span>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden border border-white">
-                        <img
-                          src={getCurrencyFlag(recipient.currency) || "/placeholder.svg"}
-                          alt={`${recipient.currency} flag`}
-                          className="w-full h-full object-cover"
+                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: getCurrencyFlag(recipient.currency) }}
+                          className="w-full h-full"
                         />
                       </div>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{recipient.full_name}</p>
-                        <div className="flex items-center bg-gray-100 px-2 py-0.5 rounded-md">
-                          <img
-                            src={getCurrencyFlag(recipient.currency) || "/placeholder.svg"}
-                            alt={`${recipient.currency} flag`}
-                            className="w-4 h-3 mr-1 object-cover rounded-sm"
-                          />
-                          <span className="text-xs font-medium">{recipient.currency}</span>
-                        </div>
-                      </div>
+                      <p className="font-medium text-gray-900">{recipient.full_name}</p>
                       <p className="text-sm text-gray-500">
                         {recipient.bank_name} - {recipient.account_number}
                       </p>
