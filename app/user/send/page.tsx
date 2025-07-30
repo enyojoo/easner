@@ -730,7 +730,10 @@ export default function UserSendPage() {
                         <div className="flex items-center gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
-                              {formatCurrency(receiveAmount, receiveCurrency)}
+                              {receiveAmount.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </div>
                           </div>
                           <div className="flex-shrink-0">
