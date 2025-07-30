@@ -5,6 +5,7 @@ interface AdminData {
   transactions: any[]
   currencies: any[]
   exchangeRates: any[]
+  baseCurrency: string
   stats: {
     totalUsers: number
     activeUsers: number
@@ -61,14 +62,15 @@ class AdminDataStore {
 
     try {
       // Load all data in parallel
-      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult] = await Promise.all([
+      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrency] = await Promise.all([
         this.loadUsers(),
         this.loadTransactions(),
         this.loadCurrencies(),
         this.loadExchangeRates(),
+        this.getAdminBaseCurrency(),
       ])
 
-      const stats = await this.calculateStats(usersResult, transactionsResult)
+      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
@@ -77,6 +79,7 @@ class AdminDataStore {
         transactions: transactionsResult,
         currencies: currenciesResult,
         exchangeRates: exchangeRatesResult,
+        baseCurrency,
         stats,
         recentActivity,
         currencyPairs,
@@ -172,7 +175,7 @@ class AdminDataStore {
     return data || []
   }
 
-  private async calculateStats(users: any[], transactions: any[]) {
+  private async calculateStats(users: any[], transactions: any[], baseCurrency: string) {
     const totalUsers = users.length
     const activeUsers = users.filter((u) => u.status === "active").length
     const verifiedUsers = users.filter((u) => u.verification_status === "verified").length
@@ -180,12 +183,9 @@ class AdminDataStore {
     const totalTransactions = transactions.length
     const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
 
-    // Get admin base currency from system settings (default to NGN)
-    const adminBaseCurrency = await this.getAdminBaseCurrency()
-
     // Calculate total volume in admin's base currency
     const completedTransactions = transactions.filter((t) => t.status === "completed")
-    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, adminBaseCurrency)
+    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency)
 
     return {
       totalUsers,
@@ -199,11 +199,7 @@ class AdminDataStore {
 
   private async getAdminBaseCurrency(): Promise<string> {
     try {
-      const { data, error } = await supabase
-        .from("system_settings")
-        .select("value")
-        .eq("key", "admin_base_currency")
-        .single()
+      const { data, error } = await supabase.from("system_settings").select("value").eq("key", "base_currency").single()
 
       if (error || !data) return "NGN" // Default to NGN
       return data.value
@@ -402,6 +398,8 @@ class AdminDataStore {
       NGN: "₦",
       RUB: "₽",
       USD: "$",
+      EUR: "€",
+      GBP: "£",
     }
     return `${symbols[currency] || ""}${amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -436,7 +434,7 @@ class AdminDataStore {
         this.data.transactions = this.data.transactions.map((tx) =>
           tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
         )
-        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.data.recentActivity = this.processRecentActivity(this.data.transactions.slice(0, 10))
         this.notify()
       }
@@ -454,7 +452,7 @@ class AdminDataStore {
       // Update local data
       if (this.data) {
         this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
-        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.notify()
       }
     } catch (error) {
@@ -473,7 +471,7 @@ class AdminDataStore {
         this.data.users = this.data.users.map((user) =>
           user.id === userId ? { ...user, verification_status: newStatus } : user,
         )
-        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.notify()
       }
     } catch (error) {
@@ -592,6 +590,15 @@ class AdminDataStore {
       }
     } catch (error) {
       throw error
+    }
+  }
+
+  // Method to refresh data when base currency changes
+  async refreshDataForBaseCurrencyChange() {
+    try {
+      await this.loadData()
+    } catch (error) {
+      console.error("Error refreshing data for base currency change:", error)
     }
   }
 

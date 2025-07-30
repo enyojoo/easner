@@ -30,6 +30,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { supabase } from "@/lib/supabase"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 interface SystemSetting {
   id: string
@@ -278,6 +279,11 @@ export default function AdminSettingsPage() {
 
       const settingKey = key === "baseCurrency" ? "base_currency" : key.replace(/([A-Z])/g, "_$1").toLowerCase()
       await updateSystemSetting(settingKey, value, typeof value === "boolean" ? "boolean" : "string")
+
+      // If base currency changed, refresh admin data store
+      if (key === "baseCurrency") {
+        await adminDataStore.refreshDataForBaseCurrencyChange()
+      }
     } catch (error) {
       console.error("Error updating platform config:", error)
       // Revert the change if it failed
@@ -1385,7 +1391,9 @@ export default function AdminSettingsPage() {
                               <Label htmlFor="editTemplateType">Template Type *</Label>
                               <Select
                                 value={editingTemplate.template_type}
-                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
+                                onValueChange={(value) =>
+                                  setEditingTemplate({ ...editingTemplate, template_type: value })
+                                }
                               >
                                 <SelectTrigger>
                                   <SelectValue />

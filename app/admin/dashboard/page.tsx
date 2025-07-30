@@ -24,13 +24,16 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const formatCurrency = (amount: number, currency = "NGN") => {
+  const formatCurrency = (amount: number, currency?: string) => {
+    const baseCurrency = data?.baseCurrency || currency || "NGN"
     const symbols: { [key: string]: string } = {
       NGN: "₦",
       RUB: "₽",
       USD: "$",
+      EUR: "€",
+      GBP: "£",
     }
-    return `${symbols[currency] || ""}${amount.toLocaleString("en-US", {
+    return `${symbols[baseCurrency] || ""}${amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`
@@ -66,7 +69,10 @@ export default function AdminDashboardPage() {
               <TrendingUp className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{formatCurrency(data?.stats.totalVolume || 0)}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrency(data?.stats.totalVolume || 0, data?.baseCurrency)}
+              </div>
+              {data?.baseCurrency && <p className="text-xs text-gray-500 mt-1">in {data.baseCurrency}</p>}
             </CardContent>
           </Card>
 
