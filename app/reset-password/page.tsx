@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,34 +11,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { ArrowLeft, Lock, Eye, EyeOff } from "lucide-react"
-import { supabase } from "@/lib/supabase"
 
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [isValidSession, setIsValidSession] = useState(false)
+  const [email, setEmail] = useState("")
+  const [resetToken, setResetToken] = useState("")
 
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if user has a valid session from the reset link
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (session) {
-        setIsValidSession(true)
-      } else {
-        setError("Invalid or expired reset link. Please request a new password reset.")
-      }
+    // Get reset token and email from session storage
+    const token = sessionStorage.getItem("reset-token")
+    const userEmail = sessionStorage.getItem("reset-email")
+
+    if (!token || !userEmail) {
+      setError("Invalid reset session. Please start the password reset process again.")
+      return
     }
 
-    checkSession()
+    setResetToken(token)
+    setEmail(userEmail)
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,16 +56,28 @@ function ResetPasswordForm() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          resetToken,
+          email,
+          newPassword: password,
+        }),
       })
 
-      if (error) {
-        setError(error.message)
-      } else {
-        // Sign out after password reset for security
-        await supabase.auth.signOut()
+      const data = await response.json()
+
+      if (response.ok) {
+        // Clear session storage
+        sessionStorage.removeItem("reset-token")
+        sessionStorage.removeItem("reset-email")
+
         router.push("/login?message=Password updated successfully. Please sign in with your new password.")
+      } else {
+        setError(data.error || "Failed to update password")
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
@@ -77,7 +86,7 @@ function ResetPasswordForm() {
     }
   }
 
-  if (!isValidSession && error) {
+  if (!resetToken || !email) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
         <div className="w-full max-w-md">
@@ -88,7 +97,9 @@ function ResetPasswordForm() {
           <Card>
             <CardContent className="pt-6">
               <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  Invalid reset session. Please start the password reset process again.
+                </AlertDescription>
               </Alert>
 
               <div className="text-center">
@@ -96,7 +107,7 @@ function ResetPasswordForm() {
                   href="/forgot-password"
                   className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
                 >
-                  Request New Reset Link
+                  Start Password Reset
                 </Link>
               </div>
             </CardContent>
@@ -119,7 +130,7 @@ function ResetPasswordForm() {
               <Lock className="h-5 w-5 text-novapay-primary" />
               Reset Password
             </CardTitle>
-            <CardDescription>Enter your new password below</CardDescription>
+            <CardDescription>Enter your new password for {email}</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
@@ -180,7 +191,7 @@ function ResetPasswordForm() {
               <Button
                 type="submit"
                 className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-                disabled={isLoading || !isValidSession}
+                disabled={isLoading}
               >
                 {isLoading ? "Updating..." : "Update Password"}
               </Button>
@@ -199,28 +210,5 @@ function ResetPasswordForm() {
         </Card>
       </div>
     </div>
-  )
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
-          <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <BrandLogo size="lg" className="mx-auto mb-4" />
-            </div>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">Loading...</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      }
-    >
-      <ResetPasswordForm />
-    </Suspense>
   )
 }

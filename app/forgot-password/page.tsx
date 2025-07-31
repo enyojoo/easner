@@ -3,21 +3,27 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { ArrowLeft, Mail } from "lucide-react"
+import { ArrowLeft, Mail, Shield } from "lucide-react"
 
 export default function ForgotPasswordPage() {
+  const [step, setStep] = useState<"email" | "otp">("email")
   const [email, setEmail] = useState("")
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [resendCooldown, setResendCooldown] = useState(0)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const router = useRouter()
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
@@ -35,7 +41,9 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setMessage(data.message)
+        setStep("otp")
+        setMessage("We've sent a 6-digit code to your email address.")
+        startResendCooldown()
       } else {
         setError(data.error || "An error occurred")
       }
@@ -44,6 +52,107 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return
+
+    const newOtp = [...otp]
+    newOtp[index] = value
+
+    setOtp(newOtp)
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`)
+      nextInput?.focus()
+    }
+  }
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`)
+      prevInput?.focus()
+    }
+  }
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const otpCode = otp.join("")
+
+    if (otpCode.length !== 6) {
+      setError("Please enter all 6 digits")
+      return
+    }
+
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/verify-reset-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp: otpCode }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Store reset token and redirect to reset password page
+        sessionStorage.setItem("reset-token", data.resetToken)
+        sessionStorage.setItem("reset-email", email)
+        router.push("/reset-password")
+      } else {
+        setError(data.error || "Invalid code. Please try again.")
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return
+
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      if (response.ok) {
+        setMessage("New code sent to your email address.")
+        startResendCooldown()
+      } else {
+        setError("Failed to resend code. Please try again.")
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const startResendCooldown = () => {
+    setResendCooldown(60)
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
   }
 
   return (
@@ -56,11 +165,22 @@ export default function ForgotPasswordPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-novapay-primary" />
-              Forgot Password
+              {step === "email" ? (
+                <>
+                  <Mail className="h-5 w-5 text-novapay-primary" />
+                  Forgot Password
+                </>
+              ) : (
+                <>
+                  <Shield className="h-5 w-5 text-novapay-primary" />
+                  Enter Verification Code
+                </>
+              )}
             </CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you instructions to reset your password.
+              {step === "email"
+                ? "Enter your email address and we'll send you a verification code."
+                : `We've sent a 6-digit code to ${email}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -76,37 +196,90 @@ export default function ForgotPasswordPage() {
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+            {step === "email" ? (
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-                disabled={isLoading}
-              >
-                {isLoading ? "Sending..." : "Send Reset Instructions"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Verification Code"}
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleOtpSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Enter 6-digit code</Label>
+                  <div className="flex gap-2 justify-center">
+                    {otp.map((digit, index) => (
+                      <Input
+                        key={index}
+                        id={`otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        className="w-12 h-12 text-center text-lg font-semibold"
+                        disabled={isLoading}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  disabled={isLoading || otp.join("").length !== 6}
+                >
+                  {isLoading ? "Verifying..." : "Verify Code"}
+                </Button>
+
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0 || isLoading}
+                    className="text-sm text-novapay-primary hover:text-novapay-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className="mt-6 flex flex-col gap-2 text-center text-sm">
-              <Link
-                href="/login"
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === "otp") {
+                    setStep("email")
+                    setOtp(["", "", "", "", "", ""])
+                    setError("")
+                    setMessage("")
+                  } else {
+                    router.push("/login")
+                  }
+                }}
                 className="inline-flex items-center justify-center gap-2 text-novapay-primary hover:text-novapay-primary-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Sign In
-              </Link>
+                {step === "otp" ? "Change Email" : "Back to Sign In"}
+              </button>
               <div className="text-gray-600">
                 Don't have an account?{" "}
                 <Link

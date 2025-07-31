@@ -39,7 +39,7 @@
     "@radix-ui/react-tooltip": "1.1.6",
     "@supabase/supabase-js": "latest",
     "autoprefixer": "^10.4.20",
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
