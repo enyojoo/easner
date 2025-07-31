@@ -1,42 +1,51 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+"use client"
 
-export class SessionManager {
-  private static inactivityTimeout = 60 * 60 * 1000 // 60 minutes
+class SessionManager {
+  private inactivityTimer: NodeJS.Timeout | null = null
+  private readonly INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
+  private onExpiry?: () => void
 
-  static async getSession() {
-    try {
-      const cookieStore = cookies()
-      const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  constructor(onExpiry?: () => void) {
+    this.onExpiry = onExpiry
+    this.setupActivityListeners()
+  }
 
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession()
+  private setupActivityListeners() {
+    if (typeof window === "undefined") return
 
-      if (error || !session) {
-        return null
-      }
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
 
-      return session
-    } catch (error) {
-      console.error("Session validation error:", error)
-      return null
+    const handleActivity = () => {
+      this.resetTimer()
+    }
+
+    events.forEach((event) => {
+      document.addEventListener(event, handleActivity, true)
+    })
+  }
+
+  resetTimer() {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer)
+    }
+
+    this.inactivityTimer = setTimeout(() => {
+      this.handleExpiry()
+    }, this.INACTIVITY_TIMEOUT)
+  }
+
+  private handleExpiry() {
+    if (this.onExpiry) {
+      this.onExpiry()
     }
   }
 
-  static async isValidSession(): Promise<boolean> {
-    const session = await this.getSession()
-    return session !== null
-  }
-
-  static async destroySession(): Promise<void> {
-    try {
-      const cookieStore = cookies()
-      const supabase = createServerComponentClient({ cookies: () => cookieStore })
-      await supabase.auth.signOut()
-    } catch (error) {
-      console.error("Error destroying session:", error)
+  cleanup() {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer)
+      this.inactivityTimer = null
     }
   }
 }
+
+export const sessionManager = new SessionManager()

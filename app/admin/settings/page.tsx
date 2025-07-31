@@ -1,14 +1,16 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
-import { QrCode, Building2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { QrCode, Building2, Save, Shield, Bell, Globe } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { adminDataStore } from "@/lib/admin-data-store"
 import { AuthGuard } from "@/components/auth-guard"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 
 interface SystemSetting {
   id: string
@@ -102,8 +104,8 @@ export default function AdminSettingsPage() {
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null)
   const [editingQrCodeFile, setEditingQrCodeFile] = useState<File | null>(null)
   const [uploadingQrCode, setUploadingQrCode] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const editFileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useState<HTMLInputElement | null>(null)
+  const editFileInputRef = useState<HTMLInputElement | null>(null)
 
   // Platform configuration derived from system settings
   const [platformConfig, setPlatformConfig] = useState({
@@ -130,13 +132,17 @@ export default function AdminSettingsPage() {
 
   const [settings, setSettings] = useState({
     siteName: "NovaPay",
-    supportEmail: "support@novapay.com",
+    siteDescription: "Fast, secure, and reliable money transfers",
     maintenanceMode: false,
-    maxTransactionLimit: 1000000,
-    announcement: "",
+    registrationEnabled: true,
+    emailNotifications: true,
+    smsNotifications: false,
+    maxTransactionAmount: "1000000",
+    minTransactionAmount: "100",
+    transactionFeePercentage: "1.5",
   })
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Save settings logic here
     console.log("Saving settings:", settings)
   }
@@ -205,10 +211,25 @@ export default function AdminSettingsPage() {
             newSettings.supportEmail = setting.value
             break
           case "max_transaction_limit":
-            newSettings.maxTransactionLimit = Number.parseInt(setting.value)
+            newSettings.maxTransactionAmount = setting.value
             break
           case "announcement":
             newSettings.announcement = setting.value
+            break
+          case "site_description":
+            newSettings.siteDescription = setting.value
+            break
+          case "email_notifications":
+            newSettings.emailNotifications = setting.value === "true"
+            break
+          case "sms_notifications":
+            newSettings.smsNotifications = setting.value === "true"
+            break
+          case "min_transaction_amount":
+            newSettings.minTransactionAmount = setting.value
+            break
+          case "transaction_fee_percentage":
+            newSettings.transactionFeePercentage = setting.value
             break
         }
       })
@@ -724,60 +745,174 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const handleSettingChange = (key: string, value: any) => {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }))
+  }
+
   return (
     <AuthGuard requireAdmin>
       <AdminDashboardLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">System Settings</h1>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+              <p className="text-gray-600">Configure platform settings and preferences</p>
+            </div>
+            <Button onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Site Name</label>
-                <Input
-                  value={settings.siteName}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, siteName: e.target.value }))}
-                />
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  General Settings
+                </CardTitle>
+                <CardDescription>Basic platform configuration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="siteName">Site Name</Label>
+                  <Input
+                    id="siteName"
+                    value={settings.siteName}
+                    onChange={(e) => handleSettingChange("siteName", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="siteDescription">Site Description</Label>
+                  <Textarea
+                    id="siteDescription"
+                    value={settings.siteDescription}
+                    onChange={(e) => handleSettingChange("siteDescription", e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Maintenance Mode</Label>
+                    <p className="text-sm text-gray-500">Temporarily disable the platform</p>
+                  </div>
+                  <Switch
+                    checked={settings.maintenanceMode}
+                    onCheckedChange={(checked) => handleSettingChange("maintenanceMode", checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>User Registration</Label>
+                    <p className="text-sm text-gray-500">Allow new user registrations</p>
+                  </div>
+                  <Switch
+                    checked={settings.registrationEnabled}
+                    onCheckedChange={(checked) => handleSettingChange("registrationEnabled", checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Support Email</label>
-                <Input
-                  type="email"
-                  value={settings.supportEmail}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, supportEmail: e.target.value }))}
-                />
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notification Settings
+                </CardTitle>
+                <CardDescription>Configure notification preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Email Notifications</Label>
+                    <p className="text-sm text-gray-500">Send email notifications to users</p>
+                  </div>
+                  <Switch
+                    checked={settings.emailNotifications}
+                    onCheckedChange={(checked) => handleSettingChange("emailNotifications", checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>SMS Notifications</Label>
+                    <p className="text-sm text-gray-500">Send SMS notifications to users</p>
+                  </div>
+                  <Switch
+                    checked={settings.smsNotifications}
+                    onCheckedChange={(checked) => handleSettingChange("smsNotifications", checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Max Transaction Limit (NGN)</label>
-                <Input
-                  type="number"
-                  value={settings.maxTransactionLimit}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, maxTransactionLimit: Number(e.target.value) }))}
-                />
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Transaction Settings
+                </CardTitle>
+                <CardDescription>Configure transaction limits and fees</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="minAmount">Minimum Transaction Amount (NGN)</Label>
+                  <Input
+                    id="minAmount"
+                    type="number"
+                    value={settings.minTransactionAmount}
+                    onChange={(e) => handleSettingChange("minTransactionAmount", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxAmount">Maximum Transaction Amount (NGN)</Label>
+                  <Input
+                    id="maxAmount"
+                    type="number"
+                    value={settings.maxTransactionAmount}
+                    onChange={(e) => handleSettingChange("maxTransactionAmount", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="feePercentage">Transaction Fee (%)</Label>
+                  <Input
+                    id="feePercentage"
+                    type="number"
+                    step="0.1"
+                    value={settings.transactionFeePercentage}
+                    onChange={(e) => handleSettingChange("transactionFeePercentage", e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">System Announcement</label>
-                <Textarea
-                  value={settings.announcement}
-                  onChange={(e) => setSettings((prev) => ({ ...prev, announcement: e.target.value }))}
-                  placeholder="Enter system-wide announcement..."
-                />
-              </div>
-
-              <Button onClick={handleSave} className="w-full">
-                Save Settings
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Payment Methods Section */}
-          {/* Email Templates Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>System Information</CardTitle>
+                <CardDescription>Platform status and information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between">
+                  <span>Platform Version</span>
+                  <span className="font-medium">v1.0.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Database Status</span>
+                  <span className="text-green-600 font-medium">Connected</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Last Backup</span>
+                  <span className="font-medium">2 hours ago</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Uptime</span>
+                  <span className="font-medium">99.9%</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </AdminDashboardLayout>
     </AuthGuard>

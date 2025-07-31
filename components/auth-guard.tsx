@@ -18,11 +18,13 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
+        // Not authenticated, redirect to appropriate login
         router.push(requireAdmin ? "/admin/login" : "/login")
         return
       }
 
       if (requireAdmin && !isAdmin) {
+        // User is authenticated but not admin, redirect to login
         router.push("/login")
         return
       }
@@ -31,8 +33,8 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
       </div>
     )
   }
