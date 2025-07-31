@@ -80,7 +80,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-gray-900">Welcome back</CardTitle>
-            <CardDescription className="text-gray-600">Sign in to your Novapay account</CardDescription>
+            <CardDescription className="text-gray-600">Sign in to your NOVAMONEY account</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (

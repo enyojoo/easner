@@ -25,7 +25,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-700 leading-relaxed">
-              By accessing and using Novapay's money transfer services, you accept and agree to be bound by the terms
+              By accessing and using NOVAMONEY's money transfer services, you accept and agree to be bound by the terms
               and provision of this agreement. If you do not agree to abide by the above, please do not use this
               service.
             </p>
@@ -34,8 +34,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Service Description</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Novapay provides international money transfer services that allow users to send money across borders. Our
-              services include:
+              NOVAMONEY provides international money transfer services that allow users to send money across borders.
+              Our services include:
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-2">
               <li>International money transfers</li>
@@ -85,7 +85,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Limitation of Liability</h2>
             <p className="text-gray-700 leading-relaxed">
-              Novapay shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
+              NOVAMONEY shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
               including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting
               from your use of the service.
             </p>
@@ -110,8 +110,8 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">10. Contact Information</h2>
             <p className="text-gray-700 leading-relaxed">
-              If you have any questions about these Terms of Service, please contact us at legal@novapay.com or through
-              our customer support channels.
+              If you have any questions about these Terms of Service, please contact us at legal@novamoney.net or
+              through our customer support channels.
             </p>
           </section>
         </div>

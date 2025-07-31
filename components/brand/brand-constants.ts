@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: "NovaPay",
+  name: "NOVAMONEY",
   tagline: "Send Money Instantly",
   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
   logo: "https://cldup.com/2AU2HSUjXc.svg",

@@ -16,27 +16,41 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("email", email)
       .eq("otp", otp)
+      .eq("used", false)
       .single()
 
     if (otpError || !otpRecord) {
-      return NextResponse.json({ error: "Invalid or expired code" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 })
     }
 
     // Check if OTP is expired
-    if (new Date() > new Date(otpRecord.expires_at)) {
-      // Delete expired OTP
-      await supabase.from("password_reset_otps").delete().eq("id", otpRecord.id)
-      return NextResponse.json({ error: "Code has expired. Please request a new one." }, { status: 400 })
+    const now = new Date()
+    const expiresAt = new Date(otpRecord.expires_at)
+
+    if (now > expiresAt) {
+      return NextResponse.json({ error: "Verification code has expired" }, { status: 400 })
+    }
+
+    // Mark OTP as used
+    const { error: updateError } = await supabase
+      .from("password_reset_otps")
+      .update({ used: true })
+      .eq("email", email)
+      .eq("otp", otp)
+
+    if (updateError) {
+      console.error("Error updating OTP:", updateError)
+      return NextResponse.json({ error: "Failed to verify code" }, { status: 500 })
     }
 
     // Generate reset token
-    const resetToken = jwt.sign({ email, purpose: "password_reset" }, process.env.JWT_SECRET!, { expiresIn: "15m" })
-
-    // Delete used OTP
-    await supabase.from("password_reset_otps").delete().eq("id", otpRecord.id)
+    const resetToken = jwt.sign(
+      { email, purpose: "password_reset", exp: Math.floor(Date.now() / 1000) + 15 * 60 }, // 15 minutes
+      process.env.JWT_SECRET!,
+    )
 
     return NextResponse.json({
-      message: "Code verified successfully",
+      message: "Verification code verified successfully",
       resetToken,
     })
   } catch (error) {

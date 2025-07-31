@@ -134,7 +134,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-4">11. Contact Us</h2>
             <p className="text-gray-700 leading-relaxed">
-              If you have any questions about this Privacy Policy, please contact us at privacy@novapay.com or through
+              If you have any questions about this Privacy Policy, please contact us at privacy@novamoney.net or through
               our customer support channels.
             </p>
           </section>

@@ -10,7 +10,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "NOVAPAY - Send Money Instantly",
+  title: "NOVAMONEY - Send Money Instantly",
   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
   icons: {
     icon: "/favicon.png",
