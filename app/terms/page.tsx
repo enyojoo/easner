@@ -1,129 +1,123 @@
-"use client"
-
 import Link from "next/link"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { ArrowLeft, FileText } from "lucide-react"
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 to-white">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="text-center mb-8">
-          <BrandLogo size="lg" className="mx-auto mb-4" />
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Registration
-          </Link>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <BrandLogo size="md" />
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Registration
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Terms of Service</h1>
+          <p className="text-gray-600 mt-2">Last updated: {new Date().toLocaleDateString()}</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <FileText className="h-6 w-6 text-novapay-primary" />
-              Terms of Service
-            </CardTitle>
-            <p className="text-gray-600">Last updated: January 2024</p>
-          </CardHeader>
-          <CardContent className="prose prose-gray max-w-none">
-            <div className="space-y-6">
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  By accessing and using NovaPay's services, you accept and agree to be bound by the terms and provision
-                  of this agreement. If you do not agree to abide by the above, please do not use this service.
-                </p>
-              </section>
+        <div className="bg-white rounded-lg shadow-sm p-8 space-y-8">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
+            <p className="text-gray-700 leading-relaxed">
+              By accessing and using NovaPay's money transfer services, you accept and agree to be bound by the terms
+              and provision of this agreement. If you do not agree to abide by the above, please do not use this
+              service.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">2. Service Description</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  NovaPay provides international money transfer services, allowing users to send money across borders
-                  securely and efficiently. Our services include currency conversion, recipient management, and
-                  transaction tracking.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Service Description</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              NovaPay provides international money transfer services that allow users to send money across borders. Our
+              services include:
+            </p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+              <li>International money transfers</li>
+              <li>Currency conversion services</li>
+              <li>Transaction tracking and notifications</li>
+              <li>Customer support services</li>
+            </ul>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">3. User Responsibilities</h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>Provide accurate and complete information during registration</li>
-                  <li>Maintain the confidentiality of your account credentials</li>
-                  <li>Comply with all applicable laws and regulations</li>
-                  <li>Use the service only for legitimate purposes</li>
-                  <li>Notify us immediately of any unauthorized use of your account</li>
-                </ul>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">3. User Responsibilities</h2>
+            <p className="text-gray-700 leading-relaxed mb-4">As a user of NovaPay services, you agree to:</p>
+            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
+              <li>Provide accurate and complete information</li>
+              <li>Comply with all applicable laws and regulations</li>
+              <li>Not use the service for illegal activities</li>
+              <li>Maintain the security of your account credentials</li>
+              <li>Report any suspicious activities immediately</li>
+            </ul>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">4. Transaction Limits and Fees</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  Transaction limits and fees are subject to change and will be clearly displayed before you complete
-                  any transaction. We reserve the right to modify our fee structure with appropriate notice to users.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">4. Fees and Charges</h2>
+            <p className="text-gray-700 leading-relaxed">
+              NovaPay charges fees for money transfer services. All applicable fees will be clearly displayed before you
+              complete any transaction. Fees may vary based on the destination country, transfer amount, and payment
+              method selected.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">5. Prohibited Activities</h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>Money laundering or terrorist financing</li>
-                  <li>Fraudulent or illegal activities</li>
-                  <li>Violation of any applicable laws or regulations</li>
-                  <li>Sending money to sanctioned countries or individuals</li>
-                  <li>Using the service for commercial purposes without authorization</li>
-                </ul>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">5. Transaction Limits</h2>
+            <p className="text-gray-700 leading-relaxed">
+              Transaction limits may apply based on your verification level, destination country, and regulatory
+              requirements. These limits are in place to ensure compliance with anti-money laundering (AML) and know
+              your customer (KYC) regulations.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">6. Account Suspension and Termination</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  We reserve the right to suspend or terminate your account at any time if we suspect fraudulent
-                  activity, violation of these terms, or for any other reason we deem necessary to protect our service
-                  and users.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Privacy and Data Protection</h2>
+            <p className="text-gray-700 leading-relaxed">
+              Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and
+              protect your personal information. By using our services, you consent to the collection and use of your
+              information as described in our Privacy Policy.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">7. Limitation of Liability</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  NovaPay shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
-                  including without limitation, loss of profits, data, use, goodwill, or other intangible losses.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Limitation of Liability</h2>
+            <p className="text-gray-700 leading-relaxed">
+              NovaPay shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
+              including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting
+              from your use of the service.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">8. Privacy and Data Protection</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the
-                  service, to understand our practices regarding the collection and use of your personal information.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Termination</h2>
+            <p className="text-gray-700 leading-relaxed">
+              We may terminate or suspend your account and bar access to the service immediately, without prior notice
+              or liability, under our sole discretion, for any reason whatsoever and without limitation, including but
+              not limited to a breach of the Terms.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">9. Changes to Terms</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  We reserve the right to modify these terms at any time. We will notify users of any material changes
-                  via email or through our platform. Continued use of the service after such modifications constitutes
-                  acceptance of the new terms.
-                </p>
-              </section>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Changes to Terms</h2>
+            <p className="text-gray-700 leading-relaxed">
+              We reserve the right to modify or replace these Terms at any time. If a revision is material, we will
+              provide at least 30 days notice prior to any new terms taking effect.
+            </p>
+          </section>
 
-              <section>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">10. Contact Information</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  If you have any questions about these Terms of Service, please contact us at:
-                  <br />
-                  Email: legal@novapay.com
-                  <br />
-                  Address: [Your Business Address]
-                </p>
-              </section>
-            </div>
-          </CardContent>
-        </Card>
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">10. Contact Information</h2>
+            <p className="text-gray-700 leading-relaxed">
+              If you have any questions about these Terms of Service, please contact us at legal@novapay.com or through
+              our customer support channels.
+            </p>
+          </section>
+        </div>
       </div>
     </div>
   )

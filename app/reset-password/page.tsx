@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { BrandLogo } from "@/components/brand/brand-logo"
 import { ArrowLeft, Lock, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -199,5 +199,28 @@ export default function ResetPasswordPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <BrandLogo size="lg" className="mx-auto mb-4" />
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">Loading...</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   )
 }

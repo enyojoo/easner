@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { BrandLogo } from "@/components/brand/brand-logo"
 import { ArrowLeft, Mail } from "lucide-react"
 
 export default function ForgotPasswordPage() {
@@ -35,9 +35,9 @@ export default function ForgotPasswordPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setMessage("Password reset instructions have been sent to your email address.")
+        setMessage(data.message)
       } else {
-        setError(data.error || "Failed to send reset email")
+        setError(data.error || "An error occurred")
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
@@ -49,24 +49,30 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
       <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <BrandLogo size="lg" className="mx-auto mb-4" />
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-novapay-primary" />
               Forgot Password
             </CardTitle>
-            <CardDescription>We'll send you a secure link to reset your password</CardDescription>
+            <CardDescription>
+              Enter your email address and we'll send you instructions to reset your password.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {message && (
-              <Alert className="mb-4 border-green-200 bg-green-50">
-                <AlertDescription className="text-green-800">{message}</AlertDescription>
-              </Alert>
-            )}
-
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {message && (
+              <Alert className="mb-4 border-green-200 bg-green-50">
+                <AlertDescription className="text-green-800">{message}</AlertDescription>
               </Alert>
             )}
 
@@ -81,7 +87,6 @@ export default function ForgotPasswordPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="w-full"
                 />
               </div>
 
@@ -94,21 +99,23 @@ export default function ForgotPasswordPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 flex flex-col gap-2 text-center text-sm">
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                className="inline-flex items-center justify-center gap-2 text-novapay-primary hover:text-novapay-primary-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
               </Link>
-            </div>
-
-            <div className="mt-4 text-center text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link href="/register" className="text-novapay-primary hover:text-novapay-primary-600 font-medium">
-                Sign up
-              </Link>
+              <div className="text-gray-600">
+                Don't have an account?{" "}
+                <Link
+                  href="/register"
+                  className="text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                >
+                  Sign up
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>
