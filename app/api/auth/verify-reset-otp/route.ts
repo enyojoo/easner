@@ -12,47 +12,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and OTP are required" }, { status: 400 })
     }
 
-    console.log("Verifying OTP for email:", email, "OTP:", otp)
+    console.log("Verifying Supabase OTP for email:", email, "OTP:", otp)
 
-    // Verify OTP from our database
-    const { data: otpRecord, error: otpError } = await supabase
-      .from("password_reset_otps")
-      .select("*")
-      .eq("email", email)
-      .eq("otp", otp)
-      .eq("used", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
+    // Verify the OTP directly with Supabase Auth
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email,
+      token: otp,
+      type: "recovery",
+    })
 
-    console.log("OTP record found:", otpRecord)
+    if (error) {
+      console.error("Supabase OTP verification error:", error)
+      return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 })
+    }
 
-    if (otpError || !otpRecord) {
-      console.log("OTP not found or error:", otpError)
+    if (!data.user) {
       return NextResponse.json({ error: "Invalid verification code" }, { status: 400 })
     }
 
-    // Check if OTP is expired
-    const now = new Date()
-    const expiresAt = new Date(otpRecord.expires_at)
+    console.log("Supabase OTP verified successfully for:", email)
 
-    if (now > expiresAt) {
-      console.log("OTP expired")
-      return NextResponse.json({ error: "Verification code has expired" }, { status: 400 })
-    }
-
-    // Mark OTP as used
-    const { error: updateError } = await supabase
-      .from("password_reset_otps")
-      .update({ used: true })
-      .eq("id", otpRecord.id)
-
-    if (updateError) {
-      console.error("Error updating OTP:", updateError)
-      return NextResponse.json({ error: "Failed to verify code" }, { status: 500 })
-    }
-
-    // Generate reset token
+    // Generate reset token for our password reset page
     const resetToken = jwt.sign(
       {
         email,
@@ -61,8 +41,6 @@ export async function POST(request: NextRequest) {
       },
       process.env.JWT_SECRET!,
     )
-
-    console.log("Generated reset token for:", email)
 
     return NextResponse.json({
       message: "Verification code verified successfully",
