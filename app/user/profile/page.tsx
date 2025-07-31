@@ -23,6 +23,7 @@ export default function UserProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
   const [userStats, setUserStats] = useState({
     totalTransactions: 0,
     totalSent: 0,
@@ -162,7 +163,7 @@ export default function UserProfilePage() {
       return
     }
 
-    setLoading(true)
+    setPasswordLoading(true)
     try {
       // Update password using Supabase Auth
       const { error } = await supabase.auth.updateUser({
@@ -178,7 +179,7 @@ export default function UserProfilePage() {
       console.error("Error updating password:", error)
       alert("Failed to update password. Please try again.")
     } finally {
-      setLoading(false)
+      setPasswordLoading(false)
     }
   }
 
@@ -387,8 +388,9 @@ export default function UserProfilePage() {
                           type={showNewPassword ? "text" : "password"}
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          disabled={loading}
+                          disabled={passwordLoading}
                           placeholder="Enter new password"
+                          className="pr-10"
                         />
                         <Button
                           type="button"
@@ -396,6 +398,7 @@ export default function UserProfilePage() {
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowNewPassword(!showNewPassword)}
+                          disabled={passwordLoading}
                         >
                           {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -409,8 +412,9 @@ export default function UserProfilePage() {
                           type={showConfirmPassword ? "text" : "password"}
                           value={passwordData.confirmPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                          disabled={loading}
+                          disabled={passwordLoading}
                           placeholder="Confirm new password"
+                          className="pr-10"
                         />
                         <Button
                           type="button"
@@ -418,6 +422,7 @@ export default function UserProfilePage() {
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          disabled={passwordLoading}
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -426,15 +431,15 @@ export default function UserProfilePage() {
                     <div className="flex gap-3">
                       <Button
                         onClick={handlePasswordChange}
-                        disabled={loading || !passwordData.newPassword || !passwordData.confirmPassword}
+                        disabled={passwordLoading || !passwordData.newPassword || !passwordData.confirmPassword}
                         className="bg-novapay-primary hover:bg-novapay-primary-600"
                       >
-                        {loading ? "Updating..." : "Update Password"}
+                        {passwordLoading ? "Updating..." : "Update Password"}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={handleCancelPasswordChange}
-                        disabled={loading}
+                        disabled={passwordLoading}
                         className="bg-transparent"
                       >
                         Cancel
