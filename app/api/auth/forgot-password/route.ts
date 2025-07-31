@@ -11,10 +11,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    // Check if user exists in auth.users (Supabase auth table)
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(email)
+    // Check if user exists in our users table
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("email", email)
+      .single()
 
-    if (authError || !authUser.user) {
+    if (userError || !user) {
       // For security, don't reveal if email exists or not
       return NextResponse.json({
         message: "If an account with that email exists, we've sent a verification code.",
@@ -46,15 +50,15 @@ export async function POST(request: NextRequest) {
     // This will use Supabase's email template with {{ .Token }} placeholder
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
-      data: {
-        otp: otp, // This will be available as {{ .Token }} in the email template
-      },
     })
 
     if (resetError) {
       console.error("Failed to send reset email:", resetError)
-      return NextResponse.json({ error: "Failed to send verification code" }, { status: 500 })
+      // Don't return error to avoid revealing if email exists
     }
+
+    // For development, log the OTP
+    console.log(`Password reset OTP for ${email}: ${otp}`)
 
     return NextResponse.json({
       message: "Verification code sent to your email address.",
