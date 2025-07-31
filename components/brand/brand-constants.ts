@@ -1,12 +1,11 @@
 export const BRAND = {
   name: "NOVAMONEY",
   tagline: "Send Money Instantly",
-  description: "Transfer money between supported currencies with the best exchange rates and zero fees",
-  logo: "https://cldup.com/2AU2HSUjXc.svg",
-  favicon: "/favicon.png",
+  logo: "/logo.svg",
+  website: "https://novamoney.net",
+  supportEmail: "support@novamoney.net",
   colors: {
-    primary: "hsl(207 100% 40%)",
-    primaryHover: "hsl(207 100% 32%)",
+    primary: "#0066cc",
+    secondary: "#004499",
   },
-  font: "Poppins",
-} as const
+}
