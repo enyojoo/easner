@@ -138,10 +138,8 @@ export default function UserProfilePage() {
       }
 
       setIsEditingProfile(false)
-      // alert("Profile updated successfully!")
     } catch (error) {
       console.error("Error updating profile:", error)
-      alert("Failed to update profile. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -154,12 +152,10 @@ export default function UserProfilePage() {
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("Passwords don't match")
       return
     }
 
     if (passwordData.newPassword.length < 6) {
-      alert("Password must be at least 6 characters long")
       return
     }
 
@@ -175,18 +171,13 @@ export default function UserProfilePage() {
         throw error
       }
 
-      alert("Password updated successfully!")
-
       // Reset form and close password change section
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
       setIsChangingPassword(false)
-
-      // Reset visibility states
       setShowNewPassword(false)
       setShowConfirmPassword(false)
     } catch (error) {
       console.error("Error updating password:", error)
-      alert("Failed to update password. Please try again.")
     } finally {
       setPasswordLoading(false)
     }
