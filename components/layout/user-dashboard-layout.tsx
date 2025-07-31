@@ -1,295 +1,203 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, X, MoreHorizontal } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { LayoutDashboard, ArrowLeftRight, Send, Users, User, HelpCircle, LogOut, MoreHorizontal } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode
 }
 
+const navigation = [
+  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Send Money", href: "/user/send", icon: Send },
+  { name: "Transactions", href: "/user/transactions", icon: History },
+  { name: "Recipients", href: "/user/recipients", icon: Users },
+  { name: "Profile", href: "/user/profile", icon: User },
+  { name: "Support", href: "/user/support", icon: HelpCircle },
+]
+
+const bottomNavItems = [
+  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Transactions", href: "/user/transactions", icon: History },
+  { name: "Send Money", href: "/user/send", icon: Send, isPrimary: true },
+  { name: "Recipients", href: "/user/recipients", icon: Users },
+]
+
+const moreMenuItems = [
+  { name: "Profile", href: "/user/profile", icon: User },
+  { name: "Support", href: "/user/support", icon: HelpCircle },
+]
+
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
-  const { user, userProfile, signOut } = useAuth()
-  const router = useRouter()
   const pathname = usePathname()
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false)
+  const { signOut } = useAuth()
 
   const handleLogout = async () => {
-    try {
-      await signOut()
-      router.push("/login")
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
-  }
-
-  const menuItems = [
-    {
-      name: "Dashboard",
-      href: "/user/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Transactions",
-      href: "/user/transactions",
-      icon: ArrowLeftRight,
-    },
-    {
-      name: "Send Money",
-      href: "/user/send",
-      icon: Send,
-    },
-    {
-      name: "Recipients",
-      href: "/user/recipients",
-      icon: Users,
-    },
-  ]
-
-  const moreMenuItems = [
-    {
-      name: "Profile",
-      href: "/user/profile",
-      icon: User,
-    },
-    {
-      name: "Support",
-      href: "/user/support",
-      icon: HelpCircle,
-    },
-  ]
-
-  const isActive = (href: string) => pathname === href
-
-  const getUserInitials = () => {
-    if (userProfile?.first_name && userProfile?.last_name) {
-      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase()
-    }
-    if (user?.email) {
-      return user.email[0].toUpperCase()
-    }
-    return "U"
-  }
-
-  const getUserDisplayName = () => {
-    if (userProfile?.first_name && userProfile?.last_name) {
-      return `${userProfile.first_name} ${userProfile.last_name}`
-    }
-    if (userProfile?.first_name) {
-      return userProfile.first_name
-    }
-    if (user?.email) {
-      return user.email.split("@")[0]
-    }
-    return "User"
+    await signOut()
+    router.push("/login")
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+        </div>
+      )}
+
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 hidden lg:flex ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      >
+        <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center flex-shrink-0 px-4 py-6">
-            <BrandLogo />
+          <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
+            <BrandLogo size="sm" />
+            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 pb-4 space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.href)
-                      ? "bg-novapay-primary text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-novapay-primary-100 text-novapay-primary"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
+                  onClick={() => setSidebarOpen(false)}
                 >
-                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  <item.icon className="mr-3 h-5 w-5" />
                   {item.name}
                 </Link>
               )
             })}
-
-            {moreMenuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive(item.href)
-                      ? "bg-novapay-primary text-white"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  }`}
-                >
-                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
-                </Link>
-              )
-            })}
-
-            <button
-              onClick={handleLogout}
-              className="group flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors"
-            >
-              <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />
-              Logout
-            </button>
           </nav>
-        </div>
-      </div>
 
-      {/* Mobile Top Bar */}
-      <div className="lg:hidden">
-        <div className="flex items-center justify-center h-16 bg-white border-b border-gray-200 px-4">
-          <BrandLogo />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:pl-64">
-        {/* Desktop Header */}
-        <div className="hidden lg:flex lg:items-center lg:justify-between lg:h-16 lg:bg-white lg:border-b lg:border-gray-200 lg:px-6">
-          <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-gray-900">
-              {menuItems.find((item) => isActive(item.href))?.name ||
-                moreMenuItems.find((item) => isActive(item.href))?.name ||
-                "Dashboard"}
-            </h1>
+          {/* Logout */}
+          <div className="px-4 py-4 border-t border-gray-200">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Logout
+            </Button>
           </div>
+        </div>
+      </div>
 
-          <div className="flex items-center space-x-4">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top bar - Desktop only */}
+        <div className="bg-white border-b border-gray-200 px-4 h-16 items-center sm:px-6 lg:px-8 hidden lg:flex">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex-1"></div>
+          </div>
+        </div>
+
+        {/* Mobile Top bar */}
+        <div className="bg-white border-b border-gray-200 px-4 h-16 flex items-center sm:px-6 lg:hidden">
+          <div className="flex items-center justify-center w-full">
+            <BrandLogo size="sm" />
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">{children}</main>
+
+        {/* Bottom Navigation - Mobile/Tablet only */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
+          <div className="flex justify-around items-center py-2 px-2">
+            {bottomNavItems.map((item) => {
+              const isActive = pathname === item.href
+
+              if (item.isPrimary) {
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
+                  >
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+                        isActive ? "bg-novapay-primary" : "bg-novapay-primary"
+                      }`}
+                    >
+                      <item.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-xs text-novapay-primary font-medium">Send</span>
+                  </Link>
+                )
+              }
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
+                >
+                  <item.icon className={`h-5 w-5 mb-1 ${isActive ? "text-novapay-primary" : "text-gray-600"}`} />
+                  <span className={`text-xs ${isActive ? "text-novapay-primary font-medium" : "text-gray-600"}`}>
+                    {item.name}
+                  </span>
+                </Link>
+              )
+            })}
+
+            {/* More Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-novapay-primary text-white text-sm">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
+                <button className="flex flex-col items-center justify-center p-2 min-w-0 flex-1">
+                  <MoreHorizontal
+                    className={`h-5 w-5 mb-1 ${
+                      ["/user/profile", "/user/support"].includes(pathname) ? "text-novapay-primary" : "text-gray-600"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs ${
+                      ["/user/profile", "/user/support"].includes(pathname)
+                        ? "text-novapay-primary font-medium"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    More
+                  </span>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{getUserDisplayName()}</p>
-                    <p className="w-[200px] truncate text-sm text-muted-foreground">{user?.email}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/user/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/user/support">Support</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Page Content */}
-        <main className="flex-1 pb-20 lg:pb-0">{children}</main>
-      </div>
-
-      {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex items-center justify-around">
-          {/* Dashboard */}
-          <Link
-            href="/user/dashboard"
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-              isActive("/user/dashboard") ? "text-novapay-primary" : "text-gray-500"
-            }`}
-          >
-            <LayoutDashboard className="h-6 w-6" />
-          </Link>
-
-          {/* Transactions */}
-          <Link
-            href="/user/transactions"
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-              isActive("/user/transactions") ? "text-novapay-primary" : "text-gray-500"
-            }`}
-          >
-            <ArrowLeftRight className="h-6 w-6" />
-          </Link>
-
-          {/* Send Money - Larger Button */}
-          <Link
-            href="/user/send"
-            className={`flex flex-col items-center justify-center p-3 rounded-full transition-colors ${
-              isActive("/user/send")
-                ? "bg-novapay-primary text-white"
-                : "bg-novapay-primary text-white hover:bg-novapay-primary/90"
-            }`}
-          >
-            <Send className="h-6 w-6" />
-          </Link>
-
-          {/* Recipients */}
-          <Link
-            href="/user/recipients"
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-              isActive("/user/recipients") ? "text-novapay-primary" : "text-gray-500"
-            }`}
-          >
-            <Users className="h-6 w-6" />
-          </Link>
-
-          {/* More Menu */}
-          <DropdownMenu open={moreDropdownOpen} onOpenChange={setMoreDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-                  moreMenuItems.some((item) => isActive(item.href)) || moreDropdownOpen
-                    ? "text-novapay-primary"
-                    : "text-gray-500"
-                }`}
-              >
-                <MoreHorizontal className="h-6 w-6" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="end" className="w-48 mb-2">
-              {moreMenuItems.map((item) => {
-                const Icon = item.icon
-                return (
+              <DropdownMenuContent align="end" side="top" className="mb-2">
+                {moreMenuItems.map((item) => (
                   <DropdownMenuItem key={item.name} asChild>
                     <Link href={item.href} className="flex items-center">
-                      <Icon className="mr-2 h-4 w-4" />
+                      <item.icon className="mr-2 h-4 w-4" />
                       {item.name}
                     </Link>
                   </DropdownMenuItem>
-                )
-              })}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-600">
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ))}
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </div>
