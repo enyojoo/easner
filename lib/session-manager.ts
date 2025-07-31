@@ -1,79 +1,42 @@
-import { supabase } from "./supabase"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 
-class SessionManager {
-  private inactivityTimer: NodeJS.Timeout | null = null
-  private readonly INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
-  private lastActivity: number = Date.now()
+export class SessionManager {
+  private static inactivityTimeout = 60 * 60 * 1000 // 60 minutes
 
-  constructor() {
-    if (typeof window !== "undefined") {
-      this.initializeActivityTracking()
-      this.startInactivityTimer()
-    }
-  }
-
-  private initializeActivityTracking() {
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
-
-    events.forEach((event) => {
-      document.addEventListener(event, this.resetInactivityTimer.bind(this), true)
-    })
-  }
-
-  private resetInactivityTimer() {
-    this.lastActivity = Date.now()
-
-    if (this.inactivityTimer) {
-      clearTimeout(this.inactivityTimer)
-    }
-
-    this.startInactivityTimer()
-  }
-
-  private startInactivityTimer() {
-    this.inactivityTimer = setTimeout(async () => {
-      await this.handleSessionExpiry()
-    }, this.INACTIVITY_TIMEOUT)
-  }
-
-  private async handleSessionExpiry() {
+  static async getSession() {
     try {
-      // Check if user is still authenticated
+      const cookieStore = cookies()
+      const supabase = createServerComponentClient({ cookies: () => cookieStore })
+
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession()
 
-      if (session) {
-        // Sign out the user
-        await supabase.auth.signOut()
-
-        // Clear any stored data
-        sessionStorage.clear()
-        localStorage.clear()
-
-        // Show session expired message and redirect
-        alert("Your session has expired due to inactivity. Please log in again.")
-        window.location.href = "/"
+      if (error || !session) {
+        return null
       }
+
+      return session
     } catch (error) {
-      console.error("Error handling session expiry:", error)
+      console.error("Session validation error:", error)
+      return null
     }
   }
 
-  public cleanup() {
-    if (this.inactivityTimer) {
-      clearTimeout(this.inactivityTimer)
-    }
-
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
-    events.forEach((event) => {
-      document.removeEventListener(event, this.resetInactivityTimer.bind(this), true)
-    })
+  static async isValidSession(): Promise<boolean> {
+    const session = await this.getSession()
+    return session !== null
   }
 
-  public isSessionExpired(): boolean {
-    return Date.now() - this.lastActivity > this.INACTIVITY_TIMEOUT
+  static async destroySession(): Promise<void> {
+    try {
+      const cookieStore = cookies()
+      const supabase = createServerComponentClient({ cookies: () => cookieStore })
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.error("Error destroying session:", error)
+    }
   }
 }
-
-export const sessionManager = new SessionManager()

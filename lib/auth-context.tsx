@@ -2,9 +2,9 @@
 
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
-import { sessionManager } from "./session-manager"
 
 interface UserProfile {
   id: string
@@ -54,6 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null)
+  const router = useRouter()
+
+  const INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -92,60 +96,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+  const handleSessionExpiry = async () => {
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setUserProfile(null)
+      setIsAdmin(false)
 
-        if (session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
-        }
-      } catch (error) {
-        console.error("Error getting initial session:", error)
-      } finally {
-        setLoading(false)
+      if (typeof window !== "undefined") {
+        sessionStorage.clear()
+        localStorage.clear()
+        alert("Your session has expired due to inactivity. Please log in again.")
+        router.push("/")
       }
+    } catch (error) {
+      console.error("Error handling session expiry:", error)
+    }
+  }
+
+  const resetInactivityTimer = () => {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer)
     }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
-        } else {
-          setUser(null)
-          setUserProfile(null)
-          setIsAdmin(false)
-        }
-      } catch (error) {
-        console.error("Error handling auth state change:", error)
-      } finally {
-        setLoading(false)
-      }
-    })
-
-    // Initialize session manager when user is authenticated
-    if (user) {
-      // Session manager is already initialized in its constructor
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (!user) {
-        sessionManager.cleanup()
-      }
-      subscription.unsubscribe()
-    }
-  }, [user])
+    const timer = setTimeout(handleSessionExpiry, INACTIVITY_TIMEOUT)
+    setInactivityTimer(timer)
+  }
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -158,7 +134,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
-      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
@@ -193,23 +168,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (inactivityTimer) {
+        clearTimeout(inactivityTimer)
+        setInactivityTimer(null)
+      }
+
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
 
-      // Clear any stored session data
       if (typeof window !== "undefined") {
         sessionStorage.clear()
         localStorage.clear()
       }
 
-      // Redirect to home page
-      window.location.href = "/"
+      router.push("/")
     } catch (error) {
       console.error("Sign out error:", error)
     }
   }
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+          resetInactivityTimer()
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getInitialSession()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      try {
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+          resetInactivityTimer()
+        } else {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
+          if (inactivityTimer) {
+            clearTimeout(inactivityTimer)
+            setInactivityTimer(null)
+          }
+        }
+      } catch (error) {
+        console.error("Error handling auth state change:", error)
+      } finally {
+        setLoading(false)
+      }
+    })
+
+    // Activity tracking
+    const handleActivity = () => {
+      if (user) {
+        resetInactivityTimer()
+      }
+    }
+
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
+    events.forEach((event) => {
+      document.addEventListener(event, handleActivity, true)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+      if (inactivityTimer) {
+        clearTimeout(inactivityTimer)
+      }
+      events.forEach((event) => {
+        document.removeEventListener(event, handleActivity, true)
+      })
+    }
+  }, [user, inactivityTimer])
 
   const value = {
     user,
