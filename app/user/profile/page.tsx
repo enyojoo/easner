@@ -171,7 +171,7 @@ export default function UserProfilePage() {
         throw error
       }
 
-      // Reset form and close password change section
+      // Reset form and close password change section - THIS IS THE FIX
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
       setIsChangingPassword(false)
       setShowNewPassword(false)
