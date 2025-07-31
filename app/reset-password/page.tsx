@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -143,15 +142,14 @@ function ResetPasswordForm() {
                       disabled={isLoading}
                       className="pr-10"
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      disabled={isLoading}
                     >
                       {showPassword.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
 
@@ -168,15 +166,14 @@ function ResetPasswordForm() {
                       disabled={isLoading}
                       className="pr-10"
                     />
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      disabled={isLoading}
                     >
                       {showPassword.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                    </button>
                   </div>
                 </div>
 

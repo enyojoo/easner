@@ -13,7 +13,7 @@ export default function UserSupportPage() {
           {/* Header */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Support Center</h1>
-            <p className="text-gray-600">Get help with your NOVAPAY account and transactions</p>
+            <p className="text-gray-600">Get help with your NOVAMONEY account and transactions</p>
           </div>
 
           {/* Contact Methods */}
@@ -29,13 +29,13 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Get detailed help via email</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">support@novapay.app</p>
+                  <p className="font-medium text-blue-600">support@novamoney.net</p>
                   <p className="text-xs text-gray-500">Response within 24 hours</p>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() => window.open("mailto:support@novapay.app", "_blank")}
+                  onClick={() => window.open("mailto:support@novamoney.net", "_blank")}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Email
@@ -54,7 +54,7 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Quick chat support</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">+1 (555) 123-4567</p>
+                  <p className="font-medium text-blue-600">+1 (555) 123-4567</p>
                   <p className="text-xs text-gray-500">Available 9 AM - 6 PM UTC</p>
                 </div>
                 <Button
@@ -79,13 +79,13 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Public support & updates</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">@novapayapp</p>
+                  <p className="font-medium text-blue-600">@novamoneyapp</p>
                   <p className="text-xs text-gray-500">Follow for updates</p>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() => window.open("https://twitter.com/novapayapp", "_blank")}
+                  onClick={() => window.open("https://twitter.com/novamoneyapp", "_blank")}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Follow on X
