@@ -170,11 +170,20 @@ export default function UserProfilePage() {
         password: passwordData.newPassword,
       })
 
-      if (error) throw error
+      if (error) {
+        console.error("Supabase error:", error)
+        throw error
+      }
 
       alert("Password updated successfully!")
+
+      // Reset form and close password change section
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
       setIsChangingPassword(false)
+
+      // Reset visibility states
+      setShowNewPassword(false)
+      setShowConfirmPassword(false)
     } catch (error) {
       console.error("Error updating password:", error)
       alert("Failed to update password. Please try again.")
@@ -186,6 +195,9 @@ export default function UserProfilePage() {
   const handleCancelPasswordChange = () => {
     setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
     setIsChangingPassword(false)
+    setShowNewPassword(false)
+    setShowConfirmPassword(false)
+    setPasswordLoading(false)
   }
 
   const getSelectedCurrency = () => {
