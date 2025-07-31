@@ -1,201 +1,124 @@
 "use client"
 
-import { AuthGuard } from "@/components/auth-guard"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
-import { Send, HelpCircle, MessageCircle, Phone, Mail } from "lucide-react"
+import { Mail, MessageCircle, Clock, ExternalLink } from "lucide-react"
 
-export default function SupportPage() {
-  const [ticketData, setTicketData] = useState({
-    subject: "",
-    category: "",
-    priority: "medium",
-    message: "",
-  })
-  const [submitting, setSubmitting] = useState(false)
-
-  const handleSubmitTicket = async () => {
-    setSubmitting(true)
-    try {
-      // Submit support ticket logic here
-      console.log("Support ticket submitted:", ticketData)
-      setTicketData({
-        subject: "",
-        category: "",
-        priority: "medium",
-        message: "",
-      })
-    } catch (error) {
-      console.error("Error submitting ticket:", error)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
+export default function UserSupportPage() {
   return (
-    <AuthGuard requireAuth={true}>
-      <UserDashboardLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Support Center</h1>
-              <p className="text-gray-600">Get help with your account and transactions</p>
-            </div>
+    <UserDashboardLayout>
+      <div className="p-6">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Support Center</h1>
+            <p className="text-gray-600">Get help with your NOVAPAY account and transactions</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Contact Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  Submit a Support Ticket
-                </CardTitle>
-                <CardDescription>Describe your issue and we'll get back to you</CardDescription>
+          {/* Contact Methods */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Email Support */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="text-center pb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Mail className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle className="text-lg">Email Support</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="text-center space-y-3">
+                <p className="text-gray-600 text-sm">Get detailed help via email</p>
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input
-                    id="subject"
-                    value={ticketData.subject}
-                    onChange={(e) => setTicketData({ ...ticketData, subject: e.target.value })}
-                    placeholder="Brief description of your issue"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={ticketData.category}
-                      onValueChange={(value) => setTicketData({ ...ticketData, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="transaction">Transaction Issue</SelectItem>
-                        <SelectItem value="account">Account Problem</SelectItem>
-                        <SelectItem value="technical">Technical Support</SelectItem>
-                        <SelectItem value="billing">Billing Question</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select
-                      value={ticketData.priority}
-                      onValueChange={(value) => setTicketData({ ...ticketData, priority: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    value={ticketData.message}
-                    onChange={(e) => setTicketData({ ...ticketData, message: e.target.value })}
-                    placeholder="Please provide detailed information about your issue..."
-                    rows={6}
-                  />
+                  <p className="font-medium text-novapay-primary">support@novapay.app</p>
+                  <p className="text-xs text-gray-500">Response within 24 hours</p>
                 </div>
                 <Button
-                  onClick={handleSubmitTicket}
-                  disabled={submitting || !ticketData.subject || !ticketData.category || !ticketData.message}
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={() => window.open("mailto:support@novapay.app", "_blank")}
                 >
-                  <Send className="h-4 w-4 mr-2" />
-                  {submitting ? "Submitting..." : "Submit Ticket"}
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Contact Information & FAQ */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Mail className="h-5 w-5 text-novapay-primary" />
-                    <div>
-                      <p className="font-medium">Email Support</p>
-                      <p className="text-sm text-gray-600">support@novapay.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Phone className="h-5 w-5 text-novapay-primary" />
-                    <div>
-                      <p className="font-medium">Phone Support</p>
-                      <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    <p>
-                      <strong>Business Hours:</strong>
-                    </p>
-                    <p>Monday - Friday: 9:00 AM - 6:00 PM EST</p>
-                    <p>Saturday: 10:00 AM - 4:00 PM EST</p>
-                    <p>Sunday: Closed</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* WhatsApp Support */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="text-center pb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MessageCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle className="text-lg">WhatsApp</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-3">
+                <p className="text-gray-600 text-sm">Quick chat support</p>
+                <div className="space-y-2">
+                  <p className="font-medium text-novapay-primary">+1 (555) 123-4567</p>
+                  <p className="text-xs text-gray-500">Available 9 AM - 6 PM UTC</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full bg-green-50 hover:bg-green-100"
+                  onClick={() => window.open("https://wa.me/15551234567", "_blank")}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat on WhatsApp
+                </Button>
+              </CardContent>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5" />
-                    Frequently Asked Questions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">How long do transfers take?</h4>
-                    <p className="text-sm text-gray-600">
-                      Most transfers are completed within 1-3 business days, depending on the destination country and
-                      payment method.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium">What are the transfer fees?</h4>
-                    <p className="text-sm text-gray-600">
-                      Fees vary by currency pair and transfer amount. You can see the exact fee before confirming your
-                      transfer.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium">How can I track my transfer?</h4>
-                    <p className="text-sm text-gray-600">
-                      You can track your transfer status in the Transactions section of your dashboard.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            {/* X (Twitter) Support */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="text-center pb-4">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <ExternalLink className="h-6 w-6 text-gray-600" />
+                </div>
+                <CardTitle className="text-lg">X (Twitter)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-3">
+                <p className="text-gray-600 text-sm">Public support & updates</p>
+                <div className="space-y-2">
+                  <p className="font-medium text-novapay-primary">@novapayapp</p>
+                  <p className="text-xs text-gray-500">Follow for updates</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={() => window.open("https://twitter.com/novapayapp", "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Follow on X
+                </Button>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Support Hours */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Support Hours
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Email Support</h4>
+                  <p className="text-sm text-gray-600">24/7 - We respond within 24 hours</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Live Chat (WhatsApp)</h4>
+                  <p className="text-sm text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM UTC</p>
+                  <p className="text-sm text-gray-600">Saturday: 10:00 AM - 4:00 PM UTC</p>
+                  <p className="text-sm text-gray-600">Sunday: Closed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </UserDashboardLayout>
-    </AuthGuard>
+      </div>
+    </UserDashboardLayout>
   )
 }

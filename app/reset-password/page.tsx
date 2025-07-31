@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BrandLogo } from "@/components/brand/brand-logo"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react"
+import { BrandLogo } from "@/components/brand/brand-logo"
+import { ArrowLeft, Lock, Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 export default function ResetPasswordPage() {
@@ -18,46 +18,43 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-  const [validToken, setValidToken] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if we have the required tokens from the URL
-    const accessToken = searchParams.get("access_token")
-    const refreshToken = searchParams.get("refresh_token")
-
-    if (accessToken && refreshToken) {
-      setValidToken(true)
-      // Set the session with the tokens
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-    } else {
-      setError("Invalid or expired reset link. Please request a new password reset.")
+    // Check if user has a valid session from the reset link
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        setIsValidSession(true)
+      } else {
+        setError("Invalid or expired reset link. Please request a new password reset.")
+      }
     }
-  }, [searchParams])
+
+    checkSession()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError("")
-
-    // Validation
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setLoading(false)
-      return
-    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
-      setLoading(false)
+      setIsLoading(false)
+      return
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      setIsLoading(false)
       return
     }
 
@@ -69,200 +66,138 @@ export default function ResetPasswordPage() {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess(true)
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          router.push("/login")
-        }, 3000)
+        // Sign out after password reset for security
+        await supabase.auth.signOut()
+        router.push("/login?message=Password updated successfully. Please sign in with your new password.")
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred while updating your password")
+    } catch (error) {
+      setError("An error occurred. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  if (!validToken) {
+  if (!isValidSession && error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-        <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-          <div className="mb-8">
-            <BrandLogo size="md" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <BrandLogo size="lg" className="mx-auto mb-4" />
           </div>
 
-          <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-gray-900">Invalid Reset Link</CardTitle>
-              <CardDescription className="text-gray-600">
-                This password reset link is invalid or has expired
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+          <Card>
+            <CardContent className="pt-6">
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
 
-                <Link href="/forgot-password">
-                  <Button className="w-full bg-novapay-primary hover:bg-novapay-primary-600">
-                    Request new reset link
-                  </Button>
-                </Link>
-
-                <div className="text-center">
-                  <Link
-                    href="/login"
-                    className="text-sm text-novapay-primary hover:text-novapay-primary-600 hover:underline"
-                  >
-                    Back to login
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    )
-  }
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-        <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-          <div className="mb-8">
-            <BrandLogo size="md" />
-          </div>
-
-          <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <CardTitle className="text-2xl text-gray-900">Password updated!</CardTitle>
-              <CardDescription className="text-gray-600">Your password has been successfully updated</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  You will be redirected to the login page in a few seconds...
-                </p>
-
-                <Link href="/login">
-                  <Button className="w-full bg-novapay-primary hover:bg-novapay-primary-600">Continue to login</Button>
+              <div className="text-center">
+                <Link
+                  href="/forgot-password"
+                  className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                >
+                  Request New Reset Link
                 </Link>
               </div>
             </CardContent>
           </Card>
-        </main>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-      <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-        <div className="mb-8">
-          <BrandLogo size="md" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <BrandLogo size="lg" className="mx-auto mb-4" />
         </div>
 
-        <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-gray-900">Reset your password</CardTitle>
-            <CardDescription className="text-gray-600">Enter your new password below</CardDescription>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-novapay-primary" />
+              Reset Password
+            </CardTitle>
+            <CardDescription>Enter your new password below</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
+              <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">
-                  New Password
-                </Label>
+                <Label htmlFor="password">New Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    placeholder="Enter new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your new password"
-                    className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary pr-10"
                     required
-                    disabled={loading}
-                    minLength={6}
+                    disabled={isLoading}
+                    className="pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    disabled={loading}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-700">
-                  Confirm New Password
-                </Label>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your new password"
-                    className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary pr-10"
                     required
-                    disabled={loading}
-                    minLength={6}
+                    disabled={isLoading}
+                    className="pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    disabled={loading}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
+              <div className="text-sm text-gray-600">Password must be at least 8 characters long</div>
+
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                disabled={isLoading || !isValidSession}
               >
-                {loading ? "Updating..." : "Update password"}
+                {isLoading ? "Updating..." : "Update Password"}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <Link
                 href="/login"
-                className="text-sm text-novapay-primary hover:text-novapay-primary-600 hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
               >
-                Back to login
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
               </Link>
             </div>
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   )
 }

@@ -1,156 +1,118 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BrandLogo } from "@/components/brand/brand-logo"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { ArrowLeft, Mail } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError("")
+    setMessage("")
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
       })
 
-      if (error) {
-        setError(error.message)
+      const data = await response.json()
+
+      if (response.ok) {
+        setMessage("Password reset instructions have been sent to your email address.")
       } else {
-        setSuccess(true)
+        setError(data.error || "Failed to send reset email")
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred while sending the reset email")
+    } catch (error) {
+      setError("An error occurred. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-        <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-          <div className="mb-8">
-            <BrandLogo size="md" />
-          </div>
-
-          <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <CardTitle className="text-2xl text-gray-900">Check your email</CardTitle>
-              <CardDescription className="text-gray-600">We've sent a password reset link to {email}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
-                  Click the link in the email to reset your password. If you don't see the email, check your spam
-                  folder.
-                </p>
-
-                <Button
-                  onClick={() => {
-                    setSuccess(false)
-                    setEmail("")
-                  }}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Send another email
-                </Button>
-
-                <div className="text-center">
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center text-sm text-novapay-primary hover:text-novapay-primary-600 hover:underline"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-1" />
-                    Back to login
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
-      <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-        <div className="mb-8">
-          <BrandLogo size="md" />
-        </div>
-
-        <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-gray-900">Forgot your password?</CardTitle>
-            <CardDescription className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password
-            </CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+      <div className="w-full max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-novapay-primary" />
+              Forgot Password
+            </CardTitle>
+            <CardDescription>We'll send you a secure link to reset your password</CardDescription>
           </CardHeader>
           <CardContent>
+            {message && (
+              <Alert className="mb-4 border-green-200 bg-green-50">
+                <AlertDescription className="text-green-800">{message}</AlertDescription>
+              </Alert>
+            )}
+
             {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
+              <Alert variant="destructive" className="mb-4">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">
-                  Email address
-                </Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
+                  placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
                   required
-                  disabled={loading}
+                  disabled={isLoading}
+                  className="w-full"
                 />
               </div>
 
               <Button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                disabled={isLoading}
               >
-                {loading ? "Sending..." : "Send reset link"}
+                {isLoading ? "Sending..." : "Send Reset Instructions"}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <Link
                 href="/login"
-                className="inline-flex items-center text-sm text-novapay-primary hover:text-novapay-primary-600 hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to login
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
+              </Link>
+            </div>
+
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link href="/register" className="text-novapay-primary hover:text-novapay-primary-600 font-medium">
+                Sign up
               </Link>
             </div>
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   )
 }

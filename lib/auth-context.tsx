@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
 
@@ -54,88 +53,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null)
-  const [profileFetched, setProfileFetched] = useState(false)
-  const router = useRouter()
 
-  const INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      // Try to fetch from users table first
+      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
 
-  const fetchUserProfile = useCallback(
-    async (userId: string) => {
-      if (profileFetched) return
-
-      try {
-        setProfileFetched(true)
-
-        // Try to fetch from users table first
-        const { data: userProfile, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle()
-
-        if (userProfile && !userError) {
-          setUserProfile(userProfile)
-          setIsAdmin(false)
-          return userProfile
-        }
-
-        // If not found in users, check admin_users table
-        const { data: adminProfile, error: adminError } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle()
-
-        if (adminProfile && !adminError) {
-          setUserProfile(adminProfile)
-          setIsAdmin(true)
-          return adminProfile
-        }
-
-        return null
-      } catch (error) {
-        console.error("Error fetching user profile:", error)
-        return null
+      if (userProfile && !userError) {
+        setUserProfile(userProfile)
+        setIsAdmin(false)
+        return userProfile
       }
-    },
-    [profileFetched],
-  )
 
-  const refreshUserProfile = useCallback(async () => {
+      // If not found in users, check admin_users table
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("id", userId)
+        .single()
+
+      if (adminProfile && !adminError) {
+        setUserProfile(adminProfile)
+        setIsAdmin(true)
+        return adminProfile
+      }
+
+      return null
+    } catch (error) {
+      console.error("Error fetching user profile:", error)
+      return null
+    }
+  }
+
+  const refreshUserProfile = async () => {
     if (user) {
-      setProfileFetched(false)
       await fetchUserProfile(user.id)
     }
-  }, [user, fetchUserProfile])
+  }
 
-  const handleSessionExpiry = useCallback(async () => {
-    try {
-      await supabase.auth.signOut()
-      setUser(null)
-      setUserProfile(null)
-      setIsAdmin(false)
-      setProfileFetched(false)
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
-      if (typeof window !== "undefined") {
-        sessionStorage.clear()
-        localStorage.clear()
-        alert("Your session has expired due to inactivity. Please log in again.")
-        router.push("/")
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error("Error getting initial session:", error)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Error handling session expiry:", error)
-    }
-  }, [router])
-
-  const resetInactivityTimer = useCallback(() => {
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer)
     }
 
-    const timer = setTimeout(handleSessionExpiry, INACTIVITY_TIMEOUT)
-    setInactivityTimer(timer)
-  }, [inactivityTimer, handleSessionExpiry, INACTIVITY_TIMEOUT])
+    getInitialSession()
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      try {
+        if (session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
+        } else {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error("Error handling auth state change:", error)
+      } finally {
+        setLoading(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -148,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
+      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
@@ -180,110 +179,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signOut = useCallback(async () => {
+  const signOut = async () => {
     try {
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer)
-        setInactivityTimer(null)
-      }
-
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
-      setProfileFetched(false)
-
-      if (typeof window !== "undefined") {
-        sessionStorage.clear()
-        localStorage.clear()
-      }
-
-      router.push("/")
     } catch (error) {
       console.error("Sign out error:", error)
     }
-  }, [inactivityTimer, router])
-
-  useEffect(() => {
-    let mounted = true
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (mounted && session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
-          resetInactivityTimer()
-        }
-      } catch (error) {
-        console.error("Error getting initial session:", error)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    getInitialSession()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return
-
-      try {
-        if (event === "SIGNED_IN" && session?.user) {
-          setUser(session.user)
-          setProfileFetched(false)
-          await fetchUserProfile(session.user.id)
-          resetInactivityTimer()
-        } else if (event === "SIGNED_OUT") {
-          setUser(null)
-          setUserProfile(null)
-          setIsAdmin(false)
-          setProfileFetched(false)
-          if (inactivityTimer) {
-            clearTimeout(inactivityTimer)
-            setInactivityTimer(null)
-          }
-        }
-      } catch (error) {
-        console.error("Error handling auth state change:", error)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-        }
-      }
-    })
-
-    // Activity tracking
-    const handleActivity = () => {
-      if (user && mounted) {
-        resetInactivityTimer()
-      }
-    }
-
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
-    events.forEach((event) => {
-      document.addEventListener(event, handleActivity, true)
-    })
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer)
-      }
-      events.forEach((event) => {
-        document.removeEventListener(event, handleActivity, true)
-      })
-    }
-  }, [])
+  }
 
   const value = {
     user,

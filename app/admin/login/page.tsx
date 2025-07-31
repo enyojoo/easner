@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,8 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { useAuth } from "@/lib/auth-context"
-import { AlertCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
@@ -18,7 +18,6 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const { signIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,14 +25,35 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      const { error: signInError } = await signIn(email, password)
+      // Sign in with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      if (signInError) {
-        setError(signInError.message)
-        return
+      if (authError) {
+        throw new Error(authError.message)
       }
 
-      // The auth context will handle the redirect based on user type
+      if (!authData.user) {
+        throw new Error("Authentication failed")
+      }
+
+      // Check if user exists in admin_users table
+      const { data: adminUser, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("email", email)
+        .eq("status", "active")
+        .single()
+
+      if (adminError || !adminUser) {
+        // Sign out if not an admin
+        await supabase.auth.signOut()
+        throw new Error("Access denied. Admin privileges required.")
+      }
+
+      // Redirect to admin dashboard
       router.push("/admin/dashboard")
     } catch (err: any) {
       setError(err.message || "Login failed")
@@ -60,7 +80,6 @@ export default function AdminLoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}

@@ -1,16 +1,37 @@
 "use client"
-import { useState, useEffect } from "react"
-import { QrCode, Building2, Save, Shield, Bell, Globe } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { adminDataStore } from "@/lib/admin-data-store"
-import { AuthGuard } from "@/components/auth-guard"
+
+import { useState, useEffect, useRef } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Settings,
+  Mail,
+  Shield,
+  Save,
+  Edit,
+  Plus,
+  Trash2,
+  CreditCard,
+  QrCode,
+  Building2,
+  MoreHorizontal,
+  X,
+  Upload,
+} from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { supabase } from "@/lib/supabase"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 interface SystemSetting {
   id: string
@@ -104,8 +125,8 @@ export default function AdminSettingsPage() {
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null)
   const [editingQrCodeFile, setEditingQrCodeFile] = useState<File | null>(null)
   const [uploadingQrCode, setUploadingQrCode] = useState(false)
-  const fileInputRef = useState<HTMLInputElement | null>(null)
-  const editFileInputRef = useState<HTMLInputElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const editFileInputRef = useRef<HTMLInputElement>(null)
 
   // Platform configuration derived from system settings
   const [platformConfig, setPlatformConfig] = useState({
@@ -129,22 +150,6 @@ export default function AdminSettingsPage() {
     maxLoginAttempts: 5,
     accountLockoutDuration: 15,
   })
-
-  const [settings, setSettings] = useState({
-    siteName: "NovaPay",
-    siteDescription: "Fast, secure international money transfers",
-    maintenanceMode: false,
-    emailNotifications: true,
-    smsNotifications: false,
-    maxTransactionAmount: "50000",
-    minTransactionAmount: "10",
-    defaultCurrency: "NGN",
-  })
-
-  const handleSave = async () => {
-    // Save settings logic here
-    console.log("Saving settings:", settings)
-  }
 
   useEffect(() => {
     loadAllData()
@@ -171,16 +176,14 @@ export default function AdminSettingsPage() {
       setSystemSettings(data || [])
 
       // Update platform config from settings
-      const settingsData = data || []
+      const settings = data || []
       const newPlatformConfig = { ...platformConfig }
       const newSecuritySettings = { ...securitySettings }
-      const newSettings = { ...settings }
 
-      settingsData.forEach((setting) => {
+      settings.forEach((setting) => {
         switch (setting.key) {
           case "maintenance_mode":
             newPlatformConfig.maintenanceMode = setting.value === "true"
-            newSettings.maintenanceMode = setting.value === "true"
             break
           case "registration_enabled":
             newPlatformConfig.registrationEnabled = setting.value === "true"
@@ -203,43 +206,12 @@ export default function AdminSettingsPage() {
           case "account_lockout_duration":
             newSecuritySettings.accountLockoutDuration = Number.parseInt(setting.value)
             break
-          case "site_name":
-            newSettings.siteName = setting.value
-            break
-          case "support_email":
-            newSettings.supportEmail = setting.value
-            break
-          case "max_transaction_limit":
-            newSettings.maxTransactionAmount = setting.value
-            break
-          case "announcement":
-            newSettings.announcement = setting.value
-            break
-          case "site_description":
-            newSettings.siteDescription = setting.value
-            break
-          case "email_notifications":
-            newSettings.emailNotifications = setting.value === "true"
-            break
-          case "sms_notifications":
-            newSettings.smsNotifications = setting.value === "true"
-            break
-          case "min_transaction_amount":
-            newSettings.minTransactionAmount = setting.value
-            break
-          case "transaction_fee_percentage":
-            newSettings.transactionFeePercentage = setting.value
-            break
-          case "default_currency":
-            newSettings.defaultCurrency = setting.value
-            break
         }
       })
 
       setPlatformConfig(newPlatformConfig)
       setSecuritySettings(newSecuritySettings)
       setOriginalSecuritySettings(newSecuritySettings)
-      setSettings(newSettings)
     } catch (error) {
       console.error("Error loading system settings:", error)
     }
@@ -363,7 +335,7 @@ export default function AdminSettingsPage() {
   const handleQrCodeFileSelect = (file: File, isEditing = false) => {
     const allowedTypes = ["image/svg+xml", "image/png", "image/jpeg"]
     if (!allowedTypes.includes(file.type)) {
-      console.error("Only SVG, PNG, and JPEG files are allowed for QR codes")
+      console.error("Only SVG, PNG, and JPEG, files are allowed for QR codes")
       return
     }
 
@@ -747,141 +719,1075 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }))
-  }
-
   return (
-    <AuthGuard requireAdmin>
-      <AdminDashboardLayout>
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-              <p className="text-muted-foreground">Manage platform settings and configuration</p>
-            </div>
-            <Button onClick={handleSave}>
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
-          </div>
-
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  General Settings
-                </CardTitle>
-                <CardDescription>Basic platform configuration</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="siteName">Site Name</Label>
-                  <Input
-                    id="siteName"
-                    value={settings.siteName}
-                    onChange={(e) => handleSettingChange("siteName", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="siteDescription">Site Description</Label>
-                  <Textarea
-                    id="siteDescription"
-                    value={settings.siteDescription}
-                    onChange={(e) => handleSettingChange("siteDescription", e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="maintenanceMode"
-                    checked={settings.maintenanceMode}
-                    onCheckedChange={(checked) => handleSettingChange("maintenanceMode", checked)}
-                  />
-                  <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notification Settings
-                </CardTitle>
-                <CardDescription>Configure notification preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="emailNotifications"
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(checked) => handleSettingChange("emailNotifications", checked)}
-                  />
-                  <Label htmlFor="emailNotifications">Email Notifications</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="smsNotifications"
-                    checked={settings.smsNotifications}
-                    onCheckedChange={(checked) => handleSettingChange("smsNotifications", checked)}
-                  />
-                  <Label htmlFor="smsNotifications">SMS Notifications</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Transaction Limits
-                </CardTitle>
-                <CardDescription>Set transaction amount limits</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="minAmount">Minimum Transaction Amount</Label>
-                    <Input
-                      id="minAmount"
-                      type="number"
-                      value={settings.minTransactionAmount}
-                      onChange={(e) => handleSettingChange("minTransactionAmount", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="maxAmount">Maximum Transaction Amount</Label>
-                    <Input
-                      id="maxAmount"
-                      type="number"
-                      value={settings.maxTransactionAmount}
-                      onChange={(e) => handleSettingChange("maxTransactionAmount", e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="defaultCurrency">Default Currency</Label>
-                  <select
-                    id="defaultCurrency"
-                    value={settings.defaultCurrency}
-                    onChange={(e) => handleSettingChange("defaultCurrency", e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="NGN">Nigerian Naira (NGN)</option>
-                    <option value="USD">US Dollar (USD)</option>
-                    <option value="GBP">British Pound (GBP)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                  </select>
-                </div>
-              </CardContent>
-            </Card>
+    <AdminDashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
+            <p className="text-gray-600">Configure platform settings and system parameters</p>
           </div>
         </div>
-      </AdminDashboardLayout>
-    </AuthGuard>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="platform" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Platform
+            </TabsTrigger>
+            <TabsTrigger value="payment" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Payment Methods
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Platform Configuration */}
+          <TabsContent value="platform">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Configuration</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="maintenance">Maintenance Mode</Label>
+                      <p className="text-sm text-gray-500">Enable to temporarily disable user access</p>
+                    </div>
+                    <Switch
+                      id="maintenance"
+                      checked={platformConfig.maintenanceMode}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("maintenanceMode", checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="registration">Registration Enabled</Label>
+                      <p className="text-sm text-gray-500">Allow new user registrations</p>
+                    </div>
+                    <Switch
+                      id="registration"
+                      checked={platformConfig.registrationEnabled}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("registrationEnabled", checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="emailVerification">Email Verification Required</Label>
+                      <p className="text-sm text-gray-500">Require email verification for new accounts</p>
+                    </div>
+                    <Switch
+                      id="emailVerification"
+                      checked={platformConfig.emailVerificationRequired}
+                      onCheckedChange={(checked) => handlePlatformConfigChange("emailVerificationRequired", checked)}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="baseCurrency">Base Currency for Reporting</Label>
+                      <p className="text-sm text-gray-500">
+                        Default currency for displaying transaction amounts and reports
+                      </p>
+                    </div>
+                    <Select
+                      value={platformConfig.baseCurrency}
+                      onValueChange={(value) => handlePlatformConfigChange("baseCurrency", value)}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Select base currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies
+                          .filter((c) => c.status === "active")
+                          .map((currency) => (
+                            <SelectItem key={currency.code} value={currency.code}>
+                              <div className="flex items-center gap-3">
+                                <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                <div className="font-medium">{currency.code}</div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Payment Methods */}
+          <TabsContent value="payment">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Payment Methods</CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Configure payment methods that users will see when sending money
+                    </p>
+                  </div>
+                  <Dialog open={isAddPaymentMethodOpen} onOpenChange={setIsAddPaymentMethodOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Payment Method
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Add New Payment Method</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="currency">Currency *</Label>
+                            <Select
+                              value={newPaymentMethod.currency}
+                              onValueChange={(value) => setNewPaymentMethod({ ...newPaymentMethod, currency: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select currency" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {currencies
+                                  .filter((c) => c.status === "active")
+                                  .map((currency) => (
+                                    <SelectItem key={currency.code} value={currency.code}>
+                                      <div className="flex items-center gap-3">
+                                        <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                        <div className="font-medium">
+                                          {currency.code} - {currency.name}
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="type">Type *</Label>
+                            <Select
+                              value={newPaymentMethod.type}
+                              onValueChange={(value) => setNewPaymentMethod({ ...newPaymentMethod, type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="bank_account">
+                                  <div className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4" />
+                                    Bank Account
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="qr_code">
+                                  <div className="flex items-center gap-2">
+                                    <QrCode className="h-4 w-4" />
+                                    QR Code
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Display Name *</Label>
+                          <Input
+                            id="name"
+                            value={newPaymentMethod.name}
+                            onChange={(e) => setNewPaymentMethod({ ...newPaymentMethod, name: e.target.value })}
+                            placeholder="e.g., Sberbank Russia, SberPay QR"
+                          />
+                        </div>
+
+                        {newPaymentMethod.type === "bank_account" && (
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="accountName">Account Name *</Label>
+                              <Input
+                                id="accountName"
+                                value={newPaymentMethod.account_name}
+                                onChange={(e) =>
+                                  setNewPaymentMethod({ ...newPaymentMethod, account_name: e.target.value })
+                                }
+                                placeholder="e.g., Novapay Russia LLC"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="accountNumber">Account Number *</Label>
+                                <Input
+                                  id="accountNumber"
+                                  value={newPaymentMethod.account_number}
+                                  onChange={(e) =>
+                                    setNewPaymentMethod({ ...newPaymentMethod, account_number: e.target.value })
+                                  }
+                                  placeholder="e.g., 40817810123456789012"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="bankName">Bank Name *</Label>
+                                <Input
+                                  id="bankName"
+                                  value={newPaymentMethod.bank_name}
+                                  onChange={(e) =>
+                                    setNewPaymentMethod({ ...newPaymentMethod, bank_name: e.target.value })
+                                  }
+                                  placeholder="e.g., Sberbank Russia"
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {newPaymentMethod.type === "qr_code" && (
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="qrCodeFile">Upload QR Code *</Label>
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handleQrCodeFileSelect(file)
+                                }}
+                                accept=".svg,.png,.jpg,.jpeg,.pdf"
+                                className="hidden"
+                              />
+                              <div className="flex items-center gap-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {qrCodeFile ? "Change File" : "Select File"}
+                                </Button>
+                                {qrCodeFile && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <span>{qrCodeFile.name}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setQrCodeFile(null)}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG (Max 5MB)</p>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="instructions">Instructions</Label>
+                              <Textarea
+                                id="instructions"
+                                value={newPaymentMethod.instructions}
+                                onChange={(e) =>
+                                  setNewPaymentMethod({ ...newPaymentMethod, instructions: e.target.value })
+                                }
+                                placeholder="Instructions for users on how to use this QR code"
+                                rows={3}
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="isDefault"
+                            checked={newPaymentMethod.is_default}
+                            onCheckedChange={(checked) =>
+                              setNewPaymentMethod({ ...newPaymentMethod, is_default: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="isDefault" className="text-sm font-medium">
+                            Set as default payment method for this currency
+                          </Label>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                          <Button variant="outline" onClick={() => setIsAddPaymentMethodOpen(false)} className="flex-1">
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleAddPaymentMethod}
+                            disabled={
+                              saving ||
+                              uploadingQrCode ||
+                              !newPaymentMethod.currency ||
+                              !newPaymentMethod.name ||
+                              (newPaymentMethod.type === "bank_account" &&
+                                (!newPaymentMethod.account_name ||
+                                  !newPaymentMethod.account_number ||
+                                  !newPaymentMethod.bank_name)) ||
+                              (newPaymentMethod.type === "qr_code" && !qrCodeFile && !newPaymentMethod.qr_code_data)
+                            }
+                            className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                          >
+                            {saving ? "Adding..." : "Add Payment Method"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Edit Payment Method Dialog */}
+                  <Dialog open={isEditPaymentMethodOpen} onOpenChange={setIsEditPaymentMethodOpen}>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Edit Payment Method</DialogTitle>
+                      </DialogHeader>
+                      {editingPaymentMethod && (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="editCurrency">Currency *</Label>
+                              <Select
+                                value={editingPaymentMethod.currency}
+                                onValueChange={(value) =>
+                                  setEditingPaymentMethod({ ...editingPaymentMethod, currency: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {currencies
+                                    .filter((c) => c.status === "active")
+                                    .map((currency) => (
+                                      <SelectItem key={currency.code} value={currency.code}>
+                                        <div className="flex items-center gap-3">
+                                          <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                                          <div className="font-medium">
+                                            {currency.code} - {currency.name}
+                                          </div>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="editType">Type *</Label>
+                              <Select
+                                value={editingPaymentMethod.type}
+                                onValueChange={(value) =>
+                                  setEditingPaymentMethod({ ...editingPaymentMethod, type: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="bank_account">
+                                    <div className="flex items-center gap-2">
+                                      <Building2 className="h-4 w-4" />
+                                      Bank Account
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="qr_code">
+                                    <div className="flex items-center gap-2">
+                                      <QrCode className="h-4 w-4" />
+                                      QR Code
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editName">Display Name *</Label>
+                            <Input
+                              id="editName"
+                              value={editingPaymentMethod.name}
+                              onChange={(e) =>
+                                setEditingPaymentMethod({ ...editingPaymentMethod, name: e.target.value })
+                              }
+                              placeholder="e.g., Sberbank Russia, SberPay QR"
+                            />
+                          </div>
+
+                          {editingPaymentMethod.type === "bank_account" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="editAccountName">Account Name *</Label>
+                                <Input
+                                  id="editAccountName"
+                                  value={editingPaymentMethod.account_name || ""}
+                                  onChange={(e) =>
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, account_name: e.target.value })
+                                  }
+                                  placeholder="e.g., Novapay Russia LLC"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="editAccountNumber">Account Number *</Label>
+                                  <Input
+                                    id="editAccountNumber"
+                                    value={editingPaymentMethod.account_number || ""}
+                                    onChange={(e) =>
+                                      setEditingPaymentMethod({
+                                        ...editingPaymentMethod,
+                                        account_number: e.target.value,
+                                      })
+                                    }
+                                    placeholder="e.g., 40817810123456789012"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="editBankName">Bank Name *</Label>
+                                  <Input
+                                    id="editBankName"
+                                    value={editingPaymentMethod.bank_name || ""}
+                                    onChange={(e) =>
+                                      setEditingPaymentMethod({ ...editingPaymentMethod, bank_name: e.target.value })
+                                    }
+                                    placeholder="e.g., Sberbank Russia"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {editingPaymentMethod.type === "qr_code" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="editQrCodeFile">Upload QR Code *</Label>
+                                <input
+                                  type="file"
+                                  ref={editFileInputRef}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) handleQrCodeFileSelect(file, true)
+                                  }}
+                                  accept=".svg,.png,.jpg,.jpeg,.pdf"
+                                  className="hidden"
+                                />
+                                <div className="flex items-center gap-4">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => editFileInputRef.current?.click()}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {editingQrCodeFile
+                                      ? "Change File"
+                                      : editingPaymentMethod.qr_code_data
+                                        ? "Replace File"
+                                        : "Select File"}
+                                  </Button>
+                                  {editingQrCodeFile && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                      <span>{editingQrCodeFile.name}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingQrCodeFile(null)}
+                                        className="h-6 w-6 p-0"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {!editingQrCodeFile && editingPaymentMethod.qr_code_data && (
+                                    <span className="text-sm text-gray-600">Current file uploaded</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                  Supported formats: SVG, PNG, JPEG (Max 5MB)
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="editInstructions">Instructions</Label>
+                                <Textarea
+                                  id="editInstructions"
+                                  value={editingPaymentMethod.instructions || ""}
+                                  onChange={(e) =>
+                                    setEditingPaymentMethod({ ...editingPaymentMethod, instructions: e.target.value })
+                                  }
+                                  placeholder="Instructions for users on how to use this QR code"
+                                  rows={3}
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="editIsDefault"
+                              checked={editingPaymentMethod.is_default}
+                              onCheckedChange={(checked) =>
+                                setEditingPaymentMethod({ ...editingPaymentMethod, is_default: checked as boolean })
+                              }
+                            />
+                            <Label htmlFor="editIsDefault" className="text-sm font-medium">
+                              Set as default payment method for this currency
+                            </Label>
+                          </div>
+
+                          <div className="flex gap-4 pt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsEditPaymentMethodOpen(false)}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleEditPaymentMethod}
+                              disabled={
+                                saving ||
+                                uploadingQrCode ||
+                                !editingPaymentMethod.currency ||
+                                !editingPaymentMethod.name ||
+                                (editingPaymentMethod.type === "bank_account" &&
+                                  (!editingPaymentMethod.account_name ||
+                                    !editingPaymentMethod.account_number ||
+                                    !editingPaymentMethod.bank_name)) ||
+                                (editingPaymentMethod.type === "qr_code" &&
+                                  !editingQrCodeFile &&
+                                  !editingPaymentMethod.qr_code_data)
+                              }
+                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                            >
+                              {saving ? "Saving..." : "Save Changes"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Currency</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Default</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paymentMethods.map((method) => (
+                      <TableRow key={method.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getCurrencyFlag(method.currency)}
+                            <span className="font-medium">{method.currency}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getPaymentMethodIcon(method.type)}
+                            <span className="capitalize">{method.type.replace("_", " ")}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{method.name}</TableCell>
+                        <TableCell>
+                          {method.type === "bank_account" ? (
+                            <div className="text-sm text-gray-600">
+                              <div>{method.account_name}</div>
+                              <div className="font-mono">{method.account_number}</div>
+                              <div>{method.bank_name}</div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-600">
+                              <div className="font-mono text-xs">{method.qr_code_data}</div>
+                              {method.instructions && (
+                                <div className="mt-1 text-xs">{method.instructions.substring(0, 50)}...</div>
+                              )}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              method.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }
+                          >
+                            {method.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {method.is_default && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(method)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleTogglePaymentMethodStatus(method.id)}>
+                                {method.status === "active" ? "Disable" : "Enable"}
+                              </DropdownMenuItem>
+                              {method.status === "active" && !method.is_default && (
+                                <DropdownMenuItem onClick={() => handleSetDefaultPaymentMethod(method.id)}>
+                                  Make Default
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => handleDeletePaymentMethod(method.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {paymentMethods.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No payment methods configured yet</p>
+                    <p className="text-sm">Add payment methods to enable user transactions</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Email Templates */}
+          <TabsContent value="email">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Email Templates</CardTitle>
+                  <Dialog open={isAddTemplateOpen} onOpenChange={setIsAddTemplateOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Template
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Add New Email Template</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="templateName">Template Name *</Label>
+                            <Input
+                              id="templateName"
+                              value={newTemplate.name}
+                              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                              placeholder="e.g., Welcome Email"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="templateType">Template Type *</Label>
+                            <Select
+                              value={newTemplate.template_type}
+                              onValueChange={(value) => setNewTemplate({ ...newTemplate, template_type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="registration">Registration</SelectItem>
+                                <SelectItem value="transaction">Transaction</SelectItem>
+                                <SelectItem value="security">Security</SelectItem>
+                                <SelectItem value="notification">Notification</SelectItem>
+                                <SelectItem value="marketing">Marketing</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateSubject">Subject *</Label>
+                          <Input
+                            id="templateSubject"
+                            value={newTemplate.subject}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, subject: e.target.value })}
+                            placeholder="e.g., Welcome to Novapay!"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateVariables">Variables (JSON format)</Label>
+                          <Input
+                            id="templateVariables"
+                            value={newTemplate.variables}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, variables: e.target.value })}
+                            placeholder='e.g., {"user_name": "string", "amount": "number"}'
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateHtmlContent">HTML Content *</Label>
+                          <Textarea
+                            id="templateHtmlContent"
+                            value={newTemplate.html_content}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, html_content: e.target.value })}
+                            placeholder="HTML email template content..."
+                            rows={6}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="templateTextContent">Text Content *</Label>
+                          <Textarea
+                            id="templateTextContent"
+                            value={newTemplate.text_content}
+                            onChange={(e) => setNewTemplate({ ...newTemplate, text_content: e.target.value })}
+                            placeholder="Plain text email template content..."
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="isDefaultTemplate"
+                            checked={newTemplate.is_default}
+                            onCheckedChange={(checked) =>
+                              setNewTemplate({ ...newTemplate, is_default: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="isDefaultTemplate" className="text-sm font-medium">
+                            Set as default template for this type
+                          </Label>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                          <Button variant="outline" onClick={() => setIsAddTemplateOpen(false)} className="flex-1">
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleAddEmailTemplate}
+                            disabled={
+                              saving ||
+                              !newTemplate.name ||
+                              !newTemplate.subject ||
+                              !newTemplate.html_content ||
+                              !newTemplate.text_content
+                            }
+                            className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                          >
+                            {saving ? "Adding..." : "Add Template"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Edit Email Template Dialog */}
+                  <Dialog open={isEditTemplateOpen} onOpenChange={setIsEditTemplateOpen}>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Edit Email Template</DialogTitle>
+                      </DialogHeader>
+                      {editingTemplate && (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="editTemplateName">Template Name *</Label>
+                              <Input
+                                id="editTemplateName"
+                                value={editingTemplate.name}
+                                onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
+                                placeholder="e.g., Welcome Email"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="editTemplateType">Template Type *</Label>
+                              <Select
+                                value={editingTemplate.template_type}
+                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="registration">Registration</SelectItem>
+                                  <SelectItem value="transaction">Transaction</SelectItem>
+                                  <SelectItem value="security">Security</SelectItem>
+                                  <SelectItem value="notification">Notification</SelectItem>
+                                  <SelectItem value="marketing">Marketing</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateSubject">Subject *</Label>
+                            <Input
+                              id="editTemplateSubject"
+                              value={editingTemplate.subject}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                              placeholder="e.g., Welcome to Novapay!"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateVariables">Variables (JSON format)</Label>
+                            <Input
+                              id="editTemplateVariables"
+                              value={editingTemplate.variables}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, variables: e.target.value })}
+                              placeholder='e.g., {"user_name": "string", "amount": "number"}'
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateHtmlContent">HTML Content *</Label>
+                            <Textarea
+                              id="editTemplateHtmlContent"
+                              value={editingTemplate.html_content}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
+                              placeholder="HTML email template content..."
+                              rows={6}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="editTemplateTextContent">Text Content *</Label>
+                            <Textarea
+                              id="editTemplateTextContent"
+                              value={editingTemplate.text_content}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, text_content: e.target.value })}
+                              placeholder="Plain text email template content..."
+                              rows={4}
+                            />
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="editIsDefaultTemplate"
+                              checked={editingTemplate.is_default}
+                              onChange={(checked) =>
+                                setEditingTemplate({ ...editingTemplate, is_default: checked as boolean })
+                              }
+                            />
+                            <Label htmlFor="editIsDefaultTemplate" className="text-sm font-medium">
+                              Set as default template for this type
+                            </Label>
+                          </div>
+
+                          <div className="flex gap-4 pt-4">
+                            <Button variant="outline" onClick={() => setIsEditTemplateOpen(false)} className="flex-1">
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleEditEmailTemplate}
+                              disabled={
+                                saving ||
+                                !editingTemplate.name ||
+                                !editingTemplate.subject ||
+                                !editingTemplate.html_content ||
+                                !editingTemplate.text_content
+                              }
+                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                            >
+                              {saving ? "Saving..." : "Save Changes"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Subject</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Default</TableHead>
+                      <TableHead>Last Modified</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {emailTemplates.map((template) => (
+                      <TableRow key={template.id}>
+                        <TableCell className="font-medium">{template.name}</TableCell>
+                        <TableCell>{template.subject}</TableCell>
+                        <TableCell>
+                          <Badge className="bg-purple-100 text-purple-800">{template.template_type}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={
+                              template.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                            }
+                          >
+                            {template.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {template.is_default && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
+                        </TableCell>
+                        <TableCell>{new Date(template.updated_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditTemplateClick(template)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleTemplateStatus(template.id)}>
+                                {template.status === "active" ? "Disable" : "Enable"}
+                              </DropdownMenuItem>
+                              {template.status === "active" && !template.is_default && (
+                                <DropdownMenuItem onClick={() => handleSetDefaultTemplate(template.id)}>
+                                  Make Default
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteEmailTemplate(template.id)}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {emailTemplates.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No email templates configured yet</p>
+                    <p className="text-sm">Add email templates to customize user communications</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security Settings */}
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Security Settings</CardTitle>
+                  {!isEditingSecuritySettings && (
+                    <Button
+                      onClick={() => setIsEditingSecuritySettings(true)}
+                      className="bg-novapay-primary hover:bg-novapay-primary-600"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Settings
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                    <Input
+                      id="sessionTimeout"
+                      type="number"
+                      value={securitySettings.sessionTimeout}
+                      onChange={(e) => handleSecuritySettingsChange("sessionTimeout", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="passwordLength">Password Min Length</Label>
+                    <Input
+                      id="passwordLength"
+                      type="number"
+                      value={securitySettings.passwordMinLength}
+                      onChange={(e) => handleSecuritySettingsChange("passwordMinLength", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxAttempts">Max Login Attempts</Label>
+                    <Input
+                      id="maxAttempts"
+                      type="number"
+                      value={securitySettings.maxLoginAttempts}
+                      onChange={(e) => handleSecuritySettingsChange("maxLoginAttempts", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lockoutDuration">Account Lockout Duration (minutes)</Label>
+                    <Input
+                      id="lockoutDuration"
+                      type="number"
+                      value={securitySettings.accountLockoutDuration}
+                      onChange={(e) => handleSecuritySettingsChange("accountLockoutDuration", Number(e.target.value))}
+                      disabled={!isEditingSecuritySettings}
+                    />
+                  </div>
+                </div>
+
+                {isEditingSecuritySettings && (
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelSecuritySettings}
+                      className="flex-1 bg-transparent"
+                      disabled={saving}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveSecuritySettings}
+                      disabled={saving}
+                      className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? "Saving..." : "Save Security Settings"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminDashboardLayout>
   )
 }
