@@ -10,22 +10,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and OTP are required" }, { status: 400 })
     }
 
-    // Verify OTP
+    console.log("Verifying OTP for email:", email, "OTP:", otp)
+
+    // Verify OTP - check both used and unused OTPs
     const { data: otpRecord, error: otpError } = await supabase
       .from("password_reset_otps")
       .select("*")
       .eq("email", email)
       .eq("otp", otp)
-      .eq("used", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single()
 
+    console.log("OTP record found:", otpRecord)
+    console.log("OTP error:", otpError)
+
     if (otpError || !otpRecord) {
-      return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid verification code" }, { status: 400 })
     }
 
-    // Check if OTP is expired
+    // Check if OTP is already used
+    if (otpRecord.used) {
+      return NextResponse.json({ error: "Verification code has already been used" }, { status: 400 })
+    }
+
+    // Check if OTP is expired (15 minutes)
     const now = new Date()
     const expiresAt = new Date(otpRecord.expires_at)
+
+    console.log("Current time:", now)
+    console.log("Expires at:", expiresAt)
+    console.log("Is expired:", now > expiresAt)
 
     if (now > expiresAt) {
       return NextResponse.json({ error: "Verification code has expired" }, { status: 400 })
@@ -35,8 +50,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from("password_reset_otps")
       .update({ used: true })
-      .eq("email", email)
-      .eq("otp", otp)
+      .eq("id", otpRecord.id)
 
     if (updateError) {
       console.error("Error updating OTP:", updateError)
@@ -45,9 +59,15 @@ export async function POST(request: NextRequest) {
 
     // Generate reset token
     const resetToken = jwt.sign(
-      { email, purpose: "password_reset", exp: Math.floor(Date.now() / 1000) + 15 * 60 }, // 15 minutes
+      {
+        email,
+        purpose: "password_reset",
+        exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15 minutes
+      },
       process.env.JWT_SECRET!,
     )
+
+    console.log("Generated reset token for:", email)
 
     return NextResponse.json({
       message: "Verification code verified successfully",

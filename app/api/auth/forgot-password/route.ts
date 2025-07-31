@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+import { supabase } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,58 +9,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
+    console.log("Processing forgot password for:", email)
+
     // Check if user exists in our users table
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id, email")
-      .eq("email", email)
-      .single()
+    const { data: user, error: userError } = await supabase.from("users").select("email").eq("email", email).single()
 
     if (userError || !user) {
-      // For security, don't reveal if email exists or not
+      console.log("User not found:", email)
+      // Don't reveal if email exists for security
       return NextResponse.json({
-        message: "If an account with that email exists, we've sent a verification code.",
+        message: "If an account with this email exists, you will receive a verification code.",
       })
     }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes from now
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
-    // Delete any existing OTP for this email first
+    console.log("Generated OTP:", otp, "for email:", email)
+
+    // Delete any existing OTPs for this email
     await supabase.from("password_reset_otps").delete().eq("email", email)
 
     // Insert new OTP
     const { error: insertError } = await supabase.from("password_reset_otps").insert({
-      email: email,
-      otp: otp,
+      email,
+      otp,
       expires_at: expiresAt.toISOString(),
       used: false,
       created_at: new Date().toISOString(),
     })
 
     if (insertError) {
-      console.error("Failed to store OTP:", insertError)
+      console.error("Error inserting OTP:", insertError)
       return NextResponse.json({ error: "Failed to generate verification code" }, { status: 500 })
     }
 
-    // Send password reset email using Supabase Auth
-    // This will use Supabase's email template with {{ .Token }} placeholder
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    // Send email through Supabase Auth with OTP as custom data
+    const { error: emailError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+      data: {
+        otp: otp,
+        verification_code: otp,
+      },
     })
 
-    if (resetError) {
-      console.error("Failed to send reset email:", resetError)
-      // Don't return error to avoid revealing if email exists
+    if (emailError) {
+      console.error("Error sending email:", emailError)
+      // Don't reveal email sending errors for security
     }
 
-    // For development, log the OTP
-    console.log(`Password reset OTP for ${email}: ${otp}`)
+    console.log("OTP sent successfully for:", email)
 
     return NextResponse.json({
-      message: "Verification code sent to your email address.",
-      success: true,
+      message: "Verification code sent to your email address",
     })
   } catch (error) {
     console.error("Forgot password error:", error)
