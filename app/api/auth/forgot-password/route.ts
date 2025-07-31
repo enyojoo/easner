@@ -19,50 +19,39 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (userError || !user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      // For security, don't reveal if email exists or not
+      return NextResponse.json({
+        message: "If an account with that email exists, we've sent a verification code.",
+      })
     }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes from now
 
-    // Try to insert new OTP record
+    // Delete any existing OTP for this email first
+    await supabase.from("password_reset_otps").delete().eq("email", email)
+
+    // Insert new OTP
     const { error: insertError } = await supabase.from("password_reset_otps").insert({
-      user_id: user.id,
       email: email,
       otp: otp,
       expires_at: expiresAt.toISOString(),
+      used: false,
       created_at: new Date().toISOString(),
     })
 
     if (insertError) {
-      // If insert fails due to existing record, update it
-      if (insertError.code === "23505") {
-        // unique constraint violation
-        const { error: updateError } = await supabase
-          .from("password_reset_otps")
-          .update({
-            otp: otp,
-            expires_at: expiresAt.toISOString(),
-            created_at: new Date().toISOString(),
-          })
-          .eq("email", email)
-
-        if (updateError) {
-          console.error("Failed to update OTP:", updateError)
-          return NextResponse.json({ error: "Failed to generate verification code" }, { status: 500 })
-        }
-      } else {
-        console.error("Failed to insert OTP:", insertError)
-        return NextResponse.json({ error: "Failed to generate verification code" }, { status: 500 })
-      }
+      console.error("Failed to store OTP:", insertError)
+      return NextResponse.json({ error: "Failed to generate verification code" }, { status: 500 })
     }
 
-    // In a real app, send email with OTP here
+    // In production, send email with OTP here
+    // For development, log the OTP
     console.log(`Password reset OTP for ${email}: ${otp}`)
 
     return NextResponse.json({
-      message: "Verification code sent to your email",
+      message: "Verification code sent to your email address.",
       success: true,
     })
   } catch (error) {
