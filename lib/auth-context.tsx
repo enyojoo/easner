@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
+import { sessionManager } from "./session-manager"
 
 interface UserProfile {
   id: string
@@ -132,8 +133,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    // Initialize session manager when user is authenticated
+    if (user) {
+      // Session manager is already initialized in its constructor
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (!user) {
+        sessionManager.cleanup()
+      }
+      subscription.unsubscribe()
+    }
+  }, [user])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -185,6 +197,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+
+      // Clear any stored session data
+      if (typeof window !== "undefined") {
+        sessionStorage.clear()
+        localStorage.clear()
+      }
+
+      // Redirect to home page
+      window.location.href = "/"
     } catch (error) {
       console.error("Sign out error:", error)
     }

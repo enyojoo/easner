@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, Menu, X } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode
@@ -25,10 +26,10 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useAuth()
 
-  const handleLogout = () => {
-    // Mock logout - redirect to home
-    router.push("/")
+  const handleLogout = async () => {
+    await signOut()
   }
 
   return (
