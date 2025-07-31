@@ -8,22 +8,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Mail, Shield, Eye, EyeOff, Edit, X } from "lucide-react"
+import { User, Mail, Edit } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService } from "@/lib/database"
-import { supabase } from "@/lib/supabase"
 import { useUserData } from "@/hooks/use-user-data"
 
 export default function UserProfilePage() {
   const { user, userProfile, refreshUserProfile } = useAuth()
   const { transactions, currencies, exchangeRates } = useUserData()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [isChangingPassword, setIsChangingPassword] = useState(false)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [passwordLoading, setPasswordLoading] = useState(false)
   const [userStats, setUserStats] = useState({
     totalTransactions: 0,
     totalSent: 0,
@@ -39,12 +33,6 @@ export default function UserProfilePage() {
   })
 
   const [editProfileData, setEditProfileData] = useState(profileData)
-
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
 
   // Load user profile data
   useEffect(() => {
@@ -148,47 +136,6 @@ export default function UserProfilePage() {
   const handleCancelEdit = () => {
     setEditProfileData(profileData)
     setIsEditingProfile(false)
-  }
-
-  const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      return
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      return
-    }
-
-    setPasswordLoading(true)
-    try {
-      // Update password using Supabase Auth
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword,
-      })
-
-      if (error) {
-        console.error("Supabase error:", error)
-        throw error
-      }
-
-      // Reset form and close password change section - THIS IS THE FIX
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
-      setIsChangingPassword(false)
-      setShowNewPassword(false)
-      setShowConfirmPassword(false)
-    } catch (error) {
-      console.error("Error updating password:", error)
-    } finally {
-      setPasswordLoading(false)
-    }
-  }
-
-  const handleCancelPasswordChange = () => {
-    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
-    setIsChangingPassword(false)
-    setShowNewPassword(false)
-    setShowConfirmPassword(false)
-    setPasswordLoading(false)
   }
 
   const getSelectedCurrency = () => {
@@ -345,114 +292,6 @@ export default function UserProfilePage() {
                         Used for reporting your total sent amount in the dashboard
                       </p>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Password Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Password
-                  </CardTitle>
-                  {!isChangingPassword && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsChangingPassword(true)}
-                      className="bg-transparent"
-                    >
-                      Change
-                    </Button>
-                  )}
-                  {isChangingPassword && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCancelPasswordChange}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isChangingPassword ? (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="newPassword"
-                          type={showNewPassword ? "text" : "password"}
-                          value={passwordData.newPassword}
-                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          disabled={passwordLoading}
-                          placeholder="Enter new password"
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          disabled={passwordLoading}
-                        >
-                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                          disabled={passwordLoading}
-                          placeholder="Confirm new password"
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          disabled={passwordLoading}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handlePasswordChange}
-                        disabled={passwordLoading || !passwordData.newPassword || !passwordData.confirmPassword}
-                        className="bg-novapay-primary hover:bg-novapay-primary-600"
-                      >
-                        {passwordLoading ? "Updating..." : "Update Password"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleCancelPasswordChange}
-                        disabled={passwordLoading}
-                        className="bg-transparent"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-4">
-                    <p className="text-gray-600">Manage your account password</p>
-                    <p className="text-sm text-gray-500 mt-1">Keep your account secure by using a strong password</p>
                   </div>
                 )}
               </CardContent>
