@@ -7,12 +7,12 @@ class SessionManager {
 
   constructor(onExpiry?: () => void) {
     this.onExpiry = onExpiry
-    this.setupActivityListeners()
+    if (typeof window !== "undefined") {
+      this.setupActivityListeners()
+    }
   }
 
   private setupActivityListeners() {
-    if (typeof window === "undefined") return
-
     const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
 
     const handleActivity = () => {

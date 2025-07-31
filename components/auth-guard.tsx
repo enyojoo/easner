@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -14,24 +13,25 @@ interface AuthGuardProps {
 export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
   const { user, loading, isAdmin } = useAuth()
   const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // Not authenticated, redirect to appropriate login
         router.push(requireAdmin ? "/admin/login" : "/login")
         return
       }
 
       if (requireAdmin && !isAdmin) {
-        // User is authenticated but not admin, redirect to login
         router.push("/login")
         return
       }
+
+      setIsChecking(false)
     }
   }, [user, loading, isAdmin, requireAdmin, router])
 
-  if (loading) {
+  if (loading || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>

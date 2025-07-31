@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
@@ -55,53 +55,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null)
+  const [profileFetched, setProfileFetched] = useState(false)
   const router = useRouter()
 
   const INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      // Try to fetch from users table first
-      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
+  const fetchUserProfile = useCallback(
+    async (userId: string) => {
+      if (profileFetched) return // Prevent multiple fetches
 
-      if (userProfile && !userError) {
-        setUserProfile(userProfile)
-        setIsAdmin(false)
-        return userProfile
+      try {
+        setProfileFetched(true)
+
+        // Try to fetch from users table first
+        const { data: userProfile, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle()
+
+        if (userProfile && !userError) {
+          setUserProfile(userProfile)
+          setIsAdmin(false)
+          return userProfile
+        }
+
+        // If not found in users, check admin_users table
+        const { data: adminProfile, error: adminError } = await supabase
+          .from("admin_users")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle()
+
+        if (adminProfile && !adminError) {
+          setUserProfile(adminProfile)
+          setIsAdmin(true)
+          return adminProfile
+        }
+
+        // If no profile found, user might not be properly set up
+        console.warn("No user profile found for user:", userId)
+        return null
+      } catch (error) {
+        console.error("Error fetching user profile:", error)
+        return null
       }
+    },
+    [profileFetched],
+  )
 
-      // If not found in users, check admin_users table
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("id", userId)
-        .single()
-
-      if (adminProfile && !adminError) {
-        setUserProfile(adminProfile)
-        setIsAdmin(true)
-        return adminProfile
-      }
-
-      return null
-    } catch (error) {
-      console.error("Error fetching user profile:", error)
-      return null
-    }
-  }
-
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (user) {
+      setProfileFetched(false)
       await fetchUserProfile(user.id)
     }
-  }
+  }, [user, fetchUserProfile])
 
-  const handleSessionExpiry = async () => {
+  const handleSessionExpiry = useCallback(async () => {
     try {
       await supabase.auth.signOut()
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+      setProfileFetched(false)
 
       if (typeof window !== "undefined") {
         sessionStorage.clear()
@@ -112,16 +128,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Error handling session expiry:", error)
     }
-  }
+  }, [router])
 
-  const resetInactivityTimer = () => {
+  const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer) {
       clearTimeout(inactivityTimer)
     }
 
     const timer = setTimeout(handleSessionExpiry, INACTIVITY_TIMEOUT)
     setInactivityTimer(timer)
-  }
+  }, [inactivityTimer, handleSessionExpiry, INACTIVITY_TIMEOUT])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -166,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       if (inactivityTimer) {
         clearTimeout(inactivityTimer)
@@ -177,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+      setProfileFetched(false)
 
       if (typeof window !== "undefined") {
         sessionStorage.clear()
@@ -187,9 +204,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Sign out error:", error)
     }
-  }
+  }, [inactivityTimer, router])
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -197,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        if (session?.user) {
+        if (mounted && session?.user) {
           setUser(session.user)
           await fetchUserProfile(session.user.id)
           resetInactivityTimer()
@@ -205,7 +224,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error getting initial session:", error)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
@@ -215,15 +236,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+
       try {
-        if (session?.user) {
+        if (event === "SIGNED_IN" && session?.user) {
           setUser(session.user)
+          setProfileFetched(false) // Reset profile fetch flag
           await fetchUserProfile(session.user.id)
           resetInactivityTimer()
-        } else {
+        } else if (event === "SIGNED_OUT") {
           setUser(null)
           setUserProfile(null)
           setIsAdmin(false)
+          setProfileFetched(false)
           if (inactivityTimer) {
             clearTimeout(inactivityTimer)
             setInactivityTimer(null)
@@ -232,13 +257,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error handling auth state change:", error)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     })
 
     // Activity tracking
     const handleActivity = () => {
-      if (user) {
+      if (user && mounted) {
         resetInactivityTimer()
       }
     }
@@ -249,6 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => {
+      mounted = false
       subscription.unsubscribe()
       if (inactivityTimer) {
         clearTimeout(inactivityTimer)
@@ -257,7 +285,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.removeEventListener(event, handleActivity, true)
       })
     }
-  }, [user, inactivityTimer])
+  }, []) // Empty dependency array to prevent infinite loops
 
   const value = {
     user,

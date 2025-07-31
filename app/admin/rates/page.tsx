@@ -5,131 +5,151 @@ import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { useAdminData } from "@/hooks/use-admin-data"
-import { Save, RefreshCw } from "lucide-react"
+import { TrendingUp, TrendingDown, Edit, Save } from "lucide-react"
 import { useState } from "react"
 
 export default function AdminRatesPage() {
   const { exchangeRates, loading } = useAdminData()
-  const [rates, setRates] = useState(exchangeRates || {})
+  const [editingRate, setEditingRate] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState("")
 
-  const handleRateChange = (currency: string, rate: string) => {
-    setRates((prev: any) => ({
-      ...prev,
-      [currency]: Number.parseFloat(rate) || 0,
-    }))
+  const handleEdit = (currencyPair: string, currentRate: number) => {
+    setEditingRate(currencyPair)
+    setEditValue(currentRate.toString())
   }
 
-  const handleSave = async () => {
-    // Implementation for saving rates
-    console.log("Saving rates:", rates)
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    setEditingRate(null)
+    setEditValue("")
   }
 
-  const currencies = [
-    { code: "USD", name: "US Dollar" },
-    { code: "EUR", name: "Euro" },
-    { code: "GBP", name: "British Pound" },
-    { code: "CAD", name: "Canadian Dollar" },
-    { code: "AUD", name: "Australian Dollar" },
-    { code: "JPY", name: "Japanese Yen" },
-    { code: "CHF", name: "Swiss Franc" },
-    { code: "CNY", name: "Chinese Yuan" },
-  ]
+  const handleCancel = () => {
+    setEditingRate(null)
+    setEditValue("")
+  }
+
+  if (loading) {
+    return (
+      <AuthGuard requireAdmin>
+        <AdminDashboardLayout>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
+          </div>
+        </AdminDashboardLayout>
+      </AuthGuard>
+    )
+  }
 
   return (
-    <AuthGuard requireAuth={true} requireAdmin={true}>
+    <AuthGuard requireAdmin>
       <AdminDashboardLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Currency & Exchange Rates</h1>
-              <p className="text-gray-600">Manage currencies, exchange rates and transaction fees</p>
+              <h1 className="text-3xl font-bold tracking-tight">Exchange Rates</h1>
+              <p className="text-muted-foreground">Manage currency exchange rates and fees</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Rates
-              </Button>
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </Button>
-            </div>
+            <Button>Update All Rates</Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Exchange Rates</CardTitle>
-                <CardDescription>Base currency: Nigerian Naira (NGN)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-novapay-primary"></div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {currencies.map((currency) => (
-                      <div key={currency.code} className="flex items-center justify-between">
-                        <div>
-                          <Label className="font-medium">{currency.code}</Label>
-                          <p className="text-sm text-gray-500">{currency.name}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">1 {currency.code} =</span>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={rates[currency.code] || ""}
-                            onChange={(e) => handleRateChange(currency.code, e.target.value)}
-                            className="w-24"
-                            placeholder="0.00"
-                          />
-                          <span className="text-sm text-gray-500">NGN</span>
-                        </div>
-                      </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              { pair: "USD/NGN", rate: 1650.0, change: 2.5, updated: "2024-01-15 10:30:00", status: "active" },
+              { pair: "GBP/NGN", rate: 2050.0, change: -1.2, updated: "2024-01-15 10:30:00", status: "active" },
+              { pair: "EUR/NGN", rate: 1780.0, change: 0.8, updated: "2024-01-15 10:30:00", status: "active" },
+            ].map((rate) => (
+              <Card key={rate.pair}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{rate.pair}</CardTitle>
+                  {rate.change > 0 ? (
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-600" />
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">₦{rate.rate.toFixed(2)}</div>
+                  <p className={`text-xs ${rate.change > 0 ? "text-green-600" : "text-red-600"}`}>
+                    {rate.change > 0 ? "+" : ""}
+                    {rate.change}% from yesterday
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Exchange Rate Management</CardTitle>
+              <CardDescription>Update and manage all currency exchange rates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2">Currency Pair</th>
+                      <th className="text-left p-2">Current Rate</th>
+                      <th className="text-left p-2">24h Change</th>
+                      <th className="text-left p-2">Last Updated</th>
+                      <th className="text-left p-2">Status</th>
+                      <th className="text-left p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { pair: "USD/NGN", rate: 1650.0, change: 2.5, updated: "2024-01-15 10:30:00", status: "active" },
+                      { pair: "GBP/NGN", rate: 2050.0, change: -1.2, updated: "2024-01-15 10:30:00", status: "active" },
+                      { pair: "EUR/NGN", rate: 1780.0, change: 0.8, updated: "2024-01-15 10:30:00", status: "active" },
+                    ].map((rate) => (
+                      <tr key={rate.pair} className="border-b">
+                        <td className="p-2 font-medium">{rate.pair}</td>
+                        <td className="p-2">
+                          {editingRate === rate.pair ? (
+                            <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-24" />
+                          ) : (
+                            `₦${rate.rate.toFixed(2)}`
+                          )}
+                        </td>
+                        <td className="p-2">
+                          <span className={rate.change > 0 ? "text-green-600" : "text-red-600"}>
+                            {rate.change > 0 ? "+" : ""}
+                            {rate.change}%
+                          </span>
+                        </td>
+                        <td className="p-2">{rate.updated}</td>
+                        <td className="p-2">
+                          <Badge className="bg-green-100 text-green-800">Active</Badge>
+                        </td>
+                        <td className="p-2">
+                          {editingRate === rate.pair ? (
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleSave}>
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={handleCancel}>
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(rate.pair, rate.rate)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Rate History</CardTitle>
-                <CardDescription>Recent rate changes and updates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">USD Rate Updated</p>
-                      <p className="text-sm text-gray-500">Changed from ₦1,450 to ₦1,460</p>
-                    </div>
-                    <span className="text-sm text-gray-500">2 hours ago</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">EUR Rate Updated</p>
-                      <p className="text-sm text-gray-500">Changed from ₦1,580 to ₦1,590</p>
-                    </div>
-                    <span className="text-sm text-gray-500">5 hours ago</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">GBP Rate Updated</p>
-                      <p className="text-sm text-gray-500">Changed from ₦1,820 to ₦1,830</p>
-                    </div>
-                    <span className="text-sm text-gray-500">1 day ago</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </AdminDashboardLayout>
     </AuthGuard>
   )
 }
+</merged_code>

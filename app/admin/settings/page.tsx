@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface SystemSetting {
   id: string
@@ -758,161 +759,158 @@ export default function AdminSettingsPage() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-              <p className="text-gray-600">Configure platform settings and preferences</p>
+              <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+              <p className="text-muted-foreground">Manage platform settings and configuration</p>
             </div>
             <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  General Settings
-                </CardTitle>
-                <CardDescription>Basic platform configuration</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="siteName">Site Name</Label>
-                  <Input
-                    id="siteName"
-                    value={settings.siteName}
-                    onChange={(e) => handleSettingChange("siteName", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="siteDescription">Site Description</Label>
-                  <Textarea
-                    id="siteDescription"
-                    value={settings.siteDescription}
-                    onChange={(e) => handleSettingChange("siteDescription", e.target.value)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Maintenance Mode</Label>
-                    <p className="text-sm text-gray-500">Temporarily disable the platform</p>
-                  </div>
-                  <Switch
-                    checked={settings.maintenanceMode}
-                    onCheckedChange={(checked) => handleSettingChange("maintenanceMode", checked)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>User Registration</Label>
-                    <p className="text-sm text-gray-500">Allow new user registrations</p>
-                  </div>
-                  <Switch
-                    checked={settings.registrationEnabled}
-                    onCheckedChange={(checked) => handleSettingChange("registrationEnabled", checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          <Tabs defaultValue="general" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="general">
+                <Globe className="mr-2 h-4 w-4" />
+                General
+              </TabsTrigger>
+              <TabsTrigger value="security">
+                <Shield className="mr-2 h-4 w-4" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger value="notifications">
+                <Bell className="mr-2 h-4 w-4" />
+                Notifications
+              </TabsTrigger>
+            </TabsList>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notification Settings
-                </CardTitle>
-                <CardDescription>Configure notification preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-gray-500">Send email notifications to users</p>
+            <TabsContent value="general" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>General Settings</CardTitle>
+                  <CardDescription>Basic platform configuration</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="siteName">Site Name</Label>
+                      <Input
+                        id="siteName"
+                        value={settings.siteName}
+                        onChange={(e) => handleSettingChange("siteName", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxTransaction">Max Transaction Amount (NGN)</Label>
+                      <Input
+                        id="maxTransaction"
+                        type="number"
+                        value={settings.maxTransactionAmount}
+                        onChange={(e) => handleSettingChange("maxTransactionAmount", Number(e.target.value))}
+                      />
+                    </div>
                   </div>
-                  <Switch
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(checked) => handleSettingChange("emailNotifications", checked)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-gray-500">Send SMS notifications to users</p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="siteDescription">Site Description</Label>
+                    <Textarea
+                      id="siteDescription"
+                      value={settings.siteDescription}
+                      onChange={(e) => handleSettingChange("siteDescription", e.target.value)}
+                    />
                   </div>
-                  <Switch
-                    checked={settings.smsNotifications}
-                    onCheckedChange={(checked) => handleSettingChange("smsNotifications", checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Transaction Settings
-                </CardTitle>
-                <CardDescription>Configure transaction limits and fees</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="minAmount">Minimum Transaction Amount (NGN)</Label>
-                  <Input
-                    id="minAmount"
-                    type="number"
-                    value={settings.minTransactionAmount}
-                    onChange={(e) => handleSettingChange("minTransactionAmount", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxAmount">Maximum Transaction Amount (NGN)</Label>
-                  <Input
-                    id="maxAmount"
-                    type="number"
-                    value={settings.maxTransactionAmount}
-                    onChange={(e) => handleSettingChange("maxTransactionAmount", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="feePercentage">Transaction Fee (%)</Label>
-                  <Input
-                    id="feePercentage"
-                    type="number"
-                    step="0.1"
-                    value={settings.transactionFeePercentage}
-                    onChange={(e) => handleSettingChange("transactionFeePercentage", e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="minTransaction">Min Transaction Amount (NGN)</Label>
+                      <Input
+                        id="minTransaction"
+                        type="number"
+                        value={settings.minTransactionAmount}
+                        onChange={(e) => handleSettingChange("minTransactionAmount", Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="transactionFee">Transaction Fee (%)</Label>
+                      <Input
+                        id="transactionFee"
+                        type="number"
+                        step="0.1"
+                        value={settings.transactionFeePercentage}
+                        onChange={(e) => handleSettingChange("transactionFeePercentage", Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>System Information</CardTitle>
-                <CardDescription>Platform status and information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Platform Version</span>
-                  <span className="font-medium">v1.0.0</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Database Status</span>
-                  <span className="text-green-600 font-medium">Connected</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Last Backup</span>
-                  <span className="font-medium">2 hours ago</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Uptime</span>
-                  <span className="font-medium">99.9%</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="security" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Security Settings</CardTitle>
+                  <CardDescription>Platform security and access control</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Maintenance Mode</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enable maintenance mode to restrict access to the platform
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.maintenanceMode}
+                      onCheckedChange={(checked) => handleSettingChange("maintenanceMode", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>User Registration</Label>
+                      <p className="text-sm text-muted-foreground">Allow new users to register accounts</p>
+                    </div>
+                    <Switch
+                      checked={settings.registrationEnabled}
+                      onCheckedChange={(checked) => handleSettingChange("registrationEnabled", checked)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="notifications" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Notification Settings</CardTitle>
+                  <CardDescription>Configure system notifications</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Send email notifications to users</p>
+                    </div>
+                    <Switch
+                      checked={settings.emailNotifications}
+                      onCheckedChange={(checked) => handleSettingChange("emailNotifications", checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>SMS Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Send SMS notifications to users</p>
+                    </div>
+                    <Switch
+                      checked={settings.smsNotifications}
+                      onCheckedChange={(checked) => handleSettingChange("smsNotifications", checked)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </AdminDashboardLayout>
     </AuthGuard>
