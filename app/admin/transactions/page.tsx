@@ -3,29 +3,17 @@
 import { AuthGuard } from "@/components/auth-guard"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { useAdminData } from "@/hooks/use-admin-data"
-import { Search, Filter, Download } from "lucide-react"
+import { Search, Download } from "lucide-react"
 import { useState } from "react"
 
 export default function AdminTransactionsPage() {
-  const { transactions, loading } = useAdminData()
+  const { data, loading } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-      case "failed":
-        return <Badge className="bg-red-100 text-red-800">Failed</Badge>
-      default:
-        return <Badge>{status}</Badge>
-    }
-  }
+  const [statusFilter, setStatusFilter] = useState("all")
 
   if (loading) {
     return (
@@ -39,6 +27,32 @@ export default function AdminTransactionsPage() {
     )
   }
 
+  const transactions = data?.transactions || []
+
+  const filteredTransactions = transactions.filter((transaction: any) => {
+    const matchesSearch =
+      transaction.sender_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.recipient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "failed":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
   return (
     <AuthGuard requireAdmin>
       <AdminDashboardLayout>
@@ -46,7 +60,7 @@ export default function AdminTransactionsPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-              <p className="text-muted-foreground">Manage and monitor all transactions</p>
+              <p className="text-muted-foreground">Monitor and manage all platform transactions</p>
             </div>
             <Button>
               <Download className="mr-2 h-4 w-4" />
@@ -56,62 +70,69 @@ export default function AdminTransactionsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-              <CardDescription>View and manage all platform transactions</CardDescription>
-              <div className="flex space-x-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search transactions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
+              <CardTitle>Transaction Filters</CardTitle>
+              <CardDescription>Filter and search transactions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by sender, recipient, or reference..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
                 </div>
-                <Button variant="outline">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                </select>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>All Transactions</CardTitle>
+              <CardDescription>{filteredTransactions.length} transactions found</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">Transaction ID</th>
+                      <th className="text-left p-2">Reference</th>
                       <th className="text-left p-2">Sender</th>
                       <th className="text-left p-2">Recipient</th>
                       <th className="text-left p-2">Amount</th>
                       <th className="text-left p-2">Status</th>
                       <th className="text-left p-2">Date</th>
-                      <th className="text-left p-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions?.map((transaction: any) => (
-                      <tr key={transaction.id} className="border-b">
-                        <td className="p-2 font-mono text-sm">{transaction.id.slice(0, 8)}...</td>
+                    {filteredTransactions.map((transaction: any) => (
+                      <tr key={transaction.id} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-mono text-sm">{transaction.reference}</td>
                         <td className="p-2">{transaction.sender_name}</td>
                         <td className="p-2">{transaction.recipient_name}</td>
                         <td className="p-2">
-                          {transaction.amount} {transaction.send_currency}
+                          {transaction.amount} {transaction.from_currency} → {transaction.to_currency}
                         </td>
-                        <td className="p-2">{getStatusBadge(transaction.status)}</td>
-                        <td className="p-2">{new Date(transaction.created_at).toLocaleDateString()}</td>
                         <td className="p-2">
-                          <Button variant="outline" size="sm">
-                            View
-                          </Button>
+                          <Badge className={getStatusColor(transaction.status)}>{transaction.status}</Badge>
                         </td>
+                        <td className="p-2">{new Date(transaction.created_at).toLocaleDateString()}</td>
                       </tr>
-                    )) || (
-                      <tr>
-                        <td colSpan={7} className="p-4 text-center text-muted-foreground">
-                          No transactions found
-                        </td>
-                      </tr>
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>

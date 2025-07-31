@@ -1,51 +1,57 @@
-"use client"
+export class SessionManager {
+  private static instance: SessionManager
+  private lastActivity: number = Date.now()
+  private sessionTimeout: number = 60 * 60 * 1000 // 60 minutes
+  private timeoutId: NodeJS.Timeout | null = null
 
-class SessionManager {
-  private inactivityTimer: NodeJS.Timeout | null = null
-  private readonly INACTIVITY_TIMEOUT = 60 * 60 * 1000 // 60 minutes
-  private onExpiry?: () => void
+  private constructor() {}
 
-  constructor(onExpiry?: () => void) {
-    this.onExpiry = onExpiry
+  static getInstance(): SessionManager {
+    if (!SessionManager.instance) {
+      SessionManager.instance = new SessionManager()
+    }
+    return SessionManager.instance
+  }
+
+  updateActivity(): void {
+    this.lastActivity = Date.now()
+    this.resetTimeout()
+  }
+
+  private resetTimeout(): void {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId)
+    }
+
+    this.timeoutId = setTimeout(() => {
+      this.handleSessionExpiry()
+    }, this.sessionTimeout)
+  }
+
+  private handleSessionExpiry(): void {
+    // Clear any stored session data
     if (typeof window !== "undefined") {
-      this.setupActivityListeners()
+      localStorage.removeItem("supabase.auth.token")
+      sessionStorage.clear()
+
+      // Redirect to home page
+      window.location.href = "/"
     }
   }
 
-  private setupActivityListeners() {
-    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
-
-    const handleActivity = () => {
-      this.resetTimer()
-    }
-
-    events.forEach((event) => {
-      document.addEventListener(event, handleActivity, true)
-    })
+  isSessionExpired(): boolean {
+    return Date.now() - this.lastActivity > this.sessionTimeout
   }
 
-  resetTimer() {
-    if (this.inactivityTimer) {
-      clearTimeout(this.inactivityTimer)
-    }
-
-    this.inactivityTimer = setTimeout(() => {
-      this.handleExpiry()
-    }, this.INACTIVITY_TIMEOUT)
+  startSession(): void {
+    this.lastActivity = Date.now()
+    this.resetTimeout()
   }
 
-  private handleExpiry() {
-    if (this.onExpiry) {
-      this.onExpiry()
+  endSession(): void {
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId)
     }
-  }
-
-  cleanup() {
-    if (this.inactivityTimer) {
-      clearTimeout(this.inactivityTimer)
-      this.inactivityTimer = null
-    }
+    this.lastActivity = 0
   }
 }
-
-export const sessionManager = new SessionManager()

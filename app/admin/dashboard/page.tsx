@@ -7,7 +7,7 @@ import { useAdminData } from "@/hooks/use-admin-data"
 import { Users, CreditCard, TrendingUp, DollarSign } from "lucide-react"
 
 export default function AdminDashboardPage() {
-  const { stats, loading } = useAdminData()
+  const { data, loading } = useAdminData()
 
   if (loading) {
     return (
@@ -21,103 +21,101 @@ export default function AdminDashboardPage() {
     )
   }
 
+  const stats = [
+    {
+      title: "Total Users",
+      value: data?.totalUsers || "0",
+      description: "+20.1% from last month",
+      icon: Users,
+    },
+    {
+      title: "Total Transactions",
+      value: data?.totalTransactions || "0",
+      description: "+180.1% from last month",
+      icon: CreditCard,
+    },
+    {
+      title: "Total Revenue",
+      value: `₦${(data?.totalRevenue || 0).toLocaleString()}`,
+      description: "+19% from last month",
+      icon: DollarSign,
+    },
+    {
+      title: "Active Rate",
+      value: "98.2%",
+      description: "+2% from last month",
+      icon: TrendingUp,
+    },
+  ]
+
   return (
     <AuthGuard requireAdmin>
       <AdminDashboardLayout>
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">Welcome to your admin dashboard</p>
+            <p className="text-muted-foreground">Here's what's happening with your platform today.</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalTransactions || 0}</div>
-                <p className="text-xs text-muted-foreground">+180.1% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Transaction Volume</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${stats?.transactionVolume || 0}</div>
-                <p className="text-xs text-muted-foreground">+19% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.activeUsers || 0}</div>
-                <p className="text-xs text-muted-foreground">+201 since last hour</p>
-              </CardContent>
-            </Card>
+            {stats.map((stat) => (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>Latest transaction activity</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pl-2">
                 <div className="space-y-4">
-                  {stats?.recentTransactions?.map((transaction: any) => (
+                  {(data?.recentTransactions || []).slice(0, 5).map((transaction: any) => (
                     <div key={transaction.id} className="flex items-center">
                       <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">{transaction.sender_name}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.recipient_name}</p>
+                        <p className="text-sm font-medium leading-none">
+                          {transaction.sender_name} → {transaction.recipient_name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.amount} {transaction.from_currency} → {transaction.to_currency}
+                        </p>
                       </div>
-                      <div className="ml-auto font-medium">
-                        ${transaction.amount} {transaction.send_currency}
-                      </div>
+                      <div className="ml-auto font-medium">{new Date(transaction.created_at).toLocaleDateString()}</div>
                     </div>
-                  )) || <p className="text-sm text-muted-foreground">No recent transactions</p>}
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
             <Card className="col-span-3">
               <CardHeader>
-                <CardTitle>System Status</CardTitle>
-                <CardDescription>Current system health</CardDescription>
+                <CardTitle>Recent Users</CardTitle>
+                <CardDescription>Latest user registrations</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-sm">API Status: Operational</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-sm">Database: Healthy</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-                    <span className="text-sm">Payment Gateway: Degraded</span>
-                  </div>
+                  {(data?.recentUsers || []).slice(0, 5).map((user: any) => (
+                    <div key={user.id} className="flex items-center">
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.first_name} {user.last_name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                      <div className="ml-auto text-sm text-muted-foreground">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

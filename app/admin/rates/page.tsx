@@ -152,4 +152,3 @@ export default function AdminRatesPage() {
     </AuthGuard>
   )
 }
-</merged_code>
