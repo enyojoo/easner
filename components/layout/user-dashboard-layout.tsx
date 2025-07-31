@@ -125,7 +125,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
         {/* Bottom Navigation - Mobile/Tablet only */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
-          <div className="flex justify-around items-center py-2 px-2">
+          <div className="flex justify-around items-center py-3 px-2">
             {bottomNavItems.map((item) => {
               const isActive = pathname === item.href
 
@@ -137,13 +137,12 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                     className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                   >
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 ${
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
                         isActive ? "bg-novapay-primary" : "bg-novapay-primary"
                       }`}
                     >
                       <item.icon className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-xs text-novapay-primary font-medium">Send</span>
                   </Link>
                 )
               }
@@ -154,10 +153,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   href={item.href}
                   className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                 >
-                  <item.icon className={`h-5 w-5 mb-1 ${isActive ? "text-novapay-primary" : "text-gray-600"}`} />
-                  <span className={`text-xs ${isActive ? "text-novapay-primary font-medium" : "text-gray-600"}`}>
-                    {item.name}
-                  </span>
+                  <item.icon className={`h-6 w-6 ${isActive ? "text-novapay-primary" : "text-gray-600"}`} />
                 </Link>
               )
             })}
@@ -167,19 +163,10 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <button className="flex flex-col items-center justify-center p-2 min-w-0 flex-1">
                   <MoreHorizontal
-                    className={`h-5 w-5 mb-1 ${
+                    className={`h-6 w-6 ${
                       ["/user/profile", "/user/support"].includes(pathname) ? "text-novapay-primary" : "text-gray-600"
                     }`}
                   />
-                  <span
-                    className={`text-xs ${
-                      ["/user/profile", "/user/support"].includes(pathname)
-                        ? "text-novapay-primary font-medium"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    More
-                  </span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="mb-2">
