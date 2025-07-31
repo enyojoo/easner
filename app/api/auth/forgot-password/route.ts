@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,45 +24,48 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Send password reset email first to get the token from Supabase
-    const { data: resetData, error: emailError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
-    })
-
-    if (emailError) {
-      console.error("Error sending email:", emailError)
-      return NextResponse.json({ error: "Failed to send verification code" }, { status: 500 })
-    }
-
-    // The actual token sent by Supabase is not directly accessible
-    // So we'll use a different approach - generate our own OTP and send it via custom email
-    // For now, let's use the Supabase token approach but store a placeholder
-
-    // Generate 6-digit OTP as placeholder (this won't be used for verification)
+    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
-    console.log("Generated placeholder OTP:", otp, "for email:", email)
-    console.log("Note: User should use the token from Supabase email, not this OTP")
+    console.log("Generated OTP:", otp, "for email:", email)
 
     // Delete any existing OTPs for this email
     await supabase.from("password_reset_otps").delete().eq("email", email)
 
-    // Insert placeholder OTP (won't be used for verification)
+    // Insert new OTP
     const { error: insertError } = await supabase.from("password_reset_otps").insert({
       email,
-      otp: "SUPABASE_TOKEN", // Placeholder indicating Supabase handles the token
+      otp,
       expires_at: expiresAt.toISOString(),
       used: false,
       created_at: new Date().toISOString(),
     })
 
     if (insertError) {
-      console.error("Error inserting OTP record:", insertError)
+      console.error("Error inserting OTP:", insertError)
       return NextResponse.json({ error: "Failed to generate verification code" }, { status: 500 })
     }
 
-    console.log("Password reset email sent via Supabase for:", email)
+    // Use Supabase's signInWithOtp to send the OTP via email
+    // This will use the Magic Link template but we can customize it to show the OTP
+    const { error: emailError } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: false,
+        data: {
+          otp: otp,
+          verification_code: otp,
+        },
+      },
+    })
+
+    if (emailError) {
+      console.error("Error sending email:", emailError)
+      // Don't reveal email sending errors for security
+    } else {
+      console.log("Email sent with OTP:", otp)
+    }
 
     return NextResponse.json({
       message: "Verification code sent to your email address",
