@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabase } from "@/lib/supabase"
 import jwt from "jsonwebtoken"
-import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,25 +23,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid reset token" }, { status: 400 })
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12)
-
-    // Update user password in Supabase Auth
+    // Update user password in Supabase Auth using the admin client
     const { error: authError } = await supabase.auth.admin.updateUserById(decoded.userId, {
       password: newPassword,
     })
 
     if (authError) {
-      // If Supabase Auth update fails, try updating the users table directly
-      const { error: dbError } = await supabase
-        .from("users")
-        .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() })
-        .eq("email", email)
-
-      if (dbError) {
-        console.error("Error updating password:", dbError)
-        return NextResponse.json({ error: "Failed to update password" }, { status: 500 })
-      }
+      console.error("Error updating password in Supabase Auth:", authError)
+      return NextResponse.json({ error: "Failed to update password" }, { status: 500 })
     }
 
     return NextResponse.json({
