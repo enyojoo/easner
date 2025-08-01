@@ -148,7 +148,9 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                { : transactions.length === 0 ? (
+            { loading ? (
+                  <div className="text-center py-8 text-gray-500">Loading transactions...</div>
+                ) : transactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No transactions yet</div>
                 ) : (
                   transactions.slice(0, 3).map((transaction) => (
