@@ -58,75 +58,79 @@ export const userService = {
   },
 }
 
-// Currency operations with improved caching
+// Currency operations with stale-while-revalidate caching
 export const currencyService = {
   async getAll() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("currencies")
+        .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
+        .eq("status", "active")
+        .order("code")
+
+      if (error) throw error
+
+      return (
+        data?.map((currency) => ({
+          ...currency,
+          flag: currency.flag_svg,
+        })) || []
+      )
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.CURRENCIES, refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("currencies")
-      .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
-      .eq("status", "active")
-      .order("code")
-
-    if (error) throw error
-
-    // Map flag_svg to flag for frontend compatibility
-    const currencies =
-      data?.map((currency) => ({
-        ...currency,
-        flag: currency.flag_svg,
-      })) || []
-
-    // Cache with longer TTL since currencies don't change often
-    dataCache.set(CACHE_KEYS.CURRENCIES, currencies, 10 * 60 * 1000) // 10 minutes
-
+    // If no cache, fetch fresh data
+    const currencies = await refreshFn()
+    dataCache.set(CACHE_KEYS.CURRENCIES, currencies, 5 * 60 * 1000) // 5 minutes
     return currencies
   },
 
   async getExchangeRates() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("exchange_rates")
+        .select(`
+          *,
+          from_currency_info:currencies!exchange_rates_from_currency_fkey(id, code, name, symbol, flag_svg),
+          to_currency_info:currencies!exchange_rates_to_currency_fkey(id, code, name, symbol, flag_svg)
+        `)
+        .eq("status", "active")
+
+      if (error) throw error
+
+      return (
+        data?.map((rate) => ({
+          ...rate,
+          from_currency_info: rate.from_currency_info
+            ? {
+                ...rate.from_currency_info,
+                flag: rate.from_currency_info.flag_svg,
+              }
+            : undefined,
+          to_currency_info: rate.to_currency_info
+            ? {
+                ...rate.to_currency_info,
+                flag: rate.to_currency_info.flag_svg,
+              }
+            : undefined,
+        })) || []
+      )
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.EXCHANGE_RATES, refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("exchange_rates")
-      .select(`
-        *,
-        from_currency_info:currencies!exchange_rates_from_currency_fkey(id, code, name, symbol, flag_svg),
-        to_currency_info:currencies!exchange_rates_to_currency_fkey(id, code, name, symbol, flag_svg)
-      `)
-      .eq("status", "active")
-
-    if (error) throw error
-
-    // Map flag_svg to flag for frontend compatibility
-    const rates =
-      data?.map((rate) => ({
-        ...rate,
-        from_currency_info: rate.from_currency_info
-          ? {
-              ...rate.from_currency_info,
-              flag: rate.from_currency_info.flag_svg,
-            }
-          : undefined,
-        to_currency_info: rate.to_currency_info
-          ? {
-              ...rate.to_currency_info,
-              flag: rate.to_currency_info.flag_svg,
-            }
-          : undefined,
-      })) || []
-
-    // Cache with shorter TTL since rates can change
-    dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates, 5 * 60 * 1000) // 5 minutes
-
+    // If no cache, fetch fresh data
+    const rates = await refreshFn()
+    dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates, 2 * 60 * 1000) // 2 minutes
     return rates
   },
 
@@ -160,7 +164,7 @@ export const currencyService = {
 
     if (error) throw error
 
-    // Invalidate exchange rates cache
+    // Force refresh exchange rates cache
     dataCache.invalidate(CACHE_KEYS.EXCHANGE_RATES)
 
     return data
@@ -194,31 +198,34 @@ export const recipientService = {
 
     if (error) throw error
 
-    // Invalidate user recipients cache
+    // Force refresh user recipients cache
     dataCache.invalidate(CACHE_KEYS.USER_RECIPIENTS(userId))
 
     return data
   },
 
   async getByUserId(userId: string) {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.USER_RECIPIENTS(userId))
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("recipients")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.USER_RECIPIENTS(userId), refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("recipients")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-
-    if (error) throw error
-
-    // Cache with shorter TTL
-    dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), data || [], 5 * 60 * 1000) // 5 minutes
-
-    return data
+    // If no cache, fetch fresh data
+    const recipients = await refreshFn()
+    dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), recipients, 2 * 60 * 1000) // 2 minutes
+    return recipients
   },
 
   async update(
@@ -278,7 +285,12 @@ export const transactionService = {
     const transactionId = `NP${Date.now()}`
 
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Transaction creation timeout")), 15000),
+      )
+
+      const createPromise = supabase
         .from("transactions")
         .insert({
           transaction_id: transactionId,
@@ -297,68 +309,75 @@ export const transactionService = {
         .select()
         .single()
 
+      const { data, error } = (await Promise.race([createPromise, timeoutPromise])) as any
+
       if (error) throw error
 
-      // Invalidate user transactions cache
+      // Force refresh user transactions cache
       dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
 
       return data
     } catch (error) {
       console.error("Transaction creation error:", error)
-      throw new Error("Failed to create transaction. Please try again.")
+      throw new Error("Failed to create transaction. Please check your connection and try again.")
     }
   },
 
   async getByUserId(userId: string, limit = 20) {
-    // Reduced default limit
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.USER_TRANSACTIONS(userId))
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(`
+          *,
+          recipient:recipients(*)
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+      return data || []
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.USER_TRANSACTIONS(userId), refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select(`
-        *,
-        recipient:recipients(*)
-      `)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(limit)
-
-    if (error) throw error
-
-    // Cache with shorter TTL for active data
-    dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), data || [], 2 * 60 * 1000) // 2 minutes
-
-    return data
+    // If no cache, fetch fresh data
+    const transactions = await refreshFn()
+    dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), transactions, 1 * 60 * 1000) // 1 minute
+    return transactions
   },
 
   async getById(transactionId: string) {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.TRANSACTION(transactionId))
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(`
+          *,
+          recipient:recipients(*),
+          user:users(first_name, last_name, email)
+        `)
+        .eq("transaction_id", transactionId)
+        .single()
+
+      if (error) throw error
+      return data
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.TRANSACTION(transactionId), refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select(`
-        *,
-        recipient:recipients(*),
-        user:users(first_name, last_name, email)
-      `)
-      .eq("transaction_id", transactionId)
-      .single()
-
-    if (error) throw error
-
-    // Cache with shorter TTL for active transactions
-    const ttl = data.status === "completed" ? 10 * 60 * 1000 : 1 * 60 * 1000 // 10 min for completed, 1 min for active
-    dataCache.set(CACHE_KEYS.TRANSACTION(transactionId), data, ttl)
-
-    return data
+    // If no cache, fetch fresh data
+    const transaction = await refreshFn()
+    const ttl = transaction.status === "completed" ? 5 * 60 * 1000 : 30 * 1000 // 5 min for completed, 30s for active
+    dataCache.set(CACHE_KEYS.TRANSACTION(transactionId), transaction, ttl)
+    return transaction
   },
 
   async updateStatus(transactionId: string, status: string) {
@@ -376,7 +395,7 @@ export const transactionService = {
 
     if (error) throw error
 
-    // Invalidate transaction cache
+    // Force refresh transaction cache
     dataCache.invalidate(CACHE_KEYS.TRANSACTION(transactionId))
     dataCache.invalidatePattern("user_transactions_")
 
@@ -385,12 +404,21 @@ export const transactionService = {
 
   async uploadReceipt(transactionId: string, file: File) {
     try {
-      // First check if transaction exists
-      const { data: existingTransaction, error: checkError } = await supabase
+      // First check if transaction exists with timeout
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Transaction check timeout")), 10000),
+      )
+
+      const checkPromise = supabase
         .from("transactions")
         .select("id, transaction_id")
         .eq("transaction_id", transactionId)
         .single()
+
+      const { data: existingTransaction, error: checkError } = (await Promise.race([
+        checkPromise,
+        timeoutPromise,
+      ])) as any
 
       if (checkError || !existingTransaction) {
         console.error("Transaction check error:", checkError)
@@ -403,15 +431,19 @@ export const transactionService = {
       const filePath = `receipts/${fileName}`
 
       // Upload file to Supabase Storage with timeout
+      const uploadTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Upload timeout")), 30000),
+      )
+
       const uploadPromise = supabase.storage.from("transaction-receipts").upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
       })
 
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timeout")), 30000))
-
-      const { data: uploadData, error: uploadError } = (await Promise.race([uploadPromise, timeoutPromise])) as any
+      const { data: uploadData, error: uploadError } = (await Promise.race([
+        uploadPromise,
+        uploadTimeoutPromise,
+      ])) as any
 
       if (uploadError) {
         console.error("Upload error:", uploadError)
@@ -424,7 +456,11 @@ export const transactionService = {
       } = supabase.storage.from("transaction-receipts").getPublicUrl(filePath)
 
       // Update transaction with receipt URL
-      const { data, error } = await supabase
+      const updateTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Database update timeout")), 10000),
+      )
+
+      const updatePromise = supabase
         .from("transactions")
         .update({
           receipt_url: publicUrl,
@@ -433,6 +469,8 @@ export const transactionService = {
         })
         .eq("transaction_id", transactionId)
         .select()
+
+      const { data, error } = (await Promise.race([updatePromise, updateTimeoutPromise])) as any
 
       if (error) {
         console.error("Database update error:", error)
@@ -445,7 +483,7 @@ export const transactionService = {
 
       const updatedTransaction = data[0]
 
-      // Invalidate transaction cache
+      // Force refresh transaction cache
       dataCache.invalidate(CACHE_KEYS.TRANSACTION(transactionId))
 
       return { ...updatedTransaction, receipt_url: publicUrl }
@@ -493,24 +531,27 @@ export const transactionService = {
 // Payment Methods operations with improved caching
 export const paymentMethodService = {
   async getAll() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.PAYMENT_METHODS)
+    const refreshFn = async () => {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .order("currency", { ascending: true })
+        .order("is_default", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    }
+
+    // Try cache first with background refresh
+    const cached = dataCache.getWithRefresh(CACHE_KEYS.PAYMENT_METHODS, refreshFn)
     if (cached) {
       return cached
     }
 
-    const { data, error } = await supabase
-      .from("payment_methods")
-      .select("*")
-      .order("currency", { ascending: true })
-      .order("is_default", { ascending: false })
-
-    if (error) throw error
-
-    // Cache with longer TTL since payment methods don't change often
-    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [], 10 * 60 * 1000) // 10 minutes
-
-    return data || []
+    // If no cache, fetch fresh data
+    const methods = await refreshFn()
+    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, methods, 5 * 60 * 1000) // 5 minutes
+    return methods
   },
 
   async getByCurrency(currency: string) {
@@ -558,7 +599,7 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Invalidate payment methods cache
+    // Force refresh payment methods cache
     dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
 
     return data
@@ -608,7 +649,7 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Invalidate payment methods cache
+    // Force refresh payment methods cache
     dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
 
     return data
@@ -621,7 +662,7 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Invalidate payment methods cache
+    // Force refresh payment methods cache
     dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
 
     return data
@@ -643,7 +684,7 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Invalidate payment methods cache
+    // Force refresh payment methods cache
     dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
 
     return data
@@ -656,7 +697,7 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Invalidate payment methods cache
+    // Force refresh payment methods cache
     dataCache.invalidate(CACHE_KEYS.PAYMENT_METHODS)
   },
 }
@@ -707,7 +748,7 @@ export const adminService = {
       query = query.or(`transaction_id.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`)
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50) // Reduced limit
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50)
 
     if (error) throw error
     return data
@@ -738,7 +779,7 @@ export const adminService = {
       )
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50) // Reduced limit
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50)
 
     if (error) throw error
     return data

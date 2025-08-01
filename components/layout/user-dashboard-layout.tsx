@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, X, MoreHorizontal } from "lucide-react"
@@ -39,40 +39,19 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { signOut } = useAuth()
 
-  const handleLogout = useCallback(async () => {
-    if (isLoggingOut) return // Prevent double-click
-
-    try {
-      setIsLoggingOut(true)
-      await signOut()
-      // Force navigation to login page
-      window.location.href = "/login"
-    } catch (error) {
-      console.error("Logout error:", error)
-      // Force navigation even if signOut fails
-      window.location.href = "/login"
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }, [signOut, isLoggingOut])
-
-  const handleSidebarClose = useCallback(() => {
-    setSidebarOpen(false)
-  }, [])
-
-  const handleSidebarToggle = useCallback(() => {
-    setSidebarOpen((prev) => !prev)
-  }, [])
+  const handleLogout = async () => {
+    await signOut()
+    router.push("/login")
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={handleSidebarClose} />
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         </div>
       )}
 
@@ -84,7 +63,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
             <BrandLogo size="sm" />
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={handleSidebarClose}>
+            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -102,7 +81,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                       ? "bg-novapay-primary-100 text-novapay-primary"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
-                  onClick={handleSidebarClose}
+                  onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
                   {item.name}
@@ -117,10 +96,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               variant="ghost"
               className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               onClick={handleLogout}
-              disabled={isLoggingOut}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              {isLoggingOut ? "Logging out..." : "Logout"}
+              Logout
             </Button>
           </div>
         </div>
@@ -200,9 +178,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  {isLoggingOut ? "Logging out..." : "Logout"}
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

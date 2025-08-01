@@ -22,109 +22,77 @@ class UserDataStore {
   private currentUserId: string | null = null
   private isLoading = false
   private loadingPromise: Promise<UserData> | null = null
-  private abortController: AbortController | null = null
+  private lastActivity = Date.now()
+  private activityCheckInterval: NodeJS.Timeout | null = null
 
   subscribe(callback: () => void) {
     this.listeners.add(callback)
-    return () => {
-      this.listeners.delete(callback)
-    }
+    this.updateActivity()
+    return () => this.listeners.delete(callback)
   }
 
   private notify() {
-    // Use setTimeout to prevent blocking the main thread
-    setTimeout(() => {
-      this.listeners.forEach((callback) => {
-        try {
-          callback()
-        } catch (error) {
-          console.error("Error in data store listener:", error)
-        }
-      })
-    }, 0)
+    this.updateActivity()
+    this.listeners.forEach((callback) => {
+      try {
+        callback()
+      } catch (error) {
+        console.error("Error in data store listener:", error)
+      }
+    })
+  }
+
+  private updateActivity() {
+    this.lastActivity = Date.now()
   }
 
   async initialize(userId: string) {
-    // If same user and data is fresh, return immediately
+    this.updateActivity()
+
     if (this.currentUserId === userId && this.isDataFresh()) {
       return this.data
     }
 
-    // Cancel any ongoing requests for different user
-    if (this.currentUserId !== userId && this.abortController) {
-      this.abortController.abort()
-      this.abortController = null
-      this.loadingPromise = null
-    }
-
     // Return existing loading promise if already loading for this user
     if (this.isLoading && this.currentUserId === userId && this.loadingPromise) {
-      try {
-        return await this.loadingPromise
-      } catch (error) {
-        console.error("Error waiting for existing load:", error)
-        // Reset and try again
-        this.isLoading = false
-        this.loadingPromise = null
-      }
+      return this.loadingPromise
     }
 
     this.currentUserId = userId
-    this.abortController = new AbortController()
-    this.loadingPromise = this.loadData(userId, false, this.abortController.signal)
-
-    try {
-      const result = await this.loadingPromise
-      this.startBackgroundRefresh(userId)
-      return result
-    } catch (error) {
-      if (error.name === "AbortError") {
-        console.log("Data loading was aborted")
-      } else {
-        console.error("Error initializing user data:", error)
-      }
-      return this.data
-    } finally {
-      this.loadingPromise = null
-      this.abortController = null
-    }
+    this.loadingPromise = this.loadData(userId)
+    const result = await this.loadingPromise
+    this.startBackgroundRefresh(userId)
+    this.startActivityMonitoring()
+    return result
   }
 
-  private async loadData(userId: string, silent = false, signal?: AbortSignal): Promise<UserData> {
+  private async loadData(userId: string, silent = false): Promise<UserData> {
     if (this.isLoading && !silent) return this.data
 
     try {
       this.isLoading = true
+      this.updateActivity()
 
-      // Check if request was aborted
-      if (signal?.aborted) {
-        throw new Error("Request aborted")
-      }
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Data loading timeout")), 15000),
+      )
 
-      // Load currencies and exchange rates in parallel (they don't depend on userId)
-      const globalDataPromise = Promise.allSettled([currencyService.getAll(), currencyService.getExchangeRates()])
-
-      // Load user-specific data in parallel
-      const userDataPromise = Promise.allSettled([
-        transactionService.getByUserId(userId),
+      // Load all data with timeout protection
+      const dataPromise = Promise.allSettled([
+        currencyService.getAll(),
+        currencyService.getExchangeRates(),
+        transactionService.getByUserId(userId, 20),
         recipientService.getByUserId(userId),
       ])
 
-      const [globalResults, userResults] = await Promise.all([globalDataPromise, userDataPromise])
-
-      // Check if request was aborted after async operations
-      if (signal?.aborted) {
-        throw new Error("Request aborted")
-      }
+      const results = (await Promise.race([dataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
 
       // Extract results with fallbacks
-      const [currenciesResult, exchangeRatesResult] = globalResults
-      const [transactionsResult, recipientsResult] = userResults
-
-      const currencies = currenciesResult.status === "fulfilled" ? currenciesResult.value || [] : []
-      const exchangeRates = exchangeRatesResult.status === "fulfilled" ? exchangeRatesResult.value || [] : []
-      const transactions = transactionsResult.status === "fulfilled" ? transactionsResult.value || [] : []
-      const recipients = recipientsResult.status === "fulfilled" ? recipientsResult.value || [] : []
+      const currencies = results[0].status === "fulfilled" ? results[0].value || [] : this.data.currencies
+      const exchangeRates = results[1].status === "fulfilled" ? results[1].value || [] : this.data.exchangeRates
+      const transactions = results[2].status === "fulfilled" ? results[2].value || [] : this.data.transactions
+      const recipients = results[3].status === "fulfilled" ? results[3].value || [] : this.data.recipients
 
       this.data = {
         transactions,
@@ -140,67 +108,89 @@ class UserDataStore {
 
       return this.data
     } catch (error) {
-      if (error.name === "AbortError" || error.message === "Request aborted") {
-        throw error
-      }
       console.error("Error loading user data:", error)
       // Return existing data on error to prevent blank screens
       return this.data
     } finally {
       this.isLoading = false
+      this.loadingPromise = null
     }
   }
 
   private isDataFresh(): boolean {
-    const twoMinutes = 2 * 60 * 1000 // Reduced to 2 minutes for better responsiveness
-    return Date.now() - this.data.lastUpdated < twoMinutes
+    const oneMinute = 60 * 1000
+    return Date.now() - this.data.lastUpdated < oneMinute
   }
 
   private startBackgroundRefresh(userId: string) {
-    // Clear existing interval
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
-      this.refreshInterval = null
     }
 
-    // Set up new interval
+    // Auto refresh every minute
     this.refreshInterval = setInterval(
-      () => {
-        // Only refresh if we're still on the same user
-        if (this.currentUserId === userId && !this.isLoading) {
-          this.loadData(userId, true).catch((error) => {
-            console.error("Background refresh error:", error)
-          })
+      async () => {
+        try {
+          // Only refresh if there's been recent activity
+          const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+          if (this.lastActivity > fiveMinutesAgo) {
+            await this.loadData(userId, true)
+          }
+        } catch (error) {
+          console.error("Background refresh error:", error)
         }
       },
-      2 * 60 * 1000,
-    ) // 2 minutes
+      60 * 1000, // 1 minute
+    )
+  }
+
+  private startActivityMonitoring() {
+    if (this.activityCheckInterval) {
+      clearInterval(this.activityCheckInterval)
+    }
+
+    // Check for inactivity every 30 seconds
+    this.activityCheckInterval = setInterval(() => {
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000
+
+      // If no activity for 10 minutes, stop background refresh
+      if (this.lastActivity < tenMinutesAgo) {
+        if (this.refreshInterval) {
+          clearInterval(this.refreshInterval)
+          this.refreshInterval = null
+        }
+      }
+    }, 30 * 1000)
   }
 
   getData() {
-    return { ...this.data } // Return a copy to prevent mutations
+    this.updateActivity()
+    return this.data
   }
 
   getTransactions() {
-    return [...this.data.transactions] // Return a copy
+    this.updateActivity()
+    return this.data.transactions
   }
 
   getRecipients() {
-    return [...this.data.recipients] // Return a copy
+    this.updateActivity()
+    return this.data.recipients
   }
 
   getCurrencies() {
-    return [...this.data.currencies] // Return a copy
+    this.updateActivity()
+    return this.data.currencies
   }
 
   getExchangeRates() {
-    return [...this.data.exchangeRates] // Return a copy
+    this.updateActivity()
+    return this.data.exchangeRates
   }
 
   async refreshRecipients(userId: string) {
-    if (this.currentUserId !== userId) return
-
     try {
+      this.updateActivity()
       const recipients = await recipientService.getByUserId(userId)
       this.data.recipients = recipients || []
       this.data.lastUpdated = Date.now()
@@ -211,10 +201,9 @@ class UserDataStore {
   }
 
   async refreshTransactions(userId: string) {
-    if (this.currentUserId !== userId) return
-
     try {
-      const transactions = await transactionService.getByUserId(userId)
+      this.updateActivity()
+      const transactions = await transactionService.getByUserId(userId, 20)
       this.data.transactions = transactions || []
       this.data.lastUpdated = Date.now()
       this.notify()
@@ -223,42 +212,24 @@ class UserDataStore {
     }
   }
 
-  // Force refresh data
-  async getFreshData(userId: string) {
-    this.data.lastUpdated = 0 // Force refresh
-    return await this.initialize(userId)
+  // Force refresh all data
+  async forceRefresh(userId: string) {
+    this.updateActivity()
+    return await this.loadData(userId)
   }
 
   cleanup() {
-    // Cancel any ongoing requests
-    if (this.abortController) {
-      this.abortController.abort()
-      this.abortController = null
-    }
-
-    // Clear interval
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
       this.refreshInterval = null
     }
-
-    // Clear listeners
+    if (this.activityCheckInterval) {
+      clearInterval(this.activityCheckInterval)
+      this.activityCheckInterval = null
+    }
     this.listeners.clear()
-
-    // Reset state
     this.currentUserId = null
     this.loadingPromise = null
-    this.isLoading = false
-  }
-
-  // Get loading state
-  getLoadingState() {
-    return {
-      isLoading: this.isLoading,
-      currentUserId: this.currentUserId,
-      lastUpdated: this.data.lastUpdated,
-      listenersCount: this.listeners.size,
-    }
   }
 }
 

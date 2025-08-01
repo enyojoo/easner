@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
 
@@ -54,70 +54,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // Use refs to prevent stale closures
-  const userRef = useRef<User | null>(null)
-  const profileRef = useRef<UserProfile | null>(null)
-  const loadingRef = useRef(true)
-  const isAdminRef = useRef(false)
-
-  // Update refs when state changes
-  useEffect(() => {
-    userRef.current = user
-  }, [user])
-
-  useEffect(() => {
-    profileRef.current = userProfile
-  }, [userProfile])
-
-  useEffect(() => {
-    loadingRef.current = loading
-  }, [loading])
-
-  useEffect(() => {
-    isAdminRef.current = isAdmin
-  }, [isAdmin])
-
-  const fetchUserProfile = useCallback(async (userId: string) => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      // Try to fetch from users table first
-      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 10000),
+      )
 
-      if (userProfile && !userError) {
-        setUserProfile(userProfile)
-        setIsAdmin(false)
-        return userProfile
-      }
+      const profilePromise = (async () => {
+        // Try to fetch from users table first
+        const { data: userProfile, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single()
 
-      // If not found in users, check admin_users table
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("id", userId)
-        .single()
+        if (userProfile && !userError) {
+          setUserProfile(userProfile)
+          setIsAdmin(false)
+          return userProfile
+        }
 
-      if (adminProfile && !adminError) {
-        setUserProfile(adminProfile)
-        setIsAdmin(true)
-        return adminProfile
-      }
+        // If not found in users, check admin_users table
+        const { data: adminProfile, error: adminError } = await supabase
+          .from("admin_users")
+          .select("*")
+          .eq("id", userId)
+          .single()
 
-      return null
+        if (adminProfile && !adminError) {
+          setUserProfile(adminProfile)
+          setIsAdmin(true)
+          return adminProfile
+        }
+
+        return null
+      })()
+
+      return await Promise.race([profilePromise, timeoutPromise])
     } catch (error) {
       console.error("Error fetching user profile:", error)
       return null
     }
-  }, [])
+  }
 
-  const refreshUserProfile = useCallback(async () => {
-    const currentUser = userRef.current
-    if (currentUser) {
-      await fetchUserProfile(currentUser.id)
+  const refreshUserProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id)
     }
-  }, [fetchUserProfile])
+  }
 
   useEffect(() => {
     let mounted = true
-    let authSubscription: any = null
 
     // Get initial session
     const getInitialSession = async () => {
@@ -142,7 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getInitialSession()
 
     // Listen for auth changes
-    authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
       try {
@@ -165,13 +155,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
-      if (authSubscription?.data?.subscription) {
-        authSubscription.data.subscription.unsubscribe()
-      }
+      subscription.unsubscribe()
     }
-  }, [fetchUserProfile])
+  }, [])
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -188,9 +176,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign in error:", error)
       return { error }
     }
-  }, [])
+  }
 
-  const signUp = useCallback(async (email: string, password: string, userData: any) => {
+  const signUp = async (email: string, password: string, userData: any) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -213,25 +201,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign up error:", error)
       return { error }
     }
-  }, [])
+  }
 
-  const signOut = useCallback(async () => {
+  const signOut = async () => {
     try {
-      // Clear all state immediately for better UX
+      // Clear all data before signing out
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
 
-      // Then sign out from Supabase
       await supabase.auth.signOut()
     } catch (error) {
       console.error("Sign out error:", error)
-      // Even if signOut fails, clear local state
+      // Force clear state even if signOut fails
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
     }
-  }, [])
+  }
 
   const value = {
     user,

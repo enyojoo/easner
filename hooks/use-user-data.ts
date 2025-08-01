@@ -7,61 +7,51 @@ import { useAuth } from "@/lib/auth-context"
 export function useUserData() {
   const { userProfile } = useAuth()
   const [data, setData] = useState(userDataStore.getData())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Use refs to prevent stale closures
-  const userIdRef = useRef<string | null>(null)
   const mountedRef = useRef(true)
 
-  // Update ref when userProfile changes
-  useEffect(() => {
-    userIdRef.current = userProfile?.id || null
+  // Memoize the refresh functions to prevent unnecessary re-renders
+  const refreshRecipients = useCallback(() => {
+    if (userProfile?.id && mountedRef.current) {
+      return userDataStore.refreshRecipients(userProfile.id)
+    }
   }, [userProfile?.id])
 
-  // Subscribe to data store changes
-  useEffect(() => {
-    const unsubscribe = userDataStore.subscribe(() => {
-      if (mountedRef.current) {
-        setData(userDataStore.getData())
-        setLoading(false)
-        setError(null)
-      }
-    })
+  const refreshTransactions = useCallback(() => {
+    if (userProfile?.id && mountedRef.current) {
+      return userDataStore.refreshTransactions(userProfile.id)
+    }
+  }, [userProfile?.id])
 
-    return unsubscribe
-  }, [])
+  const forceRefresh = useCallback(() => {
+    if (userProfile?.id && mountedRef.current) {
+      return userDataStore.forceRefresh(userProfile.id)
+    }
+  }, [userProfile?.id])
 
-  // Initialize data when user changes
   useEffect(() => {
-    let mounted = true
+    mountedRef.current = true
+
+    if (!userProfile?.id) return
 
     const initializeData = async () => {
-      const userId = userProfile?.id
-      if (!userId) {
-        if (mounted) {
-          setLoading(false)
-          setData(userDataStore.getData())
-        }
-        return
-      }
+      if (!mountedRef.current) return
 
+      setLoading(true)
+      setError(null)
       try {
-        if (mounted) {
-          setLoading(true)
-          setError(null)
-        }
-
-        await userDataStore.initialize(userId)
-
-        if (mounted) {
+        await userDataStore.initialize(userProfile.id)
+        if (mountedRef.current) {
           setData(userDataStore.getData())
-          setLoading(false)
         }
-      } catch (error) {
-        console.error("Error initializing user data:", error)
-        if (mounted) {
-          setError("Failed to load data")
+      } catch (err) {
+        console.error("Failed to initialize user data:", err)
+        if (mountedRef.current) {
+          setError("Failed to load data. Please try again.")
+        }
+      } finally {
+        if (mountedRef.current) {
           setLoading(false)
         }
       }
@@ -69,46 +59,21 @@ export function useUserData() {
 
     initializeData()
 
+    const unsubscribe = userDataStore.subscribe(() => {
+      if (mountedRef.current) {
+        setData(userDataStore.getData())
+      }
+    })
+
     return () => {
-      mounted = false
+      unsubscribe()
     }
   }, [userProfile?.id])
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       mountedRef.current = false
-    }
-  }, [])
-
-  const refreshRecipients = useCallback(async () => {
-    const userId = userIdRef.current
-    if (userId) {
-      await userDataStore.refreshRecipients(userId)
-    }
-  }, [])
-
-  const refreshTransactions = useCallback(async () => {
-    const userId = userIdRef.current
-    if (userId) {
-      await userDataStore.refreshTransactions(userId)
-    }
-  }, [])
-
-  const forceRefresh = useCallback(async () => {
-    const userId = userIdRef.current
-    if (userId) {
-      setLoading(true)
-      try {
-        await userDataStore.getFreshData(userId)
-        setData(userDataStore.getData())
-        setError(null)
-      } catch (error) {
-        console.error("Error force refreshing data:", error)
-        setError("Failed to refresh data")
-      } finally {
-        setLoading(false)
-      }
+      userDataStore.cleanup()
     }
   }, [])
 
@@ -122,6 +87,5 @@ export function useUserData() {
     refreshRecipients,
     refreshTransactions,
     forceRefresh,
-    lastUpdated: data.lastUpdated,
   }
 }
