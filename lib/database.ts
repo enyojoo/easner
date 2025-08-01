@@ -3,6 +3,41 @@ import { dataCache, CACHE_KEYS } from "./cache"
 
 // User operations
 export const userService = {
+  async create(userData: {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+    phone?: string
+    baseCurrency: string
+  }) {
+    // Hash password
+    const bcrypt = require("bcryptjs")
+    const hashedPassword = await bcrypt.hash(userData.password, 12)
+
+    const { data, error } = await supabase
+      .from("users")
+      .insert({
+        email: userData.email,
+        password_hash: hashedPassword,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        phone: userData.phone,
+        base_currency: userData.baseCurrency,
+        status: "active",
+        verification_status: "unverified",
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Database insert error:", error)
+      throw error
+    }
+
+    return data
+  },
+
   async findByEmail(email: string) {
     const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
