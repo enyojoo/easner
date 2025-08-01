@@ -76,7 +76,7 @@ export default function TransactionStatusPage() {
       } catch (error) {
         console.error("Error polling transaction status:", error)
       }
-    }, 30000) // Poll every 30 seconds
+    }, 10000) // Poll every 10 seconds
 
     return () => clearInterval(pollInterval)
   }, [transaction, userProfile?.id])

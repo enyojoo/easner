@@ -1,11 +1,10 @@
-import { transactionService, recipientService, currencyService, paymentMethodService } from "./database"
+import { transactionService, recipientService, currencyService } from "./database"
 
 interface UserData {
   transactions: any[]
   recipients: any[]
   currencies: any[]
   exchangeRates: any[]
-  paymentMethods: any[]
   lastUpdated: number
 }
 
@@ -15,7 +14,6 @@ class UserDataStore {
     recipients: [],
     currencies: [],
     exchangeRates: [],
-    paymentMethods: [],
     lastUpdated: 0,
   }
 
@@ -23,7 +21,7 @@ class UserDataStore {
   private refreshInterval: NodeJS.Timeout | null = null
   private currentUserId: string | null = null
   private isLoading = false
-  private initPromise: Promise<UserData> | null = null
+  private loadingPromise: Promise<UserData> | null = null
 
   subscribe(callback: () => void) {
     this.listeners.add(callback)
@@ -35,74 +33,72 @@ class UserDataStore {
   }
 
   async initialize(userId: string) {
-    // If already initializing for this user, return the existing promise
-    if (this.currentUserId === userId && this.initPromise) {
-      return this.initPromise
-    }
-
-    // If data is fresh for this user, return immediately
     if (this.currentUserId === userId && this.isDataFresh()) {
       return this.data
     }
 
-    this.currentUserId = userId
-
-    // Create initialization promise
-    this.initPromise = this.loadData(userId, false)
-
-    try {
-      await this.initPromise
-      this.startBackgroundRefresh(userId)
-      return this.data
-    } finally {
-      this.initPromise = null
+    // Return existing loading promise if already loading for this user
+    if (this.isLoading && this.currentUserId === userId && this.loadingPromise) {
+      return this.loadingPromise
     }
+
+    this.currentUserId = userId
+    this.loadingPromise = this.loadData(userId)
+    const result = await this.loadingPromise
+    this.startBackgroundRefresh(userId)
+    return result
   }
 
-  private async loadData(userId: string, silent = false) {
+  private async loadData(userId: string, silent = false): Promise<UserData> {
     if (this.isLoading && !silent) return this.data
 
     try {
       this.isLoading = true
 
-      // Load all data in parallel with better error handling
-      const [currencies, exchangeRates, paymentMethods] = await Promise.allSettled([
+      // Load currencies and exchange rates in parallel (they don't depend on userId)
+      const [currenciesPromise, exchangeRatesPromise] = await Promise.allSettled([
         currencyService.getAll(),
         currencyService.getExchangeRates(),
-        paymentMethodService.getAll(),
       ])
 
       // Load user-specific data in parallel
-      const [transactions, recipients] = await Promise.allSettled([
-        transactionService.getByUserId(userId),
+      const [transactionsPromise, recipientsPromise] = await Promise.allSettled([
+        transactionService.getByUserId(userId, 20), // Limit to 20 most recent
         recipientService.getByUserId(userId),
       ])
 
+      // Extract results with fallbacks
+      const currencies = currenciesPromise.status === "fulfilled" ? currenciesPromise.value || [] : []
+      const exchangeRates = exchangeRatesPromise.status === "fulfilled" ? exchangeRatesPromise.value || [] : []
+      const transactions = transactionsPromise.status === "fulfilled" ? transactionsPromise.value || [] : []
+      const recipients = recipientsPromise.status === "fulfilled" ? recipientsPromise.value || [] : []
+
       this.data = {
-        transactions: transactions.status === "fulfilled" ? transactions.value || [] : [],
-        recipients: recipients.status === "fulfilled" ? recipients.value || [] : [],
-        currencies: currencies.status === "fulfilled" ? currencies.value || [] : [],
-        exchangeRates: exchangeRates.status === "fulfilled" ? exchangeRates.value || [] : [],
-        paymentMethods: paymentMethods.status === "fulfilled" ? paymentMethods.value || [] : [],
+        transactions,
+        recipients,
+        currencies,
+        exchangeRates,
         lastUpdated: Date.now(),
       }
 
       if (!silent) {
         this.notify()
       }
+
+      return this.data
     } catch (error) {
       console.error("Error loading user data:", error)
-      // Don't throw error, return partial data
+      // Return existing data on error to prevent blank screens
+      return this.data
     } finally {
       this.isLoading = false
+      this.loadingPromise = null
     }
-
-    return this.data
   }
 
   private isDataFresh(): boolean {
-    const tenMinutes = 10 * 60 * 1000 // Increased from 5 minutes
-    return Date.now() - this.data.lastUpdated < tenMinutes
+    const threeMinutes = 3 * 60 * 1000 // Reduced from 5 minutes
+    return Date.now() - this.data.lastUpdated < threeMinutes
   }
 
   private startBackgroundRefresh(userId: string) {
@@ -110,11 +106,12 @@ class UserDataStore {
       clearInterval(this.refreshInterval)
     }
 
+    // Reduced refresh interval for better UX
     this.refreshInterval = setInterval(
       () => {
         this.loadData(userId, true) // Silent refresh
       },
-      10 * 60 * 1000, // Increased to 10 minutes
+      3 * 60 * 1000, // 3 minutes instead of 5
     )
   }
 
@@ -138,14 +135,9 @@ class UserDataStore {
     return this.data.exchangeRates
   }
 
-  getPaymentMethods() {
-    return this.data.paymentMethods
-  }
-
-  // Optimistic updates for better UX
   async refreshRecipients(userId: string) {
     try {
-      const recipients = await recipientService.refreshUserRecipients(userId)
+      const recipients = await recipientService.getByUserId(userId)
       this.data.recipients = recipients || []
       this.data.lastUpdated = Date.now()
       this.notify()
@@ -156,7 +148,7 @@ class UserDataStore {
 
   async refreshTransactions(userId: string) {
     try {
-      const transactions = await transactionService.refreshUserTransactions(userId)
+      const transactions = await transactionService.getByUserId(userId, 20)
       this.data.transactions = transactions || []
       this.data.lastUpdated = Date.now()
       this.notify()
@@ -165,23 +157,9 @@ class UserDataStore {
     }
   }
 
-  // Add optimistic transaction
-  addOptimisticTransaction(transaction: any) {
-    this.data.transactions = [transaction, ...this.data.transactions]
-    this.notify()
-  }
-
-  // Update transaction status optimistically
-  updateTransactionStatus(transactionId: string, status: string) {
-    const index = this.data.transactions.findIndex((t) => t.transaction_id === transactionId)
-    if (index !== -1) {
-      this.data.transactions[index] = {
-        ...this.data.transactions[index],
-        status,
-        updated_at: new Date().toISOString(),
-      }
-      this.notify()
-    }
+  // Add method to get fresh data when needed
+  async getFreshData(userId: string) {
+    return await this.loadData(userId)
   }
 
   cleanup() {
@@ -191,7 +169,7 @@ class UserDataStore {
     }
     this.listeners.clear()
     this.currentUserId = null
-    this.initPromise = null
+    this.loadingPromise = null
   }
 }
 

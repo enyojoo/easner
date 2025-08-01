@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { userDataStore } from "@/lib/user-data-store"
 import { useAuth } from "@/lib/auth-context"
 
@@ -9,10 +9,28 @@ export function useUserData() {
   const [data, setData] = useState(userDataStore.getData())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const initRef = useRef<boolean>(false)
+
+  // Memoize the refresh functions to prevent unnecessary re-renders
+  const refreshRecipients = useCallback(() => {
+    if (userProfile?.id) {
+      return userDataStore.refreshRecipients(userProfile.id)
+    }
+  }, [userProfile?.id])
+
+  const refreshTransactions = useCallback(() => {
+    if (userProfile?.id) {
+      return userDataStore.refreshTransactions(userProfile.id)
+    }
+  }, [userProfile?.id])
+
+  const getFreshData = useCallback(() => {
+    if (userProfile?.id) {
+      return userDataStore.getFreshData(userProfile.id)
+    }
+  }, [userProfile?.id])
 
   useEffect(() => {
-    if (!userProfile?.id || initRef.current) return
+    if (!userProfile?.id) return
 
     const initializeData = async () => {
       setLoading(true)
@@ -20,10 +38,9 @@ export function useUserData() {
       try {
         await userDataStore.initialize(userProfile.id)
         setData(userDataStore.getData())
-        initRef.current = true
       } catch (err) {
         console.error("Failed to initialize user data:", err)
-        setError("Failed to load data")
+        setError("Failed to load data. Please try again.")
       } finally {
         setLoading(false)
       }
@@ -51,13 +68,10 @@ export function useUserData() {
     recipients: data.recipients,
     currencies: data.currencies,
     exchangeRates: data.exchangeRates,
-    paymentMethods: data.paymentMethods,
     loading,
     error,
-    refreshRecipients: () => userProfile?.id && userDataStore.refreshRecipients(userProfile.id),
-    refreshTransactions: () => userProfile?.id && userDataStore.refreshTransactions(userProfile.id),
-    addOptimisticTransaction: (transaction: any) => userDataStore.addOptimisticTransaction(transaction),
-    updateTransactionStatus: (transactionId: string, status: string) =>
-      userDataStore.updateTransactionStatus(transactionId, status),
+    refreshRecipients,
+    refreshTransactions,
+    getFreshData,
   }
 }

@@ -61,26 +61,12 @@ export const userService = {
 // Currency operations with improved caching
 export const currencyService = {
   async getAll() {
-    // Check cache first with stale-while-revalidate
-    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.CURRENCIES)
-
-    // Return cached data immediately if available
-    if (cached && !isStale) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
+    if (cached) {
       return cached
     }
 
-    // If stale, return cached data but fetch fresh data in background
-    if (cached && isStale) {
-      // Background refresh
-      this.refreshCurrencies()
-      return cached
-    }
-
-    // No cached data, fetch fresh
-    return this.refreshCurrencies()
-  },
-
-  async refreshCurrencies() {
     const { data, error } = await supabase
       .from("currencies")
       .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
@@ -96,30 +82,19 @@ export const currencyService = {
         flag: currency.flag_svg,
       })) || []
 
-    // Cache the result with longer TTL
-    dataCache.set(CACHE_KEYS.CURRENCIES, currencies, 30 * 60 * 1000) // 30 minutes
+    // Cache with longer TTL since currencies don't change often
+    dataCache.set(CACHE_KEYS.CURRENCIES, currencies, 10 * 60 * 1000) // 10 minutes
 
     return currencies
   },
 
   async getExchangeRates() {
-    // Check cache first with stale-while-revalidate
-    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.EXCHANGE_RATES)
-
-    if (cached && !isStale) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
+    if (cached) {
       return cached
     }
 
-    if (cached && isStale) {
-      // Background refresh
-      this.refreshExchangeRates()
-      return cached
-    }
-
-    return this.refreshExchangeRates()
-  },
-
-  async refreshExchangeRates() {
     const { data, error } = await supabase
       .from("exchange_rates")
       .select(`
@@ -149,7 +124,7 @@ export const currencyService = {
           : undefined,
       })) || []
 
-    // Cache with shorter TTL for rates
+    // Cache with shorter TTL since rates can change
     dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates, 5 * 60 * 1000) // 5 minutes
 
     return rates
@@ -226,23 +201,12 @@ export const recipientService = {
   },
 
   async getByUserId(userId: string) {
-    // Check cache first with stale-while-revalidate
-    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.USER_RECIPIENTS(userId))
-
-    if (cached && !isStale) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.USER_RECIPIENTS(userId))
+    if (cached) {
       return cached
     }
 
-    if (cached && isStale) {
-      // Background refresh
-      this.refreshUserRecipients(userId)
-      return cached
-    }
-
-    return this.refreshUserRecipients(userId)
-  },
-
-  async refreshUserRecipients(userId: string) {
     const { data, error } = await supabase
       .from("recipients")
       .select("*")
@@ -251,10 +215,10 @@ export const recipientService = {
 
     if (error) throw error
 
-    // Cache the result
-    dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), data || [])
+    // Cache with shorter TTL
+    dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), data || [], 5 * 60 * 1000) // 5 minutes
 
-    return data || []
+    return data
   },
 
   async update(
@@ -296,7 +260,7 @@ export const recipientService = {
   },
 }
 
-// Transaction operations with improved caching
+// Transaction operations with optimized performance
 export const transactionService = {
   async create(transactionData: {
     userId: string
@@ -313,51 +277,46 @@ export const transactionService = {
   }) {
     const transactionId = `NP${Date.now()}`
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert({
-        transaction_id: transactionId,
-        user_id: transactionData.userId,
-        recipient_id: transactionData.recipientId,
-        send_amount: transactionData.sendAmount,
-        send_currency: transactionData.sendCurrency,
-        receive_amount: transactionData.receiveAmount,
-        receive_currency: transactionData.receiveCurrency,
-        exchange_rate: transactionData.exchangeRate,
-        fee_amount: transactionData.feeAmount,
-        fee_type: transactionData.feeType,
-        total_amount: transactionData.totalAmount,
-        reference: transactionData.reference,
-      })
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({
+          transaction_id: transactionId,
+          user_id: transactionData.userId,
+          recipient_id: transactionData.recipientId,
+          send_amount: transactionData.sendAmount,
+          send_currency: transactionData.sendCurrency,
+          receive_amount: transactionData.receiveAmount,
+          receive_currency: transactionData.receiveCurrency,
+          exchange_rate: transactionData.exchangeRate,
+          fee_amount: transactionData.feeAmount,
+          fee_type: transactionData.feeType,
+          total_amount: transactionData.totalAmount,
+          reference: transactionData.reference,
+        })
+        .select()
+        .single()
 
-    if (error) throw error
+      if (error) throw error
 
-    // Invalidate user transactions cache
-    dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
+      // Invalidate user transactions cache
+      dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
 
-    return data
+      return data
+    } catch (error) {
+      console.error("Transaction creation error:", error)
+      throw new Error("Failed to create transaction. Please try again.")
+    }
   },
 
-  async getByUserId(userId: string, limit = 50) {
-    // Check cache first with stale-while-revalidate
-    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.USER_TRANSACTIONS(userId))
-
-    if (cached && !isStale) {
+  async getByUserId(userId: string, limit = 20) {
+    // Reduced default limit
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.USER_TRANSACTIONS(userId))
+    if (cached) {
       return cached
     }
 
-    if (cached && isStale) {
-      // Background refresh
-      this.refreshUserTransactions(userId, limit)
-      return cached
-    }
-
-    return this.refreshUserTransactions(userId, limit)
-  },
-
-  async refreshUserTransactions(userId: string, limit = 50) {
     const { data, error } = await supabase
       .from("transactions")
       .select(`
@@ -370,14 +329,14 @@ export const transactionService = {
 
     if (error) throw error
 
-    // Cache the result
-    dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), data || [])
+    // Cache with shorter TTL for active data
+    dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), data || [], 2 * 60 * 1000) // 2 minutes
 
-    return data || []
+    return data
   },
 
   async getById(transactionId: string) {
-    // Check cache first with shorter TTL for active transactions
+    // Check cache first
     const cached = dataCache.get(CACHE_KEYS.TRANSACTION(transactionId))
     if (cached) {
       return cached
@@ -395,8 +354,8 @@ export const transactionService = {
 
     if (error) throw error
 
-    // Cache the result with shorter TTL for active transactions
-    const ttl = data.status === "completed" ? 30 * 60 * 1000 : 2 * 60 * 1000 // 30 min for completed, 2 min for active
+    // Cache with shorter TTL for active transactions
+    const ttl = data.status === "completed" ? 10 * 60 * 1000 : 1 * 60 * 1000 // 10 min for completed, 1 min for active
     dataCache.set(CACHE_KEYS.TRANSACTION(transactionId), data, ttl)
 
     return data
@@ -443,13 +402,16 @@ export const transactionService = {
       const fileName = `${transactionId}_${Date.now()}.${fileExt}`
       const filePath = `receipts/${fileName}`
 
-      // Upload file to Supabase Storage using client-side upload
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("transaction-receipts")
-        .upload(filePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        })
+      // Upload file to Supabase Storage with timeout
+      const uploadPromise = supabase.storage.from("transaction-receipts").upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      })
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Upload timeout")), 30000))
+
+      const { data: uploadData, error: uploadError } = (await Promise.race([uploadPromise, timeoutPromise])) as any
 
       if (uploadError) {
         console.error("Upload error:", uploadError)
@@ -531,23 +493,12 @@ export const transactionService = {
 // Payment Methods operations with improved caching
 export const paymentMethodService = {
   async getAll() {
-    // Check cache first with stale-while-revalidate
-    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.PAYMENT_METHODS)
-
-    if (cached && !isStale) {
+    // Check cache first
+    const cached = dataCache.get(CACHE_KEYS.PAYMENT_METHODS)
+    if (cached) {
       return cached
     }
 
-    if (cached && isStale) {
-      // Background refresh
-      this.refreshPaymentMethods()
-      return cached
-    }
-
-    return this.refreshPaymentMethods()
-  },
-
-  async refreshPaymentMethods() {
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
@@ -556,8 +507,8 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Cache the result with longer TTL
-    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [], 15 * 60 * 1000) // 15 minutes
+    // Cache with longer TTL since payment methods don't change often
+    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [], 10 * 60 * 1000) // 10 minutes
 
     return data || []
   },
@@ -756,7 +707,7 @@ export const adminService = {
       query = query.or(`transaction_id.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`)
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 100)
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50) // Reduced limit
 
     if (error) throw error
     return data
@@ -787,7 +738,7 @@ export const adminService = {
       )
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 100)
+    const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50) // Reduced limit
 
     if (error) throw error
     return data

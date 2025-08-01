@@ -6,7 +6,7 @@ interface CacheItem<T> {
 
 class DataCache {
   private cache = new Map<string, CacheItem<any>>()
-  private readonly DEFAULT_TTL = 10 * 60 * 1000 // 10 minutes (increased from 5)
+  private readonly DEFAULT_TTL = 3 * 60 * 1000 // Reduced to 3 minutes
 
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
     this.cache.set(key, {
@@ -32,20 +32,6 @@ class DataCache {
     return item.data as T
   }
 
-  // Get stale data while revalidating
-  getStale<T>(key: string): { data: T | null; isStale: boolean } {
-    const item = this.cache.get(key)
-
-    if (!item) {
-      return { data: null, isStale: false }
-    }
-
-    const now = Date.now()
-    const isStale = now - item.timestamp > item.ttl
-
-    return { data: item.data as T, isStale }
-  }
-
   invalidate(key: string): void {
     this.cache.delete(key)
   }
@@ -63,16 +49,17 @@ class DataCache {
     this.cache.clear()
   }
 
-  // Preload data
-  async preload<T>(key: string, fetcher: () => Promise<T>, ttl?: number): Promise<T> {
-    const cached = this.get<T>(key)
-    if (cached) {
-      return cached
-    }
-
-    const data = await fetcher()
-    this.set(key, data, ttl)
-    return data
+  // Preload data to cache
+  preload<T>(key: string, dataPromise: Promise<T>, ttl?: number): Promise<T> {
+    return dataPromise
+      .then((data) => {
+        this.set(key, data, ttl)
+        return data
+      })
+      .catch((error) => {
+        console.error(`Failed to preload cache for ${key}:`, error)
+        throw error
+      })
   }
 
   // Get cache stats for debugging
@@ -86,7 +73,7 @@ class DataCache {
 
 export const dataCache = new DataCache()
 
-// Cache keys
+// Cache keys with shorter TTLs for better performance
 export const CACHE_KEYS = {
   CURRENCIES: "currencies",
   EXCHANGE_RATES: "exchange_rates",
