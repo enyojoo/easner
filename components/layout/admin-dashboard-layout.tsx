@@ -47,7 +47,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
           {/* Logo */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
             <div className="flex items-center gap-2">
-              <BrandLogo size="md" />
+              <BrandLogo size="sm" />
               <span className="text-sm text-novapay-primary font-medium">Admin</span>
             </div>
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>

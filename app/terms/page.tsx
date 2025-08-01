@@ -18,7 +18,7 @@ export default function TermsPage() {
             <ArrowLeft className="h-5 w-5" />
             Back
           </Link>
-          <BrandLogo size="md" />
+          <BrandLogo size="sm" />
         </div>
       </header>
 

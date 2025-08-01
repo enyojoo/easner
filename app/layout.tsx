@@ -1,35 +1,33 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins } from "next/font/google"
-import { AuthProvider } from "@/lib/auth-context"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-})
-
 export const metadata: Metadata = {
-  title: "NOVAMONEY - Send Money Instantly",
-  description: "Transfer money between supported currencies with the best exchange rates and zero fees",
-  icons: {
-    icon: "https://cldup.com/iMvs-lKmIe.svg",
-    shortcut: "https://cldup.com/iMvs-lKmIe.svg",
-    apple: "https://cldup.com/iMvs-lKmIe.svg",
-  },
-    generator: 'v0.dev'
+  title: "v0 App",
+  description: "Created with v0",
+  generator: "v0.dev",
+  icon: "https://cldup.com/iMvs-lKmIe.svg",
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
-        <AuthProvider>{children}</AuthProvider>
-      </body>
+      <head>
+        <style>{`
+html {
+  font-family: ${GeistSans.style.fontFamily};
+  --font-sans: ${GeistSans.variable};
+  --font-mono: ${GeistMono.variable};
+}
+        `}</style>
+      </head>
+      <body>{children}</body>
     </html>
   )
 }

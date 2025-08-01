@@ -105,23 +105,32 @@ class AdminDataStore {
           .from("transactions")
           .select("send_amount, send_currency, status")
           .eq("user_id", user.id)
-          .eq("status", "completed") // Only count completed transactions
 
         const totalTransactions = transactions?.length || 0
-
-        // Calculate total volume in user's base currency (same as user profile)
         const totalVolume = (transactions || []).reduce((sum, tx) => {
-          const amount = Number(tx.send_amount)
+          let amount = Number(tx.send_amount)
 
-          // If transaction currency matches user's base currency, add directly
-          if (tx.send_currency === user.base_currency) {
-            return sum + amount
+          // Convert to NGN based on actual currency
+          switch (tx.send_currency) {
+            case "RUB":
+              amount = amount * 0.011 // RUB to NGN rate
+              break
+            case "USD":
+              amount = amount * 1650 // USD to NGN rate
+              break
+            case "EUR":
+              amount = amount * 1750 // EUR to NGN rate
+              break
+            case "GBP":
+              amount = amount * 2000 // GBP to NGN rate
+              break
+            case "NGN":
+            default:
+              // Already in NGN, no conversion needed
+              break
           }
 
-          // Otherwise convert using the same logic as user profile
-          // For now, convert everything to user's base currency using fallback rates
-          const convertedAmount = this.convertToUserBaseCurrency(amount, tx.send_currency, user.base_currency)
-          return sum + convertedAmount
+          return sum + amount
         }, 0)
 
         return {
@@ -278,60 +287,6 @@ class AdminDataStore {
     }
 
     if (fromCurrency === toCurrency) return amount
-
-    const rate = rates[fromCurrency]?.[toCurrency]
-    if (rate) {
-      return amount * rate
-    }
-
-    // If direct rate not found, convert through USD
-    const toUsdRate = rates[fromCurrency]?.["USD"]
-    const fromUsdRate = rates["USD"]?.[toCurrency]
-
-    if (toUsdRate && fromUsdRate) {
-      return amount * toUsdRate * fromUsdRate
-    }
-
-    // Last fallback - return original amount
-    return amount
-  }
-
-  private convertToUserBaseCurrency(amount: number, fromCurrency: string, toCurrency: string): number {
-    if (fromCurrency === toCurrency) return amount
-
-    // Use the same conversion rates as in user profile
-    const rates: { [key: string]: { [key: string]: number } } = {
-      NGN: {
-        RUB: 0.011,
-        USD: 0.00061,
-        EUR: 0.00057,
-        GBP: 0.0005,
-      },
-      RUB: {
-        NGN: 91.0,
-        USD: 0.055,
-        EUR: 0.052,
-        GBP: 0.045,
-      },
-      USD: {
-        NGN: 1650,
-        RUB: 18.2,
-        EUR: 0.93,
-        GBP: 0.82,
-      },
-      EUR: {
-        NGN: 1750,
-        RUB: 19.5,
-        USD: 1.08,
-        GBP: 0.88,
-      },
-      GBP: {
-        NGN: 2000,
-        RUB: 22.2,
-        USD: 1.22,
-        EUR: 1.14,
-      },
-    }
 
     const rate = rates[fromCurrency]?.[toCurrency]
     if (rate) {

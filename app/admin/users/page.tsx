@@ -87,6 +87,7 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
+      // Remove .limit(20) to show all transactions
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -224,9 +225,53 @@ export default function AdminUsersPage() {
     activeUsers: data?.stats.activeUsers || 0,
     verifiedUsers: data?.stats.verifiedUsers || 0,
     newThisWeek: (data?.users || []).filter(
-      (u: UserData) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      (u: UserData) => new Date(u.created_at).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime(),
     ).length,
   }
+
+  // Calculate transaction stats for each user using exchange rates
+  const usersWithStats = (data?.users || []).map((user) => {
+    const userTransactions = (data?.transactions || []).filter((t) => t.user_id === user.id)
+    const userExchangeRates = data?.exchangeRates || []
+    const baseCurrency = user.base_currency || "NGN"
+
+    let totalSentInBaseCurrency = 0
+
+    // Calculate total sent in base currency for completed transactions
+    for (const transaction of userTransactions) {
+      if (transaction.status === "completed") {
+        let amountInBaseCurrency = transaction.send_amount
+
+        // If transaction currency is different from base currency, convert it
+        if (transaction.send_currency !== baseCurrency) {
+          // Find exchange rate from transaction currency to base currency
+          const rate = userExchangeRates.find(
+            (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+          )
+
+          if (rate) {
+            amountInBaseCurrency = transaction.send_amount * rate.rate
+          } else {
+            // If direct rate not found, try reverse rate
+            const reverseRate = userExchangeRates.find(
+              (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+            )
+            if (reverseRate && reverseRate.rate > 0) {
+              amountInBaseCurrency = transaction.send_amount / reverseRate.rate
+            }
+          }
+        }
+
+        totalSentInBaseCurrency += amountInBaseCurrency
+      }
+    }
+
+    return {
+      ...user,
+      totalTransactions: userTransactions.filter((t) => t.status === "completed").length,
+      totalVolume: totalSentInBaseCurrency,
+    }
+  })
 
   return (
     <AdminDashboardLayout>
@@ -393,7 +438,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user: UserData) => (
+                {usersWithStats.map((user: UserData) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <Checkbox
@@ -526,6 +571,7 @@ export default function AdminUsersPage() {
                                       </TableHeader>
                                       <TableBody>
                                         {userTransactions.map((transaction) => (
+                                          // Remove .slice(0, 5) to show all transactions
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}

@@ -62,7 +62,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
-            <BrandLogo size="md" />
+            <BrandLogo size="sm" />
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
