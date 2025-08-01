@@ -9,8 +9,8 @@ interface BrandLogoProps {
 export function BrandLogo({ href, className = "", size = "md" }: BrandLogoProps) {
   const sizeClasses = {
     sm: "h-4",
-    md: "h-6",
-    lg: "h-8",
+    md: "h-5",
+    lg: "h-7",
   }
 
   return (
