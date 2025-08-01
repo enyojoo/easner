@@ -99,33 +99,25 @@ export default function AdminUsersPage() {
 
   const filteredUsers = (data?.users || [])
     .map((user: UserData) => {
-      const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
-      const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
-
-      const matchesStatus = statusFilter === "all" || user.status === statusFilter
-      const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
-
-      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id)
+      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id) || []
+      const rates = exchangeRates || []
 
       // Calculate total volume in NGN for each user
-      const totalVolume = (transactions || []).reduce((sum, tx) => {
+      const totalVolume = transactions.reduce((sum, tx) => {
         if (tx.status !== "completed") return sum
 
-        let amountInNGN = Number(tx.send_amount)
+        let amountInNGN = Number(tx.send_amount) || 0
 
         // Convert to NGN if not already in NGN
         if (tx.send_currency !== "NGN") {
           // Find exchange rate from transaction currency to NGN
-          const rate = exchangeRates.find((r) => r.from_currency === tx.send_currency && r.to_currency === "NGN")
+          const rate = rates.find((r) => r.from_currency === tx.send_currency && r.to_currency === "NGN")
 
-          if (rate) {
+          if (rate && rate.rate) {
             amountInNGN = tx.send_amount * rate.rate
           } else {
             // If direct rate not found, try reverse rate
-            const reverseRate = exchangeRates.find(
-              (r) => r.from_currency === "NGN" && r.to_currency === tx.send_currency,
-            )
+            const reverseRate = rates.find((r) => r.from_currency === "NGN" && r.to_currency === tx.send_currency)
             if (reverseRate && reverseRate.rate > 0) {
               amountInNGN = tx.send_amount / reverseRate.rate
             } else {
@@ -157,6 +149,7 @@ export default function AdminUsersPage() {
       return {
         ...user,
         totalVolume,
+        totalTransactions: transactions.length,
       }
     })
     .filter((user: UserData) => {
@@ -283,9 +276,9 @@ export default function AdminUsersPage() {
 
   // Registration analytics data
   const registrationStats = {
-    totalUsers: data?.stats.totalUsers || 0,
-    activeUsers: data?.stats.activeUsers || 0,
-    verifiedUsers: data?.stats.verifiedUsers || 0,
+    totalUsers: data?.stats?.totalUsers || 0,
+    activeUsers: data?.stats?.activeUsers || 0,
+    verifiedUsers: data?.stats?.verifiedUsers || 0,
     newThisWeek: (data?.users || []).filter(
       (u: UserData) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     ).length,
