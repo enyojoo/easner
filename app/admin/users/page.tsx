@@ -97,16 +97,78 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = (data?.users || []).filter((user: UserData) => {
-    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
-    const matchesSearch =
-      fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = (data?.users || [])
+    .map((user: UserData) => {
+      const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+      const matchesSearch =
+        fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter
-    const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter
+      const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
 
-    return matchesSearch && matchesStatus && matchesVerification
-  })
+      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id)
+
+      // Calculate total volume in NGN for each user
+      const totalVolume = (transactions || []).reduce((sum, tx) => {
+        if (tx.status !== "completed") return sum
+
+        let amountInNGN = Number(tx.send_amount)
+
+        // Convert to NGN if not already in NGN
+        if (tx.send_currency !== "NGN") {
+          // Find exchange rate from transaction currency to NGN
+          const rate = exchangeRates.find((r) => r.from_currency === tx.send_currency && r.to_currency === "NGN")
+
+          if (rate) {
+            amountInNGN = tx.send_amount * rate.rate
+          } else {
+            // If direct rate not found, try reverse rate
+            const reverseRate = exchangeRates.find(
+              (r) => r.from_currency === "NGN" && r.to_currency === tx.send_currency,
+            )
+            if (reverseRate && reverseRate.rate > 0) {
+              amountInNGN = tx.send_amount / reverseRate.rate
+            } else {
+              // Fallback to hardcoded rates
+              switch (tx.send_currency) {
+                case "RUB":
+                  amountInNGN = tx.send_amount * 18.2 // RUB to NGN rate
+                  break
+                case "USD":
+                  amountInNGN = tx.send_amount * 1650 // USD to NGN rate
+                  break
+                case "EUR":
+                  amountInNGN = tx.send_amount * 1750 // EUR to NGN rate
+                  break
+                case "GBP":
+                  amountInNGN = tx.send_amount * 2000 // GBP to NGN rate
+                  break
+                default:
+                  // Keep original amount if currency not recognized
+                  break
+              }
+            }
+          }
+        }
+
+        return sum + amountInNGN
+      }, 0)
+
+      return {
+        ...user,
+        totalVolume,
+      }
+    })
+    .filter((user: UserData) => {
+      const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+      const matchesSearch =
+        fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesStatus = statusFilter === "all" || user.status === statusFilter
+      const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
+
+      return matchesSearch && matchesStatus && matchesVerification
+    })
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
