@@ -67,7 +67,7 @@ export default function UserDashboardPage() {
     calculateTotalSent()
   }, [transactions, exchangeRates, userProfile])
 
-  const userName = userProfile?.first_name || "User"
+  const userName = userProfile?.first_name 
   const baseCurrency = userProfile?.base_currency || "NGN"
   const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
   const totalSentValue = totalSent || 0
