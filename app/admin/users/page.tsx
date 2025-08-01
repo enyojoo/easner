@@ -63,7 +63,7 @@ interface TransactionData {
 }
 
 export default function AdminUsersPage() {
-  const { data, exchangeRates } = useAdminData()
+  const { data } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
@@ -87,7 +87,6 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(20)
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -97,93 +96,16 @@ export default function AdminUsersPage() {
     }
   }
 
-  const filteredUsers = (data?.users || [])
-    .map((user: UserData) => {
-      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id && tx.status === "completed") || []
-      const rates = exchangeRates || []
-      const userBaseCurrency = user.base_currency || "NGN"
+  const filteredUsers = (data?.users || []).filter((user: UserData) => {
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+    const matchesSearch =
+      fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
-      // Calculate total volume in user's base currency (same logic as user dashboard/profile)
-      const totalVolume = transactions.reduce((sum, tx) => {
-        let amountInBaseCurrency = Number(tx.send_amount) || 0
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter
+    const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
 
-        // If transaction currency is different from user's base currency, convert it
-        if (tx.send_currency !== userBaseCurrency) {
-          // Find exchange rate from transaction currency to user's base currency
-          const rate = rates.find((r) => r.from_currency === tx.send_currency && r.to_currency === userBaseCurrency)
-
-          if (rate && rate.rate) {
-            amountInBaseCurrency = tx.send_amount * rate.rate
-          } else {
-            // If direct rate not found, try reverse rate
-            const reverseRate = rates.find(
-              (r) => r.from_currency === userBaseCurrency && r.to_currency === tx.send_currency,
-            )
-            if (reverseRate && reverseRate.rate > 0) {
-              amountInBaseCurrency = tx.send_amount / reverseRate.rate
-            } else {
-              // Fallback to hardcoded rates based on user's base currency
-              if (userBaseCurrency === "NGN") {
-                switch (tx.send_currency) {
-                  case "RUB":
-                    amountInBaseCurrency = tx.send_amount * 18.2
-                    break
-                  case "USD":
-                    amountInBaseCurrency = tx.send_amount * 1650
-                    break
-                  case "EUR":
-                    amountInBaseCurrency = tx.send_amount * 1750
-                    break
-                  case "GBP":
-                    amountInBaseCurrency = tx.send_amount * 2000
-                    break
-                  default:
-                    // Keep original amount if currency not recognized
-                    break
-                }
-              } else if (userBaseCurrency === "RUB") {
-                switch (tx.send_currency) {
-                  case "NGN":
-                    amountInBaseCurrency = tx.send_amount * 0.011
-                    break
-                  case "USD":
-                    amountInBaseCurrency = tx.send_amount * 18.2
-                    break
-                  case "EUR":
-                    amountInBaseCurrency = tx.send_amount * 19.5
-                    break
-                  case "GBP":
-                    amountInBaseCurrency = tx.send_amount * 22.2
-                    break
-                  default:
-                    break
-                }
-              } else {
-                // For other base currencies, keep original amount
-                amountInBaseCurrency = tx.send_amount
-              }
-            }
-          }
-        }
-        return sum + amountInBaseCurrency
-      }, 0)
-
-      return {
-        ...user,
-        totalVolume,
-        totalTransactions: transactions.length,
-      }
-    })
-    .filter((user: UserData) => {
-      const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
-      const matchesSearch =
-        fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
-
-      const matchesStatus = statusFilter === "all" || user.status === statusFilter
-      const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
-
-      return matchesSearch && matchesStatus && matchesVerification
-    })
+    return matchesSearch && matchesStatus && matchesVerification
+  })
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -278,7 +200,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, u.base_currency),
+          formatCurrency(u.totalVolume, "NGN"),
         ].join(","),
       ),
     ].join("\n")
@@ -298,9 +220,9 @@ export default function AdminUsersPage() {
 
   // Registration analytics data
   const registrationStats = {
-    totalUsers: data?.stats?.totalUsers || 0,
-    activeUsers: data?.stats?.activeUsers || 0,
-    verifiedUsers: data?.stats?.verifiedUsers || 0,
+    totalUsers: data?.stats.totalUsers || 0,
+    activeUsers: data?.stats.activeUsers || 0,
+    verifiedUsers: data?.stats.verifiedUsers || 0,
     newThisWeek: (data?.users || []).filter(
       (u: UserData) => new Date(u.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     ).length,
@@ -491,9 +413,7 @@ export default function AdminUsersPage() {
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(user.totalVolume, user.base_currency)}
-                    </TableCell>
+                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, "NGN")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Dialog>
@@ -605,7 +525,7 @@ export default function AdminUsersPage() {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {userTransactions.slice(0, 5).map((transaction) => (
+                                        {userTransactions.map((transaction) => (
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}
