@@ -1,39 +1,40 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { formatCurrency } from "../utils/currencyFormatter"
+import { adminDataStore } from "@/lib/admin-data-store"
 
-interface User {
-  id: number
-  name: string
-  total_volume?: number
-  base_currency: string
-}
-
-const useAdminData = () => {
-  const [users, setUsers] = useState<User[]>([])
-
-  const fetchUsers = async () => {
-    // Simulate fetching users data from an API
-    const response = await fetch("/api/users")
-    const data = await response.json()
-
-    const processedUsers = data.map((user) => ({
-      ...user,
-      total_volume: user.total_volume || 0,
-      formatted_volume: formatCurrency(user.total_volume || 0, user.base_currency),
-    }))
-
-    setUsers(processedUsers)
-  }
+export function useAdminData() {
+  const [data, setData] = useState<any>(adminDataStore.getData())
+  const [loading, setLoading] = useState(adminDataStore.isLoading())
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchUsers()
+    let mounted = true
+
+    // Get current data immediately
+    const currentData = adminDataStore.getData()
+    if (currentData && mounted) {
+      setData(currentData)
+      setLoading(false)
+    }
+
+    // Subscribe to data updates
+    const unsubscribe = adminDataStore.subscribe(() => {
+      if (mounted) {
+        const newData = adminDataStore.getData()
+        if (newData) {
+          setData(newData)
+          setLoading(false)
+          setError(null)
+        }
+      }
+    })
+
+    return () => {
+      mounted = false
+      unsubscribe()
+    }
   }, [])
 
-  return {
-    users,
-  }
+  return { data, loading, error }
 }
-
-export default useAdminData
