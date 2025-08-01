@@ -95,7 +95,7 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {loading ? "Loading..." : formatCurrencyValue(totalSentValue, baseCurrency)}
+                {formatCurrencyValue(totalSentValue, baseCurrency)}
               </div>
               <p className="text-xs text-gray-500">From all currencies in your base currency</p>
             </CardContent>
