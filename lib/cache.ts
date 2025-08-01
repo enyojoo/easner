@@ -6,7 +6,29 @@ interface CacheItem<T> {
 
 class DataCache {
   private cache = new Map<string, CacheItem<any>>()
-  private readonly DEFAULT_TTL = 3 * 60 * 1000 // Reduced to 3 minutes
+  private readonly DEFAULT_TTL = 2 * 60 * 1000 // 2 minutes
+  private cleanupInterval: NodeJS.Timeout | null = null
+
+  constructor() {
+    // Start cleanup interval
+    this.startCleanup()
+  }
+
+  private startCleanup() {
+    // Clean up expired items every minute
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupExpired()
+    }, 60 * 1000)
+  }
+
+  private cleanupExpired() {
+    const now = Date.now()
+    for (const [key, item] of this.cache.entries()) {
+      if (now - item.timestamp > item.ttl) {
+        this.cache.delete(key)
+      }
+    }
+  }
 
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
     this.cache.set(key, {
@@ -49,9 +71,13 @@ class DataCache {
     this.cache.clear()
   }
 
-  // Preload data to cache
+  // Preload data to cache with timeout
   preload<T>(key: string, dataPromise: Promise<T>, ttl?: number): Promise<T> {
-    return dataPromise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Cache preload timeout")), 10000) // 10 second timeout
+    })
+
+    return Promise.race([dataPromise, timeoutPromise])
       .then((data) => {
         this.set(key, data, ttl)
         return data
@@ -69,11 +95,20 @@ class DataCache {
       keys: Array.from(this.cache.keys()),
     }
   }
+
+  // Cleanup method
+  destroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval)
+      this.cleanupInterval = null
+    }
+    this.clear()
+  }
 }
 
 export const dataCache = new DataCache()
 
-// Cache keys with shorter TTLs for better performance
+// Cache keys
 export const CACHE_KEYS = {
   CURRENCIES: "currencies",
   EXCHANGE_RATES: "exchange_rates",

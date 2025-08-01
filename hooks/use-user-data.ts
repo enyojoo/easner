@@ -1,65 +1,114 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { userDataStore } from "@/lib/user-data-store"
 import { useAuth } from "@/lib/auth-context"
 
 export function useUserData() {
   const { userProfile } = useAuth()
   const [data, setData] = useState(userDataStore.getData())
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Memoize the refresh functions to prevent unnecessary re-renders
-  const refreshRecipients = useCallback(() => {
-    if (userProfile?.id) {
-      return userDataStore.refreshRecipients(userProfile.id)
-    }
-  }, [userProfile?.id])
+  // Use refs to prevent stale closures
+  const userIdRef = useRef<string | null>(null)
+  const mountedRef = useRef(true)
 
-  const refreshTransactions = useCallback(() => {
-    if (userProfile?.id) {
-      return userDataStore.refreshTransactions(userProfile.id)
-    }
-  }, [userProfile?.id])
-
-  const getFreshData = useCallback(() => {
-    if (userProfile?.id) {
-      return userDataStore.getFreshData(userProfile.id)
-    }
-  }, [userProfile?.id])
-
+  // Update ref when userProfile changes
   useEffect(() => {
-    if (!userProfile?.id) return
+    userIdRef.current = userProfile?.id || null
+  }, [userProfile?.id])
+
+  // Subscribe to data store changes
+  useEffect(() => {
+    const unsubscribe = userDataStore.subscribe(() => {
+      if (mountedRef.current) {
+        setData(userDataStore.getData())
+        setLoading(false)
+        setError(null)
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
+  // Initialize data when user changes
+  useEffect(() => {
+    let mounted = true
 
     const initializeData = async () => {
-      setLoading(true)
-      setError(null)
+      const userId = userProfile?.id
+      if (!userId) {
+        if (mounted) {
+          setLoading(false)
+          setData(userDataStore.getData())
+        }
+        return
+      }
+
       try {
-        await userDataStore.initialize(userProfile.id)
-        setData(userDataStore.getData())
-      } catch (err) {
-        console.error("Failed to initialize user data:", err)
-        setError("Failed to load data. Please try again.")
-      } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(true)
+          setError(null)
+        }
+
+        await userDataStore.initialize(userId)
+
+        if (mounted) {
+          setData(userDataStore.getData())
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error("Error initializing user data:", error)
+        if (mounted) {
+          setError("Failed to load data")
+          setLoading(false)
+        }
       }
     }
 
     initializeData()
 
-    const unsubscribe = userDataStore.subscribe(() => {
-      setData(userDataStore.getData())
-    })
-
     return () => {
-      unsubscribe()
+      mounted = false
     }
   }, [userProfile?.id])
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      userDataStore.cleanup()
+      mountedRef.current = false
+    }
+  }, [])
+
+  const refreshRecipients = useCallback(async () => {
+    const userId = userIdRef.current
+    if (userId) {
+      await userDataStore.refreshRecipients(userId)
+    }
+  }, [])
+
+  const refreshTransactions = useCallback(async () => {
+    const userId = userIdRef.current
+    if (userId) {
+      await userDataStore.refreshTransactions(userId)
+    }
+  }, [])
+
+  const forceRefresh = useCallback(async () => {
+    const userId = userIdRef.current
+    if (userId) {
+      setLoading(true)
+      try {
+        await userDataStore.getFreshData(userId)
+        setData(userDataStore.getData())
+        setError(null)
+      } catch (error) {
+        console.error("Error force refreshing data:", error)
+        setError("Failed to refresh data")
+      } finally {
+        setLoading(false)
+      }
     }
   }, [])
 
@@ -72,6 +121,7 @@ export function useUserData() {
     error,
     refreshRecipients,
     refreshTransactions,
-    getFreshData,
+    forceRefresh,
+    lastUpdated: data.lastUpdated,
   }
 }

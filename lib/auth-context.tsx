@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
 
@@ -54,7 +54,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const fetchUserProfile = async (userId: string) => {
+  // Use refs to prevent stale closures
+  const userRef = useRef<User | null>(null)
+  const profileRef = useRef<UserProfile | null>(null)
+  const loadingRef = useRef(true)
+  const isAdminRef = useRef(false)
+
+  // Update refs when state changes
+  useEffect(() => {
+    userRef.current = user
+  }, [user])
+
+  useEffect(() => {
+    profileRef.current = userProfile
+  }, [userProfile])
+
+  useEffect(() => {
+    loadingRef.current = loading
+  }, [loading])
+
+  useEffect(() => {
+    isAdminRef.current = isAdmin
+  }, [isAdmin])
+
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       // Try to fetch from users table first
       const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
@@ -83,15 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Error fetching user profile:", error)
       return null
     }
-  }
+  }, [])
 
-  const refreshUserProfile = async () => {
-    if (user) {
-      await fetchUserProfile(user.id)
+  const refreshUserProfile = useCallback(async () => {
+    const currentUser = userRef.current
+    if (currentUser) {
+      await fetchUserProfile(currentUser.id)
     }
-  }
+  }, [fetchUserProfile])
 
   useEffect(() => {
+    let mounted = true
+    let authSubscription: any = null
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -99,23 +126,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        if (session?.user) {
+        if (mounted && session?.user) {
           setUser(session.user)
           await fetchUserProfile(session.user.id)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
     getInitialSession()
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+
       try {
         if (session?.user) {
           setUser(session.user)
@@ -128,14 +157,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error handling auth state change:", error)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      mounted = false
+      if (authSubscription?.data?.subscription) {
+        authSubscription.data.subscription.unsubscribe()
+      }
+    }
+  }, [fetchUserProfile])
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -152,9 +188,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign in error:", error)
       return { error }
     }
-  }
+  }, [])
 
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = useCallback(async (email: string, password: string, userData: any) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -177,18 +213,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign up error:", error)
       return { error }
     }
-  }
+  }, [])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut()
+      // Clear all state immediately for better UX
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+
+      // Then sign out from Supabase
+      await supabase.auth.signOut()
     } catch (error) {
       console.error("Sign out error:", error)
+      // Even if signOut fails, clear local state
+      setUser(null)
+      setUserProfile(null)
+      setIsAdmin(false)
     }
-  }
+  }, [])
 
   const value = {
     user,
