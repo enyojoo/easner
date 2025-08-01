@@ -108,29 +108,33 @@ class AdminDataStore {
 
         const totalTransactions = transactions?.length || 0
         const totalVolume = (transactions || []).reduce((sum, tx) => {
-          let amount = Number(tx.send_amount)
+          if (tx.status !== "completed") return sum
 
-          // Convert to NGN based on actual currency
-          switch (tx.send_currency) {
-            case "RUB":
-              amount = amount * 0.011 // RUB to NGN rate
-              break
-            case "USD":
-              amount = amount * 1650 // USD to NGN rate
-              break
-            case "EUR":
-              amount = amount * 1750 // EUR to NGN rate
-              break
-            case "GBP":
-              amount = amount * 2000 // GBP to NGN rate
-              break
-            case "NGN":
-            default:
-              // Already in NGN, no conversion needed
-              break
+          let amountInBaseCurrency = Number(tx.send_amount)
+
+          // Convert to user's base currency using exchange rates
+          const userBaseCurrency = user.base_currency || "NGN"
+
+          if (tx.send_currency !== userBaseCurrency) {
+            // Find exchange rate from transaction currency to user's base currency
+            const rate = this.data?.exchangeRates?.find(
+              (r) => r.from_currency === tx.send_currency && r.to_currency === userBaseCurrency,
+            )
+
+            if (rate) {
+              amountInBaseCurrency = Number(tx.send_amount) * rate.rate
+            } else {
+              // If direct rate not found, try reverse rate
+              const reverseRate = this.data?.exchangeRates?.find(
+                (r) => r.from_currency === userBaseCurrency && r.to_currency === tx.send_currency,
+              )
+              if (reverseRate && reverseRate.rate > 0) {
+                amountInBaseCurrency = Number(tx.send_amount) / reverseRate.rate
+              }
+            }
           }
 
-          return sum + amount
+          return sum + amountInBaseCurrency
         }, 0)
 
         return {

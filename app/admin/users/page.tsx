@@ -63,7 +63,7 @@ interface TransactionData {
 }
 
 export default function AdminUsersPage() {
-  const { data } = useAdminData()
+  const { data, exchangeRates } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
