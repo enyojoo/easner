@@ -58,15 +58,29 @@ export const userService = {
   },
 }
 
-// Currency operations with caching
+// Currency operations with improved caching
 export const currencyService = {
   async getAll() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.CURRENCIES)
-    if (cached) {
+    // Check cache first with stale-while-revalidate
+    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.CURRENCIES)
+
+    // Return cached data immediately if available
+    if (cached && !isStale) {
       return cached
     }
 
+    // If stale, return cached data but fetch fresh data in background
+    if (cached && isStale) {
+      // Background refresh
+      this.refreshCurrencies()
+      return cached
+    }
+
+    // No cached data, fetch fresh
+    return this.refreshCurrencies()
+  },
+
+  async refreshCurrencies() {
     const { data, error } = await supabase
       .from("currencies")
       .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
@@ -82,19 +96,30 @@ export const currencyService = {
         flag: currency.flag_svg,
       })) || []
 
-    // Cache the result
-    dataCache.set(CACHE_KEYS.CURRENCIES, currencies)
+    // Cache the result with longer TTL
+    dataCache.set(CACHE_KEYS.CURRENCIES, currencies, 30 * 60 * 1000) // 30 minutes
 
     return currencies
   },
 
   async getExchangeRates() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.EXCHANGE_RATES)
-    if (cached) {
+    // Check cache first with stale-while-revalidate
+    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.EXCHANGE_RATES)
+
+    if (cached && !isStale) {
       return cached
     }
 
+    if (cached && isStale) {
+      // Background refresh
+      this.refreshExchangeRates()
+      return cached
+    }
+
+    return this.refreshExchangeRates()
+  },
+
+  async refreshExchangeRates() {
     const { data, error } = await supabase
       .from("exchange_rates")
       .select(`
@@ -124,8 +149,8 @@ export const currencyService = {
           : undefined,
       })) || []
 
-    // Cache the result
-    dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates)
+    // Cache with shorter TTL for rates
+    dataCache.set(CACHE_KEYS.EXCHANGE_RATES, rates, 5 * 60 * 1000) // 5 minutes
 
     return rates
   },
@@ -167,7 +192,7 @@ export const currencyService = {
   },
 }
 
-// Recipient operations with caching
+// Recipient operations with improved caching
 export const recipientService = {
   async create(
     userId: string,
@@ -201,12 +226,23 @@ export const recipientService = {
   },
 
   async getByUserId(userId: string) {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.USER_RECIPIENTS(userId))
-    if (cached) {
+    // Check cache first with stale-while-revalidate
+    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.USER_RECIPIENTS(userId))
+
+    if (cached && !isStale) {
       return cached
     }
 
+    if (cached && isStale) {
+      // Background refresh
+      this.refreshUserRecipients(userId)
+      return cached
+    }
+
+    return this.refreshUserRecipients(userId)
+  },
+
+  async refreshUserRecipients(userId: string) {
     const { data, error } = await supabase
       .from("recipients")
       .select("*")
@@ -218,7 +254,7 @@ export const recipientService = {
     // Cache the result
     dataCache.set(CACHE_KEYS.USER_RECIPIENTS(userId), data || [])
 
-    return data
+    return data || []
   },
 
   async update(
@@ -260,7 +296,7 @@ export const recipientService = {
   },
 }
 
-// Transaction operations with caching
+// Transaction operations with improved caching
 export const transactionService = {
   async create(transactionData: {
     userId: string
@@ -305,12 +341,23 @@ export const transactionService = {
   },
 
   async getByUserId(userId: string, limit = 50) {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.USER_TRANSACTIONS(userId))
-    if (cached) {
+    // Check cache first with stale-while-revalidate
+    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.USER_TRANSACTIONS(userId))
+
+    if (cached && !isStale) {
       return cached
     }
 
+    if (cached && isStale) {
+      // Background refresh
+      this.refreshUserTransactions(userId, limit)
+      return cached
+    }
+
+    return this.refreshUserTransactions(userId, limit)
+  },
+
+  async refreshUserTransactions(userId: string, limit = 50) {
     const { data, error } = await supabase
       .from("transactions")
       .select(`
@@ -326,11 +373,11 @@ export const transactionService = {
     // Cache the result
     dataCache.set(CACHE_KEYS.USER_TRANSACTIONS(userId), data || [])
 
-    return data
+    return data || []
   },
 
   async getById(transactionId: string) {
-    // Check cache first
+    // Check cache first with shorter TTL for active transactions
     const cached = dataCache.get(CACHE_KEYS.TRANSACTION(transactionId))
     if (cached) {
       return cached
@@ -481,15 +528,26 @@ export const transactionService = {
   },
 }
 
-// Payment Methods operations with caching
+// Payment Methods operations with improved caching
 export const paymentMethodService = {
   async getAll() {
-    // Check cache first
-    const cached = dataCache.get(CACHE_KEYS.PAYMENT_METHODS)
-    if (cached) {
+    // Check cache first with stale-while-revalidate
+    const { data: cached, isStale } = dataCache.getStale(CACHE_KEYS.PAYMENT_METHODS)
+
+    if (cached && !isStale) {
       return cached
     }
 
+    if (cached && isStale) {
+      // Background refresh
+      this.refreshPaymentMethods()
+      return cached
+    }
+
+    return this.refreshPaymentMethods()
+  },
+
+  async refreshPaymentMethods() {
     const { data, error } = await supabase
       .from("payment_methods")
       .select("*")
@@ -498,8 +556,8 @@ export const paymentMethodService = {
 
     if (error) throw error
 
-    // Cache the result
-    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [])
+    // Cache the result with longer TTL
+    dataCache.set(CACHE_KEYS.PAYMENT_METHODS, data || [], 15 * 60 * 1000) // 15 minutes
 
     return data || []
   },

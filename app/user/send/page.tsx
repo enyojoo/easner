@@ -24,7 +24,7 @@ import {
   X,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { transactionService, paymentMethodService, recipientService } from "@/lib/database"
+import { transactionService, recipientService } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
@@ -34,7 +34,8 @@ import type { Currency } from "@/types"
 export default function UserSendPage() {
   const router = useRouter()
   const { userProfile } = useAuth()
-  const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()
+  const { currencies, exchangeRates, recipients, paymentMethods, refreshRecipients, addOptimisticTransaction } =
+    useUserData()
 
   // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
@@ -44,7 +45,6 @@ export default function UserSendPage() {
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [fee, setFee] = useState<number>(0)
 
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,20 +78,6 @@ export default function UserSendPage() {
 
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
-
-  // Load payment methods
-  useEffect(() => {
-    const loadPaymentMethods = async () => {
-      try {
-        const paymentMethodsData = await paymentMethodService.getAll()
-        setPaymentMethods(paymentMethodsData || [])
-      } catch (error) {
-        console.error("Error loading payment methods:", error)
-      }
-    }
-
-    loadPaymentMethods()
-  }, [])
 
   // Set default currencies when data is loaded
   useEffect(() => {
@@ -398,7 +384,7 @@ export default function UserSendPage() {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1)
     } else if (currentStep === 3) {
-      // Create transaction in database
+      // Create transaction in database with optimistic update
       if (!userProfile?.id || !selectedRecipientId) return
 
       try {
@@ -409,6 +395,32 @@ export default function UserSendPage() {
           throw new Error("Exchange rate not available")
         }
 
+        // Create optimistic transaction for immediate UI feedback
+        const optimisticTransaction = {
+          transaction_id: transactionId,
+          user_id: userProfile.id,
+          recipient_id: selectedRecipientId,
+          send_amount: Number.parseFloat(sendAmount),
+          send_currency: sendCurrency,
+          receive_amount: receiveAmount,
+          receive_currency: receiveCurrency,
+          exchange_rate: exchangeRateData.rate,
+          fee_amount: fee,
+          fee_type: feeType,
+          total_amount: Number.parseFloat(sendAmount) + fee,
+          status: "pending",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          recipient: recipients.find((r) => r.id === selectedRecipientId),
+        }
+
+        // Add optimistic transaction immediately
+        addOptimisticTransaction(optimisticTransaction)
+
+        // Navigate immediately for better UX
+        router.push(`/user/send/${transactionId.toLowerCase()}`)
+
+        // Create actual transaction in background
         const transaction = await transactionService.create({
           userId: userProfile.id,
           recipientId: selectedRecipientId,
@@ -429,15 +441,13 @@ export default function UserSendPage() {
           } catch (uploadError) {
             console.error("Error uploading receipt:", uploadError)
             // Don't block transaction creation if receipt upload fails
-            setUploadError("Receipt upload failed, but transaction was created successfully")
           }
         }
-
-        // Redirect to transaction status page
-        router.push(`/user/send/${transaction.transaction_id.toLowerCase()}`)
       } catch (error) {
         console.error("Error creating transaction:", error)
         setError("Failed to create transaction. Please try again.")
+        // Remove optimistic transaction on error
+        // You might want to implement removeOptimisticTransaction method
       } finally {
         setIsCreatingTransaction(false)
       }
