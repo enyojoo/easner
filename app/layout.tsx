@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   title: "NOVAMONEY - Send Money Instantly",
   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "https://cldup.com/iMvs-lKmIe.svg",
+    shortcut: "https://cldup.com/iMvs-lKmIe.svg",
+    apple: "https://cldup.com/iMvs-lKmIe.svg",
   },
     generator: 'v0.dev'
 }
