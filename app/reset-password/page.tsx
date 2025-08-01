@@ -109,7 +109,7 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <BrandLogo size="lg" className="mx-auto mb-4" />
+          <BrandLogo size="md" className="mx-auto mb-4" />
         </div>
 
         <Card>
