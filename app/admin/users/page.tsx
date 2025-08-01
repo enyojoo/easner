@@ -99,51 +99,73 @@ export default function AdminUsersPage() {
 
   const filteredUsers = (data?.users || [])
     .map((user: UserData) => {
-      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id) || []
+      const transactions = data?.transactions?.filter((tx) => tx.user_id === user.id && tx.status === "completed") || []
       const rates = exchangeRates || []
+      const userBaseCurrency = user.base_currency || "NGN"
 
-      // Calculate total volume in NGN for each user
+      // Calculate total volume in user's base currency (same logic as user dashboard/profile)
       const totalVolume = transactions.reduce((sum, tx) => {
-        if (tx.status !== "completed") return sum
+        let amountInBaseCurrency = Number(tx.send_amount) || 0
 
-        let amountInNGN = Number(tx.send_amount) || 0
-
-        // Convert to NGN if not already in NGN
-        if (tx.send_currency !== "NGN") {
-          // Find exchange rate from transaction currency to NGN
-          const rate = rates.find((r) => r.from_currency === tx.send_currency && r.to_currency === "NGN")
+        // If transaction currency is different from user's base currency, convert it
+        if (tx.send_currency !== userBaseCurrency) {
+          // Find exchange rate from transaction currency to user's base currency
+          const rate = rates.find((r) => r.from_currency === tx.send_currency && r.to_currency === userBaseCurrency)
 
           if (rate && rate.rate) {
-            amountInNGN = tx.send_amount * rate.rate
+            amountInBaseCurrency = tx.send_amount * rate.rate
           } else {
             // If direct rate not found, try reverse rate
-            const reverseRate = rates.find((r) => r.from_currency === "NGN" && r.to_currency === tx.send_currency)
+            const reverseRate = rates.find(
+              (r) => r.from_currency === userBaseCurrency && r.to_currency === tx.send_currency,
+            )
             if (reverseRate && reverseRate.rate > 0) {
-              amountInNGN = tx.send_amount / reverseRate.rate
+              amountInBaseCurrency = tx.send_amount / reverseRate.rate
             } else {
-              // Fallback to hardcoded rates
-              switch (tx.send_currency) {
-                case "RUB":
-                  amountInNGN = tx.send_amount * 18.2 // RUB to NGN rate
-                  break
-                case "USD":
-                  amountInNGN = tx.send_amount * 1650 // USD to NGN rate
-                  break
-                case "EUR":
-                  amountInNGN = tx.send_amount * 1750 // EUR to NGN rate
-                  break
-                case "GBP":
-                  amountInNGN = tx.send_amount * 2000 // GBP to NGN rate
-                  break
-                default:
-                  // Keep original amount if currency not recognized
-                  break
+              // Fallback to hardcoded rates based on user's base currency
+              if (userBaseCurrency === "NGN") {
+                switch (tx.send_currency) {
+                  case "RUB":
+                    amountInBaseCurrency = tx.send_amount * 18.2
+                    break
+                  case "USD":
+                    amountInBaseCurrency = tx.send_amount * 1650
+                    break
+                  case "EUR":
+                    amountInBaseCurrency = tx.send_amount * 1750
+                    break
+                  case "GBP":
+                    amountInBaseCurrency = tx.send_amount * 2000
+                    break
+                  default:
+                    // Keep original amount if currency not recognized
+                    break
+                }
+              } else if (userBaseCurrency === "RUB") {
+                switch (tx.send_currency) {
+                  case "NGN":
+                    amountInBaseCurrency = tx.send_amount * 0.011
+                    break
+                  case "USD":
+                    amountInBaseCurrency = tx.send_amount * 18.2
+                    break
+                  case "EUR":
+                    amountInBaseCurrency = tx.send_amount * 19.5
+                    break
+                  case "GBP":
+                    amountInBaseCurrency = tx.send_amount * 22.2
+                    break
+                  default:
+                    break
+                }
+              } else {
+                // For other base currencies, keep original amount
+                amountInBaseCurrency = tx.send_amount
               }
             }
           }
         }
-
-        return sum + amountInNGN
+        return sum + amountInBaseCurrency
       }, 0)
 
       return {
@@ -256,7 +278,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, "NGN"),
+          formatCurrency(u.totalVolume, u.base_currency),
         ].join(","),
       ),
     ].join("\n")
@@ -469,7 +491,9 @@ export default function AdminUsersPage() {
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
-                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, "NGN")}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(user.totalVolume, user.base_currency)}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Dialog>
