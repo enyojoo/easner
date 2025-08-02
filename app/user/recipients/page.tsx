@@ -212,7 +212,7 @@ export default function UserRecipientsPage() {
       console.error("Error deleting recipient:", error)
       const errorMessage = error.message?.includes("linked to a transaction")
         ? "Failed to delete - linked to a transaction"
-        : "Failed to delete recipient"
+        : "Failed to delete - linked to a transaction"
       setDeleteErrors((prev) => ({ ...prev, [id]: errorMessage }))
     } finally {
       setDeletingId(null)
