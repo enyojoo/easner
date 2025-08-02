@@ -103,8 +103,6 @@ export default function UserRecipientsPage() {
   }
 
   const handleDeleteRecipient = async (id) => {
-    if (!confirm("Are you sure you want to delete this recipient?")) return
-
     try {
       await recipientService.delete(id)
       await refreshRecipients()

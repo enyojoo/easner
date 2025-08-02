@@ -207,6 +207,19 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     setFee(feeData.fee)
   }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
 
+  // Add new useEffect to handle min/max amounts when currency changes
+  useEffect(() => {
+    if (!sendCurrency || !receiveCurrency) return
+
+    const rate = getExchangeRate(sendCurrency, receiveCurrency)
+    if (rate && rate.min_amount) {
+      const currentAmount = Number.parseFloat(sendAmount) || 0
+      if (currentAmount < rate.min_amount) {
+        setSendAmount(rate.min_amount.toString())
+      }
+    }
+  }, [sendCurrency, receiveCurrency, exchangeRates])
+
   const handleSendMoney = () => {
     const exchangeRateData = getExchangeRate(sendCurrency, receiveCurrency)
     const exchangeRate = exchangeRateData?.rate || 0
@@ -236,6 +249,18 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 type="number"
                 value={sendAmount}
                 onChange={(e) => setSendAmount(e.target.value)}
+                onBlur={(e) => {
+                  const value = Number.parseFloat(e.target.value) || 0
+                  const rate = getExchangeRate(sendCurrency, receiveCurrency)
+                  const minAmount = rate?.min_amount || 0
+                  const maxAmount = rate?.max_amount
+
+                  if (value < minAmount && minAmount > 0) {
+                    setSendAmount(minAmount.toString())
+                  } else if (maxAmount && value > maxAmount) {
+                    setSendAmount(maxAmount.toString())
+                  }
+                }}
                 className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                 placeholder="0.00"
               />
@@ -270,6 +295,19 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               </DropdownMenu>
             </div>
           </div>
+          {(() => {
+            const rate = getExchangeRate(sendCurrency, receiveCurrency)
+            if (rate && (rate.min_amount || rate.max_amount)) {
+              return (
+                <div className="text-xs text-gray-500 mt-2">
+                  {rate.min_amount && `Min: ${formatCurrency(rate.min_amount, sendCurrency)}`}
+                  {rate.min_amount && rate.max_amount && " • "}
+                  {rate.max_amount && `Max: ${formatCurrency(rate.max_amount, sendCurrency)}`}
+                </div>
+              )
+            }
+            return null
+          })()}
         </div>
 
         {/* Swap Button */}
