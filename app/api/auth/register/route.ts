@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { userService } from "@/lib/database"
 import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
@@ -10,58 +10,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    // Check if user already exists in users table
-    const { data: existingUser } = await supabase.from("users").select("id").eq("email", email).single()
-
+    // Check if user already exists
+    const existingUser = await userService.findByEmail(email)
     if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
-    // Create new user using Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create new user
+    const user = await userService.create({
       email,
       password,
+      firstName,
+      lastName,
+      phone,
+      baseCurrency: baseCurrency || "NGN",
     })
-
-    if (authError) {
-      console.error("Auth signup error:", authError)
-      return NextResponse.json({ error: authError.message }, { status: 400 })
-    }
-
-    if (!authData.user) {
-      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
-    }
-
-    // Insert user data into users table with only existing columns
-    const { data: userData, error: dbError } = await supabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email,
-        first_name: firstName,
-        last_name: lastName,
-        phone: phone || null,
-        base_currency: baseCurrency || "NGN",
-        status: "active",
-        verification_status: "pending",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (dbError) {
-      console.error("Database insert error:", dbError)
-      // Clean up auth user if database insert fails
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id)
-      } catch (cleanupError) {
-        console.error("Cleanup error:", cleanupError)
-      }
-      return NextResponse.json({ error: "Database error saving new user" }, { status: 500 })
-    }
-
-    const user = userData
 
     // Create JWT token
     const token = jwt.sign(
