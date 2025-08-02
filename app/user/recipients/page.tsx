@@ -319,51 +319,49 @@ export default function UserRecipientsPage() {
                       </p>
                     </div>
                   </div>
-                  {deleteErrors[recipient.id] && (
-                    <div className="w-full">
-                      <p className="text-xs text-red-600 mt-2">{deleteErrors[recipient.id]}</p>
+                  <div className="flex flex-col items-end space-y-1">
+                    <div className="flex items-center justify-end space-x-2 sm:justify-start">
+                      <Dialog open={!!editingRecipient} onOpenChange={(open) => !open && setEditingRecipient(null)}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditRecipient(recipient)}
+                            className="h-10 w-10 p-0"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[95vw] max-w-md mx-auto">
+                          <DialogHeader>
+                            <DialogTitle>Edit Recipient</DialogTitle>
+                          </DialogHeader>
+                          <RecipientForm
+                            isEdit
+                            formData={formData}
+                            setFormData={setFormData}
+                            error={error}
+                            isSubmitting={isSubmitting}
+                            currencies={currencies}
+                            onSubmit={handleUpdateRecipient}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteRecipient(recipient.id)}
+                        disabled={deletingId === recipient.id}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
+                      >
+                        {deletingId === recipient.id ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                  )}
-                  <div className="flex items-center justify-end space-x-2 sm:justify-start">
-                    <Dialog open={!!editingRecipient} onOpenChange={(open) => !open && setEditingRecipient(null)}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditRecipient(recipient)}
-                          className="h-10 w-10 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="w-[95vw] max-w-md mx-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Recipient</DialogTitle>
-                        </DialogHeader>
-                        <RecipientForm
-                          isEdit
-                          formData={formData}
-                          setFormData={setFormData}
-                          error={error}
-                          isSubmitting={isSubmitting}
-                          currencies={currencies}
-                          onSubmit={handleUpdateRecipient}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteRecipient(recipient.id)}
-                      disabled={deletingId === recipient.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
-                    >
-                      {deletingId === recipient.id ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    {deleteErrors[recipient.id] && <p className="text-xs text-red-600">{deleteErrors[recipient.id]}</p>}
                   </div>
                 </div>
               ))}
