@@ -13,118 +13,10 @@ import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 
-export default function UserRecipientsPage() {
-  const { userProfile } = useAuth()
-  const { recipients, currencies, refreshRecipients } = useUserData()
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingRecipient, setEditingRecipient] = useState(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currencyFilter, setCurrencyFilter] = useState("all")
-  const [formData, setFormData] = useState({
-    name: "",
-    accountNumber: "",
-    bankName: "",
-    currency: "NGN",
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState("")
-
-  const filteredRecipients = recipients.filter((recipient) => {
-    const matchesSearch =
-      recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipient.account_number.includes(searchTerm)
-    const matchesCurrency = currencyFilter === "all" || recipient.currency === currencyFilter
-    return matchesSearch && matchesCurrency
-  })
-
-  const handleAddRecipient = async () => {
-    if (!userProfile?.id) return
-
-    try {
-      setIsSubmitting(true)
-      setError("")
-
-      await recipientService.create(userProfile.id, {
-        fullName: formData.name,
-        accountNumber: formData.accountNumber,
-        bankName: formData.bankName,
-        currency: formData.currency,
-      })
-
-      // Refresh recipients data
-      await refreshRecipients()
-
-      // Reset form and close dialog
-      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
-      setIsAddDialogOpen(false)
-    } catch (error) {
-      console.error("Error adding recipient:", error)
-      setError("Failed to add recipient")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleEditRecipient = (recipient) => {
-    setEditingRecipient(recipient)
-    setFormData({
-      name: recipient.full_name,
-      accountNumber: recipient.account_number,
-      bankName: recipient.bank_name,
-      currency: recipient.currency,
-    })
-  }
-
-  const handleUpdateRecipient = async () => {
-    if (!editingRecipient) return
-
-    try {
-      setIsSubmitting(true)
-      setError("")
-
-      await recipientService.update(editingRecipient.id, {
-        fullName: formData.name,
-        accountNumber: formData.accountNumber,
-        bankName: formData.bankName,
-      })
-
-      // Refresh recipients data
-      await refreshRecipients()
-
-      // Reset form and close dialog
-      setEditingRecipient(null)
-      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
-    } catch (error) {
-      console.error("Error updating recipient:", error)
-      setError("Failed to update recipient")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleDeleteRecipient = async (id) => {
-    try {
-      await recipientService.delete(id)
-      await refreshRecipients()
-    } catch (error) {
-      console.error("Error deleting recipient:", error)
-      setError("Failed to delete recipient")
-    }
-  }
-
-  const getCurrencySymbol = (currencyCode) => {
-    const currency = currencies.find((c) => c.code === currencyCode)
-    return currency?.symbol || currencyCode
-  }
-
-  const getCurrencyFlag = (currencyCode) => {
-    const currency = currencies.find((c) => c.code === currencyCode)
-    return currency?.flag_svg || ""
-  }
-
+const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitting, currencies, onSubmit }) => {
   const selectedCurrency = currencies.find((c) => c.code === formData.currency)
 
-  const RecipientForm = ({ isEdit = false }) => (
+  return (
     <div className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -206,7 +98,7 @@ export default function UserRecipientsPage() {
       </div>
 
       <Button
-        onClick={isEdit ? handleUpdateRecipient : handleAddRecipient}
+        onClick={onSubmit}
         className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
         disabled={!formData.name || !formData.accountNumber || !formData.bankName || isSubmitting}
       >
@@ -214,6 +106,118 @@ export default function UserRecipientsPage() {
       </Button>
     </div>
   )
+}
+
+export default function UserRecipientsPage() {
+  const { userProfile } = useAuth()
+  const { recipients, currencies, refreshRecipients } = useUserData()
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [editingRecipient, setEditingRecipient] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currencyFilter, setCurrencyFilter] = useState("all")
+  const [formData, setFormData] = useState({
+    name: "",
+    accountNumber: "",
+    bankName: "",
+    currency: "NGN",
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
+  const filteredRecipients = recipients.filter((recipient) => {
+    const matchesSearch =
+      recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      recipient.account_number.includes(searchTerm)
+    const matchesCurrency = currencyFilter === "all" || recipient.currency === currencyFilter
+    return matchesSearch && matchesCurrency
+  })
+
+  const handleAddRecipient = async () => {
+    if (!userProfile?.id) return
+
+    try {
+      setIsSubmitting(true)
+      setError("")
+
+      await recipientService.create(userProfile.id, {
+        fullName: formData.name,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+        currency: formData.currency,
+      })
+
+      // Refresh recipients data
+      await refreshRecipients()
+      setError("")
+
+      // Reset form and close dialog
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+      setIsAddDialogOpen(false)
+    } catch (error) {
+      console.error("Error adding recipient:", error)
+      setError("Failed to add recipient")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleEditRecipient = (recipient) => {
+    setEditingRecipient(recipient)
+    setFormData({
+      name: recipient.full_name,
+      accountNumber: recipient.account_number,
+      bankName: recipient.bank_name,
+      currency: recipient.currency,
+    })
+  }
+
+  const handleUpdateRecipient = async () => {
+    if (!editingRecipient) return
+
+    try {
+      setIsSubmitting(true)
+      setError("")
+
+      await recipientService.update(editingRecipient.id, {
+        fullName: formData.name,
+        accountNumber: formData.accountNumber,
+        bankName: formData.bankName,
+      })
+
+      // Refresh recipients data
+      await refreshRecipients()
+      setError("")
+
+      // Reset form and close dialog
+      setEditingRecipient(null)
+      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+    } catch (error) {
+      console.error("Error updating recipient:", error)
+      setError("Failed to update recipient")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDeleteRecipient = async (id) => {
+    try {
+      await recipientService.delete(id)
+      await refreshRecipients()
+    } catch (error) {
+      console.error("Error deleting recipient:", error)
+      setError("Failed to delete recipient")
+    }
+  }
+
+  const getCurrencySymbol = (currencyCode) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return currency?.symbol || currencyCode
+  }
+
+  const getCurrencyFlag = (currencyCode) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return currency?.flag_svg || ""
+  }
 
   return (
     <UserDashboardLayout>
@@ -234,7 +238,14 @@ export default function UserRecipientsPage() {
               <DialogHeader>
                 <DialogTitle>Add New Recipient</DialogTitle>
               </DialogHeader>
-              <RecipientForm />
+              <RecipientForm
+                formData={formData}
+                setFormData={setFormData}
+                error={error}
+                isSubmitting={isSubmitting}
+                currencies={currencies}
+                onSubmit={handleAddRecipient}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -314,7 +325,15 @@ export default function UserRecipientsPage() {
                         <DialogHeader>
                           <DialogTitle>Edit Recipient</DialogTitle>
                         </DialogHeader>
-                        <RecipientForm isEdit />
+                        <RecipientForm
+                          isEdit
+                          formData={formData}
+                          setFormData={setFormData}
+                          error={error}
+                          isSubmitting={isSubmitting}
+                          currencies={currencies}
+                          onSubmit={handleUpdateRecipient}
+                        />
                       </DialogContent>
                     </Dialog>
                     <Button
