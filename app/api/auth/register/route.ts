@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       firstName,
       lastName,
       phone,
-      baseCurrency: baseCurrency || "NGN",
+      baseCurrency: baseCurrency || "USD", // Changed from "NGN" to "USD"
     })
 
     // Create JWT token
