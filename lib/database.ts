@@ -1,6 +1,5 @@
 import { supabase, createServerClient } from "./supabase"
 import { dataCache, CACHE_KEYS } from "./cache"
-import bcrypt from "bcryptjs"
 
 // User operations
 export const userService = {
@@ -20,15 +19,11 @@ export const userService = {
     baseCurrency: string
   }) {
     try {
-      // Hash password
-      const hashedPassword = await bcrypt.hash(userData.password, 12)
-
-      // Insert directly into users table without country column
+      // Insert directly into users table with only existing columns
       const { data, error } = await supabase
         .from("users")
         .insert({
           email: userData.email,
-          password_hash: hashedPassword,
           first_name: userData.firstName,
           last_name: userData.lastName,
           phone: userData.phone || null,
