@@ -228,20 +228,20 @@ export default function UserRecipientsPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
             <p className="text-gray-600">Manage your saved recipients</p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+              <Button className="bg-novapay-primary hover:bg-novapay-primary-600 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Recipient
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[95vw] max-w-md mx-auto">
               <DialogHeader>
                 <DialogTitle>Add New Recipient</DialogTitle>
               </DialogHeader>
@@ -251,8 +251,8 @@ export default function UserRecipientsPage() {
         </div>
 
         {/* Search Bar and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               placeholder="Search recipients"
@@ -263,7 +263,7 @@ export default function UserRecipientsPage() {
           </div>
 
           {/* Currency Filter Dropdown */}
-          <div className="min-w-[200px]">
+          <div className="w-full sm:w-auto sm:min-w-[200px]">
             <select
               value={currencyFilter}
               onChange={(e) => setCurrencyFilter(e.target.value)}
@@ -287,10 +287,10 @@ export default function UserRecipientsPage() {
               {filteredRecipients.map((recipient) => (
                 <div
                   key={recipient.id}
-                  className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 transition-colors gap-4 sm:gap-0"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
                       <span className="text-novapay-primary font-semibold text-sm">
                         {recipient.full_name
                           .split(" ")
@@ -305,21 +305,26 @@ export default function UserRecipientsPage() {
                         />
                       </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{recipient.full_name}</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 truncate">{recipient.full_name}</p>
+                      <p className="text-sm text-gray-500 truncate">
                         {recipient.bank_name} - {recipient.account_number}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-end space-x-2 sm:justify-start">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditRecipient(recipient)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditRecipient(recipient)}
+                          className="h-10 w-10 p-0"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="w-[95vw] max-w-md mx-auto">
                         <DialogHeader>
                           <DialogTitle>Edit Recipient</DialogTitle>
                         </DialogHeader>
@@ -330,7 +335,7 @@ export default function UserRecipientsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteRecipient(recipient.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -340,7 +345,7 @@ export default function UserRecipientsPage() {
             </div>
             {filteredRecipients.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <p>
+                <p className="text-sm px-4">
                   {searchTerm || currencyFilter !== "All"
                     ? "No recipients found matching your criteria."
                     : "No recipients added yet."}
