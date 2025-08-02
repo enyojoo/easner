@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { userService } from "@/lib/database"
-import jwt from "jsonwebtoken"
 import { supabase } from "@/lib/supabase"
+import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,24 +10,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    // Check if user already exists
-    const existingUser = await userService.findByEmail(email)
+    // Check if user already exists in users table
+    const { data: existingUser } = await supabase.from("users").select("id").eq("email", email).single()
+
     if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
-    // Create new user using Supabase Auth first
+    // Create new user using Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          phone: phone || null,
-          base_currency: baseCurrency || "NGN",
-        },
-      },
     })
 
     if (authError) {
@@ -40,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
     }
 
-    // Insert user data into users table
+    // Insert user data into users table with only existing columns
     const { data: userData, error: dbError } = await supabase
       .from("users")
       .insert({
@@ -51,7 +43,7 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         base_currency: baseCurrency || "NGN",
         status: "active",
-        verification_status: "unverified",
+        verification_status: "pending",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -61,7 +53,11 @@ export async function POST(request: NextRequest) {
     if (dbError) {
       console.error("Database insert error:", dbError)
       // Clean up auth user if database insert fails
-      await supabase.auth.admin.deleteUser(authData.user.id)
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id)
+      } catch (cleanupError) {
+        console.error("Cleanup error:", cleanupError)
+      }
       return NextResponse.json({ error: "Database error saving new user" }, { status: 500 })
     }
 
