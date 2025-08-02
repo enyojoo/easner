@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Search, Download } from "lucide-react"
+import { Search } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -82,35 +82,6 @@ export default function UserTransactionsPage() {
     })
   }
 
-  const handleExport = () => {
-    if (filteredTransactions.length === 0) {
-      alert("No transactions to export")
-      return
-    }
-
-    const csvContent = [
-      ["Transaction ID", "Date", "Recipient", "Send Amount", "Receive Amount", "Status"].join(","),
-      ...filteredTransactions.map((t) =>
-        [
-          t.transaction_id,
-          formatDate(t.created_at),
-          t.recipient?.full_name || "N/A",
-          `${formatAmount(t.send_amount, t.send_currency)}`,
-          `${formatAmount(t.receive_amount, t.receive_currency)}`,
-          t.status,
-        ].join(","),
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `novapay-transactions-${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
   const handleViewTransaction = (transactionId: string) => {
     router.push(`/user/send/${transactionId.toLowerCase()}`)
   }
@@ -129,22 +100,18 @@ export default function UserTransactionsPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
             <p className="text-gray-600">View and manage your money transfers</p>
           </div>
-          <Button onClick={handleExport} variant="outline" disabled={filteredTransactions.length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-col space-y-4">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search transactions..."
@@ -153,9 +120,9 @@ export default function UserTransactionsPage() {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full sm:w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,7 +135,7 @@ export default function UserTransactionsPage() {
                   </SelectContent>
                 </Select>
                 <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full sm:w-32">
                     <SelectValue placeholder="Currency" />
                   </SelectTrigger>
                   <SelectContent>
@@ -193,45 +160,90 @@ export default function UserTransactionsPage() {
               </div>
             ) : (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Recipient</TableHead>
-                      <TableHead>Send Amount</TableHead>
-                      <TableHead>Receive Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTransactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                        <TableCell>{formatDate(transaction.created_at)}</TableCell>
-                        <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
-                        <TableCell className="font-semibold">
-                          {formatAmount(transaction.send_amount, transaction.send_currency)}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatAmount(transaction.receive_amount, transaction.receive_currency)}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewTransaction(transaction.transaction_id)}
-                            className="bg-transparent"
-                          >
-                            View
-                          </Button>
-                        </TableCell>
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Transaction ID</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Recipient</TableHead>
+                        <TableHead>Send Amount</TableHead>
+                        <TableHead>Receive Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTransactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
+                          <TableCell>{formatDate(transaction.created_at)}</TableCell>
+                          <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
+                          <TableCell className="font-semibold">
+                            {formatAmount(transaction.send_amount, transaction.send_currency)}
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(transaction.status)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewTransaction(transaction.transaction_id)}
+                              className="bg-transparent"
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile/Tablet Card View */}
+                <div className="md:hidden space-y-4">
+                  {filteredTransactions.map((transaction) => (
+                    <div key={transaction.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <p className="font-mono text-sm text-gray-600">{transaction.transaction_id}</p>
+                          <p className="font-medium">{transaction.recipient?.full_name || "N/A"}</p>
+                        </div>
+                        {getStatusBadge(transaction.status)}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Send Amount</p>
+                          <p className="font-semibold">
+                            {formatAmount(transaction.send_amount, transaction.send_currency)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Receive Amount</p>
+                          <p className="font-semibold">
+                            {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <p className="text-sm text-gray-500">{formatDate(transaction.created_at)}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewTransaction(transaction.transaction_id)}
+                          className="bg-transparent"
+                        >
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 {filteredTransactions.length === 0 && !loading && (
                   <div className="text-center py-8 text-gray-500">
                     {transactions.length === 0
