@@ -1,5 +1,6 @@
 import { supabase, createServerClient } from "./supabase"
 import { dataCache, CACHE_KEYS } from "./cache"
+import bcrypt from "bcryptjs"
 
 // User operations
 export const userService = {
@@ -8,6 +9,48 @@ export const userService = {
 
     if (error && error.code !== "PGRST116") throw error
     return data
+  },
+
+  async create(userData: {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+    phone?: string
+    baseCurrency: string
+  }) {
+    try {
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 12)
+
+      // Insert directly into users table without country column
+      const { data, error } = await supabase
+        .from("users")
+        .insert({
+          email: userData.email,
+          password_hash: hashedPassword,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          phone: userData.phone || null,
+          base_currency: userData.baseCurrency,
+          status: "active",
+          verification_status: "pending",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error("User creation error:", error)
+        throw error
+      }
+
+      return data
+    } catch (error) {
+      console.error("User service create error:", error)
+      throw error
+    }
   },
 
   async updateProfile(
