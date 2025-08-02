@@ -337,8 +337,8 @@ export default function TransactionStatusPage() {
                         <Clock className="h-8 w-8 text-yellow-600" />
                       )}
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{statusMessage.title}</h3>
-                    <p className="text-gray-600">{statusMessage.description}</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">{statusMessage.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-600">{statusMessage.description}</p>
                   </div>
 
                   {/* Status Information */}
@@ -430,7 +430,7 @@ export default function TransactionStatusPage() {
             <div className="lg:col-span-1">
               <Card className="sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Transaction Summary</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Transaction Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -475,7 +475,7 @@ export default function TransactionStatusPage() {
                     <div className="pt-4 border-t">
                       <h4 className="font-medium mb-2">Recipient</h4>
                       <div className="space-y-1 text-sm">
-                        <p className="font-medium">{transaction.recipient.full_name}</p>
+                        <p className="text-sm sm:text-base font-medium">{transaction.recipient.full_name}</p>
                         <p className="text-gray-600">{transaction.recipient.account_number}</p>
                         <p className="text-gray-600">{transaction.recipient.bank_name}</p>
                       </div>

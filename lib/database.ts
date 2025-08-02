@@ -427,7 +427,7 @@ export const transactionService = {
 
       // Generate unique filename
       const fileExt = file.name.split(".").pop()
-      const fileName = `${transactionId}_${Date.now()}.${fileExt}`
+      const fileName = `${transactionId}.${fileExt}`
       const filePath = `receipts/${fileName}`
 
       // Upload file to Supabase Storage with timeout

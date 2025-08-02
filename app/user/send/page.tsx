@@ -1327,7 +1327,7 @@ export default function UserSendPage() {
                           disabled={isCreatingTransaction}
                           className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                         >
-                          {isCreatingTransaction ? "Creating Transaction..." : "I've Completed Payment"}
+                          {isCreatingTransaction ? "Creating Transaction..." : "I've Paid"}
                         </Button>
                       </div>
                     </div>
