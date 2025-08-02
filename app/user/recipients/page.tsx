@@ -310,7 +310,7 @@ export default function UserRecipientsPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-end space-x-2 sm:justify-start">
-                    <Dialog>
+                    <Dialog open={!!editingRecipient} onOpenChange={(open) => !open && setEditingRecipient(null)}>
                       <DialogTrigger asChild>
                         <Button
                           variant="ghost"
