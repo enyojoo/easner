@@ -146,7 +146,7 @@ class AdminDataStore {
       .from("transactions")
       .select(`
       *,
-      users!inner(first_name, last_name, email),
+      users(first_name, last_name, email),
       recipients(full_name, bank_name, account_number)
     `)
       .order("created_at", { ascending: false })
