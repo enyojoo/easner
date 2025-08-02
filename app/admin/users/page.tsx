@@ -47,6 +47,7 @@ interface UserData {
   last_login?: string
   totalTransactions: number
   totalVolume: number
+  currencySymbol: string
 }
 
 interface TransactionData {
@@ -200,7 +201,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrencySync(u.totalVolume, u.base_currency),
+          `${u.currencySymbol}${u.totalVolume.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         ].join(","),
       ),
     ].join("\n")
@@ -228,10 +229,11 @@ export default function AdminUsersPage() {
     ).length,
   }
 
-  // Calculate transaction stats for each user using exchange rates
+  // Calculate transaction stats for each user using exchange rates and currency symbols
   const usersWithStats = (data?.users || []).map((user) => {
     const userTransactions = (data?.transactions || []).filter((t) => t.user_id === user.id)
     const userExchangeRates = data?.exchangeRates || []
+    const currencies = data?.currencies || []
     const baseCurrency = user.base_currency || "NGN"
 
     let totalSentInBaseCurrency = 0
@@ -265,10 +267,15 @@ export default function AdminUsersPage() {
       }
     }
 
+    // Get currency symbol for user's base currency
+    const userCurrency = currencies.find((c) => c.code === baseCurrency)
+    const currencySymbol = userCurrency?.symbol || baseCurrency
+
     return {
       ...user,
       totalTransactions: userTransactions.filter((t) => t.status === "completed").length,
       totalVolume: totalSentInBaseCurrency,
+      currencySymbol: currencySymbol,
     }
   })
 
@@ -458,7 +465,8 @@ export default function AdminUsersPage() {
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrencySync(user.totalVolume, user.base_currency)}
+                      {user.currencySymbol}
+                      {user.totalVolume.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -548,7 +556,11 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Total Volume:</span>
                                           <span className="font-medium">
-                                            {formatCurrencySync(selectedUser.totalVolume, selectedUser.base_currency)}
+                                            {selectedUser.currencySymbol}
+                                            {selectedUser.totalVolume.toLocaleString("en-US", {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                            })}
                                           </span>
                                         </div>
                                       </div>
