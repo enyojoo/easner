@@ -384,7 +384,7 @@ export default function TransactionStatusPage() {
                             <Check className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">Payment Receipt Uploaded</p>
+                            <p className="font-medium text-gray-900">Your Payment Receipt</p>
                             <p className="text-sm text-gray-600">{transaction.receipt_filename}</p>
                           </div>
                         </div>

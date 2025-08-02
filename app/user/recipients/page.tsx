@@ -123,6 +123,7 @@ export default function UserRecipientsPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [deletingId, setDeletingId] = useState(null)
 
   const filteredRecipients = recipients.filter((recipient) => {
     const matchesSearch =
@@ -201,11 +202,15 @@ export default function UserRecipientsPage() {
 
   const handleDeleteRecipient = async (id) => {
     try {
+      setDeletingId(id)
+      setError("")
       await recipientService.delete(id)
       await refreshRecipients()
     } catch (error) {
       console.error("Error deleting recipient:", error)
       setError("Failed to delete recipient")
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -340,9 +345,14 @@ export default function UserRecipientsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteRecipient(recipient.id)}
+                      disabled={deletingId === recipient.id}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deletingId === recipient.id ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
