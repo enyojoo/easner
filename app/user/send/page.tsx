@@ -79,6 +79,9 @@ export default function UserSendPage() {
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
+  // Add this state near the other state declarations
+  const [isAddRecipientDialogOpen, setIsAddRecipientDialogOpen] = useState(false)
+
   // Load payment methods
   useEffect(() => {
     const loadPaymentMethods = async () => {
@@ -166,13 +169,8 @@ export default function UserSendPage() {
         bankName: "",
       })
 
-      // Force dialog to close by resetting any dialog state
-      setTimeout(() => {
-        const closeButton = document.querySelector('[role="dialog"] button[aria-label="Close"]')
-        if (closeButton) {
-          ;(closeButton as HTMLElement).click()
-        }
-      }, 100)
+      // Close the dialog
+      setIsAddRecipientDialogOpen(false)
     } catch (error) {
       console.error("Error adding recipient:", error)
       setError("Failed to add recipient. Please try again.")
@@ -793,7 +791,7 @@ export default function UserSendPage() {
                     </div>
 
                     {/* Add New Recipient Option */}
-                    <Dialog>
+                    <Dialog open={isAddRecipientDialogOpen} onOpenChange={setIsAddRecipientDialogOpen}>
                       <DialogTrigger asChild>
                         <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
                           <div className="flex items-center space-x-3">
@@ -1335,7 +1333,7 @@ export default function UserSendPage() {
                           disabled={isCreatingTransaction}
                           className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                         >
-                          {isCreatingTransaction ? "Creating Transaction..." : "I've Paid"}
+                          {isCreatingTransaction ? "Sending..." : "I've Paid"}
                         </Button>
                       </div>
                     </div>
