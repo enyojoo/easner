@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
-import { formatCurrency } from "@/utils/currency"
+import { formatCurrencySync } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 
@@ -83,11 +83,10 @@ export default function AdminUsersPage() {
           send_amount,
           receive_amount,
           status,
-          recipient:recipients(full_name)
+          recipient:recipients!transactions_recipient_id_fkey(full_name)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-      // Remove .limit(20) to show all transactions
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -201,7 +200,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, "NGN"),
+          formatCurrencySync(u.totalVolume, u.base_currency),
         ].join(","),
       ),
     ].join("\n")
@@ -459,7 +458,7 @@ export default function AdminUsersPage() {
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrency(user.totalVolume, user.base_currency)}
+                      {formatCurrencySync(user.totalVolume, user.base_currency)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -549,7 +548,7 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Total Volume:</span>
                                           <span className="font-medium">
-                                            {formatCurrency(selectedUser.totalVolume, selectedUser.base_currency)}
+                                            {formatCurrencySync(selectedUser.totalVolume, selectedUser.base_currency)}
                                           </span>
                                         </div>
                                       </div>
@@ -573,7 +572,6 @@ export default function AdminUsersPage() {
                                       </TableHeader>
                                       <TableBody>
                                         {userTransactions.map((transaction) => (
-                                          // Remove .slice(0, 5) to show all transactions
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}
@@ -587,11 +585,14 @@ export default function AdminUsersPage() {
                                             <TableCell>
                                               <div>
                                                 <div className="font-medium">
-                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                                                  {formatCurrencySync(
+                                                    transaction.send_amount,
+                                                    transaction.send_currency,
+                                                  )}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
                                                   →{" "}
-                                                  {formatCurrency(
+                                                  {formatCurrencySync(
                                                     transaction.receive_amount,
                                                     transaction.receive_currency,
                                                   )}

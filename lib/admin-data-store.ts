@@ -110,24 +110,21 @@ class AdminDataStore {
         const totalVolume = (transactions || []).reduce((sum, tx) => {
           let amount = Number(tx.send_amount)
 
-          // Convert to NGN based on actual currency
-          switch (tx.send_currency) {
-            case "RUB":
-              amount = amount * 0.011 // RUB to NGN rate
-              break
-            case "USD":
-              amount = amount * 1650 // USD to NGN rate
-              break
-            case "EUR":
-              amount = amount * 1750 // EUR to NGN rate
-              break
-            case "GBP":
-              amount = amount * 2000 // GBP to NGN rate
-              break
-            case "NGN":
-            default:
-              // Already in NGN, no conversion needed
-              break
+          // Convert to user's base currency using exchange rates
+          if (tx.send_currency !== user.base_currency) {
+            // This is a simplified conversion - in production you'd use actual exchange rates
+            const conversionRates: { [key: string]: { [key: string]: number } } = {
+              RUB: { NGN: 91.0, USD: 0.055, EUR: 0.052, GBP: 0.045 },
+              USD: { NGN: 1650, RUB: 18.2, EUR: 0.93, GBP: 0.82 },
+              EUR: { NGN: 1750, RUB: 19.5, USD: 1.08, GBP: 0.88 },
+              GBP: { NGN: 2000, RUB: 22.2, USD: 1.22, EUR: 1.14 },
+              NGN: { RUB: 0.011, USD: 0.00061, EUR: 0.00057, GBP: 0.0005 },
+            }
+
+            const rate = conversionRates[tx.send_currency]?.[user.base_currency]
+            if (rate) {
+              amount = amount * rate
+            }
           }
 
           return sum + amount
@@ -149,8 +146,8 @@ class AdminDataStore {
       .from("transactions")
       .select(`
         *,
-        user:users(first_name, last_name, email),
-        recipient:recipients(full_name, bank_name, account_number)
+        user:users!transactions_user_id_fkey(first_name, last_name, email),
+        recipient:recipients!transactions_recipient_id_fkey(full_name, bank_name, account_number)
       `)
       .order("created_at", { ascending: false })
       .limit(200)

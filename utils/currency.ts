@@ -1,91 +1,174 @@
-import type { Currency, ExchangeRate } from "@/types"
-import { currencyService } from "@/lib/database"
+import { supabase } from "@/lib/supabase"
 
 // Cache for currencies and exchange rates
-let currenciesCache: Currency[] | null = null
+let currenciesCache: any[] | null = null
 let exchangeRatesCache: any[] | null = null
-let lastFetch = 0
+let currenciesCacheTime = 0
+let exchangeRatesCacheTime = 0
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-// Get currencies from database
-export const getCurrencies = async (): Promise<Currency[]> => {
-  // Check cache first
-  if (currenciesCache && Date.now() - lastFetch < CACHE_DURATION) {
+// Fetch currencies from database
+export async function getCurrencies() {
+  const now = Date.now()
+
+  if (currenciesCache && now - currenciesCacheTime < CACHE_DURATION) {
     return currenciesCache
   }
 
-  const currencies = await currencyService.getAll()
-  currenciesCache = currencies
-  lastFetch = Date.now()
-  return currencies
+  try {
+    const { data, error } = await supabase
+      .from("currencies")
+      .select("id, code, name, symbol, flag_svg, status")
+      .eq("status", "active")
+      .order("code")
+
+    if (error) throw error
+
+    currenciesCache = data || []
+    currenciesCacheTime = now
+    return currenciesCache
+  } catch (error) {
+    console.error("Error fetching currencies:", error)
+    return []
+  }
 }
 
-// Get exchange rates from database
-export const getExchangeRates = async (): Promise<any[]> => {
-  // Check cache first
-  if (exchangeRatesCache && Date.now() - lastFetch < CACHE_DURATION) {
+// Fetch exchange rates from database
+export async function getExchangeRates() {
+  const now = Date.now()
+
+  if (exchangeRatesCache && now - exchangeRatesCacheTime < CACHE_DURATION) {
     return exchangeRatesCache
   }
 
-  const rates = await currencyService.getExchangeRates()
-  exchangeRatesCache = rates
-  return rates
-}
+  try {
+    const { data, error } = await supabase
+      .from("exchange_rates")
+      .select("id, from_currency, to_currency, rate, fee_type, fee_amount, status")
+      .eq("status", "active")
 
-// Legacy exports - now empty arrays, should use async functions above
-export const currencies: Currency[] = []
-export const exchangeRates: ExchangeRate[] = []
+    if (error) throw error
 
-export const getExchangeRate = async (from: string, to: string): Promise<any | null> => {
-  const rates = await getExchangeRates()
-  return rates.find((r) => r.from_currency === from && r.to_currency === to) || null
-}
-
-export const convertCurrency = async (amount: number, from: string, to: string): Promise<number> => {
-  if (from === to) return amount
-
-  const rateData = await getExchangeRate(from, to)
-  if (!rateData) return amount
-
-  return amount * rateData.rate
-}
-
-export const calculateFee = async (
-  amount: number,
-  from: string,
-  to: string,
-): Promise<{ fee: number; feeType: string }> => {
-  const rateData = await getExchangeRate(from, to)
-  if (!rateData || rateData.fee_type === "free") {
-    return { fee: 0, feeType: "free" }
+    exchangeRatesCache = data || []
+    exchangeRatesCacheTime = now
+    return exchangeRatesCache
+  } catch (error) {
+    console.error("Error fetching exchange rates:", error)
+    return []
   }
-
-  if (rateData.fee_type === "fixed") {
-    return { fee: rateData.fee_amount, feeType: "fixed" }
-  }
-
-  if (rateData.fee_type === "percentage") {
-    return { fee: (amount * rateData.fee_amount) / 100, feeType: "percentage" }
-  }
-
-  return { fee: 0, feeType: "free" }
 }
 
-export const formatCurrency = async (amount: number, currency: string): Promise<string> => {
+// Get currency symbol from database
+export async function getCurrencySymbol(currencyCode: string): Promise<string> {
   const currencies = await getCurrencies()
-  const curr = currencies.find((c) => c.code === currency)
-  return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const currency = currencies.find((c) => c.code === currencyCode)
+  return currency?.symbol || currencyCode
 }
 
-// Synchronous version for components that need immediate formatting (uses cache)
-export const formatCurrencySync = (amount: number, currency: string): string => {
+// Get currency symbol synchronously from cache
+export function getCurrencySymbolSync(currencyCode: string): string {
   if (currenciesCache) {
-    const curr = currenciesCache.find((c) => c.code === currency)
-    if (curr) {
-      return `${curr.symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    const currency = currenciesCache.find((c) => c.code === currencyCode)
+    return currency?.symbol || currencyCode
+  }
+  return currencyCode
+}
+
+// Format currency with symbol (async version)
+export async function formatCurrency(amount: number, currencyCode = "NGN"): Promise<string> {
+  const symbol = await getCurrencySymbol(currencyCode)
+  return `${symbol}${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+// Format currency with symbol (sync version using cache)
+export function formatCurrencySync(amount: number, currencyCode = "NGN"): string {
+  const symbol = getCurrencySymbolSync(currencyCode)
+  return `${symbol}${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+// Get exchange rate between two currencies
+export async function getExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
+  if (fromCurrency === toCurrency) return 1
+
+  const rates = await getExchangeRates()
+  const rate = rates.find((r) => r.from_currency === fromCurrency && r.to_currency === toCurrency)
+
+  if (rate) {
+    return rate.rate
+  }
+
+  // Try reverse rate
+  const reverseRate = rates.find((r) => r.from_currency === toCurrency && r.to_currency === fromCurrency)
+  if (reverseRate && reverseRate.rate > 0) {
+    return 1 / reverseRate.rate
+  }
+
+  return null
+}
+
+// Convert amount between currencies
+export async function convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
+  const rate = await getExchangeRate(fromCurrency, toCurrency)
+  if (rate === null) {
+    console.warn(`No exchange rate found for ${fromCurrency} to ${toCurrency}`)
+    return amount
+  }
+  return amount * rate
+}
+
+// Get fee information for currency conversion
+export async function getConversionFee(
+  fromCurrency: string,
+  toCurrency: string,
+): Promise<{ type: string; amount: number } | null> {
+  const rates = await getExchangeRates()
+  const rate = rates.find((r) => r.from_currency === fromCurrency && r.to_currency === toCurrency)
+
+  if (rate) {
+    return {
+      type: rate.fee_type || "free",
+      amount: rate.fee_amount || 0,
     }
   }
 
-  // If no cache available, return without symbol
-  return `${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return null
+}
+
+// Calculate total amount including fees
+export async function calculateTotalWithFees(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+): Promise<{ convertedAmount: number; feeAmount: number; totalAmount: number }> {
+  const convertedAmount = await convertCurrency(amount, fromCurrency, toCurrency)
+  const feeInfo = await getConversionFee(fromCurrency, toCurrency)
+
+  let feeAmount = 0
+  if (feeInfo) {
+    if (feeInfo.type === "fixed") {
+      feeAmount = feeInfo.amount
+    } else if (feeInfo.type === "percentage") {
+      feeAmount = (amount * feeInfo.amount) / 100
+    }
+  }
+
+  return {
+    convertedAmount,
+    feeAmount,
+    totalAmount: amount + feeAmount,
+  }
+}
+
+// Clear cache (useful for admin updates)
+export function clearCurrencyCache() {
+  currenciesCache = null
+  exchangeRatesCache = null
+  currenciesCacheTime = 0
+  exchangeRatesCacheTime = 0
 }
