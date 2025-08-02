@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
+import { userService } from "@/lib/database"
+import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,61 +10,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    const supabase = createServerClient()
+    // Check if user already exists
+    const existingUser = await userService.findByEmail(email)
+    if (existingUser) {
+      return NextResponse.json({ error: "User already exists" }, { status: 409 })
+    }
 
-    // Create user with Supabase Auth
-    const { data, error } = await supabase.auth.admin.createUser({
+    // Create new user
+    const user = await userService.create({
       email,
       password,
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        phone: phone || null,
-        base_currency: baseCurrency || "NGN",
+      firstName,
+      lastName,
+      phone,
+      baseCurrency: baseCurrency || "NGN",
+    })
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: "user",
       },
-      email_confirm: false, // Set to true if you want email confirmation
-    })
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" },
+    )
 
-    if (error) {
-      console.error("Supabase auth error:", error)
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-
-    if (!data.user) {
-      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
-    }
-
-    // Create user profile in users table
-    const { error: profileError } = await supabase.from("users").insert({
-      id: data.user.id,
-      email: data.user.email,
-      first_name: firstName,
-      last_name: lastName,
-      phone: phone || null,
-      base_currency: baseCurrency || "NGN",
-      status: "active",
-      verification_status: "pending",
-    })
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError)
-      // Clean up auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(data.user.id)
-      return NextResponse.json({ error: "Database error saving new user" }, { status: 500 })
-    }
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
-        id: data.user.id,
-        email: data.user.email,
-        firstName: firstName,
-        lastName: lastName,
-        baseCurrency: baseCurrency || "NGN",
-        status: "active",
-        verificationStatus: "pending",
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        baseCurrency: user.base_currency,
+        status: user.status,
+        verificationStatus: user.verification_status,
       },
     })
+
+    // Set HTTP-only cookie
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
+
+    return response
   } catch (error) {
     console.error("Registration error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

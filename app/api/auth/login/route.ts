@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase"
+import { userService } from "@/lib/database"
+import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,63 +10,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    const supabase = createServerClient()
+    const user = await userService.verifyPassword(email, password)
 
-    // Sign in with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    if (!data.user) {
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
+    if (user.status !== "active") {
+      return NextResponse.json({ error: "Account is suspended" }, { status: 403 })
     }
 
-    // Get user profile from users table
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", data.user.id)
-      .single()
-
-    if (profileError || !profile) {
-      console.error("Profile fetch error:", profileError)
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
-    }
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: "user",
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" },
+    )
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: profile.id,
-        email: profile.email,
-        firstName: profile.first_name,
-        lastName: profile.last_name,
-        baseCurrency: profile.base_currency,
-        status: profile.status,
-        verificationStatus: profile.verification_status,
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        baseCurrency: user.base_currency,
+        status: user.status,
+        verificationStatus: user.verification_status,
       },
     })
 
-    // Set session cookie
-    if (data.session) {
-      response.cookies.set("sb-access-token", data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: data.session.expires_in,
-      })
-
-      response.cookies.set("sb-refresh-token", data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-      })
-    }
+    // Set HTTP-only cookie
+    response.cookies.set("auth-token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
 
     return response
   } catch (error) {
