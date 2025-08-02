@@ -10,13 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { signUp } = useAuth()
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -56,18 +54,28 @@ export default function RegisterPage() {
     }
 
     try {
-      const { user, error: signUpError } = await signUp(formData.email, formData.password, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        baseCurrency: "NGN", // Default base currency
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          baseCurrency: "NGN", // Default base currency
+        }),
       })
 
-      if (signUpError) {
-        setError(signUpError.message)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Registration failed")
         return
       }
 
-      if (user) {
+      if (data.success) {
         setSuccess(true)
         // Redirect after a short delay to show success message
         setTimeout(() => {
@@ -99,7 +107,8 @@ export default function RegisterPage() {
         }, 2000)
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred during registration")
+      console.error("Registration error:", err)
+      setError("Network error. Please check your connection and try again.")
     } finally {
       setLoading(false)
     }
