@@ -363,7 +363,7 @@ export default function TransactionStatusPage() {
                               ? "Status:"
                               : "Estimated completion:"}
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium text-sm sm:text-base">
                         {statusMessage.isCompleted
                           ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
                           : transaction.status === "failed"

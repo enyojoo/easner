@@ -165,6 +165,14 @@ export default function UserSendPage() {
         accountNumber: "",
         bankName: "",
       })
+
+      // Force dialog to close by resetting any dialog state
+      setTimeout(() => {
+        const closeButton = document.querySelector('[role="dialog"] button[aria-label="Close"]')
+        if (closeButton) {
+          ;(closeButton as HTMLElement).click()
+        }
+      }, 100)
     } catch (error) {
       console.error("Error adding recipient:", error)
       setError("Failed to add recipient. Please try again.")
