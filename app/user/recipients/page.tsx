@@ -124,6 +124,7 @@ export default function UserRecipientsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [deletingId, setDeletingId] = useState(null)
+  const [deleteErrors, setDeleteErrors] = useState({})
 
   const filteredRecipients = recipients.filter((recipient) => {
     const matchesSearch =
@@ -203,12 +204,16 @@ export default function UserRecipientsPage() {
   const handleDeleteRecipient = async (id) => {
     try {
       setDeletingId(id)
-      setError("")
+      setDeleteErrors((prev) => ({ ...prev, [id]: "" }))
       await recipientService.delete(id)
       await refreshRecipients()
+      setDeleteErrors((prev) => ({ ...prev, [id]: "" }))
     } catch (error) {
       console.error("Error deleting recipient:", error)
-      setError("Failed to delete recipient")
+      const errorMessage = error.message?.includes("linked to a transaction")
+        ? "Failed to delete - linked to a transaction"
+        : "Failed to delete recipient"
+      setDeleteErrors((prev) => ({ ...prev, [id]: errorMessage }))
     } finally {
       setDeletingId(null)
     }
@@ -314,6 +319,11 @@ export default function UserRecipientsPage() {
                       </p>
                     </div>
                   </div>
+                  {deleteErrors[recipient.id] && (
+                    <div className="w-full">
+                      <p className="text-xs text-red-600 mt-2">{deleteErrors[recipient.id]}</p>
+                    </div>
+                  )}
                   <div className="flex items-center justify-end space-x-2 sm:justify-start">
                     <Dialog open={!!editingRecipient} onOpenChange={(open) => !open && setEditingRecipient(null)}>
                       <DialogTrigger asChild>
