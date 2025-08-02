@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
-import jwt from "jsonwebtoken"
+import { createServerClient } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,90 +9,61 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    // Check if user already exists in users table
-    const { data: existingUser } = await supabase.from("users").select("id").eq("email", email).single()
+    const supabase = createServerClient()
 
-    if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 })
-    }
-
-    // Create new user using Supabase Auth first
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create user with Supabase Auth
+    const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
-    })
-
-    if (authError) {
-      console.error("Auth signup error:", authError)
-      return NextResponse.json({ error: authError.message }, { status: 400 })
-    }
-
-    if (!authData.user) {
-      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
-    }
-
-    // Insert user data into users table with exact column names
-    const { data: userData, error: dbError } = await supabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        email: authData.user.email,
+      user_metadata: {
         first_name: firstName,
         last_name: lastName,
         phone: phone || null,
         base_currency: baseCurrency || "NGN",
-        status: "active",
-        verification_status: "pending",
-      })
-      .select()
-      .single()
+      },
+      email_confirm: false, // Set to true if you want email confirmation
+    })
 
-    if (dbError) {
-      console.error("Database insert error:", dbError)
-      // Clean up auth user if database insert fails
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id)
-      } catch (cleanupError) {
-        console.error("Cleanup error:", cleanupError)
-      }
+    if (error) {
+      console.error("Supabase auth error:", error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    if (!data.user) {
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+    }
+
+    // Create user profile in users table
+    const { error: profileError } = await supabase.from("users").insert({
+      id: data.user.id,
+      email: data.user.email,
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      base_currency: baseCurrency || "NGN",
+      status: "active",
+      verification_status: "pending",
+    })
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError)
+      // Clean up auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(data.user.id)
       return NextResponse.json({ error: "Database error saving new user" }, { status: 500 })
     }
 
-    const user = userData
-
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: "user",
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "7d" },
-    )
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        baseCurrency: user.base_currency,
-        status: user.status,
-        verificationStatus: user.verification_status,
+        id: data.user.id,
+        email: data.user.email,
+        firstName: firstName,
+        lastName: lastName,
+        baseCurrency: baseCurrency || "NGN",
+        status: "active",
+        verificationStatus: "pending",
       },
     })
-
-    // Set HTTP-only cookie
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    })
-
-    return response
   } catch (error) {
     console.error("Registration error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

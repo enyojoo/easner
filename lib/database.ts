@@ -10,44 +10,6 @@ export const userService = {
     return data
   },
 
-  async create(userData: {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-    phone?: string
-    baseCurrency: string
-  }) {
-    try {
-      // Insert directly into users table with only existing columns
-      const { data, error } = await supabase
-        .from("users")
-        .insert({
-          email: userData.email,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          phone: userData.phone || null,
-          base_currency: userData.baseCurrency,
-          status: "active",
-          verification_status: "pending",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error("User creation error:", error)
-        throw error
-      }
-
-      return data
-    } catch (error) {
-      console.error("User service create error:", error)
-      throw error
-    }
-  },
-
   async updateProfile(
     userId: string,
     updates: {
