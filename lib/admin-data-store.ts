@@ -146,14 +146,20 @@ class AdminDataStore {
       .from("transactions")
       .select(`
       *,
-      user:users(first_name, last_name, email),
-      recipient:recipients(full_name, bank_name, account_number)
+      users!inner(first_name, last_name, email),
+      recipients(full_name, bank_name, account_number)
     `)
       .order("created_at", { ascending: false })
       .limit(200)
 
     if (error) throw error
-    return data || []
+
+    // Transform the data to match expected structure
+    return (data || []).map((transaction) => ({
+      ...transaction,
+      user: transaction.users,
+      recipient: transaction.recipients,
+    }))
   }
 
   private async loadCurrencies() {
@@ -164,10 +170,10 @@ class AdminDataStore {
 
   private async loadExchangeRates() {
     const { data, error } = await supabase.from("exchange_rates").select(`
-    *,
-    from_currency_info:currencies!from_currency(code, name, symbol),
-    to_currency_info:currencies!to_currency(code, name, symbol)
-  `)
+      *,
+      from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+      to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+    `)
     if (error) throw error
     return data || []
   }
