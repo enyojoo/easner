@@ -86,17 +86,7 @@ export default function UserTransactionsPage() {
     router.push(`/user/send/${transactionId.toLowerCase()}`)
   }
 
-  if (!userProfile) {
-    return (
-      <UserDashboardLayout>
-        <div className="p-6 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600">Loading user profile...</p>
-          </div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
+
 
   return (
     <UserDashboardLayout>
