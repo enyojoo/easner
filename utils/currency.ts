@@ -1,174 +1,69 @@
-import { supabase } from "@/lib/supabase"
+import type { Currency, ExchangeRate } from "@/types"
 
-// Cache for currencies and exchange rates
-let currenciesCache: any[] | null = null
-let exchangeRatesCache: any[] | null = null
-let currenciesCacheTime = 0
-let exchangeRatesCacheTime = 0
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+export const currencies: Currency[] = [
+  {
+    code: "RUB",
+    name: "Russian Ruble",
+    symbol: "₽",
+    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path><path d="M27,4H5c-2.209,0-4,1.791-4,4V24c0,2.209,1.791,4,4,4H27c2.209,0,4-1.791,4-4V8c0-2.209-1.791-4-4-4Zm3,20c0,1.654-1.346,3-3,3H5c-1.654,0-3-1.346-3-3V8c0-1.654,1.346-3,3-3H27c1.654,0,3,1.346,3,3V24Z" opacity=".15"></path><path d="M27,5H5c-1.657,0-3,1.343-3,3v1c0-1.657,1.343-3,3-3H27c1.657,0,3,1.343,3,3v-1c0-1.657-1.343-3-3-3Z" fill="#fff" opacity=".2"></path></svg>`,
+  },
+  {
+    code: "NGN",
+    name: "Nigerian Naira",
+    symbol: "₦",
+    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path><path d="M27,4H5c-2.209,0-4,1.791-4,4V24c0,2.209,1.791,4,4,4H27c2.209,0,4-1.791,4-4V8c0-2.209-1.791-4-4-4Zm3,20c0,1.654-1.346,3-3,3H5c-1.654,0-3-1.346-3-3V8c0-1.654,1.346-3,3-3H27c1.657,0,3,1.346,3,3V24Z" opacity=".15"></path><path d="M27,5H5c-1.657,0-3,1.343-3,3v1c0-1.657,1.343-3,3-3H27c1.657,0,3,1.343,3,3v-1c0-1.657-1.343-3-3-3Z" fill="#fff" opacity=".2"></path></svg>`,
+  },
+]
 
-// Fetch currencies from database
-export async function getCurrencies() {
-  const now = Date.now()
+export const exchangeRates: ExchangeRate[] = [
+  {
+    from: "RUB",
+    to: "NGN",
+    rate: 22.45,
+    fee: {
+      type: "free",
+      amount: 0,
+    },
+  },
+  {
+    from: "NGN",
+    to: "RUB",
+    rate: 0.0445,
+    fee: {
+      type: "percentage",
+      amount: 1.5, // 1.5%
+    },
+  },
+]
 
-  if (currenciesCache && now - currenciesCacheTime < CACHE_DURATION) {
-    return currenciesCache
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("currencies")
-      .select("id, code, name, symbol, flag_svg, status")
-      .eq("status", "active")
-      .order("code")
-
-    if (error) throw error
-
-    currenciesCache = data || []
-    currenciesCacheTime = now
-    return currenciesCache
-  } catch (error) {
-    console.error("Error fetching currencies:", error)
-    return []
-  }
+export const getExchangeRate = (from: string, to: string): ExchangeRate | null => {
+  return exchangeRates.find((r) => r.from === from && r.to === to) || null
 }
 
-// Fetch exchange rates from database
-export async function getExchangeRates() {
-  const now = Date.now()
-
-  if (exchangeRatesCache && now - exchangeRatesCacheTime < CACHE_DURATION) {
-    return exchangeRatesCache
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from("exchange_rates")
-      .select("id, from_currency, to_currency, rate, fee_type, fee_amount, status")
-      .eq("status", "active")
-
-    if (error) throw error
-
-    exchangeRatesCache = data || []
-    exchangeRatesCacheTime = now
-    return exchangeRatesCache
-  } catch (error) {
-    console.error("Error fetching exchange rates:", error)
-    return []
-  }
+export const convertCurrency = (amount: number, from: string, to: string): number => {
+  const rateData = getExchangeRate(from, to)
+  if (!rateData) return amount
+  return amount * rateData.rate
 }
 
-// Get currency symbol from database
-export async function getCurrencySymbol(currencyCode: string): Promise<string> {
-  const currencies = await getCurrencies()
-  const currency = currencies.find((c) => c.code === currencyCode)
-  return currency?.symbol || currencyCode
-}
-
-// Get currency symbol synchronously from cache
-export function getCurrencySymbolSync(currencyCode: string): string {
-  if (currenciesCache) {
-    const currency = currenciesCache.find((c) => c.code === currencyCode)
-    return currency?.symbol || currencyCode
-  }
-  return currencyCode
-}
-
-// Format currency with symbol (async version)
-export async function formatCurrency(amount: number, currencyCode = "NGN"): Promise<string> {
-  const symbol = await getCurrencySymbol(currencyCode)
-  return `${symbol}${amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
-}
-
-// Format currency with symbol (sync version using cache)
-export function formatCurrencySync(amount: number, currencyCode = "NGN"): string {
-  const symbol = getCurrencySymbolSync(currencyCode)
-  return `${symbol}${amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
-}
-
-// Get exchange rate between two currencies
-export async function getExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  if (fromCurrency === toCurrency) return 1
-
-  const rates = await getExchangeRates()
-  const rate = rates.find((r) => r.from_currency === fromCurrency && r.to_currency === toCurrency)
-
-  if (rate) {
-    return rate.rate
+export const calculateFee = (amount: number, from: string, to: string): { fee: number; feeType: string } => {
+  const rateData = getExchangeRate(from, to)
+  if (!rateData || rateData.fee.type === "free") {
+    return { fee: 0, feeType: "free" }
   }
 
-  // Try reverse rate
-  const reverseRate = rates.find((r) => r.from_currency === toCurrency && r.to_currency === fromCurrency)
-  if (reverseRate && reverseRate.rate > 0) {
-    return 1 / reverseRate.rate
+  if (rateData.fee.type === "fixed") {
+    return { fee: rateData.fee.amount, feeType: "fixed" }
   }
 
-  return null
+  if (rateData.fee.type === "percentage") {
+    return { fee: (amount * rateData.fee.amount) / 100, feeType: "percentage" }
+  }
+
+  return { fee: 0, feeType: "free" }
 }
 
-// Convert amount between currencies
-export async function convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
-  const rate = await getExchangeRate(fromCurrency, toCurrency)
-  if (rate === null) {
-    console.warn(`No exchange rate found for ${fromCurrency} to ${toCurrency}`)
-    return amount
-  }
-  return amount * rate
-}
-
-// Get fee information for currency conversion
-export async function getConversionFee(
-  fromCurrency: string,
-  toCurrency: string,
-): Promise<{ type: string; amount: number } | null> {
-  const rates = await getExchangeRates()
-  const rate = rates.find((r) => r.from_currency === fromCurrency && r.to_currency === toCurrency)
-
-  if (rate) {
-    return {
-      type: rate.fee_type || "free",
-      amount: rate.fee_amount || 0,
-    }
-  }
-
-  return null
-}
-
-// Calculate total amount including fees
-export async function calculateTotalWithFees(
-  amount: number,
-  fromCurrency: string,
-  toCurrency: string,
-): Promise<{ convertedAmount: number; feeAmount: number; totalAmount: number }> {
-  const convertedAmount = await convertCurrency(amount, fromCurrency, toCurrency)
-  const feeInfo = await getConversionFee(fromCurrency, toCurrency)
-
-  let feeAmount = 0
-  if (feeInfo) {
-    if (feeInfo.type === "fixed") {
-      feeAmount = feeInfo.amount
-    } else if (feeInfo.type === "percentage") {
-      feeAmount = (amount * feeInfo.amount) / 100
-    }
-  }
-
-  return {
-    convertedAmount,
-    feeAmount,
-    totalAmount: amount + feeAmount,
-  }
-}
-
-// Clear cache (useful for admin updates)
-export function clearCurrencyCache() {
-  currenciesCache = null
-  exchangeRatesCache = null
-  currenciesCacheTime = 0
-  exchangeRatesCacheTime = 0
+export const formatCurrency = (amount: number, currency: string): string => {
+  const curr = currencies.find((c) => c.code === currency)
+  return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

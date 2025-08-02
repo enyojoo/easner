@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
-import { formatCurrencySync } from "@/utils/currency"
+import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 
@@ -47,7 +47,6 @@ interface UserData {
   last_login?: string
   totalTransactions: number
   totalVolume: number
-  currencySymbol: string
 }
 
 interface TransactionData {
@@ -84,10 +83,11 @@ export default function AdminUsersPage() {
           send_amount,
           receive_amount,
           status,
-          recipient:recipients!transactions_recipient_id_fkey(full_name)
+          recipient:recipients(full_name)
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
+      // Remove .limit(20) to show all transactions
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -201,7 +201,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          `${u.currencySymbol}${u.totalVolume.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          formatCurrency(u.totalVolume, "NGN"),
         ].join(","),
       ),
     ].join("\n")
@@ -229,11 +229,10 @@ export default function AdminUsersPage() {
     ).length,
   }
 
-  // Calculate transaction stats for each user using exchange rates and currency symbols
+  // Calculate transaction stats for each user using exchange rates
   const usersWithStats = (data?.users || []).map((user) => {
     const userTransactions = (data?.transactions || []).filter((t) => t.user_id === user.id)
     const userExchangeRates = data?.exchangeRates || []
-    const currencies = data?.currencies || []
     const baseCurrency = user.base_currency || "NGN"
 
     let totalSentInBaseCurrency = 0
@@ -267,15 +266,10 @@ export default function AdminUsersPage() {
       }
     }
 
-    // Get currency symbol for user's base currency
-    const userCurrency = currencies.find((c) => c.code === baseCurrency)
-    const currencySymbol = userCurrency?.symbol || baseCurrency
-
     return {
       ...user,
       totalTransactions: userTransactions.filter((t) => t.status === "completed").length,
       totalVolume: totalSentInBaseCurrency,
-      currencySymbol: currencySymbol,
     }
   })
 
@@ -464,10 +458,7 @@ export default function AdminUsersPage() {
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
-                    <TableCell className="font-medium">
-                      {user.currencySymbol}
-                      {user.totalVolume.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </TableCell>
+                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, "NGN")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Dialog>
@@ -556,11 +547,7 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Total Volume:</span>
                                           <span className="font-medium">
-                                            {selectedUser.currencySymbol}
-                                            {selectedUser.totalVolume.toLocaleString("en-US", {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                            })}
+                                            {formatCurrency(selectedUser.totalVolume, "NGN")}
                                           </span>
                                         </div>
                                       </div>
@@ -584,6 +571,7 @@ export default function AdminUsersPage() {
                                       </TableHeader>
                                       <TableBody>
                                         {userTransactions.map((transaction) => (
+                                          // Remove .slice(0, 5) to show all transactions
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}
@@ -597,14 +585,11 @@ export default function AdminUsersPage() {
                                             <TableCell>
                                               <div>
                                                 <div className="font-medium">
-                                                  {formatCurrencySync(
-                                                    transaction.send_amount,
-                                                    transaction.send_currency,
-                                                  )}
+                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
                                                   →{" "}
-                                                  {formatCurrencySync(
+                                                  {formatCurrency(
                                                     transaction.receive_amount,
                                                     transaction.receive_currency,
                                                   )}

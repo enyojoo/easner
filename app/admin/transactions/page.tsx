@@ -264,12 +264,9 @@ export default function AdminTransactionsPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {transaction.users?.first_name || transaction.user?.first_name}{" "}
-                          {transaction.users?.last_name || transaction.user?.last_name}
+                          {transaction.user?.first_name} {transaction.user?.last_name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {transaction.users?.email || transaction.user?.email}
-                        </div>
+                        <div className="text-sm text-gray-500">{transaction.user?.email}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -314,12 +311,9 @@ export default function AdminTransactionsPage() {
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">User</label>
                                     <p>
-                                      {selectedTransaction.users?.first_name || selectedTransaction.user?.first_name}{" "}
-                                      {selectedTransaction.users?.last_name || selectedTransaction.user?.last_name}
+                                      {selectedTransaction.user?.first_name} {selectedTransaction.user?.last_name}
                                     </p>
-                                    <p className="text-sm text-gray-500">
-                                      {selectedTransaction.users?.email || selectedTransaction.user?.email}
-                                    </p>
+                                    <p className="text-sm text-gray-500">{selectedTransaction.user?.email}</p>
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Date</label>
