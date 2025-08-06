@@ -1,75 +1,137 @@
-import { posthog } from './posthog'
+import { posthog } from '@/lib/posthog'
 
 export const analytics = {
-  // User events
+  // User identification and authentication
   identify: (userId: string, properties?: Record<string, any>) => {
-    posthog.identify(userId, properties)
+    if (typeof window !== 'undefined') {
+      posthog.identify(userId, properties)
+    }
   },
 
-  // Authentication events
-  signUp: (method: string = 'email') => {
-    posthog.capture('user_signed_up', { method })
+  // Track user registration
+  trackSignUp: (method: string, properties?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('user_signed_up', {
+        method,
+        ...properties
+      })
+    }
   },
 
-  signIn: (method: string = 'email') => {
-    posthog.capture('user_signed_in', { method })
+  // Track user login
+  trackSignIn: (method: string, properties?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('user_signed_in', {
+        method,
+        ...properties
+      })
+    }
   },
 
-  signOut: () => {
-    posthog.capture('user_signed_out')
+  // Track user logout
+  trackSignOut: () => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('user_signed_out')
+      posthog.reset()
+    }
   },
 
-  // Transaction events
-  transactionStarted: (data: {
-    sendAmount: number
+  // Transaction tracking
+  trackTransactionStarted: (properties: {
     sendCurrency: string
     receiveCurrency: string
+    sendAmount: number
+    receiveAmount: number
     exchangeRate: number
     fee: number
   }) => {
-    posthog.capture('transaction_started', data)
+    if (typeof window !== 'undefined') {
+      posthog.capture('transaction_started', properties)
+    }
   },
 
-  transactionCompleted: (data: {
+  trackTransactionCompleted: (properties: {
     transactionId: string
-    sendAmount: number
     sendCurrency: string
     receiveCurrency: string
+    sendAmount: number
+    receiveAmount: number
     exchangeRate: number
     fee: number
     totalAmount: number
   }) => {
-    posthog.capture('transaction_completed', data)
+    if (typeof window !== 'undefined') {
+      posthog.capture('transaction_completed', properties)
+    }
   },
 
-  // Currency converter events
-  currencyConverted: (data: {
+  // Currency converter usage
+  trackCurrencyConversion: (properties: {
     fromCurrency: string
     toCurrency: string
     amount: number
     convertedAmount: number
     exchangeRate: number
   }) => {
-    posthog.capture('currency_converted', data)
+    if (typeof window !== 'undefined') {
+      posthog.capture('currency_converted', properties)
+    }
   },
 
-  // Recipient events
-  recipientAdded: (currency: string) => {
-    posthog.capture('recipient_added', { currency })
+  // Recipient management
+  trackRecipientAdded: (properties: {
+    currency: string
+    method: 'manual' | 'import'
+  }) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('recipient_added', properties)
+    }
   },
 
-  // Page events
-  pageView: (page: string, properties?: Record<string, any>) => {
-    posthog.capture('page_viewed', { page, ...properties })
-  },
-
-  // Feature usage
-  featureUsed: (feature: string, properties?: Record<string, any>) => {
-    posthog.capture('feature_used', { feature, ...properties })
+  trackRecipientSelected: (properties: {
+    currency: string
+    isExisting: boolean
+  }) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('recipient_selected', properties)
+    }
   },
 
   // Error tracking
-  error: (error: string, context?: Record<string, any>) => {
-    posthog.capture('error_occurred', { error, ...context })
+  trackError: (error: string, context?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('error_occurred', {
+        error,
+        ...context
+      })
+    }
   },
+
+  // Feature usage
+  trackFeatureUsed: (feature: string, properties?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('feature_used', {
+        feature,
+        ...properties
+      })
+    }
+  },
+
+  // Page views (handled automatically by PostHogProvider)
+  trackPageView: (page: string, properties?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture('$pageview', {
+        $current_url: window.location.href,
+        page,
+        ...properties
+      })
+    }
+  },
+
+  // Custom events
+  track: (event: string, properties?: Record<string, any>) => {
+    if (typeof window !== 'undefined') {
+      posthog.capture(event, properties)
+    }
+  }
 }
