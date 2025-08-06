@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from 'lucide-react'
+import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 
@@ -27,8 +27,6 @@ const AdminRatesPage = () => {
   })
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
-  const [loadingRates, setLoadingRates] = useState(false)
-  const [freshExchangeRates, setFreshExchangeRates] = useState<any[]>([])
 
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
@@ -37,26 +35,17 @@ const AdminRatesPage = () => {
     try {
       setSaving(true)
 
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'currency',
-          data: {
-            code: newCurrencyData.code.toUpperCase(),
-            name: newCurrencyData.name,
-            symbol: newCurrencyData.symbol,
-            flag_svg: newCurrencyData.flag_svg ||
-              `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`
-          }
-        })
-      })
+      const currencyData = {
+        code: newCurrencyData.code.toUpperCase(),
+        name: newCurrencyData.name,
+        symbol: newCurrencyData.symbol,
+        flag_svg:
+          newCurrencyData.flag_svg ||
+          `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
+        status: "active",
+      }
 
-      if (!response.ok) throw new Error('Failed to add currency')
-
-      const newCurrency = await response.json()
+      const newCurrency = await adminDataStore.addCurrency(currencyData)
 
       // Create default exchange rates for the new currency
       const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
@@ -68,11 +57,11 @@ const AdminRatesPage = () => {
           from_currency: newCurrencyData.code.toUpperCase(),
           to_currency: currency.code,
           rate: 1,
-          fee_type: 'free',
+          fee_type: "free",
           fee_amount: 0,
           min_amount: 10,
           max_amount: 1000000,
-          status: 'active',
+          status: "active",
         })
       }
 
@@ -82,85 +71,44 @@ const AdminRatesPage = () => {
           from_currency: currency.code,
           to_currency: newCurrencyData.code.toUpperCase(),
           rate: 1,
-          fee_type: 'free',
+          fee_type: "free",
           fee_amount: 0,
           min_amount: 10,
           max_amount: 1000000,
-          status: 'active',
+          status: "active",
         })
       }
 
       if (newRates.length > 0) {
-        const ratesResponse = await fetch('/api/admin/rates', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: 'exchange_rates',
-            data: newRates
-          })
-        })
-
-        if (!ratesResponse.ok) throw new Error('Failed to create exchange rates')
+        await adminDataStore.updateExchangeRates(newRates)
       }
 
-      setNewCurrencyData({ code: '', name: '', symbol: '', flag_svg: '' })
+      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
       setIsAddingCurrency(false)
-      
-      // Force refresh admin data
-      await adminDataStore.forceRefresh()
     } catch (error) {
-      console.error('Error adding currency:', error)
+      console.error("Error adding currency:", error)
     } finally {
       setSaving(false)
     }
   }
 
-  const handleEditRates = async (currency: any) => {
-    try {
-      setLoadingRates(true)
-      setSelectedCurrency(currency)
-      
-      // Fetch fresh exchange rates for this currency
-      const freshRates = await adminDataStore.getFreshExchangeRates(currency.code)
-      setFreshExchangeRates(freshRates)
-      
-      const updates: any = {}
-      freshRates.forEach((rate: any) => {
-        updates[rate.to_currency] = {
-          rate: rate.rate.toString(),
-          feeType: rate.fee_type,
-          feeAmount: rate.fee_amount.toString(),
-          minAmount: (rate.min_amount || 0).toString(),
-          maxAmount: (rate.max_amount || 1000000).toString(),
-        }
-      })
+  const handleEditRates = (currency: any) => {
+    setSelectedCurrency(currency)
+    const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
+    const updates: any = {}
 
-      setRateUpdates(updates)
-      setIsEditingRates(true)
-    } catch (error) {
-      console.error('Error loading fresh rates:', error)
-      // Fallback to cached data
-      const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
-      setFreshExchangeRates(currencyRates)
-      
-      const updates: any = {}
-      currencyRates.forEach((rate: any) => {
-        updates[rate.to_currency] = {
-          rate: rate.rate.toString(),
-          feeType: rate.fee_type,
-          feeAmount: rate.fee_amount.toString(),
-          minAmount: (rate.min_amount || 0).toString(),
-          maxAmount: (rate.max_amount || 1000000).toString(),
-        }
-      })
+    currencyRates.forEach((rate: any) => {
+      updates[rate.to_currency] = {
+        rate: rate.rate.toString(),
+        feeType: rate.fee_type,
+        feeAmount: rate.fee_amount.toString(),
+        minAmount: (rate.min_amount || 0).toString(),
+        maxAmount: (rate.max_amount || 1000000).toString(),
+      }
+    })
 
-      setRateUpdates(updates)
-      setIsEditingRates(true)
-    } finally {
-      setLoadingRates(false)
-    }
+    setRateUpdates(updates)
+    setIsEditingRates(true)
   }
 
   const handleSaveRates = async () => {
@@ -173,40 +121,25 @@ const AdminRatesPage = () => {
         updates.push({
           from_currency: selectedCurrency.code,
           to_currency: toCurrency,
-          rate: parseFloat(rateInfo.rate),
+          rate: Number.parseFloat(rateInfo.rate),
           fee_type: rateInfo.feeType,
-          fee_amount: parseFloat(rateInfo.feeAmount || '0'),
-          min_amount: parseFloat(rateInfo.minAmount || '0'),
-          max_amount: parseFloat(rateInfo.maxAmount || '1000000'),
-          status: 'active',
+          fee_amount: Number.parseFloat(rateInfo.feeAmount || "0"),
+          min_amount: Number.parseFloat(rateInfo.minAmount || "0"),
+          max_amount: Number.parseFloat(rateInfo.maxAmount || "1000000"),
+          status: "active",
           updated_at: new Date().toISOString(),
         })
       }
 
       if (updates.length > 0) {
-        const response = await fetch('/api/admin/rates', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: 'exchange_rates',
-            data: updates
-          })
-        })
-
-        if (!response.ok) throw new Error('Failed to save rates')
+        await adminDataStore.updateExchangeRates(updates)
       }
 
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
-      setFreshExchangeRates([])
-      
-      // Force refresh admin data
-      await adminDataStore.forceRefresh()
     } catch (error) {
-      console.error('Error saving rates:', error)
+      console.error("Error saving rates:", error)
     } finally {
       setSaving(false)
     }
@@ -217,26 +150,10 @@ const AdminRatesPage = () => {
       const currency = currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
-      const newStatus = currency.status === 'active' ? 'suspended' : 'active'
-    
-      const response = await fetch('/api/admin/rates', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'currency_status',
-          id: currencyId,
-          data: { status: newStatus }
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to update currency status')
-      
-      // Force refresh admin data
-      await adminDataStore.forceRefresh()
+      const newStatus = currency.status === "active" ? "suspended" : "active"
+      await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
     } catch (error) {
-      console.error('Error updating currency status:', error)
+      console.error("Error updating currency status:", error)
     }
   }
 
@@ -245,21 +162,14 @@ const AdminRatesPage = () => {
       return
     }
 
-    if (!confirm('Are you sure you want to delete this currency? This will also delete all related exchange rates.')) {
+    if (!confirm("Are you sure you want to delete this currency? This will also delete all related exchange rates.")) {
       return
     }
 
     try {
-      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) throw new Error('Failed to delete currency')
-      
-      // Force refresh admin data
-      await adminDataStore.forceRefresh()
+      await adminDataStore.deleteCurrency(currencyId)
     } catch (error) {
-      console.error('Error deleting currency:', error)
+      console.error("Error deleting currency:", error)
     }
   }
 
@@ -273,11 +183,7 @@ const AdminRatesPage = () => {
     }))
   }
 
-  // Use fresh rates when available, fallback to cached data
-  const getCurrentRates = (currencyCode: string) => {
-    if (isEditingRates && selectedCurrency?.code === currencyCode && freshExchangeRates.length > 0) {
-      return freshExchangeRates
-    }
+  const getCurrencyRates = (currencyCode: string) => {
     return exchangeRates.filter((rate) => rate.from_currency === currencyCode)
   }
 
@@ -394,9 +300,9 @@ const AdminRatesPage = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditRates(currency)} disabled={loadingRates}>
+                          <DropdownMenuItem onClick={() => handleEditRates(currency)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            {loadingRates ? 'Loading...' : 'Edit Rates'}
+                            Edit Rates
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleSuspendCurrency(currency.id)}>
                             <Pause className="h-4 w-4 mr-2" />
@@ -422,125 +328,114 @@ const AdminRatesPage = () => {
             <DialogHeader>
               <DialogTitle>
                 Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
-                {loadingRates && <span className="text-sm text-gray-500 ml-2">(Loading fresh data...)</span>}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              {loadingRates ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading latest exchange rates...</span>
-                </div>
-              ) : (
-                <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
-                  {getCurrentRates(selectedCurrency?.code || "").map((rate: any) => (
-                    <div key={rate.to_currency} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center gap-2 text-lg font-medium">
-                        <span>{selectedCurrency.code}</span>
-                        <span>→</span>
-                        <span>{rate.to_currency}</span>
-                        <span className="text-sm text-gray-500">
-                          (Last updated: {new Date(rate.updated_at || rate.created_at).toLocaleString()})
-                        </span>
+              <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
+                {getCurrencyRates(selectedCurrency?.code || "").map((rate: any) => (
+                  <div key={rate.to_currency} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2 text-lg font-medium">
+                      <span>{selectedCurrency.code}</span>
+                      <span>→</span>
+                      <span>{rate.to_currency}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label>Exchange Rate</Label>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          value={rateUpdates[rate.to_currency]?.rate || rate.rate}
+                          onChange={(e) => updateRateField(rate.to_currency, "rate", e.target.value)}
+                          placeholder="0.0000"
+                        />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div className="space-y-2">
-                          <Label>Exchange Rate</Label>
-                          <Input
-                            type="number"
-                            step="0.0001"
-                            value={rateUpdates[rate.to_currency]?.rate || rate.rate}
-                            onChange={(e) => updateRateField(rate.to_currency, "rate", e.target.value)}
-                            placeholder="0.0000"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Fee Type</Label>
-                          <select
-                            value={rateUpdates[rate.to_currency]?.feeType || rate.fee_type}
-                            onChange={(e) => updateRateField(rate.to_currency, "feeType", e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                          >
-                            <option value="free">Free</option>
-                            <option value="fixed">Fixed Amount</option>
-                            <option value="percentage">Percentage</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>
-                            Fee Amount{" "}
-                            {(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage"
-                              ? "(%)"
-                              : `(${selectedCurrency.code})`}
-                          </Label>
-                          <Input
-                            type="number"
-                            step={
-                              (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "0.1" : "0.01"
-                            }
-                            value={rateUpdates[rate.to_currency]?.feeAmount || rate.fee_amount}
-                            onChange={(e) => updateRateField(rate.to_currency, "feeAmount", e.target.value)}
-                            placeholder={
-                              (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "1.5" : "10.00"
-                            }
-                            disabled={(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "free"}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Min Amount ({selectedCurrency.code})</Label>
-                          <Input
-                            type="number"
-                            step="1"
-                            value={rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0}
-                            onChange={(e) => updateRateField(rate.to_currency, "minAmount", e.target.value)}
-                            placeholder="100"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Max Amount ({selectedCurrency.code})</Label>
-                          <Input
-                            type="number"
-                            step="1"
-                            value={rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000}
-                            onChange={(e) => updateRateField(rate.to_currency, "maxAmount", e.target.value)}
-                            placeholder="1000000"
-                          />
-                        </div>
+                      <div className="space-y-2">
+                        <Label>Fee Type</Label>
+                        <select
+                          value={rateUpdates[rate.to_currency]?.feeType || rate.fee_type}
+                          onChange={(e) => updateRateField(rate.to_currency, "feeType", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="free">Free</option>
+                          <option value="fixed">Fixed Amount</option>
+                          <option value="percentage">Percentage</option>
+                        </select>
                       </div>
 
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-600">
-                          <strong>Transaction Limits:</strong> Users can send between{" "}
-                          <span className="font-medium">
-                            {selectedCurrency.symbol}
-                            {(rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0).toLocaleString()}
-                          </span>{" "}
-                          and{" "}
-                          <span className="font-medium">
-                            {selectedCurrency.symbol}
-                            {(rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000).toLocaleString()}
-                          </span>{" "}
-                          when converting from {selectedCurrency.code} to {rate.to_currency}
-                        </p>
+                      <div className="space-y-2">
+                        <Label>
+                          Fee Amount{" "}
+                          {(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage"
+                            ? "(%)"
+                            : `(${selectedCurrency.code})`}
+                        </Label>
+                        <Input
+                          type="number"
+                          step={
+                            (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "0.1" : "0.01"
+                          }
+                          value={rateUpdates[rate.to_currency]?.feeAmount || rate.fee_amount}
+                          onChange={(e) => updateRateField(rate.to_currency, "feeAmount", e.target.value)}
+                          placeholder={
+                            (rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "percentage" ? "1.5" : "10.00"
+                          }
+                          disabled={(rateUpdates[rate.to_currency]?.feeType || rate.fee_type) === "free"}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Min Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0}
+                          onChange={(e) => updateRateField(rate.to_currency, "minAmount", e.target.value)}
+                          placeholder="100"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Max Amount ({selectedCurrency.code})</Label>
+                        <Input
+                          type="number"
+                          step="1"
+                          value={rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000}
+                          onChange={(e) => updateRateField(rate.to_currency, "maxAmount", e.target.value)}
+                          placeholder="1000000"
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        <strong>Transaction Limits:</strong> Users can send between{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.to_currency]?.minAmount || rate.min_amount || 0).toLocaleString()}
+                        </span>{" "}
+                        and{" "}
+                        <span className="font-medium">
+                          {selectedCurrency.symbol}
+                          {(rateUpdates[rate.to_currency]?.maxAmount || rate.max_amount || 1000000).toLocaleString()}
+                        </span>{" "}
+                        when converting from {selectedCurrency.code} to {rate.to_currency}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsEditingRates(false)} disabled={saving || loadingRates}>
+                <Button variant="outline" onClick={() => setIsEditingRates(false)} disabled={saving}>
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSaveRates}
                   className="bg-novapay-primary hover:bg-novapay-primary-600"
-                  disabled={saving || loadingRates}
+                  disabled={saving}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Save Changes

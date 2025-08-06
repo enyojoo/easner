@@ -1,10 +1,4 @@
 import { transactionService, recipientService, currencyService } from "./database"
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 interface UserData {
   transactions: any[]
@@ -30,7 +24,6 @@ class UserDataStore {
   private loadingPromise: Promise<UserData> | null = null
   private lastActivity = Date.now()
   private activityCheckInterval: NodeJS.Timeout | null = null
-  private subscriptions: any[] = []
 
   subscribe(callback: () => void) {
     this.listeners.add(callback)
@@ -60,6 +53,7 @@ class UserDataStore {
       return this.data
     }
 
+    // Return existing loading promise if already loading for this user
     if (this.isLoading && this.currentUserId === userId && this.loadingPromise) {
       return this.loadingPromise
     }
@@ -69,75 +63,7 @@ class UserDataStore {
     const result = await this.loadingPromise
     this.startBackgroundRefresh(userId)
     this.startActivityMonitoring()
-    this.setupRealtimeSubscriptions(userId)
     return result
-  }
-
-  private setupRealtimeSubscriptions(userId: string) {
-    // Clean up existing subscriptions
-    this.subscriptions.forEach(sub => {
-      supabase.removeChannel(sub)
-    })
-    this.subscriptions = []
-
-    // Subscribe to user's transactions
-    const transactionSub = supabase
-      .channel(`user-transactions-${userId}`)
-      .on('postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'transactions',
-          filter: `user_id=eq.${userId}`
-        },
-        () => {
-          console.log('User transaction change detected, refreshing...')
-          this.refreshTransactions(userId)
-        }
-      )
-      .subscribe()
-
-    // Subscribe to user's recipients
-    const recipientSub = supabase
-      .channel(`user-recipients-${userId}`)
-      .on('postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'recipients',
-          filter: `user_id=eq.${userId}`
-        },
-        () => {
-          console.log('User recipient change detected, refreshing...')
-          this.refreshRecipients(userId)
-        }
-      )
-      .subscribe()
-
-    // Subscribe to currency and exchange rate changes
-    const currencySub = supabase
-      .channel(`user-currencies-${userId}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'currencies' },
-        () => {
-          console.log('Currency change detected, refreshing...')
-          this.refreshCurrencies()
-        }
-      )
-      .subscribe()
-
-    const rateSub = supabase
-      .channel(`user-rates-${userId}`)
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'exchange_rates' },
-        () => {
-          console.log('Exchange rate change detected, refreshing...')
-          this.refreshExchangeRates()
-        }
-      )
-      .subscribe()
-
-    this.subscriptions = [transactionSub, recipientSub, currencySub, rateSub]
   }
 
   private async loadData(userId: string, silent = false): Promise<UserData> {
@@ -147,10 +73,12 @@ class UserDataStore {
       this.isLoading = true
       this.updateActivity()
 
+      // Create timeout promise
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Data loading timeout")), 15000),
       )
 
+      // Load all data with timeout protection
       const dataPromise = Promise.allSettled([
         currencyService.getAll(),
         currencyService.getExchangeRates(),
@@ -160,6 +88,7 @@ class UserDataStore {
 
       const results = (await Promise.race([dataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
 
+      // Extract results with fallbacks
       const currencies = results[0].status === "fulfilled" ? results[0].value || [] : this.data.currencies
       const exchangeRates = results[1].status === "fulfilled" ? results[1].value || [] : this.data.exchangeRates
       const transactions = results[2].status === "fulfilled" ? results[2].value || [] : this.data.transactions
@@ -180,6 +109,7 @@ class UserDataStore {
       return this.data
     } catch (error) {
       console.error("Error loading user data:", error)
+      // Return existing data on error to prevent blank screens
       return this.data
     } finally {
       this.isLoading = false
@@ -197,9 +127,11 @@ class UserDataStore {
       clearInterval(this.refreshInterval)
     }
 
+    // Auto refresh every minute
     this.refreshInterval = setInterval(
       async () => {
         try {
+          // Only refresh if there's been recent activity
           const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
           if (this.lastActivity > fiveMinutesAgo) {
             await this.loadData(userId, true)
@@ -208,7 +140,7 @@ class UserDataStore {
           console.error("Background refresh error:", error)
         }
       },
-      60 * 1000,
+      60 * 1000, // 1 minute
     )
   }
 
@@ -217,9 +149,11 @@ class UserDataStore {
       clearInterval(this.activityCheckInterval)
     }
 
+    // Check for inactivity every 30 seconds
     this.activityCheckInterval = setInterval(() => {
       const tenMinutesAgo = Date.now() - 10 * 60 * 1000
 
+      // If no activity for 10 minutes, stop background refresh
       if (this.lastActivity < tenMinutesAgo) {
         if (this.refreshInterval) {
           clearInterval(this.refreshInterval)
@@ -278,30 +212,7 @@ class UserDataStore {
     }
   }
 
-  async refreshCurrencies() {
-    try {
-      this.updateActivity()
-      const currencies = await currencyService.getAll()
-      this.data.currencies = currencies || []
-      this.data.lastUpdated = Date.now()
-      this.notify()
-    } catch (error) {
-      console.error("Error refreshing currencies:", error)
-    }
-  }
-
-  async refreshExchangeRates() {
-    try {
-      this.updateActivity()
-      const exchangeRates = await currencyService.getExchangeRates()
-      this.data.exchangeRates = exchangeRates || []
-      this.data.lastUpdated = Date.now()
-      this.notify()
-    } catch (error) {
-      console.error("Error refreshing exchange rates:", error)
-    }
-  }
-
+  // Force refresh all data
   async forceRefresh(userId: string) {
     this.updateActivity()
     return await this.loadData(userId)
@@ -316,13 +227,6 @@ class UserDataStore {
       clearInterval(this.activityCheckInterval)
       this.activityCheckInterval = null
     }
-    
-    // Clean up subscriptions
-    this.subscriptions.forEach(sub => {
-      supabase.removeChannel(sub)
-    })
-    this.subscriptions = []
-    
     this.listeners.clear()
     this.currentUserId = null
     this.loadingPromise = null

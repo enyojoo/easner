@@ -4,8 +4,7 @@ import { dataCache, CACHE_KEYS } from "./cache"
 // User operations
 export const userService = {
   async findByEmail(email: string) {
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient.from("users").select("*").eq("email", email).single()
+    const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
     if (error && error.code !== "PGRST116") throw error
     return data
@@ -42,12 +41,11 @@ export const userService = {
   },
 
   async getStats() {
-    const serverClient = createServerClient()
-    const { data: totalUsers } = await serverClient.from("users").select("id", { count: "exact" })
+    const { data: totalUsers } = await supabase.from("users").select("id", { count: "exact" })
 
-    const { data: activeUsers } = await serverClient.from("users").select("id", { count: "exact" }).eq("status", "active")
+    const { data: activeUsers } = await supabase.from("users").select("id", { count: "exact" }).eq("status", "active")
 
-    const { data: verifiedUsers } = await serverClient
+    const { data: verifiedUsers } = await supabase
       .from("users")
       .select("id", { count: "exact" })
       .eq("verification_status", "verified")
@@ -150,8 +148,7 @@ export const currencyService = {
   },
 
   async updateRate(fromCurrency: string, toCurrency: string, rate: number, feeType = "free", feeAmount = 0) {
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("exchange_rates")
       .upsert({
         from_currency: fromCurrency,
@@ -384,13 +381,12 @@ export const transactionService = {
   },
 
   async updateStatus(transactionId: string, status: string) {
-    const serverClient = createServerClient()
     const updates: any = { status }
     if (status === "completed") {
       updates.completed_at = new Date().toISOString()
     }
 
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("transactions")
       .update(updates)
       .eq("transaction_id", transactionId)
@@ -498,7 +494,6 @@ export const transactionService = {
   },
 
   async getStats(timeRange = "today") {
-    const serverClient = createServerClient()
     const dateFilter = new Date()
 
     switch (timeRange) {
@@ -513,12 +508,12 @@ export const transactionService = {
         break
     }
 
-    const { data: transactions } = await serverClient
+    const { data: transactions } = await supabase
       .from("transactions")
       .select("*")
       .gte("created_at", dateFilter.toISOString())
 
-    const { data: pendingTransactions } = await serverClient
+    const { data: pendingTransactions } = await supabase
       .from("transactions")
       .select("id", { count: "exact" })
       .in("status", ["pending", "processing"])
@@ -794,8 +789,7 @@ export const adminService = {
 // System settings operations
 export const settingsService = {
   async get(key: string) {
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient.from("system_settings").select("value, data_type").eq("key", key).single()
+    const { data, error } = await supabase.from("system_settings").select("value, data_type").eq("key", key).single()
 
     if (error && error.code !== "PGRST116") throw error
 
@@ -848,16 +842,14 @@ export const settingsService = {
   },
 
   async getAll() {
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient.from("system_settings").select("*").order("key")
+    const { data, error } = await supabase.from("system_settings").select("*").order("key")
 
     if (error) throw error
     return data
   },
 
   async getByCategory(category: string) {
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient
+    const { data, error } = await supabase
       .from("system_settings")
       .select("*")
       .eq("category", category)

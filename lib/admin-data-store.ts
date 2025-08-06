@@ -1,10 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Client for real-time subscriptions
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from "./supabase"
 
 interface AdminData {
   users: any[]
@@ -31,9 +25,9 @@ class AdminDataStore {
   private refreshInterval: NodeJS.Timeout | null = null
   private listeners: Set<() => void> = new Set()
   private initialized = false
-  private subscriptions: any[] = []
 
   constructor() {
+    // Preload data immediately when store is created
     this.initialize()
   }
 
@@ -41,66 +35,9 @@ class AdminDataStore {
     if (this.initialized) return
     this.initialized = true
 
-    // Load initial data
-    await this.forceRefresh()
-    
-    // Set up real-time subscriptions
-    this.setupRealtimeSubscriptions()
-    
-    // Reduced refresh interval since we have real-time updates
+    // Start loading data immediately
+    this.loadData().catch(console.error)
     this.startAutoRefresh()
-  }
-
-  private setupRealtimeSubscriptions() {
-    // Subscribe to transaction changes
-    const transactionSub = supabase
-      .channel('admin-transactions')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transactions' },
-        (payload) => {
-          console.log('Transaction change detected:', payload)
-          this.forceRefresh()
-        }
-      )
-      .subscribe()
-
-    // Subscribe to user changes
-    const userSub = supabase
-      .channel('admin-users')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'users' },
-        (payload) => {
-          console.log('User change detected:', payload)
-          this.forceRefresh()
-        }
-      )
-      .subscribe()
-
-    // Subscribe to currency changes
-    const currencySub = supabase
-      .channel('admin-currencies')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'currencies' },
-        (payload) => {
-          console.log('Currency change detected:', payload)
-          this.forceRefresh()
-        }
-      )
-      .subscribe()
-
-    // Subscribe to exchange rate changes
-    const rateSub = supabase
-      .channel('admin-rates')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'exchange_rates' },
-        (payload) => {
-          console.log('Exchange rate change detected:', payload)
-          this.forceRefresh()
-        }
-      )
-      .subscribe()
-
-    this.subscriptions = [transactionSub, userSub, currencySub, rateSub]
   }
 
   subscribe(callback: () => void) {
@@ -121,299 +58,547 @@ class AdminDataStore {
   }
 
   private async loadData(): Promise<AdminData> {
-    try {
-      // Add timestamp to prevent caching
-      const timestamp = Date.now()
-      const response = await fetch(`/api/admin/data?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('Error loading admin data:', error)
-      throw error
-    }
-  }
-
-  // Method to get fresh transaction details
-  async getFreshTransaction(transactionId: string): Promise<any> {
-    try {
-      const timestamp = Date.now()
-      const response = await fetch(`/api/admin/transactions/${transactionId}?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error('Error loading fresh transaction:', error)
-      throw error
-    }
-  }
-
-  // Method to get fresh exchange rates for a specific currency
-  async getFreshExchangeRates(currencyCode: string): Promise<any[]> {
-    try {
-      const timestamp = Date.now()
-      const response = await fetch(`/api/admin/rates?currency=${currencyCode}&t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error('Error loading fresh exchange rates:', error)
-      throw error
-    }
-  }
-
-  async forceRefresh(): Promise<AdminData> {
     this.loading = true
 
     try {
-      const newData = await this.loadData()
-      this.data = newData
+      // Load all data in parallel
+      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrency] = await Promise.all([
+        this.loadUsers(),
+        this.loadTransactions(),
+        this.loadCurrencies(),
+        this.loadExchangeRates(),
+        this.getAdminBaseCurrency(),
+      ])
+
+      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
+      const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
+      const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
+
+      this.data = {
+        users: usersResult,
+        transactions: transactionsResult,
+        currencies: currenciesResult,
+        exchangeRates: exchangeRatesResult,
+        baseCurrency,
+        stats,
+        recentActivity,
+        currencyPairs,
+        lastUpdated: Date.now(),
+      }
+
       this.notify()
-      return newData
-    } catch (error) {
-      console.error('Error refreshing admin data:', error)
-      throw error
+      return this.data
     } finally {
       this.loading = false
     }
   }
 
+  private async loadUsers() {
+    const { data: users, error } = await supabase.from("users").select("*").order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    // Calculate transaction stats for each user
+    const usersWithStats = await Promise.all(
+      (users || []).map(async (user) => {
+        const { data: transactions } = await supabase
+          .from("transactions")
+          .select("send_amount, send_currency, status")
+          .eq("user_id", user.id)
+
+        const totalTransactions = transactions?.length || 0
+        const totalVolume = (transactions || []).reduce((sum, tx) => {
+          let amount = Number(tx.send_amount)
+
+          // Convert to NGN based on actual currency
+          switch (tx.send_currency) {
+            case "RUB":
+              amount = amount * 0.011 // RUB to NGN rate
+              break
+            case "USD":
+              amount = amount * 1650 // USD to NGN rate
+              break
+            case "EUR":
+              amount = amount * 1750 // EUR to NGN rate
+              break
+            case "GBP":
+              amount = amount * 2000 // GBP to NGN rate
+              break
+            case "NGN":
+            default:
+              // Already in NGN, no conversion needed
+              break
+          }
+
+          return sum + amount
+        }, 0)
+
+        return {
+          ...user,
+          totalTransactions,
+          totalVolume,
+        }
+      }),
+    )
+
+    return usersWithStats
+  }
+
+  private async loadTransactions() {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select(`
+        *,
+        user:users(first_name, last_name, email),
+        recipient:recipients(full_name, bank_name, account_number)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(200)
+
+    if (error) throw error
+    return data || []
+  }
+
+  private async loadCurrencies() {
+    const { data, error } = await supabase.from("currencies").select("*").order("code")
+    if (error) throw error
+    return data || []
+  }
+
+  private async loadExchangeRates() {
+    const { data, error } = await supabase.from("exchange_rates").select(`
+      *,
+      from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+      to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+    `)
+    if (error) throw error
+    return data || []
+  }
+
+  private async calculateStats(users: any[], transactions: any[], baseCurrency: string) {
+    const totalUsers = users.length
+    const activeUsers = users.filter((u) => u.status === "active").length
+    const verifiedUsers = users.filter((u) => u.verification_status === "verified").length
+
+    const totalTransactions = transactions.length
+    const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
+
+    // Calculate total volume in admin's base currency
+    const completedTransactions = transactions.filter((t) => t.status === "completed")
+    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency)
+
+    return {
+      totalUsers,
+      activeUsers,
+      verifiedUsers,
+      totalTransactions,
+      totalVolume,
+      pendingTransactions,
+    }
+  }
+
+  private async getAdminBaseCurrency(): Promise<string> {
+    try {
+      const { data, error } = await supabase.from("system_settings").select("value").eq("key", "base_currency").single()
+
+      if (error || !data) return "NGN" // Default to NGN
+      return data.value
+    } catch {
+      return "NGN" // Default fallback
+    }
+  }
+
+  private async calculateVolumeInBaseCurrency(transactions: any[], baseCurrency: string): Promise<number> {
+    let totalVolume = 0
+
+    for (const tx of transactions) {
+      const amount = Number(tx.send_amount)
+      const fromCurrency = tx.send_currency
+
+      if (fromCurrency === baseCurrency) {
+        // Same currency, no conversion needed
+        totalVolume += amount
+      } else {
+        // Convert using exchange rate
+        const convertedAmount = await this.convertCurrency(amount, fromCurrency, baseCurrency)
+        totalVolume += convertedAmount
+      }
+    }
+
+    return totalVolume
+  }
+
+  private async convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
+    try {
+      // Get exchange rate from database
+      const { data: rate, error } = await supabase
+        .from("exchange_rates")
+        .select("rate")
+        .eq("from_currency", fromCurrency)
+        .eq("to_currency", toCurrency)
+        .eq("status", "active")
+        .single()
+
+      if (error || !rate) {
+        // Fallback to hardcoded rates if no rate found
+        return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
+      }
+
+      return amount * rate.rate
+    } catch {
+      // Fallback to hardcoded rates
+      return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
+    }
+  }
+
+  private convertWithFallbackRates(amount: number, fromCurrency: string, toCurrency: string): number {
+    // Fallback exchange rates (these should be updated regularly)
+    const rates: { [key: string]: { [key: string]: number } } = {
+      NGN: {
+        RUB: 0.011,
+        USD: 0.00061,
+        EUR: 0.00057,
+        GBP: 0.0005,
+      },
+      RUB: {
+        NGN: 91.0,
+        USD: 0.055,
+        EUR: 0.052,
+        GBP: 0.045,
+      },
+      USD: {
+        NGN: 1650,
+        RUB: 18.2,
+        EUR: 0.93,
+        GBP: 0.82,
+      },
+      EUR: {
+        NGN: 1750,
+        RUB: 19.5,
+        USD: 1.08,
+        GBP: 0.88,
+      },
+      GBP: {
+        NGN: 2000,
+        RUB: 22.2,
+        USD: 1.22,
+        EUR: 1.14,
+      },
+    }
+
+    if (fromCurrency === toCurrency) return amount
+
+    const rate = rates[fromCurrency]?.[toCurrency]
+    if (rate) {
+      return amount * rate
+    }
+
+    // If direct rate not found, convert through USD
+    const toUsdRate = rates[fromCurrency]?.["USD"]
+    const fromUsdRate = rates["USD"]?.[toCurrency]
+
+    if (toUsdRate && fromUsdRate) {
+      return amount * toUsdRate * fromUsdRate
+    }
+
+    // Last fallback - return original amount
+    return amount
+  }
+
+  private processRecentActivity(transactions: any[]) {
+    return transactions.map((tx) => ({
+      id: tx.id,
+      type: this.getActivityType(tx.status),
+      message: this.getActivityMessage(tx),
+      user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
+      amount: this.formatCurrency(tx.send_amount, tx.send_currency),
+      time: this.getRelativeTime(tx.created_at),
+      status: this.getActivityStatus(tx.status),
+    }))
+  }
+
+  private processCurrencyPairs(transactions: any[]) {
+    const pairStats: { [key: string]: { volume: number; count: number } } = {}
+
+    transactions.forEach((tx) => {
+      const pair = `${tx.send_currency} → ${tx.receive_currency}`
+      if (!pairStats[pair]) {
+        pairStats[pair] = { volume: 0, count: 0 }
+      }
+      pairStats[pair].volume += tx.send_amount
+      pairStats[pair].count += 1
+    })
+
+    const totalVolume = Object.values(pairStats).reduce((sum, stat) => sum + stat.volume, 0)
+
+    return Object.entries(pairStats)
+      .map(([pair, stats]) => ({
+        pair,
+        volume: totalVolume > 0 ? (stats.volume / totalVolume) * 100 : 0,
+        transactions: stats.count,
+      }))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 4)
+  }
+
+  private getActivityType(status: string) {
+    switch (status) {
+      case "completed":
+        return "transaction_completed"
+      case "failed":
+        return "transaction_failed"
+      case "pending":
+      case "processing":
+        return "transaction_pending"
+      default:
+        return "transaction_pending"
+    }
+  }
+
+  private getActivityMessage(transaction: any) {
+    switch (transaction.status) {
+      case "completed":
+        return `Transaction ${transaction.transaction_id} completed successfully`
+      case "failed":
+        return `Transaction ${transaction.transaction_id} failed`
+      case "pending":
+        return `New transaction ${transaction.transaction_id} awaiting verification`
+      default:
+        return `Transaction ${transaction.transaction_id} is being processed`
+    }
+  }
+
+  private getActivityStatus(status: string) {
+    switch (status) {
+      case "completed":
+        return "success"
+      case "failed":
+        return "error"
+      case "pending":
+      case "processing":
+        return "warning"
+      default:
+        return "info"
+    }
+  }
+
+  private getRelativeTime(dateString: string) {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+    if (diffInMinutes < 1) return "Just now"
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`
+    return `${Math.floor(diffInMinutes / 1440)} days ago`
+  }
+
+  private formatCurrency(amount: number, currency = "NGN") {
+    const symbols: { [key: string]: string } = {
+      NGN: "₦",
+      RUB: "₽",
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+    }
+    return `${symbols[currency] || ""}${amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+  }
+
   private startAutoRefresh() {
-    // Reduced to 2 minutes since we have real-time updates
+    // Refresh data every 5 minutes in background
     this.refreshInterval = setInterval(
       () => {
-        this.forceRefresh().catch(console.error)
+        this.loadData().catch(console.error)
       },
-      2 * 60 * 1000,
+      5 * 60 * 1000,
     )
   }
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
-    console.log(`Updating transaction ${transactionId} to status: ${newStatus}`)
-    
     try {
-      // Update local data immediately for instant UI feedback
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("transaction_id", transactionId)
+
+      if (error) throw error
+
+      // Update local data
       if (this.data) {
         this.data.transactions = this.data.transactions.map((tx) =>
-          tx.transaction_id === transactionId ? { ...tx, status: newStatus, updated_at: new Date().toISOString() } : tx,
+          tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
         )
-        // Notify all listeners immediately (this will update both table and popup)
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
+        this.data.recentActivity = this.processRecentActivity(this.data.transactions.slice(0, 10))
         this.notify()
       }
-
-      const response = await fetch(`/api/admin/transactions/${transactionId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('API error:', errorData)
-        throw new Error(`Failed to update transaction status: ${errorData.error}`)
-      }
-
-      const result = await response.json()
-      console.log('Transaction status updated successfully:', result)
-
-      // Force refresh to get complete updated data in background
-      setTimeout(() => this.forceRefresh(), 500)
     } catch (error) {
-      console.error('Error updating transaction status:', error)
-      // Revert local changes on error
-      if (this.data) {
-        await this.forceRefresh()
-      }
       throw error
     }
   }
 
   async updateUserStatus(userId: string, newStatus: string) {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      const { error } = await supabase.from("users").update({ status: newStatus }).eq("id", userId)
 
-      if (!response.ok) {
-        throw new Error('Failed to update user status')
+      if (error) throw error
+
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
+        this.notify()
       }
-
-      // Force immediate refresh
-      await this.forceRefresh()
     } catch (error) {
-      console.error('Error updating user status:', error)
       throw error
     }
   }
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ verification_status: newStatus }),
-      })
+      const { error } = await supabase.from("users").update({ verification_status: newStatus }).eq("id", userId)
 
-      if (!response.ok) {
-        throw new Error('Failed to update user verification')
+      if (error) throw error
+
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) =>
+          user.id === userId ? { ...user, verification_status: newStatus } : user,
+        )
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
+        this.notify()
       }
-
-      // Force immediate refresh
-      await this.forceRefresh()
     } catch (error) {
-      console.error('Error updating user verification:', error)
       throw error
     }
   }
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          type: 'currency_status',
-          id: currencyId,
-          data: { status: newStatus }
-        }),
-      })
+      // Update database first
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
 
-      if (!response.ok) {
-        throw new Error('Failed to update currency status')
+      if (error) throw error
+
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.currencies = this.data.currencies.map((currency) =>
+          currency.id === currencyId
+            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
+            : currency,
+        )
+        this.notify()
       }
-
-      // Force immediate refresh
-      await this.forceRefresh()
     } catch (error) {
-      console.error('Error updating currency status:', error)
       throw error
     }
   }
 
   async updateExchangeRates(updates: any[]) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          type: 'exchange_rates',
-          data: updates
-        }),
+      // Update database first
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to update exchange rates')
-      }
+      if (error) throw error
 
-      // Force immediate refresh
-      await this.forceRefresh()
+      // Reload exchange rates to get the latest data
+      const freshExchangeRates = await this.loadExchangeRates()
+
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.exchangeRates = freshExchangeRates
+        this.notify()
+      }
     } catch (error) {
-      console.error('Error updating exchange rates:', error)
       throw error
     }
   }
 
   async addCurrency(currencyData: any) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          type: 'currency',
-          data: currencyData
-        }),
-      })
+      // Insert new currency
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
 
-      if (!response.ok) {
-        throw new Error('Failed to add currency')
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = [...this.data.currencies, newCurrency]
+        this.notify()
       }
-
-      const newCurrency = await response.json()
-
-      // Force immediate refresh
-      await this.forceRefresh()
 
       return newCurrency
     } catch (error) {
-      console.error('Error adding currency:', error)
       throw error
     }
   }
 
   async deleteCurrency(currencyId: string) {
     try {
-      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
-        method: 'DELETE',
-      })
+      const currency = this.data?.currencies.find((c) => c.id === currencyId)
+      if (!currency) return
 
-      if (!response.ok) {
-        throw new Error('Failed to delete currency')
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
+        this.data.exchangeRates = this.data.exchangeRates.filter(
+          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
+        )
+        this.notify()
       }
-
-      // Force immediate refresh
-      await this.forceRefresh()
     } catch (error) {
-      console.error('Error deleting currency:', error)
       throw error
     }
   }
 
   async updateCurrencies() {
     try {
-      await this.forceRefresh()
+      const [currencies, exchangeRates] = await Promise.all([this.loadCurrencies(), this.loadExchangeRates()])
+
+      if (this.data) {
+        this.data.currencies = currencies
+        this.data.exchangeRates = exchangeRates
+        this.notify()
+      }
     } catch (error) {
-      console.error('Error updating currencies:', error)
       throw error
     }
   }
 
+  // Method to refresh data when base currency changes
   async refreshDataForBaseCurrencyChange() {
     try {
-      await this.forceRefresh()
+      await this.loadData()
     } catch (error) {
-      console.error('Error refreshing data for base currency change:', error)
+      console.error("Error refreshing data for base currency change:", error)
     }
   }
 
@@ -421,12 +606,6 @@ class AdminDataStore {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
     }
-    
-    // Clean up subscriptions
-    this.subscriptions.forEach(sub => {
-      supabase.removeChannel(sub)
-    })
-    
     this.listeners.clear()
   }
 }
