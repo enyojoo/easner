@@ -12,10 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from 'lucide-react'
 import { useAdminData } from "@/hooks/use-admin-data"
-import { adminDataStore } from "@/lib/admin-data-store"
 
 const AdminRatesPage = () => {
-  const { data } = useAdminData()
+  const { data, loading, refetch } = useAdminData()
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
@@ -28,6 +27,16 @@ const AdminRatesPage = () => {
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [updating, setUpdating] = useState<string | null>(null)
+
+  if (loading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminDashboardLayout>
+    )
+  }
 
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
@@ -55,10 +64,8 @@ const AdminRatesPage = () => {
 
       if (!response.ok) throw new Error('Failed to add currency')
 
-      const newCurrency = await response.json()
-
       // Create default exchange rates for the new currency
-      const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
+      const existingCurrencies = currencies.filter((c: any) => c.code !== newCurrencyData.code.toUpperCase())
       const newRates = []
 
       // Add rates FROM new currency TO existing currencies
@@ -104,9 +111,7 @@ const AdminRatesPage = () => {
         if (!ratesResponse.ok) throw new Error('Failed to create exchange rates')
       }
 
-      // Force refresh the admin data store
-      await adminDataStore.forceRefresh()
-
+      await refetch()
       setNewCurrencyData({ code: '', name: '', symbol: '', flag_svg: '' })
       setIsAddingCurrency(false)
     } catch (error) {
@@ -119,7 +124,7 @@ const AdminRatesPage = () => {
 
   const handleEditRates = (currency: any) => {
     setSelectedCurrency(currency)
-    const currencyRates = exchangeRates.filter((rate) => rate.from_currency === currency.code)
+    const currencyRates = exchangeRates.filter((rate: any) => rate.from_currency === currency.code)
     const updates: any = {}
 
     currencyRates.forEach((rate: any) => {
@@ -157,9 +162,21 @@ const AdminRatesPage = () => {
       }
 
       if (updates.length > 0) {
-        await adminDataStore.updateExchangeRates(updates)
+        const response = await fetch('/api/admin/rates', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'exchange_rates',
+            data: updates
+          })
+        })
+
+        if (!response.ok) throw new Error('Failed to save rates')
       }
 
+      await refetch()
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
@@ -174,11 +191,26 @@ const AdminRatesPage = () => {
   const handleSuspendCurrency = async (currencyId: string) => {
     try {
       setUpdating(currencyId)
-      const currency = currencies.find((c) => c.id === currencyId)
+      const currency = currencies.find((c: any) => c.id === currencyId)
       if (!currency) return
 
       const newStatus = currency.status === 'active' ? 'suspended' : 'active'
-      await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
+      
+      const response = await fetch('/api/admin/rates', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'currency_status',
+          id: currencyId,
+          data: { status: newStatus }
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to update currency status')
+
+      await refetch()
     } catch (error) {
       console.error('Error updating currency status:', error)
       alert('Failed to update currency status')
@@ -199,7 +231,14 @@ const AdminRatesPage = () => {
 
     try {
       setUpdating(currencyId)
-      await adminDataStore.deleteCurrency(currencyId)
+      
+      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) throw new Error('Failed to delete currency')
+
+      await refetch()
     } catch (error) {
       console.error('Error deleting currency:', error)
       alert('Failed to delete currency')
@@ -219,7 +258,7 @@ const AdminRatesPage = () => {
   }
 
   const getCurrencyRates = (currencyCode: string) => {
-    return exchangeRates.filter((rate) => rate.from_currency === currencyCode)
+    return exchangeRates.filter((rate: any) => rate.from_currency === currencyCode)
   }
 
   return (
@@ -307,7 +346,7 @@ const AdminRatesPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currencies.map((currency) => (
+                {currencies.map((currency: any) => (
                   <TableRow key={currency.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">

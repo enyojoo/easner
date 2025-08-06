@@ -1,50 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json()
-    const transactionId = params.id
-    const supabaseAdmin = createAdminClient()
-
-    console.log('Updating transaction:', transactionId, 'with data:', body)
-
-    const updates: any = { 
-      ...body,
-      updated_at: new Date().toISOString()
-    }
+    const { id } = params
+    const updates = await request.json()
     
-    if (body.status === "completed") {
-      updates.completed_at = new Date().toISOString()
+    console.log('Updating transaction:', id, updates)
+    
+    const supabase = createServerClient()
+    
+    const updateData: any = {
+      ...updates,
+      updated_at: new Date().toISOString(),
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("transactions")
-      .update(updates)
-      .eq("transaction_id", transactionId)
+    if (updates.status === 'completed') {
+      updateData.completed_at = new Date().toISOString()
+    }
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updateData)
+      .eq('transaction_id', id)
       .select()
+      .single()
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('Error updating transaction:', error)
       throw error
     }
 
     console.log('Transaction updated successfully:', data)
-
-    return NextResponse.json({ 
-      success: true, 
-      data: data?.[0] 
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    })
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Error updating transaction:', error)
-    return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update transaction', details: error },
+      { status: 500 }
+    )
   }
 }

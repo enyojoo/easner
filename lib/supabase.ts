@@ -2,23 +2,46 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Client for browser/authenticated users
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
 
-// Admin client with service role key (server-side only)
-export const createAdminClient = () => {
-  if (typeof window !== 'undefined') {
-    throw new Error('Admin client should only be used on server-side')
+// Client-side Supabase client (singleton pattern)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
+
+// Server-side client for admin operations
+export const createServerClient = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!serviceRoleKey) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
   }
-  
-  return createClient(supabaseUrl, supabaseServiceKey, {
+
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
+      persistSession: false,
       autoRefreshToken: false,
-      persistSession: false
-    }
+    },
   })
 }
 
-export default supabase
+// Auth helper functions
+export const getCurrentUser = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+  if (error) throw error
+  return user
+}
+
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}

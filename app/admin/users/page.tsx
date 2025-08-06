@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,10 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
-import { adminDataStore } from "@/lib/admin-data-store"
 
 interface UserData {
   id: string
@@ -32,55 +30,29 @@ interface UserData {
   totalVolume: number
 }
 
-interface TransactionData {
-  transaction_id: string
-  created_at: string
-  send_currency: string
-  receive_currency: string
-  send_amount: number
-  receive_amount: number
-  status: string
-  recipient: {
-    full_name: string
-  }
-}
-
 export default function AdminUsersPage() {
-  const { data } = useAdminData()
+  const { data, loading, refetch } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
-  const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
   const [updating, setUpdating] = useState<string | null>(null)
 
-  const fetchUserTransactions = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select(`
-          transaction_id,
-          created_at,
-          send_currency,
-          receive_currency,
-          send_amount,
-          receive_amount,
-          status,
-          recipient:recipients(full_name)
-        `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setUserTransactions(data || [])
-    } catch (err) {
-      console.error("Error fetching user transactions:", err)
-      setUserTransactions([])
-    }
+  if (loading) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminDashboardLayout>
+    )
   }
 
-  const filteredUsers = (data?.users || []).filter((user: UserData) => {
+  const users = data?.users || []
+  const transactions = data?.transactions || []
+
+  const filteredUsers = users.filter((user: any) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -128,7 +100,7 @@ export default function AdminUsersPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUsers(filteredUsers.map((u: UserData) => u.id))
+      setSelectedUsers(filteredUsers.map((u: any) => u.id))
     } else {
       setSelectedUsers([])
     }
@@ -145,9 +117,21 @@ export default function AdminUsersPage() {
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
       setUpdating(userId)
-      await adminDataStore.updateUserStatus(userId, newStatus)
       
-      // Update selected user if it's the same one
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user status')
+      }
+
+      await refetch()
+      
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
@@ -162,9 +146,21 @@ export default function AdminUsersPage() {
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
       setUpdating(userId)
-      await adminDataStore.updateUserVerification(userId, newStatus)
       
-      // Update selected user if it's the same one
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ verification_status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user verification')
+      }
+
+      await refetch()
+      
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
@@ -179,8 +175,17 @@ export default function AdminUsersPage() {
   const handleBulkStatusUpdate = async (newStatus: string) => {
     try {
       setUpdating("bulk")
-      await Promise.all(selectedUsers.map((userId) => adminDataStore.updateUserStatus(userId, newStatus)))
+      await Promise.all(selectedUsers.map((userId) => 
+        fetch(`/api/admin/users/${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: newStatus }),
+        })
+      ))
       setSelectedUsers([])
+      await refetch()
     } catch (err) {
       console.error("Error bulk updating user status:", err)
       alert("Failed to bulk update user status")
@@ -191,8 +196,8 @@ export default function AdminUsersPage() {
 
   const handleExport = () => {
     const csvContent = [
-      ["Name", "Email", "Phone", "Status", "Verification", "Registration Date", "Total Volume"].join(","),
-      ...filteredUsers.map((u: UserData) =>
+      ["Name", "Email", "Phone", "Status", "Verification", "Registration Date"].join(","),
+      ...filteredUsers.map((u: any) =>
         [
           `${u.first_name} ${u.last_name}`,
           u.email,
@@ -200,7 +205,6 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, "NGN"),
         ].join(","),
       ),
     ].join("\n")
@@ -213,9 +217,8 @@ export default function AdminUsersPage() {
     a.click()
   }
 
-  const handleUserSelect = (user: UserData) => {
+  const handleUserSelect = (user: any) => {
     setSelectedUser(user)
-    fetchUserTransactions(user.id)
   }
 
   // Registration analytics data
@@ -223,52 +226,21 @@ export default function AdminUsersPage() {
     totalUsers: data?.stats.totalUsers || 0,
     activeUsers: data?.stats.activeUsers || 0,
     verifiedUsers: data?.stats.verifiedUsers || 0,
-    newThisWeek: (data?.users || []).filter(
-      (u: UserData) => new Date(u.created_at).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime(),
+    newThisWeek: users.filter(
+      (u: any) => new Date(u.created_at).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime(),
     ).length,
   }
 
-  // Calculate transaction stats for each user using exchange rates
-  const usersWithStats = (data?.users || []).map((user) => {
-    const userTransactions = (data?.transactions || []).filter((t) => t.user_id === user.id)
-    const userExchangeRates = data?.exchangeRates || []
-    const baseCurrency = user.base_currency || "NGN"
-
-    let totalSentInBaseCurrency = 0
-
-    // Calculate total sent in base currency for completed transactions
-    for (const transaction of userTransactions) {
-      if (transaction.status === "completed") {
-        let amountInBaseCurrency = transaction.send_amount
-
-        // If transaction currency is different from base currency, convert it
-        if (transaction.send_currency !== baseCurrency) {
-          // Find exchange rate from transaction currency to base currency
-          const rate = userExchangeRates.find(
-            (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-          )
-
-          if (rate) {
-            amountInBaseCurrency = transaction.send_amount * rate.rate
-          } else {
-            // If direct rate not found, try reverse rate
-            const reverseRate = userExchangeRates.find(
-              (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-            )
-            if (reverseRate && reverseRate.rate > 0) {
-              amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-            }
-          }
-        }
-
-        totalSentInBaseCurrency += amountInBaseCurrency
-      }
-    }
+  // Calculate transaction stats for each user
+  const usersWithStats = users.map((user: any) => {
+    const userTransactions = transactions.filter((t: any) => t.user_id === user.id)
+    const completedTransactions = userTransactions.filter((t: any) => t.status === 'completed')
+    const totalVolume = completedTransactions.reduce((sum: number, t: any) => sum + (t.send_amount || 0), 0)
 
     return {
       ...user,
-      totalTransactions: userTransactions.filter((t) => t.status === "completed").length,
-      totalVolume: totalSentInBaseCurrency,
+      totalTransactions: completedTransactions.length,
+      totalVolume,
     }
   })
 
@@ -449,7 +421,16 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usersWithStats.map((user: UserData) => (
+                {usersWithStats.filter((user: any) => {
+                  const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+                  const matchesSearch =
+                    fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
+
+                  const matchesStatus = statusFilter === "all" || user.status === statusFilter
+                  const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
+
+                  return matchesSearch && matchesStatus && matchesVerification
+                }).map((user: any) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <Checkbox
@@ -478,162 +459,51 @@ export default function AdminUsersPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
+                          <DialogContent className="max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>
                                 User Details - {selectedUser?.first_name} {selectedUser?.last_name}
                               </DialogTitle>
                             </DialogHeader>
                             {selectedUser && (
-                              <div className="space-y-6">
-                                {/* User Information */}
-                                <div className="grid grid-cols-2 gap-6">
-                                  <div className="space-y-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Personal Information</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                          <User className="h-4 w-4 text-gray-400" />
-                                          <span>
-                                            {selectedUser.first_name} {selectedUser.last_name}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Mail className="h-4 w-4 text-gray-400" />
-                                          <span>{selectedUser.email}</span>
-                                        </div>
-                                        {selectedUser.phone && (
-                                          <div className="flex items-center gap-2">
-                                            <Phone className="h-4 w-4 text-gray-400" />
-                                            <span>{selectedUser.phone}</span>
-                                          </div>
-                                        )}
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-600">Personal Information</label>
+                                    <div className="mt-2 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-gray-400" />
+                                        <span>
+                                          {selectedUser.first_name} {selectedUser.last_name}
+                                        </span>
                                       </div>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Account Status</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-sm">Status:</span>
-                                          {getStatusBadge(selectedUser.status)}
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-sm">Verification:</span>
-                                          {getVerificationBadge(selectedUser.verification_status)}
-                                        </div>
+                                      <div className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-gray-400" />
+                                        <span>{selectedUser.email}</span>
                                       </div>
+                                      {selectedUser.phone && (
+                                        <div className="flex items-center gap-2">
+                                          <Phone className="h-4 w-4 text-gray-400" />
+                                          <span>{selectedUser.phone}</span>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                  <div className="space-y-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Account Details</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Registration:</span>
-                                          <span className="text-sm">
-                                            {new Date(selectedUser.created_at).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                        {selectedUser.last_login && (
-                                          <div className="flex justify-between">
-                                            <span className="text-sm text-gray-600">Last Login:</span>
-                                            <span className="text-sm">
-                                              {new Date(selectedUser.last_login).toLocaleDateString()}
-                                            </span>
-                                          </div>
-                                        )}
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Base Currency:</span>
-                                          <span className="text-sm font-medium">{selectedUser.base_currency}</span>
-                                        </div>
+                                  <div>
+                                    <label className="text-sm font-medium text-gray-600">Account Status</label>
+                                    <div className="mt-2 space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">Status:</span>
+                                        {getStatusBadge(selectedUser.status)}
                                       </div>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Transaction Summary</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Total Transactions:</span>
-                                          <span className="font-medium">{selectedUser.totalTransactions}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Total Volume:</span>
-                                          <span className="font-medium">
-                                            {formatCurrency(selectedUser.totalVolume, "NGN")}
-                                          </span>
-                                        </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm">Verification:</span>
+                                        {getVerificationBadge(selectedUser.verification_status)}
                                       </div>
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* Transaction History */}
-                                <div>
-                                  <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
-                                  <div className="mt-2 max-h-64 overflow-y-auto">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>Transaction ID</TableHead>
-                                          <TableHead>Date</TableHead>
-                                          <TableHead>Currency Pair</TableHead>
-                                          <TableHead>Amount</TableHead>
-                                          <TableHead>Status</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {userTransactions.map((transaction) => (
-                                          <TableRow key={transaction.transaction_id}>
-                                            <TableCell className="font-mono text-sm">
-                                              {transaction.transaction_id}
-                                            </TableCell>
-                                            <TableCell>
-                                              {new Date(transaction.created_at).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell>
-                                              {transaction.send_currency} → {transaction.receive_currency}
-                                            </TableCell>
-                                            <TableCell>
-                                              <div>
-                                                <div className="font-medium">
-                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
-                                                </div>
-                                                <div className="text-sm text-gray-500">
-                                                  →{" "}
-                                                  {formatCurrency(
-                                                    transaction.receive_amount,
-                                                    transaction.receive_currency,
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </TableCell>
-                                            <TableCell>
-                                              <Badge
-                                                className={
-                                                  transaction.status === "completed"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : transaction.status === "processing"
-                                                      ? "bg-yellow-100 text-yellow-800"
-                                                      : "bg-gray-100 text-gray-800"
-                                                }
-                                              >
-                                                {transaction.status}
-                                              </Badge>
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                        {userTransactions.length === 0 && (
-                                          <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                                              No transactions found
-                                            </TableCell>
-                                          </TableRow>
-                                        )}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                </div>
-
-                                {/* Action Buttons */}
                                 <div className="border-t pt-4">
                                   <label className="text-sm font-medium text-gray-600">Account Actions</label>
                                   <div className="flex gap-2 mt-2">
