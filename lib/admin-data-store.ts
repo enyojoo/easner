@@ -144,29 +144,6 @@ class AdminDataStore {
     }
   }
 
-  // Method to get fresh user details with transactions
-  async getFreshUser(userId: string): Promise<any> {
-    try {
-      const timestamp = Date.now()
-      const response = await fetch(`/api/admin/users/${userId}?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error('Error loading fresh user:', error)
-      throw error
-    }
-  }
-
   // Method to get fresh transaction details
   async getFreshTransaction(transactionId: string): Promise<any> {
     try {
@@ -246,6 +223,7 @@ class AdminDataStore {
         this.data.transactions = this.data.transactions.map((tx) =>
           tx.transaction_id === transactionId ? { ...tx, status: newStatus, updated_at: new Date().toISOString() } : tx,
         )
+        // Notify all listeners immediately (this will update both table and popup)
         this.notify()
       }
 
@@ -275,14 +253,6 @@ class AdminDataStore {
 
   async updateUserStatus(userId: string, newStatus: string) {
     try {
-      // Update local data immediately for instant UI feedback
-      if (this.data) {
-        this.data.users = this.data.users.map((user) =>
-          user.id === userId ? { ...user, status: newStatus, updated_at: new Date().toISOString() } : user
-        )
-        this.notify()
-      }
-
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: {
@@ -295,28 +265,16 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Force refresh to get complete updated data in background
-      setTimeout(() => this.forceRefresh(), 100)
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
       console.error('Error updating user status:', error)
-      // Revert local changes on error
-      if (this.data) {
-        await this.forceRefresh()
-      }
       throw error
     }
   }
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
-      // Update local data immediately for instant UI feedback
-      if (this.data) {
-        this.data.users = this.data.users.map((user) =>
-          user.id === userId ? { ...user, verification_status: newStatus, updated_at: new Date().toISOString() } : user
-        )
-        this.notify()
-      }
-
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: {
@@ -329,14 +287,10 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Force refresh to get complete updated data in background
-      setTimeout(() => this.forceRefresh(), 100)
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
       console.error('Error updating user verification:', error)
-      // Revert local changes on error
-      if (this.data) {
-        await this.forceRefresh()
-      }
       throw error
     }
   }

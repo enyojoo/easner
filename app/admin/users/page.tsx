@@ -54,13 +54,37 @@ export default function AdminUsersPage() {
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const fetchUserDetails = async (userId: string) => {
+  // Sync selected user with data changes
+  useEffect(() => {
+    if (selectedUser && data?.users) {
+      const updatedUser = data.users.find((u: UserData) => u.id === selectedUser.id)
+      if (updatedUser) {
+        setSelectedUser(updatedUser)
+      }
+    }
+  }, [data?.users, selectedUser])
+
+  const fetchUserTransactions = async (userId: string) => {
     try {
-      const userData = await adminDataStore.getFreshUser(userId)
-      setSelectedUser(userData.user)
-      setUserTransactions(userData.transactions || [])
+      const userTransactions = (data?.transactions || [])
+        .filter((t: any) => t.user_id === userId)
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .map((t: any) => ({
+          transaction_id: t.transaction_id,
+          created_at: t.created_at,
+          send_currency: t.send_currency,
+          receive_currency: t.receive_currency,
+          send_amount: t.send_amount,
+          receive_amount: t.receive_amount,
+          status: t.status,
+          recipient: {
+            full_name: t.recipient_name || 'Unknown'
+          }
+        }))
+
+      setUserTransactions(userTransactions)
     } catch (err) {
-      console.error("Error fetching user details:", err)
+      console.error("Error fetching user transactions:", err)
       setUserTransactions([])
     }
   }
@@ -130,11 +154,6 @@ export default function AdminUsersPage() {
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
       await adminDataStore.updateUserStatus(userId, newStatus)
-      
-      // Update selected user if it's the same user
-      if (selectedUser?.id === userId) {
-        setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
-      }
     } catch (err) {
       console.error("Error updating user status:", err)
     }
@@ -143,11 +162,6 @@ export default function AdminUsersPage() {
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
       await adminDataStore.updateUserVerification(userId, newStatus)
-      
-      // Update selected user if it's the same user
-      if (selectedUser?.id === userId) {
-        setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
-      }
     } catch (err) {
       console.error("Error updating user verification:", err)
     }
@@ -173,7 +187,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, "NGN"),
+          formatCurrency(u.totalVolume || 0, "NGN"),
         ].join(","),
       ),
     ].join("\n")
@@ -187,15 +201,16 @@ export default function AdminUsersPage() {
   }
 
   const handleUserSelect = async (user: UserData) => {
+    setSelectedUser(user)
+    await fetchUserTransactions(user.id)
     setDialogOpen(true)
-    await fetchUserDetails(user.id)
   }
 
   // Registration analytics data
   const registrationStats = {
-    totalUsers: data?.stats.totalUsers || 0,
-    activeUsers: data?.stats.activeUsers || 0,
-    verifiedUsers: data?.stats.verifiedUsers || 0,
+    totalUsers: data?.stats?.totalUsers || 0,
+    activeUsers: data?.stats?.activeUsers || 0,
+    verifiedUsers: data?.stats?.verifiedUsers || 0,
     newThisWeek: (data?.users || []).filter(
       (u: UserData) => new Date(u.created_at).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime(),
     ).length,
@@ -551,7 +566,7 @@ export default function AdminUsersPage() {
                       <div className="mt-2 space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600">Total Transactions:</span>
-                          <span className="font-medium">{userTransactions.filter(t => t.status === 'completed').length}</span>
+                          <span className="font-medium">{selectedUser.totalTransactions}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-600">Total Volume:</span>
@@ -564,7 +579,7 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                {/* Recent Transactions */}
+                {/* Transaction History */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
                   <div className="mt-2 max-h-64 overflow-y-auto">

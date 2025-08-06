@@ -2,7 +2,7 @@
 
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, CreditCard, TrendingUp, AlertCircle, Activity, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Users, CreditCard, TrendingUp, AlertCircle, Activity, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminData } from "@/hooks/use-admin-data"
 
@@ -33,10 +33,18 @@ export default function AdminDashboardPage() {
       EUR: "€",
       GBP: "£",
     }
-    return `${symbols[baseCurrency] || ""}${amount.toLocaleString("en-US", {
+    return `${symbols[baseCurrency] || ""}${(amount || 0).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`
+  }
+
+  // Safe access to stats with fallbacks
+  const stats = data?.stats || {
+    totalTransactions: 0,
+    totalVolume: 0,
+    totalUsers: 0,
+    pendingTransactions: 0
   }
 
   return (
@@ -58,7 +66,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {data?.stats.totalTransactions.toLocaleString() || 0}
+                {stats.totalTransactions.toLocaleString()}
               </div>
             </CardContent>
           </Card>
@@ -70,7 +78,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(data?.stats.totalVolume || 0, data?.baseCurrency)}
+                {formatCurrency(stats.totalVolume, data?.baseCurrency)}
               </div>
               <p className="text-xs text-gray-500 mt-1">From all currencies.</p>
             </CardContent>
@@ -82,7 +90,7 @@ export default function AdminDashboardPage() {
               <Users className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{data?.stats.totalUsers || 0}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.totalUsers}</div>
             </CardContent>
           </Card>
 
@@ -92,7 +100,7 @@ export default function AdminDashboardPage() {
               <AlertCircle className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{data?.stats.pendingTransactions || 0}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.pendingTransactions}</div>
               <p className="text-xs text-orange-600">Awaiting processing</p>
             </CardContent>
           </Card>
@@ -109,7 +117,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
-                {data?.recentActivity?.map((activity: any) => (
+                {(data?.recentActivity || []).map((activity: any) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex-shrink-0 mt-0.5">{getActivityIcon(activity.type)}</div>
                     <div className="flex-1 min-w-0">
@@ -127,7 +135,10 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
-                )) || []}
+                ))}
+                {(!data?.recentActivity || data.recentActivity.length === 0) && (
+                  <div className="text-center py-4 text-gray-500">No recent activity</div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -148,20 +159,27 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.currencyPairs?.map((item: any, index: number) => (
+                  {(data?.currencyPairs || []).map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.pair}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
+                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${(item.volume || 0).toFixed(1)}%` }} />
                           </div>
-                          <span className="text-sm">{item.volume.toFixed(1)}%</span>
+                          <span className="text-sm">{(item.volume || 0).toFixed(1)}%</span>
                         </div>
                       </TableCell>
-                      <TableCell>{item.transactions}</TableCell>
+                      <TableCell>{item.transactions || 0}</TableCell>
                     </TableRow>
-                  )) || []}
+                  ))}
+                  {(!data?.currencyPairs || data.currencyPairs.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-4 text-gray-500">
+                        No currency pair data available
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

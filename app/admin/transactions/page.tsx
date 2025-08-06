@@ -26,6 +26,18 @@ export default function AdminTransactionsPage() {
  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
+ // Update selected transaction when data changes
+ useEffect(() => {
+   if (selectedTransaction && data?.transactions) {
+     const updatedTransaction = data.transactions.find(
+       (tx: any) => tx.transaction_id === selectedTransaction.transaction_id
+     )
+     if (updatedTransaction) {
+       setSelectedTransaction(updatedTransaction)
+     }
+   }
+ }, [data?.transactions, selectedTransaction?.transaction_id])
+
  const filteredTransactions = (data?.transactions || []).filter((transaction: any) => {
    const matchesSearch =
      searchTerm === "" ||
@@ -79,11 +91,9 @@ export default function AdminTransactionsPage() {
  const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
    try {
      await adminDataStore.updateTransactionStatus(transactionId, newStatus)
-
-     // Update selectedTransaction if it's the one being updated
-     if (selectedTransaction?.transaction_id === transactionId) {
-       setSelectedTransaction((prev) => (prev ? { ...prev, status: newStatus as any } : null))
-     }
+     
+     // The selectedTransaction will be automatically updated by the useEffect above
+     // when the data store notifies of changes
    } catch (err) {
      console.error("Error updating transaction status:", err)
    }
