@@ -12,6 +12,55 @@ const supabaseAdmin = createClient(
   }
 )
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const currencyCode = searchParams.get('currency')
+
+    if (currencyCode) {
+      // Get fresh exchange rates for specific currency
+      const { data: rates, error } = await supabaseAdmin
+        .from('exchange_rates')
+        .select('*')
+        .eq('from_currency', currencyCode)
+        .order('to_currency', { ascending: true })
+
+      if (error) throw error
+
+      return NextResponse.json(rates, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
+    }
+
+    // Get all fresh data
+    const [currenciesResult, ratesResult] = await Promise.all([
+      supabaseAdmin.from('currencies').select('*').order('created_at', { ascending: false }),
+      supabaseAdmin.from('exchange_rates').select('*').order('updated_at', { ascending: false })
+    ])
+
+    if (currenciesResult.error) throw currenciesResult.error
+    if (ratesResult.error) throw ratesResult.error
+
+    return NextResponse.json({
+      currencies: currenciesResult.data || [],
+      exchangeRates: ratesResult.data || []
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
+  } catch (error) {
+    console.error('Error fetching rates data:', error)
+    return NextResponse.json({ error: 'Failed to fetch rates data' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

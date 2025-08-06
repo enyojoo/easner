@@ -144,6 +144,29 @@ class AdminDataStore {
     }
   }
 
+  // Method to get fresh exchange rates for a specific currency
+  async getFreshExchangeRates(currencyCode: string): Promise<any[]> {
+    try {
+      const timestamp = Date.now()
+      const response = await fetch(`/api/admin/rates?currency=${currencyCode}&t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error loading fresh exchange rates:', error)
+      throw error
+    }
+  }
+
   async forceRefresh(): Promise<AdminData> {
     this.loading = true
 
