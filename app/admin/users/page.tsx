@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,26 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Search,
-  Download,
-  Filter,
-  Eye,
-  MoreHorizontal,
-  Calendar,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  User,
-  Mail,
-  Phone,
-  Ban,
-  UserCheck,
-  TrendingUp,
-} from "lucide-react"
+import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
@@ -47,6 +29,7 @@ interface UserData {
   last_login?: string
   totalTransactions: number
   totalVolume: number
+  recentTransactions?: TransactionData[]
 }
 
 interface TransactionData {
@@ -59,6 +42,8 @@ interface TransactionData {
   status: string
   recipient: {
     full_name: string
+    bank_name?: string
+    account_number?: string
   }
 }
 
@@ -70,30 +55,20 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
+  const [loadingUser, setLoadingUser] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-  const fetchUserTransactions = async (userId: string) => {
+  const fetchUserDetails = async (userId: string) => {
+    setLoadingUser(true)
     try {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select(`
-          transaction_id,
-          created_at,
-          send_currency,
-          receive_currency,
-          send_amount,
-          receive_amount,
-          status,
-          recipient:recipients(full_name)
-        `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-      // Remove .limit(20) to show all transactions
-
-      if (error) throw error
-      setUserTransactions(data || [])
+      const freshUser = await adminDataStore.getFreshUser(userId)
+      setSelectedUser(freshUser)
+      setUserTransactions(freshUser.recentTransactions || [])
     } catch (err) {
-      console.error("Error fetching user transactions:", err)
+      console.error("Error fetching user details:", err)
       setUserTransactions([])
+    } finally {
+      setLoadingUser(false)
     }
   }
 
@@ -160,24 +135,34 @@ export default function AdminUsersPage() {
   }
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
+    setUpdatingStatus(userId)
     try {
       await adminDataStore.updateUserStatus(userId, newStatus)
+      
+      // Update selected user if it's the same user
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
     } catch (err) {
       console.error("Error updating user status:", err)
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
+    setUpdatingStatus(userId)
     try {
       await adminDataStore.updateUserVerification(userId, newStatus)
+      
+      // Update selected user if it's the same user
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
     } catch (err) {
       console.error("Error updating user verification:", err)
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
@@ -215,8 +200,7 @@ export default function AdminUsersPage() {
   }
 
   const handleUserSelect = (user: UserData) => {
-    setSelectedUser(user)
-    fetchUserTransactions(user.id)
+    fetchUserDetails(user.id)
   }
 
   // Registration analytics data
@@ -473,7 +457,12 @@ export default function AdminUsersPage() {
                                 User Details - {selectedUser?.first_name} {selectedUser?.last_name}
                               </DialogTitle>
                             </DialogHeader>
-                            {selectedUser && (
+                            {loadingUser ? (
+                              <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                                <span className="ml-2">Loading user details...</span>
+                              </div>
+                            ) : selectedUser ? (
                               <div className="space-y-6">
                                 {/* User Information */}
                                 <div className="grid grid-cols-2 gap-6">
@@ -571,7 +560,6 @@ export default function AdminUsersPage() {
                                       </TableHeader>
                                       <TableBody>
                                         {userTransactions.map((transaction) => (
-                                          // Remove .slice(0, 5) to show all transactions
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}
@@ -631,38 +619,54 @@ export default function AdminUsersPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleStatusUpdate(selectedUser.id, "active")}
-                                      disabled={selectedUser.status === "active"}
+                                      disabled={selectedUser.status === "active" || updatingStatus === selectedUser.id}
                                     >
+                                      {updatingStatus === selectedUser.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
                                       Activate Account
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleStatusUpdate(selectedUser.id, "suspended")}
-                                      disabled={selectedUser.status === "suspended"}
+                                      disabled={selectedUser.status === "suspended" || updatingStatus === selectedUser.id}
                                       className="text-red-600 hover:text-red-700"
                                     >
+                                      {updatingStatus === selectedUser.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
                                       Suspend Account
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleVerificationUpdate(selectedUser.id, "verified")}
-                                      disabled={selectedUser.verification_status === "verified"}
+                                      disabled={selectedUser.verification_status === "verified" || updatingStatus === selectedUser.id}
                                     >
+                                      {updatingStatus === selectedUser.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
                                       Verify User
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleVerificationUpdate(selectedUser.id, "rejected")}
-                                      disabled={selectedUser.verification_status === "rejected"}
+                                      disabled={selectedUser.verification_status === "rejected" || updatingStatus === selectedUser.id}
                                       className="text-red-600 hover:text-red-700"
                                     >
+                                      {updatingStatus === selectedUser.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                      ) : null}
                                       Reject Verification
                                     </Button>
                                   </div>
                                 </div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-4 text-gray-500">
+                                No user selected
                               </div>
                             )}
                           </DialogContent>
@@ -670,8 +674,12 @@ export default function AdminUsersPage() {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="outline" size="sm" disabled={updatingStatus === user.id}>
+                              {updatingStatus === user.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MoreHorizontal className="h-4 w-4" />
+                              )}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">

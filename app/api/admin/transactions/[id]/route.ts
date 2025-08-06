@@ -12,6 +12,38 @@ const supabaseAdmin = createClient(
   }
 )
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const transactionId = params.id
+
+    const { data: transaction, error } = await supabaseAdmin
+      .from("transactions")
+      .select(`
+        *,
+        user:users(id, first_name, last_name, email),
+        recipient:recipients(*)
+      `)
+      .eq("transaction_id", transactionId)
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json(transaction, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
+  } catch (error) {
+    console.error('Error fetching transaction:', error)
+    return NextResponse.json({ error: 'Failed to fetch transaction' }, { status: 500 })
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -30,7 +62,13 @@ export async function PATCH(
 
     if (error) throw error
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
     console.error('Error updating transaction:', error)
     return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 })

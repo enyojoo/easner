@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Server-side admin client with service role - bypasses RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -9,88 +8,113 @@ const supabaseAdmin = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false
-    },
-    db: {
-      schema: 'public'
     }
   }
 )
 
 export async function GET(request: NextRequest) {
   try {
-    // Add cache-busting headers
-    const headers = {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    }
-
-    // Fetch all data in parallel with fresh queries
+    // Get fresh data from database
     const [
-      usersResult,
-      transactionsResult,
-      currenciesResult,
-      exchangeRatesResult,
-      settingsResult
+      { data: users, error: usersError },
+      { data: transactions, error: transactionsError },
+      { data: currencies, error: currenciesError },
+      { data: exchangeRates, error: ratesError },
+      { data: settings, error: settingsError }
     ] = await Promise.all([
-      supabaseAdmin.from('users').select('*').order('created_at', { ascending: false }),
-      supabaseAdmin.from('transactions').select('*').order('created_at', { ascending: false }),
-      supabaseAdmin.from('currencies').select('*').order('created_at', { ascending: false }),
-      supabaseAdmin.from('exchange_rates').select('*').order('updated_at', { ascending: false }),
-      supabaseAdmin.from('admin_settings').select('*').single()
+      supabaseAdmin
+        .from("users")
+        .select(`
+          *,
+          transactions:transactions(count)
+        `)
+        .order("created_at", { ascending: false }),
+      
+      supabaseAdmin
+        .from("transactions")
+        .select(`
+          *,
+          user:users(id, first_name, last_name, email),
+          recipient:recipients(*)
+        `)
+        .order("created_at", { ascending: false }),
+      
+      supabaseAdmin
+        .from("currencies")
+        .select("*")
+        .order("name"),
+      
+      supabaseAdmin
+        .from("exchange_rates")
+        .select("*")
+        .order("from_currency, to_currency"),
+      
+      supabaseAdmin
+        .from("settings")
+        .select("*")
+        .eq("key", "base_currency")
+        .single()
     ])
 
-    if (usersResult.error) throw usersResult.error
-    if (transactionsResult.error) throw transactionsResult.error
-    if (currenciesResult.error) throw currenciesResult.error
-    if (exchangeRatesResult.error) throw exchangeRatesResult.error
-
-    const users = usersResult.data || []
-    const transactions = transactionsResult.data || []
-    const currencies = currenciesResult.data || []
-    const exchangeRates = exchangeRatesResult.data || []
-    const settings = settingsResult.data || { base_currency: 'USD' }
+    if (usersError) throw usersError
+    if (transactionsError) throw transactionsError
+    if (currenciesError) throw currenciesError
+    if (ratesError) throw ratesError
 
     // Calculate stats
-    const stats = {
-      totalUsers: users.length,
-      activeUsers: users.filter(u => u.status === 'active').length,
-      verifiedUsers: users.filter(u => u.verification_status === 'verified').length,
-      totalTransactions: transactions.length,
-      totalVolume: transactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0),
-      pendingTransactions: transactions.filter(tx => tx.status === 'pending').length
-    }
+    const totalUsers = users?.length || 0
+    const activeUsers = users?.filter(u => u.status === 'active').length || 0
+    const verifiedUsers = users?.filter(u => u.verification_status === 'verified').length || 0
+    const totalTransactions = transactions?.length || 0
+    const pendingTransactions = transactions?.filter(t => t.status === 'pending').length || 0
+    
+    const totalVolume = transactions?.reduce((sum, t) => {
+      return sum + (parseFloat(t.send_amount) || 0)
+    }, 0) || 0
 
     // Recent activity (last 10 transactions)
-    const recentActivity = transactions.slice(0, 10).map(tx => ({
-      id: tx.transaction_id,
+    const recentActivity = transactions?.slice(0, 10).map(t => ({
+      id: t.id,
       type: 'transaction',
-      description: `${tx.sender_name} sent ${tx.amount} ${tx.from_currency} to ${tx.recipient_name}`,
-      timestamp: tx.created_at,
-      status: tx.status
-    }))
+      description: `${t.user?.first_name} ${t.user?.last_name} sent ${t.send_amount} ${t.send_currency}`,
+      timestamp: t.created_at,
+      status: t.status
+    })) || []
 
-    // Currency pairs for quick reference
-    const currencyPairs = currencies.map(currency => ({
-      code: currency.code,
-      name: currency.name,
-      symbol: currency.symbol,
-      rates: exchangeRates.filter(rate => rate.from_currency === currency.code)
-    }))
+    // Currency pairs
+    const currencyPairs = exchangeRates?.map(rate => ({
+      from: rate.from_currency,
+      to: rate.to_currency,
+      rate: rate.rate,
+      lastUpdated: rate.updated_at
+    })) || []
 
     const adminData = {
-      users,
-      transactions,
-      currencies,
-      exchangeRates,
-      baseCurrency: settings.base_currency,
-      stats,
+      users: users || [],
+      transactions: transactions || [],
+      currencies: currencies || [],
+      exchangeRates: exchangeRates || [],
+      baseCurrency: settings?.value || 'USD',
+      stats: {
+        totalUsers,
+        activeUsers,
+        verifiedUsers,
+        totalTransactions,
+        totalVolume,
+        pendingTransactions
+      },
       recentActivity,
       currencyPairs,
       lastUpdated: Date.now()
     }
 
-    return NextResponse.json(adminData, { headers })
+    return NextResponse.json(adminData, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    })
   } catch (error) {
     console.error('Error fetching admin data:', error)
     return NextResponse.json({ error: 'Failed to fetch admin data' }, { status: 500 })

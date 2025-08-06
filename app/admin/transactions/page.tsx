@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,18 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Search,
-  Download,
-  Filter,
-  Eye,
-  MoreHorizontal,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  ArrowUpDown,
-} from "lucide-react"
+import { Search, Download, Filter, Eye, MoreHorizontal, CheckCircle, Clock, XCircle, AlertCircle, ArrowUpDown, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
@@ -35,6 +24,9 @@ export default function AdminTransactionsPage() {
   const [currencyFilter, setCurrencyFilter] = useState("all")
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [loadingTransaction, setLoadingTransaction] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   const filteredTransactions = (data?.transactions || []).filter((transaction: any) => {
     const matchesSearch =
@@ -87,6 +79,7 @@ export default function AdminTransactionsPage() {
   }
 
   const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
+    setUpdatingStatus(transactionId)
     try {
       await adminDataStore.updateTransactionStatus(transactionId, newStatus)
 
@@ -96,6 +89,8 @@ export default function AdminTransactionsPage() {
       }
     } catch (err) {
       console.error("Error updating transaction status:", err)
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
@@ -107,6 +102,23 @@ export default function AdminTransactionsPage() {
       setSelectedTransactions([])
     } catch (err) {
       console.error("Error updating transaction statuses:", err)
+    }
+  }
+
+  const handleViewTransaction = async (transaction: any) => {
+    setLoadingTransaction(true)
+    try {
+      // Fetch fresh transaction data
+      const freshTransaction = await adminDataStore.getFreshTransaction(transaction.transaction_id)
+      setSelectedTransaction(freshTransaction)
+      setIsDialogOpen(true)
+    } catch (error) {
+      console.error("Error loading transaction details:", error)
+      // Fallback to cached data
+      setSelectedTransaction(transaction)
+      setIsDialogOpen(true)
+    } finally {
+      setLoadingTransaction(false)
     }
   }
 
@@ -194,6 +206,7 @@ export default function AdminTransactionsPage() {
                   <SelectItem value="all">All Currencies</SelectItem>
                   <SelectItem value="NGN">NGN</SelectItem>
                   <SelectItem value="RUB">RUB</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -287,153 +300,23 @@ export default function AdminTransactionsPage() {
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedTransaction(transaction)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Transaction Details</DialogTitle>
-                            </DialogHeader>
-                            {selectedTransaction && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Transaction ID</label>
-                                    <p className="font-mono">{selectedTransaction.transaction_id}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Status</label>
-                                    <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">User</label>
-                                    <p>
-                                      {selectedTransaction.user?.first_name} {selectedTransaction.user?.last_name}
-                                    </p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.user?.email}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Date</label>
-                                    <p>{new Date(selectedTransaction.created_at).toLocaleString()}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Send Amount</label>
-                                    <p className="font-medium">
-                                      {formatCurrency(
-                                        selectedTransaction.send_amount,
-                                        selectedTransaction.send_currency,
-                                      )}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Receive Amount</label>
-                                    <p className="font-medium">
-                                      {formatCurrency(
-                                        selectedTransaction.receive_amount,
-                                        selectedTransaction.receive_currency,
-                                      )}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Recipient</label>
-                                    <p>{selectedTransaction.recipient?.full_name}</p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.recipient?.bank_name}</p>
-                                    <p className="text-sm text-gray-500">
-                                      {selectedTransaction.recipient?.account_number}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
-                                    <p className="font-medium">
-                                      1 {selectedTransaction.send_currency} = {selectedTransaction.exchange_rate}{" "}
-                                      {selectedTransaction.receive_currency}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <label className="text-sm font-medium text-gray-600">Receipt</label>
-                                  {selectedTransaction.receipt_url ? (
-                                    <div className="mt-1">
-                                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                          <CheckCircle className="h-4 w-4 text-green-600" />
-                                        </div>
-                                        <div className="flex-1">
-                                          <p className="text-sm font-medium text-gray-900">
-                                            {selectedTransaction.receipt_filename || "Receipt"}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            Uploaded {new Date(selectedTransaction.updated_at).toLocaleString()}
-                                          </p>
-                                        </div>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => window.open(selectedTransaction.receipt_url, "_blank")}
-                                        >
-                                          <Eye className="h-4 w-4 mr-1" />
-                                          View
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-500 mt-1">No receipt uploaded</p>
-                                  )}
-                                </div>
-
-                                <div className="border-t pt-4">
-                                  <label className="text-sm font-medium text-gray-600">Update Status</label>
-                                  <div className="flex gap-2 mt-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleStatusUpdate(selectedTransaction.transaction_id, "processing")
-                                      }
-                                    >
-                                      Payment Received
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleStatusUpdate(selectedTransaction.transaction_id, "initiated")
-                                      }
-                                    >
-                                      Transfer Initiated
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleStatusUpdate(selectedTransaction.transaction_id, "completed")
-                                      }
-                                    >
-                                      Transfer Complete
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedTransaction.transaction_id, "failed")}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      Mark Failed
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleViewTransaction(transaction)}
+                          disabled={loadingTransaction}
+                        >
+                          {loadingTransaction ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                        </Button>
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="outline" size="sm" disabled={updatingStatus === transaction.transaction_id}>
+                              {updatingStatus === transaction.transaction_id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MoreHorizontal className="h-4 w-4" />
+                              )}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -472,6 +355,161 @@ export default function AdminTransactionsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Transaction Details Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Transaction Details</DialogTitle>
+            </DialogHeader>
+            {selectedTransaction && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Transaction ID</label>
+                    <p className="font-mono">{selectedTransaction.transaction_id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Status</label>
+                    <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">User</label>
+                    <p>
+                      {selectedTransaction.user?.first_name} {selectedTransaction.user?.last_name}
+                    </p>
+                    <p className="text-sm text-gray-500">{selectedTransaction.user?.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Date</label>
+                    <p>{new Date(selectedTransaction.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Send Amount</label>
+                    <p className="font-medium">
+                      {formatCurrency(
+                        selectedTransaction.send_amount,
+                        selectedTransaction.send_currency,
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Receive Amount</label>
+                    <p className="font-medium">
+                      {formatCurrency(
+                        selectedTransaction.receive_amount,
+                        selectedTransaction.receive_currency,
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Recipient</label>
+                    <p>{selectedTransaction.recipient?.full_name}</p>
+                    <p className="text-sm text-gray-500">{selectedTransaction.recipient?.bank_name}</p>
+                    <p className="text-sm text-gray-500">
+                      {selectedTransaction.recipient?.account_number}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
+                    <p className="font-medium">
+                      1 {selectedTransaction.send_currency} = {selectedTransaction.exchange_rate}{" "}
+                      {selectedTransaction.receive_currency}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Receipt</label>
+                  {selectedTransaction.receipt_url ? (
+                    <div className="mt-1">
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {selectedTransaction.receipt_filename || "Receipt"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Uploaded {new Date(selectedTransaction.updated_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(selectedTransaction.receipt_url, "_blank")}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">No receipt uploaded</p>
+                  )}
+                </div>
+
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-gray-600">Update Status</label>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleStatusUpdate(selectedTransaction.transaction_id, "processing")
+                      }
+                      disabled={updatingStatus === selectedTransaction.transaction_id}
+                    >
+                      {updatingStatus === selectedTransaction.transaction_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : null}
+                      Payment Received
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleStatusUpdate(selectedTransaction.transaction_id, "initiated")
+                      }
+                      disabled={updatingStatus === selectedTransaction.transaction_id}
+                    >
+                      {updatingStatus === selectedTransaction.transaction_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : null}
+                      Transfer Initiated
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleStatusUpdate(selectedTransaction.transaction_id, "completed")
+                      }
+                      disabled={updatingStatus === selectedTransaction.transaction_id}
+                    >
+                      {updatingStatus === selectedTransaction.transaction_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : null}
+                      Transfer Complete
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(selectedTransaction.transaction_id, "failed")}
+                      className="text-red-600 hover:text-red-700"
+                      disabled={updatingStatus === selectedTransaction.transaction_id}
+                    >
+                      {updatingStatus === selectedTransaction.transaction_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : null}
+                      Mark Failed
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminDashboardLayout>
   )

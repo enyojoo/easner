@@ -144,6 +144,52 @@ class AdminDataStore {
     }
   }
 
+  // Method to get fresh user details with transactions
+  async getFreshUser(userId: string): Promise<any> {
+    try {
+      const timestamp = Date.now()
+      const response = await fetch(`/api/admin/users/${userId}?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error loading fresh user:', error)
+      throw error
+    }
+  }
+
+  // Method to get fresh transaction details
+  async getFreshTransaction(transactionId: string): Promise<any> {
+    try {
+      const timestamp = Date.now()
+      const response = await fetch(`/api/admin/transactions/${transactionId}?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error loading fresh transaction:', error)
+      throw error
+    }
+  }
+
   // Method to get fresh exchange rates for a specific currency
   async getFreshExchangeRates(currencyCode: string): Promise<any[]> {
     try {
@@ -207,8 +253,16 @@ class AdminDataStore {
         throw new Error('Failed to update transaction status')
       }
 
-      // Force immediate refresh
-      await this.forceRefresh()
+      // Update local data immediately
+      if (this.data) {
+        this.data.transactions = this.data.transactions.map((tx) =>
+          tx.transaction_id === transactionId ? { ...tx, status: newStatus, updated_at: new Date().toISOString() } : tx,
+        )
+        this.notify()
+      }
+
+      // Force refresh to get complete updated data
+      setTimeout(() => this.forceRefresh(), 100)
     } catch (error) {
       console.error('Error updating transaction status:', error)
       throw error
@@ -229,8 +283,16 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Force immediate refresh
-      await this.forceRefresh()
+      // Update local data immediately
+      if (this.data) {
+        this.data.users = this.data.users.map((user) =>
+          user.id === userId ? { ...user, status: newStatus, updated_at: new Date().toISOString() } : user,
+        )
+        this.notify()
+      }
+
+      // Force refresh to get complete updated data
+      setTimeout(() => this.forceRefresh(), 100)
     } catch (error) {
       console.error('Error updating user status:', error)
       throw error
@@ -251,8 +313,16 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Force immediate refresh
-      await this.forceRefresh()
+      // Update local data immediately
+      if (this.data) {
+        this.data.users = this.data.users.map((user) =>
+          user.id === userId ? { ...user, verification_status: newStatus, updated_at: new Date().toISOString() } : user,
+        )
+        this.notify()
+      }
+
+      // Force refresh to get complete updated data
+      setTimeout(() => this.forceRefresh(), 100)
     } catch (error) {
       console.error('Error updating user verification:', error)
       throw error
