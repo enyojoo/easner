@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/response'
+import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
 
 export async function PATCH(
