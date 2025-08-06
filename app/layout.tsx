@@ -13,10 +13,54 @@ const poppins = Poppins({
 export const metadata: Metadata = {
  title: "NOVAMONEY - Send Money Instantly",
  description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+ keywords: "money transfer, send money abroad, international payments, send money app, transfer money overseas, international money transfer, transfer money online, send money online",
+ formatDetection: {
+   email: false,
+   address: false,
+   telephone: false,
+ },
+ metadataBase: new URL("https://www.novamoney.net"),
+ alternates: {
+   canonical: "/",
+ },
  icons: {
    icon: "https://cldup.com/iMvs-lKmIe.svg",
    shortcut: "https://cldup.com/iMvs-lKmIe.svg",
    apple: "https://cldup.com/iMvs-lKmIe.svg",
+ },
+ openGraph: {
+   title: "NOVAMONEY - Send Money Instantly",
+   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+   url: "https://www.novamoney.net",
+   siteName: "NOVAMONEY",
+   locale: "en_US",
+   type: "website",
+   images: [
+     {
+       url: "https://cldup.com/MvXS1FWU2c.png",
+       width: 1200,
+       height: 630,
+       alt: "NOVAMONEY - Send Money Instantly",
+     },
+   ],
+ },
+ twitter: {
+   card: "summary_large_image",
+   title: "NOVAMONEY - Send Money Instantly",
+   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+   creator: "@novamoneyapp",
+   images: ["https://cldup.com/MvXS1FWU2c.png"],
+ },
+ robots: {
+   index: true,
+   follow: true,
+   googleBot: {
+     index: true,
+     follow: true,
+     "max-video-preview": -1,
+     "max-image-preview": "large",
+     "max-snippet": -1,
+   },
  },
     generator: 'v0.dev'
 }
