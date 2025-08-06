@@ -1,4 +1,17 @@
+import { createClient } from '@supabase/supabase-js'
 import { supabase } from "./supabase"
+
+// Create service role client for admin operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 interface AdminData {
   users: any[]
@@ -61,7 +74,7 @@ class AdminDataStore {
     this.loading = true
 
     try {
-      // Load all data in parallel
+      // Load all data in parallel using service role client
       const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrency] = await Promise.all([
         this.loadUsers(),
         this.loadTransactions(),
@@ -94,14 +107,14 @@ class AdminDataStore {
   }
 
   private async loadUsers() {
-    const { data: users, error } = await supabase.from("users").select("*").order("created_at", { ascending: false })
+    const { data: users, error } = await supabaseAdmin.from("users").select("*").order("created_at", { ascending: false })
 
     if (error) throw error
 
     // Calculate transaction stats for each user
     const usersWithStats = await Promise.all(
       (users || []).map(async (user) => {
-        const { data: transactions } = await supabase
+        const { data: transactions } = await supabaseAdmin
           .from("transactions")
           .select("send_amount, send_currency, status")
           .eq("user_id", user.id)
@@ -145,7 +158,7 @@ class AdminDataStore {
   }
 
   private async loadTransactions() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("transactions")
       .select(`
         *,
@@ -160,13 +173,13 @@ class AdminDataStore {
   }
 
   private async loadCurrencies() {
-    const { data, error } = await supabase.from("currencies").select("*").order("code")
+    const { data, error } = await supabaseAdmin.from("currencies").select("*").order("code")
     if (error) throw error
     return data || []
   }
 
   private async loadExchangeRates() {
-    const { data, error } = await supabase.from("exchange_rates").select(`
+    const { data, error } = await supabaseAdmin.from("exchange_rates").select(`
       *,
       from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
       to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
@@ -199,7 +212,7 @@ class AdminDataStore {
 
   private async getAdminBaseCurrency(): Promise<string> {
     try {
-      const { data, error } = await supabase.from("system_settings").select("value").eq("key", "base_currency").single()
+      const { data, error } = await supabaseAdmin.from("system_settings").select("value").eq("key", "base_currency").single()
 
       if (error || !data) return "NGN" // Default to NGN
       return data.value
@@ -230,8 +243,8 @@ class AdminDataStore {
 
   private async convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
     try {
-      // Get exchange rate from database
-      const { data: rate, error } = await supabase
+      // Get exchange rate from database using service role
+      const { data: rate, error } = await supabaseAdmin
         .from("exchange_rates")
         .select("rate")
         .eq("from_currency", fromCurrency)
@@ -419,7 +432,7 @@ class AdminDataStore {
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("transactions")
         .update({
           status: newStatus,
@@ -445,7 +458,7 @@ class AdminDataStore {
 
   async updateUserStatus(userId: string, newStatus: string) {
     try {
-      const { error } = await supabase.from("users").update({ status: newStatus }).eq("id", userId)
+      const { error } = await supabaseAdmin.from("users").update({ status: newStatus }).eq("id", userId)
 
       if (error) throw error
 
@@ -462,7 +475,7 @@ class AdminDataStore {
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
-      const { error } = await supabase.from("users").update({ verification_status: newStatus }).eq("id", userId)
+      const { error } = await supabaseAdmin.from("users").update({ verification_status: newStatus }).eq("id", userId)
 
       if (error) throw error
 
@@ -481,8 +494,8 @@ class AdminDataStore {
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      // Update database first
-      const { error } = await supabase
+      // Update database first using service role
+      const { error } = await supabaseAdmin
         .from("currencies")
         .update({
           status: newStatus,
@@ -508,8 +521,8 @@ class AdminDataStore {
 
   async updateExchangeRates(updates: any[]) {
     try {
-      // Update database first
-      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+      // Update database first using service role
+      const { error } = await supabaseAdmin.from("exchange_rates").upsert(updates, {
         onConflict: "from_currency,to_currency",
         ignoreDuplicates: false,
       })
@@ -531,8 +544,8 @@ class AdminDataStore {
 
   async addCurrency(currencyData: any) {
     try {
-      // Insert new currency
-      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+      // Insert new currency using service role
+      const { data: newCurrency, error } = await supabaseAdmin.from("currencies").insert(currencyData).select().single()
 
       if (error) throw error
 
@@ -553,16 +566,16 @@ class AdminDataStore {
       const currency = this.data?.currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
-      // Delete exchange rates first
-      const { error: ratesError } = await supabase
+      // Delete exchange rates first using service role
+      const { error: ratesError } = await supabaseAdmin
         .from("exchange_rates")
         .delete()
         .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
 
       if (ratesError) throw ratesError
 
-      // Delete currency
-      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+      // Delete currency using service role
+      const { error } = await supabaseAdmin.from("currencies").delete().eq("id", currencyId)
 
       if (error) throw error
 
