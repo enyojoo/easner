@@ -128,11 +128,8 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
-        this.notify()
-      }
+      // Reload fresh data from server
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -152,13 +149,8 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.users = this.data.users.map((user) =>
-          user.id === userId ? { ...user, verification_status: newStatus } : user,
-        )
-        this.notify()
-      }
+      // Reload fresh data from server  
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -166,25 +158,22 @@ class AdminDataStore {
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      const { error } = await supabase
-        .from("currencies")
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
+      const response = await fetch('/api/admin/rates', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'currency_status',
+          id: currencyId,
+          data: { status: newStatus }
         })
-        .eq("id", currencyId)
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to update currency status')
 
-      // Update local data immediately after successful database update
-      if (this.data) {
-        this.data.currencies = this.data.currencies.map((currency) =>
-          currency.id === currencyId
-            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
-            : currency,
-        )
-        this.notify()
-      }
+      // Reload fresh data from server
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -212,12 +201,8 @@ class AdminDataStore {
 
       if (error) throw error
 
-      // Update local data immediately
-      if (this.data) {
-        this.data.currencies = [...this.data.currencies, newCurrency]
-        this.notify()
-      }
-
+      // Reload fresh data from server instead of local update
+      await this.loadData()
       return newCurrency
     } catch (error) {
       throw error
@@ -242,14 +227,8 @@ class AdminDataStore {
 
       if (error) throw error
 
-      // Update local data immediately
-      if (this.data) {
-        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
-        this.data.exchangeRates = this.data.exchangeRates.filter(
-          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
-        )
-        this.notify()
-      }
+      // Reload fresh data from server instead of local update
+      await this.loadData()
     } catch (error) {
       throw error
     }

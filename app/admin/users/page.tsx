@@ -10,24 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Search,
-  Download,
-  Filter,
-  Eye,
-  MoreHorizontal,
-  Calendar,
-  CheckCircle,
-  Clock,
-  XCircle,
-  AlertCircle,
-  User,
-  Mail,
-  Phone,
-  Ban,
-  UserCheck,
-  TrendingUp,
-} from "lucide-react"
+import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
@@ -162,6 +145,7 @@ export default function AdminUsersPage() {
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
       await adminDataStore.updateUserStatus(userId, newStatus)
+      // Update selected user if it's the same one
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
@@ -173,6 +157,7 @@ export default function AdminUsersPage() {
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
       await adminDataStore.updateUserVerification(userId, newStatus)
+      // Update selected user if it's the same one
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }

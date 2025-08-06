@@ -103,6 +103,9 @@ const AdminRatesPage = () => {
         if (!ratesResponse.ok) throw new Error('Failed to create exchange rates')
       }
 
+      // Refresh the admin data store to get latest data
+      await adminDataStore.updateCurrencies()
+
       setNewCurrencyData({ code: '', name: '', symbol: '', flag_svg: '' })
       setIsAddingCurrency(false)
     } catch (error) {
@@ -166,6 +169,9 @@ const AdminRatesPage = () => {
         if (!response.ok) throw new Error('Failed to save rates')
       }
 
+      // Refresh the admin data store to get latest data
+      await adminDataStore.updateCurrencies()
+
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
@@ -183,19 +189,7 @@ const AdminRatesPage = () => {
 
       const newStatus = currency.status === 'active' ? 'suspended' : 'active'
     
-      const response = await fetch('/api/admin/rates', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'currency_status',
-          id: currencyId,
-          data: { status: newStatus }
-        })
-      })
-
-      if (!response.ok) throw new Error('Failed to update currency status')
+      await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
     } catch (error) {
       console.error('Error updating currency status:', error)
     }
@@ -211,11 +205,7 @@ const AdminRatesPage = () => {
     }
 
     try {
-      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) throw new Error('Failed to delete currency')
+      await adminDataStore.deleteCurrency(currencyId)
     } catch (error) {
       console.error('Error deleting currency:', error)
     }
