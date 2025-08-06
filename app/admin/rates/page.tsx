@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
+import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from 'lucide-react'
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 
@@ -35,17 +35,26 @@ const AdminRatesPage = () => {
     try {
       setSaving(true)
 
-      const currencyData = {
-        code: newCurrencyData.code.toUpperCase(),
-        name: newCurrencyData.name,
-        symbol: newCurrencyData.symbol,
-        flag_svg:
-          newCurrencyData.flag_svg ||
-          `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
-        status: "active",
-      }
+      const response = await fetch('/api/admin/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'currency',
+          data: {
+            code: newCurrencyData.code.toUpperCase(),
+            name: newCurrencyData.name,
+            symbol: newCurrencyData.symbol,
+            flag_svg: newCurrencyData.flag_svg ||
+              `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`
+          }
+        })
+      })
 
-      const newCurrency = await adminDataStore.addCurrency(currencyData)
+      if (!response.ok) throw new Error('Failed to add currency')
+
+      const newCurrency = await response.json()
 
       // Create default exchange rates for the new currency
       const existingCurrencies = currencies.filter((c) => c.code !== newCurrencyData.code.toUpperCase())
@@ -57,11 +66,11 @@ const AdminRatesPage = () => {
           from_currency: newCurrencyData.code.toUpperCase(),
           to_currency: currency.code,
           rate: 1,
-          fee_type: "free",
+          fee_type: 'free',
           fee_amount: 0,
           min_amount: 10,
           max_amount: 1000000,
-          status: "active",
+          status: 'active',
         })
       }
 
@@ -71,22 +80,33 @@ const AdminRatesPage = () => {
           from_currency: currency.code,
           to_currency: newCurrencyData.code.toUpperCase(),
           rate: 1,
-          fee_type: "free",
+          fee_type: 'free',
           fee_amount: 0,
           min_amount: 10,
           max_amount: 1000000,
-          status: "active",
+          status: 'active',
         })
       }
 
       if (newRates.length > 0) {
-        await adminDataStore.updateExchangeRates(newRates)
+        const ratesResponse = await fetch('/api/admin/rates', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'exchange_rates',
+            data: newRates
+          })
+        })
+
+        if (!ratesResponse.ok) throw new Error('Failed to create exchange rates')
       }
 
-      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
+      setNewCurrencyData({ code: '', name: '', symbol: '', flag_svg: '' })
       setIsAddingCurrency(false)
     } catch (error) {
-      console.error("Error adding currency:", error)
+      console.error('Error adding currency:', error)
     } finally {
       setSaving(false)
     }
@@ -121,25 +141,36 @@ const AdminRatesPage = () => {
         updates.push({
           from_currency: selectedCurrency.code,
           to_currency: toCurrency,
-          rate: Number.parseFloat(rateInfo.rate),
+          rate: parseFloat(rateInfo.rate),
           fee_type: rateInfo.feeType,
-          fee_amount: Number.parseFloat(rateInfo.feeAmount || "0"),
-          min_amount: Number.parseFloat(rateInfo.minAmount || "0"),
-          max_amount: Number.parseFloat(rateInfo.maxAmount || "1000000"),
-          status: "active",
+          fee_amount: parseFloat(rateInfo.feeAmount || '0'),
+          min_amount: parseFloat(rateInfo.minAmount || '0'),
+          max_amount: parseFloat(rateInfo.maxAmount || '1000000'),
+          status: 'active',
           updated_at: new Date().toISOString(),
         })
       }
 
       if (updates.length > 0) {
-        await adminDataStore.updateExchangeRates(updates)
+        const response = await fetch('/api/admin/rates', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'exchange_rates',
+            data: updates
+          })
+        })
+
+        if (!response.ok) throw new Error('Failed to save rates')
       }
 
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
     } catch (error) {
-      console.error("Error saving rates:", error)
+      console.error('Error saving rates:', error)
     } finally {
       setSaving(false)
     }
@@ -150,10 +181,23 @@ const AdminRatesPage = () => {
       const currency = currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
-      const newStatus = currency.status === "active" ? "suspended" : "active"
-      await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
+      const newStatus = currency.status === 'active' ? 'suspended' : 'active'
+    
+      const response = await fetch('/api/admin/rates', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'currency_status',
+          id: currencyId,
+          data: { status: newStatus }
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to update currency status')
     } catch (error) {
-      console.error("Error updating currency status:", error)
+      console.error('Error updating currency status:', error)
     }
   }
 
@@ -162,14 +206,18 @@ const AdminRatesPage = () => {
       return
     }
 
-    if (!confirm("Are you sure you want to delete this currency? This will also delete all related exchange rates.")) {
+    if (!confirm('Are you sure you want to delete this currency? This will also delete all related exchange rates.')) {
       return
     }
 
     try {
-      await adminDataStore.deleteCurrency(currencyId)
+      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) throw new Error('Failed to delete currency')
     } catch (error) {
-      console.error("Error deleting currency:", error)
+      console.error('Error deleting currency:', error)
     }
   }
 

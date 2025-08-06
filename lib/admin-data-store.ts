@@ -166,17 +166,15 @@ class AdminDataStore {
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      const response = await fetch(`/api/admin/currencies/${currencyId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
 
-      if (!response.ok) {
-        throw new Error('Failed to update currency status')
-      }
+      if (error) throw error
 
       // Update local data immediately after successful database update
       if (this.data) {
@@ -194,17 +192,12 @@ class AdminDataStore {
 
   async updateExchangeRates(updates: any[]) {
     try {
-      const response = await fetch('/api/admin/exchange-rates', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to update exchange rates')
-      }
+      if (error) throw error
 
       // Reload data to get fresh exchange rates
       await this.loadData()
@@ -215,19 +208,9 @@ class AdminDataStore {
 
   async addCurrency(currencyData: any) {
     try {
-      const response = await fetch('/api/admin/currencies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(currencyData),
-      })
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
 
-      if (!response.ok) {
-        throw new Error('Failed to add currency')
-      }
-
-      const newCurrency = await response.json()
+      if (error) throw error
 
       // Update local data immediately
       if (this.data) {
@@ -243,23 +226,28 @@ class AdminDataStore {
 
   async deleteCurrency(currencyId: string) {
     try {
-      const response = await fetch(`/api/admin/currencies/${currencyId}`, {
-        method: 'DELETE',
-      })
+      const currency = this.data?.currencies.find((c) => c.id === currencyId)
+      if (!currency) return
 
-      if (!response.ok) {
-        throw new Error('Failed to delete currency')
-      }
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
 
       // Update local data immediately
       if (this.data) {
-        const currency = this.data.currencies.find((c) => c.id === currencyId)
         this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
-        if (currency) {
-          this.data.exchangeRates = this.data.exchangeRates.filter(
-            (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
-          )
-        }
+        this.data.exchangeRates = this.data.exchangeRates.filter(
+          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
+        )
         this.notify()
       }
     } catch (error) {
