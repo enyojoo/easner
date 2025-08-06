@@ -1,46 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params
-    const updates = await request.json()
-    
-    console.log('Updating transaction:', id, updates)
-    
-    const supabase = createServerClient()
-    
-    const updateData: any = {
-      ...updates,
-      updated_at: new Date().toISOString(),
-    }
+    const { status } = await request.json()
+    const transactionId = params.id
 
-    if (updates.status === 'completed') {
-      updateData.completed_at = new Date().toISOString()
-    }
+    const { error } = await supabaseAdmin
+      .from("transactions")
+      .update({
+        status: status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("transaction_id", transactionId)
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .update(updateData)
-      .eq('transaction_id', id)
-      .select()
-      .single()
+    if (error) throw error
 
-    if (error) {
-      console.error('Error updating transaction:', error)
-      throw error
-    }
-
-    console.log('Transaction updated successfully:', data)
-    return NextResponse.json(data)
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating transaction:', error)
-    return NextResponse.json(
-      { error: 'Failed to update transaction', details: error },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 })
   }
 }

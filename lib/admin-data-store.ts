@@ -1,266 +1,284 @@
-import { create } from 'zustand'
+import { supabase } from "./supabase"
 
 interface AdminData {
   users: any[]
   transactions: any[]
   currencies: any[]
   exchangeRates: any[]
-  settings: any[]
-  isLoading: boolean
-  lastFetch: number
+  baseCurrency: string
+  stats: {
+    totalUsers: number
+    activeUsers: number
+    verifiedUsers: number
+    totalTransactions: number
+    totalVolume: number
+    pendingTransactions: number
+  }
+  recentActivity: any[]
+  currencyPairs: any[]
+  lastUpdated: number
 }
 
-interface AdminDataStore extends AdminData {
-  fetchData: () => Promise<void>
-  updateUser: (userId: string, updates: any) => Promise<void>
-  updateTransaction: (transactionId: string, updates: any) => Promise<void>
-  updateCurrencyStatus: (currencyId: string, status: string) => Promise<void>
-  addCurrency: (currency: any) => Promise<void>
-  deleteCurrency: (currencyId: string) => Promise<void>
-  updateExchangeRates: (rates: any[]) => Promise<void>
-  forceRefresh: () => Promise<void>
-}
+class AdminDataStore {
+  private data: AdminData | null = null
+  private loading = false
+  private refreshInterval: NodeJS.Timeout | null = null
+  private listeners: Set<() => void> = new Set()
+  private initialized = false
 
-const CACHE_DURATION = 30000 // 30 seconds
+  constructor() {
+    // Preload data immediately when store is created
+    this.initialize()
+  }
 
-export const useAdminDataStore = create<AdminDataStore>((set, get) => ({
-  users: [],
-  transactions: [],
-  currencies: [],
-  exchangeRates: [],
-  settings: [],
-  isLoading: false,
-  lastFetch: 0,
+  private async initialize() {
+    if (this.initialized) return
+    this.initialized = true
 
-  fetchData: async () => {
-    const now = Date.now()
-    const { lastFetch, isLoading } = get()
-    
-    // Skip if already loading or data is fresh
-    if (isLoading || (now - lastFetch < CACHE_DURATION)) {
-      return
-    }
+    // Start loading data immediately
+    this.loadData().catch(console.error)
+    this.startAutoRefresh()
+  }
 
-    set({ isLoading: true })
-    
+  subscribe(callback: () => void) {
+    this.listeners.add(callback)
+    return () => this.listeners.delete(callback)
+  }
+
+  private notify() {
+    this.listeners.forEach((callback) => callback())
+  }
+
+  getData(): AdminData | null {
+    return this.data
+  }
+
+  isLoading(): boolean {
+    return this.loading && !this.data
+  }
+
+  private async loadData(): Promise<AdminData> {
+    this.loading = true
+
     try {
-      console.log('Fetching admin data from API...')
-      
-      const response = await fetch('/api/admin/data', {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      })
-      
+      // Fetch data from server-side API route
+      const response = await fetch('/api/admin/data')
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      console.log('Admin data fetched:', data)
-      
-      set({
-        users: data.users || [],
-        transactions: data.transactions || [],
-        currencies: data.currencies || [],
-        exchangeRates: data.exchangeRates || [],
-        settings: data.settings || [],
-        lastFetch: now,
-        isLoading: false
-      })
-    } catch (error) {
-      console.error('Error fetching admin data:', error)
-      set({ isLoading: false })
-      throw error
-    }
-  },
-
-  forceRefresh: async () => {
-    set({ lastFetch: 0 }) // Reset cache
-    await get().fetchData()
-  },
-
-  updateUser: async (userId: string, updates: any) => {
-    try {
-      console.log('Updating user:', userId, updates)
-      
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error('Failed to fetch admin data')
       }
 
-      const result = await response.json()
-      console.log('User update result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
+      this.data = await response.json()
+      this.notify()
+      return this.data
     } catch (error) {
-      console.error('Error updating user:', error)
+      console.error('Error loading admin data:', error)
       throw error
+    } finally {
+      this.loading = false
     }
-  },
+  }
 
-  updateTransaction: async (transactionId: string, updates: any) => {
+  private startAutoRefresh() {
+    // Refresh data every 5 minutes in background
+    this.refreshInterval = setInterval(
+      () => {
+        this.loadData().catch(console.error)
+      },
+      5 * 60 * 1000,
+    )
+  }
+
+  async updateTransactionStatus(transactionId: string, newStatus: string) {
     try {
-      console.log('Updating transaction:', transactionId, updates)
-      
       const response = await fetch(`/api/admin/transactions/${transactionId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
         },
-        body: JSON.stringify(updates)
+        body: JSON.stringify({ status: newStatus }),
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error('Failed to update transaction status')
       }
 
-      const result = await response.json()
-      console.log('Transaction update result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
-    } catch (error) {
-      console.error('Error updating transaction:', error)
-      throw error
-    }
-  },
-
-  updateCurrencyStatus: async (currencyId: string, status: string) => {
-    try {
-      console.log('Updating currency status:', currencyId, status)
-      
-      const response = await fetch('/api/admin/rates', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({
-          type: 'currency_status',
-          id: currencyId,
-          data: { status }
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // Update local data
+      if (this.data) {
+        this.data.transactions = this.data.transactions.map((tx) =>
+          tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
+        )
+        this.notify()
       }
-
-      const result = await response.json()
-      console.log('Currency status update result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
     } catch (error) {
-      console.error('Error updating currency status:', error)
-      throw error
-    }
-  },
-
-  addCurrency: async (currency: any) => {
-    try {
-      console.log('Adding currency:', currency)
-      
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({
-          type: 'currency',
-          data: currency
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-      console.log('Currency add result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
-    } catch (error) {
-      console.error('Error adding currency:', error)
-      throw error
-    }
-  },
-
-  deleteCurrency: async (currencyId: string) => {
-    try {
-      console.log('Deleting currency:', currencyId)
-      
-      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-      console.log('Currency delete result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
-    } catch (error) {
-      console.error('Error deleting currency:', error)
-      throw error
-    }
-  },
-
-  updateExchangeRates: async (rates: any[]) => {
-    try {
-      console.log('Updating exchange rates:', rates)
-      
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({
-          type: 'exchange_rates',
-          data: rates
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-      console.log('Exchange rates update result:', result)
-      
-      // Force refresh data from server
-      await get().forceRefresh()
-      
-    } catch (error) {
-      console.error('Error updating exchange rates:', error)
       throw error
     }
   }
-}))
+
+  async updateUserStatus(userId: string, newStatus: string) {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user status')
+      }
+
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateUserVerification(userId: string, newStatus: string) {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ verification_status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user verification')
+      }
+
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) =>
+          user.id === userId ? { ...user, verification_status: newStatus } : user,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateCurrencyStatus(currencyId: string, newStatus: string) {
+    try {
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.currencies = this.data.currencies.map((currency) =>
+          currency.id === currencyId
+            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
+            : currency,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateExchangeRates(updates: any[]) {
+    try {
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
+      })
+
+      if (error) throw error
+
+      // Reload data to get fresh exchange rates
+      await this.loadData()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async addCurrency(currencyData: any) {
+    try {
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = [...this.data.currencies, newCurrency]
+        this.notify()
+      }
+
+      return newCurrency
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async deleteCurrency(currencyId: string) {
+    try {
+      const currency = this.data?.currencies.find((c) => c.id === currencyId)
+      if (!currency) return
+
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
+        this.data.exchangeRates = this.data.exchangeRates.filter(
+          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async updateCurrencies() {
+    try {
+      // Reload all data to get fresh currencies and exchange rates
+      await this.loadData()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // Method to refresh data when base currency changes
+  async refreshDataForBaseCurrencyChange() {
+    try {
+      await this.loadData()
+    } catch (error) {
+      console.error("Error refreshing data for base currency change:", error)
+    }
+  }
+
+  destroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval)
+    }
+    this.listeners.clear()
+  }
+}
+
+export const adminDataStore = new AdminDataStore()

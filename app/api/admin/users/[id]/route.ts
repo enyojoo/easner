@@ -1,40 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params
-    const updates = await request.json()
-    
-    console.log('Updating user:', id, updates)
-    
-    const supabase = createServerClient()
-    
-    const { data, error } = await supabase
-      .from('users')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single()
+    const body = await request.json()
+    const userId = params.id
 
-    if (error) {
-      console.error('Error updating user:', error)
-      throw error
-    }
+    const { error } = await supabaseAdmin
+      .from("users")
+      .update(body)
+      .eq("id", userId)
 
-    console.log('User updated successfully:', data)
-    return NextResponse.json(data)
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating user:', error)
-    return NextResponse.json(
-      { error: 'Failed to update user', details: error },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
   }
 }
