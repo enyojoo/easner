@@ -1,4 +1,10 @@
-import { supabase } from "./supabase"
+import { createClient } from '@supabase/supabase-js'
+
+// Client for real-time subscriptions
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface AdminData {
   users: any[]
@@ -25,9 +31,9 @@ class AdminDataStore {
   private refreshInterval: NodeJS.Timeout | null = null
   private listeners: Set<() => void> = new Set()
   private initialized = false
+  private subscriptions: any[] = []
 
   constructor() {
-    // Preload data immediately when store is created
     this.initialize()
   }
 
@@ -35,9 +41,66 @@ class AdminDataStore {
     if (this.initialized) return
     this.initialized = true
 
-    // Start loading data immediately
-    this.loadData().catch(console.error)
+    // Load initial data
+    await this.forceRefresh()
+    
+    // Set up real-time subscriptions
+    this.setupRealtimeSubscriptions()
+    
+    // Reduced refresh interval since we have real-time updates
     this.startAutoRefresh()
+  }
+
+  private setupRealtimeSubscriptions() {
+    // Subscribe to transaction changes
+    const transactionSub = supabase
+      .channel('admin-transactions')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          console.log('Transaction change detected, refreshing data...')
+          this.forceRefresh()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to user changes
+    const userSub = supabase
+      .channel('admin-users')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        () => {
+          console.log('User change detected, refreshing data...')
+          this.forceRefresh()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to currency changes
+    const currencySub = supabase
+      .channel('admin-currencies')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'currencies' },
+        () => {
+          console.log('Currency change detected, refreshing data...')
+          this.forceRefresh()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to exchange rate changes
+    const rateSub = supabase
+      .channel('admin-rates')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'exchange_rates' },
+        () => {
+          console.log('Exchange rate change detected, refreshing data...')
+          this.forceRefresh()
+        }
+      )
+      .subscribe()
+
+    this.subscriptions = [transactionSub, userSub, currencySub, rateSub]
   }
 
   subscribe(callback: () => void) {
@@ -58,20 +121,39 @@ class AdminDataStore {
   }
 
   private async loadData(): Promise<AdminData> {
+    try {
+      // Add timestamp to prevent caching
+      const timestamp = Date.now()
+      const response = await fetch(`/api/admin/data?t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error loading admin data:', error)
+      throw error
+    }
+  }
+
+  async forceRefresh(): Promise<AdminData> {
     this.loading = true
 
     try {
-      // Fetch data from server-side API route
-      const response = await fetch('/api/admin/data')
-      if (!response.ok) {
-        throw new Error('Failed to fetch admin data')
-      }
-
-      this.data = await response.json()
+      const newData = await this.loadData()
+      this.data = newData
       this.notify()
-      return this.data
+      return newData
     } catch (error) {
-      console.error('Error loading admin data:', error)
+      console.error('Error refreshing admin data:', error)
       throw error
     } finally {
       this.loading = false
@@ -79,12 +161,12 @@ class AdminDataStore {
   }
 
   private startAutoRefresh() {
-    // Refresh data every 5 minutes in background
+    // Reduced to 2 minutes since we have real-time updates
     this.refreshInterval = setInterval(
       () => {
-        this.loadData().catch(console.error)
+        this.forceRefresh().catch(console.error)
       },
-      5 * 60 * 1000,
+      2 * 60 * 1000,
     )
   }
 
@@ -102,14 +184,10 @@ class AdminDataStore {
         throw new Error('Failed to update transaction status')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.transactions = this.data.transactions.map((tx) =>
-          tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
-        )
-        this.notify()
-      }
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating transaction status:', error)
       throw error
     }
   }
@@ -128,12 +206,10 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
-        this.notify()
-      }
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating user status:', error)
       throw error
     }
   }
@@ -152,124 +228,126 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.users = this.data.users.map((user) =>
-          user.id === userId ? { ...user, verification_status: newStatus } : user,
-        )
-        this.notify()
-      }
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating user verification:', error)
       throw error
     }
   }
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      const { error } = await supabase
-        .from("currencies")
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", currencyId)
+      const response = await fetch('/api/admin/rates', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          type: 'currency_status',
+          id: currencyId,
+          data: { status: newStatus }
+        }),
+      })
 
-      if (error) throw error
-
-      // Update local data immediately after successful database update
-      if (this.data) {
-        this.data.currencies = this.data.currencies.map((currency) =>
-          currency.id === currencyId
-            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
-            : currency,
-        )
-        this.notify()
+      if (!response.ok) {
+        throw new Error('Failed to update currency status')
       }
+
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating currency status:', error)
       throw error
     }
   }
 
   async updateExchangeRates(updates: any[]) {
     try {
-      const { error } = await supabase.from("exchange_rates").upsert(updates, {
-        onConflict: "from_currency,to_currency",
-        ignoreDuplicates: false,
+      const response = await fetch('/api/admin/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          type: 'exchange_rates',
+          data: updates
+        }),
       })
 
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error('Failed to update exchange rates')
+      }
 
-      // Reload data to get fresh exchange rates
-      await this.loadData()
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating exchange rates:', error)
       throw error
     }
   }
 
   async addCurrency(currencyData: any) {
     try {
-      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+      const response = await fetch('/api/admin/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          type: 'currency',
+          data: currencyData
+        }),
+      })
 
-      if (error) throw error
-
-      // Update local data immediately
-      if (this.data) {
-        this.data.currencies = [...this.data.currencies, newCurrency]
-        this.notify()
+      if (!response.ok) {
+        throw new Error('Failed to add currency')
       }
+
+      const newCurrency = await response.json()
+
+      // Force immediate refresh
+      await this.forceRefresh()
 
       return newCurrency
     } catch (error) {
+      console.error('Error adding currency:', error)
       throw error
     }
   }
 
   async deleteCurrency(currencyId: string) {
     try {
-      const currency = this.data?.currencies.find((c) => c.id === currencyId)
-      if (!currency) return
+      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
+        method: 'DELETE',
+      })
 
-      // Delete exchange rates first
-      const { error: ratesError } = await supabase
-        .from("exchange_rates")
-        .delete()
-        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
-
-      if (ratesError) throw ratesError
-
-      // Delete currency
-      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
-
-      if (error) throw error
-
-      // Update local data immediately
-      if (this.data) {
-        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
-        this.data.exchangeRates = this.data.exchangeRates.filter(
-          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
-        )
-        this.notify()
+      if (!response.ok) {
+        throw new Error('Failed to delete currency')
       }
+
+      // Force immediate refresh
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error deleting currency:', error)
       throw error
     }
   }
 
   async updateCurrencies() {
     try {
-      // Reload all data to get fresh currencies and exchange rates
-      await this.loadData()
+      await this.forceRefresh()
     } catch (error) {
+      console.error('Error updating currencies:', error)
       throw error
     }
   }
 
-  // Method to refresh data when base currency changes
   async refreshDataForBaseCurrencyChange() {
     try {
-      await this.loadData()
+      await this.forceRefresh()
     } catch (error) {
-      console.error("Error refreshing data for base currency change:", error)
+      console.error('Error refreshing data for base currency change:', error)
     }
   }
 
@@ -277,6 +355,12 @@ class AdminDataStore {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
     }
+    
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => {
+      supabase.removeChannel(sub)
+    })
+    
     this.listeners.clear()
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Server-side admin client with service role
+// Server-side admin client with service role - bypasses RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -9,12 +9,22 @@ const supabaseAdmin = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    db: {
+      schema: 'public'
     }
   }
 )
 
 export async function GET(request: NextRequest) {
   try {
+    // Add cache-busting headers
+    const headers = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+
     // Load all data in parallel using service role client
     const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrencyResult] = await Promise.all([
       loadUsers(),
@@ -40,7 +50,7 @@ export async function GET(request: NextRequest) {
       lastUpdated: Date.now(),
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(data, { headers })
   } catch (error) {
     console.error('Error loading admin data:', error)
     return NextResponse.json({ error: 'Failed to load admin data' }, { status: 500 })
@@ -48,9 +58,15 @@ export async function GET(request: NextRequest) {
 }
 
 async function loadUsers() {
-  const { data: users, error } = await supabaseAdmin.from("users").select("*").order("created_at", { ascending: false })
+  const { data: users, error } = await supabaseAdmin
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    console.error('Error loading users:', error)
+    throw error
+  }
 
   // Calculate transaction stats for each user
   const usersWithStats = await Promise.all(
@@ -67,20 +83,19 @@ async function loadUsers() {
         // Convert to NGN based on actual currency
         switch (tx.send_currency) {
           case "RUB":
-            amount = amount * 0.011 // RUB to NGN rate
+            amount = amount * 0.011
             break
           case "USD":
-            amount = amount * 1650 // USD to NGN rate
+            amount = amount * 1650
             break
           case "EUR":
-            amount = amount * 1750 // EUR to NGN rate
+            amount = amount * 1750
             break
           case "GBP":
-            amount = amount * 2000 // GBP to NGN rate
+            amount = amount * 2000
             break
           case "NGN":
           default:
-            // Already in NGN, no conversion needed
             break
         }
 
@@ -109,34 +124,54 @@ async function loadTransactions() {
     .order("created_at", { ascending: false })
     .limit(200)
 
-  if (error) throw error
+  if (error) {
+    console.error('Error loading transactions:', error)
+    throw error
+  }
   return data || []
 }
 
 async function loadCurrencies() {
-  const { data, error } = await supabaseAdmin.from("currencies").select("*").order("code")
-  if (error) throw error
+  const { data, error } = await supabaseAdmin
+    .from("currencies")
+    .select("*")
+    .order("code")
+    
+  if (error) {
+    console.error('Error loading currencies:', error)
+    throw error
+  }
   return data || []
 }
 
 async function loadExchangeRates() {
-  const { data, error } = await supabaseAdmin.from("exchange_rates").select(`
-    *,
-    from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
-    to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
-  `)
-  if (error) throw error
+  const { data, error } = await supabaseAdmin
+    .from("exchange_rates")
+    .select(`
+      *,
+      from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+      to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+    `)
+    
+  if (error) {
+    console.error('Error loading exchange rates:', error)
+    throw error
+  }
   return data || []
 }
 
 async function getAdminBaseCurrency(): Promise<string> {
   try {
-    const { data, error } = await supabaseAdmin.from("system_settings").select("value").eq("key", "base_currency").single()
+    const { data, error } = await supabaseAdmin
+      .from("system_settings")
+      .select("value")
+      .eq("key", "base_currency")
+      .single()
 
-    if (error || !data) return "NGN" // Default to NGN
+    if (error || !data) return "NGN"
     return data.value
   } catch {
-    return "NGN" // Default fallback
+    return "NGN"
   }
 }
 
@@ -148,12 +183,10 @@ function calculateStats(users: any[], transactions: any[], baseCurrency: string)
   const totalTransactions = transactions.length
   const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
 
-  // Calculate total volume in admin's base currency
   const completedTransactions = transactions.filter((t) => t.status === "completed")
   const totalVolume = completedTransactions.reduce((sum, tx) => {
     let amount = Number(tx.send_amount)
     
-    // Simple conversion for now
     switch (tx.send_currency) {
       case "RUB":
         amount = amount * 0.011

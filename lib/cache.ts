@@ -7,8 +7,8 @@ interface CacheItem<T> {
 
 class DataCache {
   private cache = new Map<string, CacheItem<any>>()
-  private readonly DEFAULT_TTL = 2 * 60 * 1000 // 2 minutes
-  private readonly STALE_WHILE_REVALIDATE_TTL = 5 * 60 * 1000 // 5 minutes
+  private readonly DEFAULT_TTL = 30 * 1000 // Reduced to 30 seconds
+  private readonly STALE_WHILE_REVALIDATE_TTL = 2 * 60 * 1000 // Reduced to 2 minutes
   private refreshPromises = new Map<string, Promise<any>>()
 
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
@@ -30,7 +30,7 @@ class DataCache {
     const now = Date.now()
     const age = now - item.timestamp
 
-    // If data is expired, remove it
+    // If data is expired, remove it immediately
     if (age > this.STALE_WHILE_REVALIDATE_TTL) {
       this.cache.delete(key)
       return null
@@ -53,12 +53,10 @@ class DataCache {
     return age > item.ttl
   }
 
-  // Get data and trigger background refresh if stale
   getWithRefresh<T>(key: string, refreshFn: () => Promise<T>): T | null {
     const data = this.get<T>(key)
 
     if (data && this.isStale(key) && !this.refreshPromises.has(key)) {
-      // Background refresh for stale data
       this.refreshPromises.set(
         key,
         refreshFn()
@@ -68,7 +66,7 @@ class DataCache {
           })
           .catch((error) => {
             console.error(`Background refresh failed for ${key}:`, error)
-            return data // Return stale data on error
+            return data
           })
           .finally(() => {
             this.refreshPromises.delete(key)
@@ -99,7 +97,6 @@ class DataCache {
     this.refreshPromises.clear()
   }
 
-  // Force refresh data
   async forceRefresh<T>(key: string, refreshFn: () => Promise<T>): Promise<T> {
     this.invalidate(key)
     const data = await refreshFn()
@@ -107,7 +104,12 @@ class DataCache {
     return data
   }
 
-  // Get cache stats for debugging
+  // Aggressive cache clearing for admin operations
+  clearAll(): void {
+    console.log('Clearing all cache data')
+    this.clear()
+  }
+
   getStats() {
     return {
       size: this.cache.size,
@@ -119,7 +121,7 @@ class DataCache {
 
 export const dataCache = new DataCache()
 
-// Cache keys with optimized TTLs
+// Cache keys with shorter TTLs
 export const CACHE_KEYS = {
   CURRENCIES: "currencies",
   EXCHANGE_RATES: "exchange_rates",
