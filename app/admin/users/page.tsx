@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp, Loader2 } from 'lucide-react'
+import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
@@ -29,7 +29,6 @@ interface UserData {
   last_login?: string
   totalTransactions: number
   totalVolume: number
-  recentTransactions?: TransactionData[]
 }
 
 interface TransactionData {
@@ -42,8 +41,6 @@ interface TransactionData {
   status: string
   recipient: {
     full_name: string
-    bank_name?: string
-    account_number?: string
   }
 }
 
@@ -55,20 +52,16 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
-  const [loadingUser, setLoadingUser] = useState(false)
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const fetchUserDetails = async (userId: string) => {
-    setLoadingUser(true)
     try {
-      const freshUser = await adminDataStore.getFreshUser(userId)
-      setSelectedUser(freshUser)
-      setUserTransactions(freshUser.recentTransactions || [])
+      const userData = await adminDataStore.getFreshUser(userId)
+      setSelectedUser(userData.user)
+      setUserTransactions(userData.transactions || [])
     } catch (err) {
       console.error("Error fetching user details:", err)
       setUserTransactions([])
-    } finally {
-      setLoadingUser(false)
     }
   }
 
@@ -135,7 +128,6 @@ export default function AdminUsersPage() {
   }
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
-    setUpdatingStatus(userId)
     try {
       await adminDataStore.updateUserStatus(userId, newStatus)
       
@@ -145,13 +137,10 @@ export default function AdminUsersPage() {
       }
     } catch (err) {
       console.error("Error updating user status:", err)
-    } finally {
-      setUpdatingStatus(null)
     }
   }
 
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
-    setUpdatingStatus(userId)
     try {
       await adminDataStore.updateUserVerification(userId, newStatus)
       
@@ -161,8 +150,6 @@ export default function AdminUsersPage() {
       }
     } catch (err) {
       console.error("Error updating user verification:", err)
-    } finally {
-      setUpdatingStatus(null)
     }
   }
 
@@ -199,8 +186,9 @@ export default function AdminUsersPage() {
     a.click()
   }
 
-  const handleUserSelect = (user: UserData) => {
-    fetchUserDetails(user.id)
+  const handleUserSelect = async (user: UserData) => {
+    setDialogOpen(true)
+    await fetchUserDetails(user.id)
   }
 
   // Registration analytics data
@@ -445,241 +433,14 @@ export default function AdminUsersPage() {
                     <TableCell className="font-medium">{formatCurrency(user.totalVolume, "NGN")}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => handleUserSelect(user)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>
-                                User Details - {selectedUser?.first_name} {selectedUser?.last_name}
-                              </DialogTitle>
-                            </DialogHeader>
-                            {loadingUser ? (
-                              <div className="flex items-center justify-center py-8">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                                <span className="ml-2">Loading user details...</span>
-                              </div>
-                            ) : selectedUser ? (
-                              <div className="space-y-6">
-                                {/* User Information */}
-                                <div className="grid grid-cols-2 gap-6">
-                                  <div className="space-y-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Personal Information</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                          <User className="h-4 w-4 text-gray-400" />
-                                          <span>
-                                            {selectedUser.first_name} {selectedUser.last_name}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Mail className="h-4 w-4 text-gray-400" />
-                                          <span>{selectedUser.email}</span>
-                                        </div>
-                                        {selectedUser.phone && (
-                                          <div className="flex items-center gap-2">
-                                            <Phone className="h-4 w-4 text-gray-400" />
-                                            <span>{selectedUser.phone}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Account Status</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-sm">Status:</span>
-                                          {getStatusBadge(selectedUser.status)}
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-sm">Verification:</span>
-                                          {getVerificationBadge(selectedUser.verification_status)}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="space-y-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Account Details</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Registration:</span>
-                                          <span className="text-sm">
-                                            {new Date(selectedUser.created_at).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                        {selectedUser.last_login && (
-                                          <div className="flex justify-between">
-                                            <span className="text-sm text-gray-600">Last Login:</span>
-                                            <span className="text-sm">
-                                              {new Date(selectedUser.last_login).toLocaleDateString()}
-                                            </span>
-                                          </div>
-                                        )}
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Base Currency:</span>
-                                          <span className="text-sm font-medium">{selectedUser.base_currency}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-gray-600">Transaction Summary</label>
-                                      <div className="mt-2 space-y-2">
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Total Transactions:</span>
-                                          <span className="font-medium">{selectedUser.totalTransactions}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-sm text-gray-600">Total Volume:</span>
-                                          <span className="font-medium">
-                                            {formatCurrency(selectedUser.totalVolume, "NGN")}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Transaction History */}
-                                <div>
-                                  <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
-                                  <div className="mt-2 max-h-64 overflow-y-auto">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>Transaction ID</TableHead>
-                                          <TableHead>Date</TableHead>
-                                          <TableHead>Currency Pair</TableHead>
-                                          <TableHead>Amount</TableHead>
-                                          <TableHead>Status</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {userTransactions.map((transaction) => (
-                                          <TableRow key={transaction.transaction_id}>
-                                            <TableCell className="font-mono text-sm">
-                                              {transaction.transaction_id}
-                                            </TableCell>
-                                            <TableCell>
-                                              {new Date(transaction.created_at).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell>
-                                              {transaction.send_currency} → {transaction.receive_currency}
-                                            </TableCell>
-                                            <TableCell>
-                                              <div>
-                                                <div className="font-medium">
-                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
-                                                </div>
-                                                <div className="text-sm text-gray-500">
-                                                  →{" "}
-                                                  {formatCurrency(
-                                                    transaction.receive_amount,
-                                                    transaction.receive_currency,
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </TableCell>
-                                            <TableCell>
-                                              <Badge
-                                                className={
-                                                  transaction.status === "completed"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : transaction.status === "processing"
-                                                      ? "bg-yellow-100 text-yellow-800"
-                                                      : "bg-gray-100 text-gray-800"
-                                                }
-                                              >
-                                                {transaction.status}
-                                              </Badge>
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                        {userTransactions.length === 0 && (
-                                          <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                                              No transactions found
-                                            </TableCell>
-                                          </TableRow>
-                                        )}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="border-t pt-4">
-                                  <label className="text-sm font-medium text-gray-600">Account Actions</label>
-                                  <div className="flex gap-2 mt-2">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedUser.id, "active")}
-                                      disabled={selectedUser.status === "active" || updatingStatus === selectedUser.id}
-                                    >
-                                      {updatingStatus === selectedUser.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                      ) : null}
-                                      Activate Account
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleStatusUpdate(selectedUser.id, "suspended")}
-                                      disabled={selectedUser.status === "suspended" || updatingStatus === selectedUser.id}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      {updatingStatus === selectedUser.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                      ) : null}
-                                      Suspend Account
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleVerificationUpdate(selectedUser.id, "verified")}
-                                      disabled={selectedUser.verification_status === "verified" || updatingStatus === selectedUser.id}
-                                    >
-                                      {updatingStatus === selectedUser.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                      ) : null}
-                                      Verify User
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleVerificationUpdate(selectedUser.id, "rejected")}
-                                      disabled={selectedUser.verification_status === "rejected" || updatingStatus === selectedUser.id}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      {updatingStatus === selectedUser.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                      ) : null}
-                                      Reject Verification
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-center py-4 text-gray-500">
-                                No user selected
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                        <Button variant="outline" size="sm" onClick={() => handleUserSelect(user)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={updatingStatus === user.id}>
-                              {updatingStatus === user.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <MoreHorizontal className="h-4 w-4" />
-                              )}
+                            <Button variant="outline" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -712,6 +473,208 @@ export default function AdminUsersPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* User Details Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>
+                User Details - {selectedUser?.first_name} {selectedUser?.last_name}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedUser && (
+              <div className="space-y-6">
+                {/* User Information */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Personal Information</label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span>
+                            {selectedUser.first_name} {selectedUser.last_name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <span>{selectedUser.email}</span>
+                        </div>
+                        {selectedUser.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span>{selectedUser.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Account Status</label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Status:</span>
+                          {getStatusBadge(selectedUser.status)}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Verification:</span>
+                          {getVerificationBadge(selectedUser.verification_status)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Account Details</label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Registration:</span>
+                          <span className="text-sm">
+                            {new Date(selectedUser.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {selectedUser.last_login && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Last Login:</span>
+                            <span className="text-sm">
+                              {new Date(selectedUser.last_login).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Base Currency:</span>
+                          <span className="text-sm font-medium">{selectedUser.base_currency}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Transaction Summary</label>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Total Transactions:</span>
+                          <span className="font-medium">{userTransactions.filter(t => t.status === 'completed').length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Total Volume:</span>
+                          <span className="font-medium">
+                            {formatCurrency(selectedUser.totalVolume, "NGN")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Transactions */}
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
+                  <div className="mt-2 max-h-64 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Transaction ID</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Currency Pair</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {userTransactions.map((transaction) => (
+                          <TableRow key={transaction.transaction_id}>
+                            <TableCell className="font-mono text-sm">
+                              {transaction.transaction_id}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(transaction.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {transaction.send_currency} → {transaction.receive_currency}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">
+                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  →{" "}
+                                  {formatCurrency(
+                                    transaction.receive_amount,
+                                    transaction.receive_currency,
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  transaction.status === "completed"
+                                    ? "bg-green-100 text-green-800"
+                                    : transaction.status === "processing"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-gray-100 text-gray-800"
+                                }
+                              >
+                                {transaction.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {userTransactions.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                              No transactions found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-gray-600">Account Actions</label>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(selectedUser.id, "active")}
+                      disabled={selectedUser.status === "active"}
+                    >
+                      Activate Account
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(selectedUser.id, "suspended")}
+                      disabled={selectedUser.status === "suspended"}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Suspend Account
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleVerificationUpdate(selectedUser.id, "verified")}
+                      disabled={selectedUser.verification_status === "verified"}
+                    >
+                      Verify User
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleVerificationUpdate(selectedUser.id, "rejected")}
+                      disabled={selectedUser.verification_status === "rejected"}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Reject Verification
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminDashboardLayout>
   )
