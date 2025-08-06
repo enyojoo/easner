@@ -1,21 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { NextRequest, NextResponse } from 'next/response'
+import { createAdminClient } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { type, data } = body
+    const supabaseAdmin = createAdminClient()
 
     console.log('Admin rates POST:', type, data)
 
@@ -41,7 +31,12 @@ export async function POST(request: NextRequest) {
         }
         
         console.log('Currency created:', newCurrency)
-        return NextResponse.json(newCurrency)
+        return NextResponse.json(newCurrency, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
 
       case 'exchange_rates':
         const { error: ratesError } = await supabaseAdmin
@@ -60,7 +55,12 @@ export async function POST(request: NextRequest) {
         }
         
         console.log('Exchange rates updated')
-        return NextResponse.json({ success: true })
+        return NextResponse.json({ success: true }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
 
       default:
         return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
@@ -75,26 +75,36 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
     const { type, id, data } = body
+    const supabaseAdmin = createAdminClient()
 
     console.log('Admin rates PATCH:', type, id, data)
 
     switch (type) {
       case 'currency_status':
-        const { error: statusError } = await supabaseAdmin
+        const { data: updatedCurrency, error: statusError } = await supabaseAdmin
           .from('currencies')
           .update({ 
             status: data.status,
             updated_at: new Date().toISOString()
           })
           .eq('id', id)
+          .select()
         
         if (statusError) {
           console.error('Currency status update error:', statusError)
           throw statusError
         }
         
-        console.log('Currency status updated')
-        return NextResponse.json({ success: true })
+        console.log('Currency status updated:', updatedCurrency)
+        return NextResponse.json({ 
+          success: true, 
+          data: updatedCurrency?.[0] 
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
 
       default:
         return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
@@ -109,6 +119,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const supabaseAdmin = createAdminClient()
 
     if (!id) {
       return NextResponse.json({ error: 'ID parameter required' }, { status: 400 })
@@ -151,7 +162,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log('Currency deleted successfully')
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    })
   } catch (error) {
     console.error('Error deleting currency:', error)
     return NextResponse.json({ error: 'Failed to delete currency' }, { status: 500 })

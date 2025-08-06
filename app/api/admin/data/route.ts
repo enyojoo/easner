@@ -1,28 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Server-side admin client with service role
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import { createAdminClient } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
+    const supabaseAdmin = createAdminClient()
+    
+    console.log('Loading admin data...')
+
     // Load all data in parallel using service role client
     const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrencyResult] = await Promise.all([
-      loadUsers(),
-      loadTransactions(),
-      loadCurrencies(),
-      loadExchangeRates(),
-      getAdminBaseCurrency(),
+      loadUsers(supabaseAdmin),
+      loadTransactions(supabaseAdmin),
+      loadCurrencies(supabaseAdmin),
+      loadExchangeRates(supabaseAdmin),
+      getAdminBaseCurrency(supabaseAdmin),
     ])
+
+    console.log('Data loaded:', {
+      users: usersResult.length,
+      transactions: transactionsResult.length,
+      currencies: currenciesResult.length,
+      exchangeRates: exchangeRatesResult.length
+    })
 
     const stats = calculateStats(usersResult, transactionsResult, baseCurrencyResult)
     const recentActivity = processRecentActivity(transactionsResult.slice(0, 10))
@@ -40,17 +39,33 @@ export async function GET(request: NextRequest) {
       lastUpdated: Date.now(),
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+      }
+    })
   } catch (error) {
     console.error('Error loading admin data:', error)
     return NextResponse.json({ error: 'Failed to load admin data' }, { status: 500 })
   }
 }
 
-async function loadUsers() {
-  const { data: users, error } = await supabaseAdmin.from("users").select("*").order("created_at", { ascending: false })
+async function loadUsers(supabaseAdmin: any) {
+  console.log('Loading users...')
+  const { data: users, error } = await supabaseAdmin
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    console.error('Error loading users:', error)
+    throw error
+  }
+
+  console.log('Users loaded:', users?.length || 0)
 
   // Calculate transaction stats for each user
   const usersWithStats = await Promise.all(
@@ -98,7 +113,8 @@ async function loadUsers() {
   return usersWithStats
 }
 
-async function loadTransactions() {
+async function loadTransactions(supabaseAdmin: any) {
+  console.log('Loading transactions...')
   const { data, error } = await supabaseAdmin
     .from("transactions")
     .select(`
@@ -109,27 +125,46 @@ async function loadTransactions() {
     .order("created_at", { ascending: false })
     .limit(200)
 
-  if (error) throw error
+  if (error) {
+    console.error('Error loading transactions:', error)
+    throw error
+  }
+
+  console.log('Transactions loaded:', data?.length || 0)
   return data || []
 }
 
-async function loadCurrencies() {
+async function loadCurrencies(supabaseAdmin: any) {
+  console.log('Loading currencies...')
   const { data, error } = await supabaseAdmin.from("currencies").select("*").order("code")
-  if (error) throw error
+  
+  if (error) {
+    console.error('Error loading currencies:', error)
+    throw error
+  }
+
+  console.log('Currencies loaded:', data?.length || 0)
   return data || []
 }
 
-async function loadExchangeRates() {
+async function loadExchangeRates(supabaseAdmin: any) {
+  console.log('Loading exchange rates...')
   const { data, error } = await supabaseAdmin.from("exchange_rates").select(`
     *,
     from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
     to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
   `)
-  if (error) throw error
+  
+  if (error) {
+    console.error('Error loading exchange rates:', error)
+    throw error
+  }
+
+  console.log('Exchange rates loaded:', data?.length || 0)
   return data || []
 }
 
-async function getAdminBaseCurrency(): Promise<string> {
+async function getAdminBaseCurrency(supabaseAdmin: any): Promise<string> {
   try {
     const { data, error } = await supabaseAdmin.from("system_settings").select("value").eq("key", "base_currency").single()
 
