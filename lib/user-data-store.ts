@@ -78,10 +78,10 @@ class UserDataStore {
         setTimeout(() => reject(new Error("Data loading timeout")), 15000),
       )
 
-      // Load all data with timeout protection - using service calls that respect RLS
+      // Load all data with timeout protection
       const dataPromise = Promise.allSettled([
-        this.loadCurrenciesWithCache(),
-        this.loadExchangeRatesWithCache(),
+        currencyService.getAll(),
+        currencyService.getExchangeRates(),
         transactionService.getByUserId(userId, 20),
         recipientService.getByUserId(userId),
       ])
@@ -117,45 +117,6 @@ class UserDataStore {
     }
   }
 
-  // Cache currencies and exchange rates since they change less frequently
-  private currenciesCache: { data: any[], timestamp: number } | null = null
-  private exchangeRatesCache: { data: any[], timestamp: number } | null = null
-  private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-  private async loadCurrenciesWithCache() {
-    const now = Date.now()
-    
-    if (this.currenciesCache && (now - this.currenciesCache.timestamp) < this.CACHE_TTL) {
-      return this.currenciesCache.data
-    }
-
-    try {
-      const currencies = await currencyService.getAll()
-      this.currenciesCache = { data: currencies, timestamp: now }
-      return currencies
-    } catch (error) {
-      console.error("Error loading currencies:", error)
-      return this.currenciesCache?.data || []
-    }
-  }
-
-  private async loadExchangeRatesWithCache() {
-    const now = Date.now()
-    
-    if (this.exchangeRatesCache && (now - this.exchangeRatesCache.timestamp) < this.CACHE_TTL) {
-      return this.exchangeRatesCache.data
-    }
-
-    try {
-      const exchangeRates = await currencyService.getExchangeRates()
-      this.exchangeRatesCache = { data: exchangeRates, timestamp: now }
-      return exchangeRates
-    } catch (error) {
-      console.error("Error loading exchange rates:", error)
-      return this.exchangeRatesCache?.data || []
-    }
-  }
-
   private isDataFresh(): boolean {
     const oneMinute = 60 * 1000
     return Date.now() - this.data.lastUpdated < oneMinute
@@ -166,7 +127,7 @@ class UserDataStore {
       clearInterval(this.refreshInterval)
     }
 
-    // Auto refresh every 30 seconds for more real-time updates
+    // Auto refresh every minute
     this.refreshInterval = setInterval(
       async () => {
         try {
@@ -179,7 +140,7 @@ class UserDataStore {
           console.error("Background refresh error:", error)
         }
       },
-      30 * 1000, // 30 seconds
+      60 * 1000, // 1 minute
     )
   }
 
@@ -254,16 +215,7 @@ class UserDataStore {
   // Force refresh all data
   async forceRefresh(userId: string) {
     this.updateActivity()
-    // Clear caches to force fresh data
-    this.currenciesCache = null
-    this.exchangeRatesCache = null
     return await this.loadData(userId)
-  }
-
-  // Invalidate caches when data changes
-  invalidateCaches() {
-    this.currenciesCache = null
-    this.exchangeRatesCache = null
   }
 
   cleanup() {
@@ -278,8 +230,6 @@ class UserDataStore {
     this.listeners.clear()
     this.currentUserId = null
     this.loadingPromise = null
-    this.currenciesCache = null
-    this.exchangeRatesCache = null
   }
 }
 

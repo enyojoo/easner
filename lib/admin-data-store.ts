@@ -62,13 +62,7 @@ class AdminDataStore {
 
     try {
       // Fetch data from server-side API route
-      const response = await fetch('/api/admin/data', {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      })
-      
+      const response = await fetch('/api/admin/data')
       if (!response.ok) {
         throw new Error('Failed to fetch admin data')
       }
@@ -85,18 +79,13 @@ class AdminDataStore {
   }
 
   private startAutoRefresh() {
-    // Refresh data every 30 seconds for real-time updates
+    // Refresh data every 5 minutes in background
     this.refreshInterval = setInterval(
       () => {
         this.loadData().catch(console.error)
       },
-      30 * 1000, // 30 seconds
+      5 * 60 * 1000,
     )
-  }
-
-  // Force refresh data immediately
-  async forceRefresh() {
-    return await this.loadData()
   }
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
@@ -113,8 +102,13 @@ class AdminDataStore {
         throw new Error('Failed to update transaction status')
       }
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Update local data
+      if (this.data) {
+        this.data.transactions = this.data.transactions.map((tx) =>
+          tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
+        )
+        this.notify()
+      }
     } catch (error) {
       throw error
     }
@@ -134,8 +128,11 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
+        this.notify()
+      }
     } catch (error) {
       throw error
     }
@@ -155,8 +152,13 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) =>
+          user.id === userId ? { ...user, verification_status: newStatus } : user,
+        )
+        this.notify()
+      }
     } catch (error) {
       throw error
     }
@@ -164,22 +166,25 @@ class AdminDataStore {
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'currency_status',
-          id: currencyId,
-          data: { status: newStatus }
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
         })
-      })
+        .eq("id", currencyId)
 
-      if (!response.ok) throw new Error('Failed to update currency status')
+      if (error) throw error
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.currencies = this.data.currencies.map((currency) =>
+          currency.id === currencyId
+            ? { ...currency, status: newStatus, updated_at: new Date().toISOString() }
+            : currency,
+        )
+        this.notify()
+      }
     } catch (error) {
       throw error
     }
@@ -187,21 +192,15 @@ class AdminDataStore {
 
   async updateExchangeRates(updates: any[]) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'exchange_rates',
-          data: updates
-        })
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+        onConflict: "from_currency,to_currency",
+        ignoreDuplicates: false,
       })
 
-      if (!response.ok) throw new Error('Failed to update exchange rates')
+      if (error) throw error
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Reload data to get fresh exchange rates
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -209,23 +208,15 @@ class AdminDataStore {
 
   async addCurrency(currencyData: any) {
     try {
-      const response = await fetch('/api/admin/rates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'currency',
-          data: currencyData
-        })
-      })
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
 
-      if (!response.ok) throw new Error('Failed to add currency')
+      if (error) throw error
 
-      const newCurrency = await response.json()
-
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = [...this.data.currencies, newCurrency]
+        this.notify()
+      }
 
       return newCurrency
     } catch (error) {
@@ -235,14 +226,30 @@ class AdminDataStore {
 
   async deleteCurrency(currencyId: string) {
     try {
-      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
-        method: 'DELETE'
-      })
+      const currency = this.data?.currencies.find((c) => c.id === currencyId)
+      if (!currency) return
 
-      if (!response.ok) throw new Error('Failed to delete currency')
+      // Delete exchange rates first
+      const { error: ratesError } = await supabase
+        .from("exchange_rates")
+        .delete()
+        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
 
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      if (ratesError) throw ratesError
+
+      // Delete currency
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately
+      if (this.data) {
+        this.data.currencies = this.data.currencies.filter((c) => c.id !== currencyId)
+        this.data.exchangeRates = this.data.exchangeRates.filter(
+          (rate) => rate.from_currency !== currency.code && rate.to_currency !== currency.code,
+        )
+        this.notify()
+      }
     } catch (error) {
       throw error
     }
@@ -250,8 +257,8 @@ class AdminDataStore {
 
   async updateCurrencies() {
     try {
-      // Force refresh to get updated data
-      await this.forceRefresh()
+      // Reload all data to get fresh currencies and exchange rates
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -260,7 +267,7 @@ class AdminDataStore {
   // Method to refresh data when base currency changes
   async refreshDataForBaseCurrencyChange() {
     try {
-      await this.forceRefresh()
+      await this.loadData()
     } catch (error) {
       console.error("Error refreshing data for base currency change:", error)
     }
