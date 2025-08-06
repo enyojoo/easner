@@ -37,7 +37,7 @@ export const metadata: Metadata = {
    type: "website",
    images: [
      {
-       url: "https://cldup.com/MvXS1FWU2c.png",
+       url: "https://cldup.com/o8bbjNRTtm.png",
        width: 1200,
        height: 630,
        alt: "NOVAMONEY - Send Money Instantly",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
    title: "NOVAMONEY - Send Money Instantly",
    description: "Transfer money between supported currencies with the best exchange rates and zero fees",
    creator: "@novamoneyapp",
-   images: ["https://cldup.com/MvXS1FWU2c.png"],
+   images: ["https://cldup.com/o8bbjNRTtm.png"],
  },
  robots: {
    index: true,
