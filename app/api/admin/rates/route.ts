@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Server-side admin client with service role
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -14,23 +15,19 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { type, data } = body
+    const { type, data } = await request.json()
 
     switch (type) {
       case 'currency':
         const { data: newCurrency, error: currencyError } = await supabaseAdmin
           .from('currencies')
           .insert({
-            code: data.code.toUpperCase(),
-            name: data.name,
-            symbol: data.symbol,
-            flag_svg: data.flag_svg || `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
+            ...data,
             status: 'active'
           })
           .select()
           .single()
-        
+
         if (currencyError) throw currencyError
         return NextResponse.json(newCurrency)
 
@@ -41,43 +38,42 @@ export async function POST(request: NextRequest) {
             onConflict: 'from_currency,to_currency',
             ignoreDuplicates: false
           })
-        
+
         if (ratesError) throw ratesError
         return NextResponse.json({ success: true })
 
       default:
-        return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
+        return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Error creating rate data:', error)
-    return NextResponse.json({ error: 'Failed to create rate data' }, { status: 500 })
+    console.error('Error creating rates data:', error)
+    return NextResponse.json({ error: 'Failed to create rates data' }, { status: 500 })
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { type, id, data } = body
+    const { type, id, data } = await request.json()
 
     switch (type) {
       case 'currency_status':
         const { error: statusError } = await supabaseAdmin
           .from('currencies')
-          .update({ 
+          .update({
             status: data.status,
             updated_at: new Date().toISOString()
           })
           .eq('id', id)
-        
+
         if (statusError) throw statusError
         return NextResponse.json({ success: true })
 
       default:
-        return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
+        return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Error updating rate data:', error)
-    return NextResponse.json({ error: 'Failed to update rate data' }, { status: 500 })
+    console.error('Error updating rates data:', error)
+    return NextResponse.json({ error: 'Failed to update rates data' }, { status: 500 })
   }
 }
 
@@ -87,24 +83,23 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'ID parameter required' }, { status: 400 })
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
-    // Get currency info first
-    const { data: currency, error: getCurrencyError } = await supabaseAdmin
+    const currency = await supabaseAdmin
       .from('currencies')
       .select('code')
       .eq('id', id)
       .single()
-    
-    if (getCurrencyError) throw getCurrencyError
+
+    if (currency.error) throw currency.error
 
     // Delete exchange rates first
     const { error: ratesError } = await supabaseAdmin
       .from('exchange_rates')
       .delete()
-      .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
-    
+      .or(`from_currency.eq.${currency.data.code},to_currency.eq.${currency.data.code}`)
+
     if (ratesError) throw ratesError
 
     // Delete currency
@@ -112,7 +107,7 @@ export async function DELETE(request: NextRequest) {
       .from('currencies')
       .delete()
       .eq('id', id)
-    
+
     if (currencyError) throw currencyError
 
     return NextResponse.json({ success: true })
