@@ -10,28 +10,13 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Settings,
-  Mail,
-  Shield,
-  Save,
-  Edit,
-  Plus,
-  Trash2,
-  CreditCard,
-  QrCode,
-  Building2,
-  MoreHorizontal,
-  X,
-  Upload,
-} from "lucide-react"
+import { Settings, Mail, Shield, Save, Edit, Plus, Trash2, CreditCard, QrCode, Building2, MoreHorizontal, X, Upload, Loader2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { supabase } from "@/lib/supabase"
-import { adminDataStore } from "@/lib/admin-data-store"
+import { useAdminData } from "@/hooks/use-admin-data"
 
 interface SystemSetting {
   id: string
@@ -87,6 +72,7 @@ interface EmailTemplate {
 }
 
 export default function AdminSettingsPage() {
+  const { data } = useAdminData()
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([])
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
@@ -133,7 +119,7 @@ export default function AdminSettingsPage() {
     maintenanceMode: false,
     registrationEnabled: true,
     emailVerificationRequired: true,
-    baseCurrency: "NGN",
+    baseCurrency: "USD",
   })
 
   // Security settings derived from system settings
@@ -155,9 +141,15 @@ export default function AdminSettingsPage() {
     loadAllData()
   }, [])
 
+  useEffect(() => {
+    if (data?.currencies) {
+      setCurrencies(data.currencies)
+    }
+  }, [data])
+
   const loadAllData = async () => {
     try {
-      await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods(), loadEmailTemplates()])
+      await Promise.all([loadSystemSettings(), loadPaymentMethods(), loadEmailTemplates()])
     } catch (error) {
       console.error("Error loading data:", error)
     }
@@ -165,22 +157,17 @@ export default function AdminSettingsPage() {
 
   const loadSystemSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from("system_settings")
-        .select("*")
-        .eq("is_active", true)
-        .order("category", { ascending: true })
-
-      if (error) throw error
-
-      setSystemSettings(data || [])
+      const response = await fetch('/api/admin/system-settings')
+      if (!response.ok) throw new Error('Failed to fetch system settings')
+      
+      const settings = await response.json()
+      setSystemSettings(settings)
 
       // Update platform config from settings
-      const settings = data || []
       const newPlatformConfig = { ...platformConfig }
       const newSecuritySettings = { ...securitySettings }
 
-      settings.forEach((setting) => {
+      settings.forEach((setting: SystemSetting) => {
         switch (setting.key) {
           case "maintenance_mode":
             newPlatformConfig.maintenanceMode = setting.value === "true"
@@ -217,27 +204,13 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const loadCurrencies = async () => {
-    try {
-      const { data, error } = await supabase.from("currencies").select("*").order("code", { ascending: true })
-
-      if (error) throw error
-      setCurrencies(data || [])
-    } catch (error) {
-      console.error("Error loading currencies:", error)
-    }
-  }
-
   const loadPaymentMethods = async () => {
     try {
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .select("*")
-        .order("currency", { ascending: true })
-        .order("is_default", { ascending: false })
-
-      if (error) throw error
-      setPaymentMethods(data || [])
+      const response = await fetch('/api/admin/payment-methods')
+      if (!response.ok) throw new Error('Failed to fetch payment methods')
+      
+      const methods = await response.json()
+      setPaymentMethods(methods)
     } catch (error) {
       console.error("Error loading payment methods:", error)
     }
@@ -245,13 +218,11 @@ export default function AdminSettingsPage() {
 
   const loadEmailTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .order("template_type", { ascending: true })
-
-      if (error) throw error
-      setEmailTemplates(data || [])
+      const response = await fetch('/api/admin/email-templates')
+      if (!response.ok) throw new Error('Failed to fetch email templates')
+      
+      const templates = await response.json()
+      setEmailTemplates(templates)
     } catch (error) {
       console.error("Error loading email templates:", error)
     }
@@ -259,21 +230,23 @@ export default function AdminSettingsPage() {
 
   const updateSystemSetting = async (key: string, value: any, dataType = "string") => {
     try {
-      const { error } = await supabase.from("system_settings").upsert(
-        {
+      const response = await fetch('/api/admin/system-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{
           key,
           value: String(value),
           data_type: dataType,
           category: "platform",
           is_active: true,
           updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "key",
-        },
-      )
+        }]),
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to update system setting')
+      
       console.log(`Setting ${key} updated successfully`)
     } catch (error) {
       console.error("Error updating system setting:", error)
@@ -290,7 +263,8 @@ export default function AdminSettingsPage() {
 
       // If base currency changed, refresh admin data store
       if (key === "baseCurrency") {
-        await adminDataStore.refreshDataForBaseCurrencyChange()
+        // Reload data after base currency change
+        window.location.reload()
       }
     } catch (error) {
       console.error("Error updating platform config:", error)
@@ -332,80 +306,21 @@ export default function AdminSettingsPage() {
     setIsEditingSecuritySettings(false)
   }
 
-  const handleQrCodeFileSelect = (file: File, isEditing = false) => {
-    const allowedTypes = ["image/svg+xml", "image/png", "image/jpeg"]
-    if (!allowedTypes.includes(file.type)) {
-      console.error("Only SVG, PNG, and JPEG, files are allowed for QR codes")
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      console.error("File size must be less than 5MB")
-      return
-    }
-
-    if (isEditing) {
-      setEditingQrCodeFile(file)
-    } else {
-      setQrCodeFile(file)
-    }
-  }
-
-  const uploadQrCodeFile = async (file: File): Promise<string> => {
-    const fileExt = file.name.split(".").pop()
-    const fileName = `qr_${Date.now()}.${fileExt}`
-    const filePath = `qr-codes/${fileName}`
-
-    const { data, error } = await supabase.storage.from("payment-qr-codes").upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    })
-
-    if (error) throw error
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("payment-qr-codes").getPublicUrl(filePath)
-
-    return publicUrl
-  }
-
   const handleAddPaymentMethod = async () => {
     setSaving(true)
     try {
-      // If setting as default, unset other defaults for the same currency
-      if (newPaymentMethod.is_default) {
-        await supabase.from("payment_methods").update({ is_default: false }).eq("currency", newPaymentMethod.currency)
-      }
+      const response = await fetch('/api/admin/payment-methods', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newPaymentMethod),
+      })
 
-      let qrCodeData = newPaymentMethod.qr_code_data
+      if (!response.ok) throw new Error('Failed to add payment method')
 
-      // Upload QR code file if provided
-      if (newPaymentMethod.type === "qr_code" && qrCodeFile) {
-        setUploadingQrCode(true)
-        qrCodeData = await uploadQrCodeFile(qrCodeFile)
-      }
-
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .insert({
-          currency: newPaymentMethod.currency,
-          type: newPaymentMethod.type,
-          name: newPaymentMethod.name,
-          account_name: newPaymentMethod.account_name || null,
-          account_number: newPaymentMethod.account_number || null,
-          bank_name: newPaymentMethod.bank_name || null,
-          qr_code_data: qrCodeData || null,
-          instructions: newPaymentMethod.instructions || null,
-          is_default: newPaymentMethod.is_default,
-          status: "active",
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setPaymentMethods([...paymentMethods, data])
+      const newMethod = await response.json()
+      setPaymentMethods([...paymentMethods, newMethod])
       setNewPaymentMethod({
         currency: "",
         type: "bank_account",
@@ -433,44 +348,18 @@ export default function AdminSettingsPage() {
 
     setSaving(true)
     try {
-      // If setting as default, unset other defaults for the same currency
-      if (editingPaymentMethod.is_default) {
-        await supabase
-          .from("payment_methods")
-          .update({ is_default: false })
-          .eq("currency", editingPaymentMethod.currency)
-          .neq("id", editingPaymentMethod.id)
-      }
+      const response = await fetch(`/api/admin/payment-methods/${editingPaymentMethod.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingPaymentMethod),
+      })
 
-      let qrCodeData = editingPaymentMethod.qr_code_data
+      if (!response.ok) throw new Error('Failed to update payment method')
 
-      // Upload new QR code file if provided
-      if (editingPaymentMethod.type === "qr_code" && editingQrCodeFile) {
-        setUploadingQrCode(true)
-        qrCodeData = await uploadQrCodeFile(editingQrCodeFile)
-      }
-
-      const { data, error } = await supabase
-        .from("payment_methods")
-        .update({
-          currency: editingPaymentMethod.currency,
-          type: editingPaymentMethod.type,
-          name: editingPaymentMethod.name,
-          account_name: editingPaymentMethod.account_name || null,
-          account_number: editingPaymentMethod.account_number || null,
-          bank_name: editingPaymentMethod.bank_name || null,
-          qr_code_data: qrCodeData || null,
-          instructions: editingPaymentMethod.instructions || null,
-          is_default: editingPaymentMethod.is_default,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", editingPaymentMethod.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? data : pm)))
+      const updatedMethod = await response.json()
+      setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? updatedMethod : pm)))
       setEditingPaymentMethod(null)
       setEditingQrCodeFile(null)
       setIsEditPaymentMethodOpen(false)
@@ -490,12 +379,15 @@ export default function AdminSettingsPage() {
     const newStatus = method.status === "active" ? "inactive" : "active"
 
     try {
-      const { error } = await supabase
-        .from("payment_methods")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", id)
+      const response = await fetch(`/api/admin/payment-methods/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to update payment method status')
 
       setPaymentMethods(paymentMethods.map((pm) => (pm.id === id ? { ...pm, status: newStatus } : pm)))
       console.log("Payment method status updated successfully")
@@ -509,16 +401,15 @@ export default function AdminSettingsPage() {
     if (!targetMethod) return
 
     try {
-      // Unset other defaults for the same currency
-      await supabase.from("payment_methods").update({ is_default: false }).eq("currency", targetMethod.currency)
+      const response = await fetch(`/api/admin/payment-methods/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_default: true, currency: targetMethod.currency }),
+      })
 
-      // Set this one as default
-      const { error } = await supabase
-        .from("payment_methods")
-        .update({ is_default: true, updated_at: new Date().toISOString() })
-        .eq("id", id)
-
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to set default payment method')
 
       setPaymentMethods(
         paymentMethods.map((pm) => ({
@@ -534,9 +425,11 @@ export default function AdminSettingsPage() {
 
   const handleDeletePaymentMethod = async (id: string) => {
     try {
-      const { error } = await supabase.from("payment_methods").delete().eq("id", id)
+      const response = await fetch(`/api/admin/payment-methods/${id}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to delete payment method')
 
       setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
       console.log("Payment method deleted successfully")
@@ -548,32 +441,18 @@ export default function AdminSettingsPage() {
   const handleAddEmailTemplate = async () => {
     setSaving(true)
     try {
-      // If setting as default, unset other defaults for the same template type
-      if (newTemplate.is_default) {
-        await supabase
-          .from("email_templates")
-          .update({ is_default: false })
-          .eq("template_type", newTemplate.template_type)
-      }
+      const response = await fetch('/api/admin/email-templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTemplate),
+      })
 
-      const { data, error } = await supabase
-        .from("email_templates")
-        .insert({
-          name: newTemplate.name,
-          subject: newTemplate.subject,
-          template_type: newTemplate.template_type,
-          html_content: newTemplate.html_content,
-          text_content: newTemplate.text_content,
-          variables: newTemplate.variables,
-          is_default: newTemplate.is_default,
-          status: "active",
-        })
-        .select()
-        .single()
+      if (!response.ok) throw new Error('Failed to add email template')
 
-      if (error) throw error
-
-      setEmailTemplates([...emailTemplates, data])
+      const newTemplateData = await response.json()
+      setEmailTemplates([...emailTemplates, newTemplateData])
       setNewTemplate({
         name: "",
         subject: "",
@@ -597,34 +476,18 @@ export default function AdminSettingsPage() {
 
     setSaving(true)
     try {
-      // If setting as default, unset other defaults for the same template type
-      if (editingTemplate.is_default) {
-        await supabase
-          .from("email_templates")
-          .update({ is_default: false })
-          .eq("template_type", editingTemplate.template_type)
-          .neq("id", editingTemplate.id)
-      }
+      const response = await fetch(`/api/admin/email-templates/${editingTemplate.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingTemplate),
+      })
 
-      const { data, error } = await supabase
-        .from("email_templates")
-        .update({
-          name: editingTemplate.name,
-          subject: editingTemplate.subject,
-          template_type: editingTemplate.template_type,
-          html_content: editingTemplate.html_content,
-          text_content: editingTemplate.text_content,
-          variables: editingTemplate.variables,
-          is_default: editingTemplate.is_default,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", editingTemplate.id)
-        .select()
-        .single()
+      if (!response.ok) throw new Error('Failed to update email template')
 
-      if (error) throw error
-
-      setEmailTemplates(emailTemplates.map((template) => (template.id === editingTemplate.id ? data : template)))
+      const updatedTemplate = await response.json()
+      setEmailTemplates(emailTemplates.map((template) => (template.id === editingTemplate.id ? updatedTemplate : template)))
       setEditingTemplate(null)
       setIsEditTemplateOpen(false)
       console.log("Email template updated successfully")
@@ -642,12 +505,15 @@ export default function AdminSettingsPage() {
     const newStatus = template.status === "active" ? "inactive" : "active"
 
     try {
-      const { error } = await supabase
-        .from("email_templates")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", id)
+      const response = await fetch(`/api/admin/email-templates/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to update template status')
 
       setEmailTemplates(emailTemplates.map((t) => (t.id === id ? { ...t, status: newStatus } : t)))
       console.log("Email template status updated successfully")
@@ -658,9 +524,11 @@ export default function AdminSettingsPage() {
 
   const handleDeleteEmailTemplate = async (id: string) => {
     try {
-      const { error } = await supabase.from("email_templates").delete().eq("id", id)
+      const response = await fetch(`/api/admin/email-templates/${id}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to delete email template')
 
       setEmailTemplates(emailTemplates.filter((t) => t.id !== id))
       console.log("Email template deleted successfully")
@@ -693,19 +561,15 @@ export default function AdminSettingsPage() {
     if (!targetTemplate) return
 
     try {
-      // Unset other defaults for the same template type
-      await supabase
-        .from("email_templates")
-        .update({ is_default: false })
-        .eq("template_type", targetTemplate.template_type)
+      const response = await fetch(`/api/admin/email-templates/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ is_default: true, template_type: targetTemplate.template_type }),
+      })
 
-      // Set this one as default
-      const { error } = await supabase
-        .from("email_templates")
-        .update({ is_default: true, updated_at: new Date().toISOString() })
-        .eq("id", id)
-
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to set default template')
 
       setEmailTemplates(
         emailTemplates.map((t) => ({
@@ -952,45 +816,6 @@ export default function AdminSettingsPage() {
                         {newPaymentMethod.type === "qr_code" && (
                           <>
                             <div className="space-y-2">
-                              <Label htmlFor="qrCodeFile">Upload QR Code *</Label>
-                              <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0]
-                                  if (file) handleQrCodeFileSelect(file)
-                                }}
-                                accept=".svg,.png,.jpg,.jpeg,.pdf"
-                                className="hidden"
-                              />
-                              <div className="flex items-center gap-4">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {qrCodeFile ? "Change File" : "Select File"}
-                                </Button>
-                                {qrCodeFile && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <span>{qrCodeFile.name}</span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setQrCodeFile(null)}
-                                      className="h-6 w-6 p-0"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG (Max 5MB)</p>
-                            </div>
-                            <div className="space-y-2">
                               <Label htmlFor="instructions">Instructions</Label>
                               <Textarea
                                 id="instructions"
@@ -1026,252 +851,20 @@ export default function AdminSettingsPage() {
                             onClick={handleAddPaymentMethod}
                             disabled={
                               saving ||
-                              uploadingQrCode ||
                               !newPaymentMethod.currency ||
                               !newPaymentMethod.name ||
                               (newPaymentMethod.type === "bank_account" &&
                                 (!newPaymentMethod.account_name ||
                                   !newPaymentMethod.account_number ||
-                                  !newPaymentMethod.bank_name)) ||
-                              (newPaymentMethod.type === "qr_code" && !qrCodeFile && !newPaymentMethod.qr_code_data)
+                                  !newPaymentMethod.bank_name))
                             }
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
-                            {saving ? "Adding..." : "Add Payment Method"}
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            Add Payment Method
                           </Button>
                         </div>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Edit Payment Method Dialog */}
-                  <Dialog open={isEditPaymentMethodOpen} onOpenChange={setIsEditPaymentMethodOpen}>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Edit Payment Method</DialogTitle>
-                      </DialogHeader>
-                      {editingPaymentMethod && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="editCurrency">Currency *</Label>
-                              <Select
-                                value={editingPaymentMethod.currency}
-                                onValueChange={(value) =>
-                                  setEditingPaymentMethod({ ...editingPaymentMethod, currency: value })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select currency" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {currencies
-                                    .filter((c) => c.status === "active")
-                                    .map((currency) => (
-                                      <SelectItem key={currency.code} value={currency.code}>
-                                        <div className="flex items-center gap-3">
-                                          <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
-                                          <div className="font-medium">
-                                            {currency.code} - {currency.name}
-                                          </div>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="editType">Type *</Label>
-                              <Select
-                                value={editingPaymentMethod.type}
-                                onValueChange={(value) =>
-                                  setEditingPaymentMethod({ ...editingPaymentMethod, type: value })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="bank_account">
-                                    <div className="flex items-center gap-2">
-                                      <Building2 className="h-4 w-4" />
-                                      Bank Account
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="qr_code">
-                                    <div className="flex items-center gap-2">
-                                      <QrCode className="h-4 w-4" />
-                                      QR Code
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editName">Display Name *</Label>
-                            <Input
-                              id="editName"
-                              value={editingPaymentMethod.name}
-                              onChange={(e) =>
-                                setEditingPaymentMethod({ ...editingPaymentMethod, name: e.target.value })
-                              }
-                              placeholder="e.g., Sberbank Russia, SberPay QR"
-                            />
-                          </div>
-
-                          {editingPaymentMethod.type === "bank_account" && (
-                            <>
-                              <div className="space-y-2">
-                                <Label htmlFor="editAccountName">Account Name *</Label>
-                                <Input
-                                  id="editAccountName"
-                                  value={editingPaymentMethod.account_name || ""}
-                                  onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, account_name: e.target.value })
-                                  }
-                                  placeholder="e.g., Novapay Russia LLC"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="editAccountNumber">Account Number *</Label>
-                                  <Input
-                                    id="editAccountNumber"
-                                    value={editingPaymentMethod.account_number || ""}
-                                    onChange={(e) =>
-                                      setEditingPaymentMethod({
-                                        ...editingPaymentMethod,
-                                        account_number: e.target.value,
-                                      })
-                                    }
-                                    placeholder="e.g., 40817810123456789012"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="editBankName">Bank Name *</Label>
-                                  <Input
-                                    id="editBankName"
-                                    value={editingPaymentMethod.bank_name || ""}
-                                    onChange={(e) =>
-                                      setEditingPaymentMethod({ ...editingPaymentMethod, bank_name: e.target.value })
-                                    }
-                                    placeholder="e.g., Sberbank Russia"
-                                  />
-                                </div>
-                              </div>
-                            </>
-                          )}
-
-                          {editingPaymentMethod.type === "qr_code" && (
-                            <>
-                              <div className="space-y-2">
-                                <Label htmlFor="editQrCodeFile">Upload QR Code *</Label>
-                                <input
-                                  type="file"
-                                  ref={editFileInputRef}
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0]
-                                    if (file) handleQrCodeFileSelect(file, true)
-                                  }}
-                                  accept=".svg,.png,.jpg,.jpeg,.pdf"
-                                  className="hidden"
-                                />
-                                <div className="flex items-center gap-4">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => editFileInputRef.current?.click()}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Upload className="h-4 w-4" />
-                                    {editingQrCodeFile
-                                      ? "Change File"
-                                      : editingPaymentMethod.qr_code_data
-                                        ? "Replace File"
-                                        : "Select File"}
-                                  </Button>
-                                  {editingQrCodeFile && (
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                      <span>{editingQrCodeFile.name}</span>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setEditingQrCodeFile(null)}
-                                        className="h-6 w-6 p-0"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                  {!editingQrCodeFile && editingPaymentMethod.qr_code_data && (
-                                    <span className="text-sm text-gray-600">Current file uploaded</span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-500">
-                                  Supported formats: SVG, PNG, JPEG (Max 5MB)
-                                </p>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="editInstructions">Instructions</Label>
-                                <Textarea
-                                  id="editInstructions"
-                                  value={editingPaymentMethod.instructions || ""}
-                                  onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, instructions: e.target.value })
-                                  }
-                                  placeholder="Instructions for users on how to use this QR code"
-                                  rows={3}
-                                />
-                              </div>
-                            </>
-                          )}
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="editIsDefault"
-                              checked={editingPaymentMethod.is_default}
-                              onCheckedChange={(checked) =>
-                                setEditingPaymentMethod({ ...editingPaymentMethod, is_default: checked as boolean })
-                              }
-                            />
-                            <Label htmlFor="editIsDefault" className="text-sm font-medium">
-                              Set as default payment method for this currency
-                            </Label>
-                          </div>
-
-                          <div className="flex gap-4 pt-4">
-                            <Button
-                              variant="outline"
-                              onClick={() => setIsEditPaymentMethodOpen(false)}
-                              className="flex-1"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={handleEditPaymentMethod}
-                              disabled={
-                                saving ||
-                                uploadingQrCode ||
-                                !editingPaymentMethod.currency ||
-                                !editingPaymentMethod.name ||
-                                (editingPaymentMethod.type === "bank_account" &&
-                                  (!editingPaymentMethod.account_name ||
-                                    !editingPaymentMethod.account_number ||
-                                    !editingPaymentMethod.bank_name)) ||
-                                (editingPaymentMethod.type === "qr_code" &&
-                                  !editingQrCodeFile &&
-                                  !editingPaymentMethod.qr_code_data)
-                              }
-                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
-                            >
-                              {saving ? "Saving..." : "Save Changes"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -1314,9 +907,8 @@ export default function AdminSettingsPage() {
                             </div>
                           ) : (
                             <div className="text-sm text-gray-600">
-                              <div className="font-mono text-xs">{method.qr_code_data}</div>
                               {method.instructions && (
-                                <div className="mt-1 text-xs">{method.instructions.substring(0, 50)}...</div>
+                                <div className="text-xs">{method.instructions.substring(0, 50)}...</div>
                               )}
                             </div>
                           )}
@@ -1497,126 +1089,11 @@ export default function AdminSettingsPage() {
                             }
                             className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
                           >
-                            {saving ? "Adding..." : "Add Template"}
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            Add Template
                           </Button>
                         </div>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Edit Email Template Dialog */}
-                  <Dialog open={isEditTemplateOpen} onOpenChange={setIsEditTemplateOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Edit Email Template</DialogTitle>
-                      </DialogHeader>
-                      {editingTemplate && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="editTemplateName">Template Name *</Label>
-                              <Input
-                                id="editTemplateName"
-                                value={editingTemplate.name}
-                                onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
-                                placeholder="e.g., Welcome Email"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="editTemplateType">Template Type *</Label>
-                              <Select
-                                value={editingTemplate.template_type}
-                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="registration">Registration</SelectItem>
-                                  <SelectItem value="transaction">Transaction</SelectItem>
-                                  <SelectItem value="security">Security</SelectItem>
-                                  <SelectItem value="notification">Notification</SelectItem>
-                                  <SelectItem value="marketing">Marketing</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateSubject">Subject *</Label>
-                            <Input
-                              id="editTemplateSubject"
-                              value={editingTemplate.subject}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
-                              placeholder="e.g., Welcome to Novapay!"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateVariables">Variables (JSON format)</Label>
-                            <Input
-                              id="editTemplateVariables"
-                              value={editingTemplate.variables}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, variables: e.target.value })}
-                              placeholder='e.g., {"user_name": "string", "amount": "number"}'
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateHtmlContent">HTML Content *</Label>
-                            <Textarea
-                              id="editTemplateHtmlContent"
-                              value={editingTemplate.html_content}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
-                              placeholder="HTML email template content..."
-                              rows={6}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateTextContent">Text Content *</Label>
-                            <Textarea
-                              id="editTemplateTextContent"
-                              value={editingTemplate.text_content}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, text_content: e.target.value })}
-                              placeholder="Plain text email template content..."
-                              rows={4}
-                            />
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="editIsDefaultTemplate"
-                              checked={editingTemplate.is_default}
-                              onChange={(checked) =>
-                                setEditingTemplate({ ...editingTemplate, is_default: checked as boolean })
-                              }
-                            />
-                            <Label htmlFor="editIsDefaultTemplate" className="text-sm font-medium">
-                              Set as default template for this type
-                            </Label>
-                          </div>
-
-                          <div className="flex gap-4 pt-4">
-                            <Button variant="outline" onClick={() => setIsEditTemplateOpen(false)} className="flex-1">
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={handleEditEmailTemplate}
-                              disabled={
-                                saving ||
-                                !editingTemplate.name ||
-                                !editingTemplate.subject ||
-                                !editingTemplate.html_content ||
-                                !editingTemplate.text_content
-                              }
-                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
-                            >
-                              {saving ? "Saving..." : "Save Changes"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </DialogContent>
                   </Dialog>
                 </div>
