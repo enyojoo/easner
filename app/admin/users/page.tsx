@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp } from 'lucide-react'
+import { Search, Download, Filter, Eye, MoreHorizontal, Calendar, CheckCircle, Clock, XCircle, AlertCircle, User, Mail, Phone, Ban, UserCheck, TrendingUp, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
@@ -53,6 +53,7 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
+  const [updating, setUpdating] = useState<string | null>(null)
 
   const fetchUserTransactions = async (userId: string) => {
     try {
@@ -70,7 +71,6 @@ export default function AdminUsersPage() {
         `)
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-      // Remove .limit(20) to show all transactions
 
       if (error) throw error
       setUserTransactions(data || [])
@@ -144,34 +144,48 @@ export default function AdminUsersPage() {
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
+      setUpdating(userId)
       await adminDataStore.updateUserStatus(userId, newStatus)
+      
       // Update selected user if it's the same one
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
     } catch (err) {
       console.error("Error updating user status:", err)
+      alert("Failed to update user status")
+    } finally {
+      setUpdating(null)
     }
   }
 
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
+      setUpdating(userId)
       await adminDataStore.updateUserVerification(userId, newStatus)
+      
       // Update selected user if it's the same one
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
     } catch (err) {
       console.error("Error updating user verification:", err)
+      alert("Failed to update user verification")
+    } finally {
+      setUpdating(null)
     }
   }
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
     try {
+      setUpdating("bulk")
       await Promise.all(selectedUsers.map((userId) => adminDataStore.updateUserStatus(userId, newStatus)))
       setSelectedUsers([])
     } catch (err) {
       console.error("Error bulk updating user status:", err)
+      alert("Failed to bulk update user status")
+    } finally {
+      setUpdating(null)
     }
   }
 
@@ -389,10 +403,22 @@ export default function AdminUsersPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">{selectedUsers.length} user(s) selected</span>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("active")}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleBulkStatusUpdate("active")}
+                    disabled={updating === "bulk"}
+                  >
+                    {updating === "bulk" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Activate
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("suspended")}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleBulkStatusUpdate("suspended")}
+                    disabled={updating === "bulk"}
+                  >
+                    {updating === "bulk" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Suspend
                   </Button>
                 </div>
@@ -556,7 +582,6 @@ export default function AdminUsersPage() {
                                       </TableHeader>
                                       <TableBody>
                                         {userTransactions.map((transaction) => (
-                                          // Remove .slice(0, 5) to show all transactions
                                           <TableRow key={transaction.transaction_id}>
                                             <TableCell className="font-mono text-sm">
                                               {transaction.transaction_id}
@@ -616,34 +641,38 @@ export default function AdminUsersPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleStatusUpdate(selectedUser.id, "active")}
-                                      disabled={selectedUser.status === "active"}
+                                      disabled={selectedUser.status === "active" || updating === selectedUser.id}
                                     >
+                                      {updating === selectedUser.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                       Activate Account
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleStatusUpdate(selectedUser.id, "suspended")}
-                                      disabled={selectedUser.status === "suspended"}
+                                      disabled={selectedUser.status === "suspended" || updating === selectedUser.id}
                                       className="text-red-600 hover:text-red-700"
                                     >
+                                      {updating === selectedUser.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                       Suspend Account
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleVerificationUpdate(selectedUser.id, "verified")}
-                                      disabled={selectedUser.verification_status === "verified"}
+                                      disabled={selectedUser.verification_status === "verified" || updating === selectedUser.id}
                                     >
+                                      {updating === selectedUser.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                       Verify User
                                     </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleVerificationUpdate(selectedUser.id, "rejected")}
-                                      disabled={selectedUser.verification_status === "rejected"}
+                                      disabled={selectedUser.verification_status === "rejected" || updating === selectedUser.id}
                                       className="text-red-600 hover:text-red-700"
                                     >
+                                      {updating === selectedUser.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                       Reject Verification
                                     </Button>
                                   </div>
@@ -655,8 +684,8 @@ export default function AdminUsersPage() {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button variant="outline" size="sm" disabled={updating === user.id}>
+                              {updating === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">

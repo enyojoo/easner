@@ -27,7 +27,6 @@ class AdminDataStore {
   private initialized = false
 
   constructor() {
-    // Preload data immediately when store is created
     this.initialize()
   }
 
@@ -35,7 +34,6 @@ class AdminDataStore {
     if (this.initialized) return
     this.initialized = true
 
-    // Start loading data immediately
     this.loadData().catch(console.error)
     this.startAutoRefresh()
   }
@@ -61,8 +59,13 @@ class AdminDataStore {
     this.loading = true
 
     try {
-      // Fetch data from server-side API route
-      const response = await fetch('/api/admin/data')
+      const response = await fetch('/api/admin/data', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      
       if (!response.ok) {
         throw new Error('Failed to fetch admin data')
       }
@@ -79,7 +82,6 @@ class AdminDataStore {
   }
 
   private startAutoRefresh() {
-    // Refresh data every 5 minutes in background
     this.refreshInterval = setInterval(
       () => {
         this.loadData().catch(console.error)
@@ -102,13 +104,8 @@ class AdminDataStore {
         throw new Error('Failed to update transaction status')
       }
 
-      // Update local data
-      if (this.data) {
-        this.data.transactions = this.data.transactions.map((tx) =>
-          tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
-        )
-        this.notify()
-      }
+      // Force reload data from server
+      await this.loadData()
     } catch (error) {
       throw error
     }
@@ -128,7 +125,7 @@ class AdminDataStore {
         throw new Error('Failed to update user status')
       }
 
-      // Reload fresh data from server
+      // Force reload data from server
       await this.loadData()
     } catch (error) {
       throw error
@@ -149,7 +146,7 @@ class AdminDataStore {
         throw new Error('Failed to update user verification')
       }
 
-      // Reload fresh data from server  
+      // Force reload data from server
       await this.loadData()
     } catch (error) {
       throw error
@@ -172,7 +169,7 @@ class AdminDataStore {
 
       if (!response.ok) throw new Error('Failed to update currency status')
 
-      // Reload fresh data from server
+      // Force reload data from server
       await this.loadData()
     } catch (error) {
       throw error
@@ -181,14 +178,20 @@ class AdminDataStore {
 
   async updateExchangeRates(updates: any[]) {
     try {
-      const { error } = await supabase.from("exchange_rates").upsert(updates, {
-        onConflict: "from_currency,to_currency",
-        ignoreDuplicates: false,
+      const response = await fetch('/api/admin/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'exchange_rates',
+          data: updates
+        })
       })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to update exchange rates')
 
-      // Reload data to get fresh exchange rates
+      // Force reload data from server
       await this.loadData()
     } catch (error) {
       throw error
@@ -197,11 +200,22 @@ class AdminDataStore {
 
   async addCurrency(currencyData: any) {
     try {
-      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+      const response = await fetch('/api/admin/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'currency',
+          data: currencyData
+        })
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error('Failed to add currency')
 
-      // Reload fresh data from server instead of local update
+      const newCurrency = await response.json()
+
+      // Force reload data from server
       await this.loadData()
       return newCurrency
     } catch (error) {
@@ -211,23 +225,13 @@ class AdminDataStore {
 
   async deleteCurrency(currencyId: string) {
     try {
-      const currency = this.data?.currencies.find((c) => c.id === currencyId)
-      if (!currency) return
+      const response = await fetch(`/api/admin/rates?id=${currencyId}`, {
+        method: 'DELETE'
+      })
 
-      // Delete exchange rates first
-      const { error: ratesError } = await supabase
-        .from("exchange_rates")
-        .delete()
-        .or(`from_currency.eq.${currency.code},to_currency.eq.${currency.code}`)
+      if (!response.ok) throw new Error('Failed to delete currency')
 
-      if (ratesError) throw ratesError
-
-      // Delete currency
-      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
-
-      if (error) throw error
-
-      // Reload fresh data from server instead of local update
+      // Force reload data from server
       await this.loadData()
     } catch (error) {
       throw error
@@ -236,20 +240,23 @@ class AdminDataStore {
 
   async updateCurrencies() {
     try {
-      // Reload all data to get fresh currencies and exchange rates
       await this.loadData()
     } catch (error) {
       throw error
     }
   }
 
-  // Method to refresh data when base currency changes
   async refreshDataForBaseCurrencyChange() {
     try {
       await this.loadData()
     } catch (error) {
       console.error("Error refreshing data for base currency change:", error)
     }
+  }
+
+  // Force refresh method for manual refresh
+  async forceRefresh() {
+    await this.loadData()
   }
 
   destroy() {

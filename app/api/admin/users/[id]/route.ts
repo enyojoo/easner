@@ -20,12 +20,22 @@ export async function PATCH(
     const body = await request.json()
     const userId = params.id
 
+    console.log('Updating user:', userId, 'with data:', body)
+
     const { error } = await supabaseAdmin
       .from("users")
-      .update(body)
+      .update({
+        ...body,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", userId)
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+
+    console.log('User updated successfully')
 
     return NextResponse.json({ success: true })
   } catch (error) {

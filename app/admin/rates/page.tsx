@@ -27,6 +27,7 @@ const AdminRatesPage = () => {
   })
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [updating, setUpdating] = useState<string | null>(null)
 
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
@@ -103,13 +104,14 @@ const AdminRatesPage = () => {
         if (!ratesResponse.ok) throw new Error('Failed to create exchange rates')
       }
 
-      // Refresh the admin data store to get latest data
-      await adminDataStore.updateCurrencies()
+      // Force refresh the admin data store
+      await adminDataStore.forceRefresh()
 
       setNewCurrencyData({ code: '', name: '', symbol: '', flag_svg: '' })
       setIsAddingCurrency(false)
     } catch (error) {
       console.error('Error adding currency:', error)
+      alert('Failed to add currency')
     } finally {
       setSaving(false)
     }
@@ -155,28 +157,15 @@ const AdminRatesPage = () => {
       }
 
       if (updates.length > 0) {
-        const response = await fetch('/api/admin/rates', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            type: 'exchange_rates',
-            data: updates
-          })
-        })
-
-        if (!response.ok) throw new Error('Failed to save rates')
+        await adminDataStore.updateExchangeRates(updates)
       }
-
-      // Refresh the admin data store to get latest data
-      await adminDataStore.updateCurrencies()
 
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
     } catch (error) {
       console.error('Error saving rates:', error)
+      alert('Failed to save rates')
     } finally {
       setSaving(false)
     }
@@ -184,19 +173,23 @@ const AdminRatesPage = () => {
 
   const handleSuspendCurrency = async (currencyId: string) => {
     try {
+      setUpdating(currencyId)
       const currency = currencies.find((c) => c.id === currencyId)
       if (!currency) return
 
       const newStatus = currency.status === 'active' ? 'suspended' : 'active'
-    
       await adminDataStore.updateCurrencyStatus(currencyId, newStatus)
     } catch (error) {
       console.error('Error updating currency status:', error)
+      alert('Failed to update currency status')
+    } finally {
+      setUpdating(null)
     }
   }
 
   const handleDeleteCurrency = async (currencyId: string) => {
     if (currencies.length <= 2) {
+      alert('Cannot delete currency. At least 2 currencies must remain.')
       return
     }
 
@@ -205,9 +198,13 @@ const AdminRatesPage = () => {
     }
 
     try {
+      setUpdating(currencyId)
       await adminDataStore.deleteCurrency(currencyId)
     } catch (error) {
       console.error('Error deleting currency:', error)
+      alert('Failed to delete currency')
+    } finally {
+      setUpdating(null)
     }
   }
 
@@ -333,8 +330,8 @@ const AdminRatesPage = () => {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" disabled={updating === currency.id}>
+                            {updating === currency.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
