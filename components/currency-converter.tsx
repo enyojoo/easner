@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { currencyService } from "@/lib/database"
 import type { Currency, ExchangeRate } from "@/types"
@@ -21,7 +21,7 @@ interface CurrencyConverterProps {
 
 export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [sendAmount, setSendAmount] = useState<string>("100")
-  const [sendCurrency, setSendCurrency] = useState<string>("RUB")
+  const [sendCurrency, setSendCurrency] = useState<string>("USD")
   const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
   const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [currencies, setCurrencies] = useState<Currency[]>([])
@@ -41,53 +41,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         setExchangeRates(ratesData || [])
       } catch (error) {
         console.error("Error loading currency data:", error)
-        // Fallback to static data if Supabase fails
-        setCurrencies([
-          {
-            id: "1",
-            code: "RUB",
-            name: "Russian Ruble",
-            symbol: "₽",
-            flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#1435a1" d="M1 11H31V21H1z"></path><path d="M5,4H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" fill="#fff"></path><path d="M5,20H27c2.208,0,4,1.792,4,4v4H1v-4c0-2.208,1.792-4,4-4Z" transform="rotate(180 16 24)" fill="#c53a28"></path></svg>`,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            code: "NGN",
-            name: "Nigerian Naira",
-            symbol: "₦",
-            flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#fff" d="M10 4H22V28H10z"></path><path d="M5,4h6V28H5c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" fill="#3b8655"></path><path d="M25,4h6V28h-6c-2.208,0-4-1.792-4-4V8c0-2.208,1.792-4,4-4Z" transform="rotate(180 26 16)" fill="#3b8655"></path></svg>`,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
-        setExchangeRates([
-          {
-            id: "1",
-            from_currency: "RUB",
-            to_currency: "NGN",
-            rate: 22.45,
-            fee_type: "free",
-            fee_amount: 0,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            from_currency: "NGN",
-            to_currency: "RUB",
-            rate: 0.0445,
-            fee_type: "percentage",
-            fee_amount: 1.5,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ])
       }
     }
 
@@ -96,30 +49,10 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
   // Exchange rate and fee calculation functions
   const getExchangeRate = (from: string, to: string) => {
-    // Same currency pair returns 1:1 rate
-    if (from === to) {
-      return {
-        id: "same",
-        from_currency: from,
-        to_currency: to,
-        rate: 1,
-        fee_type: "free" as const,
-        fee_amount: 0,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-    }
-
     return exchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
   }
 
   const calculateFee = (amount: number, from: string, to: string) => {
-    // Same currency pair has no fee
-    if (from === to) {
-      return { fee: 0, feeType: "free" }
-    }
-
     const rateData = getExchangeRate(from, to)
     if (!rateData || rateData.fee_type === "free") {
       return { fee: 0, feeType: "free" }
@@ -186,13 +119,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   // Update the useEffect to calculate fee and conversion
   useEffect(() => {
     const amount = Number.parseFloat(sendAmount) || 0
-
-    // If same currency, 1:1 conversion
-    if (sendCurrency === receiveCurrency) {
-      setReceiveAmount(amount)
-      setFee(0)
-      return
-    }
 
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
     const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
@@ -310,8 +236,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
           })()}
         </div>
 
-        {/* Swap Button */}
-
         {/* Fee and Rate Information */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
@@ -339,18 +263,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
             </span>
           </div>
         </div>
-
-        {/* Same Currency Warning */}
-        {sendCurrency === receiveCurrency && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-xs">ℹ</span>
-              </div>
-              <span className="text-sm text-blue-700">Same currency transfer - 1:1 conversion with no fees</span>
-            </div>
-          </div>
-        )}
 
         {/* Receiver Gets Section */}
         <div className="space-y-4">
@@ -406,14 +318,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 <span className="text-white text-sm">🏦</span>
               </div>
               <div>
-                <div className="font-medium text-sm">
-                  {sendCurrency === receiveCurrency
-                    ? `Transfer within ${receiveCurrency} accounts`
-                    : `Send to ${receiveCurrency} Bank Account`}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {sendCurrency === receiveCurrency ? "Instant transfer" : "Transfers within minutes"}
-                </div>
+                <div className="font-medium text-sm">Send to {receiveCurrency} Bank Account</div>
+                <div className="text-xs text-gray-500">Transfers within minutes</div>
               </div>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-400" />
