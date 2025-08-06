@@ -1,49 +1,47 @@
-import type { MetadataRoute } from "next"
+import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://www.novamoney.net"
-
   return [
     {
-      url: baseUrl,
+      url: 'https://www.novamoney.net',
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: `${baseUrl}/login`,
+      url: 'https://www.novamoney.net/login',
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/register`,
+      url: 'https://www.novamoney.net/register',
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/forgot-password`,
+      url: 'https://www.novamoney.net/terms',
       lastModified: new Date(),
-      changeFrequency: "yearly",
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: 'https://www.novamoney.net/privacy',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: 'https://www.novamoney.net/forgot-password',
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/terms`,
+      url: 'https://www.novamoney.net/admin/login',
       lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
-      changeFrequency: "yearly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/admin/login`,
-      lastModified: new Date(),
-      changeFrequency: "yearly",
+      changeFrequency: 'yearly',
       priority: 0.2,
     },
   ]
