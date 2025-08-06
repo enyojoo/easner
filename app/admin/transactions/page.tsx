@@ -26,7 +26,7 @@ export default function AdminTransactionsPage() {
  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
- // Update selected transaction when data changes
+ // Update selected transaction when data changes to keep popup in sync
  useEffect(() => {
    if (selectedTransaction && data?.transactions) {
      const updatedTransaction = data.transactions.find(
@@ -90,23 +90,24 @@ export default function AdminTransactionsPage() {
 
  const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
    try {
+     console.log(`Updating transaction ${transactionId} to ${newStatus}`)
      await adminDataStore.updateTransactionStatus(transactionId, newStatus)
-     
-     // The selectedTransaction will be automatically updated by the useEffect above
-     // when the data store notifies of changes
    } catch (err) {
      console.error("Error updating transaction status:", err)
+     alert("Failed to update transaction status. Please try again.")
    }
  }
 
  const handleBulkStatusUpdate = async (newStatus: string) => {
    try {
+     console.log(`Bulk updating ${selectedTransactions.length} transactions to ${newStatus}`)
      await Promise.all(
        selectedTransactions.map((transactionId) => adminDataStore.updateTransactionStatus(transactionId, newStatus)),
      )
      setSelectedTransactions([])
    } catch (err) {
      console.error("Error updating transaction statuses:", err)
+     alert("Failed to update transaction statuses. Please try again.")
    }
  }
 

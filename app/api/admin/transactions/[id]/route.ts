@@ -52,17 +52,25 @@ export async function PATCH(
     const { status } = await request.json()
     const transactionId = params.id
 
-    const { error } = await supabaseAdmin
+    console.log(`Updating transaction ${transactionId} to status: ${status}`)
+
+    const { data, error } = await supabaseAdmin
       .from("transactions")
       .update({
         status: status,
         updated_at: new Date().toISOString(),
       })
       .eq("transaction_id", transactionId)
+      .select()
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error:', error)
+      throw error
+    }
 
-    return NextResponse.json({ success: true }, {
+    console.log('Transaction updated successfully:', data)
+
+    return NextResponse.json({ success: true, data }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',

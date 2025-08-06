@@ -57,8 +57,8 @@ class AdminDataStore {
       .channel('admin-transactions')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'transactions' },
-        () => {
-          console.log('Transaction change detected, refreshing data...')
+        (payload) => {
+          console.log('Transaction change detected:', payload)
           this.forceRefresh()
         }
       )
@@ -69,8 +69,8 @@ class AdminDataStore {
       .channel('admin-users')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'users' },
-        () => {
-          console.log('User change detected, refreshing data...')
+        (payload) => {
+          console.log('User change detected:', payload)
           this.forceRefresh()
         }
       )
@@ -81,8 +81,8 @@ class AdminDataStore {
       .channel('admin-currencies')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'currencies' },
-        () => {
-          console.log('Currency change detected, refreshing data...')
+        (payload) => {
+          console.log('Currency change detected:', payload)
           this.forceRefresh()
         }
       )
@@ -93,8 +93,8 @@ class AdminDataStore {
       .channel('admin-rates')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'exchange_rates' },
-        () => {
-          console.log('Exchange rate change detected, refreshing data...')
+        (payload) => {
+          console.log('Exchange rate change detected:', payload)
           this.forceRefresh()
         }
       )
@@ -217,6 +217,8 @@ class AdminDataStore {
   }
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
+    console.log(`Updating transaction ${transactionId} to status: ${newStatus}`)
+    
     try {
       // Update local data immediately for instant UI feedback
       if (this.data) {
@@ -236,11 +238,16 @@ class AdminDataStore {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update transaction status')
+        const errorData = await response.json()
+        console.error('API error:', errorData)
+        throw new Error(`Failed to update transaction status: ${errorData.error}`)
       }
 
+      const result = await response.json()
+      console.log('Transaction status updated successfully:', result)
+
       // Force refresh to get complete updated data in background
-      setTimeout(() => this.forceRefresh(), 100)
+      setTimeout(() => this.forceRefresh(), 500)
     } catch (error) {
       console.error('Error updating transaction status:', error)
       // Revert local changes on error

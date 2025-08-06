@@ -111,8 +111,64 @@ WITH CHECK ( true );
 DROP POLICY IF EXISTS "Admins can view all transactions" ON transactions;
 DROP POLICY IF EXISTS "Admins can update transactions" ON transactions;
 
-CREATE POLICY "Service role can manage transactions" ON transactions
+CREATE POLICY "Service role can manage all transactions" ON transactions
 FOR ALL
 TO service_role
 USING ( true )
 WITH CHECK ( true );
+
+-- Disable RLS for admin operations by creating permissive policies for service role
+
+-- Drop existing restrictive policies if they exist
+DROP POLICY IF EXISTS "Admin users can manage all data" ON transactions;
+DROP POLICY IF EXISTS "Admin users can manage all users" ON users;
+DROP POLICY IF EXISTS "Admin users can manage currencies" ON currencies;
+DROP POLICY IF EXISTS "Admin users can manage exchange rates" ON exchange_rates;
+
+-- Create permissive policies for admin operations
+CREATE POLICY "Service role can manage all transactions" ON transactions
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage all users" ON users
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage all currencies" ON currencies
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage all exchange rates" ON exchange_rates
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage all recipients" ON recipients
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Service role can manage all payment methods" ON payment_methods
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+-- Ensure admin users table has proper policies
+CREATE POLICY "Service role can manage admin users" ON admin_users
+FOR ALL
+TO service_role
+USING (true)
+WITH CHECK (true);
+
+-- Grant necessary permissions to service role
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
