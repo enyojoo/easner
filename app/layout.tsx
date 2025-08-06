@@ -1,8 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins } from 'next/font/google'
+import { Poppins } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
-import { PostHogProvider } from "@/components/providers/posthog-provider"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -29,9 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <PostHogProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </PostHogProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )
