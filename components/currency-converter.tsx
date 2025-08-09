@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { currencyService } from "@/lib/database"
 import type { Currency, ExchangeRate } from "@/types"
@@ -21,12 +21,13 @@ interface CurrencyConverterProps {
 
 export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [sendAmount, setSendAmount] = useState<string>("100")
+  const [receiveAmount, setReceiveAmount] = useState<string>("0")
   const [sendCurrency, setSendCurrency] = useState<string>("USD")
   const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
-  const [receiveAmount, setReceiveAmount] = useState<number>(0)
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
   const [fee, setFee] = useState<number>(0)
+  const [lastEditedField, setLastEditedField] = useState<"send" | "receive">("send")
 
   // Load currencies and exchange rates from Supabase
   useEffect(() => {
@@ -116,29 +117,64 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     setReceiveCurrency(tempSend)
   }
 
-  // Update the useEffect to calculate fee and conversion
+  // Handle send amount change
+  const handleSendAmountChange = (value: string) => {
+    setSendAmount(value)
+    setLastEditedField("send")
+  }
+
+  // Handle receive amount change
+  const handleReceiveAmountChange = (value: string) => {
+    setReceiveAmount(value)
+    setLastEditedField("receive")
+  }
+
+  // Update the useEffect to calculate conversions based on last edited field
   useEffect(() => {
-    const amount = Number.parseFloat(sendAmount) || 0
-
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
-    const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
+    const reverseRate = getExchangeRate(receiveCurrency, sendCurrency)
 
-    if (rate) {
-      const converted = amount * rate.rate
-      setReceiveAmount(converted)
+    if (lastEditedField === "send") {
+      // Calculate receive amount from send amount
+      const amount = Number.parseFloat(sendAmount) || 0
+      const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
+
+      if (rate) {
+        const converted = amount * rate.rate
+        setReceiveAmount(converted.toFixed(2))
+      } else {
+        setReceiveAmount("0")
+      }
+
+      setFee(feeData.fee)
     } else {
-      setReceiveAmount(0)
-    }
+      // Calculate send amount from receive amount
+      const amount = Number.parseFloat(receiveAmount) || 0
 
-    setFee(feeData.fee)
-  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
+      if (reverseRate) {
+        const converted = amount * reverseRate.rate
+        setSendAmount(converted.toFixed(2))
+        const feeData = calculateFee(converted, sendCurrency, receiveCurrency)
+        setFee(feeData.fee)
+      } else if (rate) {
+        // If no reverse rate, calculate backwards using the forward rate
+        const converted = amount / rate.rate
+        setSendAmount(converted.toFixed(2))
+        const feeData = calculateFee(converted, sendCurrency, receiveCurrency)
+        setFee(feeData.fee)
+      } else {
+        setSendAmount("0")
+        setFee(0)
+      }
+    }
+  }, [sendAmount, receiveAmount, sendCurrency, receiveCurrency, exchangeRates, lastEditedField])
 
   // Add new useEffect to handle min/max amounts when currency changes
   useEffect(() => {
     if (!sendCurrency || !receiveCurrency) return
 
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
-    if (rate && rate.min_amount) {
+    if (rate && rate.min_amount && lastEditedField === "send") {
       const currentAmount = Number.parseFloat(sendAmount) || 0
       if (currentAmount < rate.min_amount) {
         setSendAmount(rate.min_amount.toString())
@@ -154,7 +190,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
       sendAmount,
       sendCurrency,
       receiveCurrency,
-      receiveAmount,
+      receiveAmount: Number.parseFloat(receiveAmount),
       exchangeRate,
       fee,
     })
@@ -174,7 +210,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               <input
                 type="number"
                 value={sendAmount}
-                onChange={(e) => setSendAmount(e.target.value)}
+                onChange={(e) => handleSendAmountChange(e.target.value)}
                 onBlur={(e) => {
                   const value = Number.parseFloat(e.target.value) || 0
                   const rate = getExchangeRate(sendCurrency, receiveCurrency)
@@ -268,43 +304,43 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
           <div className="bg-gray-50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
-                  {receiveAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div className="flex-shrink-0">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
+            <div className="flex justify-between items-center">
+              <input
+                type="number"
+                value={receiveAmount}
+                onChange={(e) => handleReceiveAmountChange(e.target.value)}
+                className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
+                placeholder="0.00"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
+                  >
+                    <div className="flex items-center gap-2">
+                      {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
+                      <span className="font-medium text-sm">{receiveCurrency}</span>
+                      <ChevronDown className="h-3 w-3 text-gray-500" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {currencies.map((currency) => (
+                    <DropdownMenuItem
+                      key={currency.code}
+                      onClick={() => handleReceiveCurrencyChange(currency.code)}
+                      className="flex items-center gap-3"
                     >
-                      <div className="flex items-center gap-2">
-                        {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
-                        <span className="font-medium text-sm">{receiveCurrency}</span>
-                        <ChevronDown className="h-3 w-3 text-gray-500" />
+                      <FlagIcon currency={currency} />
+                      <div>
+                        <div className="font-medium">{currency.code}</div>
+                        <div className="text-sm text-muted-foreground">{currency.name}</div>
                       </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {currencies.map((currency) => (
-                      <DropdownMenuItem
-                        key={currency.code}
-                        onClick={() => handleReceiveCurrencyChange(currency.code)}
-                        className="flex items-center gap-3"
-                      >
-                        <FlagIcon currency={currency} />
-                        <div>
-                          <div className="font-medium">{currency.code}</div>
-                          <div className="text-sm text-muted-foreground">{currency.name}</div>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
