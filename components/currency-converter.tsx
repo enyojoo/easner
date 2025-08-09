@@ -132,7 +132,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   // Update the useEffect to calculate conversions based on last edited field
   useEffect(() => {
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
-    const reverseRate = getExchangeRate(receiveCurrency, sendCurrency)
 
     if (lastEditedField === "send") {
       // Calculate receive amount from send amount
@@ -148,19 +147,18 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
       setFee(feeData.fee)
     } else {
-      // Calculate send amount from receive amount
-      const amount = Number.parseFloat(receiveAmount) || 0
+      // Calculate send amount from receive amount (reverse calculation)
+      const targetReceiveAmount = Number.parseFloat(receiveAmount) || 0
 
-      if (reverseRate) {
-        const converted = amount * reverseRate.rate
-        setSendAmount(converted.toFixed(2))
-        const feeData = calculateFee(converted, sendCurrency, receiveCurrency)
-        setFee(feeData.fee)
-      } else if (rate) {
-        // If no reverse rate, calculate backwards using the forward rate
-        const converted = amount / rate.rate
-        setSendAmount(converted.toFixed(2))
-        const feeData = calculateFee(converted, sendCurrency, receiveCurrency)
+      if (rate) {
+        // To get the target receive amount, we need to work backwards
+        // receiveAmount = sendAmount * rate
+        // So: sendAmount = receiveAmount / rate
+        const requiredSendAmount = targetReceiveAmount / rate.rate
+        setSendAmount(requiredSendAmount.toFixed(2))
+
+        // Calculate fee based on the required send amount
+        const feeData = calculateFee(requiredSendAmount, sendCurrency, receiveCurrency)
         setFee(feeData.fee)
       } else {
         setSendAmount("0")
