@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,18 +13,13 @@ import { User, Mail, Edit } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService } from "@/lib/database"
 import { useUserData } from "@/hooks/use-user-data"
+import { setLoading } from "@/lib/loading-context" // Declare setLoading variable
 
 export default function UserProfilePage() {
-  const { user, userProfile, refreshUserProfile } = useAuth()
+  const { user, userProfile, refreshUserProfile, loading } = useAuth()
+  const router = useRouter()
   const { transactions, currencies, exchangeRates } = useUserData()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [userStats, setUserStats] = useState({
-    totalTransactions: 0,
-    totalSent: 0,
-    memberSince: "",
-  })
-
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -31,10 +27,19 @@ export default function UserProfilePage() {
     phone: "",
     baseCurrency: "NGN",
   })
-
   const [editProfileData, setEditProfileData] = useState(profileData)
+  const [userStats, setUserStats] = useState({
+    totalTransactions: 0,
+    totalSent: 0,
+    memberSince: "",
+  })
 
-  // Load user profile data
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login")
+    }
+  }, [user, loading, router])
+
   useEffect(() => {
     if (userProfile) {
       const data = {
@@ -49,7 +54,6 @@ export default function UserProfilePage() {
     }
   }, [userProfile])
 
-  // Load user statistics
   useEffect(() => {
     if (!user || !transactions.length || !exchangeRates.length) return
 
@@ -57,14 +61,11 @@ export default function UserProfilePage() {
       const baseCurrency = userProfile?.base_currency || "NGN"
       let totalSentInBaseCurrency = 0
 
-      // Calculate total sent in base currency for completed transactions
       for (const transaction of transactions) {
         if (transaction.status === "completed") {
           let amountInBaseCurrency = transaction.send_amount
 
-          // If transaction currency is different from base currency, convert it
           if (transaction.send_currency !== baseCurrency) {
-            // Find exchange rate from transaction currency to base currency
             const rate = exchangeRates.find(
               (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
             )
@@ -72,7 +73,6 @@ export default function UserProfilePage() {
             if (rate) {
               amountInBaseCurrency = transaction.send_amount * rate.rate
             } else {
-              // If direct rate not found, try reverse rate
               const reverseRate = exchangeRates.find(
                 (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
               )
@@ -86,7 +86,6 @@ export default function UserProfilePage() {
         }
       }
 
-      // Get member since date
       const memberSince = userProfile?.created_at
         ? new Date(userProfile.created_at).toLocaleDateString("en-US", {
             month: "short",
@@ -109,7 +108,6 @@ export default function UserProfilePage() {
 
     setLoading(true)
     try {
-      // Update profile in database
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
         lastName: editProfileData.lastName,
@@ -117,10 +115,8 @@ export default function UserProfilePage() {
         baseCurrency: editProfileData.baseCurrency,
       })
 
-      // Update local state
       setProfileData(editProfileData)
 
-      // Refresh user profile from auth context to get updated data
       if (refreshUserProfile) {
         await refreshUserProfile()
       }
@@ -145,6 +141,18 @@ export default function UserProfilePage() {
   const formatCurrency = (amount: number, currency: string) => {
     const currencyInfo = currencies.find((c) => c.code === currency)
     return `${currencyInfo?.symbol || ""}${amount.toLocaleString()}`
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
   }
 
   return (

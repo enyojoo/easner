@@ -57,13 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string, userEmail: string) => {
     try {
-      console.log("Fetching profile for user:", userId)
-
       // Try to fetch from users table first
       const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
 
       if (userProfile && !userError) {
-        console.log("Found user profile:", userProfile)
         setUserProfile(userProfile)
         setIsAdmin(false)
         return userProfile
@@ -77,13 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (adminProfile && !adminError) {
-        console.log("Found admin profile:", adminProfile)
         setUserProfile(adminProfile)
         setIsAdmin(true)
         return adminProfile
       }
 
-      console.log("No profile found, creating basic profile")
       // Create a basic profile if none exists
       const basicProfile: UserProfile = {
         id: userId,
@@ -94,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false)
       return basicProfile
     } catch (error) {
-      console.error("Error fetching user profile:", error)
       // Create basic profile on error
       const basicProfile: UserProfile = {
         id: userId,
@@ -118,21 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log("Initializing auth...")
-
         const {
           data: { session },
         } = await supabase.auth.getSession()
 
-        console.log("Initial session check:", !!session)
-
         if (mounted) {
           if (session?.user) {
-            console.log("Setting initial user:", session.user.id)
             setUser(session.user)
             await fetchUserProfile(session.user.id, session.user.email || "")
           } else {
-            console.log("No initial session")
             setUser(null)
             setUserProfile(null)
             setIsAdmin(false)
@@ -140,7 +128,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
         }
       } catch (error) {
-        console.error("Error initializing auth:", error)
         if (mounted) {
           setUser(null)
           setUserProfile(null)
@@ -158,25 +145,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
-      console.log("Auth state change:", event, !!session)
-
-      if (event === "SIGNED_IN" && session?.user) {
-        console.log("User signed in:", session.user.id)
+      if (session?.user) {
         setUser(session.user)
         await fetchUserProfile(session.user.id, session.user.email || "")
-        setLoading(false)
-      } else if (event === "SIGNED_OUT" || !session) {
-        console.log("User signed out or no session")
+      } else {
         setUser(null)
         setUserProfile(null)
         setIsAdmin(false)
-        setLoading(false)
-      } else if (session?.user) {
-        console.log("Session updated:", session.user.id)
-        setUser(session.user)
-        await fetchUserProfile(session.user.id, session.user.email || "")
-        setLoading(false)
       }
+      setLoading(false)
     })
 
     return () => {
@@ -187,26 +164,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Attempting sign in for:", email)
-      setLoading(true)
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log("Sign in result:", { success: !!data.session, error: error?.message })
-
       if (error) {
-        setLoading(false)
         return { error }
       }
 
-      // Don't set loading to false here - let the auth state change handler do it
       return { error: null }
     } catch (error) {
-      console.error("Sign in error:", error)
-      setLoading(false)
       return { error }
     }
   }
@@ -231,32 +199,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null }
     } catch (error) {
-      console.error("Sign up error:", error)
       return { error }
     }
   }
 
   const signOut = async () => {
     try {
-      console.log("Signing out...")
-      setLoading(true)
-
       await supabase.auth.signOut()
-
-      // Clear state
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
-      setLoading(false)
-
-      console.log("Sign out complete")
     } catch (error) {
-      console.error("Sign out error:", error)
-      // Force clear state
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
-      setLoading(false)
     }
   }
 

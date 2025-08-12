@@ -24,21 +24,16 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  // Handle redirect after successful login
+  // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      console.log("User authenticated, redirecting to dashboard")
-
-      // Check for stored redirect and conversion data
       const redirectPath = sessionStorage.getItem("redirectAfterLogin")
       const conversionData = sessionStorage.getItem("conversionData")
 
       if (redirectPath && conversionData) {
-        // Clear stored data
         sessionStorage.removeItem("redirectAfterLogin")
         sessionStorage.removeItem("conversionData")
 
-        // Parse conversion data and add to URL
         try {
           const data = JSON.parse(conversionData)
           const params = new URLSearchParams({
@@ -50,10 +45,8 @@ export default function LoginPage() {
             fee: data.fee.toString(),
             step: "2",
           })
-
           router.push(`/user/send?${params.toString()}`)
         } catch (e) {
-          console.error("Error parsing conversion data:", e)
           router.push("/user/dashboard")
         }
       } else {
@@ -68,27 +61,22 @@ export default function LoginPage() {
     setError("")
 
     try {
-      console.log("Submitting login form")
       const { error: signInError } = await signIn(email, password)
 
       if (signInError) {
-        console.log("Login error:", signInError.message)
         setError(signInError.message)
         setSubmitting(false)
         return
       }
 
-      console.log("Login successful, waiting for auth state update...")
-      // Don't set submitting to false here - let the redirect handle it
+      // Success - the useEffect will handle redirect
     } catch (err: any) {
-      console.error("Login exception:", err)
       setError(err.message || "An error occurred during login")
       setSubmitting(false)
     }
   }
 
-  // Show loading while checking initial auth state
-  if (loading && !submitting) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
@@ -99,7 +87,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-        {/* Logo */}
         <div className="mb-8">
           <BrandLogo size="md" />
         </div>
