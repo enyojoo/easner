@@ -56,29 +56,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // Try to fetch from users table first
-      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 10000),
+      )
 
-      if (userProfile && !userError) {
-        setUserProfile(userProfile)
-        setIsAdmin(false)
-        return userProfile
-      }
+      const profilePromise = (async () => {
+        // Try to fetch from users table first
+        const { data: userProfile, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", userId)
+          .single()
 
-      // If not found in users, check admin_users table
-      const { data: adminProfile, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("id", userId)
-        .single()
+        if (userProfile && !userError) {
+          setUserProfile(userProfile)
+          setIsAdmin(false)
+          return userProfile
+        }
 
-      if (adminProfile && !adminError) {
-        setUserProfile(adminProfile)
-        setIsAdmin(true)
-        return adminProfile
-      }
+        // If not found in users, check admin_users table
+        const { data: adminProfile, error: adminError } = await supabase
+          .from("admin_users")
+          .select("*")
+          .eq("id", userId)
+          .single()
 
-      return null
+        if (adminProfile && !adminError) {
+          setUserProfile(adminProfile)
+          setIsAdmin(true)
+          return adminProfile
+        }
+
+        return null
+      })()
+
+      return await Promise.race([profilePromise, timeoutPromise])
     } catch (error) {
       console.error("Error fetching user profile:", error)
       return null
@@ -101,23 +114,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        if (mounted) {
-          if (session?.user) {
-            setUser(session.user)
-            await fetchUserProfile(session.user.id)
-          } else {
-            setUser(null)
-            setUserProfile(null)
-            setIsAdmin(false)
-          }
-          setLoading(false)
+        if (mounted && session?.user) {
+          setUser(session.user)
+          await fetchUserProfile(session.user.id)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
+      } finally {
         if (mounted) {
-          setUser(null)
-          setUserProfile(null)
-          setIsAdmin(false)
           setLoading(false)
         }
       }
@@ -142,9 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error handling auth state change:", error)
-        setUser(null)
-        setUserProfile(null)
-        setIsAdmin(false)
       } finally {
         if (mounted) {
           setLoading(false)
@@ -169,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
+      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
@@ -203,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      // Clear all data before signing out
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
@@ -210,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
     } catch (error) {
       console.error("Sign out error:", error)
+      // Force clear state even if signOut fails
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)

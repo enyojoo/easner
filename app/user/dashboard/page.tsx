@@ -1,253 +1,197 @@
 "use client"
 
-import { AuthGuard } from "@/components/auth-guard"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/lib/auth-context"
-import { useUserData } from "@/hooks/use-user-data"
-import { formatCurrency } from "@/utils/currency"
-import { ArrowUpRight, ArrowDownLeft, Plus, Eye, EyeOff, TrendingUp, Users, Clock, DollarSign } from "lucide-react"
+import { Send, TrendingUp } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { useEffect, useState } from "react"
+import { useUserData } from "@/hooks/use-user-data"
 
-export default function UserDashboard() {
+interface Transaction {
+  id: string
+  transaction_id: string
+  send_amount: number
+  send_currency: string
+  status: string
+  created_at: string
+  recipient: {
+    full_name: string
+  }
+}
+
+export default function UserDashboardPage() {
   const { userProfile } = useAuth()
-  const { transactions, recipients, loading } = useUserData()
-  const [showBalance, setShowBalance] = useState(true)
+  const { transactions, currencies, exchangeRates, loading } = useUserData()
+  const [totalSent, setTotalSent] = useState(0)
 
-  // Mock balance data - replace with real data
-  const balance = 125000
+  useEffect(() => {
+    if (!userProfile?.id || !transactions.length || !exchangeRates.length) return
+
+    const calculateTotalSent = () => {
+      const baseCurrency = userProfile.base_currency || "NGN"
+      let totalInBaseCurrency = 0
+
+      for (const transaction of transactions) {
+        if (transaction.status === "completed") {
+          let amountInBaseCurrency = transaction.send_amount
+
+          // If transaction currency is different from base currency, convert it
+          if (transaction.send_currency !== baseCurrency) {
+            // Find exchange rate from transaction currency to base currency
+            const rate = exchangeRates.find(
+              (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+            )
+
+            if (rate) {
+              amountInBaseCurrency = transaction.send_amount * rate.rate
+            } else {
+              // If direct rate not found, try reverse rate
+              const reverseRate = exchangeRates.find(
+                (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+              )
+              if (reverseRate && reverseRate.rate > 0) {
+                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
+              }
+            }
+          }
+
+          totalInBaseCurrency += amountInBaseCurrency
+        }
+      }
+
+      setTotalSent(totalInBaseCurrency)
+    }
+
+    calculateTotalSent()
+  }, [transactions, exchangeRates, userProfile])
+
+  const userName = userProfile?.first_name 
   const baseCurrency = userProfile?.base_currency || "NGN"
+  const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
+  const totalSentValue = totalSent || 0
 
-  // Get recent transactions (last 5)
-  const recentTransactions = transactions?.slice(0, 5) || []
-
-  // Calculate stats
-  const totalSent = transactions?.reduce((sum, tx) => (tx.type === "send" ? sum + tx.amount : sum), 0) || 0
-  const totalReceived = transactions?.reduce((sum, tx) => (tx.type === "receive" ? sum + tx.amount : sum), 0) || 0
-  const pendingTransactions = transactions?.filter((tx) => tx.status === "pending").length || 0
+  const formatCurrencyValue = (amount: number, currencyCode: string) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
 
   return (
-    <AuthGuard>
-      <UserDashboardLayout>
-        <div className="space-y-6">
-          {/* Welcome Section */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userProfile?.first_name || "User"}!</h1>
-              <p className="text-gray-600">Here's what's happening with your money today.</p>
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <Link href="/user/send">
-                <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Send Money
-                </Button>
-              </Link>
-            </div>
-          </div>
+    <UserDashboardLayout>
+      <div className="p-6 space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
+          <p className="text-gray-600">Overview of your account and recent activity</p>
+        </div>
 
-          {/* Balance Card */}
-          <Card className="bg-gradient-to-r from-novapay-primary to-novapay-primary-600 text-white">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium text-white/90">Available Balance</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowBalance(!showBalance)}
-                  className="text-white/80 hover:text-white hover:bg-white/10"
-                >
-                  {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Sent</CardTitle>
+              <TrendingUp className="h-4 w-4 text-novapay-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{showBalance ? formatCurrency(balance, baseCurrency) : "••••••"}</div>
-              <p className="text-white/80 text-sm mt-1">
-                {baseCurrency} • Last updated: {new Date().toLocaleTimeString()}
-              </p>
+              <div className="text-2xl font-bold text-gray-900">
+                {formatCurrencyValue(totalSentValue, baseCurrency)}
+              </div>
+              <p className="text-xs text-gray-500">From all currencies in your base currency</p>
             </CardContent>
           </Card>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Sent</CardTitle>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalSent, baseCurrency)}</div>
-                <p className="text-xs text-muted-foreground">This month</p>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Transactions</CardTitle>
+              <Send className="h-4 w-4 text-novapay-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{completedTransactions}</div>
+              <p className="text-xs text-green-600">Completed transactions</p>
+            </CardContent>
+          </Card>
+        </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Received</CardTitle>
-                <ArrowDownLeft className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalReceived, baseCurrency)}</div>
-                <p className="text-xs text-muted-foreground">This month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Recipients</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{recipients?.length || 0}</div>
-                <p className="text-xs text-muted-foreground">Saved recipients</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingTransactions}</div>
-                <p className="text-xs text-muted-foreground">Transactions</p>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Send Money Card */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-gray-900">Quick Send</CardTitle>
+              <CardDescription>Send money instantly</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center py-6">
+                <div className="w-16 h-16 bg-novapay-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Send className="h-8 w-8 text-novapay-primary" />
+                </div>
+                <p className="text-sm text-gray-600 mb-4">Start a new money transfer</p>
+                <Link href="/user/send">
+                  <Button className="w-full bg-novapay-primary hover:bg-novapay-primary-600">Send Money</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Recent Transactions */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Transactions</CardTitle>
-                  <CardDescription>Your latest money transfers</CardDescription>
-                </div>
-                <Link href="/user/transactions">
-                  <Button variant="outline" size="sm">
-                    View All
-                  </Button>
-                </Link>
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">Recent Transactions</CardTitle>
+                <CardDescription>Your latest money transfers</CardDescription>
               </div>
+              <Link href="/user/transactions">
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                        <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
-                      </div>
-                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : recentTransactions.length > 0 ? (
-                <div className="space-y-4">
-                  {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            transaction.type === "send" ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"
-                          }`}
-                        >
-                          {transaction.type === "send" ? (
-                            <ArrowUpRight className="h-4 w-4" />
-                          ) : (
-                            <ArrowDownLeft className="h-4 w-4" />
-                          )}
+              <div className="space-y-4">
+            { loading ? (
+                  <div className="text-center py-8 text-gray-500">Loading transactions...</div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">No transactions yet</div>
+                ) : (
+                  transactions.slice(0, 3).map((transaction) => (
+                    <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
+                            <Send className="h-5 w-5 text-novapay-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(transaction.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">
-                            {transaction.type === "send" ? "Sent to" : "Received from"} {transaction.recipient_name}
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">
+                            {formatCurrencyValue(transaction.send_amount, transaction.send_currency)}
                           </p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(transaction.created_at).toLocaleDateString()}
-                          </p>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                              transaction.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : transaction.status === "processing"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {transaction.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`font-medium ${transaction.type === "send" ? "text-red-600" : "text-green-600"}`}>
-                          {transaction.type === "send" ? "-" : "+"}
-                          {formatCurrency(transaction.amount, transaction.currency)}
-                        </p>
-                        <Badge
-                          variant={
-                            transaction.status === "completed"
-                              ? "default"
-                              : transaction.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                        >
-                          {transaction.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions yet</h3>
-                  <p className="text-gray-600 mb-4">Start by sending money to someone</p>
-                  <Link href="/user/send">
-                    <Button>Send Money</Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common tasks you might want to do</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Link href="/user/send">
-                  <Button variant="outline" className="w-full justify-start h-auto p-4 bg-transparent">
-                    <ArrowUpRight className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Send Money</div>
-                      <div className="text-sm text-gray-600">Transfer to anyone</div>
-                    </div>
-                  </Button>
-                </Link>
-
-                <Link href="/user/recipients">
-                  <Button variant="outline" className="w-full justify-start h-auto p-4 bg-transparent">
-                    <Users className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Recipients</div>
-                      <div className="text-sm text-gray-600">Manage saved recipients</div>
-                    </div>
-                  </Button>
-                </Link>
-
-                <Link href="/user/transactions">
-                  <Button variant="outline" className="w-full justify-start h-auto p-4 bg-transparent">
-                    <TrendingUp className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Transaction History</div>
-                      <div className="text-sm text-gray-600">View all transactions</div>
-                    </div>
-                  </Button>
-                </Link>
+                    </Link>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-      </UserDashboardLayout>
-    </AuthGuard>
+      </div>
+    </UserDashboardLayout>
   )
 }
