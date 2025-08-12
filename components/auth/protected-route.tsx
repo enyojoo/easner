@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { useEffect } from "react"
 import { useRouteProtection } from "@/hooks/use-route-protection"
 
 interface ProtectedRouteProps {
@@ -10,26 +11,29 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useRouteProtection()
+  const { isAuthenticated, isExpired, loading, userProfile, adminProfile, redirectToLogin } = useRouteProtection()
 
-  // Show loading while checking authentication
+  useEffect(() => {
+    if (!loading && isExpired) {
+      redirectToLogin()
+    }
+  }, [loading, isExpired, redirectToLogin])
+
+  useEffect(() => {
+    if (!loading && requireAdmin && !adminProfile) {
+      redirectToLogin()
+    }
+  }, [loading, requireAdmin, adminProfile, redirectToLogin])
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
       </div>
     )
   }
 
-  // Don't render if not authenticated (will redirect)
-  if (!user) {
-    return null
-  }
-
-  // Don't render if admin access required but user is not admin
-  if (requireAdmin && !isAdmin) {
+  if (isExpired || (requireAdmin && !adminProfile)) {
     return null
   }
 
