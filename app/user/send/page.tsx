@@ -833,11 +833,14 @@ export default function UserSendPage() {
                       <div className="bg-gray-50 rounded-xl p-4">
                         <div className="flex justify-between items-center">
                           <input
-                            type="number"
-                            value={receiveAmount.toFixed(2)}
+                            type="text"
+                            value={lastEditedField === "receive" ? receiveAmount.toString() : receiveAmount.toFixed(2)}
                             onChange={(e) => {
-                              setReceiveAmount(Number.parseFloat(e.target.value) || 0)
-                              setLastEditedField("receive")
+                              const value = e.target.value
+                              if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                                setReceiveAmount(Number.parseFloat(value) || 0)
+                                setLastEditedField("receive")
+                              }
                             }}
                             className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                             placeholder="0.00"
