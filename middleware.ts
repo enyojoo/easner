@@ -1,25 +1,31 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 
-export async function middleware(req: NextRequest) {
+export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  const supabase = createMiddlewareClient({ req: request, res })
 
-  // Check if we have a session
+  // Get the current session
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // If user is not signed in and the current path starts with /user, redirect to /login
-  if (!session && req.nextUrl.pathname.startsWith("/user")) {
-    const redirectUrl = new URL("/login", req.url)
-    return NextResponse.redirect(redirectUrl)
+  const { pathname } = request.nextUrl
+
+  // If user is logged in and tries to access login page, redirect to dashboard
+  if (session && pathname === "/login") {
+    return NextResponse.redirect(new URL("/user/dashboard", request.url))
+  }
+
+  // If user is not logged in and tries to access protected user pages, redirect to login
+  if (!session && pathname.startsWith("/user/")) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
   return res
 }
 
 export const config = {
-  matcher: ["/user/:path*"],
+  matcher: ["/login", "/user/:path*"],
 }
