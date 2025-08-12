@@ -16,6 +16,7 @@ interface UserProfile {
   verification_status?: string
   created_at?: string
   updated_at?: string
+  name?: string
 }
 
 interface AuthContextType {
@@ -56,44 +57,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 10000),
-      )
+      // Try to fetch from users table first
+      const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
 
-      const profilePromise = (async () => {
-        // Try to fetch from users table first
-        const { data: userProfile, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single()
+      if (userProfile && !userError) {
+        setUserProfile(userProfile)
+        setIsAdmin(false)
+        return userProfile
+      }
 
-        if (userProfile && !userError) {
-          setUserProfile(userProfile)
-          setIsAdmin(false)
-          return userProfile
-        }
+      // If not found in users, check admin_users table
+      const { data: adminProfile, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("id", userId)
+        .single()
 
-        // If not found in users, check admin_users table
-        const { data: adminProfile, error: adminError } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("id", userId)
-          .single()
+      if (adminProfile && !adminError) {
+        setUserProfile(adminProfile)
+        setIsAdmin(true)
+        return adminProfile
+      }
 
-        if (adminProfile && !adminError) {
-          setUserProfile(adminProfile)
-          setIsAdmin(true)
-          return adminProfile
-        }
-
-        return null
-      })()
-
-      return await Promise.race([profilePromise, timeoutPromise])
+      // If no profile found in either table, user might not have completed registration
+      console.warn("No profile found for user:", userId)
+      setUserProfile(null)
+      setIsAdmin(false)
+      return null
     } catch (error) {
       console.error("Error fetching user profile:", error)
+      setUserProfile(null)
+      setIsAdmin(false)
       return null
     }
   }
@@ -114,14 +108,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        if (mounted && session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
+        if (mounted) {
+          if (session?.user) {
+            setUser(session.user)
+            await fetchUserProfile(session.user.id)
+          } else {
+            setUser(null)
+            setUserProfile(null)
+            setIsAdmin(false)
+          }
+          setLoading(false)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
-      } finally {
         if (mounted) {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
           setLoading(false)
         }
       }
@@ -135,6 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
+      console.log("Auth state change:", event, session?.user?.id)
+
       try {
         if (session?.user) {
           setUser(session.user)
@@ -146,6 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error handling auth state change:", error)
+        setUser(null)
+        setUserProfile(null)
+        setIsAdmin(false)
       } finally {
         if (mounted) {
           setLoading(false)
