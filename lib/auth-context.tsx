@@ -78,18 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return adminProfile
       }
 
-      // If no profile found, clear user state
+      // If no profile found in either table, this might be a new user
       console.warn("No profile found for user:", userId)
-      setUser(null)
-      setUserProfile(null)
-      setIsAdmin(false)
       return null
     } catch (error) {
       console.error("Error fetching user profile:", error)
-      // Clear user state on error
-      setUser(null)
-      setUserProfile(null)
-      setIsAdmin(false)
       return null
     }
   }
@@ -139,6 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
+
+      console.log("Auth state change:", event, !!session)
 
       try {
         if (session?.user) {

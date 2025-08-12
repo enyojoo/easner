@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,45 +16,13 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, user, userProfile, loading, isAdmin } = useAuth()
+  const { signIn, user, loading, isAdmin } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!loading && user && userProfile) {
-      // Check for stored redirect and conversion data
-      const redirectPath = sessionStorage.getItem("redirectAfterLogin")
-      const conversionData = sessionStorage.getItem("conversionData")
-
-      if (redirectPath && conversionData) {
-        // Clear stored data
-        sessionStorage.removeItem("redirectAfterLogin")
-        sessionStorage.removeItem("conversionData")
-
-        // Parse conversion data and add to URL
-        const data = JSON.parse(conversionData)
-        const params = new URLSearchParams({
-          sendAmount: data.sendAmount,
-          sendCurrency: data.sendCurrency,
-          receiveCurrency: data.receiveCurrency,
-          receiveAmount: data.receiveAmount.toString(),
-          exchangeRate: data.exchangeRate.toString(),
-          fee: data.fee.toString(),
-          step: "2",
-        })
-
-        router.push(`/user/send?${params.toString()}`)
-      } else {
-        // Regular redirect based on user type
-        router.push(isAdmin ? "/admin/dashboard" : "/user/dashboard")
-      }
-    }
-  }, [user, userProfile, loading, isAdmin, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,14 +34,42 @@ export default function LoginPage() {
 
       if (signInError) {
         setError(signInError.message)
+        setSubmitting(false)
         return
       }
 
-      // Don't manually redirect here - let the useEffect handle it
-      // after the auth state is properly updated
+      // Wait a bit for auth state to update, then redirect
+      setTimeout(() => {
+        // Check for stored redirect and conversion data
+        const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+        const conversionData = sessionStorage.getItem("conversionData")
+
+        if (redirectPath && conversionData) {
+          // Clear stored data
+          sessionStorage.removeItem("redirectAfterLogin")
+          sessionStorage.removeItem("conversionData")
+
+          // Parse conversion data and add to URL
+          const data = JSON.parse(conversionData)
+          const params = new URLSearchParams({
+            sendAmount: data.sendAmount,
+            sendCurrency: data.sendCurrency,
+            receiveCurrency: data.receiveCurrency,
+            receiveAmount: data.receiveAmount.toString(),
+            exchangeRate: data.exchangeRate.toString(),
+            fee: data.fee.toString(),
+            step: "2",
+          })
+
+          router.push(`/user/send?${params.toString()}`)
+        } else {
+          // Regular redirect based on user type
+          router.push("/user/dashboard")
+        }
+        setSubmitting(false)
+      }, 1000)
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
-    } finally {
       setSubmitting(false)
     }
   }
@@ -85,11 +81,6 @@ export default function LoginPage() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
       </div>
     )
-  }
-
-  // Don't render login form if user is already authenticated
-  if (user && userProfile) {
-    return null
   }
 
   return (

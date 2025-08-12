@@ -14,8 +14,8 @@ export function PublicHeader() {
     await signOut()
   }
 
-  // Only show user as logged in if we have both user and userProfile
-  const isLoggedIn = !loading && user && userProfile
+  // Show user as logged in if we have a user (even without profile for new users)
+  const isLoggedIn = !loading && user
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
