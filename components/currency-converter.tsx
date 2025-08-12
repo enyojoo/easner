@@ -34,8 +34,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
   const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
   const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
-  const [sendDropdownDirection, setSendDropdownDirection] = useState<"down" | "up">("down")
-  const [receiveDropdownDirection, setReceiveDropdownDirection] = useState<"down" | "up">("down")
 
   const sendDropdownRef = useRef<HTMLDivElement>(null)
   const receiveDropdownRef = useRef<HTMLDivElement>(null)
@@ -58,29 +56,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
     loadData()
   }, [])
-
-  // Calculate dropdown direction based on available space
-  const calculateDropdownDirection = (buttonElement: HTMLElement): "down" | "up" => {
-    const rect = buttonElement.getBoundingClientRect()
-    const viewportHeight = window.innerHeight
-    const dropdownHeight = 320 // Increased from 300 to account for search bar + padding + max-h-60
-
-    const spaceBelow = viewportHeight - rect.bottom - 20 // Add 20px buffer
-    const spaceAbove = rect.top - 20 // Add 20px buffer
-
-    // If there's enough space below, drop down
-    if (spaceBelow >= dropdownHeight) {
-      return "down"
-    }
-
-    // If there's more space above than below, drop up
-    if (spaceAbove > spaceBelow && spaceAbove >= dropdownHeight) {
-      return "up"
-    }
-
-    // If neither has enough space, choose the one with more space
-    return spaceAbove > spaceBelow ? "up" : "down"
-  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -165,7 +140,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     isOpen,
     onToggle,
     dropdownRef,
-    direction,
   }: {
     selectedCurrency: string
     onCurrencyChange: (currency: string) => void
@@ -174,15 +148,9 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     isOpen: boolean
     onToggle: () => void
     dropdownRef: React.RefObject<HTMLDivElement>
-    direction: "down" | "up"
   }) => {
     const filteredCurrencies = filterCurrencies(searchTerm)
     const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
-
-    const dropdownClasses =
-      direction === "up"
-        ? "absolute right-0 bottom-full mb-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-        : "absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
 
     return (
       <div className="relative" ref={dropdownRef}>
@@ -199,7 +167,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         </Button>
 
         {isOpen && (
-          <div className={dropdownClasses}>
+          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
             {/* Search Bar */}
             <div className="p-3 border-b">
               <div className="relative">
@@ -214,8 +182,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               </div>
             </div>
 
-            {/* Currency List */}
-            <div className="max-h-60 overflow-y-auto">
+            {/* Currency List - Show 3 items in preview, rest scroll */}
+            <div className="max-h-[180px] overflow-y-auto">
               {filteredCurrencies.length > 0 ? (
                 filteredCurrencies.map((currency) => (
                   <div
@@ -225,7 +193,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                       onSearchChange("")
                       onToggle()
                     }}
-                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50"
+                    className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 min-h-[60px]"
                   >
                     <FlagIcon currency={currency} />
                     <div className="flex-1">
@@ -271,30 +239,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const handleReceiveAmountChange = (value: string) => {
     setReceiveAmount(value)
     setLastEditedField("receive")
-  }
-
-  // Handle send dropdown toggle with direction calculation
-  const handleSendDropdownToggle = () => {
-    if (!sendDropdownOpen && sendDropdownRef.current) {
-      const button = sendDropdownRef.current.querySelector("button")
-      if (button) {
-        const direction = calculateDropdownDirection(button)
-        setSendDropdownDirection(direction)
-      }
-    }
-    setSendDropdownOpen(!sendDropdownOpen)
-  }
-
-  // Handle receive dropdown toggle with direction calculation
-  const handleReceiveDropdownToggle = () => {
-    if (!receiveDropdownOpen && receiveDropdownRef.current) {
-      const button = receiveDropdownRef.current.querySelector("button")
-      if (button) {
-        const direction = calculateDropdownDirection(button)
-        setReceiveDropdownDirection(direction)
-      }
-    }
-    setReceiveDropdownOpen(!receiveDropdownOpen)
   }
 
   // Update the useEffect to calculate conversions based on last edited field
@@ -395,9 +339,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 searchTerm={sendCurrencySearch}
                 onSearchChange={setSendCurrencySearch}
                 isOpen={sendDropdownOpen}
-                onToggle={handleSendDropdownToggle}
+                onToggle={() => setSendDropdownOpen(!sendDropdownOpen)}
                 dropdownRef={sendDropdownRef}
-                direction={sendDropdownDirection}
               />
             </div>
           </div>
@@ -462,9 +405,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 searchTerm={receiveCurrencySearch}
                 onSearchChange={setReceiveCurrencySearch}
                 isOpen={receiveDropdownOpen}
-                onToggle={handleReceiveDropdownToggle}
+                onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
                 dropdownRef={receiveDropdownRef}
-                direction={receiveDropdownDirection}
               />
             </div>
           </div>
