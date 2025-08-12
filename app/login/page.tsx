@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, user, loading, isAdmin } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -24,51 +24,35 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      console.log("User already logged in, redirecting to dashboard")
+      router.push("/user/dashboard")
+    }
+  }, [user, loading, router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError("")
 
     try {
+      console.log("Submitting login form")
       const { error: signInError } = await signIn(email, password)
 
       if (signInError) {
+        console.log("Login error:", signInError.message)
         setError(signInError.message)
         setSubmitting(false)
         return
       }
 
-      // Wait a bit for auth state to update, then redirect
-      setTimeout(() => {
-        // Check for stored redirect and conversion data
-        const redirectPath = sessionStorage.getItem("redirectAfterLogin")
-        const conversionData = sessionStorage.getItem("conversionData")
+      console.log("Login successful, waiting for redirect...")
 
-        if (redirectPath && conversionData) {
-          // Clear stored data
-          sessionStorage.removeItem("redirectAfterLogin")
-          sessionStorage.removeItem("conversionData")
-
-          // Parse conversion data and add to URL
-          const data = JSON.parse(conversionData)
-          const params = new URLSearchParams({
-            sendAmount: data.sendAmount,
-            sendCurrency: data.sendCurrency,
-            receiveCurrency: data.receiveCurrency,
-            receiveAmount: data.receiveAmount.toString(),
-            exchangeRate: data.exchangeRate.toString(),
-            fee: data.fee.toString(),
-            step: "2",
-          })
-
-          router.push(`/user/send?${params.toString()}`)
-        } else {
-          // Regular redirect based on user type
-          router.push("/user/dashboard")
-        }
-        setSubmitting(false)
-      }, 1000)
+      // The useEffect will handle the redirect when user state updates
     } catch (err: any) {
+      console.error("Login exception:", err)
       setError(err.message || "An error occurred during login")
       setSubmitting(false)
     }
@@ -76,6 +60,15 @@ export default function LoginPage() {
 
   // Show loading while checking auth state
   if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
+      </div>
+    )
+  }
+
+  // Don't render if user is already logged in
+  if (user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>

@@ -16,6 +16,7 @@ interface UserProfile {
   verification_status?: string
   created_at?: string
   updated_at?: string
+  name?: string
 }
 
 interface AuthContextType {
@@ -56,10 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId)
+
       // Try to fetch from users table first
       const { data: userProfile, error: userError } = await supabase.from("users").select("*").eq("id", userId).single()
 
       if (userProfile && !userError) {
+        console.log("Found user profile:", userProfile)
         setUserProfile(userProfile)
         setIsAdmin(false)
         return userProfile
@@ -73,17 +77,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (adminProfile && !adminError) {
+        console.log("Found admin profile:", adminProfile)
         setUserProfile(adminProfile)
         setIsAdmin(true)
         return adminProfile
       }
 
-      // If no profile found in either table, this might be a new user
-      console.warn("No profile found for user:", userId)
-      return null
+      console.log("No profile found, creating basic profile from user data")
+      // Create a basic profile from user metadata if no profile exists
+      const basicProfile: UserProfile = {
+        id: userId,
+        email: user?.email || "",
+        first_name: user?.user_metadata?.first_name || "",
+        last_name: user?.user_metadata?.last_name || "",
+        name: user?.user_metadata?.name || user?.email?.split("@")[0] || "",
+      }
+      setUserProfile(basicProfile)
+      setIsAdmin(false)
+      return basicProfile
     } catch (error) {
       console.error("Error fetching user profile:", error)
-      return null
+      // Still create a basic profile even on error
+      const basicProfile: UserProfile = {
+        id: userId,
+        email: user?.email || "",
+        name: user?.email?.split("@")[0] || "User",
+      }
+      setUserProfile(basicProfile)
+      setIsAdmin(false)
+      return basicProfile
     }
   }
 
@@ -96,18 +118,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
+        console.log("Initializing auth...")
+
+        // Get initial session
         const {
           data: { session },
+          error,
         } = await supabase.auth.getSession()
+
+        console.log("Initial session:", { session: !!session, user: !!session?.user, error })
 
         if (mounted) {
           if (session?.user) {
+            console.log("Setting user from session:", session.user.id)
             setUser(session.user)
             await fetchUserProfile(session.user.id)
           } else {
+            console.log("No session found, clearing user state")
             setUser(null)
             setUserProfile(null)
             setIsAdmin(false)
@@ -115,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
         }
       } catch (error) {
-        console.error("Error getting initial session:", error)
+        console.error("Error initializing auth:", error)
         if (mounted) {
           setUser(null)
           setUserProfile(null)
@@ -125,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    getInitialSession()
+    initializeAuth()
 
     // Listen for auth changes
     const {
@@ -133,22 +162,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
-      console.log("Auth state change:", event, !!session)
+      console.log("Auth state change:", event, { session: !!session, user: !!session?.user })
 
       try {
         if (session?.user) {
+          console.log("Auth change: setting user", session.user.id)
           setUser(session.user)
           await fetchUserProfile(session.user.id)
         } else {
+          console.log("Auth change: clearing user state")
           setUser(null)
           setUserProfile(null)
           setIsAdmin(false)
         }
       } catch (error) {
         console.error("Error handling auth state change:", error)
-        setUser(null)
-        setUserProfile(null)
-        setIsAdmin(false)
       } finally {
         if (mounted) {
           setLoading(false)
@@ -164,16 +192,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Attempting sign in for:", email)
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log("Sign in result:", { success: !!data.session, error: error?.message })
+
       if (error) {
         return { error }
       }
 
-      // The auth state change listener will handle setting user and profile
       return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
@@ -208,12 +239,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Clear all data before signing out
+      console.log("Signing out...")
+
+      // Clear state first
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
 
       await supabase.auth.signOut()
+
+      console.log("Sign out complete")
     } catch (error) {
       console.error("Sign out error:", error)
       // Force clear state even if signOut fails

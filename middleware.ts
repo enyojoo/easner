@@ -1,43 +1,42 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next()
+  const { pathname } = request.nextUrl
 
-  // Create a Supabase client configured to use cookies
-  const supabase = createServerComponentClient({ cookies: () => request.cookies })
+  // Get auth tokens from cookies
+  const accessToken =
+    request.cookies.get("sb-access-token")?.value ||
+    request.cookies.get("supabase-auth-token")?.value ||
+    request.cookies.get("sb-localhost-auth-token")?.value
 
-  try {
-    // Get the session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+  const refreshToken =
+    request.cookies.get("sb-refresh-token")?.value ||
+    request.cookies.get("supabase-refresh-token")?.value ||
+    request.cookies.get("sb-localhost-refresh-token")?.value
 
-    const { pathname } = request.nextUrl
+  const hasValidSession = !!(accessToken && refreshToken)
 
-    // If user is logged in and tries to access login page, redirect to dashboard
-    if (session && pathname === "/login") {
-      return NextResponse.redirect(new URL("/user/dashboard", request.url))
-    }
+  console.log("Middleware check:", {
+    pathname,
+    hasValidSession,
+    accessToken: !!accessToken,
+    refreshToken: !!refreshToken,
+  })
 
-    // If user is not logged in and tries to access protected user pages, redirect to login
-    if (!session && pathname.startsWith("/user/")) {
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
-
-    return res
-  } catch (error) {
-    console.error("Middleware auth error:", error)
-
-    // On error, allow access to login but protect user routes
-    const { pathname } = request.nextUrl
-    if (pathname.startsWith("/user/")) {
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
-
-    return res
+  // If user has session and tries to access login, redirect to dashboard
+  if (hasValidSession && pathname === "/login") {
+    console.log("Redirecting logged in user from login to dashboard")
+    return NextResponse.redirect(new URL("/user/dashboard", request.url))
   }
+
+  // If user has no session and tries to access user pages, redirect to login
+  if (!hasValidSession && pathname.startsWith("/user/")) {
+    console.log("Redirecting unauthenticated user to login")
+    return NextResponse.redirect(new URL("/login", request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
