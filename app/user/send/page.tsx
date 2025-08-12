@@ -468,31 +468,44 @@ export default function UserSendPage() {
     if (!sendCurrency || !receiveCurrency) return
 
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
+    if (!rate) return
 
     if (lastEditedField === "send") {
       // Calculate receive amount from send amount
       const amount = Number.parseFloat(sendAmount) || 0
       const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
 
-      if (rate) {
-        const converted = amount * rate.rate
-        setReceiveAmount(converted.toFixed(2))
-      } else {
-        setReceiveAmount("0")
-      }
-
+      const converted = amount * rate.rate
+      setReceiveAmount(converted.toFixed(2))
       setFee(feeData.fee)
       setFeeType(feeData.feeType)
     } else {
       // Calculate send amount from receive amount (reverse calculation)
       const targetReceiveAmount = Number.parseFloat(receiveAmount) || 0
 
-      if (rate && rate.rate > 0) {
+      if (rate.rate > 0) {
         // To get the target receive amount, we need to work backwards
         // receiveAmount = sendAmount * rate
         // So: sendAmount = receiveAmount / rate
-        const requiredSendAmount = targetReceiveAmount / rate.rate
-        setSendAmount(requiredSendAmount.toFixed(2))
+        let requiredSendAmount = targetReceiveAmount / rate.rate
+
+        // Check if the calculated send amount is outside min/max limits
+        if (rate.min_amount && requiredSendAmount < rate.min_amount) {
+          // If below minimum, set to minimum and recalculate receive amount
+          requiredSendAmount = rate.min_amount
+          setSendAmount(requiredSendAmount.toFixed(2))
+          const newReceiveAmount = requiredSendAmount * rate.rate
+          setReceiveAmount(newReceiveAmount.toFixed(2))
+        } else if (rate.max_amount && requiredSendAmount > rate.max_amount) {
+          // If above maximum, set to maximum and recalculate receive amount
+          requiredSendAmount = rate.max_amount
+          setSendAmount(requiredSendAmount.toFixed(2))
+          const newReceiveAmount = requiredSendAmount * rate.rate
+          setReceiveAmount(newReceiveAmount.toFixed(2))
+        } else {
+          // If within limits, just update the send amount
+          setSendAmount(requiredSendAmount.toFixed(2))
+        }
 
         // Calculate fee based on the required send amount
         const feeData = calculateFee(requiredSendAmount, sendCurrency, receiveCurrency)
@@ -510,10 +523,12 @@ export default function UserSendPage() {
     if (!sendCurrency || !receiveCurrency) return
 
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
-    if (rate && rate.min_amount) {
+    if (rate && rate.min_amount && lastEditedField === "send") {
       const currentAmount = Number.parseFloat(sendAmount) || 0
       if (currentAmount < rate.min_amount) {
         setSendAmount(rate.min_amount.toString())
+      } else if (rate.max_amount && currentAmount > rate.max_amount) {
+        setSendAmount(rate.max_amount.toString())
       }
     }
   }, [sendCurrency, receiveCurrency, exchangeRates])
