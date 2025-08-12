@@ -29,17 +29,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import type { Currency } from "@/types"
-import { ProtectedRoute } from "@/components/auth/protected-route"
 
 export default function UserSendPage() {
-  return (
-    <ProtectedRoute>
-      <SendMoneyContent />
-    </ProtectedRoute>
-  )
-}
-
-function SendMoneyContent() {
   const router = useRouter()
   const { userProfile } = useAuth()
   const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()

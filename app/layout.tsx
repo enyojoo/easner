@@ -11,8 +11,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
- title: "NOVAMONEY - Send Money Instantly",
- description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+ title: "NOVAMONEY - Send Money | International Money Transfer",
+ description: "Transfer money between supported currencies with the best exchange rates and zero fees. Send money abroad and make international money transfer online for free.",
  keywords: "money transfer, send money abroad, international payments, send money app, transfer money overseas, international money transfer, transfer money online, send money online",
  formatDetection: {
    email: false,
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
    apple: "https://cldup.com/iMvs-lKmIe.svg",
  },
  openGraph: {
-   title: "NOVAMONEY - Send Money Instantly",
-   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+   title: "NOVAMONEY - Send Money | International Money Transfer",
+   description: "Transfer money between supported currencies with the best exchange rates and zero fees. Send money abroad and make international money transfer online for free.",
    url: "https://www.novamoney.net",
    siteName: "NOVAMONEY",
    locale: "en_US",
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
        url: "https://cldup.com/o8bbjNRTtm.png",
        width: 1200,
        height: 630,
-       alt: "NOVAMONEY - Send Money Instantly",
+       alt: "NOVAMONEY",
      },
    ],
  },
  twitter: {
    card: "summary_large_image",
-   title: "NOVAMONEY - Send Money Instantly",
-   description: "Transfer money between supported currencies with the best exchange rates and zero fees",
+   title: "NOVAMONEY - Send Money | International Money Transfer",
+   description: "Transfer money between supported currencies with the best exchange rates and zero fees. Send money abroad and make international money transfer online for free.",
    creator: "@novamoneyapp",
    images: ["https://cldup.com/o8bbjNRTtm.png"],
  },
