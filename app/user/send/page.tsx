@@ -23,7 +23,6 @@ import {
   AlertCircle,
   X,
 } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { transactionService, paymentMethodService, recipientService } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -82,6 +81,15 @@ export default function UserSendPage() {
   // Add this state near the other state declarations
   const [isAddRecipientDialogOpen, setIsAddRecipientDialogOpen] = useState(false)
 
+  // Currency dropdown states
+  const [sendCurrencySearch, setSendCurrencySearch] = useState<string>("")
+  const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
+  const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
+  const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
+
+  const sendDropdownRef = useRef<HTMLDivElement>(null)
+  const receiveDropdownRef = useRef<HTMLDivElement>(null)
+
   // Load payment methods
   useEffect(() => {
     const loadPaymentMethods = async () => {
@@ -99,7 +107,7 @@ export default function UserSendPage() {
   // Set default currencies when data is loaded
   useEffect(() => {
     if (currencies.length > 0 && userProfile) {
-      const userBaseCurrency = userProfile.base_currency || "NGN"
+      const userBaseCurrency = userProfile.base_currency || "USD"
       const baseCurrencyExists = currencies.find((c) => c.code === userBaseCurrency)
 
       if (baseCurrencyExists) {
@@ -127,6 +135,35 @@ export default function UserSendPage() {
       setTransactionId(newTransactionId)
     }
   }, [currentStep, transactionId])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sendDropdownRef.current && !sendDropdownRef.current.contains(event.target as Node)) {
+        setSendDropdownOpen(false)
+        setSendCurrencySearch("")
+      }
+      if (receiveDropdownRef.current && !receiveDropdownRef.current.contains(event.target as Node)) {
+        setReceiveDropdownOpen(false)
+        setReceiveCurrencySearch("")
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Filter currencies based on search
+  const filterCurrencies = (searchTerm: string) => {
+    if (!searchTerm) return currencies
+    return currencies.filter(
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }
 
   const filteredSavedRecipients = recipients.filter(
     (recipient) =>
@@ -268,30 +305,10 @@ export default function UserSendPage() {
 
   // Exchange rate and fee calculation functions
   const getExchangeRate = (from: string, to: string) => {
-    // Same currency pair returns 1:1 rate
-    if (from === to) {
-      return {
-        id: "same",
-        from_currency: from,
-        to_currency: to,
-        rate: 1,
-        fee_type: "free" as const,
-        fee_amount: 0,
-        status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-    }
-
     return exchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
   }
 
   const calculateFee = (amount: number, from: string, to: string) => {
-    // Same currency pair has no fee
-    if (from === to) {
-      return { fee: 0, feeType: "free" }
-    }
-
     const rateData = getExchangeRate(from, to)
     if (!rateData || rateData.fee_type === "free") {
       return { fee: 0, feeType: "free" }
@@ -331,6 +348,87 @@ export default function UserSendPage() {
     return <span className="text-xs">{currency.code}</span>
   }
 
+  // Custom Currency Dropdown Component
+  const CurrencyDropdown = ({
+    selectedCurrency,
+    onCurrencyChange,
+    searchTerm,
+    onSearchChange,
+    isOpen,
+    onToggle,
+    dropdownRef,
+  }: {
+    selectedCurrency: string
+    onCurrencyChange: (currency: string) => void
+    searchTerm: string
+    onSearchChange: (search: string) => void
+    isOpen: boolean
+    onToggle: () => void
+    dropdownRef: React.RefObject<HTMLDivElement>
+  }) => {
+    const filteredCurrencies = filterCurrencies(searchTerm)
+    const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
+
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <Button
+          variant="outline"
+          className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
+          onClick={onToggle}
+        >
+          <div className="flex items-center gap-2">
+            {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
+            <span className="font-medium text-sm">{selectedCurrency}</span>
+            <ChevronDown className="h-3 w-3 text-gray-500" />
+          </div>
+        </Button>
+
+        {isOpen && (
+          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            {/* Search Bar */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search currencies..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-10 h-9"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Currency List - Show 3 items in preview, rest scroll */}
+            <div className="max-h-[180px] overflow-y-auto">
+              {filteredCurrencies.length > 0 ? (
+                filteredCurrencies.map((currency) => (
+                  <div
+                    key={currency.code}
+                    onClick={() => {
+                      onCurrencyChange(currency.code)
+                      onSearchChange("")
+                      onToggle()
+                    }}
+                    className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 min-h-[60px]"
+                  >
+                    <FlagIcon currency={currency} />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{currency.code}</div>
+                      <div className="text-xs text-muted-foreground truncate">{currency.name}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No currencies found</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Handle currency selection with same currency prevention
   const handleSendCurrencyChange = (newCurrency: string) => {
     setSendCurrency(newCurrency)
@@ -363,14 +461,6 @@ export default function UserSendPage() {
     if (!sendCurrency || !receiveCurrency) return
 
     const amount = Number.parseFloat(sendAmount) || 0
-
-    // If same currency, 1:1 conversion
-    if (sendCurrency === receiveCurrency) {
-      setReceiveAmount(amount)
-      setFee(0)
-      setFeeType("free")
-      return
-    }
 
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
     const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
@@ -516,18 +606,6 @@ export default function UserSendPage() {
           </div>
         </div>
 
-        {/* Same Currency Notice */}
-        {sendCurrency === receiveCurrency && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-xs">ℹ</span>
-              </div>
-              <span className="text-sm text-blue-700">Same currency transfer - 1:1 conversion</span>
-            </div>
-          </div>
-        )}
-
         {currentStep >= 2 && recipientData.fullName && (
           <div className="pt-4 border-t">
             <h4 className="font-medium mb-2">Recipient</h4>
@@ -664,35 +742,15 @@ export default function UserSendPage() {
                             className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                             placeholder="0.00"
                           />
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
-                                  <span className="font-medium text-sm">{sendCurrency}</span>
-                                  <ChevronDown className="h-3 w-3 text-gray-500" />
-                                </div>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              {currencies.map((currency) => (
-                                <DropdownMenuItem
-                                  key={currency.code}
-                                  onClick={() => handleSendCurrencyChange(currency.code)}
-                                  className="flex items-center gap-3"
-                                >
-                                  <FlagIcon currency={currency} />
-                                  <div>
-                                    <div className="font-medium">{currency.code}</div>
-                                    <div className="text-sm text-muted-foreground">{currency.name}</div>
-                                  </div>
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <CurrencyDropdown
+                            selectedCurrency={sendCurrency}
+                            onCurrencyChange={handleSendCurrencyChange}
+                            searchTerm={sendCurrencySearch}
+                            onSearchChange={setSendCurrencySearch}
+                            isOpen={sendDropdownOpen}
+                            onToggle={() => setSendDropdownOpen(!sendDropdownOpen)}
+                            dropdownRef={sendDropdownRef}
+                          />
                         </div>
                       </div>
                       {(() => {
@@ -737,20 +795,6 @@ export default function UserSendPage() {
                       </div>
                     </div>
 
-                    {/* Same Currency Warning */}
-                    {sendCurrency === receiveCurrency && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 text-xs">ℹ</span>
-                          </div>
-                          <span className="text-sm text-blue-700">
-                            Same currency transfer - 1:1 conversion with no fees
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Receiver Gets Section */}
                     <div className="space-y-4">
                       <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
@@ -765,35 +809,15 @@ export default function UserSendPage() {
                             </div>
                           </div>
                           <div className="flex-shrink-0">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
-                                    <span className="font-medium text-sm">{receiveCurrency}</span>
-                                    <ChevronDown className="h-3 w-3 text-gray-500" />
-                                  </div>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                {currencies.map((currency) => (
-                                  <DropdownMenuItem
-                                    key={currency.code}
-                                    onClick={() => handleReceiveCurrencyChange(currency.code)}
-                                    className="flex items-center gap-3"
-                                  >
-                                    <FlagIcon currency={currency} />
-                                    <div>
-                                      <div className="font-medium">{currency.code}</div>
-                                      <div className="text-sm text-muted-foreground">{currency.name}</div>
-                                    </div>
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <CurrencyDropdown
+                              selectedCurrency={receiveCurrency}
+                              onCurrencyChange={handleReceiveCurrencyChange}
+                              searchTerm={receiveCurrencySearch}
+                              onSearchChange={setReceiveCurrencySearch}
+                              isOpen={receiveDropdownOpen}
+                              onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
+                              dropdownRef={receiveDropdownRef}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1002,16 +1026,12 @@ export default function UserSendPage() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-novapay-primary">
-                            {sendCurrency === receiveCurrency
-                              ? `Transfer ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)}`
-                              : `Transfer ${formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}`}
+                            Transfer {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
                           </h3>
                           <p className="text-xs text-gray-600">
-                            {sendCurrency === receiveCurrency
-                              ? "Same currency transfer - no conversion needed"
-                              : fee > 0
-                                ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
-                                : "Send money to complete your transfer"}
+                            {fee > 0
+                              ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
+                              : "Send money to complete your transfer"}
                           </p>
                         </div>
                       </div>
@@ -1195,11 +1215,9 @@ export default function UserSendPage() {
                                     <span>
                                       Transfer exactly{" "}
                                       <strong>
-                                        {sendCurrency === receiveCurrency
-                                          ? formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)
-                                          : formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+                                        {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
                                       </strong>
-                                      {sendCurrency !== receiveCurrency && fee > 0 && (
+                                      {fee > 0 && (
                                         <span className="text-xs block text-amber-600">
                                           (Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} +
                                           Fee: {formatCurrency(fee, sendCurrency)})
@@ -1223,12 +1241,6 @@ export default function UserSendPage() {
                                     <span className="text-amber-500 mt-0.5 text-xs">•</span>
                                     <span>Upload receipt for faster processing</span>
                                   </li>
-                                  {sendCurrency === receiveCurrency && (
-                                    <li className="flex items-start gap-2">
-                                      <span className="text-blue-500 mt-0.5 text-xs">•</span>
-                                      <span className="text-blue-700">Same currency transfer - instant processing</span>
-                                    </li>
-                                  )}
                                   {defaultMethod?.type === "qr_code" && (
                                     <li className="flex items-start gap-2">
                                       <span className="text-amber-500 mt-0.5 text-xs">•</span>
