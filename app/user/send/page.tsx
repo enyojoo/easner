@@ -90,6 +90,9 @@ export default function UserSendPage() {
   const sendDropdownRef = useRef<HTMLDivElement>(null)
   const receiveDropdownRef = useRef<HTMLDivElement>(null)
 
+  // Add state for tracking which field was last edited
+  const [lastEditedField, setLastEditedField] = useState<"send" | "receive">("send")
+
   // Load payment methods
   useEffect(() => {
     const loadPaymentMethods = async () => {
@@ -460,21 +463,43 @@ export default function UserSendPage() {
   useEffect(() => {
     if (!sendCurrency || !receiveCurrency) return
 
-    const amount = Number.parseFloat(sendAmount) || 0
-
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
-    const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
 
-    if (rate) {
-      const converted = amount * rate.rate
-      setReceiveAmount(converted)
+    if (lastEditedField === "send") {
+      // Calculate receive amount from send amount
+      const amount = Number.parseFloat(sendAmount) || 0
+      const feeData = calculateFee(amount, sendCurrency, receiveCurrency)
+
+      if (rate) {
+        const converted = amount * rate.rate
+        setReceiveAmount(converted)
+      } else {
+        setReceiveAmount(0)
+      }
+
+      setFee(feeData.fee)
+      setFeeType(feeData.feeType)
     } else {
-      setReceiveAmount(0)
-    }
+      // Calculate send amount from receive amount (reverse calculation)
+      const targetReceiveAmount = receiveAmount
 
-    setFee(feeData.fee)
-    setFeeType(feeData.feeType)
-  }, [sendAmount, sendCurrency, receiveCurrency, exchangeRates])
+      if (rate && rate.rate > 0) {
+        // To get the target receive amount, we need to work backwards
+        // receiveAmount = sendAmount * rate
+        // So: sendAmount = receiveAmount / rate
+        const requiredSendAmount = targetReceiveAmount / rate.rate
+        setSendAmount(requiredSendAmount.toFixed(2))
+
+        // Calculate fee based on the required send amount
+        const feeData = calculateFee(requiredSendAmount, sendCurrency, receiveCurrency)
+        setFee(feeData.fee)
+        setFeeType(feeData.feeType)
+      } else {
+        setSendAmount("0")
+        setFee(0)
+      }
+    }
+  }, [sendAmount, receiveAmount, sendCurrency, receiveCurrency, exchangeRates, lastEditedField])
 
   // Add new useEffect to handle min/max amounts when currency changes
   useEffect(() => {
@@ -726,7 +751,10 @@ export default function UserSendPage() {
                           <input
                             type="number"
                             value={sendAmount}
-                            onChange={(e) => setSendAmount(e.target.value)}
+                            onChange={(e) => {
+                              setSendAmount(e.target.value)
+                              setLastEditedField("send")
+                            }}
                             onBlur={(e) => {
                               const value = Number.parseFloat(e.target.value) || 0
                               const rate = getExchangeRate(sendCurrency, receiveCurrency)
@@ -801,12 +829,16 @@ export default function UserSendPage() {
                       <div className="bg-gray-50 rounded-xl p-4">
                         <div className="flex items-center gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="text-3xl font-bold text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide max-w-[170px] sm:max-w-none">
-                              {receiveAmount.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </div>
+                            <input
+                              type="number"
+                              value={receiveAmount.toFixed(2)}
+                              onChange={(e) => {
+                                setReceiveAmount(Number.parseFloat(e.target.value) || 0)
+                                setLastEditedField("receive")
+                              }}
+                              className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
+                              placeholder="0.00"
+                            />
                           </div>
                           <div className="flex-shrink-0">
                             <CurrencyDropdown
