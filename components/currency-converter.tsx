@@ -63,10 +63,10 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const calculateDropdownDirection = (buttonElement: HTMLElement): "down" | "up" => {
     const rect = buttonElement.getBoundingClientRect()
     const viewportHeight = window.innerHeight
-    const dropdownHeight = 300 // Approximate height of dropdown (search + max-h-60)
+    const dropdownHeight = 320 // Increased from 300 to account for search bar + padding + max-h-60
 
-    const spaceBelow = viewportHeight - rect.bottom
-    const spaceAbove = rect.top
+    const spaceBelow = viewportHeight - rect.bottom - 20 // Add 20px buffer
+    const spaceAbove = rect.top - 20 // Add 20px buffer
 
     // If there's enough space below, drop down
     if (spaceBelow >= dropdownHeight) {
@@ -74,12 +74,12 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     }
 
     // If there's more space above than below, drop up
-    if (spaceAbove > spaceBelow) {
+    if (spaceAbove > spaceBelow && spaceAbove >= dropdownHeight) {
       return "up"
     }
 
-    // Default to down
-    return "down"
+    // If neither has enough space, choose the one with more space
+    return spaceAbove > spaceBelow ? "up" : "down"
   }
 
   // Close dropdown when clicking outside
