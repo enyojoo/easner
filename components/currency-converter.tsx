@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { ChevronDown, Search } from "lucide-react"
 import { currencyService } from "@/lib/database"
 import type { Currency, ExchangeRate } from "@/types"
 
@@ -28,6 +30,15 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
   const [fee, setFee] = useState<number>(0)
   const [lastEditedField, setLastEditedField] = useState<"send" | "receive">("send")
+  const [sendCurrencySearch, setSendCurrencySearch] = useState<string>("")
+  const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
+  const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
+  const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
+  const [sendDropdownDirection, setSendDropdownDirection] = useState<"down" | "up">("down")
+  const [receiveDropdownDirection, setReceiveDropdownDirection] = useState<"down" | "up">("down")
+
+  const sendDropdownRef = useRef<HTMLDivElement>(null)
+  const receiveDropdownRef = useRef<HTMLDivElement>(null)
 
   // Load currencies and exchange rates from Supabase
   useEffect(() => {
@@ -47,6 +58,58 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
     loadData()
   }, [])
+
+  // Calculate dropdown direction based on available space
+  const calculateDropdownDirection = (buttonElement: HTMLElement): "down" | "up" => {
+    const rect = buttonElement.getBoundingClientRect()
+    const viewportHeight = window.innerHeight
+    const dropdownHeight = 300 // Approximate height of dropdown (search + max-h-60)
+
+    const spaceBelow = viewportHeight - rect.bottom
+    const spaceAbove = rect.top
+
+    // If there's enough space below, drop down
+    if (spaceBelow >= dropdownHeight) {
+      return "down"
+    }
+
+    // If there's more space above than below, drop up
+    if (spaceAbove > spaceBelow) {
+      return "up"
+    }
+
+    // Default to down
+    return "down"
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sendDropdownRef.current && !sendDropdownRef.current.contains(event.target as Node)) {
+        setSendDropdownOpen(false)
+        setSendCurrencySearch("")
+      }
+      if (receiveDropdownRef.current && !receiveDropdownRef.current.contains(event.target as Node)) {
+        setReceiveDropdownOpen(false)
+        setReceiveCurrencySearch("")
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Filter currencies based on search
+  const filterCurrencies = (searchTerm: string) => {
+    if (!searchTerm) return currencies
+    return currencies.filter(
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }
 
   // Exchange rate and fee calculation functions
   const getExchangeRate = (from: string, to: string) => {
@@ -93,6 +156,94 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     return <span className="text-xs">{currency.code}</span>
   }
 
+  // Custom Currency Dropdown Component
+  const CurrencyDropdown = ({
+    selectedCurrency,
+    onCurrencyChange,
+    searchTerm,
+    onSearchChange,
+    isOpen,
+    onToggle,
+    dropdownRef,
+    direction,
+  }: {
+    selectedCurrency: string
+    onCurrencyChange: (currency: string) => void
+    searchTerm: string
+    onSearchChange: (search: string) => void
+    isOpen: boolean
+    onToggle: () => void
+    dropdownRef: React.RefObject<HTMLDivElement>
+    direction: "down" | "up"
+  }) => {
+    const filteredCurrencies = filterCurrencies(searchTerm)
+    const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
+
+    const dropdownClasses =
+      direction === "up"
+        ? "absolute right-0 bottom-full mb-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+        : "absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <Button
+          variant="outline"
+          className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
+          onClick={onToggle}
+        >
+          <div className="flex items-center gap-2">
+            {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
+            <span className="font-medium text-sm">{selectedCurrency}</span>
+            <ChevronDown className="h-3 w-3 text-gray-500" />
+          </div>
+        </Button>
+
+        {isOpen && (
+          <div className={dropdownClasses}>
+            {/* Search Bar */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search currencies..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-10 h-9"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Currency List */}
+            <div className="max-h-60 overflow-y-auto">
+              {filteredCurrencies.length > 0 ? (
+                filteredCurrencies.map((currency) => (
+                  <div
+                    key={currency.code}
+                    onClick={() => {
+                      onCurrencyChange(currency.code)
+                      onSearchChange("")
+                      onToggle()
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50"
+                  >
+                    <FlagIcon currency={currency} />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{currency.code}</div>
+                      <div className="text-xs text-muted-foreground truncate">{currency.name}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No currencies found</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Handle currency selection with same currency prevention
   const handleSendCurrencyChange = (newCurrency: string) => {
     setSendCurrency(newCurrency)
@@ -110,13 +261,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     }
   }
 
-  const handleSwapCurrencies = () => {
-    const tempSend = sendCurrency
-    const tempReceive = receiveCurrency
-    setSendCurrency(tempReceive)
-    setReceiveCurrency(tempSend)
-  }
-
   // Handle send amount change
   const handleSendAmountChange = (value: string) => {
     setSendAmount(value)
@@ -127,6 +271,30 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const handleReceiveAmountChange = (value: string) => {
     setReceiveAmount(value)
     setLastEditedField("receive")
+  }
+
+  // Handle send dropdown toggle with direction calculation
+  const handleSendDropdownToggle = () => {
+    if (!sendDropdownOpen && sendDropdownRef.current) {
+      const button = sendDropdownRef.current.querySelector("button")
+      if (button) {
+        const direction = calculateDropdownDirection(button)
+        setSendDropdownDirection(direction)
+      }
+    }
+    setSendDropdownOpen(!sendDropdownOpen)
+  }
+
+  // Handle receive dropdown toggle with direction calculation
+  const handleReceiveDropdownToggle = () => {
+    if (!receiveDropdownOpen && receiveDropdownRef.current) {
+      const button = receiveDropdownRef.current.querySelector("button")
+      if (button) {
+        const direction = calculateDropdownDirection(button)
+        setReceiveDropdownDirection(direction)
+      }
+    }
+    setReceiveDropdownOpen(!receiveDropdownOpen)
   }
 
   // Update the useEffect to calculate conversions based on last edited field
@@ -194,9 +362,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     })
   }
 
-  const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
-  const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
-
   return (
     <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
       <CardContent className="p-6 space-y-6">
@@ -224,35 +389,16 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                 placeholder="0.00"
               />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
-                      <span className="font-medium text-sm">{sendCurrency}</span>
-                      <ChevronDown className="h-3 w-3 text-gray-500" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {currencies.map((currency) => (
-                    <DropdownMenuItem
-                      key={currency.code}
-                      onClick={() => handleSendCurrencyChange(currency.code)}
-                      className="flex items-center gap-3"
-                    >
-                      <FlagIcon currency={currency} />
-                      <div>
-                        <div className="font-medium">{currency.code}</div>
-                        <div className="text-sm text-muted-foreground">{currency.name}</div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <CurrencyDropdown
+                selectedCurrency={sendCurrency}
+                onCurrencyChange={handleSendCurrencyChange}
+                searchTerm={sendCurrencySearch}
+                onSearchChange={setSendCurrencySearch}
+                isOpen={sendDropdownOpen}
+                onToggle={handleSendDropdownToggle}
+                dropdownRef={sendDropdownRef}
+                direction={sendDropdownDirection}
+              />
             </div>
           </div>
           {(() => {
@@ -310,35 +456,16 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                 placeholder="0.00"
               />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
-                      <span className="font-medium text-sm">{receiveCurrency}</span>
-                      <ChevronDown className="h-3 w-3 text-gray-500" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {currencies.map((currency) => (
-                    <DropdownMenuItem
-                      key={currency.code}
-                      onClick={() => handleReceiveCurrencyChange(currency.code)}
-                      className="flex items-center gap-3"
-                    >
-                      <FlagIcon currency={currency} />
-                      <div>
-                        <div className="font-medium">{currency.code}</div>
-                        <div className="text-sm text-muted-foreground">{currency.name}</div>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <CurrencyDropdown
+                selectedCurrency={receiveCurrency}
+                onCurrencyChange={handleReceiveCurrencyChange}
+                searchTerm={receiveCurrencySearch}
+                onSearchChange={setReceiveCurrencySearch}
+                isOpen={receiveDropdownOpen}
+                onToggle={handleReceiveDropdownToggle}
+                dropdownRef={receiveDropdownRef}
+                direction={receiveDropdownDirection}
+              />
             </div>
           </div>
         </div>
