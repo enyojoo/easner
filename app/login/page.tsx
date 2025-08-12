@@ -24,34 +24,10 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  // Redirect if already logged in
+  // Redirect if user is already logged in
   useEffect(() => {
     if (!loading && user) {
-      const redirectPath = sessionStorage.getItem("redirectAfterLogin")
-      const conversionData = sessionStorage.getItem("conversionData")
-
-      if (redirectPath && conversionData) {
-        sessionStorage.removeItem("redirectAfterLogin")
-        sessionStorage.removeItem("conversionData")
-
-        try {
-          const data = JSON.parse(conversionData)
-          const params = new URLSearchParams({
-            sendAmount: data.sendAmount,
-            sendCurrency: data.sendCurrency,
-            receiveCurrency: data.receiveCurrency,
-            receiveAmount: data.receiveAmount.toString(),
-            exchangeRate: data.exchangeRate.toString(),
-            fee: data.fee.toString(),
-            step: "2",
-          })
-          router.push(`/user/send?${params.toString()}`)
-        } catch (e) {
-          router.push("/user/dashboard")
-        }
-      } else {
-        router.push("/user/dashboard")
-      }
+      router.push("/user/dashboard")
     }
   }, [user, loading, router])
 
@@ -65,17 +41,43 @@ export default function LoginPage() {
 
       if (signInError) {
         setError(signInError.message)
-        setSubmitting(false)
         return
       }
 
-      // Success - the useEffect will handle redirect
+      // Check for stored redirect and conversion data
+      const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+      const conversionData = sessionStorage.getItem("conversionData")
+
+      if (redirectPath && conversionData) {
+        // Clear stored data
+        sessionStorage.removeItem("redirectAfterLogin")
+        sessionStorage.removeItem("conversionData")
+
+        // Parse conversion data and add to URL
+        const data = JSON.parse(conversionData)
+        const params = new URLSearchParams({
+          sendAmount: data.sendAmount,
+          sendCurrency: data.sendCurrency,
+          receiveCurrency: data.receiveCurrency,
+          receiveAmount: data.receiveAmount.toString(),
+          exchangeRate: data.exchangeRate.toString(),
+          fee: data.fee.toString(),
+          step: "2",
+        })
+
+        router.push(`/user/send?${params.toString()}`)
+      } else {
+        // Regular users always go to user dashboard
+        router.push("/user/dashboard")
+      }
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
+    } finally {
       setSubmitting(false)
     }
   }
 
+  // Show loading while checking auth state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
@@ -87,6 +89,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
+        {/* Logo */}
         <div className="mb-8">
           <BrandLogo size="md" />
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,30 +31,12 @@ interface Transaction {
 
 export default function UserTransactionsPage() {
   const router = useRouter()
-  const { user, loading } = useAuth()
-  const { transactions, currencies } = useUserData()
+  const { userProfile } = useAuth()
+  const { transactions, currencies, loading } = useUserData()
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
 
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
@@ -103,6 +85,8 @@ export default function UserTransactionsPage() {
   const handleViewTransaction = (transactionId: string) => {
     router.push(`/user/send/${transactionId.toLowerCase()}`)
   }
+
+
 
   return (
     <UserDashboardLayout>
