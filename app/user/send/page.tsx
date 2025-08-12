@@ -831,33 +831,26 @@ export default function UserSendPage() {
                     <div className="space-y-4">
                       <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
                       <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 min-w-0">
-                            <input
-                              type="text"
-                              value={receiveAmount === 0 ? "" : receiveAmount.toString()}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                  setReceiveAmount(value === "" ? 0 : Number.parseFloat(value) || 0)
-                                  setLastEditedField("receive")
-                                }
-                              }}
-                              className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div className="flex-shrink-0">
-                            <CurrencyDropdown
-                              selectedCurrency={receiveCurrency}
-                              onCurrencyChange={handleReceiveCurrencyChange}
-                              searchTerm={receiveCurrencySearch}
-                              onSearchChange={setReceiveCurrencySearch}
-                              isOpen={receiveDropdownOpen}
-                              onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
-                              dropdownRef={receiveDropdownRef}
-                            />
-                          </div>
+                        <div className="flex justify-between items-center">
+                          <input
+                            type="number"
+                            value={receiveAmount.toFixed(2)}
+                            onChange={(e) => {
+                              setReceiveAmount(Number.parseFloat(e.target.value) || 0)
+                              setLastEditedField("receive")
+                            }}
+                            className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
+                            placeholder="0.00"
+                          />
+                          <CurrencyDropdown
+                            selectedCurrency={receiveCurrency}
+                            onCurrencyChange={handleReceiveCurrencyChange}
+                            searchTerm={receiveCurrencySearch}
+                            onSearchChange={setReceiveCurrencySearch}
+                            isOpen={receiveDropdownOpen}
+                            onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
+                            dropdownRef={receiveDropdownRef}
+                          />
                         </div>
                       </div>
                     </div>
