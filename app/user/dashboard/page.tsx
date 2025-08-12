@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
+import { useRouteProtection } from "@/hooks/use-route-protection"
 
 interface Transaction {
   id: string
@@ -22,8 +23,9 @@ interface Transaction {
 }
 
 export default function UserDashboardPage() {
+  const { user, loading } = useRouteProtection()
   const { userProfile } = useAuth()
-  const { transactions, currencies, exchangeRates, loading } = useUserData()
+  const { transactions, currencies, exchangeRates, loading: dataLoading } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
 
   useEffect(() => {
@@ -67,7 +69,23 @@ export default function UserDashboardPage() {
     calculateTotalSent()
   }, [transactions, exchangeRates, userProfile])
 
-  const userName = userProfile?.first_name 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!user) {
+    return null
+  }
+
+  const userName = userProfile?.first_name
   const baseCurrency = userProfile?.base_currency || "NGN"
   const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
   const totalSentValue = totalSent || 0
@@ -148,7 +166,7 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-            { loading ? (
+                {dataLoading ? (
                   <div className="text-center py-8 text-gray-500">Loading transactions...</div>
                 ) : transactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No transactions yet</div>

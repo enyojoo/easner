@@ -2,38 +2,58 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import {
-  ChevronDown,
-  Upload,
-  Check,
-  Clock,
-  ArrowLeft,
-  Copy,
-  ChevronRight,
-  Plus,
-  Search,
-  QrCode,
-  Building2,
-  AlertCircle,
-  X,
-} from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { ChevronDown, ArrowLeft, Search, ArrowRight, Send, User, CreditCard, CheckCircle } from "lucide-react"
 import { transactionService, paymentMethodService, recipientService } from "@/lib/database"
-import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import type { Currency } from "@/types"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { refreshRecipients } from "@/lib/recipient-utils" // Import refreshRecipients
+
+interface RecipientData {
+  fullName: string
+  email: string
+  phone: string
+  address: string
+  city: string
+  country: string
+  bankName: string
+  accountNumber: string
+  routingNumber: string
+  swiftCode: string
+}
+
+interface ConversionData {
+  sendAmount: string
+  sendCurrency: string
+  receiveCurrency: string
+  receiveAmount: number
+  exchangeRate: number
+  fee: number
+}
 
 export default function UserSendPage() {
+  return (
+    <ProtectedRoute>
+      <SendMoneyContent />
+    </ProtectedRoute>
+  )
+}
+
+function SendMoneyContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { userProfile } = useAuth()
-  const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()
+  const { currencies, exchangeRates, recipients, loading } = useUserData()
 
   // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
@@ -44,15 +64,25 @@ export default function UserSendPage() {
   const [fee, setFee] = useState<number>(0)
 
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // const [loading, setLoading] = useState(true) // This loading state is shadowed by useUserData's loading
+  const [error, setError] = useState<string | null>("")
 
-  const [recipientData, setRecipientData] = useState({
+  const [recipientData, setRecipientData] = useState<RecipientData>({
     fullName: "",
-    accountNumber: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    country: "",
     bankName: "",
-    phoneNumber: "",
+    accountNumber: "",
+    routingNumber: "",
+    swiftCode: "",
   })
+  const [selectedRecipient, setSelectedRecipient] = useState<string>("")
+  const [purpose, setPurpose] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  // const [error, setError] = useState("") // This error state is shadowed by the above error state
   const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
   const [transactionId, setTransactionId] = useState<string>("")
 
@@ -63,6 +93,31 @@ export default function UserSendPage() {
     accountNumber: "",
     bankName: "",
   })
+
+  const [conversionData, setConversionData] = useState<ConversionData | null>(null)
+
+  // Load data from URL params if available
+  useEffect(() => {
+    const step = searchParams.get("step")
+    const sendAmount = searchParams.get("sendAmount")
+    const sendCurrency = searchParams.get("sendCurrency")
+    const receiveCurrency = searchParams.get("receiveCurrency")
+    const receiveAmount = searchParams.get("receiveAmount")
+    const exchangeRate = searchParams.get("exchangeRate")
+    const fee = searchParams.get("fee")
+
+    if (step && sendAmount && sendCurrency && receiveCurrency && receiveAmount && exchangeRate && fee) {
+      setCurrentStep(Number.parseInt(step))
+      setConversionData({
+        sendAmount,
+        sendCurrency,
+        receiveCurrency,
+        receiveAmount: Number.parseFloat(receiveAmount),
+        exchangeRate: Number.parseFloat(exchangeRate),
+        fee: Number.parseFloat(fee),
+      })
+    }
+  }, [searchParams])
 
   // Copy feedback states
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
@@ -127,7 +182,7 @@ export default function UserSendPage() {
           setReceiveCurrency(currencies[1].code)
         }
       }
-      setLoading(false)
+      // setLoading(false); // This loading state is shadowed by useUserData's loading
     }
   }, [currencies, userProfile])
 
@@ -179,9 +234,15 @@ export default function UserSendPage() {
     setSelectedRecipientId(recipient.id)
     setRecipientData({
       fullName: recipient.full_name,
-      accountNumber: recipient.account_number,
+      email: recipient.email || "",
+      phone: recipient.phone_number || "",
+      address: recipient.address || "",
+      city: recipient.city || "",
+      country: recipient.country || "",
       bankName: recipient.bank_name,
-      phoneNumber: recipient.phone_number || "",
+      accountNumber: recipient.account_number,
+      routingNumber: recipient.routing_number || "",
+      swiftCode: recipient.swift_code || "",
     })
   }
 
@@ -453,6 +514,55 @@ export default function UserSendPage() {
     }
   }
 
+  const handleConversionSubmit = (data: ConversionData) => {
+    setConversionData(data)
+    setCurrentStep(2)
+  }
+
+  const handleRecipientSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setCurrentStep(3)
+  }
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!conversionData || !userProfile) return
+
+    setIsSubmitting(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sendAmount: Number.parseFloat(conversionData.sendAmount),
+          sendCurrency: conversionData.sendCurrency,
+          receiveCurrency: conversionData.receiveCurrency,
+          receiveAmount: conversionData.receiveAmount,
+          exchangeRate: conversionData.exchangeRate,
+          fee: conversionData.fee,
+          recipient: recipientData,
+          purpose,
+          userId: userProfile.id,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create transaction")
+      }
+
+      const result = await response.json()
+      router.push(`/user/send/${result.transactionId}`)
+    } catch (err: any) {
+      setError(err.message || "Failed to create transaction")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   // Get payment methods for the sending currency
   const getPaymentMethodsForCurrency = (currency: string) => {
     return paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
@@ -657,6 +767,11 @@ export default function UserSendPage() {
     </Card>
   )
 
+  const formatCurrency2 = (amount: number, currencyCode: string) => {
+    const currency = currencies.find((c) => c.code === currencyCode)
+    return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   if (loading) {
     return (
       <UserDashboardLayout>
@@ -707,37 +822,49 @@ export default function UserSendPage() {
     <UserDashboardLayout>
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center space-x-4 mb-4">
+              <Button variant="ghost" size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Send Money</h1>
+            <p className="text-gray-600">Transfer money to your recipients</p>
+          </div>
+
           {/* Progress Indicator */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.completed
-                        ? "bg-green-500 text-white"
-                        : currentStep === step.number
-                          ? "bg-novapay-primary text-white"
-                          : "bg-gray-200 text-gray-600"
+                      step <= currentStep ? "bg-novapay-primary text-white" : "bg-gray-200 text-gray-600"
                     }`}
                   >
-                    {step.completed ? <Check className="h-4 w-4" /> : step.number}
+                    {step < currentStep ? <CheckCircle className="h-4 w-4" /> : step}
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
-                  {index < steps.length - 1 && (
-                    <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
-                        }`}
-                      />
-                    </div>
+                  <div className="ml-2 text-sm">
+                    {step === 1 && "Amount"}
+                    {step === 2 && "Recipient"}
+                    {step === 3 && "Review"}
+                  </div>
+                  {step < 3 && (
+                    <div className={`w-16 h-0.5 ml-4 ${step < currentStep ? "bg-novapay-primary" : "bg-gray-200"}`} />
                   )}
                 </div>
               ))}
             </div>
-            <Progress value={(currentStep / 4) * 100} className="h-2" />
+            <Progress value={(currentStep / 4) * 100} className="h-2" style={{ visibility: "hidden", height: 0 }} />
           </div>
+
+          {error && (
+            <Alert className="mb-6" variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
@@ -746,145 +873,24 @@ export default function UserSendPage() {
               {currentStep === 1 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Amount to Send</CardTitle>
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="h-5 w-5 mr-2" />
+                      Enter Amount
+                    </CardTitle>
+                    <CardDescription>How much would you like to send?</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* You Send Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-gray-700">You Send</h3>
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex justify-between items-center">
-                          <input
-                            type="number"
-                            value={sendAmount}
-                            onChange={(e) => {
-                              setSendAmount(e.target.value)
-                              setLastEditedField("send")
-                            }}
-                            onBlur={(e) => {
-                              const value = Number.parseFloat(e.target.value) || 0
-                              const rate = getExchangeRate(sendCurrency, receiveCurrency)
-                              const minAmount = rate?.min_amount || 0
-                              const maxAmount = rate?.max_amount
-
-                              if (value < minAmount && minAmount > 0) {
-                                setSendAmount(minAmount.toString())
-                              } else if (maxAmount && value > maxAmount) {
-                                setSendAmount(maxAmount.toString())
-                              }
-                            }}
-                            className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
-                            placeholder="0.00"
-                          />
-                          <CurrencyDropdown
-                            selectedCurrency={sendCurrency}
-                            onCurrencyChange={handleSendCurrencyChange}
-                            searchTerm={sendCurrencySearch}
-                            onSearchChange={setSendCurrencySearch}
-                            isOpen={sendDropdownOpen}
-                            onToggle={() => setSendDropdownOpen(!sendDropdownOpen)}
-                            dropdownRef={sendDropdownRef}
-                          />
-                        </div>
-                      </div>
-                      {(() => {
-                        const rate = getExchangeRate(sendCurrency, receiveCurrency)
-                        if (rate && (rate.min_amount || rate.max_amount)) {
-                          return (
-                            <div className="text-xs text-gray-500 mt-2">
-                              {rate.min_amount && `Min: ${formatCurrency(rate.min_amount, sendCurrency)}`}
-                              {rate.min_amount && rate.max_amount && " • "}
-                              {rate.max_amount && `Max: ${formatCurrency(rate.max_amount, sendCurrency)}`}
-                            </div>
-                          )
-                        }
-                        return null
-                      })()}
+                  <CardContent>
+                    <div className="max-w-md mx-auto">
+                      {/* Currency Converter Component would go here */}
+                      <p className="text-center text-gray-600">Currency converter component</p>
+                      <Button
+                        className="w-full mt-4 bg-novapay-primary hover:bg-novapay-primary-600"
+                        onClick={() => setCurrentStep(2)}
+                      >
+                        Continue
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
                     </div>
-
-                    {/* Fee and Rate Information */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 text-xs">✓</span>
-                          </div>
-                          <span className="text-sm text-gray-600">Fee</span>
-                        </div>
-                        <span className={`font-medium ${fee === 0 ? "text-green-600" : "text-gray-900"}`}>
-                          {fee === 0 ? "FREE" : formatCurrency(fee, sendCurrency)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                            <span className="text-novapay-primary text-xs">%</span>
-                          </div>
-                          <span className="text-sm text-gray-600">Rate</span>
-                        </div>
-                        <span className="font-medium text-novapay-primary">
-                          1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Receiver Gets Section */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-gray-700">Receiver Gets</h3>
-                      <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex justify-between items-center">
-                          <input
-                            type="number"
-                            value={receiveAmount}
-                            onChange={(e) => {
-                              setReceiveAmount(e.target.value)
-                              setLastEditedField("receive")
-                            }}
-                            onBlur={(e) => {
-                              const targetReceiveAmount = Number.parseFloat(e.target.value) || 0
-                              const rate = getExchangeRate(sendCurrency, receiveCurrency)
-
-                              if (rate && targetReceiveAmount > 0) {
-                                let requiredSendAmount = targetReceiveAmount / rate.rate
-
-                                // Apply min/max constraints and adjust both fields if needed
-                                if (rate.min_amount && requiredSendAmount < rate.min_amount) {
-                                  requiredSendAmount = rate.min_amount
-                                  const adjustedReceiveAmount = requiredSendAmount * rate.rate
-                                  setReceiveAmount(adjustedReceiveAmount.toFixed(2))
-                                  setSendAmount(requiredSendAmount.toFixed(2))
-                                } else if (rate.max_amount && requiredSendAmount > rate.max_amount) {
-                                  requiredSendAmount = rate.max_amount
-                                  const adjustedReceiveAmount = requiredSendAmount * rate.rate
-                                  setReceiveAmount(adjustedReceiveAmount.toFixed(2))
-                                  setSendAmount(requiredSendAmount.toFixed(2))
-                                }
-                              }
-                            }}
-                            className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
-                            placeholder="0.00"
-                          />
-                          <CurrencyDropdown
-                            selectedCurrency={receiveCurrency}
-                            onCurrencyChange={handleReceiveCurrencyChange}
-                            searchTerm={receiveCurrencySearch}
-                            onSearchChange={setReceiveCurrencySearch}
-                            isOpen={receiveDropdownOpen}
-                            onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
-                            dropdownRef={receiveDropdownRef}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleContinue}
-                      className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-                      disabled={!sendCurrency || !receiveCurrency || !sendAmount}
-                    >
-                      Continue
-                    </Button>
                   </CardContent>
                 </Card>
               )}
@@ -893,554 +899,159 @@ export default function UserSendPage() {
               {currentStep === 2 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Add Recipient</CardTitle>
+                    <CardTitle className="flex items-center">
+                      <User className="h-5 w-5 mr-2" />
+                      Recipient Details
+                    </CardTitle>
+                    <CardDescription>Who are you sending money to?</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Search Bar */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <Input
-                        placeholder="Search recipients"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 h-12 bg-gray-50 border-0 rounded-xl"
-                      />
-                    </div>
-
-                    {/* Add New Recipient Option */}
-                    <Dialog open={isAddRecipientDialogOpen} onOpenChange={setIsAddRecipientDialogOpen}>
-                      <DialogTrigger asChild>
-                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                              <Plus className="h-6 w-6 text-white" />
-                            </div>
-                            <span className="font-medium text-gray-900">Add new recipient</span>
-                          </div>
-                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <CardContent>
+                    <form onSubmit={handleRecipientSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Input
+                            id="fullName"
+                            value={recipientData.fullName}
+                            onChange={(e) => setRecipientData({ ...recipientData, fullName: e.target.value })}
+                            required
+                          />
                         </div>
-                      </DialogTrigger>
-
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Add New Recipient</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="newRecipientName">Full Name *</Label>
-                            <Input
-                              id="newRecipientName"
-                              value={newRecipientData.fullName}
-                              onChange={(e) => setNewRecipientData({ ...newRecipientData, fullName: e.target.value })}
-                              placeholder="Enter recipient's full name"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="newRecipientAccount">Account Number *</Label>
-                            <Input
-                              id="newRecipientAccount"
-                              value={newRecipientData.accountNumber}
-                              onChange={(e) =>
-                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                              }
-                              placeholder="Enter account number"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="newRecipientBank">Bank Name *</Label>
-                            <Input
-                              id="newRecipientBank"
-                              value={newRecipientData.bankName}
-                              onChange={(e) => setNewRecipientData({ ...newRecipientData, bankName: e.target.value })}
-                              placeholder="Enter bank name"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="newRecipientCurrency">Currency</Label>
-                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
-                              {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
-                              <div>
-                                <div className="font-medium">{receiveCurrency}</div>
-                                <div className="text-sm text-gray-500">{receiveCurrencyData?.name}</div>
-                              </div>
-                              <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
-                            </div>
-                          </div>
-                          <Button
-                            onClick={handleAddNewRecipient}
-                            disabled={
-                              !newRecipientData.fullName ||
-                              !newRecipientData.accountNumber ||
-                              !newRecipientData.bankName
-                            }
-                            className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
-                          >
-                            Add Recipient
-                          </Button>
+                        <div>
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={recipientData.email}
+                            onChange={(e) => setRecipientData({ ...recipientData, email: e.target.value })}
+                            required
+                          />
                         </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    {/* Saved Recipients List */}
-                    <div className="space-y-3">
-                      {filteredSavedRecipients.map((recipient) => (
-                        <div
-                          key={recipient.id}
-                          onClick={() => handleSelectRecipient(recipient)}
-                          className={`flex items-center justify-between p-4 bg-white rounded-xl border cursor-pointer transition-colors ${
-                            selectedRecipientId === recipient.id
-                              ? "border-novapay-primary bg-novapay-primary-50"
-                              : "border-gray-100 hover:border-novapay-primary-200"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
-                              <span className="text-novapay-primary font-semibold text-sm">
-                                {recipient.full_name
-                                  .split(" ")
-                                  .map((n: string) => n[0])
-                                  .join("")
-                                  .toUpperCase()}
-                              </span>
-                              <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
-                                <div
-                                  dangerouslySetInnerHTML={{
-                                    __html: currencies.find((c) => c.code === recipient.currency)?.flag || "",
-                                  }}
-                                  className="w-full h-full"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">{recipient.full_name}</p>
-                              <p className="text-sm text-gray-500">
-                                {recipient.bank_name} - {recipient.account_number}
-                              </p>
-                            </div>
-                          </div>
-                          {selectedRecipientId === recipient.id && (
-                            <div className="w-6 h-6 bg-novapay-primary rounded-full flex items-center justify-center">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          )}
+                        <div>
+                          <Label htmlFor="phone">Phone Number *</Label>
+                          <Input
+                            id="phone"
+                            value={recipientData.phone}
+                            onChange={(e) => setRecipientData({ ...recipientData, phone: e.target.value })}
+                            required
+                          />
                         </div>
-                      ))}
-                    </div>
-
-                    {filteredSavedRecipients.length === 0 && searchTerm && (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No recipients found matching "{searchTerm}"</p>
+                        <div>
+                          <Label htmlFor="country">Country *</Label>
+                          <Input
+                            id="country"
+                            value={recipientData.country}
+                            onChange={(e) => setRecipientData({ ...recipientData, country: e.target.value })}
+                            required
+                          />
+                        </div>
                       </div>
-                    )}
 
-                    {filteredSavedRecipients.length === 0 && !searchTerm && (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No recipients found for {receiveCurrency}</p>
-                        <p className="text-sm">Add a new recipient to get started</p>
+                      <div className="flex space-x-4">
+                        <Button type="button" variant="outline" onClick={() => setCurrentStep(1)}>
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back
+                        </Button>
+                        <Button type="submit" className="bg-novapay-primary hover:bg-novapay-primary-600">
+                          Continue
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
                       </div>
-                    )}
-
-                    <div className="flex gap-4">
-                      <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
-                      </Button>
-                      <Button
-                        onClick={handleContinue}
-                        disabled={!selectedRecipientId}
-                        className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
-                      >
-                        Continue
-                      </Button>
-                    </div>
+                    </form>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Step 3: Payment Instructions */}
-              {currentStep === 3 && (
+              {currentStep === 3 && conversionData && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      Make Payment
-                      <div className="flex items-center text-orange-600">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
-                      </div>
+                    <CardTitle className="flex items-center">
+                      <Send className="h-5 w-5 mr-2" />
+                      Review & Send
                     </CardTitle>
+                    <CardDescription>Please review your transaction details</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Payment Method - Dynamic based on admin settings */}
-                    <div className="bg-gradient-to-br from-novapay-primary-50 to-blue-50 rounded-xl p-4 border border-novapay-primary-100">
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-novapay-primary rounded-lg flex items-center justify-center">
-                          {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Transaction Summary */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2">Transaction Summary</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>You send:</span>
+                            <span className="font-medium">
+                              {formatCurrency2(
+                                Number.parseFloat(conversionData.sendAmount),
+                                conversionData.sendCurrency,
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Recipient gets:</span>
+                            <span className="font-medium">
+                              {formatCurrency2(conversionData.receiveAmount, conversionData.receiveCurrency)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Exchange rate:</span>
+                            <span>
+                              1 {conversionData.sendCurrency} = {conversionData.exchangeRate}{" "}
+                              {conversionData.receiveCurrency}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Fee:</span>
+                            <span>{formatCurrency2(conversionData.fee, conversionData.sendCurrency)}</span>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-novapay-primary">
-                            Transfer {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
-                          </h3>
-                          <p className="text-xs text-gray-600">
-                            {fee > 0
-                              ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
-                              : "Send money to complete your transfer"}
+                      </div>
+
+                      {/* Recipient Details */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2">Recipient Details</h3>
+                        <div className="space-y-1 text-sm">
+                          <p>
+                            <span className="font-medium">Name:</span> {recipientData.fullName}
+                          </p>
+                          <p>
+                            <span className="font-medium">Email:</span> {recipientData.email}
+                          </p>
+                          <p>
+                            <span className="font-medium">Phone:</span> {recipientData.phone}
+                          </p>
+                          <p>
+                            <span className="font-medium">Country:</span> {recipientData.country}
                           </p>
                         </div>
                       </div>
 
-                      {/* Render payment methods based on admin configuration */}
-                      {(() => {
-                        const paymentMethodsForCurrency = getPaymentMethodsForCurrency(sendCurrency)
-                        const defaultMethod = getDefaultPaymentMethod(sendCurrency)
-
-                        if (paymentMethodsForCurrency.length === 0) {
-                          return (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                              <p className="text-red-700">No payment methods configured for {sendCurrency}</p>
-                              <p className="text-red-600 text-sm">Please contact support</p>
-                            </div>
-                          )
-                        }
-
-                        return (
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {/* Payment Method Details */}
-                            <div className="space-y-3">
-                              {defaultMethod?.type === "bank_account" && (
-                                <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <Building2 className="h-4 w-4 text-gray-600" />
-                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Account Name</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.account_name}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.account_name, "accountName")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.accountName ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Account Number</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-sm">
-                                          {defaultMethod.account_number}
-                                        </span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.account_number, "accountNumber")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.accountNumber ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Bank Name</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.bank_name, "bankName")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.bankName ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                                      <span className="text-gray-600 text-xs">Transaction ID</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(transactionId, "transactionId")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.transactionId ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {defaultMethod?.type === "qr_code" && (
-                                <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">
-                                  <div className="flex items-center justify-center gap-2 mb-3">
-                                    <QrCode className="h-4 w-4 text-gray-600" />
-                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
-                                  </div>
-                                  <div className="w-48 h-48 bg-gray-100 rounded-lg mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                                    {defaultMethod.qr_code_data ? (
-                                      defaultMethod.qr_code_data.endsWith(".svg") ? (
-                                        <img
-                                          src={defaultMethod.qr_code_data || "/placeholder.svg"}
-                                          alt="QR Code"
-                                          className="w-full h-full object-contain"
-                                        />
-                                      ) : defaultMethod.qr_code_data.endsWith(".pdf") ? (
-                                        <div className="text-center">
-                                          <QrCode className="h-16 w-16 text-gray-400 mx-auto mb-2" />
-                                          <a
-                                            href={defaultMethod.qr_code_data}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-sm underline"
-                                          >
-                                            View QR Code PDF
-                                          </a>
-                                        </div>
-                                      ) : (
-                                        <img
-                                          src={defaultMethod.qr_code_data || "/placeholder.svg"}
-                                          alt="QR Code"
-                                          className="w-full h-full object-contain"
-                                        />
-                                      )
-                                    ) : (
-                                      <QrCode className="h-16 w-16 text-gray-400" />
-                                    )}
-                                  </div>
-                                  {defaultMethod.instructions && (
-                                    <p className="text-xs text-gray-500 mb-2">{defaultMethod.instructions}</p>
-                                  )}
-                                  <div className="mt-2 pt-2 border-t border-gray-100">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Transaction ID</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(transactionId, "transactionId")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.transactionId ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Important Instructions */}
-                            <div className="space-y-3">
-                              <h4 className="font-medium text-gray-900 text-xs uppercase tracking-wide">
-                                Important Instructions
-                              </h4>
-                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                <ul className="text-xs text-amber-700 space-y-1.5">
-                                  <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>
-                                      Transfer exactly{" "}
-                                      <strong>
-                                        {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
-                                      </strong>
-                                      {fee > 0 && (
-                                        <span className="text-xs block text-amber-600">
-                                          (Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} +
-                                          Fee: {formatCurrency(fee, sendCurrency)})
-                                        </span>
-                                      )}
-                                    </span>
-                                  </li>
-                                  <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>
-                                      Include transaction ID <strong>{transactionId}</strong>
-                                    </span>
-                                  </li>
-                                  <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>
-                                      Complete within <strong>60 minutes</strong>
-                                    </span>
-                                  </li>
-                                  <li className="flex items-start gap-2">
-                                    <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>Upload receipt for faster processing</span>
-                                  </li>
-                                  {defaultMethod?.type === "qr_code" && (
-                                    <li className="flex items-start gap-2">
-                                      <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                      <span>Scan QR code with your mobile banking app</span>
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })()}
-                    </div>
-
-                    {/* Upload Receipt Section with Better Error Handling */}
-                    <div className="space-y-3">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileInputChange}
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        className="hidden"
-                      />
-
-                      {/* Upload Error Alert */}
-                      {uploadError && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-sm text-red-700 font-medium">Upload Error</p>
-                              <p className="text-xs text-red-600 mt-1">{uploadError}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleDismissUploadError}
-                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
+                      <form onSubmit={handleFinalSubmit}>
+                        <div className="mb-4">
+                          <Label htmlFor="purpose">Purpose of Transfer</Label>
+                          <Textarea
+                            id="purpose"
+                            value={purpose}
+                            onChange={(e) => setPurpose(e.target.value)}
+                            placeholder="e.g., Family support, business payment, etc."
+                            rows={3}
+                          />
                         </div>
-                      )}
 
-                      <div
-                        onClick={handleUploadClick}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                          isDragOver
-                            ? "border-novapay-primary bg-novapay-primary-50"
-                            : uploadedFile
-                              ? "border-green-300 bg-green-50"
-                              : uploadError
-                                ? "border-red-300 bg-red-50"
-                                : "border-gray-200 hover:border-novapay-primary-300"
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                              uploadedFile
-                                ? "bg-green-100"
-                                : uploadError
-                                  ? "bg-red-100"
-                                  : isDragOver
-                                    ? "bg-novapay-primary-100"
-                                    : "bg-gray-100 group-hover:bg-novapay-primary-50"
-                            }`}
+                        <div className="flex space-x-4">
+                          <Button type="button" variant="outline" onClick={() => setCurrentStep(2)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-novapay-primary hover:bg-novapay-primary-600"
                           >
-                            {uploadedFile ? (
-                              <Check className="h-5 w-5 text-green-600" />
-                            ) : uploadError ? (
-                              <AlertCircle className="h-5 w-5 text-red-600" />
-                            ) : (
-                              <Upload
-                                className={`h-5 w-5 transition-colors ${
-                                  isDragOver ? "text-novapay-primary" : "text-gray-400"
-                                }`}
-                              />
-                            )}
-                          </div>
-                          <div className="text-left">
-                            <h3 className="font-medium text-gray-900 text-sm">
-                              {uploadedFile
-                                ? uploadedFile.name
-                                : uploadError
-                                  ? "Upload Failed"
-                                  : "Upload Payment Receipt"}
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                              {uploadedFile
-                                ? `${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB`
-                                : uploadError
-                                  ? "Click to try again"
-                                  : "JPG, PNG or PDF (Max 5MB)"}
-                            </p>
-                          </div>
-                          {uploadedFile && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleRemoveFile()
-                              }}
-                              className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
+                            {isSubmitting ? "Processing..." : "Send Money"}
+                            <Send className="h-4 w-4 ml-2" />
+                          </Button>
                         </div>
-
-                        {/* Progress Bar (shown when uploading) */}
-                        {isUploading && (
-                          <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                              <span>Uploading...</span>
-                              <span>{uploadProgress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div
-                                className="bg-novapay-primary h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${uploadProgress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-4">
-                        <Button variant="outline" onClick={handleBack} className="flex-1 bg-transparent">
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back
-                        </Button>
-                        <Button
-                          onClick={handleContinue}
-                          disabled={isCreatingTransaction}
-                          className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
-                        >
-                          {isCreatingTransaction ? "Sending..." : "I've Paid"}
-                        </Button>
-                      </div>
+                      </form>
                     </div>
                   </CardContent>
                 </Card>
