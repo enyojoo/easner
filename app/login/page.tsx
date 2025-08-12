@@ -16,7 +16,7 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, user, loading } = useAuth()
+  const { signIn, user, userProfile, loading, isAdmin } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -24,13 +24,40 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  // Redirect if already logged in
+  // Handle redirect when user is authenticated
   useEffect(() => {
+    console.log("Login page effect:", { loading, user: !!user, userProfile: !!userProfile })
+
     if (!loading && user) {
-      console.log("User already logged in, redirecting to dashboard")
-      router.push("/user/dashboard")
+      console.log("User is authenticated, redirecting...")
+
+      // Check for stored redirect and conversion data
+      const redirectPath = sessionStorage.getItem("redirectAfterLogin")
+      const conversionData = sessionStorage.getItem("conversionData")
+
+      if (redirectPath && conversionData) {
+        console.log("Found stored redirect data, redirecting to send page")
+        sessionStorage.removeItem("redirectAfterLogin")
+        sessionStorage.removeItem("conversionData")
+
+        const data = JSON.parse(conversionData)
+        const params = new URLSearchParams({
+          sendAmount: data.sendAmount,
+          sendCurrency: data.sendCurrency,
+          receiveCurrency: data.receiveCurrency,
+          receiveAmount: data.receiveAmount.toString(),
+          exchangeRate: data.exchangeRate.toString(),
+          fee: data.fee.toString(),
+          step: "2",
+        })
+
+        router.push(`/user/send?${params.toString()}`)
+      } else {
+        console.log("Redirecting to dashboard")
+        router.push(isAdmin ? "/admin/dashboard" : "/user/dashboard")
+      }
     }
-  }, [user, loading, router])
+  }, [user, loading, router, isAdmin])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,19 +65,19 @@ export default function LoginPage() {
     setError("")
 
     try {
-      console.log("Submitting login form")
+      console.log("Submitting login form for:", email)
+
       const { error: signInError } = await signIn(email, password)
 
       if (signInError) {
-        console.log("Login error:", signInError.message)
+        console.log("Login failed:", signInError.message)
         setError(signInError.message)
         setSubmitting(false)
         return
       }
 
-      console.log("Login successful, waiting for redirect...")
-
-      // The useEffect will handle the redirect when user state updates
+      console.log("Login successful, auth context should handle redirect")
+      // Don't set submitting to false here - let the redirect happen
     } catch (err: any) {
       console.error("Login exception:", err)
       setError(err.message || "An error occurred during login")
@@ -58,17 +85,8 @@ export default function LoginPage() {
     }
   }
 
-  // Show loading while checking auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
-      </div>
-    )
-  }
-
-  // Don't render if user is already logged in
-  if (user) {
+  // Show loading while checking initial auth state
+  if (loading && !submitting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary"></div>
