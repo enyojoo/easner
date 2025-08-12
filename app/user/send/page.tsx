@@ -40,7 +40,7 @@ export default function UserSendPage() {
   const [sendAmount, setSendAmount] = useState<string>("100")
   const [sendCurrency, setSendCurrency] = useState<string>("")
   const [receiveCurrency, setReceiveCurrency] = useState<string>("")
-  const [receiveAmount, setReceiveAmount] = useState<number>(0)
+  const [receiveAmount, setReceiveAmount] = useState<string>("0")
   const [fee, setFee] = useState<number>(0)
 
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -476,16 +476,16 @@ export default function UserSendPage() {
 
       if (rate) {
         const converted = amount * rate.rate
-        setReceiveAmount(converted)
+        setReceiveAmount(converted.toFixed(2))
       } else {
-        setReceiveAmount(0)
+        setReceiveAmount("0")
       }
 
       setFee(feeData.fee)
       setFeeType(feeData.feeType)
     } else {
       // Calculate send amount from receive amount (reverse calculation)
-      const targetReceiveAmount = receiveAmount
+      const targetReceiveAmount = Number.parseFloat(receiveAmount) || 0
 
       if (rate && rate.rate > 0) {
         // To get the target receive amount, we need to work backwards
@@ -552,7 +552,7 @@ export default function UserSendPage() {
           recipientId: selectedRecipientId,
           sendAmount: Number.parseFloat(sendAmount),
           sendCurrency,
-          receiveAmount,
+          receiveAmount: Number.parseFloat(receiveAmount),
           receiveCurrency,
           exchangeRate: exchangeRateData.rate,
           feeAmount: fee,
@@ -625,7 +625,9 @@ export default function UserSendPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Recipient Gets</span>
-            <span className="font-semibold">{formatCurrency(receiveAmount, receiveCurrency)}</span>
+            <span className="font-semibold">
+              {formatCurrency(Number.parseFloat(receiveAmount) || 0, receiveCurrency)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Exchange Rate</span>
@@ -833,14 +835,11 @@ export default function UserSendPage() {
                       <div className="bg-gray-50 rounded-xl p-4">
                         <div className="flex justify-between items-center">
                           <input
-                            type="text"
-                            value={lastEditedField === "receive" ? receiveAmount.toString() : receiveAmount.toFixed(2)}
+                            type="number"
+                            value={receiveAmount}
                             onChange={(e) => {
-                              const value = e.target.value
-                              if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                setReceiveAmount(Number.parseFloat(value) || 0)
-                                setLastEditedField("receive")
-                              }
+                              setReceiveAmount(e.target.value)
+                              setLastEditedField("receive")
                             }}
                             className="text-3xl font-bold bg-transparent border-0 outline-none w-full"
                             placeholder="0.00"
