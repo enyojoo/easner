@@ -16,7 +16,6 @@ interface UserProfile {
   verification_status?: string
   created_at?: string
   updated_at?: string
-  name?: string
 }
 
 interface AuthContextType {
@@ -79,13 +78,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return adminProfile
       }
 
-      // If no profile found in either table, user might not have completed registration
+      // If no profile found, clear user state
       console.warn("No profile found for user:", userId)
+      setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
       return null
     } catch (error) {
       console.error("Error fetching user profile:", error)
+      // Clear user state on error
+      setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
       return null
@@ -137,8 +139,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
-
-      console.log("Auth state change:", event, session?.user?.id)
 
       try {
         if (session?.user) {

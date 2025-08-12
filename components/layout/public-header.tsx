@@ -14,6 +14,9 @@ export function PublicHeader() {
     await signOut()
   }
 
+  // Only show user as logged in if we have both user and userProfile
+  const isLoggedIn = !loading && user && userProfile
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,7 +28,7 @@ export function PublicHeader() {
           <div className="flex items-center space-x-3">
             {loading ? (
               <div className="w-20 h-8 bg-gray-200 animate-pulse rounded"></div>
-            ) : user ? (
+            ) : isLoggedIn ? (
               <div className="flex items-center space-x-3">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
