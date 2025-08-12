@@ -16,7 +16,7 @@ import { AlertCircle, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { signIn, user, userProfile, loading, isAdmin } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -24,40 +24,43 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  // Handle redirect when user is authenticated
+  // Handle redirect after successful login
   useEffect(() => {
-    console.log("Login page effect:", { loading, user: !!user, userProfile: !!userProfile })
-
     if (!loading && user) {
-      console.log("User is authenticated, redirecting...")
+      console.log("User authenticated, redirecting to dashboard")
 
       // Check for stored redirect and conversion data
       const redirectPath = sessionStorage.getItem("redirectAfterLogin")
       const conversionData = sessionStorage.getItem("conversionData")
 
       if (redirectPath && conversionData) {
-        console.log("Found stored redirect data, redirecting to send page")
+        // Clear stored data
         sessionStorage.removeItem("redirectAfterLogin")
         sessionStorage.removeItem("conversionData")
 
-        const data = JSON.parse(conversionData)
-        const params = new URLSearchParams({
-          sendAmount: data.sendAmount,
-          sendCurrency: data.sendCurrency,
-          receiveCurrency: data.receiveCurrency,
-          receiveAmount: data.receiveAmount.toString(),
-          exchangeRate: data.exchangeRate.toString(),
-          fee: data.fee.toString(),
-          step: "2",
-        })
+        // Parse conversion data and add to URL
+        try {
+          const data = JSON.parse(conversionData)
+          const params = new URLSearchParams({
+            sendAmount: data.sendAmount,
+            sendCurrency: data.sendCurrency,
+            receiveCurrency: data.receiveCurrency,
+            receiveAmount: data.receiveAmount.toString(),
+            exchangeRate: data.exchangeRate.toString(),
+            fee: data.fee.toString(),
+            step: "2",
+          })
 
-        router.push(`/user/send?${params.toString()}`)
+          router.push(`/user/send?${params.toString()}`)
+        } catch (e) {
+          console.error("Error parsing conversion data:", e)
+          router.push("/user/dashboard")
+        }
       } else {
-        console.log("Redirecting to dashboard")
-        router.push(isAdmin ? "/admin/dashboard" : "/user/dashboard")
+        router.push("/user/dashboard")
       }
     }
-  }, [user, loading, router, isAdmin])
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,19 +68,18 @@ export default function LoginPage() {
     setError("")
 
     try {
-      console.log("Submitting login form for:", email)
-
+      console.log("Submitting login form")
       const { error: signInError } = await signIn(email, password)
 
       if (signInError) {
-        console.log("Login failed:", signInError.message)
+        console.log("Login error:", signInError.message)
         setError(signInError.message)
         setSubmitting(false)
         return
       }
 
-      console.log("Login successful, auth context should handle redirect")
-      // Don't set submitting to false here - let the redirect happen
+      console.log("Login successful, waiting for auth state update...")
+      // Don't set submitting to false here - let the redirect handle it
     } catch (err: any) {
       console.error("Login exception:", err)
       setError(err.message || "An error occurred during login")

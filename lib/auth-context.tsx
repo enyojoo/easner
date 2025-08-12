@@ -124,15 +124,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        console.log("Initial session check:", !!session?.user)
+        console.log("Initial session check:", !!session)
 
         if (mounted) {
           if (session?.user) {
-            console.log("Found existing session, setting user")
+            console.log("Setting initial user:", session.user.id)
             setUser(session.user)
             await fetchUserProfile(session.user.id, session.user.email || "")
           } else {
-            console.log("No existing session")
+            console.log("No initial session")
             setUser(null)
             setUserProfile(null)
             setIsAdmin(false)
@@ -142,6 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error initializing auth:", error)
         if (mounted) {
+          setUser(null)
+          setUserProfile(null)
+          setIsAdmin(false)
           setLoading(false)
         }
       }
@@ -155,18 +158,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
-      console.log("Auth state change:", event, !!session?.user)
+      console.log("Auth state change:", event, !!session)
 
       if (event === "SIGNED_IN" && session?.user) {
-        console.log("User signed in, updating state")
+        console.log("User signed in:", session.user.id)
         setUser(session.user)
         await fetchUserProfile(session.user.id, session.user.email || "")
         setLoading(false)
       } else if (event === "SIGNED_OUT" || !session) {
-        console.log("User signed out, clearing state")
+        console.log("User signed out or no session")
         setUser(null)
         setUserProfile(null)
         setIsAdmin(false)
+        setLoading(false)
+      } else if (session?.user) {
+        console.log("Session updated:", session.user.id)
+        setUser(session.user)
+        await fetchUserProfile(session.user.id, session.user.email || "")
         setLoading(false)
       }
     })
@@ -179,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Starting sign in process...")
+      console.log("Attempting sign in for:", email)
       setLoading(true)
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -187,23 +195,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
 
-      console.log("Sign in response:", { user: !!data.user, session: !!data.session, error: error?.message })
+      console.log("Sign in result:", { success: !!data.session, error: error?.message })
 
       if (error) {
         setLoading(false)
         return { error }
       }
 
-      if (data.user && data.session) {
-        console.log("Sign in successful, setting user state")
-        setUser(data.user)
-        await fetchUserProfile(data.user.id, data.user.email || "")
-        setLoading(false)
-        return { error: null }
-      }
-
-      setLoading(false)
-      return { error: new Error("No user data returned") }
+      // Don't set loading to false here - let the auth state change handler do it
+      return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
       setLoading(false)
@@ -239,12 +239,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log("Signing out...")
+      setLoading(true)
+
+      await supabase.auth.signOut()
+
+      // Clear state
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
-      await supabase.auth.signOut()
+      setLoading(false)
+
+      console.log("Sign out complete")
     } catch (error) {
       console.error("Sign out error:", error)
+      // Force clear state
+      setUser(null)
+      setUserProfile(null)
+      setIsAdmin(false)
+      setLoading(false)
     }
   }
 
