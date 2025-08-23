@@ -42,16 +42,17 @@ export default function HomePage() {
         </div>
 
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 lg:pt-10 lg:pb-16">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-200px)]">
-            {/* Right Side - Currency Converter */}
-            <div className="flex justify-center w-full order-1 lg:order-2">
-              <div className="w-full max-w-md">
-                <CurrencyConverter onSendMoney={handleSendMoney} />
-              </div>
+          {/* Mobile: Only Currency Converter */}
+          <div className="md:hidden flex justify-center items-center min-h-[calc(100vh-200px)]">
+            <div className="w-full max-w-md">
+              <CurrencyConverter onSendMoney={handleSendMoney} />
             </div>
+          </div>
 
+          {/* Tablet and Desktop: Full Layout */}
+          <div className="hidden md:grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-200px)]">
             {/* Left Side - Hero Content */}
-            <div className="space-y-6 lg:space-y-8 w-full text-center lg:text-left order-2 lg:order-1">
+            <div className="space-y-6 lg:space-y-8 w-full text-center lg:text-left">
               <div className="space-y-4">
                 <h1 className="sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 text-5xl">
                   Send Money
@@ -94,6 +95,13 @@ export default function HomePage() {
                     <p className="text-gray-600 leading-relaxed">Competitive exchange rates, zero fees</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Right Side - Currency Converter */}
+            <div className="flex justify-center w-full">
+              <div className="w-full max-w-md">
+                <CurrencyConverter onSendMoney={handleSendMoney} />
               </div>
             </div>
           </div>
