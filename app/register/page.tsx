@@ -131,7 +131,7 @@ export default function RegisterPage() {
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
-              <p className="text-gray-600 mb-4">Welcome to NOVAMONEY! You can now start sending money instantly.</p>
+              <p className="text-gray-600 mb-4">Welcome to Easner! You can now start sending money instantly.</p>
               <p className="text-sm text-gray-500">Redirecting...</p>
             </CardContent>
           </Card>
@@ -151,9 +151,7 @@ export default function RegisterPage() {
         <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-gray-900">Create account</CardTitle>
-            <CardDescription className="text-gray-600">
-              Join NOVAMONEY and start sending money instantly
-            </CardDescription>
+            <CardDescription className="text-gray-600">Join Easner and start sending money instantly</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (

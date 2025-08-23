@@ -37,6 +37,7 @@ export default function LoginPage() {
         return
       }
 
+      // Welcome to Easner! You can now start sending money instantly.
       // Check for stored redirect and conversion data
       const redirectPath = sessionStorage.getItem("redirectAfterLogin")
       const conversionData = sessionStorage.getItem("conversionData")
@@ -81,7 +82,7 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-gray-900">Welcome back</CardTitle>
-            <CardDescription className="text-gray-600">Sign in to your NOVAMONEY account</CardDescription>
+            <CardDescription className="text-gray-600">Sign in to your Easner account</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
