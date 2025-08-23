@@ -32,7 +32,7 @@ export default function PrivacyPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Information We Collect</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  NOVAMONEY collects information you provide directly to us, such as when you create an account, use our
+                  Easner collects information you provide directly to us, such as when you create an account, use our
                   services, or contact us for support. This includes:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-gray-700">
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
                   <li>With your consent or at your direction</li>
                   <li>With service providers who assist us in operating our business</li>
                   <li>To comply with legal obligations or respond to legal requests</li>
-                  <li>To protect the rights, property, or safety of NOVAMONEY, our users, or others</li>
+                  <li>To protect the rights, property, or safety of Easner, our users, or others</li>
                   <li>In connection with a merger, acquisition, or sale of assets</li>
                 </ul>
               </section>
@@ -146,9 +146,9 @@ export default function PrivacyPage() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    <strong>Email:</strong> privacy@novamoney.net
+                    <strong>Email:</strong> privacy@easner.com
                     <br />
-                    <strong>Website:</strong> www.novamoney.net
+                    <strong>Website:</strong> www.easner.com
                   </p>
                 </div>
               </section>

@@ -32,17 +32,16 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  By accessing and using NOVAMONEY's services, you accept and agree to be bound by the terms and
-                  provision of this agreement. If you do not agree to abide by the above, please do not use this
-                  service.
+                  By accessing and using Easner's services, you accept and agree to be bound by the terms and provisions
+                  of this agreement. If you do not agree to abide by the above, please do not use this service.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. Service Description</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  NOVAMONEY provides international money transfer services that allow users to send money across
-                  borders. Our services include:
+                  Easner provides international money transfer services that allow users to send money across borders.
+                  Our services include:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-gray-700">
                   <li>International money transfers</li>
@@ -54,7 +53,7 @@ export default function TermsPage() {
 
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">3. User Responsibilities</h2>
-                <p className="text-gray-700 leading-relaxed mb-4">As a user of NOVAMONEY services, you agree to:</p>
+                <p className="text-gray-700 leading-relaxed mb-4">As a user of Easner services, you agree to:</p>
                 <ul className="list-disc pl-6 space-y-2 text-gray-700">
                   <li>Provide accurate and complete information</li>
                   <li>Maintain the security of your account credentials</li>
@@ -67,9 +66,9 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">4. Fees and Charges</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  NOVAMONEY charges fees for money transfer services. All applicable fees will be clearly displayed
-                  before you complete any transaction. Fees may vary based on the destination country, transfer amount,
-                  and payment method selected.
+                  Easner charges fees for money transfer services. All applicable fees will be clearly displayed before
+                  you complete any transaction. Fees may vary based on the destination country, transfer amount, and
+                  payment method selected.
                 </p>
               </section>
 
@@ -94,9 +93,9 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">7. Limitation of Liability</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  NOVAMONEY shall not be liable for any indirect, incidental, special, consequential, or punitive
-                  damages, including without limitation, loss of profits, data, use, goodwill, or other intangible
-                  losses, resulting from your use of the service.
+                  Easner shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
+                  including without limitation, loss of profits, data, use, goodwill, or other intangible losses,
+                  resulting from your use of the service.
                 </p>
               </section>
 
@@ -124,9 +123,9 @@ export default function TermsPage() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    <strong>Email:</strong> support@novamoney.net
+                    <strong>Email:</strong> support@easner.com
                     <br />
-                    <strong>Website:</strong> www.novamoney.net
+                    <strong>Website:</strong> www.easner.com
                   </p>
                 </div>
               </section>
