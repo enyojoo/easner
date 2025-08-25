@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { PublicHeader } from "@/components/layout/public-header"
 import { CurrencyConverter } from "@/components/currency-converter"
 import { useAuth } from "@/lib/auth-context"
+import Link from "next/link"
 
 export default function HomePage() {
   const router = useRouter()
@@ -31,10 +32,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex flex-col">
       <PublicHeader />
 
-      <main className="relative overflow-hidden">
+      <main className="relative overflow-hidden flex-1">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-novapay-primary-100 to-novapay-primary-200 rounded-full opacity-20 blur-3xl"></div>
@@ -107,6 +108,23 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="w-full border-t bg-white/80 backdrop-blur-md">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="text-sm text-gray-600">© 2025 Easner, Inc</div>
+            <div className="flex items-center space-x-6">
+              <Link href="/terms" className="text-sm text-gray-600 hover:text-novapay-primary">
+                Terms
+              </Link>
+              <Link href="/privacy" className="text-sm text-gray-600 hover:text-novapay-primary">
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

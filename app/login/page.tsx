@@ -37,7 +37,6 @@ export default function LoginPage() {
         return
       }
 
-      // Welcome to Easner! You can now start sending money instantly.
       // Check for stored redirect and conversion data
       const redirectPath = sessionStorage.getItem("redirectAfterLogin")
       const conversionData = sessionStorage.getItem("conversionData")
@@ -76,7 +75,9 @@ export default function LoginPage() {
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
         {/* Logo */}
         <div className="mb-8">
-          <BrandLogo size="md" />
+          <Link href="/">
+            <BrandLogo size="md" />
+          </Link>
         </div>
 
         <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">

@@ -123,7 +123,9 @@ export default function RegisterPage() {
       <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
         <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
           <div className="mb-8">
-            <BrandLogo size="md" />
+            <Link href="/">
+              <BrandLogo size="md" />
+            </Link>
           </div>
           <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
             <CardContent className="pt-6 text-center">
@@ -145,7 +147,9 @@ export default function RegisterPage() {
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
         {/* Logo */}
         <div className="mb-8">
-          <BrandLogo size="md" />
+          <Link href="/">
+            <BrandLogo size="md" />
+          </Link>
         </div>
 
         <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
