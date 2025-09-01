@@ -107,9 +107,9 @@ export default function UserSendPage() {
     loadPaymentMethods()
   }, [])
 
-  // Set default currencies when data is loaded
+  // Set default currencies when data is loaded - only if not already set
   useEffect(() => {
-    if (currencies.length > 0 && userProfile) {
+    if (currencies.length > 0 && userProfile && !sendCurrency && !receiveCurrency) {
       const userBaseCurrency = userProfile.base_currency || "USD"
       const baseCurrencyExists = currencies.find((c) => c.code === userBaseCurrency)
 
@@ -128,8 +128,11 @@ export default function UserSendPage() {
         }
       }
       setLoading(false)
+    } else if (currencies.length > 0 && sendCurrency && receiveCurrency) {
+      // If currencies are already set, just stop loading
+      setLoading(false)
     }
-  }, [currencies, userProfile])
+  }, [currencies, userProfile, sendCurrency, receiveCurrency])
 
   // Generate transaction ID when moving to step 3
   useEffect(() => {
