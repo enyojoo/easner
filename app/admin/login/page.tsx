@@ -11,19 +11,27 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { supabase } from "@/lib/supabase"
-import { useRouteProtection } from "@/hooks/use-route-protection"
+import { useAuth } from "@/lib/auth-context"
 import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 
 function AdminLoginPageContent() {
-  const { isChecking } = useRouteProtection({ requireAuth: false })
+  const { user, isAdmin, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
+  // Redirect if already logged in as admin
+  useEffect(() => {
+    if (!loading && user && isAdmin) {
+      router.push("/admin/dashboard")
+    }
+  }, [user, isAdmin, loading, router])
+
   // Show loading spinner while checking authentication
-  if (isChecking) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-easner-primary" />
