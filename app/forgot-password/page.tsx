@@ -156,7 +156,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo size="md" className="mx-auto mb-4" />
@@ -167,12 +167,12 @@ export default function ForgotPasswordPage() {
             <CardTitle className="flex items-center gap-2">
               {step === "email" ? (
                 <>
-                  <Mail className="h-5 w-5 text-novapay-primary" />
+                  <Mail className="h-5 w-5 text-easner-primary" />
                   Forgot Password
                 </>
               ) : (
                 <>
-                  <Shield className="h-5 w-5 text-novapay-primary" />
+                  <Shield className="h-5 w-5 text-easner-primary" />
                   Enter Verification Code
                 </>
               )}
@@ -213,7 +213,7 @@ export default function ForgotPasswordPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
                   disabled={isLoading}
                 >
                   {isLoading ? "Sending..." : "Send Verification Code"}
@@ -243,7 +243,7 @@ export default function ForgotPasswordPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
                   disabled={isLoading || otp.join("").length !== 6}
                 >
                   {isLoading ? "Verifying..." : "Verify Code"}
@@ -254,7 +254,7 @@ export default function ForgotPasswordPage() {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={resendCooldown > 0 || isLoading}
-                    className="text-sm text-novapay-primary hover:text-novapay-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="text-sm text-easner-primary hover:text-easner-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
                   </button>
@@ -275,7 +275,7 @@ export default function ForgotPasswordPage() {
                     router.push("/login")
                   }
                 }}
-                className="inline-flex items-center justify-center gap-2 text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                className="inline-flex items-center justify-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 {step === "otp" ? "Change Email" : "Back to Sign In"}
@@ -284,7 +284,7 @@ export default function ForgotPasswordPage() {
                 Don't have an account?{" "}
                 <Link
                   href="/register"
-                  className="text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                  className="text-easner-primary hover:text-easner-primary-600 transition-colors"
                 >
                   Sign up
                 </Link>

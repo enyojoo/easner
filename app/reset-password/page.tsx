@@ -94,10 +94,10 @@ function ResetPasswordForm() {
 
   if (!isValidSession && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto"></div>
             <p className="mt-2 text-gray-600">Validating reset link...</p>
           </div>
         </div>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <BrandLogo size="md" className="mx-auto mb-4" />
@@ -115,7 +115,7 @@ function ResetPasswordForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-novapay-primary" />
+              <Lock className="h-5 w-5 text-easner-primary" />
               Reset Password
             </CardTitle>
             <CardDescription>Enter your new password below</CardDescription>
@@ -179,7 +179,7 @@ function ResetPasswordForm() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
                   disabled={isLoading}
                 >
                   {isLoading ? "Resetting..." : "Reset Password"}
@@ -190,7 +190,7 @@ function ResetPasswordForm() {
             <div className="mt-6 text-center">
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
@@ -207,10 +207,10 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-novapay-primary-50 to-white p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
           <div className="w-full max-w-md">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-novapay-primary mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto"></div>
               <p className="mt-2 text-gray-600">Loading...</p>
             </div>
           </div>

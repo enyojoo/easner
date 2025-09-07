@@ -48,7 +48,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
           <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <BrandLogo size="sm" />
-              <span className="text-sm text-novapay-primary font-medium">Admin</span>
+              <span className="text-sm text-easner-primary font-medium">Admin</span>
             </div>
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
@@ -65,7 +65,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
                   href={item.href}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? "bg-novapay-primary-100 text-novapay-primary"
+                      ? "bg-easner-primary-100 text-easner-primary"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}

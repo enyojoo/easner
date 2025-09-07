@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
+import ErrorBoundary from "@/components/error-boundary"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -77,9 +78,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <PostHogProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </PostHogProvider>
+        <ErrorBoundary>
+          <PostHogProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </PostHogProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

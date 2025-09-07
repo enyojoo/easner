@@ -30,8 +30,8 @@ export function PublicHeader() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-novapay-primary" />
+                      <div className="w-8 h-8 bg-easner-primary-100 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-easner-primary" />
                       </div>
                       <span className="text-gray-700">
                         {userProfile?.first_name || userProfile?.name || user.email?.split("@")[0]}
@@ -59,13 +59,13 @@ export function PublicHeader() {
                 <Link href="/login">
                   <Button
                     variant="ghost"
-                    className="text-gray-600 hover:text-novapay-primary hover:bg-novapay-primary-50"
+                    className="text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
                   >
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  <Button className="bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
                     Sign Up
                   </Button>
                 </Link>

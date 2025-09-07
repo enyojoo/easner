@@ -292,7 +292,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-              <User className="h-4 w-4 text-novapay-primary" />
+              <User className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{registrationStats.totalUsers}</div>
@@ -335,7 +335,7 @@ export default function AdminUsersPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">New This Week</CardTitle>
-              <TrendingUp className="h-4 w-4 text-novapay-primary" />
+              <TrendingUp className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{registrationStats.newThisWeek}</div>

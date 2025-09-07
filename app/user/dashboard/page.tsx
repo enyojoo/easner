@@ -91,7 +91,7 @@ export default function UserDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Sent</CardTitle>
-              <TrendingUp className="h-4 w-4 text-novapay-primary" />
+              <TrendingUp className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
@@ -104,7 +104,7 @@ export default function UserDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Transactions</CardTitle>
-              <Send className="h-4 w-4 text-novapay-primary" />
+              <Send className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{completedTransactions}</div>
@@ -122,12 +122,12 @@ export default function UserDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center py-6">
-                <div className="w-16 h-16 bg-novapay-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="h-8 w-8 text-novapay-primary" />
+                <div className="w-16 h-16 bg-easner-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Send className="h-8 w-8 text-easner-primary" />
                 </div>
                 <p className="text-sm text-gray-600 mb-4">Start a new money transfer</p>
                 <Link href="/user/send">
-                  <Button className="w-full bg-novapay-primary hover:bg-novapay-primary-600">Send Money</Button>
+                  <Button className="w-full bg-easner-primary hover:bg-easner-primary-600">Send Money</Button>
                 </Link>
               </div>
             </CardContent>
@@ -157,8 +157,8 @@ export default function UserDashboardPage() {
                     <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                            <Send className="h-5 w-5 text-novapay-primary" />
+                          <div className="w-10 h-10 bg-easner-primary-100 rounded-full flex items-center justify-center">
+                            <Send className="h-5 w-5 text-easner-primary" />
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>

@@ -32,14 +32,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-easner-primary-50 via-white to-blue-50 flex flex-col">
       <PublicHeader />
 
       <main className="relative overflow-hidden flex-1">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-novapay-primary-100 to-novapay-primary-200 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-100 to-novapay-primary-100 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-easner-primary-100 to-easner-primary-200 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-blue-100 to-easner-primary-100 rounded-full opacity-20 blur-3xl"></div>
         </div>
 
         <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 lg:pt-10 lg:pb-16">
@@ -57,7 +57,7 @@ export default function HomePage() {
               <div className="space-y-4">
                 <h1 className="sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 text-5xl">
                   Send Money
-                  <span className="block text-novapay-primary">Instantly</span>
+                  <span className="block text-easner-primary">Instantly</span>
                 </h1>
 
                 <p className="lg:text-2xl text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 text-lg">
@@ -115,10 +115,10 @@ export default function HomePage() {
           <div className="flex h-16 items-center justify-between">
             <div className="text-sm text-gray-600">© 2025 Easner, Inc</div>
             <div className="flex items-center space-x-6">
-              <Link href="/terms" className="text-sm text-gray-600 hover:text-novapay-primary">
+              <Link href="/terms" className="text-sm text-gray-600 hover:text-easner-primary">
                 Terms
               </Link>
-              <Link href="/privacy" className="text-sm text-gray-600 hover:text-novapay-primary">
+              <Link href="/privacy" className="text-sm text-gray-600 hover:text-easner-primary">
                 Privacy Policy
               </Link>
             </div>

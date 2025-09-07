@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { userService } from "@/lib/database"
-import jwt from "jsonwebtoken"
+import { createServerClient } from "@/lib/supabase"
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,49 +9,67 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    const user = await userService.verifyPassword(email, password)
+    const supabase = createServerClient()
 
-    if (!user) {
+    // Use Supabase Auth for authentication
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (authError || !authData.user) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    if (user.status !== "active") {
+    // Get user profile from the database
+    let userProfile = null
+    let isAdmin = false
+
+    // Try regular users table first
+    const { data: regularUser, error: regularUserError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single()
+
+    if (regularUser && !regularUserError) {
+      userProfile = regularUser
+      isAdmin = false
+    } else {
+      // Check admin_users table
+      const { data: adminUser, error: adminError } = await supabase
+        .from("admin_users")
+        .select("*")
+        .eq("id", authData.user.id)
+        .single()
+
+      if (adminUser && !adminError) {
+        userProfile = adminUser
+        isAdmin = true
+      }
+    }
+
+    if (!userProfile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
+    }
+
+    if (userProfile.status !== "active") {
       return NextResponse.json({ error: "Account is suspended" }, { status: 403 })
     }
 
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: "user",
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "7d" },
-    )
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        baseCurrency: user.base_currency,
-        status: user.status,
-        verificationStatus: user.verification_status,
+        id: userProfile.id,
+        email: userProfile.email,
+        firstName: userProfile.first_name,
+        lastName: userProfile.last_name,
+        baseCurrency: userProfile.base_currency,
+        status: userProfile.status,
+        verificationStatus: userProfile.verification_status,
+        isAdmin,
       },
     })
-
-    // Set HTTP-only cookie
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    })
-
-    return response
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

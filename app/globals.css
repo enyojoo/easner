@@ -1,4 +1,4 @@
-/* NovaPay Brand Standards
+/* Easner Brand Standards
  * Primary Color: #007ACC (hsl(207 100% 40%))
  * Font: Poppins (300, 400, 500, 600, 700, 800, 900)
  * Logo: https://cldup.com/2AU2HSUjXc.svg
@@ -37,18 +37,18 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* NovaPay Brand Colors */
-    --novapay-primary: 207 100% 40%;
-    --novapay-primary-50: 207 100% 97%;
-    --novapay-primary-100: 207 100% 92%;
-    --novapay-primary-200: 207 100% 84%;
-    --novapay-primary-300: 207 100% 72%;
-    --novapay-primary-400: 207 100% 56%;
-    --novapay-primary-500: 207 100% 40%;
-    --novapay-primary-600: 207 100% 32%;
-    --novapay-primary-700: 207 100% 24%;
-    --novapay-primary-800: 207 100% 16%;
-    --novapay-primary-900: 207 100% 8%;
+    /* Easner Brand Colors */
+    --easner-primary: 207 100% 40%;
+    --easner-primary-50: 207 100% 97%;
+    --easner-primary-100: 207 100% 92%;
+    --easner-primary-200: 207 100% 84%;
+    --easner-primary-300: 207 100% 72%;
+    --easner-primary-400: 207 100% 56%;
+    --easner-primary-500: 207 100% 40%;
+    --easner-primary-600: 207 100% 32%;
+    --easner-primary-700: 207 100% 24%;
+    --easner-primary-800: 207 100% 16%;
+    --easner-primary-900: 207 100% 8%;
   }
 
   .dark {
@@ -97,81 +97,81 @@
     display: none;
   }
 
-  .bg-novapay-primary {
-    background-color: hsl(var(--novapay-primary));
+  .bg-easner-primary {
+    background-color: hsl(var(--easner-primary));
   }
-  .bg-novapay-primary-50 {
-    background-color: hsl(var(--novapay-primary-50));
+  .bg-easner-primary-50 {
+    background-color: hsl(var(--easner-primary-50));
   }
-  .bg-novapay-primary-100 {
-    background-color: hsl(var(--novapay-primary-100));
+  .bg-easner-primary-100 {
+    background-color: hsl(var(--easner-primary-100));
   }
-  .bg-novapay-primary-200 {
-    background-color: hsl(var(--novapay-primary-200));
+  .bg-easner-primary-200 {
+    background-color: hsl(var(--easner-primary-200));
   }
-  .bg-novapay-primary-300 {
-    background-color: hsl(var(--novapay-primary-300));
+  .bg-easner-primary-300 {
+    background-color: hsl(var(--easner-primary-300));
   }
-  .bg-novapay-primary-400 {
-    background-color: hsl(var(--novapay-primary-400));
+  .bg-easner-primary-400 {
+    background-color: hsl(var(--easner-primary-400));
   }
-  .bg-novapay-primary-500 {
-    background-color: hsl(var(--novapay-primary-500));
+  .bg-easner-primary-500 {
+    background-color: hsl(var(--easner-primary-500));
   }
-  .bg-novapay-primary-600 {
-    background-color: hsl(var(--novapay-primary-600));
+  .bg-easner-primary-600 {
+    background-color: hsl(var(--easner-primary-600));
   }
-  .bg-novapay-primary-700 {
-    background-color: hsl(var(--novapay-primary-700));
+  .bg-easner-primary-700 {
+    background-color: hsl(var(--easner-primary-700));
   }
-  .bg-novapay-primary-800 {
-    background-color: hsl(var(--novapay-primary-800));
+  .bg-easner-primary-800 {
+    background-color: hsl(var(--easner-primary-800));
   }
-  .bg-novapay-primary-900 {
-    background-color: hsl(var(--novapay-primary-900));
-  }
-
-  .text-novapay-primary {
-    color: hsl(var(--novapay-primary));
-  }
-  .text-novapay-primary-50 {
-    color: hsl(var(--novapay-primary-50));
-  }
-  .text-novapay-primary-100 {
-    color: hsl(var(--novapay-primary-100));
-  }
-  .text-novapay-primary-200 {
-    color: hsl(var(--novapay-primary-200));
-  }
-  .text-novapay-primary-300 {
-    color: hsl(var(--novapay-primary-300));
-  }
-  .text-novapay-primary-400 {
-    color: hsl(var(--novapay-primary-400));
-  }
-  .text-novapay-primary-500 {
-    color: hsl(var(--novapay-primary-500));
-  }
-  .text-novapay-primary-600 {
-    color: hsl(var(--novapay-primary-600));
-  }
-  .text-novapay-primary-700 {
-    color: hsl(var(--novapay-primary-700));
-  }
-  .text-novapay-primary-800 {
-    color: hsl(var(--novapay-primary-800));
-  }
-  .text-novapay-primary-900 {
-    color: hsl(var(--novapay-primary-900));
+  .bg-easner-primary-900 {
+    background-color: hsl(var(--easner-primary-900));
   }
 
-  .border-novapay-primary {
-    border-color: hsl(var(--novapay-primary));
+  .text-easner-primary {
+    color: hsl(var(--easner-primary));
   }
-  .border-novapay-primary-200 {
-    border-color: hsl(var(--novapay-primary-200));
+  .text-easner-primary-50 {
+    color: hsl(var(--easner-primary-50));
   }
-  .border-novapay-primary-300 {
-    border-color: hsl(var(--novapay-primary-300));
+  .text-easner-primary-100 {
+    color: hsl(var(--easner-primary-100));
+  }
+  .text-easner-primary-200 {
+    color: hsl(var(--easner-primary-200));
+  }
+  .text-easner-primary-300 {
+    color: hsl(var(--easner-primary-300));
+  }
+  .text-easner-primary-400 {
+    color: hsl(var(--easner-primary-400));
+  }
+  .text-easner-primary-500 {
+    color: hsl(var(--easner-primary-500));
+  }
+  .text-easner-primary-600 {
+    color: hsl(var(--easner-primary-600));
+  }
+  .text-easner-primary-700 {
+    color: hsl(var(--easner-primary-700));
+  }
+  .text-easner-primary-800 {
+    color: hsl(var(--easner-primary-800));
+  }
+  .text-easner-primary-900 {
+    color: hsl(var(--easner-primary-900));
+  }
+
+  .border-easner-primary {
+    border-color: hsl(var(--easner-primary));
+  }
+  .border-easner-primary-200 {
+    border-color: hsl(var(--easner-primary-200));
+  }
+  .border-easner-primary-300 {
+    border-color: hsl(var(--easner-primary-300));
   }
 }

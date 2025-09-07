@@ -197,7 +197,7 @@ const AdminRatesPage = () => {
           </div>
           <Dialog open={isAddingCurrency} onOpenChange={setIsAddingCurrency}>
             <DialogTrigger asChild>
-              <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+              <Button className="bg-easner-primary hover:bg-easner-primary-600">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Currency
               </Button>
@@ -247,7 +247,7 @@ const AdminRatesPage = () => {
                 <Button
                   onClick={handleAddCurrency}
                   disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol || saving}
-                  className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Add Currency
@@ -434,7 +434,7 @@ const AdminRatesPage = () => {
                 </Button>
                 <Button
                   onClick={handleSaveRates}
-                  className="bg-novapay-primary hover:bg-novapay-primary-600"
+                  className="bg-easner-primary hover:bg-easner-primary-600"
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}

@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
-              <CreditCard className="h-4 w-4 text-novapay-primary" />
+              <CreditCard className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Volume</CardTitle>
-              <TrendingUp className="h-4 w-4 text-novapay-primary" />
+              <TrendingUp className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-novapay-primary" />
+              <Users className="h-4 w-4 text-easner-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{data?.stats.totalUsers || 0}</div>
@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div className="bg-novapay-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
+                            <div className="bg-easner-primary h-2 rounded-full" style={{ width: `${item.volume}%` }} />
                           </div>
                           <span className="text-sm">{item.volume.toFixed(1)}%</span>
                         </div>

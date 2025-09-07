@@ -1,22 +1,43 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { transactionService, currencyService } from "@/lib/database"
-import { requireAuth } from "@/lib/auth"
+import { createServerClient } from "@/lib/supabase"
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = createServerClient()
+  
+  // Get the authorization header
+  const authHeader = request.headers.get("authorization")
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("No authorization header")
+  }
+
+  const token = authHeader.substring(7)
+  
+  // Verify the token with Supabase
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  
+  if (error || !user) {
+    throw new Error("Invalid token")
+  }
+
+  return user
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request)
-    const transactions = await transactionService.getByUserId(user.userId)
+    const user = await getAuthenticatedUser(request)
+    const transactions = await transactionService.getByUserId(user.id)
 
     return NextResponse.json({ transactions })
   } catch (error) {
     console.error("Get transactions error:", error)
-    return NextResponse.json({ error: "Failed to fetch transactions" }, { status: 500 })
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request)
+    const user = await getAuthenticatedUser(request)
     const { recipientId, sendAmount, sendCurrency, receiveCurrency } = await request.json()
 
     // Get exchange rate
@@ -38,7 +59,7 @@ export async function POST(request: NextRequest) {
     const totalAmount = sendAmount + feeAmount
 
     const transaction = await transactionService.create({
-      userId: user.userId,
+      userId: user.id,
       recipientId,
       sendAmount,
       sendCurrency,
@@ -53,6 +74,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ transaction })
   } catch (error) {
     console.error("Create transaction error:", error)
+    if (error.message === "Authentication required" || error.message === "Invalid token") {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
     return NextResponse.json({ error: "Failed to create transaction" }, { status: 500 })
   }
 }

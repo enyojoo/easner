@@ -246,7 +246,7 @@ export default function UserProfilePage() {
                       <Button
                         onClick={handleProfileUpdate}
                         disabled={loading}
-                        className="bg-novapay-primary hover:bg-novapay-primary-600"
+                        className="bg-easner-primary hover:bg-easner-primary-600"
                       >
                         {loading ? "Saving..." : "Save Changes"}
                       </Button>

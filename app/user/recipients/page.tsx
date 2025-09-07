@@ -99,7 +99,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
 
       <Button
         onClick={onSubmit}
-        className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+        className="w-full bg-easner-primary hover:bg-easner-primary-600"
         disabled={!formData.name || !formData.accountNumber || !formData.bankName || isSubmitting}
       >
         {isSubmitting ? "Saving..." : isEdit ? "Update Recipient" : "Add Recipient"}
@@ -239,7 +239,7 @@ export default function UserRecipientsPage() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-novapay-primary hover:bg-novapay-primary-600 w-full sm:w-auto">
+              <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Recipient
               </Button>
@@ -294,11 +294,11 @@ export default function UserRecipientsPage() {
               {filteredRecipients.map((recipient) => (
                 <div
                   key={recipient.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 transition-colors gap-4 sm:gap-0"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-easner-primary-200 transition-colors gap-4 sm:gap-0"
                 >
                   <div className="flex items-center space-x-3 flex-1">
-                    <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
-                      <span className="text-novapay-primary font-semibold text-sm">
+                    <div className="w-12 h-12 bg-easner-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
+                      <span className="text-easner-primary font-semibold text-sm">
                         {recipient.full_name
                           .split(" ")
                           .map((n) => n[0])

@@ -71,7 +71,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-easner-primary-50 via-white to-blue-50">
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
         {/* Logo */}
         <div className="mb-8">
@@ -104,7 +104,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
                   required
                   disabled={loading}
                 />
@@ -121,7 +121,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary pr-10"
+                    className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
                     required
                     disabled={loading}
                   />
@@ -150,7 +150,7 @@ export default function LoginPage() {
                 </div>
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-novapay-primary hover:text-novapay-primary-600 hover:underline"
+                  className="text-sm text-easner-primary hover:text-easner-primary-600 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -159,7 +159,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
@@ -170,7 +170,7 @@ export default function LoginPage() {
                 {"Don't have an account? "}
                 <Link
                   href="/register"
-                  className="text-novapay-primary hover:text-novapay-primary-600 hover:underline font-medium"
+                  className="text-easner-primary hover:text-easner-primary-600 hover:underline font-medium"
                 >
                   Sign up
                 </Link>

@@ -720,7 +720,7 @@ export default function UserSendPage() {
                       step.completed
                         ? "bg-green-500 text-white"
                         : currentStep === step.number
-                          ? "bg-novapay-primary text-white"
+                          ? "bg-easner-primary text-white"
                           : "bg-gray-200 text-gray-600"
                     }`}
                   >
@@ -821,12 +821,12 @@ export default function UserSendPage() {
 
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-novapay-primary-100 rounded-full flex items-center justify-center">
-                            <span className="text-novapay-primary text-xs">%</span>
+                          <div className="w-5 h-5 bg-easner-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-easner-primary text-xs">%</span>
                           </div>
                           <span className="text-sm text-gray-600">Rate</span>
                         </div>
-                        <span className="font-medium text-novapay-primary">
+                        <span className="font-medium text-easner-primary">
                           1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
                         </span>
                       </div>
@@ -883,7 +883,7 @@ export default function UserSendPage() {
 
                     <Button
                       onClick={handleContinue}
-                      className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                      className="w-full bg-easner-primary hover:bg-easner-primary-600"
                       disabled={!sendCurrency || !receiveCurrency || !sendAmount}
                     >
                       Continue
@@ -913,7 +913,7 @@ export default function UserSendPage() {
                     {/* Add New Recipient Option */}
                     <Dialog open={isAddRecipientDialogOpen} onOpenChange={setIsAddRecipientDialogOpen}>
                       <DialogTrigger asChild>
-                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-novapay-primary-200 cursor-pointer transition-colors">
+                        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-easner-primary-200 cursor-pointer transition-colors">
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                               <Plus className="h-6 w-6 text-white" />
@@ -979,7 +979,7 @@ export default function UserSendPage() {
                               !newRecipientData.accountNumber ||
                               !newRecipientData.bankName
                             }
-                            className="w-full bg-novapay-primary hover:bg-novapay-primary-600"
+                            className="w-full bg-easner-primary hover:bg-easner-primary-600"
                           >
                             Add Recipient
                           </Button>
@@ -995,13 +995,13 @@ export default function UserSendPage() {
                           onClick={() => handleSelectRecipient(recipient)}
                           className={`flex items-center justify-between p-4 bg-white rounded-xl border cursor-pointer transition-colors ${
                             selectedRecipientId === recipient.id
-                              ? "border-novapay-primary bg-novapay-primary-50"
-                              : "border-gray-100 hover:border-novapay-primary-200"
+                              ? "border-easner-primary bg-easner-primary-50"
+                              : "border-gray-100 hover:border-easner-primary-200"
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-novapay-primary-100 rounded-full flex items-center justify-center relative">
-                              <span className="text-novapay-primary font-semibold text-sm">
+                            <div className="w-12 h-12 bg-easner-primary-100 rounded-full flex items-center justify-center relative">
+                              <span className="text-easner-primary font-semibold text-sm">
                                 {recipient.full_name
                                   .split(" ")
                                   .map((n: string) => n[0])
@@ -1025,7 +1025,7 @@ export default function UserSendPage() {
                             </div>
                           </div>
                           {selectedRecipientId === recipient.id && (
-                            <div className="w-6 h-6 bg-novapay-primary rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-easner-primary rounded-full flex items-center justify-center">
                               <Check className="h-4 w-4 text-white" />
                             </div>
                           )}
@@ -1054,7 +1054,7 @@ export default function UserSendPage() {
                       <Button
                         onClick={handleContinue}
                         disabled={!selectedRecipientId}
-                        className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                        className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                       >
                         Continue
                       </Button>
@@ -1077,13 +1077,13 @@ export default function UserSendPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Payment Method - Dynamic based on admin settings */}
-                    <div className="bg-gradient-to-br from-novapay-primary-50 to-blue-50 rounded-xl p-4 border border-novapay-primary-100">
+                    <div className="bg-gradient-to-br from-easner-primary-50 to-blue-50 rounded-xl p-4 border border-easner-primary-100">
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-novapay-primary rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-easner-primary rounded-lg flex items-center justify-center">
                           {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-novapay-primary">
+                          <h3 className="font-semibold text-easner-primary">
                             Transfer {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
                           </h3>
                           <p className="text-xs text-gray-600">
@@ -1351,12 +1351,12 @@ export default function UserSendPage() {
                         onDrop={handleDrop}
                         className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                           isDragOver
-                            ? "border-novapay-primary bg-novapay-primary-50"
+                            ? "border-easner-primary bg-easner-primary-50"
                             : uploadedFile
                               ? "border-green-300 bg-green-50"
                               : uploadError
                                 ? "border-red-300 bg-red-50"
-                                : "border-gray-200 hover:border-novapay-primary-300"
+                                : "border-gray-200 hover:border-easner-primary-300"
                         }`}
                       >
                         <div className="flex items-center justify-center gap-3">
@@ -1367,8 +1367,8 @@ export default function UserSendPage() {
                                 : uploadError
                                   ? "bg-red-100"
                                   : isDragOver
-                                    ? "bg-novapay-primary-100"
-                                    : "bg-gray-100 group-hover:bg-novapay-primary-50"
+                                    ? "bg-easner-primary-100"
+                                    : "bg-gray-100 group-hover:bg-easner-primary-50"
                             }`}
                           >
                             {uploadedFile ? (
@@ -1378,7 +1378,7 @@ export default function UserSendPage() {
                             ) : (
                               <Upload
                                 className={`h-5 w-5 transition-colors ${
-                                  isDragOver ? "text-novapay-primary" : "text-gray-400"
+                                  isDragOver ? "text-easner-primary" : "text-gray-400"
                                 }`}
                               />
                             )}
@@ -1423,7 +1423,7 @@ export default function UserSendPage() {
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                               <div
-                                className="bg-novapay-primary h-1.5 rounded-full transition-all duration-300"
+                                className="bg-easner-primary h-1.5 rounded-full transition-all duration-300"
                                 style={{ width: `${uploadProgress}%` }}
                               ></div>
                             </div>
@@ -1439,7 +1439,7 @@ export default function UserSendPage() {
                         <Button
                           onClick={handleContinue}
                           disabled={isCreatingTransaction}
-                          className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                          className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                         >
                           {isCreatingTransaction ? "Sending..." : "I've Paid"}
                         </Button>

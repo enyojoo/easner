@@ -120,7 +120,7 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-easner-primary-50 via-white to-blue-50">
         <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
           <div className="mb-8">
             <Link href="/">
@@ -143,7 +143,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-novapay-primary-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-easner-primary-50 via-white to-blue-50">
       <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
         {/* Logo */}
         <div className="mb-8">
@@ -176,7 +176,7 @@ export default function RegisterPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="Enter your first name"
-                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
                   required
                   disabled={loading}
                 />
@@ -192,7 +192,7 @@ export default function RegisterPage() {
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Enter your last name"
-                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
                   required
                   disabled={loading}
                 />
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter your email"
-                  className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary"
+                  className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
                   required
                   disabled={loading}
                 />
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create a password (min 8 characters)"
-                    className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary pr-10"
+                    className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
                     required
                     disabled={loading}
                   />
@@ -254,7 +254,7 @@ export default function RegisterPage() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm your password"
-                    className="border-gray-200 focus:border-novapay-primary focus:ring-novapay-primary pr-10"
+                    className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
                     required
                     disabled={loading}
                   />
@@ -279,11 +279,11 @@ export default function RegisterPage() {
                 />
                 <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
                   I agree to the{" "}
-                  <Link href="/terms" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                  <Link href="/terms" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
                     Terms
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-novapay-primary hover:text-novapay-primary-600 hover:underline">
+                  <Link href="/privacy" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
                     Privacy Policy
                   </Link>
                 </Label>
@@ -292,7 +292,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 disabled={loading || !acceptTerms}
-                className="w-full bg-novapay-primary hover:bg-novapay-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating Account..." : "Create Account"}
               </Button>
@@ -303,7 +303,7 @@ export default function RegisterPage() {
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="text-novapay-primary hover:text-novapay-primary-600 hover:underline font-medium"
+                  className="text-easner-primary hover:text-easner-primary-600 hover:underline font-medium"
                 >
                   Sign in
                 </Link>

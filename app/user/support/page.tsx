@@ -29,7 +29,7 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Get detailed help via email</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">support@novamoney.net</p>
+                  <p className="font-medium text-easner-primary">support@novamoney.net</p>
                   <p className="text-xs text-gray-500">Response within 24 hours</p>
                 </div>
                 <Button
@@ -54,7 +54,7 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Quick chat support</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">+1 (555) 123-4567</p>
+                  <p className="font-medium text-easner-primary">+1 (555) 123-4567</p>
                   <p className="text-xs text-gray-500">Available 9 AM - 6 PM UTC</p>
                 </div>
                 <Button
@@ -79,7 +79,7 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Public support & updates</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-novapay-primary">@novamoneyapp</p>
+                  <p className="font-medium text-easner-primary">@novamoneyapp</p>
                   <p className="text-xs text-gray-500">Follow for updates</p>
                 </div>
                 <Button

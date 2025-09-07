@@ -78,7 +78,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   href={item.href}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? "bg-novapay-primary-100 text-novapay-primary"
+                      ? "bg-easner-primary-100 text-easner-primary"
                       : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
@@ -138,7 +138,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   >
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isActive ? "bg-novapay-primary" : "bg-novapay-primary"
+                        isActive ? "bg-easner-primary" : "bg-easner-primary"
                       }`}
                     >
                       <item.icon className="h-6 w-6 text-white" />
@@ -153,7 +153,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   href={item.href}
                   className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                 >
-                  <item.icon className={`h-6 w-6 ${isActive ? "text-novapay-primary" : "text-gray-600"}`} />
+                  <item.icon className={`h-6 w-6 ${isActive ? "text-easner-primary" : "text-gray-600"}`} />
                 </Link>
               )
             })}
@@ -164,7 +164,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                 <button className="flex flex-col items-center justify-center p-2 min-w-0 flex-1">
                   <MoreHorizontal
                     className={`h-6 w-6 ${
-                      ["/user/profile", "/user/support"].includes(pathname) ? "text-novapay-primary" : "text-gray-600"
+                      ["/user/profile", "/user/support"].includes(pathname) ? "text-easner-primary" : "text-gray-600"
                     }`}
                   />
                 </button>

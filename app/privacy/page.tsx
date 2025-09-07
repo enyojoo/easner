@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 text-novapay-primary hover:text-novapay-primary-600 transition-colors"
+            className="inline-flex items-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
             Back

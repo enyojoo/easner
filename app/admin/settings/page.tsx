@@ -836,7 +836,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <Dialog open={isAddPaymentMethodOpen} onOpenChange={setIsAddPaymentMethodOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                      <Button className="bg-easner-primary hover:bg-easner-primary-600">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Payment Method
                       </Button>
@@ -1035,7 +1035,7 @@ export default function AdminSettingsPage() {
                                   !newPaymentMethod.bank_name)) ||
                               (newPaymentMethod.type === "qr_code" && !qrCodeFile && !newPaymentMethod.qr_code_data)
                             }
-                            className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                            className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                           >
                             {saving ? "Adding..." : "Add Payment Method"}
                           </Button>
@@ -1265,7 +1265,7 @@ export default function AdminSettingsPage() {
                                   !editingQrCodeFile &&
                                   !editingPaymentMethod.qr_code_data)
                               }
-                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                              className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                             >
                               {saving ? "Saving..." : "Save Changes"}
                             </Button>
@@ -1387,7 +1387,7 @@ export default function AdminSettingsPage() {
                   <CardTitle>Email Templates</CardTitle>
                   <Dialog open={isAddTemplateOpen} onOpenChange={setIsAddTemplateOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-novapay-primary hover:bg-novapay-primary-600">
+                      <Button className="bg-easner-primary hover:bg-easner-primary-600">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Template
                       </Button>
@@ -1495,7 +1495,7 @@ export default function AdminSettingsPage() {
                               !newTemplate.html_content ||
                               !newTemplate.text_content
                             }
-                            className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                            className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                           >
                             {saving ? "Adding..." : "Add Template"}
                           </Button>
@@ -1610,7 +1610,7 @@ export default function AdminSettingsPage() {
                                 !editingTemplate.html_content ||
                                 !editingTemplate.text_content
                               }
-                              className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                              className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                             >
                               {saving ? "Saving..." : "Save Changes"}
                             </Button>
@@ -1710,7 +1710,7 @@ export default function AdminSettingsPage() {
                   {!isEditingSecuritySettings && (
                     <Button
                       onClick={() => setIsEditingSecuritySettings(true)}
-                      className="bg-novapay-primary hover:bg-novapay-primary-600"
+                      className="bg-easner-primary hover:bg-easner-primary-600"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Settings
@@ -1776,7 +1776,7 @@ export default function AdminSettingsPage() {
                     <Button
                       onClick={handleSaveSecuritySettings}
                       disabled={saving}
-                      className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                      className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {saving ? "Saving..." : "Save Security Settings"}
