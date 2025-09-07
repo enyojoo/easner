@@ -8,7 +8,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isChecking } = useRouteProtection({ requireAuth: true, adminOnly: true })
+  const { isChecking } = useRouteProtection({ requireAuth: true, adminOnly: true, redirectTo: "/admin/login" })
 
   // Show loading spinner while checking authentication
   if (isChecking) {
