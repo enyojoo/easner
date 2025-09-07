@@ -8,7 +8,7 @@ import Link from "next/link"
 
 export default function HomePage() {
   const router = useRouter()
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, loading } = useAuth()
 
   const handleSendMoney = (data: {
     sendAmount: string
@@ -26,7 +26,9 @@ export default function HomePage() {
         router.push("/user/send")
       }
     } else {
-      // User is not logged in, redirect to login
+      // Store conversion data and redirect to login
+      sessionStorage.setItem("conversionData", JSON.stringify(data))
+      sessionStorage.setItem("redirectAfterLogin", "/user/send")
       router.push("/login")
     }
   }

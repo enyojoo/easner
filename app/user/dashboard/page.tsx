@@ -3,11 +3,12 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, TrendingUp } from "lucide-react"
+import { Send, TrendingUp, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
+import { useRouteProtection } from "@/hooks/use-route-protection"
 
 interface Transaction {
   id: string
@@ -21,10 +22,23 @@ interface Transaction {
   }
 }
 
-export default function UserDashboardPage() {
+function UserDashboardPageContent() {
   const { userProfile } = useAuth()
+  const { isChecking } = useRouteProtection({ requireAuth: true })
   const { transactions, currencies, exchangeRates, loading } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
+
+  // Show loading spinner while checking authentication
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-easner-primary mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     if (!userProfile?.id || !transactions.length || !exchangeRates.length) return
@@ -194,4 +208,8 @@ export default function UserDashboardPage() {
       </div>
     </UserDashboardLayout>
   )
+}
+
+export default function UserDashboardPage() {
+  return <UserDashboardPageContent />
 }

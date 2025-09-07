@@ -12,11 +12,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react"
+import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { useRouteProtection } from "@/hooks/use-route-protection"
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter()
   const { signUp, signIn } = useAuth()
+  const { isChecking } = useRouteProtection({ requireAuth: false })
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -30,6 +32,18 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+
+  // Show loading spinner while checking authentication
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-easner-primary mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -314,4 +328,8 @@ export default function RegisterPage() {
       </main>
     </div>
   )
+}
+
+export default function RegisterPage() {
+  return <RegisterPageContent />
 }
