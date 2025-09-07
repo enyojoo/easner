@@ -3,12 +3,11 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, TrendingUp, Loader2 } from "lucide-react"
+import { Send, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
-import { useRouteProtection } from "@/hooks/use-route-protection"
 
 interface Transaction {
   id: string
@@ -22,48 +21,76 @@ interface Transaction {
   }
 }
 
-function UserDashboardPageContent() {
-  const { userProfile } = useAuth()
-  const { isChecking } = useRouteProtection({ requireAuth: true })
-  const { transactions, currencies, exchangeRates, loading } = useUserData()
+export default function UserDashboardPage() {
+  const { userProfile, loading: authLoading } = useAuth()
+  const { transactions, currencies, exchangeRates, loading: dataLoading, error } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
 
-  // Show loading spinner while checking authentication
-  if (isChecking) {
+  // Show error if data loading failed
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-easner-primary mb-4" />
-          <p className="text-gray-600">Loading...</p>
+      <UserDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load dashboard</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-easner-primary text-white px-4 py-2 rounded-lg hover:bg-easner-primary-600"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
-      </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  // Show loading while auth or data is loading
+  if (authLoading || dataLoading) {
+    return (
+      <UserDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </UserDashboardLayout>
     )
   }
 
   useEffect(() => {
-    if (!userProfile?.id || !transactions.length || !exchangeRates.length) return
+    if (!userProfile?.id || !transactions?.length || !exchangeRates?.length) return
 
-    const calculateTotalSent = () => {
-      const baseCurrency = userProfile.base_currency || "NGN"
-      let totalInBaseCurrency = 0
+    try {
+      const calculateTotalSent = () => {
+        const baseCurrency = userProfile.base_currency || "NGN"
+        let totalInBaseCurrency = 0
 
-      for (const transaction of transactions) {
-        if (transaction.status === "completed") {
-          let amountInBaseCurrency = transaction.send_amount
+        for (const transaction of transactions) {
+          if (!transaction || transaction.status !== "completed") continue
+
+          let amountInBaseCurrency = transaction.send_amount || 0
 
           // If transaction currency is different from base currency, convert it
           if (transaction.send_currency !== baseCurrency) {
             // Find exchange rate from transaction currency to base currency
             const rate = exchangeRates.find(
-              (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+              (r) => r && r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
             )
 
-            if (rate) {
+            if (rate && rate.rate > 0) {
               amountInBaseCurrency = transaction.send_amount * rate.rate
             } else {
               // If direct rate not found, try reverse rate
               const reverseRate = exchangeRates.find(
-                (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+                (r) => r && r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
               )
               if (reverseRate && reverseRate.rate > 0) {
                 amountInBaseCurrency = transaction.send_amount / reverseRate.rate
@@ -73,22 +100,30 @@ function UserDashboardPageContent() {
 
           totalInBaseCurrency += amountInBaseCurrency
         }
+
+        setTotalSent(totalInBaseCurrency)
       }
 
-      setTotalSent(totalInBaseCurrency)
+      calculateTotalSent()
+    } catch (error) {
+      console.error("Error calculating total sent:", error)
+      setTotalSent(0)
     }
-
-    calculateTotalSent()
   }, [transactions, exchangeRates, userProfile])
 
-  const userName = userProfile?.first_name 
+  const userName = userProfile?.first_name || "User"
   const baseCurrency = userProfile?.base_currency || "NGN"
-  const completedTransactions = transactions.filter((t) => t.status === "completed").length || 0
+  const completedTransactions = transactions?.filter((t) => t && t.status === "completed").length || 0
   const totalSentValue = totalSent || 0
 
   const formatCurrencyValue = (amount: number, currencyCode: string) => {
-    const currency = currencies.find((c) => c.code === currencyCode)
-    return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    try {
+      const currency = currencies?.find((c) => c && c.code === currencyCode)
+      return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    } catch (error) {
+      console.error("Error formatting currency:", error)
+      return `${currencyCode} ${amount.toFixed(2)}`
+    }
   }
 
   return (
@@ -162,12 +197,14 @@ function UserDashboardPageContent() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-            { loading ? (
+            { dataLoading ? (
                   <div className="text-center py-8 text-gray-500">Loading transactions...</div>
-                ) : transactions.length === 0 ? (
+                ) : !transactions || transactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No transactions yet</div>
                 ) : (
-                  transactions.slice(0, 3).map((transaction) => (
+                  transactions.slice(0, 3).map((transaction) => {
+                    if (!transaction) return null
+                    return (
                     <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
                         <div className="flex items-center space-x-3">
@@ -199,7 +236,8 @@ function UserDashboardPageContent() {
                         </div>
                       </div>
                     </Link>
-                  ))
+                    )
+                  })
                 )}
               </div>
             </CardContent>
@@ -208,8 +246,4 @@ function UserDashboardPageContent() {
       </div>
     </UserDashboardLayout>
   )
-}
-
-export default function UserDashboardPage() {
-  return <UserDashboardPageContent />
 }
