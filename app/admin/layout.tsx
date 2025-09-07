@@ -14,10 +14,7 @@ export default function AdminLayout({
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-easner-primary mb-4" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-easner-primary" />
       </div>
     )
   }
