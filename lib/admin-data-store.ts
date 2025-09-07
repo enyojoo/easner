@@ -22,7 +22,7 @@ interface AdminData {
 class AdminDataStore {
   private data: AdminData | null = null
   private loading = false
-  private refreshInterval: NodeJS.Timeout | null = null
+  private refreshInterval: ReturnType<typeof setInterval> | null = null
   private listeners: Set<() => void> = new Set()
   private initialized = false
 
@@ -61,29 +61,34 @@ class AdminDataStore {
     this.loading = true
 
     try {
-      // Load all data in parallel
-      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrency] = await Promise.all([
-        this.loadUsers(),
-        this.loadTransactions(),
-        this.loadCurrencies(),
-        this.loadExchangeRates(),
-        this.getAdminBaseCurrency(),
-      ])
-
-      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
-      const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
-      const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
+      // Use admin overview API to load data server-side with proper auth
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+      const res = await fetch("/api/admin/overview", {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      })
+      if (!res.ok) {
+        throw new Error("Failed to load admin overview")
+      }
+      const payload = await res.json()
 
       this.data = {
-        users: usersResult,
-        transactions: transactionsResult,
-        currencies: currenciesResult,
-        exchangeRates: exchangeRatesResult,
-        baseCurrency,
-        stats,
-        recentActivity,
-        currencyPairs,
-        lastUpdated: Date.now(),
+        users: payload.users || [],
+        transactions: payload.transactions || [],
+        currencies: payload.currencies || [],
+        exchangeRates: payload.exchangeRates || [],
+        baseCurrency: payload.baseCurrency || "NGN",
+        stats: payload.stats || {
+          totalUsers: 0,
+          activeUsers: 0,
+          verifiedUsers: 0,
+          totalTransactions: 0,
+          totalVolume: 0,
+          pendingTransactions: 0,
+        },
+        recentActivity: payload.recentActivity || [],
+        currencyPairs: payload.currencyPairs || [],
+        lastUpdated: payload.lastUpdated || Date.now(),
       }
 
       this.notify()
@@ -100,14 +105,14 @@ class AdminDataStore {
 
     // Calculate transaction stats for each user
     const usersWithStats = await Promise.all(
-      (users || []).map(async (user) => {
+      (users || []).map(async (user: any) => {
         const { data: transactions } = await supabase
           .from("transactions")
           .select("send_amount, send_currency, status")
           .eq("user_id", user.id)
 
         const totalTransactions = transactions?.length || 0
-        const totalVolume = (transactions || []).reduce((sum, tx) => {
+        const totalVolume = (transactions || []).reduce((sum: number, tx: any) => {
           let amount = Number(tx.send_amount)
 
           // Convert to NGN based on actual currency

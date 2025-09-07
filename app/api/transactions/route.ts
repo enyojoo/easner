@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request)
+    const user = await requireAuth(request)
     const transactions = await transactionService.getByUserId(user.userId)
 
     return NextResponse.json({ transactions })
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request)
+    const user = await requireAuth(request)
     const { recipientId, sendAmount, sendCurrency, receiveCurrency } = await request.json()
 
     // Get exchange rate
