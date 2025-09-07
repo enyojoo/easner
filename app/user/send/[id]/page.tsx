@@ -241,7 +241,7 @@ export default function TransactionStatusPage() {
               <p className="text-red-700 mb-4">{error || "Transaction not found"}</p>
               <Button
                 onClick={() => router.push("/user/dashboard")}
-                className="bg-novapay-primary hover:bg-novapay-primary-600"
+                className="bg-easner-primary hover:bg-easner-primary-600"
               >
                 Back to Dashboard
               </Button>
@@ -285,7 +285,7 @@ export default function TransactionStatusPage() {
                       step.completed
                         ? "bg-green-500 text-white"
                         : step.number === 4
-                          ? "bg-novapay-primary text-white"
+                          ? "bg-easner-primary text-white"
                           : "bg-gray-200 text-gray-600"
                     }`}
                   >
@@ -416,7 +416,7 @@ export default function TransactionStatusPage() {
                     ) : (
                       <Button
                         onClick={() => router.push("/user/dashboard")}
-                        className="flex-1 bg-novapay-primary hover:bg-novapay-primary-600"
+                        className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                       >
                         Dashboard
                       </Button>
