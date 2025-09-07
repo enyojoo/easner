@@ -6,7 +6,9 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "build:shared": "pnpm -C packages/shared build",
+    "dev:mobile": "pnpm -C apps/mobile start"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
