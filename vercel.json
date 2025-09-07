@@ -1,4 +1,0 @@
-{
-  "installCommand": "pnpm install --filter . --no-frozen-lockfile"
-}
-
