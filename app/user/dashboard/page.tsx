@@ -26,6 +26,17 @@ export default function UserDashboardPage() {
   const { transactions, currencies, exchangeRates, loading: dataLoading, error } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
 
+  // Debug logging
+  console.log("Dashboard Debug:", {
+    userProfile: userProfile?.id,
+    authLoading,
+    dataLoading,
+    error,
+    transactionsCount: transactions?.length,
+    currenciesCount: currencies?.length,
+    exchangeRatesCount: exchangeRates?.length
+  })
+
   // Show error if data loading failed
   if (error) {
     return (
@@ -59,6 +70,31 @@ export default function UserDashboardPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto mb-4"></div>
             <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
+
+  // If no user profile, show error
+  if (!userProfile) {
+    return (
+      <UserDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load profile</h3>
+            <p className="text-gray-600 mb-4">Please try logging in again</p>
+            <button 
+              onClick={() => window.location.href = "/login"} 
+              className="bg-easner-primary text-white px-4 py-2 rounded-lg hover:bg-easner-primary-600"
+            >
+              Go to Login
+            </button>
           </div>
         </div>
       </UserDashboardLayout>
@@ -126,9 +162,10 @@ export default function UserDashboardPage() {
     }
   }
 
-  return (
-    <UserDashboardLayout>
-      <div className="p-6 space-y-6">
+  try {
+    return (
+      <UserDashboardLayout>
+        <div className="p-6 space-y-6">
         {/* Page Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
@@ -245,5 +282,29 @@ export default function UserDashboardPage() {
         </div>
       </div>
     </UserDashboardLayout>
-  )
+    )
+  } catch (error) {
+    console.error("Dashboard render error:", error)
+    return (
+      <UserDashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Something went wrong</h3>
+            <p className="text-gray-600 mb-4">There was an error loading the dashboard</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-easner-primary text-white px-4 py-2 rounded-lg hover:bg-easner-primary-600"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </UserDashboardLayout>
+    )
+  }
 }
