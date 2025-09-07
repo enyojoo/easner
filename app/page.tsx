@@ -29,7 +29,7 @@ export default function HomePage() {
       // Store conversion data and redirect to login
       sessionStorage.setItem("conversionData", JSON.stringify(data))
       sessionStorage.setItem("redirectAfterLogin", "/user/send")
-      router.push("/login")
+      router.push("/auth/user/login")
     }
   }
 

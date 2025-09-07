@@ -20,7 +20,7 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
   const {
     requireAuth = true,
     adminOnly = false,
-    redirectTo = "/login",
+    redirectTo = "/auth/user/login",
   } = options
 
   useEffect(() => {

@@ -11,13 +11,25 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { supabase } from "@/lib/supabase"
+import { useRouteProtection } from "@/hooks/use-route-protection"
+import { Loader2 } from "lucide-react"
 
-export default function AdminLoginPage() {
+function AdminLoginPageContent() {
+  const { isChecking } = useRouteProtection({ requireAuth: false })
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+
+  // Show loading spinner while checking authentication
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-easner-primary" />
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,4 +129,8 @@ export default function AdminLoginPage() {
       </div>
     </div>
   )
+}
+
+export default function AdminLoginPage() {
+  return <AdminLoginPageContent />
 }

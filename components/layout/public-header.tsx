@@ -34,7 +34,7 @@ export function PublicHeader() {
                         <User className="h-4 w-4 text-easner-primary" />
                       </div>
                       <span className="text-gray-700">
-                        {userProfile?.first_name || userProfile?.name || user.email?.split("@")[0]}
+                        {userProfile?.first_name || user.email?.split("@")[0]}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -56,7 +56,7 @@ export function PublicHeader() {
               </div>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/auth/user/login">
                   <Button
                     variant="ghost"
                     className="text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
@@ -64,7 +64,7 @@ export function PublicHeader() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/auth/user/register">
                   <Button className="bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
                     Sign Up
                   </Button>

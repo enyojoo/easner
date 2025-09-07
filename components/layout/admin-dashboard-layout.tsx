@@ -27,7 +27,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
 
   const handleLogout = () => {
     // Mock logout - redirect to admin login
-    router.push("/admin/login")
+    router.push("/auth/admin/login")
   }
 
   return (

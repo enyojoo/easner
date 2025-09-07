@@ -316,7 +316,7 @@ function RegisterPageContent() {
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link
-                  href="/login"
+                  href="/auth/user/login"
                   className="text-easner-primary hover:text-easner-primary-600 hover:underline font-medium"
                 >
                   Sign in

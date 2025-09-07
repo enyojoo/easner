@@ -11,13 +11,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${baseUrl}/auth/user/login`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/register`,
+      url: `${baseUrl}/auth/user/register`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
@@ -35,13 +35,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/forgot-password`,
+      url: `${baseUrl}/auth/user/forgot-password`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/admin/login`,
+      url: `${baseUrl}/auth/admin/login`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.2,

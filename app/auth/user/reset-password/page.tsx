@@ -189,7 +189,7 @@ function ResetPasswordForm() {
 
             <div className="mt-6 text-center">
               <Link
-                href="/login"
+                href="/auth/user/login"
                 className="inline-flex items-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />

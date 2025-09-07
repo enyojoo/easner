@@ -163,7 +163,7 @@ function LoginPageContent() {
                   </Label>
                 </div>
                 <Link
-                  href="/forgot-password"
+                  href="/auth/user/forgot-password"
                   className="text-sm text-easner-primary hover:text-easner-primary-600 hover:underline"
                 >
                   Forgot password?
@@ -183,7 +183,7 @@ function LoginPageContent() {
               <p className="text-sm text-gray-600">
                 {"Don't have an account? "}
                 <Link
-                  href="/register"
+                  href="/auth/user/register"
                   className="text-easner-primary hover:text-easner-primary-600 hover:underline font-medium"
                 >
                   Sign up
