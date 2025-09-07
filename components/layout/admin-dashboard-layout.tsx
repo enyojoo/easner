@@ -25,8 +25,10 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const handleLogout = () => {
-    // Mock logout - redirect to admin login
+  const handleLogout = async () => {
+    // Properly sign out and redirect to admin login
+    const { signOut } = await import("@/lib/supabase")
+    await signOut()
     router.push("/auth/admin/login")
   }
 
