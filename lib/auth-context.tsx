@@ -107,24 +107,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Get initial session with timeout
+    // Get initial session
     const getInitialSession = async () => {
       try {
-        // Set a timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Auth timeout")), 5000)
-        )
-
-        const sessionPromise = supabase.auth.getSession()
-        
         const {
           data: { session },
-        } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
           setUser(session.user)
-          // Don't wait for profile fetch - do it in background
-          fetchUserProfile(session.user.id).catch(console.error)
+          await fetchUserProfile(session.user.id)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)

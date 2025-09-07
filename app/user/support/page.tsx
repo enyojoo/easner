@@ -13,7 +13,7 @@ export default function UserSupportPage() {
           {/* Header */}
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Support Center</h1>
-            <p className="text-gray-600">Get help with your NOVAMONEY account and transactions</p>
+            <p className="text-gray-600">Get help with your Easner account and transactions</p>
           </div>
 
           {/* Contact Methods */}
@@ -29,13 +29,13 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Get detailed help via email</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-easner-primary">support@novamoney.net</p>
+                  <p className="font-medium text-easner-primary">support@easner.com</p>
                   <p className="text-xs text-gray-500">Response within 24 hours</p>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() => window.open("mailto:support@novamoney.net", "_blank")}
+                  onClick={() => window.open("mailto:support@easner.com", "_blank")}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Email
@@ -79,13 +79,13 @@ export default function UserSupportPage() {
               <CardContent className="text-center space-y-3">
                 <p className="text-gray-600 text-sm">Public support & updates</p>
                 <div className="space-y-2">
-                  <p className="font-medium text-easner-primary">@novamoneyapp</p>
+                  <p className="font-medium text-easner-primary">@easnerapp</p>
                   <p className="text-xs text-gray-500">Follow for updates</p>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  onClick={() => window.open("https://twitter.com/novamoneyapp", "_blank")}
+                  onClick={() => window.open("https://twitter.com/easnerapp", "_blank")}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Follow on X

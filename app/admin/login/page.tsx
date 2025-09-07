@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,9 +13,8 @@ import { BrandLogo } from "@/components/brand/brand-logo"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
 import { Loader2 } from "lucide-react"
-import { useEffect } from "react"
 
-function AdminLoginPageContent() {
+export default function AdminLoginPage() {
   const { user, isAdmin, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -137,8 +136,4 @@ function AdminLoginPageContent() {
       </div>
     </div>
   )
-}
-
-export default function AdminLoginPage() {
-  return <AdminLoginPageContent />
 }
