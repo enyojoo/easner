@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { initPostHog, posthog } from '@/lib/posthog'
+import { initPostHog, safePostHogCapture } from '@/lib/posthog'
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -13,7 +13,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && pathname) {
-      posthog.capture('$pageview', {
+      safePostHogCapture('$pageview', {
         $current_url: window.location.href,
       })
     }

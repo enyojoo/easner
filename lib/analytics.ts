@@ -1,4 +1,4 @@
-import { posthog } from '@/lib/posthog'
+import { posthog, safePostHogCapture } from '@/lib/posthog'
 
 export const analytics = {
   // User identification and authentication
@@ -10,29 +10,31 @@ export const analytics = {
 
   // Track user registration
   trackSignUp: (method: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('user_signed_up', {
-        method,
-        ...properties
-      })
-    }
+    safePostHogCapture('user_signed_up', {
+      method,
+      ...properties
+    })
   },
 
   // Track user login
   trackSignIn: (method: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('user_signed_in', {
-        method,
-        ...properties
-      })
-    }
+    safePostHogCapture('user_signed_in', {
+      method,
+      ...properties
+    })
   },
 
   // Track user logout
   trackSignOut: () => {
+    safePostHogCapture('user_signed_out')
     if (typeof window !== 'undefined') {
-      posthog.capture('user_signed_out')
-      posthog.reset()
+      try {
+        posthog.reset()
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('PostHog reset failed:', error)
+        }
+      }
     }
   },
 
@@ -45,9 +47,7 @@ export const analytics = {
     exchangeRate: number
     fee: number
   }) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('transaction_started', properties)
-    }
+    safePostHogCapture('transaction_started', properties)
   },
 
   trackTransactionCompleted: (properties: {
@@ -60,9 +60,7 @@ export const analytics = {
     fee: number
     totalAmount: number
   }) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('transaction_completed', properties)
-    }
+    safePostHogCapture('transaction_completed', properties)
   },
 
   // Currency converter usage
@@ -73,9 +71,7 @@ export const analytics = {
     convertedAmount: number
     exchangeRate: number
   }) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('currency_converted', properties)
-    }
+    safePostHogCapture('currency_converted', properties)
   },
 
   // Recipient management
@@ -83,55 +79,43 @@ export const analytics = {
     currency: string
     method: 'manual' | 'import'
   }) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('recipient_added', properties)
-    }
+    safePostHogCapture('recipient_added', properties)
   },
 
   trackRecipientSelected: (properties: {
     currency: string
     isExisting: boolean
   }) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('recipient_selected', properties)
-    }
+    safePostHogCapture('recipient_selected', properties)
   },
 
   // Error tracking
   trackError: (error: string, context?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('error_occurred', {
-        error,
-        ...context
-      })
-    }
+    safePostHogCapture('error_occurred', {
+      error,
+      ...context
+    })
   },
 
   // Feature usage
   trackFeatureUsed: (feature: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('feature_used', {
-        feature,
-        ...properties
-      })
-    }
+    safePostHogCapture('feature_used', {
+      feature,
+      ...properties
+    })
   },
 
   // Page views (handled automatically by PostHogProvider)
   trackPageView: (page: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture('$pageview', {
-        $current_url: window.location.href,
-        page,
-        ...properties
-      })
-    }
+    safePostHogCapture('$pageview', {
+      $current_url: typeof window !== 'undefined' ? window.location.href : '',
+      page,
+      ...properties
+    })
   },
 
   // Custom events
   track: (event: string, properties?: Record<string, any>) => {
-    if (typeof window !== 'undefined') {
-      posthog.capture(event, properties)
-    }
+    safePostHogCapture(event, properties)
   }
 }
