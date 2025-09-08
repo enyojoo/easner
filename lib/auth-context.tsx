@@ -54,18 +54,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     try {
-      // Add timeout to prevent hanging
+      // Reduced timeout to 5 seconds for faster failure
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 10000),
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 5000),
       )
 
-      const profilePromise = (async () => {
-        // Try to fetch from users table first
+      const profilePromise = (async (): Promise<UserProfile | null> => {
+        // Try to fetch from users table first with a more specific query
         const { data: userProfile, error: userError } = await supabase
           .from("users")
-          .select("*")
+          .select("id, email, first_name, last_name, phone, country, created_at")
           .eq("id", userId)
           .single()
 
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If not found in users, check admin_users table
         const { data: adminProfile, error: adminError } = await supabase
           .from("admin_users")
-          .select("*")
+          .select("id, email, first_name, last_name, phone, created_at")
           .eq("id", userId)
           .single()
 
@@ -88,11 +88,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return adminProfile
         }
 
+        // If no profile found and this is the first attempt, retry once
+        if (retryCount === 0) {
+          console.warn("Profile not found, retrying...")
+          return await fetchUserProfile(userId, 1)
+        }
+
         return null
       })()
 
-      return await Promise.race([profilePromise, timeoutPromise])
+      return await Promise.race([profilePromise, timeoutPromise]) as UserProfile | null
     } catch (error) {
+      // If it's a timeout and we haven't retried, try once more
+      if (error instanceof Error && error.message === "Profile fetch timeout" && retryCount === 0) {
+        console.warn("Profile fetch timed out, retrying...")
+        return await fetchUserProfile(userId, 1)
+      }
+      
       console.error("Error fetching user profile:", error)
       return null
     }
@@ -116,7 +128,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (mounted && session?.user) {
           setUser(session.user)
-          await fetchUserProfile(session.user.id)
+          // Try to fetch profile, but don't block loading if it fails
+          try {
+            await fetchUserProfile(session.user.id)
+          } catch (profileError) {
+            console.warn("Profile fetch failed during initial load:", profileError)
+            // Continue without profile - user can still use the app
+          }
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
@@ -138,7 +156,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (session?.user) {
           setUser(session.user)
-          await fetchUserProfile(session.user.id)
+          // Try to fetch profile, but don't block auth state change if it fails
+          try {
+            await fetchUserProfile(session.user.id)
+          } catch (profileError) {
+            console.warn("Profile fetch failed during auth state change:", profileError)
+            // Continue without profile - user is still authenticated
+          }
         } else {
           setUser(null)
           setUserProfile(null)
