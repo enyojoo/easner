@@ -42,37 +42,19 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
     setMessage('')
 
     try {
-      // Use the same API endpoint as the web version
-      const response = await fetch('https://easner.com/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'easner://reset-password',
       })
 
-      let data
-      try {
-        const responseText = await response.text()
-        console.log('Forgot password response text:', responseText)
-        data = JSON.parse(responseText)
-      } catch (jsonError) {
-        console.error('JSON parse error:', jsonError)
-        console.error('Response status:', response.status)
-        setError('Invalid response from server. Please try again.')
-        return
-      }
-
-      if (response.ok) {
+      if (error) {
+        setError(error.message)
+      } else {
         setStep('otp')
         setMessage('We\'ve sent a 6-digit code to your email address.')
         startResendCooldown()
-      } else {
-        setError(data.error || 'Failed to send verification code')
       }
     } catch (error) {
-      console.error('Forgot password error:', error)
-      setError('Network error. Please check your connection and try again.')
+      setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -146,8 +128,10 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
     setError('')
 
     try {
+      console.log('Sending OTP verification request for email:', email, 'OTP:', otpCode)
+      
       // Use the same API endpoint as the web version
-      const response = await fetch('https://easner.com/api/auth/verify-reset-otp', {
+      const response = await fetch('https://easnerapp.vercel.app/api/auth/verify-reset-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,27 +142,37 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         }),
       })
 
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
+        setError('Invalid or expired verification code')
+        return
+      }
+
+      // Try to parse JSON response
       let data
       try {
         const responseText = await response.text()
         console.log('Response text:', responseText)
         data = JSON.parse(responseText)
-      } catch (jsonError) {
-        console.error('JSON parse error:', jsonError)
-        console.error('Response status:', response.status)
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError)
         setError('Invalid response from server. Please try again.')
         return
       }
 
-      if (response.ok) {
+      if (data.resetToken) {
         // Store reset token and navigate to reset password screen
-        // For mobile, we'll use a simple flag since we can't use sessionStorage
         navigation.navigate('ResetPassword', { 
           email: email,
           resetToken: data.resetToken 
         })
       } else {
-        setError(data.error || 'Invalid or expired verification code')
+        setError(data.error || 'Invalid verification code')
       }
     } catch (error) {
       console.error('OTP verification error:', error)
@@ -195,26 +189,18 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
     setError('')
 
     try {
-      // Use the same API endpoint as the web version
-      const response = await fetch('https://easner.com/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'easner://reset-password',
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (error) {
+        setError('Failed to resend code. Please try again.')
+      } else {
         setMessage('New code sent to your email address.')
         startResendCooldown()
-      } else {
-        setError(data.error || 'Failed to resend code. Please try again.')
       }
     } catch (error) {
-      console.error('Resend OTP error:', error)
-      setError('Network error. Please check your connection and try again.')
+      setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -240,18 +226,18 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.content}>
-        <View style={styles.header}>
+          <View style={styles.content}>
+            <View style={styles.header}>
               <BrandLogo size="lg" style={styles.logo} />
               <Text style={styles.title}>
                 {step === 'email' ? 'Forgot Password?' : 'Enter Verification Code'}
               </Text>
-          <Text style={styles.subtitle}>
+              <Text style={styles.subtitle}>
                 {step === 'email'
                   ? 'Enter your email address and we\'ll send you a verification code.'
                   : `We've sent a 6-digit code to ${email}`}
-          </Text>
-        </View>
+              </Text>
+            </View>
 
             {error ? (
               <View style={styles.errorContainer}>
@@ -306,7 +292,7 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
                           onChangeText={(value) => handleOtpChange(index, value)}
                           onKeyPress={(e) => handleOtpKeyPress(index, e)}
                           keyboardType="numeric"
-                          maxLength={6}
+                            maxLength={6}
                           editable={!loading}
                           selectTextOnFocus
                           contextMenuHidden={false}

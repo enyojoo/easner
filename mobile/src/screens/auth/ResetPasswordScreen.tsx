@@ -68,7 +68,7 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
       }
 
       // Use the same API endpoint as the web version
-      const response = await fetch('https://easner.com/api/auth/reset-password', {
+      const response = await fetch('https://easnerapp.vercel.app/api/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

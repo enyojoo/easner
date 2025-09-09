@@ -272,7 +272,7 @@ export default function ForgotPasswordPage() {
                     setError("")
                     setMessage("")
                   } else {
-                    router.push("/auth/user/login")
+                    router.push("/login")
                   }
                 }}
                 className="inline-flex items-center justify-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"

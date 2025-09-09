@@ -81,7 +81,7 @@ function ResetPasswordForm() {
         sessionStorage.removeItem("reset-email")
 
         // Redirect to login with success message
-        router.push("/auth/user/login?message=Password reset successful. Please sign in with your new password.")
+        router.push("/login?message=Password reset successful. Please sign in with your new password.")
       } else {
         setError(data.error || "Failed to reset password")
       }
