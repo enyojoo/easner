@@ -3,117 +3,130 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Mail, MessageCircle, Clock, ExternalLink } from "lucide-react"
+import { Clock } from "lucide-react"
+import { useState } from "react"
 
 export default function UserSupportPage() {
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
+
+  const faqItems = [
+    {
+      question: 'How do I send money?',
+      answer: 'To send money, click the "Send Money" button on your dashboard, enter the amount and select currencies, choose a recipient, make payment using the displayed method, and confirm your transaction.'
+    },
+    {
+      question: 'What are the fees?',
+      answer: 'We charge absolutely no fees on any transaction. Send money worldwide completely free with Easner.'
+    },
+    {
+      question: 'How long does it take?',
+      answer: 'All transactions are completed within 5 minutes or less, ensuring your money reaches its destination quickly and efficiently.'
+    }
+  ]
+
+  const handleEmailSupport = () => {
+    window.open("mailto:support@easner.com?subject=Support Request", "_blank")
+  }
+
+  const handleOpenLiveChat = () => {
+    alert('Live chat functionality will be implemented')
+  }
+
+
+  const toggleFAQ = (index: number) => {
+    setExpandedFAQ(expandedFAQ === index ? null : index)
+  }
+
   return (
     <UserDashboardLayout>
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Support Center</h1>
-            <p className="text-gray-600">Get help with your Easner account and transactions</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Support</h1>
+            <p className="text-gray-600">We're here to help you</p>
           </div>
+        </div>
 
-          {/* Contact Methods */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Email Support */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center pb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Mail className="h-6 w-6 text-blue-600" />
+        <div className="max-w-4xl mx-auto space-y-6 p-6">
+          {/* Contact Options */}
+          <Card className="bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">Get in Touch</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-0">
+              {/* Email Support */}
+              <div 
+                className="flex items-center justify-between py-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={handleEmailSupport}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="text-2xl">📧</div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Email Support</h3>
+                    <p className="text-sm text-gray-600">support@easner.com</p>
+                  </div>
                 </div>
-                <CardTitle className="text-lg">Email Support</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-3">
-                <p className="text-gray-600 text-sm">Get detailed help via email</p>
-                <div className="space-y-2">
-                  <p className="font-medium text-easner-primary">support@easner.com</p>
-                  <p className="text-xs text-gray-500">Response within 24 hours</p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  onClick={() => window.open("mailto:support@easner.com", "_blank")}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send Email
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="text-gray-400">›</div>
+              </div>
 
-            {/* WhatsApp Support */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center pb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MessageCircle className="h-6 w-6 text-green-600" />
+              {/* Live Chat */}
+              <div 
+                className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={handleOpenLiveChat}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="text-2xl">💬</div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Live Chat</h3>
+                    <p className="text-sm text-gray-600">Chat with us in real-time</p>
+                  </div>
                 </div>
-                <CardTitle className="text-lg">WhatsApp</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-3">
-                <p className="text-gray-600 text-sm">Quick chat support</p>
-                <div className="space-y-2">
-                  <p className="font-medium text-easner-primary">+1 (555) 123-4567</p>
-                  <p className="text-xs text-gray-500">Available 9 AM - 6 PM UTC</p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full bg-green-50 hover:bg-green-100"
-                  onClick={() => window.open("https://wa.me/15551234567", "_blank")}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Chat on WhatsApp
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="text-gray-400">›</div>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* X (Twitter) Support */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="text-center pb-4">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <ExternalLink className="h-6 w-6 text-gray-600" />
+          {/* FAQ Section */}
+          <Card className="bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">Frequently Asked Questions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-0">
+              {faqItems.map((item, index) => (
+                <div key={index} className="border-b border-gray-100 last:border-b-0">
+                  <button
+                    className="w-full text-left py-4 focus:outline-none"
+                    onClick={() => toggleFAQ(index)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-gray-900 pr-4">{item.question}</h3>
+                      <div className="text-gray-400 transform transition-transform duration-200">
+                        {expandedFAQ === index ? '−' : '+'}
+                      </div>
+                    </div>
+                  </button>
+                  {expandedFAQ === index && (
+                    <div className="pb-4">
+                      <p className="text-sm text-gray-600 leading-relaxed">{item.answer}</p>
+                    </div>
+                  )}
                 </div>
-                <CardTitle className="text-lg">X (Twitter)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-3">
-                <p className="text-gray-600 text-sm">Public support & updates</p>
-                <div className="space-y-2">
-                  <p className="font-medium text-easner-primary">@easnerapp</p>
-                  <p className="text-xs text-gray-500">Follow for updates</p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  onClick={() => window.open("https://twitter.com/easnerapp", "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Follow on X
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+              ))}
+            </CardContent>
+          </Card>
 
           {/* Support Hours */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="bg-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Support Hours
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Email Support</h4>
-                  <p className="text-sm text-gray-600">24/7 - We respond within 24 hours</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Live Chat (WhatsApp)</h4>
-                  <p className="text-sm text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM UTC</p>
-                  <p className="text-sm text-gray-600">Saturday: 10:00 AM - 4:00 PM UTC</p>
-                  <p className="text-sm text-gray-600">Sunday: Closed</p>
-                </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">All week from 8 am to 11pm GMT+3</p>
               </div>
             </CardContent>
           </Card>

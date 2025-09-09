@@ -80,7 +80,7 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
     const { error: signUpError } = await signUp(formData.email, formData.password, {
       first_name: formData.firstName,
       last_name: formData.lastName,
-      base_currency: 'NGN',
+      base_currency: 'USD',
     })
 
     if (signUpError) {

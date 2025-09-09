@@ -187,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             first_name: userData.firstName,
             last_name: userData.lastName,
-            base_currency: userData.baseCurrency || "NGN",
+            base_currency: userData.baseCurrency || "USD",
           },
         },
       })

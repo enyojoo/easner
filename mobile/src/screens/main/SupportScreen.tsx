@@ -23,31 +23,20 @@ export default function SupportScreen({ navigation }: NavigationProps) {
     Alert.alert('Live Chat', 'Live chat functionality will be implemented')
   }
 
-  const handleOpenFAQ = () => {
-    Alert.alert('FAQ', 'FAQ functionality will be implemented')
-  }
 
 
   const faqItems = [
     {
       question: 'How do I send money?',
-      answer: 'To send money, tap the "Send Money" button on your dashboard, enter the amount and select currencies, choose a recipient, select a payment method, and confirm your transaction.'
+      answer: 'To send money, tap the "Send Money" button on your dashboard, enter the amount and select currencies, choose a recipient, make payment using the displayed method, and confirm your transaction.'
     },
     {
       question: 'What are the fees?',
-      answer: 'Fees vary depending on the currency pair and payment method. You can see the exact fees before confirming your transaction.'
+      answer: 'We charge absolutely no fees on any transaction. Send money worldwide completely free with Easner.'
     },
     {
       question: 'How long does it take?',
-      answer: 'Most transactions are completed within 1-3 business days, depending on the recipient\'s bank and country.'
-    },
-    {
-      question: 'Is my money safe?',
-      answer: 'Yes, we use bank-level security and encryption to protect your transactions and personal information.'
-    },
-    {
-      question: 'How do I add a recipient?',
-      answer: 'Go to the Recipients tab, tap "Add New Recipient", and fill in the recipient\'s details including name, bank, and account number.'
+      answer: 'All transactions are completed within 5 minutes or less, ensuring your money reaches its destination quickly and efficiently.'
     }
   ]
 
@@ -93,7 +82,7 @@ export default function SupportScreen({ navigation }: NavigationProps) {
         <Text style={styles.sectionTitle}>Get in Touch</Text>
         {renderContactButton(
           'Email Support',
-          'Send us an email',
+          'support@easner.com',
           handleEmailSupport,
           '📧'
         )}
@@ -107,14 +96,8 @@ export default function SupportScreen({ navigation }: NavigationProps) {
 
       {/* FAQ Section */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-          <TouchableOpacity onPress={handleOpenFAQ}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {faqItems.slice(0, 3).map(renderFAQItem)}
+        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        {faqItems.map(renderFAQItem)}
       </View>
 
       {/* Support Hours */}
