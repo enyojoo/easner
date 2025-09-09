@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     fontSize: 16,
+    borderWidth: 0,
   },
   eyeButton: {
     padding: 12,

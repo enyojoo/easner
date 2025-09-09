@@ -31,7 +31,13 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
       setIsValidSession(true)
     } else {
       Alert.alert('Error', 'Invalid or expired reset link', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
+        { text: 'OK', onPress: () => {
+          // Use reset to go back to the root of the auth stack
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          })
+        }}
       ])
     }
   }, [route.params])
@@ -86,7 +92,13 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
         Alert.alert(
           'Password Updated',
           'Your password has been successfully updated',
-          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+          [{ text: 'OK', onPress: () => {
+            // Use reset to go back to the root of the auth stack
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })
+          }}]
         )
       } else {
         Alert.alert('Error', data.error || 'Failed to reset password')
@@ -190,7 +202,13 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Remember your password? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => {
+            // Use reset to go back to the root of the auth stack
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })
+          }}>
             <Text style={styles.footerLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
@@ -260,6 +278,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     fontSize: 16,
+    borderWidth: 0,
   },
   eyeButton: {
     padding: 12,

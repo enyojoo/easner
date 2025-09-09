@@ -77,22 +77,32 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
     if (!validateForm()) return
 
     setLoading(true)
-    const { error } = await signUp(formData.email, formData.password, {
+    const { error: signUpError } = await signUp(formData.email, formData.password, {
       first_name: formData.firstName,
       last_name: formData.lastName,
       base_currency: 'NGN',
     })
-    setLoading(false)
 
-    if (error) {
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration')
-    } else {
-      Alert.alert(
-        'Registration Successful',
-        'Please check your email to verify your account',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-      )
+    if (signUpError) {
+      setLoading(false)
+      Alert.alert('Registration Failed', signUpError.message || 'An error occurred during registration')
+      return
     }
+
+    setLoading(false)
+    
+    // Show success message and navigate to login
+    Alert.alert(
+      'Registration Successful',
+      'Please check your email to verify your account. After verification, you can sign in to start sending money.',
+      [{ text: 'OK', onPress: () => {
+        // Navigate to login screen
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        })
+      }}]
+    )
   }
 
   return (
@@ -227,7 +237,13 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => {
+            // Use reset to go back to the root of the auth stack
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            })
+          }}>
             <Text style={styles.footerLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
@@ -302,13 +318,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     fontSize: 16,
+    borderWidth: 0,
   },
   eyeButton: {
     padding: 12,
   },
   termsContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 20,
     marginTop: 10,
   },

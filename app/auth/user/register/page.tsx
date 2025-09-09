@@ -81,42 +81,11 @@ function RegisterPageContent() {
         return
       }
 
-      // After successful signup, sign in the user automatically
-      const { error: signInError } = await signIn(formData.email, formData.password)
-
-      if (signInError) {
-        setError("Account created but auto-login failed. Please sign in manually.")
-        return
-      }
-
       setSuccess(true)
       // Redirect after a short delay to show success message
       setTimeout(() => {
-        // Check for stored redirect and conversion data
-        const redirectPath = sessionStorage.getItem("redirectAfterLogin")
-        const conversionData = sessionStorage.getItem("conversionData")
-
-        if (redirectPath && conversionData) {
-          // Clear stored data
-          sessionStorage.removeItem("redirectAfterLogin")
-          sessionStorage.removeItem("conversionData")
-
-          // Parse conversion data and add to URL
-          const data = JSON.parse(conversionData)
-          const params = new URLSearchParams({
-            sendAmount: data.sendAmount,
-            sendCurrency: data.sendCurrency,
-            receiveCurrency: data.receiveCurrency,
-            receiveAmount: data.receiveAmount.toString(),
-            exchangeRate: data.exchangeRate.toString(),
-            fee: data.fee.toString(),
-            step: "2",
-          })
-
-          router.push(`/user/send?${params.toString()}`)
-        } else {
-          router.push("/user/dashboard")
-        }
+        // Redirect to login page after successful signup
+        router.push("/auth/user/login")
       }, 2000)
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
@@ -147,8 +116,9 @@ function RegisterPageContent() {
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
-              <p className="text-gray-600 mb-4">Welcome to Easner! You can now start sending money instantly.</p>
-              <p className="text-sm text-gray-500">Redirecting...</p>
+              <p className="text-gray-600 mb-2">Welcome to Easner! Please check your email to verify your account.</p>
+              <p className="text-sm text-gray-500 mb-4">After verification, you can sign in to start sending money.</p>
+              <p className="text-sm text-gray-500">Redirecting to login...</p>
             </CardContent>
           </Card>
         </main>

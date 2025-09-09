@@ -32,7 +32,7 @@ import type { Currency } from "@/types"
 
 export default function UserSendPage() {
   const router = useRouter()
-  const { userProfile } = useAuth()
+  const { user, userProfile } = useAuth()
   const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()
 
   // Initialize state with default values
@@ -46,6 +46,8 @@ export default function UserSendPage() {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false)
+  const [isResendingVerification, setIsResendingVerification] = useState(false)
 
   const [recipientData, setRecipientData] = useState({
     fullName: "",
@@ -535,8 +537,40 @@ export default function UserSendPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
+  const handleResendVerificationEmail = async () => {
+    if (!user?.email) return
+    
+    setIsResendingVerification(true)
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: user.email }),
+      })
+      
+      if (response.ok) {
+        // Show success message
+        alert('Verification email sent! Please check your inbox.')
+      } else {
+        alert('Failed to send verification email. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error resending verification email:', error)
+      alert('Failed to send verification email. Please try again.')
+    } finally {
+      setIsResendingVerification(false)
+    }
+  }
+
   const handleContinue = async () => {
     if (currentStep < 3) {
+      // Check email verification before moving to step 2
+      if (currentStep === 1 && !user?.email_confirmed_at) {
+        setShowEmailVerificationModal(true)
+        return
+      }
       setCurrentStep(currentStep + 1)
     } else if (currentStep === 3) {
       // Create transaction in database
@@ -1456,6 +1490,42 @@ export default function UserSendPage() {
           </div>
         </div>
       </div>
+
+      {/* Email Verification Modal */}
+      <Dialog open={showEmailVerificationModal} onOpenChange={setShowEmailVerificationModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Email Verification Required
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Please verify your email address before you can send money. We've sent a verification link to <strong>{user?.email}</strong>.
+            </p>
+            <p className="text-sm text-gray-600">
+              Check your email and click the verification link to continue.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowEmailVerificationModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleResendVerificationEmail}
+                disabled={isResendingVerification}
+                className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+              >
+                {isResendingVerification ? "Sending..." : "Resend Email"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </UserDashboardLayout>
   )
 }

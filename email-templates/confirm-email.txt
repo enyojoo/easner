@@ -1,0 +1,24 @@
+Welcome to Easner!
+
+Hi there!
+
+Thank you for signing up with Easner! We're excited to have you join our community of users who send money globally with ease.
+
+To complete your registration and start sending money securely, please confirm your email address by clicking the link below:
+
+{{ .ConfirmationURL }}
+
+This confirmation link will expire in 24 hours for your security. If you didn't create an account with Easner, please ignore this email.
+
+Once confirmed, you'll be able to:
+• Send money to over 200 countries
+• Track your transfers in real-time
+• Save your favorite recipients
+• Enjoy competitive exchange rates
+
+Need help? We're here for you!
+• Contact Support: support@easner.com
+
+© 2024 Easner, Inc. All rights reserved.
+28 Geary St Ste 650, San Francisco, CA 94108
+You received this email because you signed up for an Easner account.

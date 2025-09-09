@@ -226,18 +226,18 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.content}>
-            <View style={styles.header}>
+      <View style={styles.content}>
+        <View style={styles.header}>
               <BrandLogo size="lg" style={styles.logo} />
               <Text style={styles.title}>
                 {step === 'email' ? 'Forgot Password?' : 'Enter Verification Code'}
               </Text>
-              <Text style={styles.subtitle}>
+          <Text style={styles.subtitle}>
                 {step === 'email'
                   ? 'Enter your email address and we\'ll send you a verification code.'
                   : `We've sent a 6-digit code to ${email}`}
-              </Text>
-            </View>
+          </Text>
+        </View>
 
             {error ? (
               <View style={styles.errorContainer}>
@@ -337,7 +337,11 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
                     // Clear any existing intervals
                     setResendCooldown(0)
                   } else {
-                    navigation.navigate('Login')
+                    // Use reset to go back to the root of the auth stack
+                    navigation.reset({
+                      index: 0,
+                      routes: [{ name: 'Login' }],
+                    })
                   }
                 }}
                 style={styles.backButton}
