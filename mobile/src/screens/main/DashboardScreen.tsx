@@ -71,6 +71,11 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
   const stats = getTransactionStats()
 
   const formatNumber = (num: number) => {
+    // Only apply rounding for values over 10,000
+    if (num < 10000) {
+      return num.toLocaleString()
+    }
+    
     if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T'
     if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
     if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
