@@ -8,7 +8,6 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
-import { formatCurrencyWithRounding } from "@/utils/currency"
 
 interface Transaction {
   id: string
@@ -80,7 +79,8 @@ export default function UserDashboardPage() {
 
   const formatCurrencyValue = (amount: number, currencyCode: string) => {
     try {
-      return formatCurrencyWithRounding(amount, currencyCode)
+      const currency = currencies?.find((c) => c && c.code === currencyCode)
+      return `${currency?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     } catch (error) {
       console.error("Error formatting currency:", error)
       return `${currencyCode} ${amount.toFixed(2)}`
