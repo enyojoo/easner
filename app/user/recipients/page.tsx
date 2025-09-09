@@ -25,39 +25,6 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="Enter recipient's full name"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="accountNumber">Account Number</Label>
-        <Input
-          id="accountNumber"
-          value={formData.accountNumber}
-          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-          placeholder="Enter account number"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="bankName">Bank Name</Label>
-        <Input
-          id="bankName"
-          value={formData.bankName}
-          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-          placeholder="Enter bank name"
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="currency">Currency</Label>
         <Select
           value={formData.currency}
@@ -95,6 +62,39 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="name">Full Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter recipient's full name"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="accountNumber">Account Number</Label>
+        <Input
+          id="accountNumber"
+          value={formData.accountNumber}
+          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+          placeholder="Enter account number"
+          disabled={isSubmitting}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="bankName">Bank Name</Label>
+        <Input
+          id="bankName"
+          value={formData.bankName}
+          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+          placeholder="Enter bank name"
+          disabled={isSubmitting}
+        />
       </div>
 
       <Button

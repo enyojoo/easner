@@ -151,8 +151,8 @@ export default function UserProfilePage() {
     <UserDashboardLayout>
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600">Manage your account information and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600">Manage your account information</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -161,10 +161,7 @@ export default function UserProfilePage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Personal
-                  </CardTitle>
+                  <CardTitle>Profile</CardTitle>
                   {!isEditingProfile && (
                     <Button
                       variant="outline"
@@ -181,50 +178,53 @@ export default function UserProfilePage() {
               <CardContent className="space-y-4">
                 {isEditingProfile ? (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="firstName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
                         <Input
                           id="firstName"
                           value={editProfileData.firstName}
                           onChange={(e) => setEditProfileData({ ...editProfileData, firstName: e.target.value })}
                           disabled={loading}
+                          className="font-medium"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="lastName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
                         <Input
                           id="lastName"
                           value={editProfileData.lastName}
                           onChange={(e) => setEditProfileData({ ...editProfileData, lastName: e.target.value })}
                           disabled={loading}
+                          className="font-medium"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" value={editProfileData.email} disabled className="bg-gray-50" />
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="email" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
+                        <Input id="email" type="email" value={editProfileData.email} disabled className="bg-gray-50 font-medium" />
                         <p className="text-xs text-gray-500">Email cannot be changed</p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="phone" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
                         <Input
                           id="phone"
                           value={editProfileData.phone}
                           onChange={(e) => setEditProfileData({ ...editProfileData, phone: e.target.value })}
                           disabled={loading}
+                          className="font-medium"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="baseCurrency">Base Currency</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="baseCurrency" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
                       <Select
                         value={editProfileData.baseCurrency}
                         onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
                         disabled={loading}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="font-medium">
                           <SelectValue placeholder="Select base currency" />
                         </SelectTrigger>
                         <SelectContent>
@@ -239,7 +239,7 @@ export default function UserProfilePage() {
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-gray-500">
-                        This currency will be used for reporting your total sent amount in the dashboard
+                        Used for reporting your total sent amount
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -248,7 +248,7 @@ export default function UserProfilePage() {
                         disabled={loading}
                         className="bg-easner-primary hover:bg-easner-primary-600"
                       >
-                        {loading ? "Saving..." : "Save Changes"}
+                        {loading ? "Saving..." : "Save"}
                       </Button>
                       <Button
                         variant="outline"
@@ -256,40 +256,36 @@ export default function UserProfilePage() {
                         disabled={loading}
                         className="bg-transparent"
                       >
-                        Cancel
+                        Discard
                       </Button>
                     </div>
                   </>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-gray-600">First Name</Label>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
                         <p className="font-medium text-gray-900">{profileData.firstName || "Not set"}</p>
                       </div>
-                      <div>
-                        <Label className="text-gray-600">Last Name</Label>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
                         <p className="font-medium text-gray-900">{profileData.lastName || "Not set"}</p>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-gray-600">Email Address</Label>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
                         <p className="font-medium text-gray-900">{profileData.email}</p>
                       </div>
-                      <div>
-                        <Label className="text-gray-600">Phone Number</Label>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
                         <p className="font-medium text-gray-900">{profileData.phone || "Not set"}</p>
                       </div>
-                    </div>
-                    <div>
-                      <Label className="text-gray-600">Base Currency</Label>
-                      <div className="flex items-center gap-2 mt-1">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
+                      <div className="flex items-center gap-2">
                         <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag_svg || "" }} />
-                        <span className="font-medium text-gray-900">{getSelectedCurrency()?.code}</span>
+                        <span className="font-semibold text-gray-900">{getSelectedCurrency()?.code}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Used for reporting your total sent amount in the dashboard
+                      <p className="text-xs text-gray-500">
+                        Used for reporting your total sent amount
                       </p>
                     </div>
                   </div>

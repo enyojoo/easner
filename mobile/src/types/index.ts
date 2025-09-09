@@ -94,3 +94,16 @@ export interface User {
   created_at: string
   updated_at: string
 }
+
+// Mobile-specific types
+export interface AuthUser {
+  id: string
+  email: string
+  isAdmin: boolean
+  profile: User
+}
+
+export interface NavigationProps {
+  navigation: any
+  route: any
+}

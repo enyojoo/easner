@@ -282,7 +282,7 @@ export const transactionService = {
     totalAmount: number
     reference?: string
   }) {
-    const transactionId = `NP${Date.now()}`
+    const transactionId = `ETID${Date.now()}`
 
     try {
       // Add timeout to prevent hanging
