@@ -180,7 +180,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
       case 'pending':
         return '#f59e0b'
       case 'processing':
-        return '#3b82f6'
+        return '#007ACC'
       case 'failed':
         return '#ef4444'
       default:
@@ -256,7 +256,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         </View>
         
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+        <ActivityIndicator size="large" color="#007ACC" />
         <Text style={styles.loadingText}>Loading transaction details...</Text>
         </View>
       </View>
@@ -397,7 +397,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
               </View>
             </View>
             <TouchableOpacity style={styles.receiptButton} onPress={handleViewReceipt}>
-              <Ionicons name="open-outline" size={16} color="#3b82f6" />
+              <Ionicons name="open-outline" size={16} color="#007ACC" />
               <Text style={styles.receiptButtonText}>View</Text>
             </TouchableOpacity>
           </View>
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -564,10 +564,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#007ACC',
   },
   backButtonText: {
-    color: '#3b82f6',
+    color: '#007ACC',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -660,10 +660,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#007ACC',
   },
   receiptButtonText: {
-    color: '#3b82f6',
+    color: '#007ACC',
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 4,
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   primaryBottomButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
   },
   secondaryBottomButton: {
     backgroundColor: '#f3f4f6',

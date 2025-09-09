@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#007ACC',
   },
   paymentHeader: {
     flexDirection: 'row',
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   currencyIcon: {
     width: 32,
     height: 32,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   paymentTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: '#007ACC',
     marginBottom: 4,
   },
   paymentSubtitle: {

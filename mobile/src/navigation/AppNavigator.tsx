@@ -66,7 +66,7 @@ function MainTabs() {
             <Ionicons 
               name="grid-outline" 
               size={28} 
-              color={focused ? '#3b82f6' : '#6b7280'} 
+              color={focused ? '#007ACC' : '#6b7280'} 
             />
           ),
         }}
@@ -79,7 +79,7 @@ function MainTabs() {
             <Ionicons 
               name="time-outline" 
               size={28} 
-              color={focused ? '#3b82f6' : '#6b7280'} 
+              color={focused ? '#007ACC' : '#6b7280'} 
             />
           ),
         }}
@@ -93,11 +93,11 @@ function MainTabs() {
               width: 60,
               height: 60,
               borderRadius: 30,
-              backgroundColor: '#3b82f6',
+              backgroundColor: '#007ACC',
               justifyContent: 'center',
               alignItems: 'center',
               marginBottom: 20,
-              shadowColor: '#3b82f6',
+              shadowColor: '#007ACC',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
@@ -116,7 +116,7 @@ function MainTabs() {
             <Ionicons 
               name="people-outline" 
               size={28} 
-              color={focused ? '#3b82f6' : '#6b7280'} 
+              color={focused ? '#007ACC' : '#6b7280'} 
             />
           ),
         }}
@@ -129,7 +129,7 @@ function MainTabs() {
             <Ionicons 
               name="ellipsis-horizontal-outline" 
               size={28} 
-              color={focused ? '#3b82f6' : '#6b7280'} 
+              color={focused ? '#007ACC' : '#6b7280'} 
             />
           ),
         }}

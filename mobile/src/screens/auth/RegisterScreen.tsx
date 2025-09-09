@@ -9,11 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Linking,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
+import BrandLogo from '../../components/BrandLogo'
 
 export default function RegisterScreen({ navigation }: NavigationProps) {
   const [formData, setFormData] = useState({
@@ -22,15 +24,23 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
   })
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const { signUp } = useAuth()
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleTermsPress = () => {
+    Linking.openURL('https://easner.com/terms')
+  }
+
+  const handlePrivacyPress = () => {
+    Linking.openURL('https://easner.com/privacy')
   }
 
   const validateForm = () => {
@@ -46,6 +56,11 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
 
     if (formData.password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters long')
+      return false
+    }
+
+    if (!acceptTerms) {
+      Alert.alert('Error', 'Please accept the terms and conditions')
       return false
     }
 
@@ -65,7 +80,6 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
     const { error } = await signUp(formData.email, formData.password, {
       first_name: formData.firstName,
       last_name: formData.lastName,
-      phone: formData.phone,
       base_currency: 'NGN',
     })
     setLoading(false)
@@ -87,11 +101,12 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Easner today</Text>
-        </View>
+         <ScrollView contentContainerStyle={styles.scrollContainer}>
+         <View style={styles.header}>
+           <BrandLogo size="lg" style={styles.logo} />
+           <Text style={styles.title}>Create Account</Text>
+           <Text style={styles.subtitle}>Join Easner today</Text>
+         </View>
 
         <View style={styles.form}>
           <View style={styles.row}>
@@ -130,16 +145,6 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.phone}
-              onChangeText={(value) => handleInputChange('phone', value)}
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-            />
-          </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password *</Text>
@@ -187,10 +192,32 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
             </View>
           </View>
 
+          <View style={styles.termsContainer}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setAcceptTerms(!acceptTerms)}
+              disabled={loading}
+            >
+              <View style={[styles.checkbox, acceptTerms && styles.checkboxChecked]}>
+                {acceptTerms && (
+                  <Ionicons name="checkmark" size={16} color="#ffffff" />
+                )}
+              </View>
+            </TouchableOpacity>
+            <View style={styles.termsTextContainer}>
+              <Text style={styles.termsText}>
+                I agree to the{' '}
+                <Text style={styles.termsLink} onPress={handleTermsPress}>Terms</Text>
+                {' '}and{' '}
+                <Text style={styles.termsLink} onPress={handlePrivacyPress}>Privacy Policy</Text>
+              </Text>
+            </View>
+          </View>
+
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, (loading || !acceptTerms) && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !acceptTerms}
           >
             <Text style={styles.buttonText}>
               {loading ? 'Creating Account...' : 'Create Account'}
@@ -222,6 +249,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
     marginTop: 40,
+  },
+  logo: {
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -276,12 +306,47 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: 12,
   },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  checkboxContainer: {
+    padding: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#007ACC',
+    borderColor: '#007ACC',
+  },
+  termsTextContainer: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  termsText: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+  termsLink: {
+    color: '#007ACC',
+    fontWeight: '600',
+  },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    marginTop: 10,
   },
   buttonDisabled: {
     backgroundColor: '#9ca3af',
@@ -302,7 +367,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#007ACC',
     fontWeight: '600',
   },
 })

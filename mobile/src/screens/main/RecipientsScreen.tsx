@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   addButton: {
     marginHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   saveButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
   },
   cancelButtonText: {
     color: '#374151',

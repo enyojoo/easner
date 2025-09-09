@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
+import BrandLogo from '../../components/BrandLogo'
 
 export default function LoginScreen({ navigation }: NavigationProps) {
   const [email, setEmail] = useState('')
@@ -44,6 +45,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
+          <BrandLogo size="lg" style={styles.logo} />
           <Text style={styles.title}>Welcome to Easner</Text>
           <Text style={styles.subtitle}>Sign in to your account</Text>
         </View>
@@ -132,6 +134,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  logo: {
+    marginBottom: 20,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -179,7 +184,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -197,7 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#3b82f6',
+    color: '#007ACC',
     fontSize: 14,
   },
   footer: {
@@ -211,7 +216,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#007ACC',
     fontWeight: '600',
   },
 })

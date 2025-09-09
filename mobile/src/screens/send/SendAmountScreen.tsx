@@ -346,11 +346,11 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
             <View style={styles.feeRateItem}>
               <View style={styles.feeRateIconContainer}>
                 <View style={[styles.feeRateIcon, { backgroundColor: '#dbeafe' }]}>
-                  <Text style={[styles.feeRateIconText, { color: '#3b82f6' }]}>%</Text>
+                  <Text style={[styles.feeRateIconText, { color: '#007ACC' }]}>%</Text>
                 </View>
                 <Text style={styles.feeRateLabel}>Rate</Text>
               </View>
-              <Text style={[styles.feeRateValue, { color: '#3b82f6' }]}>
+              <Text style={[styles.feeRateValue, { color: '#007ACC' }]}>
                 1 {sendCurrency} = {exchangeRate?.rate?.toFixed(4) || '0.0000'} {receiveCurrency}
               </Text>
             </View>
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 24,
     borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
+    borderLeftColor: '#007ACC',
   },
   exchangeRateText: {
     fontSize: 14,

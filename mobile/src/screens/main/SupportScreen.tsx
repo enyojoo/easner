@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#007ACC',
     fontWeight: '500',
   },
   contactButton: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     height: 100,
   },
   sendButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',

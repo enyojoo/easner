@@ -280,7 +280,7 @@ export default function ProfileScreen({ navigation }: NavigationProps) {
               <Text style={styles.sectionTitle}>Profile</Text>
           {!isEditing ? (
                 <TouchableOpacity onPress={handleEditProfile} style={styles.editButtonContainer}>
-                  <Ionicons name="pencil-outline" size={16} color="#3b82f6" />
+                  <Ionicons name="pencil-outline" size={16} color="#007ACC" />
               <Text style={styles.editButton}>Edit</Text>
             </TouchableOpacity>
           ) : (
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     textAlign: 'center',
   },

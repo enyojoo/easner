@@ -113,7 +113,7 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
       case 'pending':
         return '#f59e0b'
       case 'processing':
-        return '#3b82f6'
+        return '#007ACC'
       case 'failed':
         return '#ef4444'
       default:
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#007ACC',
   },
   actionButtonText: {
     color: '#ffffff',
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   secondaryButtonText: {
-    color: '#3b82f6',
+    color: '#007ACC',
   },
   section: {
     paddingHorizontal: 20,
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#007ACC',
     fontWeight: '500',
   },
   transactionItem: {
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,

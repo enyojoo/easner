@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     fontSize: 16,
-    color: '#3b82f6',
+    color: '#007ACC',
   },
   termsContainer: {
     margin: 20,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f9ff',
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
+    borderLeftColor: '#007ACC',
   },
   termsText: {
     fontSize: 12,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
   },
   confirmButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
   },
   confirmButtonDisabled: {
     backgroundColor: '#9ca3af',

@@ -24,10 +24,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Send password reset email using Supabase Auth
-    // Supabase will generate the OTP and send it via {{ .Token }} in the email template
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    // Send OTP code using Supabase Auth
+    // This will send a 6-digit OTP code to the user's email
+    const { error: resetError } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: false,
+      },
     })
 
     if (resetError) {

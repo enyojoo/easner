@@ -34,7 +34,7 @@ export default function TransactionsScreen({ navigation }: NavigationProps) {
       case 'pending':
         return '#f59e0b'
       case 'processing':
-        return '#3b82f6'
+        return '#007ACC'
       case 'failed':
         return '#ef4444'
       default:

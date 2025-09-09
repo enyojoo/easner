@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { supabase } from '../../lib/supabase'
 import { NavigationProps } from '../../types'
+import BrandLogo from '../../components/BrandLogo'
 
 export default function ResetPasswordScreen({ navigation, route }: NavigationProps) {
   const [password, setPassword] = useState('')
@@ -20,19 +21,20 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(false)
 
   useEffect(() => {
-    // Check if we have access token from deep link
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        Alert.alert('Error', 'Invalid or expired reset link', [
-          { text: 'OK', onPress: () => navigation.navigate('Login') }
-        ])
-      }
+    // Check if we have valid reset parameters from OTP verification
+    const { email, resetToken } = route.params || {}
+    
+    if (email && resetToken) {
+      setIsValidSession(true)
+    } else {
+      Alert.alert('Error', 'Invalid or expired reset link', [
+        { text: 'OK', onPress: () => navigation.navigate('Login') }
+      ])
     }
-    checkSession()
-  }, [])
+  }, [route.params])
 
   const validateForm = () => {
     if (!password || !confirmPassword) {
@@ -58,24 +60,59 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password
+      const { email, resetToken } = route.params || {}
+      
+      if (!email || !resetToken) {
+        Alert.alert('Error', 'Invalid reset session')
+        return
+      }
+
+      // Use the same API endpoint as the web version
+      const response = await fetch('https://easner.com/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: resetToken,
+          email: email,
+          newPassword: password,
+        }),
       })
 
-      if (error) {
-        Alert.alert('Error', error.message)
-      } else {
+      const data = await response.json()
+
+      if (response.ok) {
         Alert.alert(
           'Password Updated',
           'Your password has been successfully updated',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         )
+      } else {
+        Alert.alert('Error', data.error || 'Failed to reset password')
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred')
+      console.error('Password reset error:', error)
+      Alert.alert('Error', 'Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!isValidSession) {
+    return (
+      <ScreenWrapper>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <BrandLogo size="lg" style={styles.logo} />
+            <Text style={styles.title}>Validating Reset Link</Text>
+            <Text style={styles.subtitle}>
+              Please wait while we validate your reset link...
+            </Text>
+          </View>
+        </View>
+      </ScreenWrapper>
+    )
   }
 
   return (
@@ -86,6 +123,7 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
       >
       <View style={styles.content}>
         <View style={styles.header}>
+          <BrandLogo size="lg" style={styles.logo} />
           <Text style={styles.title}>Reset Password</Text>
           <Text style={styles.subtitle}>
             Enter your new password below.
@@ -175,6 +213,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  logo: {
+    marginBottom: 20,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -224,7 +265,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   button: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#007ACC',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
@@ -248,7 +289,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#007ACC',
     fontWeight: '600',
   },
 })
