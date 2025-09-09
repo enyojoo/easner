@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
         // Store reset token and redirect to reset password page
         sessionStorage.setItem("reset-token", data.resetToken)
         sessionStorage.setItem("reset-email", email)
-        router.push("/reset-password")
+        router.push("/auth/user/reset-password")
       } else {
         setError(data.error || "Invalid code. Please try again.")
       }
@@ -272,7 +272,7 @@ export default function ForgotPasswordPage() {
                     setError("")
                     setMessage("")
                   } else {
-                    router.push("/login")
+                    router.push("/auth/user/login")
                   }
                 }}
                 className="inline-flex items-center justify-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"
