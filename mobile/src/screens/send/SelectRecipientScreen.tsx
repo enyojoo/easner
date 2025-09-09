@@ -15,8 +15,11 @@ import { useUserData } from '../../contexts/UserDataContext'
 import BottomButton from '../../components/BottomButton'
 import { NavigationProps, Recipient, Currency } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
+import { recipientService, RecipientData } from '../../lib/recipientService'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function SelectRecipientScreen({ navigation, route }: NavigationProps) {
+  const { userProfile } = useAuth()
   const { recipients, refreshRecipients, currencies } = useUserData()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null)
@@ -27,12 +30,15 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     bankName: '',
     phoneNumber: '',
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const { sendAmount, sendCurrency, receiveAmount, receiveCurrency, exchangeRate, fee, feeType } = route.params || {}
 
   useEffect(() => {
     refreshRecipients()
   }, [])
+
 
   // Helper function to get initials from full name
   const getInitials = (fullName: string) => {
@@ -55,8 +61,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
   }
 
   const filteredRecipients = recipients.filter(recipient =>
-    recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    recipient.bank_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    recipient.bank_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    recipient.account_number.includes(searchTerm)) &&
+    recipient.currency === receiveCurrency
   )
 
   const handleSelectRecipient = (recipient: Recipient) => {
@@ -64,19 +72,48 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
   }
 
   const handleAddRecipient = async () => {
+    if (!userProfile?.id) {
+      Alert.alert('Error', 'User not authenticated')
+      return
+    }
+
     if (!newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName) {
       Alert.alert('Error', 'Please fill in all required fields')
       return
     }
 
     try {
-      // In a real app, you would call the API to create the recipient
-      Alert.alert('Success', 'Recipient added successfully', [
-        { text: 'OK', onPress: () => setShowAddRecipient(false) }
-      ])
-      setNewRecipient({ fullName: '', accountNumber: '', bankName: '', phoneNumber: '' })
+      setIsSubmitting(true)
+      setError('')
+
+      const newRecipientData = await recipientService.create(userProfile.id, {
+        fullName: newRecipient.fullName,
+        accountNumber: newRecipient.accountNumber,
+        bankName: newRecipient.bankName,
+        currency: receiveCurrency,
+      })
+
+      // Refresh recipients data
+      await refreshRecipients()
+
+      // Select the new recipient
+      handleSelectRecipient(newRecipientData)
+
+      // Clear form and close modal
+      setNewRecipient({ 
+        fullName: '', 
+        accountNumber: '', 
+        bankName: '', 
+        phoneNumber: ''
+      })
+      setShowAddRecipient(false)
+      
+      Alert.alert('Success', 'Recipient added successfully')
     } catch (error) {
-      Alert.alert('Error', 'Failed to add recipient')
+      console.error('Error adding recipient:', error)
+      setError('Failed to add recipient')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -97,6 +134,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
       recipient: selectedRecipient,
     })
   }
+
 
   const renderRecipient = ({ item }: { item: Recipient }) => (
     <TouchableOpacity
@@ -183,11 +221,29 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Recipient</Text>
             
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+            
+            <View style={styles.currencyDisplay}>
+              <Text style={styles.currencyLabel}>Currency</Text>
+              <View style={styles.currencyDisplayContent}>
+                <Text style={styles.currencyFlag}>{getCountryFlag(receiveCurrency)}</Text>
+                <View style={styles.currencyInfo}>
+                  <Text style={styles.currencyCode}>{receiveCurrency}</Text>
+                </View>
+                <Text style={styles.autoSelectedText}>Auto-selected</Text>
+              </View>
+            </View>
+            
             <TextInput
               style={styles.modalInput}
               value={newRecipient.fullName}
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
               placeholder="Full Name *"
+              editable={!isSubmitting}
             />
             
             <TextInput
@@ -196,6 +252,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
               placeholder="Account Number *"
               keyboardType="numeric"
+              editable={!isSubmitting}
             />
             
             <TextInput
@@ -203,33 +260,34 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               value={newRecipient.bankName}
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
               placeholder="Bank Name *"
-            />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.phoneNumber}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, phoneNumber: text }))}
-              placeholder="Phone Number (Optional)"
-              keyboardType="phone-pad"
+              editable={!isSubmitting}
             />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowAddRecipient(false)}
+                onPress={() => {
+                  setShowAddRecipient(false)
+                  setError('')
+                }}
+                disabled={isSubmitting}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton]}
+                style={[styles.modalButton, styles.saveButton, isSubmitting && styles.disabledButton]}
                 onPress={handleAddRecipient}
+                disabled={isSubmitting}
               >
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>
+                  {isSubmitting ? 'Adding...' : 'Add'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       )}
+
 
       {/* Bottom Button */}
       {selectedRecipient && (
@@ -442,5 +500,70 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  disabledButton: {
+    backgroundColor: '#9ca3af',
+    opacity: 0.6,
+  },
+  currencyIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#eff6ff',
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+  },
+  currencyText: {
+    fontSize: 12,
+    color: '#2563eb',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  errorContainer: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  currencyDisplay: {
+    marginBottom: 16,
+  },
+  currencyLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  currencyDisplayContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  currencyInfo: {
+    flex: 1,
+  },
+  currencyCode: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  autoSelectedText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
   },
 })

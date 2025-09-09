@@ -967,7 +967,6 @@ export default function UserSendPage() {
                               {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
                               <div>
                                 <div className="font-medium">{receiveCurrency}</div>
-                                <div className="text-sm text-gray-500">{receiveCurrencyData?.name}</div>
                               </div>
                               <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
                             </div>

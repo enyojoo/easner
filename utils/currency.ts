@@ -63,7 +63,21 @@ export const calculateFee = (amount: number, from: string, to: string): { fee: n
   return { fee: 0, feeType: "free" }
 }
 
+export const formatNumber = (num: number): string => {
+  if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T'
+  if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
+  if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
+  if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
+  return num.toFixed(0)
+}
+
 export const formatCurrency = (amount: number, currency: string): string => {
   const curr = currencies.find((c) => c.code === currency)
   return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+export const formatCurrencyWithRounding = (amount: number, currency: string): string => {
+  const curr = currencies.find((c) => c.code === currency)
+  const formattedNumber = formatNumber(amount)
+  return `${curr?.symbol || ""}${formattedNumber}`
 }

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Mail, Edit } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService } from "@/lib/database"
+import { formatCurrencyWithRounding } from "@/utils/currency"
 import { useUserData } from "@/hooks/use-user-data"
 
 export default function UserProfilePage() {
@@ -143,8 +144,7 @@ export default function UserProfilePage() {
   }
 
   const formatCurrency = (amount: number, currency: string) => {
-    const currencyInfo = currencies.find((c) => c.code === currency)
-    return `${currencyInfo?.symbol || ""}${amount.toLocaleString()}`
+    return formatCurrencyWithRounding(amount, currency)
   }
 
   return (
