@@ -20,6 +20,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const { signIn } = useAuth()
 
   const handleLogin = async () => {
@@ -29,7 +30,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
     }
 
     setLoading(true)
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(email, password, rememberMe)
     setLoading(false)
 
     if (error) {
@@ -46,7 +47,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <BrandLogo size="lg" style={styles.logo} />
-          <Text style={styles.title}>Welcome to Easner</Text>
+          <Text style={styles.title}>Welcome Back!</Text>
           <Text style={styles.subtitle}>Sign in to your account</Text>
         </View>
 
@@ -85,6 +86,22 @@ export default function LoginScreen({ navigation }: NavigationProps) {
                 />
               </TouchableOpacity>
             </View>
+          </View>
+
+          {/* Remember Me Checkbox */}
+          <View style={styles.rememberMeContainer}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+              disabled={loading}
+            >
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe && (
+                  <Ionicons name="checkmark" size={16} color="#ffffff" />
+                )}
+              </View>
+              <Text style={styles.rememberMeText}>Remember me</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -183,6 +200,33 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 12,
+  },
+  rememberMeContainer: {
+    marginBottom: 20,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  checkboxChecked: {
+    backgroundColor: '#007ACC',
+    borderColor: '#007ACC',
+  },
+  rememberMeText: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '500',
   },
   button: {
     backgroundColor: '#007ACC',

@@ -50,7 +50,7 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         setError(error.message)
       } else {
         setStep('otp')
-        setMessage('We\'ve sent a 6-digit code to your email address.')
+        setMessage('')
         startResendCooldown()
       }
     } catch (error) {
@@ -234,7 +234,7 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
               </Text>
           <Text style={styles.subtitle}>
                 {step === 'email'
-                  ? 'Enter your email address and we\'ll send you a verification code.'
+                  ? 'Enter your email for verification code'
                   : `We've sent a 6-digit code to ${email}`}
           </Text>
         </View>
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   },
   otpInput: {
     width: 45,
-    height: 45,
+    height: 55,
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,

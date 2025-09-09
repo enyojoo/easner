@@ -66,7 +66,10 @@ export default function TransactionsScreen({ navigation }: NavigationProps) {
   const renderTransaction = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       style={styles.transactionItem}
-      onPress={() => navigation.navigate('TransactionDetails', { transactionId: item.transaction_id })}
+      onPress={() => navigation.navigate('TransactionDetails', { 
+        transactionId: item.transaction_id,
+        fromScreen: 'Transactions'
+      })}
     >
       {/* Header with Transaction ID and Status */}
       <View style={styles.transactionHeader}>

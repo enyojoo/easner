@@ -44,7 +44,7 @@ function LoginPageContent() {
     setError("")
 
     try {
-      const { error: signInError } = await signIn(email, password)
+      const { error: signInError } = await signIn(email, password, rememberMe)
 
       if (signInError) {
         setError(signInError.message)

@@ -28,20 +28,13 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
 
-  const { transactionId } = route.params || {}
+  const { transactionId, fromScreen } = route.params || {}
 
-  // Override the back button behavior
-  useFocusEffect(
-    React.useCallback(() => {
-      // Add event listener for hardware back button (Android)
-      const backHandler = navigation.addListener('beforeRemove', (e: any) => {
-        e.preventDefault()
-        navigation.navigate('MainTabs', { screen: 'Transactions' })
-      })
-
-      return () => backHandler()
-    }, [navigation])
-  )
+  // Custom back navigation handler
+  const handleBackNavigation = () => {
+    // Use goBack() to trigger the natural transition animation
+    navigation.goBack()
+  }
 
   // Update current time every second
   useEffect(() => {
@@ -248,7 +241,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         <View style={styles.customHeader}>
           <TouchableOpacity 
             style={styles.headerBackButton}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Transactions' })}
+            onPress={handleBackNavigation}
           >
             <Ionicons name="arrow-back" size={24} color="#000" />
             <Text style={styles.headerBackText}>Back</Text>
@@ -270,7 +263,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         <View style={styles.customHeader}>
           <TouchableOpacity 
             style={styles.headerBackButton}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Transactions' })}
+            onPress={handleBackNavigation}
           >
             <Ionicons name="arrow-back" size={24} color="#000" />
             <Text style={styles.headerBackText}>Back</Text>
