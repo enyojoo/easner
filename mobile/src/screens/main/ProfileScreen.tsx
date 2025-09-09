@@ -141,11 +141,17 @@ export default function ProfileScreen({ navigation }: NavigationProps) {
   }
 
   const formatNumber = (num: number) => {
-    // Only apply rounding for values over 10,000
+    // Values less than 1,000: show with decimals (e.g., 12.50)
+    if (num < 1000) {
+      return num.toFixed(2)
+    }
+    
+    // Values 1,000 to 9,999: show as whole numbers (e.g., 1,000, 1,500)
     if (num < 10000) {
       return num.toLocaleString()
     }
     
+    // Values 10,000 and above: apply K/M/B/T rounding
     if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T'
     if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
     if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
