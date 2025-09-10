@@ -133,7 +133,7 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
     
     // Values 1,000 to 9,999: show as whole numbers (e.g., 1,000, 1,500)
     if (num < 10000) {
-      return num.toLocaleString()
+      return Math.round(num).toLocaleString()
     }
     
     // Values 10,000 and above: apply K/M/B/T rounding

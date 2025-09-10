@@ -43,6 +43,11 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
       return
     }
 
+    // For admin pages, if we have a user but profile is still loading, wait
+    if (adminOnly && user && userProfile === undefined && loading) {
+      return
+    }
+
     // If still loading auth, wait
     if (loading) return
 
@@ -55,13 +60,16 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
 
     // If user is logged in but trying to access login page
     if (!requireAuth && user) {
-      if (isAdmin) {
-        router.push("/admin/dashboard")
-      } else {
-        router.push("/user/dashboard")
+      // Only redirect if we know the user's admin status
+      if (userProfile !== undefined) {
+        if (isAdmin) {
+          router.push("/admin/dashboard")
+        } else {
+          router.push("/user/dashboard")
+        }
+        setIsAuthorized(false)
+        return
       }
-      setIsAuthorized(false)
-      return
     }
 
     setIsAuthorized(true)
