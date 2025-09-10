@@ -60,27 +60,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (adminUser && !adminError) {
-        // For admin users, we need to create a User object with the required fields
-        const adminAsUser: User = {
-          id: adminUser.id,
-          email: adminUser.email,
-          first_name: adminUser.first_name || '',
-          last_name: adminUser.last_name || '',
-          phone: adminUser.phone,
-          base_currency: adminUser.base_currency || 'USD',
-          status: adminUser.status || 'active',
-          verification_status: adminUser.verification_status || 'verified',
-          created_at: adminUser.created_at,
-          updated_at: adminUser.updated_at,
-        }
-        
-        setUser(adminAsUser)
-        setUserProfile({
-          id: adminUser.id,
-          email: adminUser.email,
-          isAdmin: true,
-          profile: adminAsUser,
-        })
+        // Admin users cannot access mobile app - sign them out
+        console.log('Admin user detected, signing out from mobile app')
+        await supabase.auth.signOut()
+        setUser(null)
+        setUserProfile(null)
+        return
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)

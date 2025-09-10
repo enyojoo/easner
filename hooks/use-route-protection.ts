@@ -24,10 +24,21 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
   } = options
 
   useEffect(() => {
-    // For user pages, we can proceed as soon as we have a user (don't wait for profile)
-    if (requireAuth && !adminOnly && user) {
+    // For user pages, check if user is admin and block access
+    if (requireAuth && !adminOnly && user && userProfile !== undefined) {
+      if (isAdmin) {
+        // Admin users cannot access user pages - redirect to admin dashboard
+        router.push("/admin/dashboard")
+        setIsAuthorized(false)
+        return
+      }
       setIsAuthorized(true)
       setIsChecking(false)
+      return
+    }
+
+    // For user pages, if we have a user but profile is still loading, wait
+    if (requireAuth && !adminOnly && user && userProfile === undefined && loading) {
       return
     }
 
