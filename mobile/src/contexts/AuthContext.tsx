@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { User, AuthUser } from '../types'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
   userProfile: AuthUser | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshUserProfile: () => Promise<void>
@@ -41,11 +42,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (regularUser && !regularUserError) {
+        setUser(regularUser as User)
         setUserProfile({
           id: regularUser.id,
           email: regularUser.email,
           isAdmin: false,
-          profile: regularUser,
+          profile: regularUser as User,
         })
         return
       }
@@ -58,11 +60,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (adminUser && !adminError) {
+        // For admin users, we need to create a User object with the required fields
+        const adminAsUser: User = {
+          id: adminUser.id,
+          email: adminUser.email,
+          first_name: adminUser.first_name || '',
+          last_name: adminUser.last_name || '',
+          phone: adminUser.phone,
+          base_currency: adminUser.base_currency || 'USD',
+          status: adminUser.status || 'active',
+          verification_status: adminUser.verification_status || 'verified',
+          created_at: adminUser.created_at,
+          updated_at: adminUser.updated_at,
+        }
+        
+        setUser(adminAsUser)
         setUserProfile({
           id: adminUser.id,
           email: adminUser.email,
           isAdmin: true,
-          profile: adminUser,
+          profile: adminAsUser,
         })
       }
     } catch (error) {
@@ -87,7 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
-          setUser(session.user as User)
+          // We'll set the user after fetching the profile
           await fetchUserProfile(session.user.id)
         }
       } catch (error) {
@@ -109,7 +126,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       try {
         if (session?.user) {
-          setUser(session.user as User)
+          // We'll set the user after fetching the profile
           await fetchUserProfile(session.user.id)
         } else {
           setUser(null)
