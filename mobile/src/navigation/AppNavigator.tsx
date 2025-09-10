@@ -36,21 +36,19 @@ const getTransitionConfig = () => {
     return {
       ...TransitionPresets.SlideFromRightIOS,
       gestureEnabled: true,
-      gestureDirection: 'horizontal',
-      gestureResponseDistance: {
-        horizontal: 50,
-      },
+      gestureDirection: 'horizontal' as const,
+      gestureResponseDistance: 50,
       gestureVelocityImpact: 0.3,
       transitionSpec: {
         open: {
-          animation: 'timing',
+          animation: 'timing' as const,
           config: {
             duration: 300,
             useNativeDriver: true,
           },
         },
         close: {
-          animation: 'timing',
+          animation: 'timing' as const,
           config: {
             duration: 300,
             useNativeDriver: true,
@@ -61,23 +59,21 @@ const getTransitionConfig = () => {
   } else {
     // Android Material Design transitions
     return {
-      ...TransitionPresets.SlideFromRightAndroid,
+      ...TransitionPresets.SlideFromRightIOS,
       gestureEnabled: true,
-      gestureDirection: 'horizontal',
-      gestureResponseDistance: {
-        horizontal: 50,
-      },
+      gestureDirection: 'horizontal' as const,
+      gestureResponseDistance: 50,
       gestureVelocityImpact: 0.3,
       transitionSpec: {
         open: {
-          animation: 'timing',
+          animation: 'timing' as const,
           config: {
             duration: 300,
             useNativeDriver: true,
           },
         },
         close: {
-          animation: 'timing',
+          animation: 'timing' as const,
           config: {
             duration: 300,
             useNativeDriver: true,
@@ -88,63 +84,6 @@ const getTransitionConfig = () => {
   }
 }
 
-// Special transition for TransactionDetails that handles back navigation properly
-const getTransactionDetailsTransitionConfig = () => {
-  if (Platform.OS === 'ios') {
-    return {
-      ...TransitionPresets.SlideFromRightIOS,
-      gestureEnabled: true,
-      gestureDirection: 'horizontal',
-      gestureResponseDistance: {
-        horizontal: 100,
-      },
-      gestureVelocityImpact: 0.3,
-      transitionSpec: {
-        open: {
-          animation: 'timing',
-          config: {
-            duration: 300,
-            useNativeDriver: true,
-          },
-        },
-        close: {
-          animation: 'timing',
-          config: {
-            duration: 300,
-            useNativeDriver: true,
-          },
-        },
-      },
-    }
-  } else {
-    // Android Material Design transitions
-    return {
-      ...TransitionPresets.SlideFromRightAndroid,
-      gestureEnabled: true,
-      gestureDirection: 'horizontal',
-      gestureResponseDistance: {
-        horizontal: 100,
-      },
-      gestureVelocityImpact: 0.3,
-      transitionSpec: {
-        open: {
-          animation: 'timing',
-          config: {
-            duration: 300,
-            useNativeDriver: true,
-          },
-        },
-        close: {
-          animation: 'timing',
-          config: {
-            duration: 300,
-            useNativeDriver: true,
-          },
-        },
-      },
-    }
-  }
-}
 
 // Modal-style transitions for certain screens
 const getModalTransitionConfig = () => {
@@ -155,7 +94,7 @@ const getModalTransitionConfig = () => {
     }
   } else {
     return {
-      ...TransitionPresets.ModalSlideFromBottomAndroid,
+      ...TransitionPresets.ModalPresentationIOS,
       gestureEnabled: true,
     }
   }
@@ -182,9 +121,7 @@ function AuthStack() {
         options={{
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -193,9 +130,7 @@ function AuthStack() {
         options={{
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -204,9 +139,7 @@ function AuthStack() {
         options={{
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
     </Stack.Navigator>
@@ -333,9 +266,7 @@ function MainStack() {
           headerShown: false,
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -345,9 +276,7 @@ function MainStack() {
           headerShown: false,
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -357,9 +286,7 @@ function MainStack() {
           headerShown: false,
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -369,9 +296,7 @@ function MainStack() {
           headerShown: false,
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -379,7 +304,9 @@ function MainStack() {
         component={TransactionDetailsScreen}
         options={{ 
           headerShown: false,
-          ...getTransactionDetailsTransitionConfig(),
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -389,9 +316,7 @@ function MainStack() {
           headerShown: false,
           ...getTransitionConfig(),
           gestureEnabled: true,
-          gestureResponseDistance: {
-            horizontal: 50,
-          },
+          gestureResponseDistance: 50,
         }}
       />
     </Stack.Navigator>

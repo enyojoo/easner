@@ -290,7 +290,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
       <View style={styles.customHeader}>
         <TouchableOpacity 
           style={styles.headerBackButton}
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Transactions' })}
+          onPress={handleBackNavigation}
         >
           <Ionicons name="arrow-back" size={24} color="#000" />
           <Text style={styles.headerBackText}>Back</Text>
