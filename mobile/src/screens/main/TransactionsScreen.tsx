@@ -11,11 +11,64 @@ import {
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
+import { transactionService } from '../../lib/transactionService'
 
 export default function TransactionsScreen({ navigation }: NavigationProps) {
   const { transactions, loading, refreshTransactions } = useUserData()
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
+
+  // Initialize live transactions with current data
+  useEffect(() => {
+    if (transactions.length > 0) {
+      setLiveTransactions(transactions)
+    }
+  }, [transactions])
+
+  // Poll for transaction updates every 10 seconds for all transactions
+  useEffect(() => {
+    if (liveTransactions.length === 0) return
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const updatedTransactions = await Promise.all(
+          liveTransactions.map(async (transaction) => {
+            try {
+              const updatedTransaction = await transactionService.getById(transaction.transaction_id)
+              return updatedTransaction
+            } catch (error) {
+              console.error('Error polling transaction:', error)
+              return transaction
+            }
+          })
+        )
+
+        // Update only if status has changed
+        const hasChanges = updatedTransactions.some((updated, index) => 
+          updated.status !== liveTransactions[index].status
+        )
+
+        if (hasChanges) {
+          // Update the live transactions with new data
+          setLiveTransactions(prev => {
+            const updated = [...prev]
+            updatedTransactions.forEach((updatedTransaction, index) => {
+              const originalIndex = prev.findIndex(t => t.transaction_id === updatedTransaction.transaction_id)
+              if (originalIndex !== -1) {
+                updated[originalIndex] = updatedTransaction as Transaction
+              }
+            })
+            return updated
+          })
+        }
+      } catch (error) {
+        console.error('Error polling transactions:', error)
+      }
+    }, 10000) // Poll every 10 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [liveTransactions])
 
   useEffect(() => {
     refreshTransactions()
@@ -24,6 +77,10 @@ export default function TransactionsScreen({ navigation }: NavigationProps) {
   const onRefresh = async () => {
     setRefreshing(true)
     await refreshTransactions()
+    // Also refresh live transactions
+    if (liveTransactions.length > 0) {
+      setLiveTransactions(transactions)
+    }
     setRefreshing(false)
   }
 
@@ -57,7 +114,8 @@ export default function TransactionsScreen({ navigation }: NavigationProps) {
     })
   }
 
-  const filteredTransactions = transactions.filter(transaction => {
+  const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
+  const filteredTransactions = currentTransactions.filter(transaction => {
     const matchesSearch = transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.recipient?.full_name.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch

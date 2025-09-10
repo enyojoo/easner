@@ -5,24 +5,78 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import { transactionService } from '../../lib/transactionService'
 
 export default function DashboardScreen({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
-  const { transactions, currencies, exchangeRates, loading, refreshAll } = useUserData()
+  const { transactions, currencies, exchangeRates, loading, refreshAll, refreshTransactions } = useUserData()
   const [refreshing, setRefreshing] = useState(false)
   const [totalSent, setTotalSent] = useState(0)
+  const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
 
-  const recentTransactions = transactions.slice(0, 3)
+  const recentTransactions = liveTransactions.length > 0 ? liveTransactions.slice(0, 3) : transactions.slice(0, 3)
+
+  // Initialize live transactions with current data
+  useEffect(() => {
+    if (transactions.length > 0) {
+      setLiveTransactions(transactions)
+    }
+  }, [transactions])
+
+  // Poll for transaction updates every 10 seconds for all transactions
+  useEffect(() => {
+    if (!userProfile?.id || recentTransactions.length === 0) return
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const updatedTransactions = await Promise.all(
+          recentTransactions.map(async (transaction) => {
+            try {
+              const updatedTransaction = await transactionService.getById(transaction.transaction_id)
+              return updatedTransaction
+            } catch (error) {
+              console.error('Error polling transaction:', error)
+              return transaction
+            }
+          })
+        )
+
+        // Update only if status has changed
+        const hasChanges = updatedTransactions.some((updated, index) => 
+          updated.status !== recentTransactions[index].status
+        )
+
+        if (hasChanges) {
+          // Update the live transactions with new data
+          setLiveTransactions(prev => {
+            const updated = [...prev]
+            updatedTransactions.forEach((updatedTransaction, index) => {
+              const originalIndex = prev.findIndex(t => t.transaction_id === updatedTransaction.transaction_id)
+              if (originalIndex !== -1) {
+                updated[originalIndex] = updatedTransaction as Transaction
+              }
+            })
+            return updated
+          })
+        }
+      } catch (error) {
+        console.error('Error polling transactions:', error)
+      }
+    }, 10000) // Poll every 10 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [recentTransactions, userProfile?.id])
 
   useEffect(() => {
-    if (!userProfile?.id || !transactions?.length || !exchangeRates?.length) return
+    const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
+    if (!userProfile?.id || !currentTransactions?.length || !exchangeRates?.length) return
 
     try {
       const calculateTotalSent = () => {
         const baseCurrency = userProfile.profile.base_currency || "NGN"
         let totalInBaseCurrency = 0
 
-        for (const transaction of transactions) {
+        for (const transaction of currentTransactions) {
           if (!transaction || transaction.status !== "completed") continue
 
           let amountInBaseCurrency = transaction.send_amount || 0
@@ -58,10 +112,11 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
       console.error("Error calculating total sent:", error)
       setTotalSent(0)
     }
-  }, [transactions, exchangeRates, userProfile])
+  }, [liveTransactions, transactions, exchangeRates, userProfile])
 
   const getTransactionStats = () => {
-    const completedTransactions = transactions.filter(t => t.status === 'completed').length
+    const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
+    const completedTransactions = currentTransactions.filter(t => t.status === 'completed').length
     return {
       completedTransactions,
       totalSent
@@ -103,6 +158,10 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
   const onRefresh = async () => {
     setRefreshing(true)
     await refreshAll()
+    // Also refresh live transactions
+    if (liveTransactions.length > 0) {
+      setLiveTransactions(transactions)
+    }
     setRefreshing(false)
   }
 
