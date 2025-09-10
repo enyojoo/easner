@@ -168,8 +168,8 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
       // Refresh transactions list
       await refreshTransactions()
 
-      // Navigate to transaction details page
-      navigation.navigate('TransactionDetails', { 
+      // Navigate to send transaction details page
+      navigation.navigate('SendTransactionDetails', { 
         transactionId: transaction.transaction_id 
       })
     } catch (error: any) {

@@ -26,6 +26,7 @@ import SendAmountScreen from '../screens/send/SendAmountScreen'
 import SelectRecipientScreen from '../screens/send/SelectRecipientScreen'
 import PaymentMethodScreen from '../screens/send/PaymentMethodScreen'
 import ConfirmationScreen from '../screens/send/ConfirmationScreen'
+import SendTransactionDetailsScreen from '../screens/send/SendTransactionDetailsScreen'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -43,14 +44,14 @@ const getTransitionConfig = () => {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 250,
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 250,
             useNativeDriver: true,
           },
         },
@@ -59,11 +60,39 @@ const getTransitionConfig = () => {
   } else {
     // Android Material Design transitions
     return {
-      ...TransitionPresets.SlideFromRightIOS,
+      ...TransitionPresets.ScaleFromCenterAndroid,
       gestureEnabled: true,
       gestureDirection: 'horizontal' as const,
       gestureResponseDistance: 50,
       gestureVelocityImpact: 0.3,
+      transitionSpec: {
+        open: {
+          animation: 'timing' as const,
+          config: {
+            duration: 250,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing' as const,
+          config: {
+            duration: 250,
+            useNativeDriver: true,
+          },
+        },
+      },
+    }
+  }
+}
+
+// Specialized transition configuration for send money flow
+const getSendFlowTransitionConfig = () => {
+  if (Platform.OS === 'ios') {
+    return {
+      gestureEnabled: true,
+      gestureDirection: 'horizontal' as const,
+      gestureResponseDistance: 60,
+      gestureVelocityImpact: 0.4,
       transitionSpec: {
         open: {
           animation: 'timing' as const,
@@ -80,22 +109,58 @@ const getTransitionConfig = () => {
           },
         },
       },
-    }
-  }
-}
-
-
-// Modal-style transitions for certain screens
-const getModalTransitionConfig = () => {
-  if (Platform.OS === 'ios') {
-    return {
-      ...TransitionPresets.ModalPresentationIOS,
-      gestureEnabled: true,
+      cardStyleInterpolator: ({ current, layouts }: any) => {
+        return {
+          cardStyle: {
+            transform: [
+              {
+                translateX: current.progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [layouts.screen.width, 0],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+            opacity: current.progress.interpolate({
+              inputRange: [0, 0.05, 1],
+              outputRange: [0, 1, 1],
+              extrapolate: 'clamp',
+            }),
+          },
+          overlayStyle: {
+            opacity: current.progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 0.2],
+              extrapolate: 'clamp',
+            }),
+          },
+        }
+      },
     }
   } else {
+    // Android uses the standard configuration
     return {
-      ...TransitionPresets.ModalPresentationIOS,
+      ...TransitionPresets.ScaleFromCenterAndroid,
       gestureEnabled: true,
+      gestureDirection: 'horizontal' as const,
+      gestureResponseDistance: 60,
+      gestureVelocityImpact: 0.4,
+      transitionSpec: {
+        open: {
+          animation: 'timing' as const,
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing' as const,
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+      },
     }
   }
 }
@@ -264,9 +329,7 @@ function MainStack() {
         component={SendAmountScreen}
         options={{ 
           headerShown: false,
-          ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
+          ...getSendFlowTransitionConfig(),
         }}
       />
       <Stack.Screen 
@@ -274,9 +337,7 @@ function MainStack() {
         component={SelectRecipientScreen}
         options={{ 
           headerShown: false,
-          ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
+          ...getSendFlowTransitionConfig(),
         }}
       />
       <Stack.Screen 
@@ -284,9 +345,7 @@ function MainStack() {
         component={PaymentMethodScreen}
         options={{ 
           headerShown: false,
-          ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
+          ...getSendFlowTransitionConfig(),
         }}
       />
       <Stack.Screen 
@@ -294,9 +353,15 @@ function MainStack() {
         component={ConfirmationScreen}
         options={{ 
           headerShown: false,
-          ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
+          ...getSendFlowTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="SendTransactionDetails" 
+        component={SendTransactionDetailsScreen}
+        options={{ 
+          headerShown: false,
+          ...getSendFlowTransitionConfig(),
         }}
       />
       <Stack.Screen 
