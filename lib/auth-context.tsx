@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, user?: any) => {
     try {
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) =>
@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userProfile && !userError) {
           setUserProfile(userProfile)
           setIsAdmin(false)
+          if (user) setUser(user) // Set user after determining admin status
           return userProfile
         }
 
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (adminProfile && !adminError) {
           setUserProfile(adminProfile)
           setIsAdmin(true)
+          if (user) setUser(user) // Set user after determining admin status
           return adminProfile
         }
 
@@ -115,8 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
+          await fetchUserProfile(session.user.id, session.user)
         }
       } catch (error) {
         console.error("Error getting initial session:", error)
@@ -137,8 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         if (session?.user) {
-          setUser(session.user)
-          await fetchUserProfile(session.user.id)
+          // Don't set user until profile is fetched to avoid race conditions
+          await fetchUserProfile(session.user.id, session.user)
         } else {
           setUser(null)
           setUserProfile(null)
