@@ -191,7 +191,7 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
     }
 
     // Check email verification before proceeding
-    if (!user?.email_confirmed_at) {
+    if (!user?.verification_status || user.verification_status !== 'verified') {
       setShowEmailVerificationModal(true)
       return
     }
