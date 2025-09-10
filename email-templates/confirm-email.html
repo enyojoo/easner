@@ -38,7 +38,12 @@
         .logo {
             max-width: 120px;
             height: auto;
-            margin-bottom: 20px;
+            margin: 0 auto 20px auto;
+            display: block;
+        }
+        
+        .logo {
+            display: block;
         }
         
         .email-title {
@@ -147,6 +152,79 @@
             margin-top: 20px;
         }
         
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0a0a0a;
+                color: #e5e5e5;
+            }
+            
+            .email-container {
+                background-color: #1a1a1a;
+                border-color: #333333;
+            }
+            
+            .email-header {
+                background: #1a1a1a;
+                border-bottom-color: #333333;
+            }
+            
+            .email-title {
+                color: #007ACC;
+            }
+            
+            .email-subtitle {
+                color: #999999;
+            }
+            
+            .welcome-text {
+                color: #ffffff;
+            }
+            
+            .confirmation-text {
+                color: #e5e5e5;
+            }
+            
+            .security-note {
+                background-color: #2a2a2a;
+                border-left-color: #007ACC;
+            }
+            
+            .security-note h3 {
+                color: #ffffff;
+            }
+            
+            .security-note p {
+                color: #e5e5e5;
+            }
+            
+            .email-footer {
+                background-color: #1a1a1a;
+                border-top-color: #333333;
+            }
+            
+            .footer-text {
+                color: #999999;
+            }
+            
+            .footer-links a {
+                color: #007ACC;
+            }
+            
+            .company-info {
+                color: #666666;
+            }
+            
+            ul {
+                color: #e5e5e5 !important;
+            }
+            
+            .confirmation-url {
+                background-color: #2a2a2a !important;
+                color: #007ACC !important;
+            }
+        }
+        
         /* Mobile responsiveness */
         @media only screen and (max-width: 600px) {
             .email-container {
@@ -189,7 +267,14 @@
                 display: block;
                 margin: 10px 0;
             }
+            
+            .logo {
+                margin: 0 auto 20px auto;
+                display: block;
+            }
+            
         }
+        
         
     </style>
 </head>
@@ -197,7 +282,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="https://cldup.com/cwHk7-kSb4.svg" alt="Easner Logo" class="logo">
+            <img src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/EASNER.png" alt="Easner Logo" class="logo">
             <h1 class="email-title">Welcome to Easner!</h1>
             <p class="email-subtitle">Send money globally with ease</p>
         </div>
@@ -213,8 +298,7 @@
             </div>
             
             <div class="security-note">
-                <h3>🔒 Security Note</h3>
-                <p>This confirmation link will expire in 24 hours for your security. If you didn't create an account with Easner, please ignore this email.</p>
+                <p>This confirmation link will expire in 30 minutes. If you didn't create an account with Easner, please ignore this email.</p>
             </div>
             
             <p class="confirmation-text">
@@ -232,7 +316,7 @@
                 If the button doesn't work, you can also copy and paste this link into your browser:
             </p>
             
-            <p style="word-break: break-all; color: #007ACC; font-size: 14px; background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p class="confirmation-url" style="word-break: break-all; color: #007ACC; font-size: 14px; background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
                 {{ .ConfirmationURL }}
             </p>
         </div>

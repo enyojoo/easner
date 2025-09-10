@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Platform, TouchableOpacity } from 'react-native'
-import { createStackNavigator } from '@react-navigation/stack'
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../contexts/AuthContext'
@@ -30,13 +30,185 @@ import ConfirmationScreen from '../screens/send/ConfirmationScreen'
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
 
+// Custom transition configurations for smooth, platform-appropriate animations
+const getTransitionConfig = () => {
+  if (Platform.OS === 'ios') {
+    return {
+      ...TransitionPresets.SlideFromRightIOS,
+      gestureEnabled: true,
+      gestureDirection: 'horizontal',
+      gestureResponseDistance: {
+        horizontal: 50,
+      },
+      gestureVelocityImpact: 0.3,
+      transitionSpec: {
+        open: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+      },
+    }
+  } else {
+    // Android Material Design transitions
+    return {
+      ...TransitionPresets.SlideFromRightAndroid,
+      gestureEnabled: true,
+      gestureDirection: 'horizontal',
+      gestureResponseDistance: {
+        horizontal: 50,
+      },
+      gestureVelocityImpact: 0.3,
+      transitionSpec: {
+        open: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+      },
+    }
+  }
+}
+
+// Special transition for TransactionDetails that handles back navigation properly
+const getTransactionDetailsTransitionConfig = () => {
+  if (Platform.OS === 'ios') {
+    return {
+      ...TransitionPresets.SlideFromRightIOS,
+      gestureEnabled: true,
+      gestureDirection: 'horizontal',
+      gestureResponseDistance: {
+        horizontal: 100,
+      },
+      gestureVelocityImpact: 0.3,
+      transitionSpec: {
+        open: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+      },
+    }
+  } else {
+    // Android Material Design transitions
+    return {
+      ...TransitionPresets.SlideFromRightAndroid,
+      gestureEnabled: true,
+      gestureDirection: 'horizontal',
+      gestureResponseDistance: {
+        horizontal: 100,
+      },
+      gestureVelocityImpact: 0.3,
+      transitionSpec: {
+        open: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+        close: {
+          animation: 'timing',
+          config: {
+            duration: 300,
+            useNativeDriver: true,
+          },
+        },
+      },
+    }
+  }
+}
+
+// Modal-style transitions for certain screens
+const getModalTransitionConfig = () => {
+  if (Platform.OS === 'ios') {
+    return {
+      ...TransitionPresets.ModalPresentationIOS,
+      gestureEnabled: true,
+    }
+  } else {
+    return {
+      ...TransitionPresets.ModalSlideFromBottomAndroid,
+      gestureEnabled: true,
+    }
+  }
+}
+
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        ...getTransitionConfig()
+      }}
+    >
+      <Stack.Screen 
+        name="Login" 
+        component={LoginScreen}
+        options={{
+          gestureEnabled: false, // Login is the root screen
+        }}
+      />
+      <Stack.Screen 
+        name="Register" 
+        component={RegisterScreen}
+        options={{
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen}
+        options={{
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="ResetPassword" 
+        component={ResetPasswordScreen}
+        options={{
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
+        }}
+      />
     </Stack.Navigator>
   )
 }
@@ -140,52 +312,86 @@ function MainTabs() {
 
 function MainStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        ...getTransitionConfig()
+      }}
+    >
       <Stack.Screen 
         name="MainTabs" 
         component={MainTabs} 
-        options={{ headerShown: false }}
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false // Disable gesture for main tabs
+        }}
       />
       <Stack.Screen 
         name="SendAmount" 
         component={SendAmountScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
         }}
       />
       <Stack.Screen 
         name="SelectRecipient" 
         component={SelectRecipientScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
         }}
       />
       <Stack.Screen 
         name="PaymentMethod" 
         component={PaymentMethodScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
         }}
       />
       <Stack.Screen 
         name="Confirmation" 
         component={ConfirmationScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
         }}
       />
       <Stack.Screen 
         name="TransactionDetails" 
         component={TransactionDetailsScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransactionDetailsTransitionConfig(),
         }}
       />
       <Stack.Screen 
         name="Support" 
         component={SupportScreen}
         options={{ 
-          headerShown: false
+          headerShown: false,
+          ...getTransitionConfig(),
+          gestureEnabled: true,
+          gestureResponseDistance: {
+            horizontal: 50,
+          },
         }}
       />
     </Stack.Navigator>

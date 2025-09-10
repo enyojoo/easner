@@ -115,7 +115,7 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
          <View style={styles.header}>
            <BrandLogo size="lg" style={styles.logo} />
            <Text style={styles.title}>Create Account</Text>
-           <Text style={styles.subtitle}>Join Easner today</Text>
+           <Text style={styles.subtitle}>To send money with Ease</Text>
          </View>
 
         <View style={styles.form}>

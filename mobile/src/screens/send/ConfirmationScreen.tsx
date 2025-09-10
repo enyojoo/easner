@@ -55,7 +55,10 @@ export default function ConfirmationScreen({ navigation, route }: NavigationProp
             text: 'OK',
             onPress: () => {
               refreshTransactions()
-              navigation.navigate('TransactionDetails', { transactionId })
+              navigation.navigate('TransactionDetails', { 
+                transactionId,
+                fromScreen: 'SendFlow'
+              })
             }
           }
         ]

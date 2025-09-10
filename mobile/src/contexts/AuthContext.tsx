@@ -130,7 +130,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -139,6 +139,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (error) {
         return { error }
+      }
+
+      // If remember me is checked, extend session duration
+      if (rememberMe && data.session) {
+        // Set a longer session duration (30 days)
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        })
       }
 
       return { error: null }

@@ -201,7 +201,10 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
             <TouchableOpacity 
               key={transaction.id} 
               style={styles.transactionItem}
-              onPress={() => navigation.navigate('TransactionDetails', { transactionId: transaction.transaction_id })}
+              onPress={() => navigation.navigate('TransactionDetails', { 
+                transactionId: transaction.transaction_id,
+                fromScreen: 'Dashboard'
+              })}
             >
               {/* Header with Transaction ID and Status */}
               <View style={styles.transactionHeader}>

@@ -179,7 +179,7 @@ export default function ForgotPasswordPage() {
             </CardTitle>
             <CardDescription>
               {step === "email"
-                ? "Enter your email address and we'll send you a verification code."
+                ? "Enter your email for verification code"
                 : `We've sent a 6-digit code to ${email}`}
             </CardDescription>
           </CardHeader>
@@ -272,7 +272,7 @@ export default function ForgotPasswordPage() {
                     setError("")
                     setMessage("")
                   } else {
-                    router.push("/login")
+                    router.push("/auth/user/login")
                   }
                 }}
                 className="inline-flex items-center justify-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"

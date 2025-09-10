@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { StatusBar } from 'expo-status-bar'
 import { View, Text, StyleSheet } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AuthProvider } from './src/contexts/AuthContext'
 import { UserDataProvider } from './src/contexts/UserDataContext'
 import AppNavigator from './src/navigation/AppNavigator'
@@ -12,16 +13,29 @@ export default function App() {
   
   try {
     return (
-      <SafeAreaProvider>
-        <AuthProvider>
-          <UserDataProvider>
-            <NavigationContainer>
-              <StatusBar style="dark" />
-              <AppNavigator />
-            </NavigationContainer>
-          </UserDataProvider>
-        </AuthProvider>
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <UserDataProvider>
+              <NavigationContainer
+                theme={{
+                  colors: {
+                    primary: '#007ACC',
+                    background: '#ffffff',
+                    card: '#ffffff',
+                    text: '#1f2937',
+                    border: '#e5e7eb',
+                    notification: '#ef4444',
+                  },
+                }}
+              >
+                <StatusBar style="dark" />
+                <AppNavigator />
+              </NavigationContainer>
+            </UserDataProvider>
+          </AuthProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     )
   } catch (error) {
     console.error('App.tsx: Error in App component:', error)
