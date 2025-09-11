@@ -6,7 +6,6 @@ import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import DashboardSkeleton from '../../components/DashboardSkeleton'
-import WithAuth from '../../components/auth/with-auth'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
 
@@ -585,11 +584,7 @@ const styles = StyleSheet.create({
   },
 })
 
-// Export DashboardScreen wrapped with authentication guard
+// Export DashboardScreen directly (authentication handled at navigator level)
 export default function DashboardScreen(props: NavigationProps) {
-  return (
-    <WithAuth requireAuth={true}>
-      <DashboardContent {...props} />
-    </WithAuth>
-  )
+  return <DashboardContent {...props} />
 }

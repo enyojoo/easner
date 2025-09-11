@@ -9,7 +9,6 @@ import {
   TextInput,
 } from 'react-native'
 import ScreenWrapper from '../../components/ScreenWrapper'
-import WithAuth from '../../components/auth/with-auth'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import { transactionService } from '../../lib/transactionService'
@@ -371,11 +370,7 @@ const styles = StyleSheet.create({
   },
 })
 
-// Export TransactionsScreen wrapped with authentication guard
+// Export TransactionsScreen directly (authentication handled at navigator level)
 export default function TransactionsScreen(props: NavigationProps) {
-  return (
-    <WithAuth requireAuth={true}>
-      <TransactionsContent {...props} />
-    </WithAuth>
-  )
+  return <TransactionsContent {...props} />
 }

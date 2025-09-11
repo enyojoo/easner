@@ -38,20 +38,20 @@ const getTransitionConfig = () => {
       ...TransitionPresets.SlideFromRightIOS,
       gestureEnabled: true,
       gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 50,
-      gestureVelocityImpact: 0.3,
+      gestureResponseDistance: 25, // More responsive (was 50)
+      gestureVelocityImpact: 0.5, // More sensitive (was 0.3)
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 250,
+            duration: 140, // Faster open (was 250)
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 250,
+            duration: 110, // Faster close (was 250)
             useNativeDriver: true,
           },
         },
@@ -66,14 +66,14 @@ const getTransitionConfig = () => {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 145, // Faster open (was 300)
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 115, // Faster close (was 300)
             useNativeDriver: true,
           },
         },
@@ -88,20 +88,20 @@ const getSendFlowTransitionConfig = () => {
     return {
       gestureEnabled: true,
       gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 60,
-      gestureVelocityImpact: 0.4,
+      gestureResponseDistance: 25, // More responsive (was 60)
+      gestureVelocityImpact: 0.5, // More sensitive (was 0.4)
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 140, // Faster open (was 300)
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 110, // Faster close (was 300)
             useNativeDriver: true,
           },
         },
@@ -143,14 +143,14 @@ const getSendFlowTransitionConfig = () => {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 145, // Faster open (was 300)
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 300,
+            duration: 115, // Faster close (was 300)
             useNativeDriver: true,
           },
         },
@@ -369,39 +369,6 @@ function MainStack() {
           ...getTransitionConfig(),
         }}
       />
-      {/* Auth screens accessible from main stack */}
-      <Stack.Screen 
-        name="Login" 
-        component={LoginScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
-      <Stack.Screen 
-        name="Register" 
-        component={RegisterScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
-      <Stack.Screen 
-        name="ForgotPassword" 
-        component={ForgotPasswordScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
-      <Stack.Screen 
-        name="ResetPassword" 
-        component={ResetPasswordScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
     </Stack.Navigator>
   )
 }
@@ -411,7 +378,17 @@ export default function AppNavigator() {
 
   console.log('AppNavigator: user:', !!user, 'userProfile:', !!userProfile, 'loading:', loading)
 
-  // Always start with MainStack (Dashboard) - web app pattern
-  // Individual screens will handle authentication redirects
-  return <MainStack />
+  // Show loading screen while checking initial authentication
+  // This prevents the flash of Login screen when user has an active session
+  if (loading) {
+    return null // Return null instead of loading spinner for faster transition
+  }
+
+  // If user is logged in, show main app (Dashboard)
+  if (user) {
+    return <MainStack />
+  }
+
+  // If no user, show auth stack (Login)
+  return <AuthStack />
 }

@@ -13,7 +13,6 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
-import WithAuth from '../../components/auth/with-auth'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
@@ -733,11 +732,7 @@ const styles = StyleSheet.create({
   },
 })
 
-// Export ProfileScreen wrapped with authentication guard
+// Export ProfileScreen directly (authentication handled at navigator level)
 export default function ProfileScreen(props: NavigationProps) {
-  return (
-    <WithAuth requireAuth={true}>
-      <ProfileContent {...props} />
-    </WithAuth>
-  )
+  return <ProfileContent {...props} />
 }

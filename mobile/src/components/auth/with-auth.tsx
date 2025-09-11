@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { useAuth } from '../../contexts/AuthContext'
 import { useNavigation } from '@react-navigation/native'
 
@@ -17,44 +16,17 @@ const WithAuth: React.FC<WithAuthProps> = ({ children, requireAuth = true, ...pr
     // Only redirect if we're not loading and require auth but user is not logged in
     if (!loading && requireAuth && !user) {
       console.log('WithAuth: Redirecting to login - user not authenticated')
-      // Add small delay to prevent multiple simultaneous redirects
-      const timeoutId = setTimeout(() => {
-        navigation.navigate('Login' as never)
-      }, 100)
-      
-      return () => clearTimeout(timeoutId)
+      navigation.navigate('Login' as never)
     }
   }, [user, loading, requireAuth, navigation])
-
-  // Show loading spinner while checking auth status
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007ACC" />
-      </View>
-    )
-  }
 
   // If auth is required but user is not logged in, don't render children
   // (redirect will happen in useEffect)
   if (requireAuth && !user) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007ACC" />
-      </View>
-    )
+    return null // Don't show loading spinner, just return null
   }
 
   return React.cloneElement(children as React.ReactElement, props)
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-  },
-})
 
 export default WithAuth

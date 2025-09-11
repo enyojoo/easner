@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../contexts/AuthContext'
@@ -21,6 +22,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { signIn } = useAuth()
 
   // Track screen view
@@ -34,17 +36,20 @@ export default function LoginScreen({ navigation }: NavigationProps) {
       return
     }
 
+    setIsLoading(true)
     try {
       const { error } = await signIn(email, password, rememberMe)
       
       if (error) {
         Alert.alert('Login Failed', error.message || 'Invalid credentials')
       } else {
-        // Redirect to Dashboard after successful login
-        navigation.navigate('MainTabs' as never)
+        // No need to navigate - the AppNavigator will automatically show MainStack
+        // when user state changes to authenticated
       }
     } catch (error) {
       Alert.alert('Login Failed', 'An unexpected error occurred')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -100,12 +105,22 @@ export default function LoginScreen({ navigation }: NavigationProps) {
           </View>
 
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={handleLogin}
+            disabled={isLoading}
           >
-            <Text style={styles.buttonText}>
-              Sign In
-            </Text>
+            {isLoading ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text style={[styles.buttonText, styles.buttonTextWithSpinner]}>
+                  Signing In...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>
+                Sign In
+              </Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -213,10 +228,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonTextWithSpinner: {
+    marginLeft: 8,
   },
   linkButton: {
     alignItems: 'center',

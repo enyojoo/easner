@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Linking,
+  ActivityIndicator,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
@@ -251,9 +252,18 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
             onPress={handleRegister}
             disabled={loading || !acceptTerms}
           >
-            <Text style={styles.buttonText}>
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </Text>
+            {loading ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text style={[styles.buttonText, styles.buttonTextWithSpinner]}>
+                  Creating Account...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>
+                Create Account
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -394,10 +404,17 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: '#9ca3af',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   buttonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonTextWithSpinner: {
+    marginLeft: 8,
   },
   footer: {
     flexDirection: 'row',

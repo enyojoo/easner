@@ -12,7 +12,6 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
-import WithAuth from '../../components/auth/with-auth'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Recipient } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
@@ -767,11 +766,7 @@ const styles = StyleSheet.create({
   },
 })
 
-// Export RecipientsScreen wrapped with authentication guard
+// Export RecipientsScreen directly (authentication handled at navigator level)
 export default function RecipientsScreen(props: NavigationProps) {
-  return (
-    <WithAuth requireAuth={true}>
-      <RecipientsContent {...props} />
-    </WithAuth>
-  )
+  return <RecipientsContent {...props} />
 }
