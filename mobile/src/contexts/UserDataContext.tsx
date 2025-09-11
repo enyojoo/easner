@@ -41,6 +41,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [loading, setLoading] = useState(false)
   const [dataInitialized, setDataInitialized] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   const fetchCurrencies = async () => {
     try {
@@ -206,11 +207,12 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   }
 
   useEffect(() => {
-    console.log('UserDataContext: User changed:', !!user, user?.id, 'dataInitialized:', dataInitialized)
+    console.log('UserDataContext: User changed:', !!user, user?.id, 'dataInitialized:', dataInitialized, 'isClearing:', isClearing)
     
     if (user && user.id && !dataInitialized) {
       console.log('UserDataContext: User found with ID, initializing data')
       setDataInitialized(true)
+      setIsClearing(false)
       
       // Initialize data immediately when user is available
       const initializeData = async () => {
@@ -226,8 +228,9 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       }
       
       initializeData()
-    } else if (!user) {
+    } else if (!user && !isClearing) {
       console.log('UserDataContext: No user, clearing all data')
+      setIsClearing(true)
       setDataInitialized(false)
       // Clear data when user logs out
       setCurrencies([])
@@ -236,7 +239,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       setTransactions([])
       setPaymentMethods([])
     }
-  }, [user, dataInitialized])
+  }, [user, dataInitialized, isClearing])
 
   const value = {
     currencies,

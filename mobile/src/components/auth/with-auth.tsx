@@ -17,7 +17,12 @@ const WithAuth: React.FC<WithAuthProps> = ({ children, requireAuth = true, ...pr
     // Only redirect if we're not loading and require auth but user is not logged in
     if (!loading && requireAuth && !user) {
       console.log('WithAuth: Redirecting to login - user not authenticated')
-      navigation.navigate('Login' as never)
+      // Add small delay to prevent multiple simultaneous redirects
+      const timeoutId = setTimeout(() => {
+        navigation.navigate('Login' as never)
+      }, 100)
+      
+      return () => clearTimeout(timeoutId)
     }
   }, [user, loading, requireAuth, navigation])
 
