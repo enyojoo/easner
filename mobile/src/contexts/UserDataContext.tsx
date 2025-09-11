@@ -40,6 +40,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [loading, setLoading] = useState(false)
+  const [dataInitialized, setDataInitialized] = useState(false)
 
   const fetchCurrencies = async () => {
     try {
@@ -205,10 +206,12 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   }
 
   useEffect(() => {
-    console.log('UserDataContext: User changed:', !!user, user?.id)
+    console.log('UserDataContext: User changed:', !!user, user?.id, 'dataInitialized:', dataInitialized)
     
-    if (user && user.id) {
+    if (user && user.id && !dataInitialized) {
       console.log('UserDataContext: User found with ID, initializing data')
+      setDataInitialized(true)
+      
       // Initialize data immediately when user is available
       const initializeData = async () => {
         try {
@@ -223,8 +226,9 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       }
       
       initializeData()
-    } else {
+    } else if (!user) {
       console.log('UserDataContext: No user, clearing all data')
+      setDataInitialized(false)
       // Clear data when user logs out
       setCurrencies([])
       setExchangeRates([])
@@ -232,7 +236,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       setTransactions([])
       setPaymentMethods([])
     }
-  }, [user])
+  }, [user, dataInitialized])
 
   const value = {
     currencies,

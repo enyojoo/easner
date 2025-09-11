@@ -369,6 +369,39 @@ function MainStack() {
           ...getTransitionConfig(),
         }}
       />
+      {/* Auth screens accessible from main stack */}
+      <Stack.Screen 
+        name="Login" 
+        component={LoginScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="Register" 
+        component={RegisterScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPasswordScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ResetPassword" 
+        component={ResetPasswordScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
     </Stack.Navigator>
   )
 }
@@ -378,7 +411,7 @@ export default function AppNavigator() {
 
   console.log('AppNavigator: user:', !!user, 'userProfile:', !!userProfile, 'loading:', loading)
 
-  // Show main stack if we have user (profile can load in background)
-  // Show auth stack if no user
-  return user ? <MainStack /> : <AuthStack />
+  // Always start with MainStack (Dashboard) - web app pattern
+  // Individual screens will handle authentication redirects
+  return <MainStack />
 }

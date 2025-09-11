@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import WithAuth from '../../components/auth/with-auth'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
@@ -20,7 +21,7 @@ import { userService, UserProfileData, UserStats } from '../../lib/userService'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { analytics } from '../../lib/analytics'
 
-export default function ProfileScreen({ navigation }: NavigationProps) {
+function ProfileContent({ navigation }: NavigationProps) {
   const { user, userProfile, signOut, refreshUserProfile } = useAuth()
   const { transactions, currencies, exchangeRates } = useUserData()
   const [isEditing, setIsEditing] = useState(false)
@@ -731,3 +732,12 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
 })
+
+// Export ProfileScreen wrapped with authentication guard
+export default function ProfileScreen(props: NavigationProps) {
+  return (
+    <WithAuth requireAuth={true}>
+      <ProfileContent {...props} />
+    </WithAuth>
+  )
+}

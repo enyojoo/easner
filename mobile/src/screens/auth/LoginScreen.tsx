@@ -39,8 +39,10 @@ export default function LoginScreen({ navigation }: NavigationProps) {
       
       if (error) {
         Alert.alert('Login Failed', error.message || 'Invalid credentials')
+      } else {
+        // Redirect to Dashboard after successful login
+        navigation.navigate('MainTabs' as never)
       }
-      // No loading state - let the app transition smoothly
     } catch (error) {
       Alert.alert('Login Failed', 'An unexpected error occurred')
     }

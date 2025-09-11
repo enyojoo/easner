@@ -9,12 +9,13 @@ import {
   TextInput,
 } from 'react-native'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import WithAuth from '../../components/auth/with-auth'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
 
-export default function TransactionsScreen({ navigation }: NavigationProps) {
+function TransactionsContent({ navigation }: NavigationProps) {
   const { transactions, loading, refreshTransactions } = useUserData()
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -369,3 +370,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 })
+
+// Export TransactionsScreen wrapped with authentication guard
+export default function TransactionsScreen(props: NavigationProps) {
+  return (
+    <WithAuth requireAuth={true}>
+      <TransactionsContent {...props} />
+    </WithAuth>
+  )
+}

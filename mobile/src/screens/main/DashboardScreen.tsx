@@ -6,10 +6,11 @@ import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import DashboardSkeleton from '../../components/DashboardSkeleton'
+import WithAuth from '../../components/auth/with-auth'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
 
-export default function DashboardScreen({ navigation }: NavigationProps) {
+function DashboardContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
   const { transactions, currencies, exchangeRates, loading, refreshAll, refreshTransactions } = useUserData()
   const [refreshing, setRefreshing] = useState(false)
@@ -583,3 +584,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 })
+
+// Export DashboardScreen wrapped with authentication guard
+export default function DashboardScreen(props: NavigationProps) {
+  return (
+    <WithAuth requireAuth={true}>
+      <DashboardContent {...props} />
+    </WithAuth>
+  )
+}

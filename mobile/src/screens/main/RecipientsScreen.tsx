@@ -12,6 +12,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import WithAuth from '../../components/auth/with-auth'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Recipient } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
@@ -19,7 +20,7 @@ import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
 import { analytics } from '../../lib/analytics'
 
-export default function RecipientsScreen({ navigation }: NavigationProps) {
+function RecipientsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
   const { recipients, loading, refreshRecipients, currencies } = useUserData()
   const [searchTerm, setSearchTerm] = useState('')
@@ -765,3 +766,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 })
+
+// Export RecipientsScreen wrapped with authentication guard
+export default function RecipientsScreen(props: NavigationProps) {
+  return (
+    <WithAuth requireAuth={true}>
+      <RecipientsContent {...props} />
+    </WithAuth>
+  )
+}
