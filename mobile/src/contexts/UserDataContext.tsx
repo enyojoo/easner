@@ -92,9 +92,13 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   }
 
   const fetchRecipients = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('UserDataContext: No user for recipients fetch')
+      return
+    }
 
     try {
+      console.log('UserDataContext: Fetching recipients for user:', user.id)
       const { data, error } = await supabase
         .from('recipients')
         .select('*')
@@ -102,6 +106,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
+      console.log('UserDataContext: Recipients fetched:', data?.length || 0)
       setRecipients(data || [])
     } catch (error) {
       console.error('Error fetching recipients:', error)
@@ -109,9 +114,13 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   }
 
   const fetchTransactions = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('UserDataContext: No user for transactions fetch')
+      return
+    }
 
     try {
+      console.log('UserDataContext: Fetching transactions for user:', user.id)
       const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -123,6 +132,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         .limit(20)
 
       if (error) throw error
+      console.log('UserDataContext: Transactions fetched:', data?.length || 0)
       setTransactions(data || [])
     } catch (error) {
       console.error('Error fetching transactions:', error)
@@ -175,21 +185,46 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   }
 
   const refreshAll = async () => {
+    console.log('UserDataContext: Starting refreshAll')
     setLoading(true)
-    await Promise.all([
-      fetchCurrencies(),
-      fetchExchangeRates(),
-      fetchRecipients(),
-      fetchTransactions(),
-      fetchPaymentMethods(),
-    ])
-    setLoading(false)
+    
+    try {
+      await Promise.all([
+        fetchCurrencies(),
+        fetchExchangeRates(),
+        fetchRecipients(),
+        fetchTransactions(),
+        fetchPaymentMethods(),
+      ])
+      console.log('UserDataContext: refreshAll completed successfully')
+    } catch (error) {
+      console.error('UserDataContext: Error in refreshAll:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    if (user) {
-      refreshAll()
+    console.log('UserDataContext: User changed:', !!user, user?.id)
+    
+    if (user && user.id) {
+      console.log('UserDataContext: User found with ID, initializing data')
+      // Initialize data immediately when user is available
+      const initializeData = async () => {
+        try {
+          setLoading(true)
+          await refreshAll()
+          console.log('UserDataContext: Data initialization completed')
+        } catch (error) {
+          console.error('UserDataContext: Error initializing data:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+      
+      initializeData()
     } else {
+      console.log('UserDataContext: No user, clearing all data')
       // Clear data when user logs out
       setCurrencies([])
       setExchangeRates([])

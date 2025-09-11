@@ -14,12 +14,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function LoginScreen({ navigation }: NavigationProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const { signIn } = useAuth()
 
@@ -29,12 +28,15 @@ export default function LoginScreen({ navigation }: NavigationProps) {
       return
     }
 
-    setLoading(true)
-    const { error } = await signIn(email, password, rememberMe)
-    setLoading(false)
-
-    if (error) {
-      Alert.alert('Login Failed', error.message || 'Invalid credentials')
+    try {
+      const { error } = await signIn(email, password, rememberMe)
+      
+      if (error) {
+        Alert.alert('Login Failed', error.message || 'Invalid credentials')
+      }
+      // No loading state - let the app transition smoothly
+    } catch (error) {
+      Alert.alert('Login Failed', 'An unexpected error occurred')
     }
   }
 
@@ -67,25 +69,11 @@ export default function LoginScreen({ navigation }: NavigationProps) {
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your password"
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#6b7280"
-                />
-              </TouchableOpacity>
-            </View>
+            <PasswordInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+            />
           </View>
 
           {/* Remember Me Checkbox */}
@@ -93,7 +81,6 @@ export default function LoginScreen({ navigation }: NavigationProps) {
             <TouchableOpacity
               style={styles.checkboxContainer}
               onPress={() => setRememberMe(!rememberMe)}
-              disabled={loading}
             >
               <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
                 {rememberMe && (
@@ -105,12 +92,11 @@ export default function LoginScreen({ navigation }: NavigationProps) {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={styles.button}
             onPress={handleLogin}
-            disabled={loading}
           >
             <Text style={styles.buttonText}>
-              {loading ? 'Signing In...' : 'Sign In'}
+              Sign In
             </Text>
           </TouchableOpacity>
 
@@ -129,6 +115,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      
     </KeyboardAvoidingView>
     </View>
   )
@@ -184,23 +171,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#ffffff',
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-  },
-  passwordInput: {
-    flex: 1,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 0,
-  },
-  eyeButton: {
-    padding: 12,
-  },
   rememberMeContainer: {
     marginBottom: 20,
   },
@@ -234,9 +204,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
-  },
-  buttonDisabled: {
-    backgroundColor: '#9ca3af',
   },
   buttonText: {
     color: '#ffffff',

@@ -34,8 +34,6 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
   const [lastEditedField, setLastEditedField] = useState<'send' | 'receive'>('send')
   const [showCurrencyPicker, setShowCurrencyPicker] = useState<'send' | 'receive' | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false)
-  const [isResendingVerification, setIsResendingVerification] = useState(false)
 
   // Set default currencies
   useEffect(() => {
@@ -147,31 +145,6 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
     }
   }
 
-  const handleResendVerificationEmail = async () => {
-    if (!user?.email) return
-    
-    setIsResendingVerification(true)
-    try {
-      const response = await fetch('https://easnerapp.vercel.app/api/auth/resend-verification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: user.email }),
-      })
-      
-      if (response.ok) {
-        Alert.alert('Success', 'Verification email sent! Please check your inbox.')
-      } else {
-        Alert.alert('Error', 'Failed to send verification email. Please try again.')
-      }
-    } catch (error) {
-      console.error('Error resending verification email:', error)
-      Alert.alert('Error', 'Failed to send verification email. Please try again.')
-    } finally {
-      setIsResendingVerification(false)
-    }
-  }
 
   const handleContinue = () => {
     if (!sendAmount || !sendCurrency || !receiveCurrency) {
@@ -190,11 +163,7 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
       return
     }
 
-    // Check email verification before proceeding
-    if (!user?.verification_status || user.verification_status !== 'verified') {
-      setShowEmailVerificationModal(true)
-      return
-    }
+    // Email verification check removed - users are already verified before accessing the app
 
     // Check min/max limits
     const rate = getExchangeRate(sendCurrency, receiveCurrency)
@@ -457,46 +426,6 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
       {/* Currency Picker Modal */}
       {renderCurrencyPicker()}
 
-      {/* Email Verification Modal */}
-      <Modal
-        visible={showEmailVerificationModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowEmailVerificationModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.emailVerificationModal}>
-            <View style={styles.emailVerificationHeader}>
-              <Ionicons name="mail-outline" size={24} color="#f59e0b" />
-              <Text style={styles.emailVerificationTitle}>Email Verification Required</Text>
-            </View>
-            <Text style={styles.emailVerificationText}>
-              Please verify your email address before you can send money. We've sent a verification link to:
-            </Text>
-            <Text style={styles.emailVerificationEmail}>{user?.email}</Text>
-            <Text style={styles.emailVerificationSubtext}>
-              Check your email and click the verification link to continue.
-            </Text>
-            <View style={styles.emailVerificationButtons}>
-              <TouchableOpacity
-                style={styles.emailVerificationCancelButton}
-                onPress={() => setShowEmailVerificationModal(false)}
-              >
-                <Text style={styles.emailVerificationCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.emailVerificationResendButton}
-                onPress={handleResendVerificationEmail}
-                disabled={isResendingVerification}
-              >
-                <Text style={styles.emailVerificationResendText}>
-                  {isResendingVerification ? 'Sending...' : 'Resend Email'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ScreenWrapper>
   )
 }
@@ -705,72 +634,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  emailVerificationModal: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-  },
-  emailVerificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  emailVerificationTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginLeft: 12,
-  },
-  emailVerificationText: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  emailVerificationEmail: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  emailVerificationSubtext: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  emailVerificationButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  emailVerificationCancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    alignItems: 'center',
-  },
-  emailVerificationCancelText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  emailVerificationResendButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#007ACC',
-    alignItems: 'center',
-  },
-  emailVerificationResendText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#ffffff',
   },
 })

@@ -152,6 +152,14 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
                 onChangeText={setPassword}
                 placeholder="Enter new password"
                 secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                passwordRules="minlength: 6;"
+                importantForAutofill="yes"
+                underlineColorAndroid="transparent"
+                selectionColor="#007ACC"
+                placeholderTextColor="#9ca3af"
               />
               <TouchableOpacity
                 style={styles.eyeButton}
@@ -175,6 +183,14 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm new password"
                 secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                passwordRules="minlength: 6;"
+                importantForAutofill="yes"
+                underlineColorAndroid="transparent"
+                selectionColor="#007ACC"
+                placeholderTextColor="#9ca3af"
               />
               <TouchableOpacity
                 style={styles.eyeButton}
@@ -279,6 +295,10 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     borderWidth: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    color: '#1f2937',
+    minHeight: 20,
   },
   eyeButton: {
     padding: 12,

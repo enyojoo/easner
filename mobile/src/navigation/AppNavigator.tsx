@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Platform, TouchableOpacity } from 'react-native'
+import { View, Platform, TouchableOpacity, Text } from 'react-native'
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
@@ -389,12 +389,19 @@ function MainStack() {
 }
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth()
+  const { user, userProfile, loading } = useAuth()
 
-  if (loading) {
-    // You can add a loading screen here
-    return null
+  console.log('AppNavigator: user:', !!user, 'userProfile:', !!userProfile, 'loading:', loading)
+
+  // Show loading screen only during initial app load when there's no user
+  if (loading && !user) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <Text>Loading...</Text>
+      </View>
+    )
   }
 
+  // Show main stack if we have user (profile can load in background)
   return user ? <MainStack /> : <AuthStack />
 }

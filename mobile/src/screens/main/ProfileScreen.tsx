@@ -365,9 +365,9 @@ export default function ProfileScreen({ navigation }: NavigationProps) {
                   <Ionicons name="mail-outline" size={16} color="#10b981" />
                   <Text style={styles.statusLabel}>Email</Text>
                 </View>
-                <View style={[styles.statusBadge, user?.verification_status === 'verified' ? styles.verifiedBadge : styles.pendingBadge]}>
-                  <Text style={[styles.statusBadgeText, user?.verification_status === 'verified' ? styles.verifiedText : styles.pendingText]}>
-                    {user?.verification_status === 'verified' ? 'Verified' : 'Pending'}
+                <View style={[styles.statusBadge, userProfile?.profile.verification_status === 'verified' ? styles.verifiedBadge : styles.pendingBadge]}>
+                  <Text style={[styles.statusBadgeText, userProfile?.profile.verification_status === 'verified' ? styles.verifiedText : styles.pendingText]}>
+                    {userProfile?.profile.verification_status === 'verified' ? 'Verified' : 'Pending'}
                   </Text>
                 </View>
               </View>

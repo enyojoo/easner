@@ -23,7 +23,6 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
   const { refreshTransactions, currencies } = useUserData()
   const insets = useSafeAreaInsets()
   const [transaction, setTransaction] = useState<TransactionData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
@@ -71,7 +70,6 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
 
   const fetchTransactionDetails = async () => {
     try {
-      setLoading(true)
       setError(null)
 
       const transactionData = await transactionService.getById(transactionId.toUpperCase())
@@ -86,8 +84,6 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     } catch (error: any) {
       console.error('Error loading transaction:', error)
       setError(error.message || 'Failed to load transaction details')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -234,29 +230,8 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     Alert.alert('Contact Support', 'Support functionality will be implemented')
   }
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        {/* Custom Header */}
-        <View style={styles.customHeader}>
-          <TouchableOpacity 
-            style={styles.headerBackButton}
-            onPress={handleBackNavigation}
-          >
-            <Ionicons name="arrow-back" size={24} color="#000" />
-            <Text style={styles.headerBackText}>Back</Text>
-          </TouchableOpacity>
-        </View>
-        
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007ACC" />
-        <Text style={styles.loadingText}>Loading transaction details...</Text>
-        </View>
-      </View>
-    )
-  }
 
-  if (error || !transaction) {
+  if (error) {
     return (
       <View style={styles.container}>
         {/* Custom Header */}
@@ -276,6 +251,24 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         <TouchableOpacity style={styles.retryButton} onPress={fetchTransactionDetails}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
+        </View>
+      </View>
+    )
+  }
+
+  // Don't render main content until transaction is loaded
+  if (!transaction) {
+    return (
+      <View style={styles.container}>
+        {/* Custom Header */}
+        <View style={styles.customHeader}>
+          <TouchableOpacity 
+            style={styles.headerBackButton}
+            onPress={handleBackNavigation}
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Text style={styles.headerBackText}>Back</Text>
+          </TouchableOpacity>
         </View>
       </View>
     )
@@ -514,17 +507,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#6b7280',
   },
   errorContainer: {
     flex: 1,

@@ -32,8 +32,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [userProfile, setUserProfile] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, user?: any) => {
     try {
+      console.log('AuthContext: Fetching user profile for userId:', userId)
+      
       // Try regular users table first
       const { data: regularUser, error: regularUserError } = await supabase
         .from('users')
@@ -42,14 +44,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (regularUser && !regularUserError) {
-        setUser(regularUser as User)
+        console.log('AuthContext: Regular user found:', regularUser.email)
         setUserProfile({
           id: regularUser.id,
           email: regularUser.email,
           isAdmin: false,
-          profile: regularUser as User,
+          profile: {
+            id: regularUser.id,
+            email: regularUser.email,
+            first_name: regularUser.first_name,
+            last_name: regularUser.last_name,
+            phone: regularUser.phone,
+            base_currency: regularUser.base_currency,
+            status: regularUser.status,
+            verification_status: regularUser.verification_status,
+            created_at: regularUser.created_at,
+            updated_at: regularUser.updated_at,
+          } as User,
         })
-        return
+        if (user) setUser(user) // Set user after profile is fetched
+        return regularUser
       }
 
       // Check admin_users table
@@ -65,10 +79,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await supabase.auth.signOut()
         setUser(null)
         setUserProfile(null)
-        return
+        return null
       }
+
+      console.log('AuthContext: No user found in either table')
+      // If user not found in either table, clear state
+      setUser(null)
+      setUserProfile(null)
+      return null
     } catch (error) {
       console.error('Error fetching user profile:', error)
+      // Don't clear user state on error, just log it
+      console.log('AuthContext: Profile fetch error, but keeping user session')
+      return null
     }
   }
 
@@ -89,8 +112,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
-          // We'll set the user after fetching the profile
-          await fetchUserProfile(session.user.id)
+          // Set user immediately
+          setUser(session.user)
+          // Fetch profile in background
+          fetchUserProfile(session.user.id, session.user).catch(error => {
+            console.error('Initial profile fetch error:', error)
+          })
         }
       } catch (error) {
         console.error('Error getting initial session:', error)
@@ -109,19 +136,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
+      console.log('AuthContext: Auth state change:', event, session?.user?.id)
+
       try {
         if (session?.user) {
-          // We'll set the user after fetching the profile
-          await fetchUserProfile(session.user.id)
+          console.log('AuthContext: User session found, fetching profile')
+          // Set user immediately to prevent UI issues
+          setUser(session.user)
+          // Fetch profile in background
+          fetchUserProfile(session.user.id, session.user).catch(error => {
+            console.error('Background profile fetch error:', error)
+          })
         } else {
+          console.log('AuthContext: No user session, clearing state')
           setUser(null)
           setUserProfile(null)
         }
       } catch (error) {
         console.error('Error handling auth state change:', error)
+        // Don't clear state on error, just log it
       } finally {
         if (mounted) {
-          setLoading(false)
+          // Only set loading to false if we're not in the middle of a login process
+          if (!session?.user || userProfile) {
+            console.log('AuthContext: Setting loading to false')
+            setLoading(false)
+          }
         }
       }
     })
@@ -134,14 +174,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
+      console.log('AuthContext: Attempting sign in for:', email)
+      // Don't set loading to true here to prevent loading screen during login
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) {
+        console.log('AuthContext: Sign in error:', error.message)
         return { error }
       }
+
+      console.log('AuthContext: Sign in successful, session:', !!data.session)
 
       // If remember me is checked, extend session duration
       if (rememberMe && data.session) {
@@ -152,6 +198,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         })
       }
 
+      // The auth state change handler will manage the loading state
       return { error: null }
     } catch (error) {
       console.error('Sign in error:', error)
@@ -182,9 +229,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     try {
+      console.log('AuthContext: Signing out user')
+      // Clear user state immediately to prevent UI issues
+      setUser(null)
+      setUserProfile(null)
+      
       await supabase.auth.signOut()
+      console.log('AuthContext: Sign out successful')
     } catch (error) {
       console.error('Sign out error:', error)
+      // Still clear the state even if sign out fails
+      setUser(null)
+      setUserProfile(null)
     }
   }
 

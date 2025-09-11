@@ -165,6 +165,14 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
                 onChangeText={(value) => handleInputChange('password', value)}
                 placeholder="Create a password"
                 secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                passwordRules="minlength: 6;"
+                importantForAutofill="yes"
+                underlineColorAndroid="transparent"
+                selectionColor="#007ACC"
+                placeholderTextColor="#9ca3af"
               />
               <TouchableOpacity
                 style={styles.eyeButton}
@@ -188,6 +196,14 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
                 onChangeText={(value) => handleInputChange('confirmPassword', value)}
                 placeholder="Confirm your password"
                 secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                passwordRules="minlength: 6;"
+                importantForAutofill="yes"
+                underlineColorAndroid="transparent"
+                selectionColor="#007ACC"
+                placeholderTextColor="#9ca3af"
               />
               <TouchableOpacity
                 style={styles.eyeButton}
@@ -319,6 +335,10 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     borderWidth: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    color: '#1f2937',
+    minHeight: 20,
   },
   eyeButton: {
     padding: 12,
