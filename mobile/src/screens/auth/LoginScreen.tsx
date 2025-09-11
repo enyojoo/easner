@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -15,12 +15,18 @@ import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
 import PasswordInput from '../../components/PasswordInput'
+import { analytics } from '../../lib/analytics'
 
 export default function LoginScreen({ navigation }: NavigationProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const { signIn } = useAuth()
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Login')
+  }, [])
 
   const handleLogin = async () => {
     if (!email || !password) {

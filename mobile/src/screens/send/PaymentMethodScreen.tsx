@@ -18,6 +18,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, PaymentMethod, Currency } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
+import { analytics } from '../../lib/analytics'
 import { transactionService } from '../../lib/transactionService'
 
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
@@ -32,6 +33,11 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
   const { sendAmount, sendCurrency, receiveAmount, receiveCurrency, exchangeRate, fee, feeType, recipient } = route.params || {}
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('PaymentMethod')
+  }, [])
 
   useEffect(() => {
     refreshPaymentMethods()

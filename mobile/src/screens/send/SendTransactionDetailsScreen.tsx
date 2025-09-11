@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Linking,
+  BackHandler,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
@@ -17,6 +18,7 @@ import { NavigationProps } from '../../types'
 import { transactionService, TransactionData } from '../../lib/transactionService'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
+import { analytics } from '../../lib/analytics'
 
 export default function SendTransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -29,6 +31,23 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
   const [currentTime, setCurrentTime] = useState(Date.now())
 
   const { transactionId, fromScreen } = route.params || {}
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('SendTransactionDetails')
+  }, [])
+
+  // Prevent hardware back button on Android
+  useEffect(() => {
+    const backAction = () => {
+      // Return true to prevent default back action
+      return true
+    }
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
+
+    return () => backHandler.remove()
+  }, [])
 
   // Update current time every second
   useEffect(() => {

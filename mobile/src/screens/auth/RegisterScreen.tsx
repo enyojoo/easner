@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
+import { analytics } from '../../lib/analytics'
 
 export default function RegisterScreen({ navigation }: NavigationProps) {
   const [formData, setFormData] = useState({
@@ -30,6 +31,11 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
   const { signUp } = useAuth()
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Register')
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))

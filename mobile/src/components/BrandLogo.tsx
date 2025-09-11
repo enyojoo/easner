@@ -25,7 +25,7 @@ export default function BrandLogo({ size = 'md', style }: BrandLogoProps) {
 
   return (
     <Image
-      source={require('../../assets/logo.png')}
+      source={require('../../assets/icons/logo.png')}
       style={[getSizeStyles(), style]}
       resizeMode="contain"
     />

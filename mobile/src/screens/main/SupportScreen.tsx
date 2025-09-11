@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   View,
   Text,
@@ -10,8 +10,13 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { NavigationProps } from '../../types'
+import { analytics } from '../../lib/analytics'
 
 export default function SupportScreen({ navigation }: NavigationProps) {
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Support')
+  }, [])
 
   const handleEmailSupport = () => {
     const email = 'support@easner.com'

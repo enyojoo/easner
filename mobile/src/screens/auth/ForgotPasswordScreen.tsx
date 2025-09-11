@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import ScreenWrapper from '../../components/ScreenWrapper'
 import { supabase } from '../../lib/supabase'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
+import { analytics } from '../../lib/analytics'
 
 export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   const [step, setStep] = useState<'email' | 'otp'>('email')
@@ -24,6 +25,11 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   const [error, setError] = useState('')
   const [resendCooldown, setResendCooldown] = useState(0)
   const otpRefs = useRef<(TextInput | null)[]>([])
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('ForgotPassword')
+  }, [])
 
   const handleEmailSubmit = async () => {
     if (!email) {

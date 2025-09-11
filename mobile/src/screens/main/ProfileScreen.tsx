@@ -18,6 +18,7 @@ import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
 import { userService, UserProfileData, UserStats } from '../../lib/userService'
 import { getCountryFlag } from '../../utils/flagUtils'
+import { analytics } from '../../lib/analytics'
 
 export default function ProfileScreen({ navigation }: NavigationProps) {
   const { user, userProfile, signOut, refreshUserProfile } = useAuth()
@@ -38,6 +39,11 @@ export default function ProfileScreen({ navigation }: NavigationProps) {
     baseCurrency: 'NGN',
   })
   const [editProfileData, setEditProfileData] = useState(profileData)
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Profile')
+  }, [])
 
   // Load user profile data
   useEffect(() => {

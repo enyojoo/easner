@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { useUserData } from '../../contexts/UserDataContext'
 import BottomButton from '../../components/BottomButton'
 import { NavigationProps, Transaction } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
+import { analytics } from '../../lib/analytics'
 
 export default function ConfirmationScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -31,6 +32,11 @@ export default function ConfirmationScreen({ navigation, route }: NavigationProp
     recipient, 
     paymentMethod 
   } = route.params || {}
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Confirmation')
+  }, [])
 
   const handleConfirmTransaction = async () => {
     if (!userProfile) {

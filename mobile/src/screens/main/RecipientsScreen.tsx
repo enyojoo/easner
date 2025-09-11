@@ -17,6 +17,7 @@ import { NavigationProps, Recipient } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
+import { analytics } from '../../lib/analytics'
 
 export default function RecipientsScreen({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -36,6 +37,11 @@ export default function RecipientsScreen({ navigation }: NavigationProps) {
     bankName: '',
     currency: 'NGN',
   })
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Recipients')
+  }, [])
 
   useEffect(() => {
     refreshRecipients()

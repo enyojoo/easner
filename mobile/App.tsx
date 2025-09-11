@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AuthProvider } from './src/contexts/AuthContext'
 import { UserDataProvider } from './src/contexts/UserDataContext'
+import { PostHogProvider } from './src/components/PostHogProvider'
 import AppNavigator from './src/navigation/AppNavigator'
 
 export default function App() {
@@ -15,25 +16,27 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <AuthProvider>
-            <UserDataProvider>
-              <NavigationContainer
-                theme={{
-                  colors: {
-                    primary: '#007ACC',
-                    background: '#ffffff',
-                    card: '#ffffff',
-                    text: '#1f2937',
-                    border: '#e5e7eb',
-                    notification: '#ef4444',
-                  },
-                }}
-              >
-                <StatusBar style="dark" />
-                <AppNavigator />
-              </NavigationContainer>
-            </UserDataProvider>
-          </AuthProvider>
+          <PostHogProvider>
+            <AuthProvider>
+              <UserDataProvider>
+                <NavigationContainer
+                  theme={{
+                    colors: {
+                      primary: '#007ACC',
+                      background: '#ffffff',
+                      card: '#ffffff',
+                      text: '#1f2937',
+                      border: '#e5e7eb',
+                      notification: '#ef4444',
+                    },
+                  }}
+                >
+                  <StatusBar style="dark" />
+                  <AppNavigator />
+                </NavigationContainer>
+              </UserDataProvider>
+            </AuthProvider>
+          </PostHogProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     )

@@ -5,7 +5,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import DashboardSkeleton from '../../components/DashboardSkeleton'
 import { transactionService } from '../../lib/transactionService'
+import { analytics } from '../../lib/analytics'
 
 export default function DashboardScreen({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -15,6 +17,26 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
   const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
 
   const recentTransactions = liveTransactions.length > 0 ? liveTransactions.slice(0, 3) : transactions.slice(0, 3)
+
+  // Calculate transaction stats
+  const getTransactionStats = () => {
+    const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
+    const completedTransactions = currentTransactions.filter(t => t.status === 'completed').length
+    return {
+      completedTransactions,
+      totalSent
+    }
+  }
+
+  const stats = getTransactionStats()
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Dashboard', {
+      hasTransactions: transactions.length > 0,
+      totalSent: stats.totalSent
+    })
+  }, [transactions.length, stats.totalSent])
 
   // Initialize live transactions with current data
   useEffect(() => {
@@ -114,17 +136,6 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
     }
   }, [liveTransactions, transactions, exchangeRates, userProfile])
 
-  const getTransactionStats = () => {
-    const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
-    const completedTransactions = currentTransactions.filter(t => t.status === 'completed').length
-    return {
-      completedTransactions,
-      totalSent
-    }
-  }
-
-  const stats = getTransactionStats()
-
   const formatNumber = (num: number) => {
     // Values less than 1,000: show with decimals (e.g., 12.50)
     if (num < 1000) {
@@ -192,6 +203,11 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  // Show skeleton while data is loading
+  if (loading || !userProfile || !currencies?.length || !exchangeRates?.length) {
+    return <DashboardSkeleton />
   }
 
   return (

@@ -17,6 +17,7 @@ import { NavigationProps, Recipient, Currency } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
+import { analytics } from '../../lib/analytics'
 
 export default function SelectRecipientScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -34,6 +35,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
   const [error, setError] = useState('')
 
   const { sendAmount, sendCurrency, receiveAmount, receiveCurrency, exchangeRate, fee, feeType } = route.params || {}
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('SelectRecipient')
+  }, [])
 
   useEffect(() => {
     refreshRecipients()

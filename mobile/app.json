@@ -2,19 +2,17 @@
   "expo": {
     "name": "Easner",
     "slug": "easner",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icons/ios-light.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.easner.mobile",
+      "icon": "./assets/icons/ios-light.png",
+      "darkIcon": "./assets/icons/ios-dark.png",
+      "tintedIcon": "./assets/icons/ios-tinted.png",
       "statusBar": {
         "barStyle": "dark-content",
         "backgroundColor": "#ffffff"
@@ -24,10 +22,11 @@
       }
     },
     "android": {
-      "icon": "./assets/icon.png",
+      "icon": "./assets/icons/adaptive-icon.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#007ACC"
+        "foregroundImage": "./assets/icons/adaptive-icon.png",
+        "backgroundColor": "#007ACC",
+        "monochromeImage": "./assets/icons/adaptive-icon.png"
       },
       "edgeToEdgeEnabled": false,
       "package": "com.easner.mobile",
@@ -40,19 +39,30 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/icons/ios-light.png"
     },
     "extra": {
       "eas": {
         "projectId": "f50954cf-ded8-4635-a858-23a1e11aa758"
-      },
-      "supabaseUrl": "https://seeqjiebmrnolcyydewj.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZXFqaWVibXJub2xjeXlkZXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2OTIxMTksImV4cCI6MjA2OTI2ODExOX0.7wc1OxdPCuhpBgPZY-pQAdjjOO8VbKdb3O47IQjd4Fc"
+      }
     },
     "plugins": [
       "expo-secure-store",
       "expo-image-picker",
-      "expo-document-picker"
+      "expo-document-picker",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#007ACC",
+          "image": "./assets/icons/splash-icon-light.png",
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./assets/icons/splash-icon-dark.png",
+            "backgroundColor": "#007ACC"
+          },
+          "imageWidth": 200
+        }
+      ]
     ],
     "owner": "enyosam"
   }

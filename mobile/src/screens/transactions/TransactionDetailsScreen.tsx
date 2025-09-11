@@ -17,6 +17,7 @@ import { NavigationProps } from '../../types'
 import { transactionService, TransactionData } from '../../lib/transactionService'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
+import { analytics } from '../../lib/analytics'
 
 export default function TransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -34,6 +35,11 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     // Use goBack() to trigger the natural transition animation
     navigation.goBack()
   }
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('TransactionDetails')
+  }, [])
 
   // Update current time every second
   useEffect(() => {

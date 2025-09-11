@@ -14,6 +14,7 @@ import ScreenWrapper from '../../components/ScreenWrapper'
 import { supabase } from '../../lib/supabase'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
+import { analytics } from '../../lib/analytics'
 
 export default function ResetPasswordScreen({ navigation, route }: NavigationProps) {
   const [password, setPassword] = useState('')
@@ -22,6 +23,11 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isValidSession, setIsValidSession] = useState(false)
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('ResetPassword')
+  }, [])
 
   useEffect(() => {
     // Check if we have valid reset parameters from OTP verification

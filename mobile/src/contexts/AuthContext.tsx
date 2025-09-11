@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '../lib/supabase'
 import { User, AuthUser } from '../types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { analytics } from '../lib/analytics'
 
 interface AuthContextType {
   user: User | null
@@ -112,10 +113,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
-          // Set user immediately
-          setUser(session.user)
+          // Set user immediately (map Supabase user to our User type)
+          const mappedUser: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            first_name: session.user.user_metadata?.first_name || '',
+            last_name: session.user.user_metadata?.last_name || '',
+            phone: session.user.phone || undefined,
+            base_currency: session.user.user_metadata?.base_currency || 'NGN',
+            status: 'active',
+            verification_status: session.user.email_confirmed_at ? 'verified' : 'pending',
+            created_at: session.user.created_at,
+            updated_at: session.user.updated_at || session.user.created_at
+          }
+          setUser(mappedUser)
           // Fetch profile in background
-          fetchUserProfile(session.user.id, session.user).catch(error => {
+          fetchUserProfile(session.user.id, mappedUser).catch(error => {
             console.error('Initial profile fetch error:', error)
           })
         }
@@ -141,10 +154,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         if (session?.user) {
           console.log('AuthContext: User session found, fetching profile')
-          // Set user immediately to prevent UI issues
-          setUser(session.user)
+          // Set user immediately to prevent UI issues (map Supabase user to our User type)
+          const mappedUser: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            first_name: session.user.user_metadata?.first_name || '',
+            last_name: session.user.user_metadata?.last_name || '',
+            phone: session.user.phone || undefined,
+            base_currency: session.user.user_metadata?.base_currency || 'NGN',
+            status: 'active',
+            verification_status: session.user.email_confirmed_at ? 'verified' : 'pending',
+            created_at: session.user.created_at,
+            updated_at: session.user.updated_at || session.user.created_at
+          }
+          setUser(mappedUser)
           // Fetch profile in background
-          fetchUserProfile(session.user.id, session.user).catch(error => {
+          fetchUserProfile(session.user.id, mappedUser).catch(error => {
             console.error('Background profile fetch error:', error)
           })
         } else {
@@ -189,6 +214,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('AuthContext: Sign in successful, session:', !!data.session)
 
+      // Track successful sign in
+      analytics.trackSignIn('email', {
+        rememberMe,
+        userId: data.user?.id
+      })
+
       // If remember me is checked, extend session duration
       if (rememberMe && data.session) {
         // Set a longer session duration (30 days)
@@ -230,6 +261,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     try {
       console.log('AuthContext: Signing out user')
+      
+      // Track sign out
+      analytics.trackSignOut()
+      
       // Clear user state immediately to prevent UI issues
       setUser(null)
       setUserProfile(null)

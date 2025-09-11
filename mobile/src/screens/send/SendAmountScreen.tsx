@@ -19,6 +19,7 @@ import BottomButton from '../../components/BottomButton'
 import { useUserData } from '../../contexts/UserDataContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps, Currency, ExchangeRate } from '../../types'
+import { analytics } from '../../lib/analytics'
 import { getCountryFlag } from '../../utils/flagUtils'
 
 export default function SendAmountScreen({ navigation }: NavigationProps) {
@@ -34,6 +35,14 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
   const [lastEditedField, setLastEditedField] = useState<'send' | 'receive'>('send')
   const [showCurrencyPicker, setShowCurrencyPicker] = useState<'send' | 'receive' | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('SendAmount', {
+      sendCurrency: sendCurrency,
+      receiveCurrency: receiveCurrency
+    })
+  }, [])
 
   // Set default currencies
   useEffect(() => {

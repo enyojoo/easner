@@ -12,12 +12,18 @@ import ScreenWrapper from '../../components/ScreenWrapper'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import { transactionService } from '../../lib/transactionService'
+import { analytics } from '../../lib/analytics'
 
 export default function TransactionsScreen({ navigation }: NavigationProps) {
   const { transactions, loading, refreshTransactions } = useUserData()
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
+
+  // Track screen view
+  useEffect(() => {
+    analytics.trackScreenView('Transactions')
+  }, [])
 
   // Initialize live transactions with current data
   useEffect(() => {

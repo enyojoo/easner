@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, Platform, TouchableOpacity, Text } from 'react-native'
+import { View, Platform, TouchableOpacity } from 'react-native'
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
@@ -58,25 +58,22 @@ const getTransitionConfig = () => {
       },
     }
   } else {
-    // Android Material Design transitions
+    // Android Material Design transitions - disable gestures
     return {
       ...TransitionPresets.ScaleFromCenterAndroid,
-      gestureEnabled: true,
-      gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 50,
-      gestureVelocityImpact: 0.3,
+      gestureEnabled: false, // Disable gestures on Android
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 250,
+            duration: 300,
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 250,
+            duration: 300,
             useNativeDriver: true,
           },
         },
@@ -138,13 +135,10 @@ const getSendFlowTransitionConfig = () => {
       },
     }
   } else {
-    // Android uses the standard configuration
+    // Android uses the standard configuration - disable gestures
     return {
       ...TransitionPresets.ScaleFromCenterAndroid,
-      gestureEnabled: true,
-      gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 60,
-      gestureVelocityImpact: 0.4,
+      gestureEnabled: false, // Disable gestures on Android
       transitionSpec: {
         open: {
           animation: 'timing' as const,
@@ -185,8 +179,6 @@ function AuthStack() {
         component={RegisterScreen}
         options={{
           ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -194,8 +186,6 @@ function AuthStack() {
         component={ForgotPasswordScreen}
         options={{
           ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -203,8 +193,6 @@ function AuthStack() {
         component={ResetPasswordScreen}
         options={{
           ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
         }}
       />
     </Stack.Navigator>
@@ -362,6 +350,7 @@ function MainStack() {
         options={{ 
           headerShown: false,
           ...getSendFlowTransitionConfig(),
+          gestureEnabled: false, // Disable all gestures - only allow navigation via buttons
         }}
       />
       <Stack.Screen 
@@ -370,8 +359,6 @@ function MainStack() {
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
         }}
       />
       <Stack.Screen 
@@ -380,8 +367,6 @@ function MainStack() {
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
-          gestureEnabled: true,
-          gestureResponseDistance: 50,
         }}
       />
     </Stack.Navigator>
@@ -393,15 +378,7 @@ export default function AppNavigator() {
 
   console.log('AppNavigator: user:', !!user, 'userProfile:', !!userProfile, 'loading:', loading)
 
-  // Show loading screen only during initial app load when there's no user
-  if (loading && !user) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <Text>Loading...</Text>
-      </View>
-    )
-  }
-
   // Show main stack if we have user (profile can load in background)
+  // Show auth stack if no user
   return user ? <MainStack /> : <AuthStack />
 }
