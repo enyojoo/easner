@@ -38,46 +38,70 @@ const getTransitionConfig = () => {
       ...TransitionPresets.SlideFromRightIOS,
       gestureEnabled: true,
       gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 25, // More responsive (was 50)
-      gestureVelocityImpact: 0.5, // More sensitive (was 0.3)
+      gestureResponseDistance: 30, // More responsive
+      gestureVelocityImpact: 0.5, // More sensitive
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 140, // Faster open (was 250)
+            duration: 180, // Faster - was 250ms
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 110, // Faster close (was 250)
+            duration: 150, // Faster - was 250ms
             useNativeDriver: true,
           },
         },
       },
     }
   } else {
-    // Android Material Design transitions - disable gestures
+    // Android - Modern slide up to open, slide out to close
     return {
-      ...TransitionPresets.ScaleFromCenterAndroid,
       gestureEnabled: false, // Disable gestures on Android
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 145, // Faster open (was 300)
+            duration: 200, // Faster - was 300ms
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 115, // Faster close (was 300)
+            duration: 180, // Faster - was 300ms
             useNativeDriver: true,
           },
         },
       },
+      cardStyleInterpolator: ({ current, layouts }: any) => ({
+        cardStyle: {
+          transform: [
+            {
+              translateY: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [layouts.screen.height, 0], // Slide up from bottom
+                extrapolate: 'clamp',
+              }),
+            },
+          ],
+          opacity: current.progress.interpolate({
+            inputRange: [0, 0.3, 1],
+            outputRange: [0, 0.8, 1], // Fade in as it slides up
+            extrapolate: 'clamp',
+          }),
+        },
+        overlayStyle: {
+          opacity: current.progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 0.1], // Subtle overlay
+            extrapolate: 'clamp',
+          }),
+        },
+      }),
     }
   }
 }
@@ -88,20 +112,20 @@ const getSendFlowTransitionConfig = () => {
     return {
       gestureEnabled: true,
       gestureDirection: 'horizontal' as const,
-      gestureResponseDistance: 25, // More responsive (was 60)
-      gestureVelocityImpact: 0.5, // More sensitive (was 0.4)
+      gestureResponseDistance: 60,
+      gestureVelocityImpact: 0.4,
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 140, // Faster open (was 300)
+            duration: 300,
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 110, // Faster close (was 300)
+            duration: 300,
             useNativeDriver: true,
           },
         },
@@ -135,26 +159,43 @@ const getSendFlowTransitionConfig = () => {
       },
     }
   } else {
-    // Android uses the standard configuration - disable gestures
+    // Android - Simple slide in/out for send money flow
     return {
-      ...TransitionPresets.ScaleFromCenterAndroid,
       gestureEnabled: false, // Disable gestures on Android
       transitionSpec: {
         open: {
           animation: 'timing' as const,
           config: {
-            duration: 145, // Faster open (was 300)
+            duration: 300, // Faster - was 300ms
             useNativeDriver: true,
           },
         },
         close: {
           animation: 'timing' as const,
           config: {
-            duration: 115, // Faster close (was 300)
+            duration: 300, // Faster - was 300ms
             useNativeDriver: true,
           },
         },
       },
+      cardStyleInterpolator: ({ current, layouts }: any) => ({
+        cardStyle: {
+          transform: [
+            {
+              translateX: current.progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [layouts.screen.width * 0.3, 0], // Simple slide in from right
+                extrapolate: 'clamp',
+              }),
+            },
+          ],
+          opacity: current.progress.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [0, 0.9, 1], // Simple fade in
+            extrapolate: 'clamp',
+          }),
+        },
+      }),
     }
   }
 }
