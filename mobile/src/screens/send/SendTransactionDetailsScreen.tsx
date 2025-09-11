@@ -37,17 +37,19 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     analytics.trackScreenView('SendTransactionDetails')
   }, [])
 
-  // Prevent hardware back button on Android
-  useEffect(() => {
-    const backAction = () => {
-      // Return true to prevent default back action
-      return true
-    }
+  // Prevent hardware back button on Android only when this screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        // Return true to prevent default back action only for this screen
+        return true
+      }
 
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
 
-    return () => backHandler.remove()
-  }, [])
+      return () => backHandler.remove()
+    }, [])
+  )
 
   // Update current time every second
   useEffect(() => {
