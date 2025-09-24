@@ -62,7 +62,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       )
 
       const profilePromise = (async () => {
-        // Try to fetch from users table first
+        // Check if this is an admin user by looking at the user metadata
+        const isAdminUser = user?.user_metadata?.isAdmin || user?.isAdmin || false
+
+        if (isAdminUser) {
+          // For admin users, create profile from user metadata
+          const adminProfile = {
+            id: user.id,
+            email: user.email,
+            first_name: user.user_metadata?.first_name || user.name || '',
+            last_name: user.user_metadata?.last_name || '',
+            phone: user.phone || '',
+            base_currency: user.user_metadata?.base_currency || 'NGN',
+            status: 'active',
+            verification_status: 'verified',
+            created_at: user.created_at,
+            updated_at: user.updated_at || user.created_at,
+            role: 'super_admin'
+          }
+          
+          setUserProfile(adminProfile)
+          setIsAdmin(true)
+          if (user) setUser(user)
+          return adminProfile
+        }
+
+        // For regular users, try to fetch from users table
         const { data: userProfile, error: userError } = await supabase
           .from("users")
           .select("*")
@@ -76,20 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return userProfile
         }
 
-        // If not found in users, check admin_users table
-        const { data: adminProfile, error: adminError } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("id", userId)
-          .single()
-
-        if (adminProfile && !adminError) {
-          setUserProfile(adminProfile)
-          setIsAdmin(true)
-          if (user) setUser(user) // Set user after determining admin status
-          return adminProfile
-        }
-
+        // If not found in users table and not admin, return null
         return null
       })()
 

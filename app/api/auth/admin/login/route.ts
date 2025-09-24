@@ -40,9 +40,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Admin account is not active." }, { status: 403 })
     }
 
-    // Verify password using Supabase Auth (but don't create a session)
-    // We need to verify the password is correct
-    const { data: authData, error: authError } = await serverClient.auth.signInWithPassword({
+    // For admin login, we need to create a proper Supabase session
+    // but we'll use a different approach to avoid RLS issues
+    
+    // Create a regular supabase client for auth (not service role)
+    const { createClient } = await import('@supabase/supabase-js')
+    const authClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    // Verify password with regular auth client
+    const { data: authData, error: authError } = await authClient.auth.signInWithPassword({
       email,
       password,
     })
@@ -59,12 +68,20 @@ export async function POST(request: NextRequest) {
     // Verify the authenticated user matches the admin user
     if (authData.user.id !== adminUser.id) {
       console.log("User ID mismatch:", { authId: authData.user.id, adminId: adminUser.id })
+      await authClient.auth.signOut()
       return NextResponse.json({ error: "User ID mismatch" }, { status: 403 })
     }
 
-    // Sign out immediately to avoid creating a session
-    await serverClient.auth.signOut()
+    // Update user metadata to mark as admin
+    await authClient.auth.updateUser({
+      data: {
+        isAdmin: true,
+        role: adminUser.role,
+        name: adminUser.name
+      }
+    })
 
+    // Return the session data with admin flag
     return NextResponse.json({
       success: true,
       user: {
@@ -73,10 +90,8 @@ export async function POST(request: NextRequest) {
         name: adminUser.name,
         role: adminUser.role,
       },
-      // Include a flag to indicate this is an admin session
-      isAdmin: true,
-      // Include a simple token for admin session management
-      adminToken: Buffer.from(`${adminUser.id}:${Date.now()}`).toString('base64')
+      session: authData.session,
+      isAdmin: true
     })
   } catch (error) {
     console.error("Admin login error:", error)
