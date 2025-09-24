@@ -96,7 +96,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: ExpoSecureStoreAdapter,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true, // Better session detection for RLS
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'easner-mobile-app'
+    }
+  }
 })
 
 // Auth helper functions

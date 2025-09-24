@@ -12,7 +12,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true, // Better session detection for RLS
   },
+  global: {
+    headers: {
+      'X-Client-Info': 'easner-web-app'
+    }
+  }
 })
 
 // Server-side client for admin operations

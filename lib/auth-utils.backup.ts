@@ -9,7 +9,7 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Enhanced authentication with better error handling and validation
+ * Get authenticated user from request using Supabase Auth
  */
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   try {
@@ -29,71 +29,45 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     }
     
     if (!token) {
-      console.log("No authentication token found")
       return null
     }
 
-    // Verify the token with Supabase with timeout
-    const authPromise = supabase.auth.getUser(token)
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Auth timeout")), 10000)
-    )
-
-    const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
+    // Verify the token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token)
     
-    if (error) {
-      console.error("Auth token verification failed:", error.message)
-      return null
-    }
-    
-    if (!user) {
-      console.log("No user found in token")
+    if (error || !user) {
       return null
     }
 
-    // Get user profile from database with enhanced validation
+    // Get user profile from database
     let userProfile = null
     let isAdmin = false
 
-    try {
-      // Try regular users table first
-      const { data: regularUser, error: regularUserError } = await supabase
-        .from("users")
+    // Try regular users table first
+    const { data: regularUser, error: regularUserError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+
+    if (regularUser && !regularUserError) {
+      userProfile = regularUser
+      isAdmin = false
+    } else {
+      // Check admin_users table
+      const { data: adminUser, error: adminError } = await supabase
+        .from("admin_users")
         .select("*")
         .eq("id", user.id)
         .single()
 
-      if (regularUser && !regularUserError) {
-        userProfile = regularUser
-        isAdmin = false
-        console.log("Regular user authenticated:", regularUser.email)
-      } else {
-        // Check admin_users table
-        const { data: adminUser, error: adminError } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-
-        if (adminUser && !adminError) {
-          userProfile = adminUser
-          isAdmin = true
-          console.log("Admin user authenticated:", adminUser.email)
-        }
+      if (adminUser && !adminError) {
+        userProfile = adminUser
+        isAdmin = true
       }
-    } catch (dbError) {
-      console.error("Database profile lookup failed:", dbError)
-      return null
     }
 
     if (!userProfile) {
-      console.log("User profile not found in database")
-      return null
-    }
-
-    // Additional validation
-    if (userProfile.status && userProfile.status !== "active") {
-      console.log("User account is not active:", userProfile.status)
       return null
     }
 
@@ -137,39 +111,6 @@ export async function requireAdmin(request: NextRequest): Promise<AuthenticatedU
   }
   
   return user
-}
-
-/**
- * Require user authentication (non-admin) - throws error if admin or not authenticated
- */
-export async function requireUser(request: NextRequest): Promise<AuthenticatedUser> {
-  const user = await requireAuth(request)
-  
-  if (user.isAdmin) {
-    throw new Error("Admin users cannot access user APIs")
-  }
-  
-  return user
-}
-
-/**
- * Validate user access to specific resource
- */
-export function validateUserAccess(user: AuthenticatedUser, resourceUserId: string): boolean {
-  if (user.isAdmin) {
-    return true // Admins can access all resources
-  }
-  
-  return user.id === resourceUserId
-}
-
-/**
- * Validate user access and throw error if not allowed
- */
-export function requireUserAccess(user: AuthenticatedUser, resourceUserId: string): void {
-  if (!validateUserAccess(user, resourceUserId)) {
-    throw new Error("Access denied: You can only access your own resources")
-  }
 }
 
 /**

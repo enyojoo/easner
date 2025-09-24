@@ -204,7 +204,12 @@ export const recipientService = {
     return data
   },
 
-  async getByUserId(userId: string) {
+  async getByUserId(userId: string, requestingUserId?: string) {
+    // Validate user access if requestingUserId is provided
+    if (requestingUserId && requestingUserId !== userId) {
+      throw new Error("Access denied: You can only view your own recipients")
+    }
+
     const refreshFn = async () => {
       const { data, error } = await supabase
         .from("recipients")
@@ -267,7 +272,7 @@ export const recipientService = {
   },
 }
 
-// Transaction operations with optimized performance
+// Transaction operations with enhanced access control
 export const transactionService = {
   async create(transactionData: {
     userId: string
@@ -281,7 +286,12 @@ export const transactionService = {
     feeType: string
     totalAmount: number
     reference?: string
-  }) {
+  }, requestingUserId?: string) {
+    // Validate user access if requestingUserId is provided
+    if (requestingUserId && requestingUserId !== transactionData.userId) {
+      throw new Error("Access denied: You can only create transactions for yourself")
+    }
+
     const transactionId = `ETID${Date.now()}`
 
     try {
@@ -323,7 +333,12 @@ export const transactionService = {
     }
   },
 
-  async getByUserId(userId: string, limit = 20) {
+  async getByUserId(userId: string, limit = 20, requestingUserId?: string) {
+    // Validate user access if requestingUserId is provided
+    if (requestingUserId && requestingUserId !== userId) {
+      throw new Error("Access denied: You can only view your own transactions")
+    }
+
     const refreshFn = async () => {
       const { data, error } = await supabase
         .from("transactions")
