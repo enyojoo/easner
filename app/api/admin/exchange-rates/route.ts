@@ -2,6 +2,29 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { requireAuth } from "@/lib/auth-utils"
 
+export async function GET(request: NextRequest) {
+  try {
+    const user = await requireAuth(request)
+    
+    if (!user.isAdmin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+
+    const serverClient = createServerClient()
+    const { data, error } = await serverClient
+      .from("exchange_rates")
+      .select("*")
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json({ exchangeRates: data || [] })
+  } catch (error) {
+    console.error("Error loading exchange rates:", error)
+    return NextResponse.json({ error: "Failed to load exchange rates" }, { status: 500 })
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const user = await requireAuth(request)
