@@ -521,20 +521,18 @@ class AdminDataStore {
     try {
       console.log(`AdminDataStore: Updating user ${userId} status to ${newStatus}`)
       
-      const response = await fetch(`/api/admin/users/${userId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      })
+      const { error } = await supabase
+        .from("users")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error("API Error:", errorData)
-        throw new Error(`Failed to update user status: ${errorData.error || response.statusText}`)
+      if (error) {
+        console.error("Database error:", error)
+        throw error
       }
-
-      const result = await response.json()
-      console.log("Update result:", result)
 
       // Update local data
       if (this.data) {
@@ -547,7 +545,7 @@ class AdminDataStore {
       }
     } catch (error) {
       console.error("Error updating user status:", error)
-      throw error // Re-throw to show error to user
+      throw error
     }
   }
 
@@ -555,20 +553,18 @@ class AdminDataStore {
     try {
       console.log(`AdminDataStore: Updating user ${userId} verification to ${newStatus}`)
       
-      const response = await fetch(`/api/admin/users/${userId}/verification`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verification_status: newStatus }),
-      })
+      const { error } = await supabase
+        .from("users")
+        .update({
+          verification_status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error("API Error:", errorData)
-        throw new Error(`Failed to update user verification: ${errorData.error || response.statusText}`)
+      if (error) {
+        console.error("Database error:", error)
+        throw error
       }
-
-      const result = await response.json()
-      console.log("Update result:", result)
 
       // Update local data
       if (this.data) {
@@ -581,7 +577,7 @@ class AdminDataStore {
       }
     } catch (error) {
       console.error("Error updating user verification:", error)
-      throw error // Re-throw to show error to user
+      throw error
     }
   }
 

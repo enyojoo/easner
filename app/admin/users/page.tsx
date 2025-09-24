@@ -161,29 +161,23 @@ export default function AdminUsersPage() {
 
   const handleStatusUpdate = async (userId: string, newStatus: string) => {
     try {
-      console.log(`Updating user ${userId} status to ${newStatus}`)
       await adminDataStore.updateUserStatus(userId, newStatus)
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
       }
-      console.log("Status update successful")
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error updating user status:", err)
-      alert(`Failed to update user status: ${err.message}`)
     }
   }
 
   const handleVerificationUpdate = async (userId: string, newStatus: string) => {
     try {
-      console.log(`Updating user ${userId} verification to ${newStatus}`)
       await adminDataStore.updateUserVerification(userId, newStatus)
       if (selectedUser?.id === userId) {
         setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
       }
-      console.log("Verification update successful")
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error updating user verification:", err)
-      alert(`Failed to update user verification: ${err.message}`)
     }
   }
 
