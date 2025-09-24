@@ -88,7 +88,22 @@ export default function AdminTransactionsPage() {
 
   const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
     try {
-      await adminDataStore.updateTransactionStatus(transactionId, newStatus)
+      // Call the API endpoint which handles email notifications
+      const response = await fetch(`/api/admin/transactions/${transactionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update transaction status')
+      }
+
+      // Refresh the data to get the updated transaction
+      await adminDataStore.refreshData()
 
       // Update selectedTransaction if it's the one being updated
       if (selectedTransaction?.transaction_id === transactionId) {
@@ -102,8 +117,24 @@ export default function AdminTransactionsPage() {
   const handleBulkStatusUpdate = async (newStatus: string) => {
     try {
       await Promise.all(
-        selectedTransactions.map((transactionId) => adminDataStore.updateTransactionStatus(transactionId, newStatus)),
+        selectedTransactions.map(async (transactionId) => {
+          const response = await fetch(`/api/admin/transactions/${transactionId}/status`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: newStatus })
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Failed to update transaction status')
+          }
+        })
       )
+      
+      // Refresh the data to get the updated transactions
+      await adminDataStore.refreshData()
       setSelectedTransactions([])
     } catch (err) {
       console.error("Error updating transaction statuses:", err)
