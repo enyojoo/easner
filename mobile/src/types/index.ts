@@ -59,7 +59,6 @@ export interface Transaction {
   updated_at: string
   completed_at?: string
   failure_reason?: string
-  status_updated_at?: string
   recipient?: Recipient
   user?: {
     first_name: string

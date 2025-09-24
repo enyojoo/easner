@@ -1,6 +1,6 @@
 // Transaction status management service with email notifications
 
-import { supabase } from './supabase'
+import { createServerClient } from './supabase'
 import type { Transaction, TransactionStatusHistory } from '@/types'
 
 export interface StatusUpdateData {
