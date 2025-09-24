@@ -25,6 +25,7 @@
     "expo-document-picker": "~14.0.7",
     "expo-image-picker": "~17.0.8",
     "expo-linking": "~8.0.8",
+    "expo-notifications": "~0.32.11",
     "expo-secure-store": "~15.0.7",
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
