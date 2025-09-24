@@ -27,8 +27,8 @@ class AdminDataStore {
   private initialized = false
 
   constructor() {
-    // Preload data immediately when store is created
-    this.initialize()
+    // Don't preload data immediately - wait for explicit initialization
+    // this.initialize()
   }
 
   private async initialize() {
@@ -38,6 +38,11 @@ class AdminDataStore {
     // Start loading data immediately
     this.loadData().catch(console.error)
     this.startAutoRefresh()
+  }
+
+  // Public method to initialize when user is authenticated
+  async initializeWhenReady() {
+    await this.initialize()
   }
 
   subscribe(callback: () => void) {

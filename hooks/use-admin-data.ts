@@ -2,19 +2,39 @@
 
 import { useState, useEffect } from "react"
 import { adminDataStore } from "@/lib/admin-data-store"
+import { useAuth } from "@/lib/auth-context"
 
 export function useAdminData() {
+  const { userProfile, isAdmin } = useAuth()
   const [data, setData] = useState<any>(adminDataStore.getData())
-  const [loading, setLoading] = useState(adminDataStore.isLoading())
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
 
-    // Get current data immediately
-    const currentData = adminDataStore.getData()
-    if (currentData && mounted) {
-      setData(currentData)
+    // Only initialize if user is admin and authenticated
+    if (isAdmin && userProfile) {
+      const initializeData = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+          await adminDataStore.initializeWhenReady()
+          if (mounted) {
+            setData(adminDataStore.getData())
+            setLoading(false)
+          }
+        } catch (err) {
+          console.error("Failed to initialize admin data:", err)
+          if (mounted) {
+            setError("Failed to load admin data")
+            setLoading(false)
+          }
+        }
+      }
+
+      initializeData()
+    } else {
       setLoading(false)
     }
 
@@ -34,7 +54,7 @@ export function useAdminData() {
       mounted = false
       unsubscribe()
     }
-  }, [])
+  }, [isAdmin, userProfile])
 
   return { data, loading, error }
 }
