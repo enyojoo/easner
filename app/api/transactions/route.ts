@@ -22,36 +22,36 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     return createErrorResponse("Send amount must be greater than 0", 400)
   }
 
-  // Get exchange rate
-  const rateData = await currencyService.getRate(sendCurrency, receiveCurrency)
-  if (!rateData) {
+    // Get exchange rate
+    const rateData = await currencyService.getRate(sendCurrency, receiveCurrency)
+    if (!rateData) {
     return createErrorResponse("Exchange rate not available", 400)
-  }
+    }
 
-  const receiveAmount = sendAmount * rateData.rate
-  let feeAmount = 0
+    const receiveAmount = sendAmount * rateData.rate
+    let feeAmount = 0
 
-  // Calculate fee
-  if (rateData.fee_type === "fixed") {
-    feeAmount = rateData.fee_amount
-  } else if (rateData.fee_type === "percentage") {
-    feeAmount = (sendAmount * rateData.fee_amount) / 100
-  }
+    // Calculate fee
+    if (rateData.fee_type === "fixed") {
+      feeAmount = rateData.fee_amount
+    } else if (rateData.fee_type === "percentage") {
+      feeAmount = (sendAmount * rateData.fee_amount) / 100
+    }
 
-  const totalAmount = sendAmount + feeAmount
+    const totalAmount = sendAmount + feeAmount
 
-  const transaction = await transactionService.create({
-    userId: user.id,
-    recipientId,
-    sendAmount,
-    sendCurrency,
-    receiveAmount,
-    receiveCurrency,
-    exchangeRate: rateData.rate,
-    feeAmount,
-    feeType: rateData.fee_type,
-    totalAmount,
+    const transaction = await transactionService.create({
+      userId: user.id,
+      recipientId,
+      sendAmount,
+      sendCurrency,
+      receiveAmount,
+      receiveCurrency,
+      exchangeRate: rateData.rate,
+      feeAmount,
+      feeType: rateData.fee_type,
+      totalAmount,
   }, user.id)
 
-  return NextResponse.json({ transaction })
+    return NextResponse.json({ transaction })
 })
