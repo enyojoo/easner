@@ -1,4 +1,4 @@
-import { supabase } from "./supabase"
+import { supabase, createServerClient } from "./supabase"
 
 interface AdminData {
   users: any[]
@@ -94,14 +94,15 @@ class AdminDataStore {
   }
 
   private async loadUsers() {
-    const { data: users, error } = await supabase.from("users").select("*").order("created_at", { ascending: false })
+    const serverClient = createServerClient()
+    const { data: users, error } = await serverClient.from("users").select("*").order("created_at", { ascending: false })
 
     if (error) throw error
 
     // Calculate transaction stats for each user
     const usersWithStats = await Promise.all(
       (users || []).map(async (user) => {
-        const { data: transactions } = await supabase
+        const { data: transactions } = await serverClient
           .from("transactions")
           .select("send_amount, send_currency, status")
           .eq("user_id", user.id)
@@ -160,13 +161,15 @@ class AdminDataStore {
   }
 
   private async loadCurrencies() {
-    const { data, error } = await supabase.from("currencies").select("*").order("code")
+    const serverClient = createServerClient()
+    const { data, error } = await serverClient.from("currencies").select("*").order("code")
     if (error) throw error
     return data || []
   }
 
   private async loadExchangeRates() {
-    const { data, error } = await supabase.from("exchange_rates").select(`
+    const serverClient = createServerClient()
+    const { data, error } = await serverClient.from("exchange_rates").select(`
       *,
       from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
       to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
@@ -199,7 +202,8 @@ class AdminDataStore {
 
   private async getAdminBaseCurrency(): Promise<string> {
     try {
-      const { data, error } = await supabase.from("system_settings").select("value").eq("key", "base_currency").single()
+      const serverClient = createServerClient()
+      const { data, error } = await serverClient.from("system_settings").select("value").eq("key", "base_currency").single()
 
       if (error || !data) return "NGN" // Default to NGN
       return data.value
@@ -445,7 +449,8 @@ class AdminDataStore {
 
   async updateUserStatus(userId: string, newStatus: string) {
     try {
-      const { error } = await supabase.from("users").update({ status: newStatus }).eq("id", userId)
+      const serverClient = createServerClient()
+      const { error } = await serverClient.from("users").update({ status: newStatus }).eq("id", userId)
 
       if (error) throw error
 
@@ -462,7 +467,8 @@ class AdminDataStore {
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
-      const { error } = await supabase.from("users").update({ verification_status: newStatus }).eq("id", userId)
+      const serverClient = createServerClient()
+      const { error } = await serverClient.from("users").update({ verification_status: newStatus }).eq("id", userId)
 
       if (error) throw error
 
@@ -509,7 +515,8 @@ class AdminDataStore {
   async updateExchangeRates(updates: any[]) {
     try {
       // Update database first
-      const { error } = await supabase.from("exchange_rates").upsert(updates, {
+      const serverClient = createServerClient()
+      const { error } = await serverClient.from("exchange_rates").upsert(updates, {
         onConflict: "from_currency,to_currency",
         ignoreDuplicates: false,
       })
@@ -532,7 +539,8 @@ class AdminDataStore {
   async addCurrency(currencyData: any) {
     try {
       // Insert new currency
-      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
+      const serverClient = createServerClient()
+      const { data: newCurrency, error } = await serverClient.from("currencies").insert(currencyData).select().single()
 
       if (error) throw error
 
@@ -562,7 +570,8 @@ class AdminDataStore {
       if (ratesError) throw ratesError
 
       // Delete currency
-      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
+      const serverClient = createServerClient()
+      const { error } = await serverClient.from("currencies").delete().eq("id", currencyId)
 
       if (error) throw error
 
