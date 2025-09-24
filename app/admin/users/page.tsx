@@ -97,14 +97,27 @@ export default function AdminUsersPage() {
       // Remove .limit(20) to show all transactions
 
       if (error) throw error
-      setUserTransactions(data || [])
+      // Transform the data to match TransactionData interface
+      const transformedData = (data || []).map((tx: any) => ({
+        transaction_id: tx.transaction_id,
+        created_at: tx.created_at,
+        send_currency: tx.send_currency,
+        receive_currency: tx.receive_currency,
+        send_amount: tx.send_amount,
+        receive_amount: tx.receive_amount,
+        status: tx.status,
+        recipient: {
+          full_name: Array.isArray(tx.recipient) ? tx.recipient[0]?.full_name || '' : tx.recipient?.full_name || ''
+        }
+      }))
+      setUserTransactions(transformedData)
     } catch (err) {
       console.error("Error fetching user transactions:", err)
       setUserTransactions([])
     }
   }
 
-  const filteredUsers = (data?.users || []).filter((user: UserData) => {
+  const filteredUsers = (data?.users || []).filter((user: any) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -237,8 +250,8 @@ export default function AdminUsersPage() {
   }
 
   // Calculate transaction stats for each user using exchange rates
-  const usersWithStats = (data?.users || []).map((user) => {
-    const userTransactions = (data?.transactions || []).filter((t) => t.user_id === user.id)
+  const usersWithStats = (data?.users || []).map((user: any) => {
+    const userTransactions = (data?.transactions || []).filter((t: any) => t.user_id === user.id)
     const userExchangeRates = data?.exchangeRates || []
     const baseCurrency = user.base_currency || "NGN"
 
@@ -253,7 +266,7 @@ export default function AdminUsersPage() {
         if (transaction.send_currency !== baseCurrency) {
           // Find exchange rate from transaction currency to base currency
           const rate = userExchangeRates.find(
-            (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+            (r: any) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
           )
 
           if (rate) {
@@ -261,7 +274,7 @@ export default function AdminUsersPage() {
           } else {
             // If direct rate not found, try reverse rate
             const reverseRate = userExchangeRates.find(
-              (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
+              (r: any) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
             )
             if (reverseRate && reverseRate.rate > 0) {
               amountInBaseCurrency = transaction.send_amount / reverseRate.rate
@@ -275,7 +288,7 @@ export default function AdminUsersPage() {
 
     return {
       ...user,
-      totalTransactions: userTransactions.filter((t) => t.status === "completed").length,
+      totalTransactions: userTransactions.filter((t: any) => t.status === "completed").length,
       totalVolume: totalSentInBaseCurrency,
     }
   })
