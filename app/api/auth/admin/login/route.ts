@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user metadata to mark as admin
-    await authClient.auth.updateUser({
+    const { error: updateError } = await authClient.auth.updateUser({
       data: {
         isAdmin: true,
         role: adminUser.role,
@@ -77,7 +77,17 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    if (updateError) {
+      console.error("Failed to update user metadata:", updateError)
+      // Continue anyway, the session is still valid
+    }
+
     console.log("Admin login successful for:", email)
+    console.log("Session data:", {
+      access_token: authData.session?.access_token ? "Present" : "Missing",
+      refresh_token: authData.session?.refresh_token ? "Present" : "Missing",
+      expires_at: authData.session?.expires_at
+    })
 
     // Return the session data with admin flag
     return NextResponse.json({

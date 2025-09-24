@@ -47,13 +47,21 @@ function AdminLoginPageContent() {
 
       // Set the session in Supabase client
       if (data.session) {
-        await supabase.auth.setSession(data.session)
+        const { error: sessionError } = await supabase.auth.setSession(data.session)
+        if (sessionError) {
+          console.error("Session set error:", sessionError)
+          throw new Error("Failed to set session")
+        }
+        console.log("Session set successfully")
+      } else {
+        console.error("No session returned from admin login")
+        throw new Error("No session returned")
       }
 
       // Wait a moment for auth context to update, then redirect
       setTimeout(() => {
         router.push("/admin/dashboard")
-      }, 100)
+      }, 500) // Increased timeout to allow session to be set
     } catch (err: any) {
       setError(err.message || "Login failed")
     } finally {
