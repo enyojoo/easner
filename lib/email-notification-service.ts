@@ -28,6 +28,7 @@ export class EmailNotificationService {
     transactionId: string, 
     status: string
   ): Promise<void> {
+    console.log('EmailNotificationService: sendTransactionStatusEmail called for:', transactionId, status)
     // Run in background - don't await this
     this.sendEmailInBackground(transactionId, status).catch(error => {
       console.error('Background email notification failed:', error)
@@ -57,8 +58,13 @@ export class EmailNotificationService {
     status: string
   ): Promise<void> {
     try {
+      console.log('EmailNotificationService: sendEmailInBackground called for:', transactionId, status)
+      
       // Get transaction details
+      console.log('EmailNotificationService: Creating Supabase client')
       const supabase = createServerClient()
+      
+      console.log('EmailNotificationService: Fetching transaction details')
       const { data: transaction, error } = await supabase
         .from('transactions')
         .select(`
@@ -74,8 +80,14 @@ export class EmailNotificationService {
         return
       }
 
+      console.log('EmailNotificationService: Transaction found:', transaction.transaction_id)
+      console.log('EmailNotificationService: Full transaction data:', JSON.stringify(transaction, null, 2))
+      console.log('EmailNotificationService: User data:', transaction.user)
+      console.log('EmailNotificationService: Recipient data:', transaction.recipient)
+
       if (!transaction.user?.email) {
         console.log('No user email found for transaction notification')
+        console.log('EmailNotificationService: Available user fields:', Object.keys(transaction.user || {}))
         return
       }
 
@@ -96,20 +108,26 @@ export class EmailNotificationService {
       }
 
       // Send appropriate email based on status
+      console.log('EmailNotificationService: Sending email for status:', status)
       switch (status) {
         case 'pending':
+          console.log('EmailNotificationService: Sending pending email')
           await emailService.sendTransactionPendingEmail(transaction.user.email, emailData)
           break
         case 'processing':
+          console.log('EmailNotificationService: Sending processing email')
           await emailService.sendTransactionProcessingEmail(transaction.user.email, emailData)
           break
         case 'completed':
+          console.log('EmailNotificationService: Sending completed email')
           await emailService.sendTransactionCompletedEmail(transaction.user.email, emailData)
           break
         case 'failed':
+          console.log('EmailNotificationService: Sending failed email')
           await emailService.sendTransactionFailedEmail(transaction.user.email, emailData)
           break
         case 'cancelled':
+          console.log('EmailNotificationService: Sending cancelled email')
           await emailService.sendTransactionCancelledEmail(transaction.user.email, emailData)
           break
         default:
