@@ -85,7 +85,7 @@ export function generateBaseEmailTemplate(
         .cta-button {
             display: inline-block;
             background: linear-gradient(135deg, #007ACC 0%, #0056b3 100%);
-            color: #ffffff;
+            color: #ffffff !important;
             text-decoration: none;
             padding: 16px 32px;
             border-radius: 8px;
@@ -301,6 +301,10 @@ export function generateBaseEmailTemplate(
             
             .detail-value {
                 color: #ffffff;
+            }
+            
+            .cta-button {
+                color: #ffffff !important;
             }
         }
         

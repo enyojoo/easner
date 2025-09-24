@@ -51,13 +51,15 @@ export interface Transaction {
   fee_amount: number
   fee_type: string
   total_amount: number
-  status: "pending" | "processing" | "completed" | "failed"
+  status: "pending" | "processing" | "completed" | "failed" | "cancelled"
   reference?: string
   receipt_url?: string
   receipt_filename?: string
   created_at: string
   updated_at: string
   completed_at?: string
+  failure_reason?: string
+  status_updated_at?: string
   recipient?: Recipient
   user?: {
     first_name: string
@@ -91,6 +93,16 @@ export interface User {
   base_currency: string
   status: "active" | "inactive"
   verification_status: "pending" | "verified" | "rejected"
+  created_at: string
+  updated_at: string
+}
+
+export interface TransactionStatusHistory {
+  id: string
+  transaction_id: string
+  status: "pending" | "processing" | "completed" | "failed" | "cancelled"
+  previous_status?: string
+  failure_reason?: string
   created_at: string
   updated_at: string
 }
