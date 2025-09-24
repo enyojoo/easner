@@ -155,7 +155,7 @@ export class TransactionStatusService {
   /**
    * Send email notification based on status
    */
-  private async sendStatusNotification(
+  async sendStatusNotification(
     transaction: Transaction, 
     status: string
   ): Promise<void> {
