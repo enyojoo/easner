@@ -89,7 +89,7 @@ export default function AdminTransactionsPage() {
   const handleStatusUpdate = async (transactionId: string, newStatus: string) => {
     try {
       await adminDataStore.updateTransactionStatus(transactionId, newStatus)
-      
+
       // Update selectedTransaction if it's the one being updated
       if (selectedTransaction?.transaction_id === transactionId) {
         setSelectedTransaction((prev) => (prev ? { ...prev, status: newStatus as any } : null))

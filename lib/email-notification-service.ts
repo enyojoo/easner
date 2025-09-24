@@ -1,5 +1,4 @@
-// Simple, non-blocking email notification service
-// This service sends emails in the background without interfering with core functionality
+// Simple, working email notification service
 
 import { createServerClient } from './supabase'
 import { emailService } from './email-service'
@@ -21,49 +20,18 @@ export interface TransactionEmailData {
 
 export class EmailNotificationService {
   /**
-   * Send transaction status email notification (non-blocking)
-   * This method runs in the background and doesn't affect the main transaction flow
+   * Send transaction status email notification
    */
   static async sendTransactionStatusEmail(
     transactionId: string, 
     status: string
   ): Promise<void> {
-    console.log('EmailNotificationService: sendTransactionStatusEmail called for:', transactionId, status)
-    // Run in background - don't await this
-    this.sendEmailInBackground(transactionId, status).catch(error => {
-      console.error('Background email notification failed:', error)
-      // Don't throw - this is non-blocking
-    })
-  }
-
-  /**
-   * Send welcome email (non-blocking)
-   */
-  static async sendWelcomeEmail(
-    userEmail: string, 
-    firstName: string
-  ): Promise<void> {
-    // Run in background - don't await this
-    this.sendWelcomeInBackground(userEmail, firstName).catch(error => {
-      console.error('Background welcome email failed:', error)
-      // Don't throw - this is non-blocking
-    })
-  }
-
-  /**
-   * Background method to send transaction status email
-   */
-  private static async sendEmailInBackground(
-    transactionId: string, 
-    status: string
-  ): Promise<void> {
+    console.log('Sending email for transaction:', transactionId, 'status:', status)
+    
     try {
-      console.log('EmailNotificationService: sendEmailInBackground called for:', transactionId, status)
-      
-      // Get transaction details with proper error handling
+      // Get transaction data from database
       const supabase = createServerClient()
       
-      // First, get the basic transaction data
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .select('*')
@@ -71,37 +39,30 @@ export class EmailNotificationService {
         .single()
 
       if (transactionError || !transaction) {
-        console.error('Failed to fetch transaction:', transactionError)
+        console.error('Transaction not found:', transactionError)
         return
       }
 
-      console.log('EmailNotificationService: Transaction found:', transaction.transaction_id)
-
-      // Get user data separately
+      // Get user email
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('first_name, last_name, email')
+        .select('email')
         .eq('id', transaction.user_id)
         .single()
 
       if (userError || !user?.email) {
-        console.error('Failed to fetch user data:', userError)
-        console.log('EmailNotificationService: User ID from transaction:', transaction.user_id)
+        console.error('User not found:', userError)
         return
       }
 
-      console.log('EmailNotificationService: User found:', user.email)
-
-      // Get recipient data separately
+      // Get recipient name
       const { data: recipient, error: recipientError } = await supabase
         .from('recipients')
         .select('full_name')
         .eq('id', transaction.recipient_id)
         .single()
 
-      console.log('EmailNotificationService: Recipient found:', recipient?.full_name || 'Unknown')
-
-      // Prepare email data
+      // Create email data
       const emailData: TransactionEmailData = {
         transactionId: transaction.transaction_id,
         recipientName: recipient?.full_name || 'Unknown',
@@ -117,40 +78,31 @@ export class EmailNotificationService {
         updatedAt: transaction.updated_at
       }
 
-      // Send appropriate email based on status
-      console.log('EmailNotificationService: Sending email for status:', status)
-      switch (status) {
-        case 'pending':
-          await emailService.sendTransactionPendingEmail(user.email, emailData)
-          break
-        case 'processing':
-        case 'initiated':
-          await emailService.sendTransactionProcessingEmail(user.email, emailData)
-          break
-        case 'completed':
-          await emailService.sendTransactionCompletedEmail(user.email, emailData)
-          break
-        case 'failed':
-          await emailService.sendTransactionFailedEmail(user.email, emailData)
-          break
-        case 'cancelled':
-          await emailService.sendTransactionCancelledEmail(user.email, emailData)
-          break
-        default:
-          console.log(`Unknown transaction status: ${status}`)
+      // Send email based on status
+      console.log('Sending email to:', user.email)
+      
+      if (status === 'completed') {
+        await emailService.sendTransactionCompletedEmail(user.email, emailData)
+      } else if (status === 'processing' || status === 'initiated') {
+        await emailService.sendTransactionProcessingEmail(user.email, emailData)
+      } else if (status === 'pending') {
+        await emailService.sendTransactionPendingEmail(user.email, emailData)
+      } else if (status === 'failed') {
+        await emailService.sendTransactionFailedEmail(user.email, emailData)
+      } else if (status === 'cancelled') {
+        await emailService.sendTransactionCancelledEmail(user.email, emailData)
       }
 
-      console.log(`Email notification sent for transaction ${transactionId} with status ${status}`)
+      console.log('Email sent successfully!')
     } catch (error) {
-      console.error('Error sending transaction status email:', error)
-      // Don't throw - this is non-blocking
+      console.error('Error sending email:', error)
     }
   }
 
   /**
-   * Background method to send welcome email
+   * Send welcome email
    */
-  private static async sendWelcomeInBackground(
+  static async sendWelcomeEmail(
     userEmail: string, 
     firstName: string
   ): Promise<void> {
@@ -159,10 +111,9 @@ export class EmailNotificationService {
         firstName,
         dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/user/dashboard`
       })
-      console.log(`Welcome email sent to ${userEmail}`)
+      console.log('Welcome email sent to:', userEmail)
     } catch (error) {
       console.error('Error sending welcome email:', error)
-      // Don't throw - this is non-blocking
     }
   }
 }
