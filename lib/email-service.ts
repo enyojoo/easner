@@ -46,7 +46,7 @@ export class EmailService {
           name: this.config.fromName
         },
         replyTo: this.config.replyTo,
-        subject: template.subject,
+        subject: typeof template.subject === 'function' ? template.subject(emailData.data) : template.subject,
         html: template.html(emailData.data),
         text: template.text(emailData.data)
       }
