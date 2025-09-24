@@ -100,12 +100,17 @@ class AdminDataStore {
 
   private async loadUsers() {
     try {
+      console.log("AdminDataStore: Loading users...")
       const { data: users, error } = await supabase
         .from("users")
         .select("*")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error("AdminDataStore: Error loading users:", error)
+        throw error
+      }
+      console.log("AdminDataStore: Users loaded successfully:", users?.length || 0)
 
       // Calculate transaction stats for each user
       const usersWithStats = await Promise.all(
@@ -159,6 +164,7 @@ class AdminDataStore {
 
   private async loadTransactions() {
     try {
+      console.log("AdminDataStore: Loading transactions...")
       const { data, error } = await supabase
         .from("transactions")
         .select(`
@@ -169,7 +175,11 @@ class AdminDataStore {
         .order("created_at", { ascending: false })
         .limit(200)
 
-      if (error) throw error
+      if (error) {
+        console.error("AdminDataStore: Error loading transactions:", error)
+        throw error
+      }
+      console.log("AdminDataStore: Transactions loaded successfully:", data?.length || 0)
       return data || []
     } catch (error) {
       console.error("Error loading transactions:", error)
