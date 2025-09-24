@@ -8,6 +8,7 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies
 DROP POLICY IF EXISTS "Service role only access admin" ON admin_users;
+DROP POLICY IF EXISTS "Service role full access admin_users" ON admin_users;
 
 -- Create proper admin_users policy
 CREATE POLICY "Service role full access admin_users" ON admin_users
@@ -21,6 +22,9 @@ DROP POLICY IF EXISTS "Users can view own profile" ON users;
 DROP POLICY IF EXISTS "Users can update own profile" ON users;
 DROP POLICY IF EXISTS "Users can insert own profile" ON users;
 DROP POLICY IF EXISTS "Service role full access users" ON users;
+DROP POLICY IF EXISTS "Service role can view users" ON users;
+DROP POLICY IF EXISTS "Service role can update users" ON users;
+DROP POLICY IF EXISTS "Service role can delete users" ON users;
 
 -- Create new policies
 CREATE POLICY "Users can view own profile" ON users
@@ -45,6 +49,9 @@ DROP POLICY IF EXISTS "Users can insert own transactions" ON transactions;
 DROP POLICY IF EXISTS "Users can update own transactions" ON transactions;
 DROP POLICY IF EXISTS "Service role can delete transactions" ON transactions;
 DROP POLICY IF EXISTS "Service role full access transactions" ON transactions;
+DROP POLICY IF EXISTS "Service role can view transactions" ON transactions;
+DROP POLICY IF EXISTS "Service role can update transactions" ON transactions;
+DROP POLICY IF EXISTS "Service role can insert transactions" ON transactions;
 
 -- Create new policies
 CREATE POLICY "Users can view own transactions" ON transactions
@@ -69,6 +76,10 @@ DROP POLICY IF EXISTS "Users can insert own recipients" ON recipients;
 DROP POLICY IF EXISTS "Users can update own recipients" ON recipients;
 DROP POLICY IF EXISTS "Users can delete own recipients" ON recipients;
 DROP POLICY IF EXISTS "Service role full access recipients" ON recipients;
+DROP POLICY IF EXISTS "Service role can view recipients" ON recipients;
+DROP POLICY IF EXISTS "Service role can update recipients" ON recipients;
+DROP POLICY IF EXISTS "Service role can insert recipients" ON recipients;
+DROP POLICY IF EXISTS "Service role can delete recipients" ON recipients;
 
 -- Create new policies
 CREATE POLICY "Users can view own recipients" ON recipients
@@ -93,6 +104,11 @@ CREATE POLICY "Service role full access recipients" ON recipients
 -- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view active currencies" ON currencies;
 DROP POLICY IF EXISTS "Service role can modify currencies" ON currencies;
+DROP POLICY IF EXISTS "Service role full access currencies" ON currencies;
+DROP POLICY IF EXISTS "Service role can view currencies" ON currencies;
+DROP POLICY IF EXISTS "Service role can update currencies" ON currencies;
+DROP POLICY IF EXISTS "Service role can insert currencies" ON currencies;
+DROP POLICY IF EXISTS "Service role can delete currencies" ON currencies;
 
 -- Create new policies
 CREATE POLICY "Anyone can view active currencies" ON currencies
@@ -108,6 +124,11 @@ CREATE POLICY "Service role full access currencies" ON currencies
 -- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view active exchange rates" ON exchange_rates;
 DROP POLICY IF EXISTS "Service role can modify exchange rates" ON exchange_rates;
+DROP POLICY IF EXISTS "Service role full access exchange_rates" ON exchange_rates;
+DROP POLICY IF EXISTS "Service role can view exchange_rates" ON exchange_rates;
+DROP POLICY IF EXISTS "Service role can update exchange_rates" ON exchange_rates;
+DROP POLICY IF EXISTS "Service role can insert exchange_rates" ON exchange_rates;
+DROP POLICY IF EXISTS "Service role can delete exchange_rates" ON exchange_rates;
 
 -- Create new policies
 CREATE POLICY "Anyone can view active exchange rates" ON exchange_rates
@@ -123,6 +144,11 @@ CREATE POLICY "Service role full access exchange_rates" ON exchange_rates
 -- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view active payment methods" ON payment_methods;
 DROP POLICY IF EXISTS "Service role can modify payment methods" ON payment_methods;
+DROP POLICY IF EXISTS "Service role full access payment_methods" ON payment_methods;
+DROP POLICY IF EXISTS "Service role can view payment_methods" ON payment_methods;
+DROP POLICY IF EXISTS "Service role can update payment_methods" ON payment_methods;
+DROP POLICY IF EXISTS "Service role can insert payment_methods" ON payment_methods;
+DROP POLICY IF EXISTS "Service role can delete payment_methods" ON payment_methods;
 
 -- Create new policies
 CREATE POLICY "Anyone can view active payment methods" ON payment_methods
@@ -138,6 +164,11 @@ CREATE POLICY "Service role full access payment_methods" ON payment_methods
 -- Drop existing policies
 DROP POLICY IF EXISTS "Anyone can view system settings" ON system_settings;
 DROP POLICY IF EXISTS "Service role can modify system settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role full access system_settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role can view system_settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role can update system_settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role can insert system_settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role can delete system_settings" ON system_settings;
 
 -- Create new policies
 CREATE POLICY "Anyone can view system settings" ON system_settings
@@ -148,18 +179,41 @@ CREATE POLICY "Service role full access system_settings" ON system_settings
   FOR ALL USING (auth.role() = 'service_role');
 
 -- =====================================================
--- 9. Verify RLS is enabled and policies are working
+-- 9. Fix EMAIL_TEMPLATES table policies
+-- =====================================================
+-- Enable RLS on email_templates
+ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Anyone can view email templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role can modify email templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role full access email_templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role can view email_templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role can update email_templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role can insert email_templates" ON email_templates;
+DROP POLICY IF EXISTS "Service role can delete email_templates" ON email_templates;
+
+-- Create new policies
+CREATE POLICY "Anyone can view email templates" ON email_templates
+  FOR SELECT USING (true);
+
+-- Service role can do everything
+CREATE POLICY "Service role full access email_templates" ON email_templates
+  FOR ALL USING (auth.role() = 'service_role');
+
+-- =====================================================
+-- 10. Verify RLS is enabled and policies are working
 -- =====================================================
 -- Check RLS status
 SELECT schemaname, tablename, rowsecurity 
 FROM pg_tables 
 WHERE schemaname = 'public' 
-AND tablename IN ('users', 'admin_users', 'currencies', 'exchange_rates', 'recipients', 'transactions', 'payment_methods', 'system_settings')
+AND tablename IN ('users', 'admin_users', 'currencies', 'exchange_rates', 'recipients', 'transactions', 'payment_methods', 'system_settings', 'email_templates')
 ORDER BY tablename;
 
 -- Check policies
 SELECT schemaname, tablename, policyname, cmd, roles
 FROM pg_policies 
 WHERE schemaname = 'public' 
-AND tablename IN ('users', 'admin_users', 'currencies', 'exchange_rates', 'recipients', 'transactions', 'payment_methods', 'system_settings')
+AND tablename IN ('users', 'admin_users', 'currencies', 'exchange_rates', 'recipients', 'transactions', 'payment_methods', 'system_settings', 'email_templates')
 ORDER BY tablename, policyname;

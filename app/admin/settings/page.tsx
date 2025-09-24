@@ -245,12 +245,7 @@ export default function AdminSettingsPage() {
 
   const loadEmailTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .order("template_type", { ascending: true })
-
-      if (error) throw error
+      const data = await adminDataStore.loadEmailTemplates()
       setEmailTemplates(data || [])
     } catch (error) {
       console.error("Error loading email templates:", error)
