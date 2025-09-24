@@ -71,6 +71,13 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
 
+  // Format currency using database currencies
+  const formatCurrencyFromDB = (amount: number, currencyCode: string): string => {
+    const currency = data?.currencies?.find((c: any) => c.code === currencyCode)
+    const symbol = currency?.symbol || currencyCode
+    return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const fetchUserTransactions = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -201,7 +208,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, u.base_currency),
+          formatCurrencyFromDB(u.totalVolume, u.base_currency),
         ].join(","),
       ),
     ].join("\n")
@@ -458,7 +465,7 @@ export default function AdminUsersPage() {
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
-                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, user.base_currency)}</TableCell>
+                    <TableCell className="font-medium">{formatCurrencyFromDB(user.totalVolume, user.base_currency)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Dialog>
@@ -547,7 +554,7 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Total Volume:</span>
                                           <span className="font-medium">
-                                            {formatCurrency(selectedUser.totalVolume, selectedUser.base_currency)}
+                                            {formatCurrencyFromDB(selectedUser.totalVolume, selectedUser.base_currency)}
                                           </span>
                                         </div>
                                       </div>
@@ -585,11 +592,11 @@ export default function AdminUsersPage() {
                                             <TableCell>
                                               <div>
                                                 <div className="font-medium">
-                                                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                                                  {formatCurrencyFromDB(transaction.send_amount, transaction.send_currency)}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
                                                   →{" "}
-                                                  {formatCurrency(
+                                                  {formatCurrencyFromDB(
                                                     transaction.receive_amount,
                                                     transaction.receive_currency,
                                                   )}
