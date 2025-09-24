@@ -32,6 +32,7 @@ export class EmailNotificationService {
       // Get transaction data from database
       const supabase = createServerClient()
       
+      console.log('Fetching transaction data...')
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .select('*')
@@ -43,7 +44,10 @@ export class EmailNotificationService {
         return
       }
 
+      console.log('Transaction found:', transaction.transaction_id)
+
       // Get user email
+      console.log('Fetching user data...')
       const { data: user, error: userError } = await supabase
         .from('users')
         .select('email')
@@ -55,12 +59,17 @@ export class EmailNotificationService {
         return
       }
 
+      console.log('User email found:', user.email)
+
       // Get recipient name
+      console.log('Fetching recipient data...')
       const { data: recipient, error: recipientError } = await supabase
         .from('recipients')
         .select('full_name')
         .eq('id', transaction.recipient_id)
         .single()
+
+      console.log('Recipient found:', recipient?.full_name || 'Unknown')
 
       // Create email data
       const emailData: TransactionEmailData = {
@@ -79,21 +88,29 @@ export class EmailNotificationService {
       }
 
       // Send email based on status
-      console.log('Sending email to:', user.email)
+      console.log('Sending email to:', user.email, 'with status:', status)
       
+      let result
       if (status === 'completed') {
-        await emailService.sendTransactionCompletedEmail(user.email, emailData)
+        result = await emailService.sendTransactionCompletedEmail(user.email, emailData)
       } else if (status === 'processing' || status === 'initiated') {
-        await emailService.sendTransactionProcessingEmail(user.email, emailData)
+        result = await emailService.sendTransactionProcessingEmail(user.email, emailData)
       } else if (status === 'pending') {
-        await emailService.sendTransactionPendingEmail(user.email, emailData)
+        result = await emailService.sendTransactionPendingEmail(user.email, emailData)
       } else if (status === 'failed') {
-        await emailService.sendTransactionFailedEmail(user.email, emailData)
+        result = await emailService.sendTransactionFailedEmail(user.email, emailData)
       } else if (status === 'cancelled') {
-        await emailService.sendTransactionCancelledEmail(user.email, emailData)
+        result = await emailService.sendTransactionCancelledEmail(user.email, emailData)
+      } else {
+        console.log('Unknown status:', status)
+        return
       }
 
-      console.log('Email sent successfully!')
+      if (result.success) {
+        console.log('Email sent successfully!', result.messageId)
+      } else {
+        console.error('Email sending failed:', result.error)
+      }
     } catch (error) {
       console.error('Error sending email:', error)
     }
@@ -107,11 +124,19 @@ export class EmailNotificationService {
     firstName: string
   ): Promise<void> {
     try {
-      await emailService.sendWelcomeEmail(userEmail, {
+      const result = await emailService.sendWelcomeEmail({
         firstName,
+        lastName: '',
+        email: userEmail,
+        baseCurrency: 'USD',
         dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/user/dashboard`
       })
-      console.log('Welcome email sent to:', userEmail)
+      
+      if (result.success) {
+        console.log('Welcome email sent to:', userEmail)
+      } else {
+        console.error('Welcome email failed:', result.error)
+      }
     } catch (error) {
       console.error('Error sending welcome email:', error)
     }
