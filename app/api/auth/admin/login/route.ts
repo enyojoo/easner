@@ -9,10 +9,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    const supabase = createServerClient()
+    const serverClient = createServerClient()
 
     // First check if user exists in admin_users table (before auth)
-    const { data: adminUser, error: adminError } = await supabase
+    const { data: adminUser, error: adminError } = await serverClient
       .from("admin_users")
       .select("*")
       .eq("email", email)
@@ -40,15 +40,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Admin account is not active." }, { status: 403 })
     }
 
-    // Now authenticate with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    // Verify password using Supabase Auth (but don't create a session)
+    // We need to verify the password is correct
+    const { data: authData, error: authError } = await serverClient.auth.signInWithPassword({
       email,
       password,
     })
 
     if (authError) {
-      console.log("Auth error:", authError)
-      return NextResponse.json({ error: authError.message }, { status: 401 })
+      console.log("Password verification failed:", authError)
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
     if (!authData.user) {
@@ -58,9 +59,11 @@ export async function POST(request: NextRequest) {
     // Verify the authenticated user matches the admin user
     if (authData.user.id !== adminUser.id) {
       console.log("User ID mismatch:", { authId: authData.user.id, adminId: adminUser.id })
-      await supabase.auth.signOut()
       return NextResponse.json({ error: "User ID mismatch" }, { status: 403 })
     }
+
+    // Sign out immediately to avoid creating a session
+    await serverClient.auth.signOut()
 
     return NextResponse.json({
       success: true,
@@ -70,6 +73,10 @@ export async function POST(request: NextRequest) {
         name: adminUser.name,
         role: adminUser.role,
       },
+      // Include a flag to indicate this is an admin session
+      isAdmin: true,
+      // Include a simple token for admin session management
+      adminToken: Buffer.from(`${adminUser.id}:${Date.now()}`).toString('base64')
     })
   } catch (error) {
     console.error("Admin login error:", error)
