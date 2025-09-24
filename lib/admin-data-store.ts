@@ -514,8 +514,39 @@ class AdminDataStore {
         this.data.recentActivity = this.processRecentActivity(this.data.transactions.slice(0, 10))
         this.notify()
       }
+
+      // Send email notification in background (non-blocking)
+      this.sendEmailNotification(transactionId, newStatus).catch(error => {
+        console.error('Email notification failed:', error)
+        // Don't throw - email failure shouldn't break the status update
+      })
     } catch (error) {
       throw error
+    }
+  }
+
+  /**
+   * Send email notification in background (non-blocking)
+   */
+  private async sendEmailNotification(transactionId: string, status: string): Promise<void> {
+    try {
+      // Only send emails on client side to avoid server-side issues
+      if (typeof window !== 'undefined') {
+        await fetch('/api/send-email-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'transaction',
+            transactionId,
+            status
+          })
+        })
+      }
+    } catch (error) {
+      console.error('Failed to send email notification:', error)
+      // Don't throw - this is non-blocking
     }
   }
 

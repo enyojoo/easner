@@ -53,15 +53,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       totalAmount,
   }, user.id)
 
-    // Send initial pending status email
+    // Send initial pending status email (non-blocking)
     try {
-      const { transactionStatusService } = await import('@/lib/transaction-status-service')
-      
-      // Fetch the full transaction data with user and recipient info for email
-      const fullTransaction = await transactionStatusService.getTransaction(transaction.transaction_id)
-      if (fullTransaction) {
-        await transactionStatusService.sendStatusNotification(fullTransaction, 'pending')
-      }
+      const { EmailNotificationService } = await import('@/lib/email-notification-service')
+      EmailNotificationService.sendTransactionStatusEmail(transaction.transaction_id, 'pending')
     } catch (emailError) {
       console.error('Failed to send initial transaction email:', emailError)
       // Don't fail the transaction creation if email fails
