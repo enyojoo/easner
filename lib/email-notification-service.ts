@@ -30,7 +30,15 @@ export class EmailNotificationService {
     
     try {
       // Get transaction data from database
-      const supabase = createServerClient()
+      console.log('Creating Supabase client...')
+      let supabase
+      try {
+        supabase = createServerClient()
+        console.log('Supabase client created successfully')
+      } catch (clientError) {
+        console.error('Failed to create Supabase client:', clientError)
+        return
+      }
       
       console.log('Fetching transaction data...')
       const { data: transaction, error: transactionError } = await supabase
@@ -39,8 +47,13 @@ export class EmailNotificationService {
         .eq('transaction_id', transactionId)
         .single()
 
-      if (transactionError || !transaction) {
-        console.error('Transaction not found:', transactionError)
+      if (transactionError) {
+        console.error('Transaction query error:', transactionError)
+        return
+      }
+
+      if (!transaction) {
+        console.error('Transaction not found for ID:', transactionId)
         return
       }
 
