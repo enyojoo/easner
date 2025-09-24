@@ -26,32 +26,28 @@ function AdminLoginPageContent() {
     setError("")
 
     try {
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Use our API route for admin login instead of direct Supabase queries
+      const response = await fetch("/api/auth/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (authError) {
-        throw new Error(authError.message)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
       }
 
-      if (!authData.user) {
-        throw new Error("Authentication failed")
+      if (!data.success) {
+        throw new Error("Login failed")
       }
 
-      // Check if user exists in admin_users table
-      const { data: adminUser, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("email", email)
-        .eq("status", "active")
-        .single()
-
-      if (adminError || !adminUser) {
-        // Sign out if not an admin
-        await supabase.auth.signOut()
-        throw new Error("Access denied. Admin privileges required.")
+      // Set the session in Supabase client
+      if (data.session) {
+        await supabase.auth.setSession(data.session)
       }
 
       // Wait a moment for auth context to update, then redirect
@@ -96,6 +92,7 @@ function AdminLoginPageContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
+                  autoComplete="email"
                 />
               </div>
 
@@ -108,6 +105,7 @@ function AdminLoginPageContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
+                  autoComplete="current-password"
                 />
               </div>
 
