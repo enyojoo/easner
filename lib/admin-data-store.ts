@@ -42,7 +42,31 @@ class AdminDataStore {
 
   // Public method to initialize when user is authenticated
   async initializeWhenReady() {
-    await this.initialize()
+    // Check if user is admin by checking if they exist in admin_users table
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.log("AdminDataStore: No user found, not initializing")
+        return
+      }
+
+      // Check if user is admin by querying admin_users table
+      const { data: adminUser } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("id", user.id)
+        .single()
+
+      if (!adminUser) {
+        console.log("AdminDataStore: User is not admin, not initializing")
+        return
+      }
+
+      console.log("AdminDataStore: User is admin, initializing...")
+      await this.initialize()
+    } catch (error) {
+      console.error("AdminDataStore: Error checking admin status:", error)
+    }
   }
 
   subscribe(callback: () => void) {
