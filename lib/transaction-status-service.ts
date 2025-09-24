@@ -56,10 +56,10 @@ export class TransactionStatusService {
       // Update transaction
       const updateData: any = {
         status: statusData.status,
-        status_updated_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
 
+      // Only add optional fields if they exist in the schema
       if (statusData.failure_reason) {
         updateData.failure_reason = statusData.failure_reason
       }
@@ -93,8 +93,11 @@ export class TransactionStatusService {
       // Create status history record
       await this.createStatusHistory(transactionId, statusData, previousStatus)
 
-      // Send email notification
-      await this.sendStatusNotification(updatedTransaction, statusData.status)
+      // Send email notification (non-blocking)
+      this.sendStatusNotification(updatedTransaction, statusData.status).catch(error => {
+        console.error('Email notification failed:', error)
+        // Don't throw error as email failure shouldn't break status update
+      })
 
       return {
         success: true,
@@ -134,19 +137,25 @@ export class TransactionStatusService {
     statusData: StatusUpdateData, 
     previousStatus: string
   ): Promise<void> {
-    const { error } = await supabase
-      .from('transaction_status_history')
-      .insert({
-        transaction_id: transactionId,
-        status: statusData.status,
-        previous_status: previousStatus,
-        failure_reason: statusData.failure_reason,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+    try {
+      const supabase = createServerClient()
+      const { error } = await supabase
+        .from('transaction_status_history')
+        .insert({
+          transaction_id: transactionId,
+          status: statusData.status,
+          previous_status: previousStatus,
+          failure_reason: statusData.failure_reason,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
 
-    if (error) {
-      console.error('Failed to create status history:', error)
+      if (error) {
+        console.error('Failed to create status history:', error)
+        // Don't throw error as this is not critical
+      }
+    } catch (error) {
+      console.error('Status history table may not exist:', error)
       // Don't throw error as this is not critical
     }
   }
