@@ -1,15 +1,13 @@
 // Admin transaction status update API endpoint
 
 import { NextRequest, NextResponse } from "next/server"
-import { transactionStatusService } from "@/lib/transaction-status-service"
-import { requireAdmin } from "@/lib/admin-auth-utils"
+import { createServerClient } from "@/lib/supabase"
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const admin = await requireAdmin(request)
     const transactionId = params.id
     const body = await request.json()
 
@@ -21,22 +19,47 @@ export async function PATCH(
       }, { status: 400 })
     }
 
-    const result = await transactionStatusService.updateStatus(transactionId, {
-      status,
-      failure_reason,
-      reference,
-      completed_at
-    })
+    // Use service role client for admin operations
+    const supabase = createServerClient()
 
-    if (!result.success) {
+    // Update transaction status directly
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    }
+
+    if (failure_reason) {
+      updateData.failure_reason = failure_reason
+    }
+
+    if (reference) {
+      updateData.reference = reference
+    }
+
+    if (completed_at) {
+      updateData.completed_at = completed_at
+    }
+
+    const { data: updatedTransaction, error: updateError } = await supabase
+      .from('transactions')
+      .update(updateData)
+      .eq('transaction_id', transactionId)
+      .select(`
+        *,
+        recipient:recipients(*),
+        user:users(first_name, last_name, email)
+      `)
+      .single()
+
+    if (updateError) {
       return NextResponse.json({ 
-        error: result.error || "Failed to update status" 
+        error: `Failed to update transaction: ${updateError.message}` 
       }, { status: 400 })
     }
 
     return NextResponse.json({ 
       success: true, 
-      transaction: result.transaction 
+      transaction: updatedTransaction 
     })
   } catch (error) {
     console.error("Error updating transaction status:", error)
