@@ -6,9 +6,12 @@ import { EmailNotificationService } from "@/lib/email-notification-service"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Email notification API: Received request')
     const { transactionId, status, userEmail, firstName, type } = await request.json()
+    console.log('Email notification API: Request data:', { transactionId, status, userEmail, firstName, type })
 
     if (type === 'transaction' && transactionId && status) {
+      console.log('Email notification API: Sending transaction status email')
       // Send transaction status email
       EmailNotificationService.sendTransactionStatusEmail(transactionId, status)
       
@@ -17,6 +20,7 @@ export async function POST(request: NextRequest) {
         message: 'Transaction email notification queued' 
       })
     } else if (type === 'welcome' && userEmail && firstName) {
+      console.log('Email notification API: Sending welcome email')
       // Send welcome email
       EmailNotificationService.sendWelcomeEmail(userEmail, firstName)
       
@@ -25,6 +29,7 @@ export async function POST(request: NextRequest) {
         message: 'Welcome email notification queued' 
       })
     } else {
+      console.log('Email notification API: Invalid parameters')
       return NextResponse.json({ 
         error: 'Invalid parameters' 
       }, { status: 400 })

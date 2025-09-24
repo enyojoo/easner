@@ -516,6 +516,7 @@ class AdminDataStore {
       }
 
       // Send email notification in background (non-blocking)
+      console.log('AdminDataStore: Sending email notification for transaction:', transactionId, 'status:', newStatus)
       this.sendEmailNotification(transactionId, newStatus).catch(error => {
         console.error('Email notification failed:', error)
         // Don't throw - email failure shouldn't break the status update
@@ -530,9 +531,13 @@ class AdminDataStore {
    */
   private async sendEmailNotification(transactionId: string, status: string): Promise<void> {
     try {
+      console.log('AdminDataStore: sendEmailNotification called for:', transactionId, status)
+      console.log('AdminDataStore: typeof window:', typeof window)
+      
       // Only send emails on client side to avoid server-side issues
       if (typeof window !== 'undefined') {
-        await fetch('/api/send-email-notification', {
+        console.log('AdminDataStore: Making fetch request to /api/send-email-notification')
+        const response = await fetch('/api/send-email-notification', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -543,6 +548,12 @@ class AdminDataStore {
             status
           })
         })
+        
+        console.log('AdminDataStore: Email notification response:', response.status, response.statusText)
+        const responseData = await response.json()
+        console.log('AdminDataStore: Email notification response data:', responseData)
+      } else {
+        console.log('AdminDataStore: Not in browser environment, skipping email notification')
       }
     } catch (error) {
       console.error('Failed to send email notification:', error)
