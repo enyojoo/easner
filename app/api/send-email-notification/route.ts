@@ -13,20 +13,20 @@ export async function POST(request: NextRequest) {
     if (type === 'transaction' && transactionId && status) {
       console.log('Email notification API: Sending transaction status email for:', transactionId, status)
       // Send transaction status email
-      EmailNotificationService.sendTransactionStatusEmail(transactionId, status)
+      await EmailNotificationService.sendTransactionStatusEmail(transactionId, status)
       
       return NextResponse.json({ 
         success: true, 
-        message: 'Transaction email notification queued' 
+        message: 'Transaction email notification sent' 
       })
     } else if (type === 'welcome' && userEmail && firstName) {
       console.log('Email notification API: Sending welcome email to:', userEmail)
       // Send welcome email
-      EmailNotificationService.sendWelcomeEmail(userEmail, firstName)
+      await EmailNotificationService.sendWelcomeEmail(userEmail, firstName)
       
       return NextResponse.json({ 
         success: true, 
-        message: 'Welcome email notification queued' 
+        message: 'Welcome email notification sent' 
       })
     } else {
       console.log('Email notification API: Invalid parameters')

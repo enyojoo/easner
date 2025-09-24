@@ -533,12 +533,23 @@ class AdminDataStore {
     try {
       console.log('AdminDataStore: sendEmailNotification called for:', transactionId, status)
       
-      // Import EmailNotificationService dynamically to avoid server-side issues
-      const { EmailNotificationService } = await import('./email-notification-service')
+      // Call server-side API route for email sending
+      console.log('AdminDataStore: Making fetch request to /api/send-email-notification')
+      const response = await fetch('/api/send-email-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'transaction',
+          transactionId,
+          status
+        })
+      })
       
-      console.log('AdminDataStore: Calling EmailNotificationService directly')
-      await EmailNotificationService.sendTransactionStatusEmail(transactionId, status)
-      console.log('AdminDataStore: Email notification completed')
+      console.log('AdminDataStore: Email notification response:', response.status, response.statusText)
+      const responseData = await response.json()
+      console.log('AdminDataStore: Email notification response data:', responseData)
     } catch (error) {
       console.error('Failed to send email notification:', error)
       // Don't throw - this is non-blocking
