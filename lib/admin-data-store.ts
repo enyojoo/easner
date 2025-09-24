@@ -22,7 +22,7 @@ interface AdminData {
 class AdminDataStore {
   private data: AdminData | null = null
   private loading = false
-  private refreshInterval: NodeJS.Timeout | null = null
+  private refreshInterval: ReturnType<typeof setInterval> | null = null
   private listeners: Set<() => void> = new Set()
   private initialized = false
 
