@@ -16,14 +16,28 @@ export async function POST(request: NextRequest) {
       .from("admin_users")
       .select("*")
       .eq("email", email)
-      .eq("status", "active")
       .single()
 
-    console.log("Admin user check:", { email, adminError, adminUser })
+    console.log("Admin user check:", { 
+      email, 
+      adminError, 
+      adminUser: adminUser ? {
+        id: adminUser.id,
+        email: adminUser.email,
+        role: adminUser.role,
+        status: adminUser.status
+      } : null
+    })
 
     if (adminError || !adminUser) {
       console.log("Admin user not found:", adminError)
       return NextResponse.json({ error: "Access denied. Admin privileges required." }, { status: 403 })
+    }
+
+    // Check if admin user is active (if status field exists)
+    if (adminUser.status && adminUser.status !== "active") {
+      console.log("Admin user is not active:", adminUser.status)
+      return NextResponse.json({ error: "Admin account is not active." }, { status: 403 })
     }
 
     // Now authenticate with Supabase Auth
