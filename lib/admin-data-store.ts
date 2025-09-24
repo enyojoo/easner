@@ -537,8 +537,7 @@ class AdminDataStore {
   async updateExchangeRates(updates: any[]) {
     try {
       // Update database first
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { error } = await serverClient.from("exchange_rates").upsert(updates, {
+      const { error } = await supabase.from("exchange_rates").upsert(updates, {
         onConflict: "from_currency,to_currency",
         ignoreDuplicates: false,
       })
@@ -561,8 +560,7 @@ class AdminDataStore {
   async addCurrency(currencyData: any) {
     try {
       // Insert new currency
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { data: newCurrency, error } = await serverClient.from("currencies").insert(currencyData).select().single()
+      const { data: newCurrency, error } = await supabase.from("currencies").insert(currencyData).select().single()
 
       if (error) throw error
 
@@ -592,8 +590,7 @@ class AdminDataStore {
       if (ratesError) throw ratesError
 
       // Delete currency
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { error } = await serverClient.from("currencies").delete().eq("id", currencyId)
+      const { error } = await supabase.from("currencies").delete().eq("id", currencyId)
 
       if (error) throw error
 
@@ -636,8 +633,7 @@ class AdminDataStore {
   // Email Templates methods
   async loadEmailTemplates() {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("email_templates")
         .select("*")
         .order("template_type", { ascending: true })
@@ -652,8 +648,7 @@ class AdminDataStore {
 
   async createEmailTemplate(template: any) {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("email_templates")
         .insert([template])
         .select()
@@ -669,8 +664,7 @@ class AdminDataStore {
 
   async updateEmailTemplate(id: string, template: any) {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("email_templates")
         .update(template)
         .eq("id", id)
@@ -687,8 +681,7 @@ class AdminDataStore {
 
   async deleteEmailTemplate(id: string) {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { error } = await serverClient
+      const { error } = await supabase
         .from("email_templates")
         .delete()
         .eq("id", id)
@@ -702,8 +695,7 @@ class AdminDataStore {
 
   async updateEmailTemplateStatus(id: string, status: string) {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("email_templates")
         .update({ status })
         .eq("id", id)
@@ -720,16 +712,14 @@ class AdminDataStore {
 
   async setDefaultEmailTemplate(id: string, templateType: string) {
     try {
-      // const serverClient = createServerClient() // Temporarily disabled
-      
       // First, unset all defaults for this template type
-      await serverClient
+      await supabase
         .from("email_templates")
         .update({ is_default: false })
         .eq("template_type", templateType)
 
       // Then set the selected template as default
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("email_templates")
         .update({ is_default: true })
         .eq("id", id)
