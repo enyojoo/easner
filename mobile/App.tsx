@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { StatusBar } from 'expo-status-bar'
 import { View, Text, StyleSheet } from 'react-native'
@@ -7,10 +7,16 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AuthProvider } from './src/contexts/AuthContext'
 import { UserDataProvider } from './src/contexts/UserDataContext'
 import { PostHogProvider } from './src/components/PostHogProvider'
+import { deepLinkService } from './src/services/DeepLinkService'
 import AppNavigator from './src/navigation/AppNavigator'
 
 export default function App() {
   console.log('App.tsx: App component rendering')
+  
+  // Initialize deep linking
+  useEffect(() => {
+    deepLinkService.initialize()
+  }, [])
   
   try {
     return (
