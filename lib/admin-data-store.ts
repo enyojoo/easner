@@ -95,12 +95,57 @@ class AdminDataStore {
 
   private async loadUsers() {
     try {
-      const response = await fetch("/api/admin/users")
-      if (!response.ok) {
-        throw new Error("Failed to load users")
-      }
-      const data = await response.json()
-      return data.users || []
+      const { data: users, error } = await supabase
+        .from("users")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
+      // Calculate transaction stats for each user
+      const usersWithStats = await Promise.all(
+        (users || []).map(async (user) => {
+          const { data: transactions } = await supabase
+            .from("transactions")
+            .select("send_amount, send_currency, status")
+            .eq("user_id", user.id)
+
+          const totalTransactions = transactions?.length || 0
+          const totalVolume = (transactions || []).reduce((sum, tx) => {
+            let amount = Number(tx.send_amount)
+
+            // Convert to NGN based on actual currency
+            switch (tx.send_currency) {
+              case "RUB":
+                amount = amount * 0.011 // RUB to NGN rate
+                break
+              case "USD":
+                amount = amount * 1650 // USD to NGN rate
+                break
+              case "EUR":
+                amount = amount * 1750 // EUR to NGN rate
+                break
+              case "GBP":
+                amount = amount * 2000 // GBP to NGN rate
+                break
+              case "NGN":
+              default:
+                // Already in NGN, no conversion needed
+                break
+            }
+
+            return sum + amount
+          }, 0)
+
+          return {
+            ...user,
+            totalTransactions,
+            totalVolume,
+          }
+        }),
+      )
+
+      return usersWithStats
     } catch (error) {
       console.error("Error loading users:", error)
       return [] // Return empty array on error to prevent crashes
@@ -109,12 +154,18 @@ class AdminDataStore {
 
   private async loadTransactions() {
     try {
-      const response = await fetch("/api/admin/transactions")
-      if (!response.ok) {
-        throw new Error("Failed to load transactions")
-      }
-      const data = await response.json()
-      return data.transactions || []
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(`
+          *,
+          user:users(first_name, last_name, email),
+          recipient:recipients(full_name, bank_name, account_number)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(200)
+
+      if (error) throw error
+      return data || []
     } catch (error) {
       console.error("Error loading transactions:", error)
       return [] // Return empty array on error to prevent crashes
@@ -123,12 +174,13 @@ class AdminDataStore {
 
   private async loadCurrencies() {
     try {
-      const response = await fetch("/api/admin/currencies")
-      if (!response.ok) {
-        throw new Error("Failed to load currencies")
-      }
-      const data = await response.json()
-      return data.currencies || []
+      const { data, error } = await supabase
+        .from("currencies")
+        .select("*")
+        .order("code", { ascending: true })
+
+      if (error) throw error
+      return data || []
     } catch (error) {
       console.error("Error loading currencies:", error)
       return [] // Return empty array on error to prevent crashes
@@ -137,12 +189,17 @@ class AdminDataStore {
 
   private async loadExchangeRates() {
     try {
-      const response = await fetch("/api/admin/exchange-rates")
-      if (!response.ok) {
-        throw new Error("Failed to load exchange rates")
-      }
-      const data = await response.json()
-      return data.exchangeRates || []
+      const { data, error } = await supabase
+        .from("exchange_rates")
+        .select(`
+          *,
+          from_currency_info:currencies!exchange_rates_from_currency_fkey(code, name, symbol),
+          to_currency_info:currencies!exchange_rates_to_currency_fkey(code, name, symbol)
+        `)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return data || []
     } catch (error) {
       console.error("Error loading exchange rates:", error)
       return [] // Return empty array on error to prevent crashes
@@ -173,12 +230,14 @@ class AdminDataStore {
 
   private async getAdminBaseCurrency(): Promise<string> {
     try {
-      const response = await fetch("/api/admin/settings")
-      if (!response.ok) {
-        return "NGN" // Default to NGN
-      }
-      const data = await response.json()
-      return data.settings?.base_currency || "NGN"
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "base_currency")
+        .single()
+
+      if (error || !data) return "NGN" // Default to NGN
+      return data.value
     } catch {
       return "NGN" // Default fallback
     }
