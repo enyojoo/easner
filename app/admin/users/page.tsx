@@ -201,7 +201,7 @@ export default function AdminUsersPage() {
           u.status,
           u.verification_status,
           new Date(u.created_at).toLocaleDateString(),
-          formatCurrency(u.totalVolume, "NGN"),
+          formatCurrency(u.totalVolume, u.base_currency),
         ].join(","),
       ),
     ].join("\n")
@@ -458,7 +458,7 @@ export default function AdminUsersPage() {
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
-                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, "NGN")}</TableCell>
+                    <TableCell className="font-medium">{formatCurrency(user.totalVolume, user.base_currency)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Dialog>
@@ -547,7 +547,7 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Total Volume:</span>
                                           <span className="font-medium">
-                                            {formatCurrency(selectedUser.totalVolume, "NGN")}
+                                            {formatCurrency(selectedUser.totalVolume, selectedUser.base_currency)}
                                           </span>
                                         </div>
                                       </div>

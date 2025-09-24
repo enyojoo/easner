@@ -542,8 +542,29 @@ class AdminDataStore {
   }
 
   async updateUserVerification(userId: string, newStatus: string) {
-    console.log("updateUserVerification temporarily disabled - needs API route")
-    // TODO: Implement API route for user verification update
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/verification`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verification_status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update user verification")
+      }
+
+      // Update local data
+      if (this.data) {
+        this.data.users = this.data.users.map((user) => 
+          user.id === userId ? { ...user, verification_status: newStatus } : user
+        )
+        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
+        this.notify()
+      }
+    } catch (error) {
+      console.error("Error updating user verification:", error)
+      // Don't throw error to prevent crashes
+    }
   }
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
