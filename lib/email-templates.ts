@@ -71,7 +71,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Pending
   transactionPending: {
-    subject: "Payment Required - Transaction #{{transactionId}}",
+    subject: (data: TransactionEmailData) => `Payment Required - Transaction #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
@@ -97,7 +97,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Complete Payment",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}`
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}`
         }
       )
     },
@@ -118,7 +118,7 @@ Transaction Details:
 Next Steps:
 Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!
 
-Complete Payment: ${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}
+Complete Payment: ${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `
@@ -126,7 +126,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Processing
   transactionProcessing: {
-    subject: "Transfer Processing - Transaction #{{transactionId}}",
+    subject: (data: TransactionEmailData) => `Transfer Processing - Transaction #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
@@ -152,7 +152,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Track Transfer",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}`
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}`
         }
       )
     },
@@ -173,7 +173,7 @@ Transaction Details:
 What's Happening:
 We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!
 
-Track Transfer: ${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}
+Track Transfer: ${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `
@@ -181,7 +181,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Completed
   transactionCompleted: {
-    subject: "Transfer Completed - Transaction #{{transactionId}}",
+    subject: (data: TransactionEmailData) => `Transfer Completed Successfully! 🎉 Transaction #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
@@ -207,7 +207,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "View Transaction",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}`
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}`
         }
       )
     },
@@ -230,7 +230,7 @@ Transaction Details:
 What's Next:
 Your recipient should receive the money within minutes thanks to our fast processing. You can track all your transfers in your dashboard.
 
-View Transaction: ${process.env.NEXT_PUBLIC_APP_URL}/user/transactions/${data.transactionId}
+View Transaction: ${process.env.NEXT_PUBLIC_SITE_URL}/user/transactions/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `
@@ -238,7 +238,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Failed
   transactionFailed: {
-    subject: "Transfer Failed - Transaction #{{transactionId}}",
+    subject: (data: TransactionEmailData) => `Transaction Failed - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
@@ -264,7 +264,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Contact Support",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/user/support`
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/user/support`
         }
       )
     },
@@ -286,7 +286,7 @@ Transaction Details:
 What Happens Next:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Contact Support: ${process.env.NEXT_PUBLIC_APP_URL}/user/support
+Contact Support: ${process.env.NEXT_PUBLIC_SITE_URL}/user/support
 
 Need help? Contact us at support@easner.com
     `
@@ -294,7 +294,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Cancelled
   transactionCancelled: {
-    subject: "Transfer Cancelled - Transaction #{{transactionId}}",
+    subject: (data: TransactionEmailData) => `Transaction Cancelled - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
@@ -320,7 +320,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Send New Transfer",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/user/send`
+          url: `${process.env.NEXT_PUBLIC_SITE_URL}/user/send`
         }
       )
     },
@@ -342,7 +342,7 @@ Transaction Details:
 Refund Information:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Send New Transfer: ${process.env.NEXT_PUBLIC_APP_URL}/user/send
+Send New Transfer: ${process.env.NEXT_PUBLIC_SITE_URL}/user/send
 
 Need help? Contact us at support@easner.com
     `
