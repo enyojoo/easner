@@ -1,7 +1,6 @@
 // Transaction status management service with email notifications
 
 import { supabase } from './supabase'
-import { emailService } from './email-service'
 import type { Transaction, TransactionStatusHistory } from '@/types'
 
 export interface StatusUpdateData {
@@ -164,6 +163,11 @@ export class TransactionStatusService {
       return
     }
 
+    // Only send emails on server side
+    if (typeof window !== 'undefined') {
+      return
+    }
+
     const emailData = {
       transactionId: transaction.transaction_id,
       recipientName: transaction.recipient?.full_name || 'Unknown',
@@ -180,6 +184,9 @@ export class TransactionStatusService {
     }
 
     try {
+      // Dynamically import email service only on server side
+      const { emailService } = await import('./email-service')
+      
       switch (status) {
         case 'pending':
           await emailService.sendTransactionPendingEmail(transaction.user.email, emailData)

@@ -493,17 +493,32 @@ class AdminDataStore {
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
     try {
-      // Import transaction status service to handle email notifications
-      const { transactionStatusService } = await import('./transaction-status-service')
-      
-      // Use the transaction status service which handles email notifications
-      const result = await transactionStatusService.updateStatus(transactionId, {
-        status: newStatus as any,
-        failure_reason: newStatus === 'failed' ? 'Transaction failed by admin' : undefined
-      })
+      // Only import and use transaction status service on server side
+      if (typeof window === 'undefined') {
+        const { transactionStatusService } = await import('./transaction-status-service')
+        
+        // Use the transaction status service which handles email notifications
+        const result = await transactionStatusService.updateStatus(transactionId, {
+          status: newStatus as any,
+          failure_reason: newStatus === 'failed' ? 'Transaction failed by admin' : undefined
+        })
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update transaction status')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update transaction status')
+        }
+      } else {
+        // On client side, just update the database directly
+        const { error } = await supabase
+          .from("transactions")
+          .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("transaction_id", transactionId)
+
+        if (error) {
+          throw error
+        }
       }
 
       // Update local data
