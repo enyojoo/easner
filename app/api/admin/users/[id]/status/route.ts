@@ -1,30 +1,51 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
-import { requireAuth } from "@/lib/auth-utils"
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await requireAuth(request)
+    const supabase = createServerClient()
     
-    if (!user.isAdmin) {
+    // Check if user is authenticated and is admin
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    }
+
+    const { user } = session
+    
+    // Check if user is admin by querying admin_users table
+    const { data: adminUser, error: adminError } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("id", user.id)
+      .single()
+    
+    if (adminError || !adminUser) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
     const { status } = await request.json()
     const userId = params.id
 
-    const serverClient = createServerClient()
-    const { data, error } = await serverClient
+    // Update user status using service role (bypasses RLS)
+    const { data, error } = await supabase
       .from("users")
-      .update({ status })
+      .update({ 
+        status,
+        updated_at: new Date().toISOString()
+      })
       .eq("id", userId)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("Database error:", error)
+      throw error
+    }
 
     return NextResponse.json({ user: data })
   } catch (error) {

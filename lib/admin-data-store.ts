@@ -519,6 +519,8 @@ class AdminDataStore {
 
   async updateUserStatus(userId: string, newStatus: string) {
     try {
+      console.log(`AdminDataStore: Updating user ${userId} status to ${newStatus}`)
+      
       const response = await fetch(`/api/admin/users/${userId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -526,23 +528,33 @@ class AdminDataStore {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update user status")
+        const errorData = await response.json()
+        console.error("API Error:", errorData)
+        throw new Error(`Failed to update user status: ${errorData.error || response.statusText}`)
       }
+
+      const result = await response.json()
+      console.log("Update result:", result)
 
       // Update local data
       if (this.data) {
-        this.data.users = this.data.users.map((user) => (user.id === userId ? { ...user, status: newStatus } : user))
+        this.data.users = this.data.users.map((user) => 
+          user.id === userId ? { ...user, status: newStatus, updated_at: new Date().toISOString() } : user
+        )
         this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.notify()
+        console.log("Local data updated successfully")
       }
     } catch (error) {
       console.error("Error updating user status:", error)
-      // Don't throw error to prevent crashes
+      throw error // Re-throw to show error to user
     }
   }
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
+      console.log(`AdminDataStore: Updating user ${userId} verification to ${newStatus}`)
+      
       const response = await fetch(`/api/admin/users/${userId}/verification`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -550,20 +562,26 @@ class AdminDataStore {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update user verification")
+        const errorData = await response.json()
+        console.error("API Error:", errorData)
+        throw new Error(`Failed to update user verification: ${errorData.error || response.statusText}`)
       }
+
+      const result = await response.json()
+      console.log("Update result:", result)
 
       // Update local data
       if (this.data) {
         this.data.users = this.data.users.map((user) => 
-          user.id === userId ? { ...user, verification_status: newStatus } : user
+          user.id === userId ? { ...user, verification_status: newStatus, updated_at: new Date().toISOString() } : user
         )
         this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.notify()
+        console.log("Local data updated successfully")
       }
     } catch (error) {
       console.error("Error updating user verification:", error)
-      // Don't throw error to prevent crashes
+      throw error // Re-throw to show error to user
     }
   }
 
