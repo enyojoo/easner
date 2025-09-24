@@ -2,6 +2,24 @@ import type { Currency, ExchangeRate } from "@/types"
 
 export const currencies: Currency[] = [
   {
+    code: "USD",
+    name: "US Dollar",
+    symbol: "$",
+    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#b22234" d="M0 0h32v2.4H0z"></path><path fill="#fff" d="M0 2.4h32v2.4H0z"></path><path fill="#b22234" d="M0 4.8h32v2.4H0z"></path><path fill="#fff" d="M0 7.2h32v2.4H0z"></path><path fill="#b22234" d="M0 9.6h32v2.4H0z"></path><path fill="#fff" d="M0 12h32v2.4H0z"></path><path fill="#b22234" d="M0 14.4h32v2.4H0z"></path><path fill="#fff" d="M0 16.8h32v2.4H0z"></path><path fill="#b22234" d="M0 19.2h32v2.4H0z"></path><path fill="#fff" d="M0 21.6h32v2.4H0z"></path><path fill="#b22234" d="M0 24h32v2.4H0z"></path><path fill="#fff" d="M0 26.4h32v2.4H0z"></path><path fill="#b22234" d="M0 28.8h32v2.4H0z"></path><path fill="#3c3b6e" d="M0 0h12.8v16.8H0z"></path><path fill="#fff" d="M1.6 1.6h9.6v1.6H1.6z"></path><path fill="#fff" d="M1.6 4.8h9.6v1.6H1.6z"></path><path fill="#fff" d="M1.6 8h9.6v1.6H1.6z"></path><path fill="#fff" d="M1.6 11.2h9.6v1.6H1.6z"></path><path fill="#fff" d="M1.6 14.4h9.6v1.6H1.6z"></path></svg>`,
+  },
+  {
+    code: "EUR",
+    name: "Euro",
+    symbol: "€",
+    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#003399" d="M0 0h32v32H0z"></path><path fill="#ffcc00" d="M16 4c6.627 0 12 5.373 12 12s-5.373 12-12 12c-2.381 0-4.6-.694-6.47-1.89L16 20.5l6.47 5.61C20.6 27.306 18.381 28 16 28c-6.627 0-12-5.373-12-12S9.373 4 16 4z"></path><path fill="#003399" d="M16 6c5.523 0 10 4.477 10 10s-4.477 10-10 10c-1.657 0-3.2-.402-4.57-1.11L16 22.5l4.57 2.39C19.2 25.598 17.657 26 16 26c-5.523 0-10-4.477-10-10S10.477 6 16 6z"></path></svg>`,
+  },
+  {
+    code: "GBP",
+    name: "British Pound",
+    symbol: "£",
+    flag: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><path fill="#012169" d="M0 0h32v32H0z"></path><path fill="#fff" d="M0 0l32 32M32 0L0 32" stroke="#c8102e" stroke-width="6.4"></path><path fill="#c8102e" d="M0 0l32 32M32 0L0 32" stroke="#fff" stroke-width="2.4"></path><path fill="#c8102e" d="M16 0v32M0 16h32" stroke="#c8102e" stroke-width="4.8"></path><path fill="#c8102e" d="M16 0v32M0 16h32" stroke="#fff" stroke-width="2.4"></path></svg>`,
+  },
+  {
     code: "RUB",
     name: "Russian Ruble",
     symbol: "₽",
