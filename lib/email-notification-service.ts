@@ -60,50 +60,81 @@ export class EmailNotificationService {
     try {
       console.log('EmailNotificationService: sendEmailInBackground called for:', transactionId, status)
       
-      // For now, let's use a simple approach - send a test email to verify the system works
-      const testEmail = 'enyocreative@gmail.com' // Use your test email
+      // Get transaction details with proper error handling
+      const supabase = createServerClient()
       
-      console.log('EmailNotificationService: Sending test email to:', testEmail)
-      
-      // Create mock email data for testing
+      // First, get the basic transaction data
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .single()
+
+      if (transactionError || !transaction) {
+        console.error('Failed to fetch transaction:', transactionError)
+        return
+      }
+
+      console.log('EmailNotificationService: Transaction found:', transaction.transaction_id)
+
+      // Get user data separately
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('first_name, last_name, email')
+        .eq('id', transaction.user_id)
+        .single()
+
+      if (userError || !user?.email) {
+        console.error('Failed to fetch user data:', userError)
+        console.log('EmailNotificationService: User ID from transaction:', transaction.user_id)
+        return
+      }
+
+      console.log('EmailNotificationService: User found:', user.email)
+
+      // Get recipient data separately
+      const { data: recipient, error: recipientError } = await supabase
+        .from('recipients')
+        .select('full_name')
+        .eq('id', transaction.recipient_id)
+        .single()
+
+      console.log('EmailNotificationService: Recipient found:', recipient?.full_name || 'Unknown')
+
+      // Prepare email data
       const emailData: TransactionEmailData = {
-        transactionId: transactionId,
-        recipientName: 'Test Recipient',
-        sendAmount: 100,
-        sendCurrency: 'USD',
-        receiveAmount: 150000,
-        receiveCurrency: 'NGN',
-        exchangeRate: 1500,
-        fee: 0,
+        transactionId: transaction.transaction_id,
+        recipientName: recipient?.full_name || 'Unknown',
+        sendAmount: transaction.send_amount,
+        sendCurrency: transaction.send_currency,
+        receiveAmount: transaction.receive_amount,
+        receiveCurrency: transaction.receive_currency,
+        exchangeRate: transaction.exchange_rate,
+        fee: transaction.fee_amount,
         status: status as any,
-        failureReason: undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        failureReason: transaction.failure_reason,
+        createdAt: transaction.created_at,
+        updatedAt: transaction.updated_at
       }
 
       // Send appropriate email based on status
       console.log('EmailNotificationService: Sending email for status:', status)
       switch (status) {
         case 'pending':
-          console.log('EmailNotificationService: Sending pending email')
-          await emailService.sendTransactionPendingEmail(testEmail, emailData)
+          await emailService.sendTransactionPendingEmail(user.email, emailData)
           break
         case 'processing':
         case 'initiated':
-          console.log('EmailNotificationService: Sending processing email')
-          await emailService.sendTransactionProcessingEmail(testEmail, emailData)
+          await emailService.sendTransactionProcessingEmail(user.email, emailData)
           break
         case 'completed':
-          console.log('EmailNotificationService: Sending completed email')
-          await emailService.sendTransactionCompletedEmail(testEmail, emailData)
+          await emailService.sendTransactionCompletedEmail(user.email, emailData)
           break
         case 'failed':
-          console.log('EmailNotificationService: Sending failed email')
-          await emailService.sendTransactionFailedEmail(testEmail, emailData)
+          await emailService.sendTransactionFailedEmail(user.email, emailData)
           break
         case 'cancelled':
-          console.log('EmailNotificationService: Sending cancelled email')
-          await emailService.sendTransactionCancelledEmail(testEmail, emailData)
+          await emailService.sendTransactionCancelledEmail(user.email, emailData)
           break
         default:
           console.log(`Unknown transaction status: ${status}`)
