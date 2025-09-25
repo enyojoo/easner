@@ -400,37 +400,37 @@ export function generateTransactionDetails(data: any): string {
     <div class="transaction-details">
       <h3>Transaction Details</h3>
       <div class="detail-row">
-        <span class="detail-label">Transaction ID:</span>
+        <span class="detail-label">Transaction ID: </span>
         <span class="detail-value">${data.transactionId}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Recipient:</span>
+        <span class="detail-label">Recipient: </span>
         <span class="detail-value">${data.recipientName}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Amount:</span>
+        <span class="detail-label">Amount: </span>
         <span class="detail-value">${data.sendAmount} ${data.sendCurrency}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Receiving:</span>
+        <span class="detail-label">Receiving: </span>
         <span class="detail-value">${data.receiveAmount} ${data.receiveCurrency}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Exchange Rate:</span>
+        <span class="detail-label">Rate Used: </span>
         <span class="detail-value">1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Fee:</span>
+        <span class="detail-label">Fee: </span>
         <span class="detail-value">${data.fee} ${data.sendCurrency}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Status:</span>
+        <span class="detail-label">Status: </span>
         <span class="detail-value">
           <span class="status-badge status-${data.status}">${data.status}</span>
         </span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Date:</span>
+        <span class="detail-label">Date: </span>
         <span class="detail-value">${new Date(data.createdAt).toLocaleDateString()}</span>
       </div>
     </div>

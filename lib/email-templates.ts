@@ -111,7 +111,7 @@ Transaction Details:
 - Recipient: ${data.recipientName}
 - Amount: ${data.sendAmount} ${data.sendCurrency}
 - Receiving: ${data.receiveAmount} ${data.receiveCurrency}
-- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Rate Used: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
@@ -166,7 +166,7 @@ Transaction Details:
 - Recipient: ${data.recipientName}
 - Amount: ${data.sendAmount} ${data.sendCurrency}
 - Receiving: ${data.receiveAmount} ${data.receiveCurrency}
-- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Rate Used: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
@@ -223,7 +223,7 @@ Transaction Details:
 - Recipient: ${data.recipientName}
 - Amount: ${data.sendAmount} ${data.sendCurrency}
 - Receiving: ${data.receiveAmount} ${data.receiveCurrency}
-- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Rate Used: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
@@ -279,7 +279,7 @@ Transaction Details:
 - Recipient: ${data.recipientName}
 - Amount: ${data.sendAmount} ${data.sendCurrency}
 - Receiving: ${data.receiveAmount} ${data.receiveCurrency}
-- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Rate Used: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
@@ -335,7 +335,7 @@ Transaction Details:
 - Recipient: ${data.recipientName}
 - Amount: ${data.sendAmount} ${data.sendCurrency}
 - Receiving: ${data.receiveAmount} ${data.receiveCurrency}
-- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Rate Used: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
