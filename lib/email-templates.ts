@@ -97,7 +97,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Complete Payment",
-          url: `https://easner.com/user/send/${data.transactionId.toLowerCase()}`
+          url: `https://www.easner.com/user/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -118,7 +118,7 @@ Transaction Details:
 Next Steps:
 Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!
 
-Complete Payment: https://easner.com/user/send/${data.transactionId.toLowerCase()}
+Complete Payment: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -152,7 +152,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Track Transfer",
-          url: `https://easner.com/user/send/${data.transactionId.toLowerCase()}`
+          url: `https://www.easner.com/user/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -173,7 +173,7 @@ Transaction Details:
 What's Happening:
 We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!
 
-Track Transfer: https://easner.com/user/send/${data.transactionId.toLowerCase()}
+Track Transfer: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -207,7 +207,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "View Transaction",
-          url: `https://easner.com/user/send/${data.transactionId.toLowerCase()}`
+          url: `https://www.easner.com/user/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -230,7 +230,7 @@ Transaction Details:
 What's Next:
 Your recipient should receive the money within minutes thanks to our fast processing. You can track all your transfers in your dashboard.
 
-View Transaction: https://easner.com/user/send/${data.transactionId.toLowerCase()}
+View Transaction: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -264,7 +264,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Contact Support",
-          url: `https://easner.com/user/support`
+          url: `https://www.easner.com/user/support`
         }
       )
     },
@@ -286,7 +286,7 @@ Transaction Details:
 What Happens Next:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Contact Support: https://easner.com/user/support
+Contact Support: https://www.easner.com/user/support
 
 Need help? Contact us at support@easner.com
     `
@@ -320,7 +320,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Send New Transfer",
-          url: `https://easner.com/user/send`
+          url: `https://www.easner.com/user/send`
         }
       )
     },
@@ -342,7 +342,7 @@ Transaction Details:
 Refund Information:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Send New Transfer: https://easner.com/user/send
+Send New Transfer: https://www.easner.com/user/send
 
 Need help? Contact us at support@easner.com
     `

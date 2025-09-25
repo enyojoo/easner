@@ -43,11 +43,11 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
   }
 
   const handleTermsPress = () => {
-    Linking.openURL('https://easner.com/terms')
+    Linking.openURL('https://www.easner.com/terms')
   }
 
   const handlePrivacyPress = () => {
-    Linking.openURL('https://easner.com/privacy')
+    Linking.openURL('https://www.easner.com/privacy')
   }
 
   const validateForm = () => {

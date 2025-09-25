@@ -132,7 +132,7 @@ export class DeepLinkService {
    */
   createDeepLink(screen: string, params: Record<string, string> = {}): string {
     try {
-      const baseUrl = 'https://easner.com'
+      const baseUrl = 'https://www.easner.com'
       
       const screenMap: Record<string, string> = {
         'Dashboard': '/user/dashboard',
@@ -154,7 +154,7 @@ export class DeepLinkService {
       return `${baseUrl}${path}`
     } catch (error) {
       console.error('DeepLinkService: Error creating deep link:', error)
-      return 'https://easner.com/user/dashboard'
+      return 'https://www.easner.com/user/dashboard'
     }
   }
 
