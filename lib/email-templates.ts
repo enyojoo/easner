@@ -37,7 +37,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       
       return generateBaseEmailTemplate(
         "Welcome to Easner!",
-        "Cross-border transfers in under 5 minutes",
+        "",
         content,
         {
           text: "Go to Dashboard",
@@ -93,7 +93,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Payment Required",
-        "Complete payment for instant transfer",
+        "",
         content,
         {
           text: "Complete Payment",
@@ -306,7 +306,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Cancelled",
-        "Your transfer has been cancelled",
+        "",
         content,
         {
           text: "Send New Transfer",
