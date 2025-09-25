@@ -15,7 +15,7 @@ import type { Transaction } from "@/types"
 export default function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
-  const { userProfile } = useAuth()
+  const { userProfile, loading: authLoading } = useAuth()
   const { currencies } = useUserData()
   const transactionId = params.id as string
 
@@ -37,10 +37,17 @@ export default function TransactionStatusPage() {
   // Load transaction data from Supabase
   useEffect(() => {
     const loadTransaction = async () => {
-      if (!transactionId || !userProfile?.id) return
+      // Wait for auth to finish loading before attempting to load transaction
+      if (authLoading) return
+      
+      if (!transactionId || !userProfile?.id) {
+        setHasAttemptedLoad(true)
+        return
+      }
 
       try {
         setError(null)
+        setLoading(true)
 
         const transactionData = await transactionService.getById(transactionId.toUpperCase())
 
@@ -57,11 +64,13 @@ export default function TransactionStatusPage() {
         console.error("Error loading transaction:", error)
         setError("Failed to load transaction details")
         setHasAttemptedLoad(true)
+      } finally {
+        setLoading(false)
       }
     }
 
     loadTransaction()
-  }, [transactionId, userProfile?.id])
+  }, [transactionId, userProfile?.id, authLoading])
 
   // Poll for transaction updates every 30 seconds
   useEffect(() => {
@@ -252,7 +261,7 @@ export default function TransactionStatusPage() {
     )
   }
 
-  if (!transaction) {
+  if (authLoading || (!hasAttemptedLoad && !transaction)) {
     return (
       <UserDashboardLayout>
         <div className="p-6">
