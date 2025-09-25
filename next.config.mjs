@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable SWC minification for better performance
-  swcMinify: true,
+  // Enable Turbopack for Next.js 15
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
   // Enable compression
   compress: true,
   // Optimize images
