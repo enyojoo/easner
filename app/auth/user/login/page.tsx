@@ -13,21 +13,31 @@ import { BrandLogo } from "@/components/brand/brand-logo"
 import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
-import { useRouteProtection } from "@/hooks/use-route-protection"
+import { useEffect } from "react"
 
 function LoginPageContent() {
   const router = useRouter()
-  const { signIn } = useAuth()
-  const { isChecking } = useRouteProtection({ requireAuth: false })
+  const { signIn, user, userProfile, isAdmin, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
   const [error, setError] = useState("")
 
-  // Show loading spinner while checking authentication
-  if (isChecking) {
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!loading && user && userProfile !== undefined) {
+      if (isAdmin) {
+        router.push("/admin/dashboard")
+      } else {
+        router.push("/user/dashboard")
+      }
+    }
+  }, [user, userProfile, isAdmin, loading, router])
+
+  // Show loading only while auth is loading, not for form submission
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -40,7 +50,7 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setFormLoading(true)
     setError("")
 
     try {
@@ -80,7 +90,7 @@ function LoginPageContent() {
     } catch (err: any) {
       setError(err.message || "An error occurred during login")
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
@@ -120,7 +130,7 @@ function LoginPageContent() {
                   placeholder="Enter your email"
                   className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
                   required
-                  disabled={loading}
+                  disabled={formLoading}
                 />
               </div>
 
@@ -137,13 +147,13 @@ function LoginPageContent() {
                     placeholder="Enter your password"
                     className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
                     required
-                    disabled={loading}
+                    disabled={formLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={loading}
+                    disabled={formLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -156,7 +166,7 @@ function LoginPageContent() {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    disabled={loading}
+                    disabled={formLoading}
                   />
                   <Label htmlFor="remember" className="text-sm text-gray-600">
                     Remember me
@@ -172,10 +182,10 @@ function LoginPageContent() {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={formLoading}
                 className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {formLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
