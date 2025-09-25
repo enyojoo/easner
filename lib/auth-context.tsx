@@ -56,58 +56,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string, user?: any) => {
     try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 10000),
-      )
+      // Check if this is an admin user by looking at the user metadata
+      const isAdminUser = user?.user_metadata?.isAdmin || user?.isAdmin || false
 
-      const profilePromise = (async () => {
-        // Check if this is an admin user by looking at the user metadata
-        const isAdminUser = user?.user_metadata?.isAdmin || user?.isAdmin || false
-
-        if (isAdminUser) {
-          // For admin users, create profile from user metadata
-          const adminProfile = {
-            id: user.id,
-            email: user.email,
-            first_name: user.user_metadata?.first_name || user.name || '',
-            last_name: user.user_metadata?.last_name || '',
-            phone: user.phone || '',
-            base_currency: user.user_metadata?.base_currency || 'NGN',
-            status: 'active',
-            verification_status: 'verified',
-            created_at: user.created_at,
-            updated_at: user.updated_at || user.created_at,
-            role: 'super_admin'
-          }
-          
-          setUserProfile(adminProfile)
-          setIsAdmin(true)
-          if (user) setUser(user)
-          return adminProfile
+      if (isAdminUser) {
+        // For admin users, create profile from user metadata
+        const adminProfile = {
+          id: user.id,
+          email: user.email,
+          first_name: user.user_metadata?.first_name || user.name || '',
+          last_name: user.user_metadata?.last_name || '',
+          phone: user.phone || '',
+          base_currency: user.user_metadata?.base_currency || 'NGN',
+          status: 'active',
+          verification_status: 'verified',
+          created_at: user.created_at,
+          updated_at: user.updated_at || user.created_at,
+          role: 'super_admin'
         }
+        
+        setUserProfile(adminProfile)
+        setIsAdmin(true)
+        setUser(user)
+        return adminProfile
+      }
 
-        // For regular users, try to fetch from users table
-        const { data: userProfile, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", userId)
-          .single()
+      // For regular users, try to fetch from users table with a shorter timeout
+      const { data: userProfile, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single()
 
-        if (userProfile && !userError) {
-          setUserProfile(userProfile)
-          setIsAdmin(false)
-          if (user) setUser(user) // Set user after determining admin status
-          return userProfile
-        }
+      if (userProfile && !userError) {
+        setUserProfile(userProfile)
+        setIsAdmin(false)
+        setUser(user)
+        return userProfile
+      }
 
-        // If not found in users table and not admin, return null
-        return null
-      })()
-
-      return await Promise.race([profilePromise, timeoutPromise])
+      // If not found in users table and not admin, return null
+      return null
     } catch (error) {
       console.error("Error fetching user profile:", error)
+      // Don't fail completely, just return null and let the auth flow continue
       return null
     }
   }
@@ -150,8 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         if (session?.user) {
-          // Don't set user until profile is fetched to avoid race conditions
-          await fetchUserProfile(session.user.id, session.user)
+          // Set user immediately to prevent loading issues
+          setUser(session.user)
+          // Then fetch profile asynchronously
+          fetchUserProfile(session.user.id, session.user).catch(error => {
+            console.error("Error fetching profile after auth change:", error)
+          })
         } else {
           setUser(null)
           setUserProfile(null)
@@ -225,22 +221,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
-      // Clear all data before signing out
+      // Clear all data immediately
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+      setLoading(false)
 
-      await supabase.auth.signOut()
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error("Sign out error:", error)
+      }
     } catch (error) {
       console.error("Sign out error:", error)
       // Force clear state even if signOut fails
       setUser(null)
       setUserProfile(null)
       setIsAdmin(false)
+      setLoading(false)
     }
-  }
+  }, [])
 
   const value = useMemo(() => ({
     user,

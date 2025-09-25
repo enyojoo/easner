@@ -24,6 +24,13 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
   } = options
 
   useEffect(() => {
+    // For login pages, don't show loading if we're not requiring auth
+    if (!requireAuth) {
+      setIsAuthorized(true)
+      setIsChecking(false)
+      return
+    }
+
     // For user pages, check if user is admin and block access
     if (requireAuth && !adminOnly && user && userProfile !== undefined) {
       if (isAdmin) {
