@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import type { Transaction } from "@/types"
 
-export default function TransactionStatusPage() {
+function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
   const { user, userProfile, loading: authLoading } = useAuth()
@@ -37,20 +37,16 @@ export default function TransactionStatusPage() {
   // Load transaction data from Supabase
   useEffect(() => {
     const loadTransaction = async () => {
-      console.log('Transaction page auth state:', { authLoading, user: !!user, userProfile: !!userProfile, transactionId })
-      
       // Wait for auth to finish loading before attempting to load transaction
       if (authLoading) return
       
       // If no user is authenticated, redirect to login
       if (!user?.id) {
-        console.log('Transaction page: User not authenticated, redirecting to login')
         router.push('/auth/user/login')
         return
       }
       
       if (!transactionId) {
-        console.log('Transaction page: Missing transactionId', { transactionId })
         setHasAttemptedLoad(true)
         return
       }
@@ -281,14 +277,17 @@ export default function TransactionStatusPage() {
     )
   }
 
+  // Show loading only if we haven't attempted to load yet or if auth is still loading
   if (authLoading || (!hasAttemptedLoad && !transaction)) {
     return (
       <UserDashboardLayout>
         <div className="p-6">
           <div className="max-w-6xl mx-auto">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded mb-4"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading transaction...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -529,3 +528,5 @@ export default function TransactionStatusPage() {
     </UserDashboardLayout>
   )
 }
+
+export default memo(TransactionStatusPage)

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
 
@@ -112,11 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (user) {
       await fetchUserProfile(user.id)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     let mounted = true
@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
+  const signIn = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -198,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Sign in error:", error)
       return { error }
     }
-  }
+  }, [])
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     userProfile,
     loading,
@@ -251,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     refreshUserProfile,
     isAdmin,
-  }
+  }), [user, userProfile, loading, signIn, signUp, signOut, refreshUserProfile, isAdmin])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

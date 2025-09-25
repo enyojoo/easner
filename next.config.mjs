@@ -1,13 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable SWC minification for better performance
+  swcMinify: true,
+  // Enable compression
+  compress: true,
+  // Optimize images
+  images: {
+    unoptimized: true,
+    formats: ['image/webp', 'image/avif'],
+  },
+  // Enable React strict mode for better development
+  reactStrictMode: true,
+  // Enable experimental features for better performance
+  experimental: {
+    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
