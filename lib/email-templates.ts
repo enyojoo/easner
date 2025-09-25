@@ -97,7 +97,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Complete Payment",
-          url: `https://easner.com/user/transactions/${data.transactionId}`
+          url: `https://easner.com/user/send/${data.transactionId}`
         }
       )
     },
@@ -118,7 +118,7 @@ Transaction Details:
 Next Steps:
 Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!
 
-Complete Payment: https://easner.com/user/transactions/${data.transactionId}
+Complete Payment: https://easner.com/user/send/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `
@@ -152,7 +152,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Track Transfer",
-          url: `https://easner.com/user/transactions/${data.transactionId}`
+          url: `https://easner.com/user/send/${data.transactionId}`
         }
       )
     },
@@ -173,7 +173,7 @@ Transaction Details:
 What's Happening:
 We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!
 
-Track Transfer: https://easner.com/user/transactions/${data.transactionId}
+Track Transfer: https://easner.com/user/send/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `
@@ -207,7 +207,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "View Transaction",
-          url: `https://easner.com/user/transactions/${data.transactionId}`
+          url: `https://easner.com/user/send/${data.transactionId}`
         }
       )
     },
@@ -230,7 +230,7 @@ Transaction Details:
 What's Next:
 Your recipient should receive the money within minutes thanks to our fast processing. You can track all your transfers in your dashboard.
 
-View Transaction: https://easner.com/user/transactions/${data.transactionId}
+View Transaction: https://easner.com/user/send/${data.transactionId}
 
 Need help? Contact us at support@easner.com
     `

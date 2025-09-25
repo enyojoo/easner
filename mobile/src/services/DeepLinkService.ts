@@ -78,7 +78,7 @@ export class DeepLinkService {
         'user': 'Dashboard',
         'user/dashboard': 'Dashboard',
         'user/transactions': 'Transactions',
-        'user/transactions/': 'TransactionDetails',
+        'user/send/': 'TransactionDetails',
         'user/recipients': 'Recipients',
         'user/send': 'Send',
         'user/support': 'Support',
