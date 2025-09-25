@@ -144,7 +144,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Processing",
-        "Your transfer is being processed",
+        "",
         content,
         {
           text: "Track Transfer",
@@ -195,7 +195,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Completed!",
-        "Your transfer has been completed successfully",
+        "",
         content,
         {
           text: "View Transaction",
@@ -250,7 +250,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Failed",
-        "We're here to help resolve this",
+        "",
         content,
         {
           text: "Contact Support",
