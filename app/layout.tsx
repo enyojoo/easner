@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins } from "next/font/google"
+import { Poppins, Unbounded } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
 import ErrorBoundary from "@/components/error-boundary"
@@ -9,6 +9,13 @@ import "./globals.css"
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
+})
+
+const unbounded = Unbounded({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-unbounded",
 })
 
 export const metadata: Metadata = {
@@ -77,7 +84,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet" />
+      </head>
+      <body className={`${poppins.variable} ${unbounded.variable} font-sans`}>
         <ErrorBoundary>
           <PostHogProvider>
             <AuthProvider>{children}</AuthProvider>
