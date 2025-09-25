@@ -95,3 +95,29 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
