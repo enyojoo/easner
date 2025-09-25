@@ -80,14 +80,14 @@ Need help? Contact us at support@easner.com
         
         <p class="confirmation-text">
           Your transfer to ${data.recipientName} is ready to be processed. 
-          Complete your payment now and your money will reach its destination soon!
+          Complete your payment now and your money will reach its destination in under 5 minutes!
         </p>
         
         ${generateTransactionDetails(data)}
         
         <div class="security-note">
           <h3>Next Steps</h3>
-          <p>Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive soon!</p>
+          <p>Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!</p>
         </div>
       `
       
@@ -104,7 +104,7 @@ Need help? Contact us at support@easner.com
     text: (data: TransactionEmailData) => `
 Payment Required - Transaction #${data.transactionId}
 
-Your transfer to ${data.recipientName} is ready to be processed. Complete your payment now and your money will reach its destination soon!
+Your transfer to ${data.recipientName} is ready to be processed. Complete your payment now and your money will reach its destination in under 5 minutes!
 
 Transaction Details:
 - Transaction ID: ${data.transactionId}
@@ -116,7 +116,7 @@ Transaction Details:
 - Status: ${data.status}
 
 Next Steps:
-Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive soon!
+Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!
 
 Complete Payment: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
@@ -135,14 +135,14 @@ Need help? Contact us at support@easner.com
         
         <p class="confirmation-text">
           Great news! We've received your payment and your transfer to ${data.recipientName} is now being processed. 
-          Your money will arrive soon!
+          Your money will arrive in under 5 minutes!
         </p>
         
         ${generateTransactionDetails(data)}
         
         <div class="security-note">
           <h3>What's Happening</h3>
-          <p>We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this is processed quickly!</p>
+          <p>We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!</p>
         </div>
       `
       
@@ -158,7 +158,7 @@ Need help? Contact us at support@easner.com
     text: (data: TransactionEmailData) => `
 Transfer Processing - Transaction #${data.transactionId}
 
-Great news! We've received your payment and your transfer to ${data.recipientName} is now being processed. Your money will arrive soon!
+Great news! We've received your payment and your transfer to ${data.recipientName} is now being processed. Your money will arrive in under 5 minutes!
 
 Transaction Details:
 - Transaction ID: ${data.transactionId}
@@ -170,7 +170,7 @@ Transaction Details:
 - Status: ${data.status}
 
 What's Happening:
-We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this is processed quickly!
+We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!
 
 Track Transfer: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
