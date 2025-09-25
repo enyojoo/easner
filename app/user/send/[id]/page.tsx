@@ -15,7 +15,7 @@ import type { Transaction } from "@/types"
 export default function TransactionStatusPage() {
   const router = useRouter()
   const params = useParams()
-  const { userProfile, loading: authLoading } = useAuth()
+  const { user, userProfile, loading: authLoading } = useAuth()
   const { currencies } = useUserData()
   const transactionId = params.id as string
 
@@ -37,10 +37,13 @@ export default function TransactionStatusPage() {
   // Load transaction data from Supabase
   useEffect(() => {
     const loadTransaction = async () => {
+      console.log('Transaction page auth state:', { authLoading, user: !!user, userProfile: !!userProfile, transactionId })
+      
       // Wait for auth to finish loading before attempting to load transaction
       if (authLoading) return
       
-      if (!transactionId || !userProfile?.id) {
+      if (!transactionId || !user?.id) {
+        console.log('Transaction page: Missing transactionId or user.id', { transactionId, userId: user?.id })
         setHasAttemptedLoad(true)
         return
       }
@@ -52,7 +55,7 @@ export default function TransactionStatusPage() {
         const transactionData = await transactionService.getById(transactionId.toUpperCase())
 
         // Verify this transaction belongs to the current user
-        if (transactionData.user_id !== userProfile.id) {
+        if (transactionData.user_id !== user.id) {
           setError("Transaction not found or access denied")
           setHasAttemptedLoad(true)
           return
@@ -70,11 +73,11 @@ export default function TransactionStatusPage() {
     }
 
     loadTransaction()
-  }, [transactionId, userProfile?.id, authLoading])
+  }, [transactionId, user?.id, authLoading])
 
   // Poll for transaction updates every 30 seconds
   useEffect(() => {
-    if (!transaction || !userProfile?.id) return
+    if (!transaction || !user?.id) return
 
     const pollInterval = setInterval(async () => {
       try {
@@ -88,7 +91,7 @@ export default function TransactionStatusPage() {
     }, 10000) // Poll every 10 seconds
 
     return () => clearInterval(pollInterval)
-  }, [transaction, userProfile?.id])
+  }, [transaction, user?.id])
 
   const getTimeInfo = () => {
     if (!transaction) return { timeRemaining: 0, isOverdue: false, elapsedTime: 0 }
