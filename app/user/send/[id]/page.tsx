@@ -42,8 +42,15 @@ export default function TransactionStatusPage() {
       // Wait for auth to finish loading before attempting to load transaction
       if (authLoading) return
       
-      if (!transactionId || !user?.id) {
-        console.log('Transaction page: Missing transactionId or user.id', { transactionId, userId: user?.id })
+      // If no user is authenticated, redirect to login
+      if (!user?.id) {
+        console.log('Transaction page: User not authenticated, redirecting to login')
+        router.push('/auth/user/login')
+        return
+      }
+      
+      if (!transactionId) {
+        console.log('Transaction page: Missing transactionId', { transactionId })
         setHasAttemptedLoad(true)
         return
       }
@@ -251,12 +258,22 @@ export default function TransactionStatusPage() {
           <div className="max-w-6xl mx-auto">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
               <p className="text-red-700 mb-4">{error || "Transaction not found"}</p>
-              <Button
-                onClick={() => router.push("/user/dashboard")}
-                className="bg-easner-primary hover:bg-easner-primary-600"
-              >
-                Back to Dashboard
-              </Button>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={() => router.push("/user/dashboard")}
+                  className="bg-easner-primary hover:bg-easner-primary-600"
+                >
+                  Back to Dashboard
+                </Button>
+                {error && error.includes("access denied") && (
+                  <Button
+                    onClick={() => router.push("/auth/user/login")}
+                    variant="outline"
+                  >
+                    Login
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
