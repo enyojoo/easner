@@ -78,8 +78,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   href={item.href}
                   className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                     isActive
-                      ? "bg-easner-primary text-white shadow-sm"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-easner-primary-100 text-easner-primary"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
