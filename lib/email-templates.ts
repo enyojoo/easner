@@ -129,10 +129,6 @@ Need help? Contact us at support@easner.com
     subject: (data: TransactionEmailData) => `Transfer Processing - Transaction #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
-        <p class="welcome-text">
-          Your Transfer is Being Processed
-        </p>
-        
         <p class="confirmation-text">
           Great news! We've received your payment and your transfer to ${data.recipientName} is now being processed. 
           Your money will arrive in under 5 minutes!
@@ -148,6 +144,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Processing",
+        "Your transfer is being processed",
         content,
         {
           text: "Track Transfer",
@@ -183,10 +180,6 @@ Need help? Contact us at support@easner.com
     subject: (data: TransactionEmailData) => `Transfer Completed Successfully! 🎉 Transaction #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
-        <p class="welcome-text">
-          Transfer Completed Successfully! 🎉
-        </p>
-        
         <p class="confirmation-text">
           Your transfer to ${data.recipientName} has been completed successfully! 
           The money has been sent and should arrive within minutes.
@@ -202,6 +195,7 @@ Need help? Contact us at support@easner.com
       
       return generateBaseEmailTemplate(
         "Transfer Completed!",
+        "Your transfer has been completed successfully",
         content,
         {
           text: "View Transaction",
@@ -211,8 +205,6 @@ Need help? Contact us at support@easner.com
     },
     text: (data: TransactionEmailData) => `
 Transfer Completed - Transaction #${data.transactionId}
-
-Transfer Completed Successfully! 🎉
 
 Your transfer to ${data.recipientName} has been completed successfully! The money has been sent and should arrive within minutes.
 
