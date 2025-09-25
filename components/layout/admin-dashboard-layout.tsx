@@ -45,7 +45,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full w-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
             <div className="flex items-center gap-2">
@@ -58,36 +58,36 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-3 py-6 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                     isActive
-                      ? "bg-easner-primary-100 text-easner-primary"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-easner-primary text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.name}</span>
                 </Link>
               )
             })}
           </nav>
 
           {/* Logout */}
-          <div className="px-4 py-4 border-t border-gray-200">
+          <div className="px-3 py-4 border-t border-gray-200">
             <Button
               variant="ghost"
-              className="w-full justify-start text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-3"
               onClick={handleLogout}
             >
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
+              <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />
+              <span className="truncate">Logout</span>
             </Button>
           </div>
         </div>
