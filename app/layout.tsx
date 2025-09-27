@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Poppins, Unbounded } from "next/font/google"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
-import ErrorBoundary from "@/components/error-boundary"
+import { ClientErrorBoundary } from "@/components/client-error-boundary"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -83,18 +83,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${poppins.variable} ${unbounded.variable} font-sans`}>
-        <ErrorBoundary>
+      <body className={`${poppins.variable} ${unbounded.variable} font-sans`} suppressHydrationWarning>
+        <ClientErrorBoundary>
           <PostHogProvider>
             <AuthProvider>{children}</AuthProvider>
           </PostHogProvider>
-        </ErrorBoundary>
+        </ClientErrorBoundary>
       </body>
     </html>
   )

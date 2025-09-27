@@ -332,5 +332,136 @@ Send New Transfer: https://www.easner.com/user/send
 
 Need help? Contact us at support@easner.com
     `
+  },
+
+  // Early Access Request
+  earlyAccessRequest: {
+    subject: "New Early Access Request - Easner",
+    html: (data: any) => {
+      const content = `
+        <p class="welcome-text">
+          New Early Access Request
+        </p>
+        
+        <p class="confirmation-text">
+          A new user has requested early access to Easner. Here are their details:
+        </p>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">Contact Information</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Name:</strong> ${data.fullName}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Email:</strong> ${data.email}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>WhatsApp/Telegram:</strong> ${data.whatsappTelegram}</p>
+        </div>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">Use Case & Transfer Preferences</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Primary Use Case:</strong> ${data.primaryUseCase}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Located in:</strong> ${data.locatedIn}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Sending to:</strong> ${data.sendingTo}</p>
+        </div>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">Request Details</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Submitted at:</strong> ${new Date(data.submittedAt).toLocaleString()}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>User Agent:</strong> ${data.userAgent}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>IP Address:</strong> ${data.ipAddress}</p>
+        </div>
+        
+            `
+
+            return generateBaseEmailTemplate(
+              "New Early Access Request",
+              "",
+              content
+            )
+    },
+    text: (data: any) => `
+New Early Access Request - Easner
+
+A new user has requested early access to Easner. Here are their details:
+
+Contact Information:
+- Name: ${data.fullName}
+- Email: ${data.email}
+- WhatsApp/Telegram: ${data.whatsappTelegram}
+
+Use Case & Transfer Preferences:
+- Primary Use Case: ${data.primaryUseCase}
+- Located in: ${data.locatedIn}
+- Sending to: ${data.sendingTo}
+
+Request Details:
+- Submitted at: ${new Date(data.submittedAt).toLocaleString()}
+- User Agent: ${data.userAgent}
+- IP Address: ${data.ipAddress}
+
+        © 2025 Easner, Inc. All rights reserved.
+    `
+  },
+
+  // Early Access Confirmation (sent to user)
+  earlyAccessConfirmation: {
+    subject: "You're on the list! - Easner Early Access",
+    html: (data: any) => {
+      const content = `
+        <p class="welcome-text">
+          You're on the list! 🎉
+        </p>
+
+        <p class="confirmation-text">
+          Thank you for requesting early access to Easner! We're excited to have you join our community of users who will experience zero-fee international money transfers.
+        </p>
+
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">What happens next?</h3>
+          <ul style="margin: 0; padding-left: 20px; color: #555; font-size: 16px;">
+            <li style="margin-bottom: 8px; font-size: 16px;">We'll review your application and use case</li>
+            <li style="margin-bottom: 8px; font-size: 16px;">You'll receive an invitation email when approved</li>
+            <li style="margin-bottom: 8px; font-size: 16px;">We'll follow up with you via the contact method you provided</li>
+            <li style="margin-bottom: 0; font-size: 16px;">You'll be among the first to experience our platform</li>
+          </ul>
+        </div>
+
+        <div style="background: #e8f4fd; border: 1px solid #b3d9ff; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 10px 0; font-size: 18px;">Why Easner?</h3>
+          <p style="margin: 0; color: #555; font-size: 16px;">
+            We're building the future of international money transfers with zero fees, real-time exchange rates, and instant transfers. Your early access will help us shape the perfect experience for users like you.
+          </p>
+        </div>
+
+        <div class="security-note">
+          <h3>Questions?</h3>
+          <p>If you have any questions about your early access request or our platform, feel free to reach out to us. We're here to help!</p>
+        </div>
+      `
+
+      return generateBaseEmailTemplate(
+        "You're on the list!",
+        `Hi ${data.fullName},`,
+        content
+      )
+    },
+    text: (data: any) => `
+You're on the list! 🎉
+
+Hi ${data.fullName},
+
+Thank you for requesting early access to Easner! We're excited to have you join our community of users who will experience zero-fee international money transfers.
+
+What happens next?
+- We'll review your application and use case
+- You'll receive an invitation email when approved
+- We'll follow up with you via the contact method you provided
+- You'll be among the first to experience our platform
+
+Why Easner?
+We're building the future of international money transfers with zero fees, real-time exchange rates, and instant transfers. Your early access will help us shape the perfect experience for users like you.
+
+Questions?
+If you have any questions about your early access request or our platform, feel free to reach out to us. We're here to help!
+
+© 2025 Easner, Inc. All rights reserved.
+    `
   }
 }

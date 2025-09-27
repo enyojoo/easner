@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X, UserPlus } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 
@@ -16,6 +16,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Transactions", href: "/admin/transactions", icon: CreditCard },
   { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Early Access", href: "/admin/early-access", icon: UserPlus },
   { name: "Rates", href: "/admin/rates", icon: TrendingUp },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ]

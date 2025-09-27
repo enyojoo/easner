@@ -112,14 +112,14 @@ export function generateBaseEmailTemplate(
         
         .security-note h3 {
             color: #2d3748;
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 10px;
             font-weight: 600;
         }
         
         .security-note p {
             color: #4a5568;
-            font-size: 14px;
+            font-size: 16px;
             margin: 0;
         }
         
@@ -167,7 +167,7 @@ export function generateBaseEmailTemplate(
         
         .transaction-details h3 {
             color: #2d3748;
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 15px;
             font-weight: 600;
         }
@@ -177,23 +177,26 @@ export function generateBaseEmailTemplate(
             justify-content: space-between;
             margin-bottom: 8px;
             padding: 4px 0;
+            font-size: 16px;
         }
         
         .detail-label {
             color: #4a5568;
             font-weight: 500;
+            font-size: 16px;
         }
         
         .detail-value {
             color: #1a202c;
             font-weight: 600;
+            font-size: 16px;
         }
         
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             text-transform: uppercase;
         }

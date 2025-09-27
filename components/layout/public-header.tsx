@@ -55,21 +55,11 @@ export function PublicHeader() {
                 </DropdownMenu>
               </div>
             ) : (
-              <>
-                <Link href="/auth/user/login">
-                  <Button
-                    variant="ghost"
-                    className="text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth/user/register">
-                  <Button className="bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
-                    Sign Up
-                  </Button>
-                </Link>
-              </>
+              <Link href="/access">
+                <Button className="bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                  Get Early Access
+                </Button>
+              </Link>
             )}
           </div>
         </div>

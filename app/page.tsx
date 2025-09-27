@@ -20,19 +20,8 @@ export default function HomePage() {
     exchangeRate: number
     fee: number
   }) => {
-    if (user) {
-      if (isAdmin) {
-        router.push("/admin/dashboard")
-      } else {
-        // User is logged in, go directly to send page
-        router.push("/user/send")
-      }
-    } else {
-      // Store conversion data and redirect to login
-      sessionStorage.setItem("conversionData", JSON.stringify(data))
-      sessionStorage.setItem("redirectAfterLogin", "/user/send")
-      router.push("/auth/user/login")
-    }
+    // Redirect to early access form instead of normal flow
+    router.push("/access")
   }
 
   return (
@@ -362,9 +351,9 @@ export default function HomePage() {
               <Button 
                 size="lg" 
                 className="bg-white text-easner-primary hover:bg-gray-50 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 group"
-                onClick={() => document.getElementById('currency-converter')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => router.push("/access")}
               >
-                Start sending money
+                Get Early Access
                 <Send className="ml-2 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
