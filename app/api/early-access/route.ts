@@ -319,19 +319,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Save to database first
-    const earlyAccessData = {
-      email,
-      fullName,
-      whatsappTelegram,
-      primaryUseCase,
-      locatedIn,
-      sendingTo,
-      ipAddress: getClientIP(request),
-      userAgent: request.headers.get('user-agent') || undefined
-    }
+    // Save to database first (optional - will continue if database fails)
+    let savedRequest = null
+    try {
+      const earlyAccessData = {
+        email,
+        fullName,
+        whatsappTelegram,
+        primaryUseCase,
+        locatedIn,
+        sendingTo,
+        ipAddress: getClientIP(request),
+        userAgent: request.headers.get('user-agent') || undefined
+      }
 
-    const savedRequest = await earlyAccessService.create(earlyAccessData)
+      savedRequest = await earlyAccessService.create(earlyAccessData)
+    } catch (dbError) {
+      console.error('Database save failed (continuing with email):', dbError)
+      // Continue with email sending even if database fails
+    }
 
     // Send email to admin
     const adminEmailResult = await emailService.sendEmail(emailData)
@@ -368,13 +374,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: 'Early access request submitted successfully',
-      requestId: savedRequest.id
+      requestId: savedRequest?.id || null
     })
 
   } catch (error) {
     console.error('Early access form submission error:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      formData: { email, fullName, whatsappTelegram, primaryUseCase, locatedIn, sendingTo }
+    })
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

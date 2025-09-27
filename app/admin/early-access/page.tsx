@@ -1,15 +1,35 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Mail, Phone, MapPin, Calendar, User, CheckCircle, XCircle, Clock, MessageCircle } from "lucide-react"
-import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Search,
+  Download,
+  Filter,
+  Eye,
+  MoreHorizontal,
+  Calendar,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  MessageCircle,
+  UserPlus,
+  TrendingUp,
+} from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface EarlyAccessRequest {
   id: string
@@ -34,12 +54,13 @@ interface Stats {
   contacted: number
 }
 
-export default function EarlyAccessPage() {
+export default function AdminEarlyAccessPage() {
   const [requests, setRequests] = useState<EarlyAccessRequest[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, contacted: 0 })
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedRequests, setSelectedRequests] = useState<string[]>([])
   const [selectedRequest, setSelectedRequest] = useState<EarlyAccessRequest | null>(null)
 
   const fetchRequests = async () => {
@@ -47,7 +68,7 @@ export default function EarlyAccessPage() {
       setLoading(true)
       const params = new URLSearchParams()
       if (statusFilter !== "all") params.append("status", statusFilter)
-      if (searchQuery) params.append("search", searchQuery)
+      if (searchTerm) params.append("search", searchTerm)
 
       const response = await fetch(`/api/admin/early-access?${params.toString()}`)
       const data = await response.json()
@@ -85,7 +106,7 @@ export default function EarlyAccessPage() {
 
   useEffect(() => {
     fetchRequests()
-  }, [statusFilter, searchQuery])
+  }, [statusFilter, searchTerm])
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -337,10 +358,18 @@ export default function EarlyAccessPage() {
 
   return (
     <AdminDashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Early Access Requests</h1>
-          <p className="text-gray-600">Manage and review early access applications</p>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Early Access Requests</h1>
+            <p className="text-gray-600">Manage and review early access applications</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -386,7 +415,10 @@ export default function EarlyAccessPage() {
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Filters</CardTitle>
+            <CardTitle className="flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Filters
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -395,8 +427,8 @@ export default function EarlyAccessPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Search by name, email, or contact..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -420,10 +452,24 @@ export default function EarlyAccessPage() {
         {/* Requests Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Requests</CardTitle>
-            <CardDescription>
-              {loading ? "Loading..." : `${requests.length} request(s) found`}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Requests</CardTitle>
+                <CardDescription>
+                  {loading ? "Loading..." : `${requests.length} request(s) found`}
+                </CardDescription>
+              </div>
+              {selectedRequests.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    Bulk Approve
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Bulk Reject
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -433,18 +479,42 @@ export default function EarlyAccessPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedRequests.length === requests.length && requests.length > 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedRequests(requests.map(r => r.id))
+                            } else {
+                              setSelectedRequests([])
+                            }
+                          }}
+                        />
+                      </TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Use Case</TableHead>
                       <TableHead>Location</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {requests.map((request) => (
                       <TableRow key={request.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRequests.includes(request.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedRequests([...selectedRequests, request.id])
+                              } else {
+                                setSelectedRequests(selectedRequests.filter(id => id !== request.id))
+                              }
+                            }}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{request.full_name}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -467,33 +537,38 @@ export default function EarlyAccessPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedRequest(request)}
-                            >
-                              View
-                            </Button>
-                            {request.status === 'pending' && (
-                              <>
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => updateRequestStatus(request.id, 'approved')}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => updateRequestStatus(request.id, 'rejected')}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            )}
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedRequest(request)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              {request.status === 'pending' && (
+                                <>
+                                  <DropdownMenuItem onClick={() => updateRequestStatus(request.id, 'approved')}>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateRequestStatus(request.id, 'contacted')}>
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    Mark as Contacted
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => updateRequestStatus(request.id, 'rejected')}
+                                    className="text-red-600"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -504,83 +579,85 @@ export default function EarlyAccessPage() {
           </CardContent>
         </Card>
 
-        {/* Request Details Modal */}
-        {selectedRequest && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Request Details</CardTitle>
-              <CardDescription>Full information for {selectedRequest.full_name}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Full Name</label>
-                  <p className="text-lg">{selectedRequest.full_name}</p>
+        {/* Request Details Dialog */}
+        <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Request Details</DialogTitle>
+              <p className="text-sm text-gray-600">Full information for {selectedRequest?.full_name}</p>
+            </DialogHeader>
+            {selectedRequest && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Full Name</label>
+                    <p className="text-lg">{selectedRequest.full_name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Email</label>
+                    <p className="text-lg">{selectedRequest.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">WhatsApp/Telegram</label>
+                    <p className="text-lg">{selectedRequest.whatsapp_telegram}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Primary Use Case</label>
+                    <p className="text-lg">{getUseCaseName(selectedRequest.primary_use_case)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Located In</label>
+                    <p className="text-lg">{getCountryName(selectedRequest.located_in)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Sending To</label>
+                    <p className="text-lg">{getCountryName(selectedRequest.sending_to)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">IP Address</label>
+                    <p className="text-lg">{selectedRequest.ip_address || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <div className="mt-1">{getStatusBadge(selectedRequest.status)}</div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-lg">{selectedRequest.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">WhatsApp/Telegram</label>
-                  <p className="text-lg">{selectedRequest.whatsapp_telegram}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Primary Use Case</label>
-                  <p className="text-lg">{getUseCaseName(selectedRequest.primary_use_case)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Located In</label>
-                  <p className="text-lg">{getCountryName(selectedRequest.located_in)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Sending To</label>
-                  <p className="text-lg">{getCountryName(selectedRequest.sending_to)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">IP Address</label>
-                  <p className="text-lg">{selectedRequest.ip_address || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <div className="mt-1">{getStatusBadge(selectedRequest.status)}</div>
-                </div>
-              </div>
-              
-              {selectedRequest.notes && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Notes</label>
-                  <p className="text-lg">{selectedRequest.notes}</p>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-4">
-                <Button onClick={() => setSelectedRequest(null)}>Close</Button>
-                {selectedRequest.status === 'pending' && (
-                  <>
-                    <Button
-                      onClick={() => updateRequestStatus(selectedRequest.id, 'approved')}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => updateRequestStatus(selectedRequest.id, 'contacted')}
-                    >
-                      Mark as Contacted
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
-                    >
-                      Reject
-                    </Button>
-                  </>
+                
+                {selectedRequest.notes && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Notes</label>
+                    <p className="text-lg">{selectedRequest.notes}</p>
+                  </div>
                 )}
+
+                <div className="flex gap-2 pt-4">
+                  <Button onClick={() => setSelectedRequest(null)}>Close</Button>
+                  {selectedRequest.status === 'pending' && (
+                    <>
+                      <Button
+                        onClick={() => updateRequestStatus(selectedRequest.id, 'approved')}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => updateRequestStatus(selectedRequest.id, 'contacted')}
+                      >
+                        Mark as Contacted
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => updateRequestStatus(selectedRequest.id, 'rejected')}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminDashboardLayout>
   )
