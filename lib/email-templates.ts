@@ -231,10 +231,6 @@ Need help? Contact us at support@easner.com
     subject: (data: TransactionEmailData) => `Transaction Failed - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
-        <p class="welcome-text">
-          Transfer Failed
-        </p>
-        
         <p class="confirmation-text">
           Unfortunately, your transfer to ${data.recipientName} could not be completed. 
           ${data.failureReason ? `Reason: ${data.failureReason}` : 'Please contact support for more information.'}
