@@ -195,7 +195,6 @@ function RegisterPageContent() {
                 />
               </div>
 
-
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-gray-700">
                   Password

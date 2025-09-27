@@ -19,14 +19,25 @@ export const userService = {
     phone?: string
     baseCurrency?: string
   }) {
-    const { data, error } = await supabase
+    console.log("userService.create: Creating user with data:", {
+      id: userData.id,
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      phone: userData.phone,
+      baseCurrency: userData.baseCurrency
+    })
+
+    // Use server client to bypass RLS for user creation
+    const serverClient = createServerClient()
+    const { data, error } = await serverClient
       .from("users")
       .insert({
         id: userData.id, // Use provided ID or let Supabase generate one
         email: userData.email,
         first_name: userData.firstName,
         last_name: userData.lastName,
-        phone: userData.phone,
+        phone: userData.phone || null, // Make phone optional
         base_currency: userData.baseCurrency || "USD",
         status: "active",
         verification_status: "pending",
@@ -36,7 +47,12 @@ export const userService = {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error("userService.create: Error creating user:", error)
+      throw error
+    }
+    
+    console.log("userService.create: User created successfully:", data)
     return data
   },
 

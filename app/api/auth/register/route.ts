@@ -40,15 +40,30 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user in our database
-    const user = await userService.create({
-      id: authData.user.id, // Use Supabase auth user ID
-      email,
-      password, // This won't be used since we're using Supabase auth
-      firstName,
-      lastName,
-      phone,
-      baseCurrency: baseCurrency || "USD",
-    })
+    console.log("Creating user in database with ID:", authData.user.id)
+    let user
+    try {
+      user = await userService.create({
+        id: authData.user.id, // Use Supabase auth user ID
+        email,
+        password, // This won't be used since we're using Supabase auth
+        firstName,
+        lastName,
+        phone: phone || undefined, // Make phone optional
+        baseCurrency: baseCurrency || "USD",
+      })
+      console.log("User created successfully in database:", user)
+    } catch (userError) {
+      console.error("Error creating user in database:", userError)
+      // If user creation fails, we should clean up the auth user
+      try {
+        await serverClient.auth.admin.deleteUser(authData.user.id)
+        console.log("Cleaned up auth user after database creation failure")
+      } catch (cleanupError) {
+        console.error("Error cleaning up auth user:", cleanupError)
+      }
+      return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 })
+    }
 
     // Create JWT token
     const token = jwt.sign(
