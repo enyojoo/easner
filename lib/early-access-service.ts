@@ -30,7 +30,8 @@ export interface CreateEarlyAccessRequestData {
 export const earlyAccessService = {
   // Create a new early access request
   async create(data: CreateEarlyAccessRequestData): Promise<EarlyAccessRequest> {
-    const { data: result, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data: result, error } = await supabaseClient
       .from('early_access_requests')
       .insert({
         email: data.email,
@@ -52,7 +53,8 @@ export const earlyAccessService = {
 
   // Get all early access requests (admin only)
   async getAll(): Promise<EarlyAccessRequest[]> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .select('*')
       .order('created_at', { ascending: false })
@@ -63,7 +65,8 @@ export const earlyAccessService = {
 
   // Get early access request by ID
   async getById(id: string): Promise<EarlyAccessRequest | null> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .select('*')
       .eq('id', id)
@@ -75,7 +78,8 @@ export const earlyAccessService = {
 
   // Get early access request by email
   async getByEmail(email: string): Promise<EarlyAccessRequest | null> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .select('*')
       .eq('email', email)
@@ -93,7 +97,8 @@ export const earlyAccessService = {
     status: 'pending' | 'approved' | 'rejected' | 'contacted',
     notes?: string
   ): Promise<EarlyAccessRequest> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .update({
         status,
@@ -110,21 +115,22 @@ export const earlyAccessService = {
 
   // Get statistics
   async getStats() {
-    const { data: total } = await supabase
+    const supabaseClient = createServerClient()
+    const { data: total } = await supabaseClient
       .from('early_access_requests')
       .select('id', { count: 'exact' })
 
-    const { data: pending } = await supabase
+    const { data: pending } = await supabaseClient
       .from('early_access_requests')
       .select('id', { count: 'exact' })
       .eq('status', 'pending')
 
-    const { data: approved } = await supabase
+    const { data: approved } = await supabaseClient
       .from('early_access_requests')
       .select('id', { count: 'exact' })
       .eq('status', 'approved')
 
-    const { data: contacted } = await supabase
+    const { data: contacted } = await supabaseClient
       .from('early_access_requests')
       .select('id', { count: 'exact' })
       .eq('status', 'contacted')
@@ -139,7 +145,8 @@ export const earlyAccessService = {
 
   // Get requests by status
   async getByStatus(status: 'pending' | 'approved' | 'rejected' | 'contacted'): Promise<EarlyAccessRequest[]> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .select('*')
       .eq('status', status)
@@ -151,7 +158,8 @@ export const earlyAccessService = {
 
   // Search requests
   async search(query: string): Promise<EarlyAccessRequest[]> {
-    const { data, error } = await supabase
+    const supabaseClient = createServerClient()
+    const { data, error } = await supabaseClient
       .from('early_access_requests')
       .select('*')
       .or(`email.ilike.%${query}%,full_name.ilike.%${query}%,whatsapp_telegram.ilike.%${query}%`)
