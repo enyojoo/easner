@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/EASNERwh.png",
+        url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
         width: 1200,
         height: 630,
         alt: "Easner",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     description:
       "Transfer money between supported currencies with the best exchange rates and zero fees. Send money abroad and make international money transfer online for free with Easner.",
     creator: "@easnerapp",
-    images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/EASNERwh.png"],
+    images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
   },
   robots: {
     index: true,
