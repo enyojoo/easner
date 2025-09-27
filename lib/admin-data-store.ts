@@ -1,4 +1,4 @@
-import { supabase, createServerClient } from "./supabase"
+import { supabase } from "./supabase"
 
 interface AdminData {
   users: any[]
@@ -759,11 +759,10 @@ class AdminDataStore {
     }
   }
 
-  // Payment Methods methods - using service role client to bypass RLS
+  // Payment Methods methods
   async loadPaymentMethods() {
     try {
-      const serverClient = createServerClient()
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("payment_methods")
         .select("*")
         .order("currency", { ascending: true })
@@ -779,8 +778,7 @@ class AdminDataStore {
 
   async createPaymentMethod(paymentMethod: any) {
     try {
-      const serverClient = createServerClient()
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("payment_methods")
         .insert([paymentMethod])
         .select()
@@ -796,8 +794,7 @@ class AdminDataStore {
 
   async updatePaymentMethod(id: string, paymentMethod: any) {
     try {
-      const serverClient = createServerClient()
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("payment_methods")
         .update(paymentMethod)
         .eq("id", id)
@@ -814,8 +811,7 @@ class AdminDataStore {
 
   async deletePaymentMethod(id: string) {
     try {
-      const serverClient = createServerClient()
-      const { error } = await serverClient
+      const { error } = await supabase
         .from("payment_methods")
         .delete()
         .eq("id", id)
@@ -829,8 +825,7 @@ class AdminDataStore {
 
   async updatePaymentMethodStatus(id: string, status: string) {
     try {
-      const serverClient = createServerClient()
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("payment_methods")
         .update({ status })
         .eq("id", id)
@@ -847,16 +842,14 @@ class AdminDataStore {
 
   async setDefaultPaymentMethod(id: string, currency: string) {
     try {
-      const serverClient = createServerClient()
-      
       // First, unset all defaults for this currency
-      await serverClient
+      await supabase
         .from("payment_methods")
         .update({ is_default: false })
         .eq("currency", currency)
 
       // Then set the selected payment method as default
-      const { data, error } = await serverClient
+      const { data, error } = await supabase
         .from("payment_methods")
         .update({ is_default: true })
         .eq("id", id)
