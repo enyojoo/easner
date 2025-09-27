@@ -257,16 +257,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Use our custom API route that checks for existing users
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          baseCurrency: userData.baseCurrency || "USD",
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        return { error: { message: result.error } }
+      }
+
+      // If registration was successful, sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            base_currency: userData.baseCurrency || "USD",
-          },
-        },
       })
 
       if (error) {

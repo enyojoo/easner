@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { userService } from "@/lib/database"
+import { createServerClient } from "@/lib/supabase"
 import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
@@ -10,20 +11,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    // Check if user already exists
+    // Check if user already exists in our database
     const existingUser = await userService.findByEmail(email)
     if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
-    // Create new user
-    const user = await userService.create({
+    // Create user in Supabase auth first
+    const serverClient = createServerClient()
+    const { data: authData, error: authError } = await serverClient.auth.admin.createUser({
       email,
       password,
+      email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        base_currency: baseCurrency || "USD",
+      }
+    })
+
+    if (authError) {
+      console.error("Auth user creation error:", authError)
+      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
+    }
+
+    if (!authData.user) {
+      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
+    }
+
+    // Create user in our database
+    const user = await userService.create({
+      id: authData.user.id, // Use Supabase auth user ID
+      email,
+      password, // This won't be used since we're using Supabase auth
       firstName,
       lastName,
       phone,
-      baseCurrency: baseCurrency || "USD", // Changed from "NGN" to "USD"
+      baseCurrency: baseCurrency || "USD",
     })
 
     // Create JWT token
