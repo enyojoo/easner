@@ -26,20 +26,28 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [receiveAmount, setReceiveAmount] = useState<string>("0")
   const [sendCurrency, setSendCurrency] = useState<string>("USD")
   const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
-  const [currencies, setCurrencies] = useState<Currency[]>([])
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
+  const [currencies, setCurrencies] = useState<Currency[]>([
+    { id: "1", code: "USD", name: "US Dollar", symbol: "$", flag: null, status: "active" },
+    { id: "2", code: "NGN", name: "Nigerian Naira", symbol: "₦", flag: null, status: "active" },
+    { id: "3", code: "EUR", name: "Euro", symbol: "€", flag: null, status: "active" },
+    { id: "4", code: "GBP", name: "British Pound", symbol: "£", flag: null, status: "active" }
+  ])
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([
+    { id: "1", from_currency: "USD", to_currency: "NGN", rate: 1650, fee_type: "free", fee_amount: 0, min_amount: 1, max_amount: 10000, status: "active" },
+    { id: "2", from_currency: "EUR", to_currency: "NGN", rate: 1750, fee_type: "free", fee_amount: 0, min_amount: 1, max_amount: 10000, status: "active" },
+    { id: "3", from_currency: "GBP", to_currency: "NGN", rate: 2000, fee_type: "free", fee_amount: 0, min_amount: 1, max_amount: 10000, status: "active" }
+  ])
   const [fee, setFee] = useState<number>(0)
   const [lastEditedField, setLastEditedField] = useState<"send" | "receive">("send")
   const [sendCurrencySearch, setSendCurrencySearch] = useState<string>("")
   const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
   const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
   const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const sendDropdownRef = useRef<HTMLDivElement>(null)
   const receiveDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Load currencies and exchange rates from Supabase
+  // Load currencies and exchange rates from Supabase in background
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -48,12 +56,16 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
           currencyService.getExchangeRates(),
         ])
 
-        setCurrencies(currenciesData || [])
-        setExchangeRates(ratesData || [])
+        // Only update if we got data
+        if (currenciesData && currenciesData.length > 0) {
+          setCurrencies(currenciesData)
+        }
+        if (ratesData && ratesData.length > 0) {
+          setExchangeRates(ratesData)
+        }
       } catch (error) {
         console.error("Error loading currency data:", error)
-      } finally {
-        setIsLoading(false)
+        // Keep using default data if API fails
       }
     }
 
@@ -309,33 +321,6 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     })
   }
 
-  if (isLoading) {
-    return (
-      <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
-        <CardContent className="p-6 space-y-6">
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="flex justify-between items-center">
-                <div className="h-8 bg-gray-200 rounded animate-pulse w-24"></div>
-                <div className="h-8 bg-gray-200 rounded-full animate-pulse w-20"></div>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="flex justify-between items-center">
-                <div className="h-8 bg-gray-200 rounded animate-pulse w-24"></div>
-                <div className="h-8 bg-gray-200 rounded-full animate-pulse w-20"></div>
-              </div>
-            </div>
-          </div>
-          <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
