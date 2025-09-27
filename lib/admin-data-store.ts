@@ -759,6 +759,111 @@ class AdminDataStore {
     }
   }
 
+  // Payment Methods methods
+  async loadPaymentMethods() {
+    try {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .order("currency", { ascending: true })
+        .order("is_default", { ascending: false })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error("Error loading payment methods:", error)
+      throw error
+    }
+  }
+
+  async createPaymentMethod(paymentMethod: any) {
+    try {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .insert([paymentMethod])
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error creating payment method:", error)
+      throw error
+    }
+  }
+
+  async updatePaymentMethod(id: string, paymentMethod: any) {
+    try {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .update(paymentMethod)
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error updating payment method:", error)
+      throw error
+    }
+  }
+
+  async deletePaymentMethod(id: string) {
+    try {
+      const { error } = await supabase
+        .from("payment_methods")
+        .delete()
+        .eq("id", id)
+
+      if (error) throw error
+    } catch (error) {
+      console.error("Error deleting payment method:", error)
+      throw error
+    }
+  }
+
+  async updatePaymentMethodStatus(id: string, status: string) {
+    try {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error updating payment method status:", error)
+      throw error
+    }
+  }
+
+  async setDefaultPaymentMethod(id: string, currency: string) {
+    try {
+      // First, unset all defaults for this currency
+      await supabase
+        .from("payment_methods")
+        .update({ is_default: false })
+        .eq("currency", currency)
+
+      // Then set the selected payment method as default
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .update({ is_default: true })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error("Error setting default payment method:", error)
+      throw error
+    }
+  }
+
   async createEmailTemplate(template: any) {
     try {
       const { data, error } = await supabase
