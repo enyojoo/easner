@@ -3,14 +3,12 @@
 import { useRouter } from "next/navigation"
 import { PublicHeader } from "@/components/layout/public-header"
 import { CurrencyConverter } from "@/components/currency-converter"
-import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Play, Shield, Zap, Globe, Users, TrendingUp, CheckCircle, Star, Download, Code, Building2, Heart, Smartphone, Send, DollarSign, Clock, Lock } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
-  const { user, isAdmin, loading } = useAuth()
 
   const handleSendMoney = (data: {
     sendAmount: string
