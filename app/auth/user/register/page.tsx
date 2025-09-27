@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useRouteProtection } from "@/hooks/use-route-protection"
+import { validatePassword } from "@/lib/security-settings"
 
 function RegisterPageContent() {
   const router = useRouter()
@@ -24,10 +25,8 @@ function RegisterPageContent() {
     lastName: "",
     email: "",
     password: "",
-    confirmPassword: "",
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -51,14 +50,11 @@ function RegisterPageContent() {
     setError("")
 
     // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
-      return
-    }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long")
+    // Validate password using security settings
+    const passwordValidation = await validatePassword(formData.password)
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.error || "Invalid password")
       setLoading(false)
       return
     }
@@ -211,7 +207,7 @@ function RegisterPageContent() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Create a password (min 8 characters)"
+                    placeholder="Create a password"
                     className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
                     required
                     disabled={loading}
@@ -227,32 +223,6 @@ function RegisterPageContent() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-gray-700">
-                  Confirm Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirm your password"
-                    className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
-                    required
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={loading}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
 
               <div className="flex items-start space-x-2">
                 <Checkbox

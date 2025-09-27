@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react"
+import { validatePassword } from "@/lib/security-settings"
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -51,8 +52,10 @@ function ResetPasswordForm() {
       return
     }
 
-    if (passwords.newPassword.length < 8) {
-      setError("Password must be at least 8 characters long")
+    // Validate password using security settings
+    const passwordValidation = await validatePassword(passwords.newPassword)
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.error || "Invalid password")
       setIsLoading(false)
       return
     }

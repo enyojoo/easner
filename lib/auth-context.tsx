@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
+import { getSessionTimeout } from "./security-settings"
 
 interface UserProfile {
   id: string
@@ -53,6 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [sessionTimeout, setSessionTimeout] = useState<number | null>(null)
+  const [lastActivity, setLastActivity] = useState<number>(Date.now())
 
   const fetchUserProfile = async (userId: string, user?: any) => {
     try {
@@ -167,6 +170,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Load security settings and set up session timeout
+  useEffect(() => {
+    const loadSecuritySettings = async () => {
+      try {
+        const timeout = await getSessionTimeout()
+        setSessionTimeout(timeout)
+      } catch (error) {
+        console.error("Error loading session timeout:", error)
+        setSessionTimeout(30) // Default fallback
+      }
+    }
+
+    loadSecuritySettings()
+  }, [])
+
+  // Session timeout enforcement
+  useEffect(() => {
+    if (!user || !sessionTimeout) return
+
+    const checkSessionTimeout = () => {
+      const now = Date.now()
+      const timeSinceLastActivity = (now - lastActivity) / (1000 * 60) // Convert to minutes
+
+      if (timeSinceLastActivity >= sessionTimeout) {
+        console.log("Session timeout reached, signing out user")
+        signOut()
+      }
+    }
+
+    // Check every minute
+    const interval = setInterval(checkSessionTimeout, 60000)
+
+    return () => clearInterval(interval)
+  }, [user, sessionTimeout, lastActivity])
+
+  // Update last activity on user interaction
+  useEffect(() => {
+    if (!user) return
+
+    const updateActivity = () => {
+      setLastActivity(Date.now())
+    }
+
+    // Listen for user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity, true)
+    })
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity, true)
+      })
+    }
+  }, [user])
 
   const signIn = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
     try {
