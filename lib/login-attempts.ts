@@ -1,115 +1,155 @@
 import { supabase } from "./supabase"
-import { getMaxLoginAttempts, getAccountLockoutDuration } from "./security-settings"
+import { getSecuritySettings } from "./security-settings"
 
-interface LoginAttempt {
+export interface LoginAttempt {
+  id: string
   email: string
-  attempts: number
-  lastAttempt: string
-  lockedUntil?: string
+  ip_address: string
+  user_agent: string
+  success: boolean
+  created_at: string
 }
 
-const LOGIN_ATTEMPTS_KEY = "login_attempts"
+export class LoginAttemptService {
+  private static async createTableIfNotExists() {
+    // This would typically be done via migration, but we'll check if the table exists
+    try {
+      const { error } = await supabase
+        .from("login_attempts")
+        .select("id")
+        .limit(1)
+      
+      if (error && error.code === 'PGRST116') {
+        // Table doesn't exist, we need to create it
+        console.warn("login_attempts table doesn't exist. Please create it via migration.")
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error("Error checking login_attempts table:", error)
+      return false
+    }
+  }
 
-export async function recordLoginAttempt(email: string, success: boolean): Promise<{ 
-  canAttempt: boolean; 
-  remainingAttempts: number; 
-  lockedUntil?: string 
-}> {
-  try {
-    const maxAttempts = await getMaxLoginAttempts()
-    const lockoutDuration = await getAccountLockoutDuration()
-    
-    // Get current attempts from localStorage
-    const stored = localStorage.getItem(LOGIN_ATTEMPTS_KEY)
-    const attempts: LoginAttempt[] = stored ? JSON.parse(stored) : []
-    
-    // Find existing attempt record for this email
-    let attemptRecord = attempts.find(a => a.email === email)
-    
-    if (!attemptRecord) {
-      attemptRecord = {
-        email,
-        attempts: 0,
-        lastAttempt: new Date().toISOString()
+  static async recordAttempt(
+    email: string, 
+    success: boolean, 
+    ipAddress: string = "unknown", 
+    userAgent: string = "unknown"
+  ): Promise<void> {
+    try {
+      const tableExists = await this.createTableIfNotExists()
+      if (!tableExists) {
+        console.warn("Cannot record login attempt - table doesn't exist")
+        return
       }
-      attempts.push(attemptRecord)
+
+      await supabase
+        .from("login_attempts")
+        .insert({
+          email,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          success,
+          created_at: new Date().toISOString()
+        })
+    } catch (error) {
+      console.error("Error recording login attempt:", error)
     }
-    
-    if (success) {
-      // Reset attempts on successful login
-      attemptRecord.attempts = 0
-      attemptRecord.lockedUntil = undefined
-    } else {
-      // Increment failed attempts
-      attemptRecord.attempts += 1
-      attemptRecord.lastAttempt = new Date().toISOString()
-      
-      // Check if we should lock the account
-      if (attemptRecord.attempts >= maxAttempts) {
-        const lockoutUntil = new Date()
-        lockoutUntil.setMinutes(lockoutUntil.getMinutes() + lockoutDuration)
-        attemptRecord.lockedUntil = lockoutUntil.toISOString()
+  }
+
+  static async isAccountLocked(email: string): Promise<{ locked: boolean; remainingTime?: number }> {
+    try {
+      const tableExists = await this.createTableIfNotExists()
+      if (!tableExists) {
+        return { locked: false }
       }
-    }
-    
-    // Save back to localStorage
-    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(attempts))
-    
-    // Check if account is locked
-    if (attemptRecord.lockedUntil) {
-      const lockoutTime = new Date(attemptRecord.lockedUntil)
-      const now = new Date()
+
+      const settings = await getSecuritySettings()
+      const lockoutDurationMs = settings.accountLockoutDuration * 60 * 1000
+      const cutoffTime = new Date(Date.now() - lockoutDurationMs).toISOString()
+
+      // Get failed attempts within the lockout period
+      const { data: failedAttempts, error } = await supabase
+        .from("login_attempts")
+        .select("created_at")
+        .eq("email", email)
+        .eq("success", false)
+        .gte("created_at", cutoffTime)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Error checking login attempts:", error)
+        return { locked: false }
+      }
+
+      const failedCount = failedAttempts?.length || 0
       
-      if (now < lockoutTime) {
-        return {
-          canAttempt: false,
-          remainingAttempts: 0,
-          lockedUntil: attemptRecord.lockedUntil
+      if (failedCount >= settings.maxLoginAttempts) {
+        // Account is locked, calculate remaining time
+        const oldestFailedAttempt = failedAttempts[failedAttempts.length - 1]
+        const lockoutEndTime = new Date(oldestFailedAttempt.created_at).getTime() + lockoutDurationMs
+        const remainingTime = Math.max(0, lockoutEndTime - Date.now())
+        
+        return { 
+          locked: true, 
+          remainingTime: Math.ceil(remainingTime / 60000) // Convert to minutes
         }
-      } else {
-        // Lockout expired, reset attempts
-        attemptRecord.attempts = 0
-        attemptRecord.lockedUntil = undefined
-        localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(attempts))
       }
-    }
-    
-    return {
-      canAttempt: true,
-      remainingAttempts: Math.max(0, maxAttempts - attemptRecord.attempts)
-    }
-  } catch (error) {
-    console.error("Error recording login attempt:", error)
-    // On error, allow the attempt
-    return {
-      canAttempt: true,
-      remainingAttempts: 999
+
+      return { locked: false }
+    } catch (error) {
+      console.error("Error checking account lock status:", error)
+      return { locked: false }
     }
   }
-}
 
-export function clearLoginAttempts(email: string): void {
-  try {
-    const stored = localStorage.getItem(LOGIN_ATTEMPTS_KEY)
-    if (!stored) return
-    
-    const attempts: LoginAttempt[] = JSON.parse(stored)
-    const filtered = attempts.filter(a => a.email !== email)
-    localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(filtered))
-  } catch (error) {
-    console.error("Error clearing login attempts:", error)
+  static async getRemainingAttempts(email: string): Promise<number> {
+    try {
+      const tableExists = await this.createTableIfNotExists()
+      if (!tableExists) {
+        return 5 // Default
+      }
+
+      const settings = await getSecuritySettings()
+      const lockoutDurationMs = settings.accountLockoutDuration * 60 * 1000
+      const cutoffTime = new Date(Date.now() - lockoutDurationMs).toISOString()
+
+      // Get failed attempts within the lockout period
+      const { data: failedAttempts, error } = await supabase
+        .from("login_attempts")
+        .select("created_at")
+        .eq("email", email)
+        .eq("success", false)
+        .gte("created_at", cutoffTime)
+
+      if (error) {
+        console.error("Error getting remaining attempts:", error)
+        return settings.maxLoginAttempts
+      }
+
+      const failedCount = failedAttempts?.length || 0
+      return Math.max(0, settings.maxLoginAttempts - failedCount)
+    } catch (error) {
+      console.error("Error getting remaining attempts:", error)
+      return 5 // Default
+    }
   }
-}
 
-export function getLoginAttempts(email: string): LoginAttempt | null {
-  try {
-    const stored = localStorage.getItem(LOGIN_ATTEMPTS_KEY)
-    if (!stored) return null
-    
-    const attempts: LoginAttempt[] = JSON.parse(stored)
-    return attempts.find(a => a.email === email) || null
-  } catch (error) {
-    console.error("Error getting login attempts:", error)
-    return null
+  static async clearFailedAttempts(email: string): Promise<void> {
+    try {
+      const tableExists = await this.createTableIfNotExists()
+      if (!tableExists) {
+        return
+      }
+
+      await supabase
+        .from("login_attempts")
+        .delete()
+        .eq("email", email)
+        .eq("success", false)
+    } catch (error) {
+      console.error("Error clearing failed attempts:", error)
+    }
   }
 }

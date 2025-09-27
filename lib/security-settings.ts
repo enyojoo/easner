@@ -54,7 +54,7 @@ export async function getSecuritySettings(): Promise<SecuritySettings> {
 
     return securitySettings
   } catch (error) {
-    console.error("Error fetching security settings:", error)
+    console.error("Error loading security settings:", error)
     return getDefaultSecuritySettings()
   }
 }
@@ -68,14 +68,8 @@ export function getDefaultSecuritySettings(): SecuritySettings {
   }
 }
 
-export function clearSecuritySettingsCache() {
-  cachedSettings = null
-  lastFetch = 0
-}
-
-// Password validation utility
-export async function validatePassword(password: string): Promise<{ valid: boolean; error?: string }> {
-  const settings = await getSecuritySettings()
+export function validatePassword(password: string, minLength?: number): { valid: boolean; error?: string } {
+  const settings = minLength !== undefined ? { passwordMinLength: minLength } : cachedSettings || getDefaultSecuritySettings()
   
   if (password.length < settings.passwordMinLength) {
     return {
@@ -87,20 +81,7 @@ export async function validatePassword(password: string): Promise<{ valid: boole
   return { valid: true }
 }
 
-// Session timeout utility
-export async function getSessionTimeout(): Promise<number> {
-  const settings = await getSecuritySettings()
-  return settings.sessionTimeout
-}
-
-// Login attempts utility
-export async function getMaxLoginAttempts(): Promise<number> {
-  const settings = await getSecuritySettings()
-  return settings.maxLoginAttempts
-}
-
-// Account lockout utility
-export async function getAccountLockoutDuration(): Promise<number> {
-  const settings = await getSecuritySettings()
-  return settings.accountLockoutDuration
+export function clearSecuritySettingsCache() {
+  cachedSettings = null
+  lastFetch = 0
 }

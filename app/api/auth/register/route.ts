@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { userService } from "@/lib/database"
-import { createServerClient } from "@/lib/supabase"
 import jwt from "jsonwebtoken"
 
 export async function POST(request: NextRequest) {
@@ -11,59 +10,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
     }
 
-    // Check if user already exists in our database
+    // Check if user already exists
     const existingUser = await userService.findByEmail(email)
     if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
-    // Create user in Supabase auth first
-    const serverClient = createServerClient()
-    const { data: authData, error: authError } = await serverClient.auth.admin.createUser({
+    // Create new user
+    const user = await userService.create({
       email,
       password,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-        base_currency: baseCurrency || "USD",
-      }
+      firstName,
+      lastName,
+      phone,
+      baseCurrency: baseCurrency || "USD", // Changed from "NGN" to "USD"
     })
-
-    if (authError) {
-      console.error("Auth user creation error:", authError)
-      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
-    }
-
-    if (!authData.user) {
-      return NextResponse.json({ error: "Failed to create user account" }, { status: 500 })
-    }
-
-    // Create user in our database
-    console.log("Creating user in database with ID:", authData.user.id)
-    let user
-    try {
-      user = await userService.create({
-        id: authData.user.id, // Use Supabase auth user ID
-        email,
-        password, // This won't be used since we're using Supabase auth
-        firstName,
-        lastName,
-        phone: phone || undefined, // Make phone optional
-        baseCurrency: baseCurrency || "USD",
-      })
-      console.log("User created successfully in database:", user)
-    } catch (userError) {
-      console.error("Error creating user in database:", userError)
-      // If user creation fails, we should clean up the auth user
-      try {
-        await serverClient.auth.admin.deleteUser(authData.user.id)
-        console.log("Cleaned up auth user after database creation failure")
-      } catch (cleanupError) {
-        console.error("Error cleaning up auth user:", cleanupError)
-      }
-      return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 })
-    }
 
     // Create JWT token
     const token = jwt.sign(

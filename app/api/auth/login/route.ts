@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { LoginAttemptService } from "@/lib/login-attempts"
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,6 +8,20 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+    }
+
+    // Get client IP and user agent
+    const ipAddress = request.headers.get('x-forwarded-for') || 
+                     request.headers.get('x-real-ip') || 
+                     'unknown'
+    const userAgent = request.headers.get('user-agent') || 'unknown'
+
+    // Check if account is locked
+    const lockStatus = await LoginAttemptService.isAccountLocked(email)
+    if (lockStatus.locked) {
+      return NextResponse.json({ 
+        error: `Account is temporarily locked. Please try again in ${lockStatus.remainingTime} minutes.` 
+      }, { status: 423 })
     }
 
     const supabase = createServerClient()
@@ -18,8 +33,16 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError || !authData.user) {
+      // Record failed login attempt
+      await LoginAttemptService.recordAttempt(email, false, ipAddress, userAgent)
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
+
+    // Record successful login attempt
+    await LoginAttemptService.recordAttempt(email, true, ipAddress, userAgent)
+    
+    // Clear any previous failed attempts on successful login
+    await LoginAttemptService.clearFailedAttempts(email)
 
     // Get user profile from the database
     let userProfile = null

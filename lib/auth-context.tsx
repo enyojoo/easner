@@ -4,7 +4,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
-import { getSessionTimeout } from "./security-settings"
+import { getSecuritySettings } from "./security-settings"
 
 interface UserProfile {
   id: string
@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [sessionTimeout, setSessionTimeout] = useState<number | null>(null)
+  const [sessionTimeout, setSessionTimeout] = useState(30) // Default 30 minutes
   const [lastActivity, setLastActivity] = useState<number>(Date.now())
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const fetchUserProfile = async (userId: string, user?: any) => {
     try {
@@ -113,6 +113,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user])
 
+  // Load security settings and set up session timeout
+  useEffect(() => {
+    const loadSecuritySettings = async () => {
+      try {
+        const settings = await getSecuritySettings()
+        setSessionTimeout(settings.sessionTimeout)
+      } catch (error) {
+        console.error("Error loading security settings:", error)
+      }
+    }
+    loadSecuritySettings()
+  }, [])
+
+  // Session timeout check
+  useEffect(() => {
+    if (!user) return
+
+    const checkSessionTimeout = () => {
+      const now = Date.now()
+      const timeSinceLastActivity = now - lastActivity
+      const timeoutMs = sessionTimeout * 60 * 1000 // Convert minutes to milliseconds
+
+      if (timeSinceLastActivity > timeoutMs) {
+        console.log("Session timeout reached, signing out user")
+        signOut()
+      }
+    }
+
+    const interval = setInterval(checkSessionTimeout, 60000) // Check every minute
+    return () => clearInterval(interval)
+  }, [user, lastActivity, sessionTimeout])
+
+  // Update last activity on user interaction
+  useEffect(() => {
+    const updateActivity = () => setLastActivity(Date.now())
+    
+    // Listen for user activity
+    document.addEventListener('mousedown', updateActivity)
+    document.addEventListener('keypress', updateActivity)
+    document.addEventListener('scroll', updateActivity)
+    document.addEventListener('touchstart', updateActivity)
+
+    return () => {
+      document.removeEventListener('mousedown', updateActivity)
+      document.removeEventListener('keypress', updateActivity)
+      document.removeEventListener('scroll', updateActivity)
+      document.removeEventListener('touchstart', updateActivity)
+    }
+  }, [])
+
   useEffect(() => {
     let mounted = true
 
@@ -147,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           // Set user immediately to prevent loading issues
           setUser(session.user)
+          setLastActivity(Date.now()) // Reset activity timer on login
           // Then fetch profile asynchronously
           fetchUserProfile(session.user.id, session.user).catch(error => {
             console.error("Error fetching profile after auth change:", error)
@@ -170,62 +221,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
-
-  // Load security settings and set up session timeout
-  useEffect(() => {
-    const loadSecuritySettings = async () => {
-      try {
-        const timeout = await getSessionTimeout()
-        setSessionTimeout(timeout)
-      } catch (error) {
-        console.error("Error loading session timeout:", error)
-        setSessionTimeout(30) // Default fallback
-      }
-    }
-
-    loadSecuritySettings()
-  }, [])
-
-  // Session timeout enforcement
-  useEffect(() => {
-    if (!user || !sessionTimeout) return
-
-    const checkSessionTimeout = () => {
-      const now = Date.now()
-      const timeSinceLastActivity = (now - lastActivity) / (1000 * 60) // Convert to minutes
-
-      if (timeSinceLastActivity >= sessionTimeout) {
-        console.log("Session timeout reached, signing out user")
-        signOut()
-      }
-    }
-
-    // Check every minute
-    const interval = setInterval(checkSessionTimeout, 60000)
-
-    return () => clearInterval(interval)
-  }, [user, sessionTimeout, lastActivity])
-
-  // Update last activity on user interaction
-  useEffect(() => {
-    if (!user) return
-
-    const updateActivity = () => {
-      setLastActivity(Date.now())
-    }
-
-    // Listen for user activity
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
-    events.forEach(event => {
-      document.addEventListener(event, updateActivity, true)
-    })
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, updateActivity, true)
-      })
-    }
-  }, [user])
 
   const signIn = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
     try {
@@ -257,32 +252,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
-      // Use our custom API route that checks for existing users
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          phone: userData.phone,
-          baseCurrency: userData.baseCurrency || "USD",
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        return { error: { message: result.error } }
-      }
-
-      // If registration was successful, sign in with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            base_currency: userData.baseCurrency || "USD",
+          },
+        },
       })
 
       if (error) {

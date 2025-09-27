@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react"
-import { validatePassword } from "@/lib/security-settings"
+import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -27,6 +27,20 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [isValidSession, setIsValidSession] = useState(false)
+  const [securitySettings, setSecuritySettings] = useState<any>(null)
+
+  // Load security settings
+  useEffect(() => {
+    const loadSecuritySettings = async () => {
+      try {
+        const settings = await getSecuritySettings()
+        setSecuritySettings(settings)
+      } catch (error) {
+        console.error("Error loading security settings:", error)
+      }
+    }
+    loadSecuritySettings()
+  }, [])
 
   useEffect(() => {
     // Check for reset token from session storage or URL params
@@ -52,10 +66,10 @@ function ResetPasswordForm() {
       return
     }
 
-    // Validate password using security settings
-    const passwordValidation = await validatePassword(passwords.newPassword)
+    // Use security settings for password validation
+    const passwordValidation = validatePassword(passwords.newPassword, securitySettings?.passwordMinLength)
     if (!passwordValidation.valid) {
-      setError(passwordValidation.error || "Invalid password")
+      setError(passwordValidation.error || "Password validation failed")
       setIsLoading(false)
       return
     }
