@@ -70,6 +70,7 @@ export default function AdminUsersPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
+  const [saving, setSaving] = useState(false)
 
   // Format currency using database currencies
   const formatCurrencyFromDB = (amount: number, currencyCode: string): string => {
@@ -239,6 +240,34 @@ export default function AdminUsersPage() {
     fetchUserTransactions(user.id)
   }
 
+  const handleSyncVerification = async () => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/admin/sync-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        console.log('Verification sync successful:', result.message)
+        // Refresh admin data to show updated verification status
+        window.location.reload()
+      } else {
+        console.error('Verification sync failed:', result.error)
+        alert(`Sync failed: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error syncing verification:', error)
+      alert('Failed to sync verification status')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Registration analytics data
   const registrationStats = {
     totalUsers: data?.stats.totalUsers || 0,
@@ -301,10 +330,20 @@ export default function AdminUsersPage() {
             <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
             <p className="text-gray-600">Manage user accounts and verification status</p>
           </div>
-          <Button onClick={handleExport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export Users
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSyncVerification} 
+              variant="outline"
+              disabled={saving}
+            >
+              <UserCheck className="h-4 w-4 mr-2" />
+              Sync Verification
+            </Button>
+            <Button onClick={handleExport} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Users
+            </Button>
+          </div>
         </div>
 
         {/* Registration Analytics */}
