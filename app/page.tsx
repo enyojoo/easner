@@ -83,7 +83,7 @@ export default function HomePage() {
 
               {/* Right Side - Currency Converter */}
               <div className="flex justify-center lg:justify-end order-2 lg:order-2">
-                <div className="w-full max-w-xs sm:max-w-sm md:max-w-md">
+                <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg">
                   <div id="currency-converter" className="relative">
                     <CurrencyConverter onSendMoney={handleSendMoney} />
                   </div>
