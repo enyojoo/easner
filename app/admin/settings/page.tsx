@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Settings,
-  Mail,
   Shield,
   Save,
   Edit,
@@ -31,7 +30,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { supabase } from "@/lib/supabase"
-import { adminDataStore } from "@/lib/admin-data-store"
 
 interface SystemSetting {
   id: string
@@ -72,33 +70,16 @@ interface PaymentMethod {
   updated_at: string
 }
 
-interface EmailTemplate {
-  id: string
-  name: string
-  subject: string
-  template_type: string
-  html_content: string
-  text_content: string
-  variables: string
-  status: string
-  is_default: boolean
-  created_at: string
-  updated_at: string
-}
 
 export default function AdminSettingsPage() {
   const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([])
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([])
   const [activeTab, setActiveTab] = useState("platform")
   const [saving, setSaving] = useState(false)
   const [isAddPaymentMethodOpen, setIsAddPaymentMethodOpen] = useState(false)
   const [isEditPaymentMethodOpen, setIsEditPaymentMethodOpen] = useState(false)
-  const [isAddTemplateOpen, setIsAddTemplateOpen] = useState(false)
-  const [isEditTemplateOpen, setIsEditTemplateOpen] = useState(false)
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<PaymentMethod | null>(null)
-  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null)
   const [isEditingSecuritySettings, setIsEditingSecuritySettings] = useState(false)
   const [newPaymentMethod, setNewPaymentMethod] = useState({
     currency: "",
@@ -109,15 +90,6 @@ export default function AdminSettingsPage() {
     bank_name: "",
     qr_code_data: "",
     instructions: "",
-    is_default: false,
-  })
-  const [newTemplate, setNewTemplate] = useState({
-    name: "",
-    subject: "",
-    template_type: "registration",
-    html_content: "",
-    text_content: "",
-    variables: "",
     is_default: false,
   })
 
@@ -157,7 +129,7 @@ export default function AdminSettingsPage() {
 
   const loadAllData = async () => {
     try {
-      await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods(), loadEmailTemplates()])
+      await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods()])
     } catch (error) {
       console.error("Error loading data:", error)
     }
@@ -243,14 +215,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const loadEmailTemplates = async () => {
-    try {
-      const data = await adminDataStore.loadEmailTemplates()
-      setEmailTemplates(data || [])
-    } catch (error) {
-      console.error("Error loading email templates:", error)
-    }
-  }
 
   const updateSystemSetting = async (key: string, value: any, dataType = "string") => {
     try {
@@ -283,9 +247,10 @@ export default function AdminSettingsPage() {
       const settingKey = key === "baseCurrency" ? "base_currency" : key.replace(/([A-Z])/g, "_$1").toLowerCase()
       await updateSystemSetting(settingKey, value, typeof value === "boolean" ? "boolean" : "string")
 
-      // If base currency changed, refresh admin data store
+      // If base currency changed, refresh data
       if (key === "baseCurrency") {
-        await adminDataStore.refreshDataForBaseCurrencyChange()
+        // Refresh currencies and payment methods when base currency changes
+        await Promise.all([loadCurrencies(), loadPaymentMethods()])
       }
     } catch (error) {
       console.error("Error updating platform config:", error)
@@ -540,139 +505,12 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const handleAddEmailTemplate = async () => {
-    setSaving(true)
-    try {
-      // If setting as default, unset other defaults for the same template type
-      if (newTemplate.is_default) {
-        await supabase
-          .from("email_templates")
-          .update({ is_default: false })
-          .eq("template_type", newTemplate.template_type)
-      }
-
-      const { data, error } = await supabase
-        .from("email_templates")
-        .insert({
-          name: newTemplate.name,
-          subject: newTemplate.subject,
-          template_type: newTemplate.template_type,
-          html_content: newTemplate.html_content,
-          text_content: newTemplate.text_content,
-          variables: newTemplate.variables,
-          is_default: newTemplate.is_default,
-          status: "active",
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setEmailTemplates([...emailTemplates, data])
-      setNewTemplate({
-        name: "",
-        subject: "",
-        template_type: "registration",
-        html_content: "",
-        text_content: "",
-        variables: "",
-        is_default: false,
-      })
-      setIsAddTemplateOpen(false)
-      console.log("Email template added successfully")
-    } catch (error) {
-      console.error("Error adding email template:", error)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleEditEmailTemplate = async () => {
-    if (!editingTemplate) return
-
-    setSaving(true)
-    try {
-      // If setting as default, unset other defaults for the same template type
-      if (editingTemplate.is_default) {
-        await supabase
-          .from("email_templates")
-          .update({ is_default: false })
-          .eq("template_type", editingTemplate.template_type)
-          .neq("id", editingTemplate.id)
-      }
-
-      const { data, error } = await supabase
-        .from("email_templates")
-        .update({
-          name: editingTemplate.name,
-          subject: editingTemplate.subject,
-          template_type: editingTemplate.template_type,
-          html_content: editingTemplate.html_content,
-          text_content: editingTemplate.text_content,
-          variables: editingTemplate.variables,
-          is_default: editingTemplate.is_default,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", editingTemplate.id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setEmailTemplates(emailTemplates.map((template) => (template.id === editingTemplate.id ? data : template)))
-      setEditingTemplate(null)
-      setIsEditTemplateOpen(false)
-      console.log("Email template updated successfully")
-    } catch (error) {
-      console.error("Error updating email template:", error)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleToggleTemplateStatus = async (id: string) => {
-    const template = emailTemplates.find((t) => t.id === id)
-    if (!template) return
-
-    const newStatus = template.status === "active" ? "inactive" : "active"
-
-    try {
-      const { error } = await supabase
-        .from("email_templates")
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq("id", id)
-
-      if (error) throw error
-
-      setEmailTemplates(emailTemplates.map((t) => (t.id === id ? { ...t, status: newStatus } : t)))
-      console.log("Email template status updated successfully")
-    } catch (error) {
-      console.error("Error updating template status:", error)
-    }
-  }
-
-  const handleDeleteEmailTemplate = async (id: string) => {
-    try {
-      const { error } = await supabase.from("email_templates").delete().eq("id", id)
-
-      if (error) throw error
-
-      setEmailTemplates(emailTemplates.filter((t) => t.id !== id))
-      console.log("Email template deleted successfully")
-    } catch (error) {
-      console.error("Error deleting email template:", error)
-    }
-  }
 
   const handleEditClick = (method: PaymentMethod) => {
     setEditingPaymentMethod({ ...method })
     setIsEditPaymentMethodOpen(true)
   }
 
-  const handleEditTemplateClick = (template: EmailTemplate) => {
-    setEditingTemplate({ ...template })
-    setIsEditTemplateOpen(true)
-  }
 
   const getPaymentMethodIcon = (type: string) => {
     return type === "qr_code" ? <QrCode className="h-4 w-4" /> : <Building2 className="h-4 w-4" />
@@ -683,36 +521,6 @@ export default function AdminSettingsPage() {
     return currency?.flag_svg ? <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} /> : null
   }
 
-  const handleSetDefaultTemplate = async (id: string) => {
-    const targetTemplate = emailTemplates.find((t) => t.id === id)
-    if (!targetTemplate) return
-
-    try {
-      // Unset other defaults for the same template type
-      await supabase
-        .from("email_templates")
-        .update({ is_default: false })
-        .eq("template_type", targetTemplate.template_type)
-
-      // Set this one as default
-      const { error } = await supabase
-        .from("email_templates")
-        .update({ is_default: true, updated_at: new Date().toISOString() })
-        .eq("id", id)
-
-      if (error) throw error
-
-      setEmailTemplates(
-        emailTemplates.map((t) => ({
-          ...t,
-          is_default: t.template_type === targetTemplate.template_type ? t.id === id : t.is_default,
-        })),
-      )
-      console.log("Default email template updated successfully")
-    } catch (error) {
-      console.error("Error setting default email template:", error)
-    }
-  }
 
   return (
     <AdminDashboardLayout>
@@ -725,7 +533,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="platform" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Platform
@@ -733,10 +541,6 @@ export default function AdminSettingsPage() {
             <TabsTrigger value="payment" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payment Methods
-            </TabsTrigger>
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -1374,327 +1178,6 @@ export default function AdminSettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Email Templates */}
-          <TabsContent value="email">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Email Templates</CardTitle>
-                  <Dialog open={isAddTemplateOpen} onOpenChange={setIsAddTemplateOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-easner-primary hover:bg-easner-primary-600">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Template
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Add New Email Template</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="templateName">Template Name *</Label>
-                            <Input
-                              id="templateName"
-                              value={newTemplate.name}
-                              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                              placeholder="e.g., Welcome Email"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="templateType">Template Type *</Label>
-                            <Select
-                              value={newTemplate.template_type}
-                              onValueChange={(value) => setNewTemplate({ ...newTemplate, template_type: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="registration">Registration</SelectItem>
-                                <SelectItem value="transaction">Transaction</SelectItem>
-                                <SelectItem value="security">Security</SelectItem>
-                                <SelectItem value="notification">Notification</SelectItem>
-                                <SelectItem value="marketing">Marketing</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="templateSubject">Subject *</Label>
-                          <Input
-                            id="templateSubject"
-                            value={newTemplate.subject}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, subject: e.target.value })}
-                            placeholder="e.g., Welcome to Novapay!"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="templateVariables">Variables (JSON format)</Label>
-                          <Input
-                            id="templateVariables"
-                            value={newTemplate.variables}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, variables: e.target.value })}
-                            placeholder='e.g., {"user_name": "string", "amount": "number"}'
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="templateHtmlContent">HTML Content *</Label>
-                          <Textarea
-                            id="templateHtmlContent"
-                            value={newTemplate.html_content}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, html_content: e.target.value })}
-                            placeholder="HTML email template content..."
-                            rows={6}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="templateTextContent">Text Content *</Label>
-                          <Textarea
-                            id="templateTextContent"
-                            value={newTemplate.text_content}
-                            onChange={(e) => setNewTemplate({ ...newTemplate, text_content: e.target.value })}
-                            placeholder="Plain text email template content..."
-                            rows={4}
-                          />
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="isDefaultTemplate"
-                            checked={newTemplate.is_default}
-                            onCheckedChange={(checked) =>
-                              setNewTemplate({ ...newTemplate, is_default: checked as boolean })
-                            }
-                          />
-                          <Label htmlFor="isDefaultTemplate" className="text-sm font-medium">
-                            Set as default template for this type
-                          </Label>
-                        </div>
-
-                        <div className="flex gap-4 pt-4">
-                          <Button variant="outline" onClick={() => setIsAddTemplateOpen(false)} className="flex-1">
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleAddEmailTemplate}
-                            disabled={
-                              saving ||
-                              !newTemplate.name ||
-                              !newTemplate.subject ||
-                              !newTemplate.html_content ||
-                              !newTemplate.text_content
-                            }
-                            className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
-                          >
-                            {saving ? "Adding..." : "Add Template"}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-
-                  {/* Edit Email Template Dialog */}
-                  <Dialog open={isEditTemplateOpen} onOpenChange={setIsEditTemplateOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Edit Email Template</DialogTitle>
-                      </DialogHeader>
-                      {editingTemplate && (
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="editTemplateName">Template Name *</Label>
-                              <Input
-                                id="editTemplateName"
-                                value={editingTemplate.name}
-                                onChange={(e) => setEditingTemplate({ ...editingTemplate, name: e.target.value })}
-                                placeholder="e.g., Welcome Email"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="editTemplateType">Template Type *</Label>
-                              <Select
-                                value={editingTemplate.template_type}
-                                onChange={(value) => setEditingTemplate({ ...editingTemplate, template_type: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="registration">Registration</SelectItem>
-                                  <SelectItem value="transaction">Transaction</SelectItem>
-                                  <SelectItem value="security">Security</SelectItem>
-                                  <SelectItem value="notification">Notification</SelectItem>
-                                  <SelectItem value="marketing">Marketing</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateSubject">Subject *</Label>
-                            <Input
-                              id="editTemplateSubject"
-                              value={editingTemplate.subject}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
-                              placeholder="e.g., Welcome to Novapay!"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateVariables">Variables (JSON format)</Label>
-                            <Input
-                              id="editTemplateVariables"
-                              value={editingTemplate.variables}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, variables: e.target.value })}
-                              placeholder='e.g., {"user_name": "string", "amount": "number"}'
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateHtmlContent">HTML Content *</Label>
-                            <Textarea
-                              id="editTemplateHtmlContent"
-                              value={editingTemplate.html_content}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, html_content: e.target.value })}
-                              placeholder="HTML email template content..."
-                              rows={6}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="editTemplateTextContent">Text Content *</Label>
-                            <Textarea
-                              id="editTemplateTextContent"
-                              value={editingTemplate.text_content}
-                              onChange={(e) => setEditingTemplate({ ...editingTemplate, text_content: e.target.value })}
-                              placeholder="Plain text email template content..."
-                              rows={4}
-                            />
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id="editIsDefaultTemplate"
-                              checked={editingTemplate.is_default}
-                              onChange={(checked) =>
-                                setEditingTemplate({ ...editingTemplate, is_default: checked as boolean })
-                              }
-                            />
-                            <Label htmlFor="editIsDefaultTemplate" className="text-sm font-medium">
-                              Set as default template for this type
-                            </Label>
-                          </div>
-
-                          <div className="flex gap-4 pt-4">
-                            <Button variant="outline" onClick={() => setIsEditTemplateOpen(false)} className="flex-1">
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={handleEditEmailTemplate}
-                              disabled={
-                                saving ||
-                                !editingTemplate.name ||
-                                !editingTemplate.subject ||
-                                !editingTemplate.html_content ||
-                                !editingTemplate.text_content
-                              }
-                              className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
-                            >
-                              {saving ? "Saving..." : "Save Changes"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Default</TableHead>
-                      <TableHead>Last Modified</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {emailTemplates.map((template) => (
-                      <TableRow key={template.id}>
-                        <TableCell className="font-medium">{template.name}</TableCell>
-                        <TableCell>{template.subject}</TableCell>
-                        <TableCell>
-                          <Badge className="bg-purple-100 text-purple-800">{template.template_type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              template.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                            }
-                          >
-                            {template.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {template.is_default && <Badge className="bg-blue-100 text-blue-800">Default</Badge>}
-                        </TableCell>
-                        <TableCell>{new Date(template.updated_at).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditTemplateClick(template)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleTemplateStatus(template.id)}>
-                                {template.status === "active" ? "Disable" : "Enable"}
-                              </DropdownMenuItem>
-                              {template.status === "active" && !template.is_default && (
-                                <DropdownMenuItem onClick={() => handleSetDefaultTemplate(template.id)}>
-                                  Make Default
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteEmailTemplate(template.id)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                {emailTemplates.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No email templates configured yet</p>
-                    <p className="text-sm">Add email templates to customize user communications</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Security Settings */}
           <TabsContent value="security">
