@@ -1,0 +1,225 @@
+"use client"
+
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ChevronDown, Search } from "lucide-react"
+import { currencyService } from "@/lib/database"
+import type { Currency, ExchangeRate } from "@/types"
+
+interface CurrencyConverterProps {
+  onSendMoney: (data: {
+    sendAmount: string
+    sendCurrency: string
+    receiveCurrency: string
+    receiveAmount: number
+    exchangeRate: number
+    fee: number
+  }) => void
+}
+
+export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
+  const [sendAmount, setSendAmount] = useState<string>("100")
+  const [receiveAmount, setReceiveAmount] = useState<string>("0")
+  const [sendCurrency, setSendCurrency] = useState<string>("USD")
+  const [receiveCurrency, setReceiveCurrency] = useState<string>("NGN")
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([])
+  const [fee, setFee] = useState<number>(0)
+  const [lastEditedField, setLastEditedField] = useState<"send" | "receive">("send")
+  const [sendCurrencySearch, setSendCurrencySearch] = useState<string>("")
+  const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
+  const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
+  const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
+
+  const sendDropdownRef = useRef<HTMLDivElement>(null)
+  const receiveDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Load currencies and exchange rates from Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [currenciesData, ratesData] = await Promise.all([
+          currencyService.getAll(),
+          currencyService.getExchangeRates(),
+        ])
+
+        setCurrencies(currenciesData || [])
+        setExchangeRates(ratesData || [])
+      } catch (error) {
+        console.error("Error loading currency data:", error)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sendDropdownRef.current && !sendDropdownRef.current.contains(event.target as Node)) {
+        setSendDropdownOpen(false)
+        setSendCurrencySearch("")
+      }
+      if (receiveDropdownRef.current && !receiveDropdownRef.current.contains(event.target as Node)) {
+        setReceiveDropdownOpen(false)
+        setReceiveCurrencySearch("")
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Filter currencies based on search
+  const filterCurrencies = (searchTerm: string) => {
+    if (!searchTerm) return currencies
+    return currencies.filter(
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }
+
+  // Exchange rate and fee calculation functions
+  const getExchangeRate = (from: string, to: string) => {
+    return exchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
+  }
+
+  const calculateFee = (amount: number, from: string, to: string) => {
+    const rateData = getExchangeRate(from, to)
+    if (!rateData || rateData.fee_type === "free") {
+      return { fee: 0, feeType: "free" }
+    }
+
+    if (rateData.fee_type === "fixed") {
+      return { fee: rateData.fee_amount, feeType: "fixed" }
+    }
+
+    if (rateData.fee_type === "percentage") {
+      return { fee: (amount * rateData.fee_amount) / 100, feeType: "percentage" }
+    }
+
+    return { fee: 0, feeType: "free" }
+  }
+
+  const formatCurrency = (amount: number, currency: string): string => {
+    const curr = currencies.find((c) => c.code === currency)
+    return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  // Component to render flag SVG safely
+  const FlagIcon = ({ currency }: { currency: Currency }) => {
+    if (!currency.flag) return null
+
+    // If flag is already an SVG string, render it directly
+    if (currency.flag.startsWith("<svg")) {
+      return <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+    }
+
+    // If flag is a URL or path, render as img
+    if (currency.flag.startsWith("http") || currency.flag.startsWith("/")) {
+      return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={20} height={20} />
+    }
+
+    // Fallback to text
+    return <span className="text-xs">{currency.code}</span>
+  }
+
+  // Custom Currency Dropdown Component
+  const CurrencyDropdown = ({
+    selectedCurrency,
+    onCurrencyChange,
+    searchTerm,
+    onSearchChange,
+    isOpen,
+    onToggle,
+    dropdownRef,
+  }: {
+    selectedCurrency: string
+    onCurrencyChange: (currency: string) => void
+    searchTerm: string
+    onSearchChange: (search: string) => void
+    isOpen: boolean
+    onToggle: () => void
+    dropdownRef: React.RefObject<HTMLDivElement>
+  }) => {
+    const filteredCurrencies = filterCurrencies(searchTerm)
+    const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
+
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <Button
+          variant="outline"
+          className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
+          onClick={onToggle}
+        >
+          <div className="flex items-center gap-2">
+            {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
+            <span className="font-medium text-sm">{selectedCurrency}</span>
+            <ChevronDown className="h-3 w-3 text-gray-500" />
+          </div>
+        </Button>
+
+        {isOpen && (
+          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            {/* Search Bar */}
+            <div className="p-3 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search currencies..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-10 h-9"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Currency List - Show 3 items in preview, rest scroll */}
+            <div className="max-h-[180px] overflow-y-auto">
+              {filteredCurrencies.length > 0 ? (
+                filteredCurrencies.map((currency) => (
+                  <div
+                    key={currency.code}
+                    onClick={() => {
+                      onCurrencyChange(currency.code)
+                      onSearchChange("")
+                      onToggle()
+                    }}
+                    className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 min-h-[60px]"
+                  >
+                    <FlagIcon currency={currency} />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{currency.code}</div>
+                      <div className="text-xs text-muted-foreground truncate">{currency.name}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No currencies found</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Handle currency selection with same currency prevention
+  const handleSendCurrencyChange = (newCurrency: string) => {
+    setSendCurrency(newCurrency)
+    // If user selects same currency as receive, swap them
+    if (newCurrency === receiveCurrency) {
+      setReceiveCurrency(sendCurrency)
+    }
+  }
+
+  const handleReceiveCurrencyChange = (newCurrency: string) => {
+    setReceiveCurrency(newCurrency)
