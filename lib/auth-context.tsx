@@ -265,7 +265,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
+        // Check if it's a duplicate email error
+        if (error.message.includes("already registered") || error.message.includes("already exists")) {
+          return { error: { message: "An account with this email already exists. Please sign in instead." } }
+        }
         return { error }
+      }
+
+      // Check if signup was successful but user already exists
+      if (data.user && !data.session) {
+        return { error: { message: "An account with this email already exists. Please check your email for verification or sign in instead." } }
       }
 
       return { error: null }

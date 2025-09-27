@@ -141,7 +141,13 @@ class AdminDataStore {
       }
       console.log("AdminDataStore: Users loaded successfully:", users?.length || 0)
 
-      // Calculate transaction stats for each user
+      // Get auth users data to include email_confirmed_at
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+      if (authError) {
+        console.error("AdminDataStore: Error loading auth users:", authError)
+      }
+
+      // Calculate transaction stats for each user and include auth data
       const usersWithStats = await Promise.all(
         (users || []).map(async (user) => {
           const { data: transactions } = await supabase
@@ -176,10 +182,17 @@ class AdminDataStore {
             return sum + amount
           }, 0)
 
+          // Find corresponding auth user to get email_confirmed_at
+          const authUser = authUsers?.users?.find(au => au.id === user.id)
+          
           return {
             ...user,
             totalTransactions,
             totalVolume,
+            // Use email_confirmed_at from auth system for verification status
+            email_confirmed_at: authUser?.email_confirmed_at,
+            // Keep verification_status for backward compatibility but use email_confirmed_at as source of truth
+            verification_status: authUser?.email_confirmed_at ? "verified" : (user.verification_status || "unverified"),
           }
         }),
       )
@@ -814,6 +827,17 @@ class AdminDataStore {
       await this.loadData()
     } catch (error) {
       console.error("Error refreshing data for base currency change:", error)
+    }
+  }
+
+  // Method to manually refresh all data
+  async refreshAllData() {
+    try {
+      console.log("AdminDataStore: Manually refreshing all data...")
+      await this.loadData()
+      console.log("AdminDataStore: Data refresh completed")
+    } catch (error) {
+      console.error("Error refreshing all data:", error)
     }
   }
 

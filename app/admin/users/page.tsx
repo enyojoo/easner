@@ -27,6 +27,7 @@ import {
   Ban,
   UserCheck,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase"
@@ -42,6 +43,7 @@ interface UserData {
   phone?: string
   status: string
   verification_status: string
+  email_confirmed_at?: string
   base_currency: string
   created_at: string
   last_login?: string
@@ -124,7 +126,9 @@ export default function AdminUsersPage() {
       fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || user.status === statusFilter
-    const matchesVerification = verificationFilter === "all" || user.verification_status === verificationFilter
+    const isVerified = user.email_confirmed_at
+    const verificationStatus = isVerified ? "verified" : "unverified"
+    const matchesVerification = verificationFilter === "all" || verificationStatus === verificationFilter
 
     return matchesSearch && matchesStatus && matchesVerification
   })
@@ -146,11 +150,13 @@ export default function AdminUsersPage() {
     )
   }
 
-  const getVerificationBadge = (status: string) => {
+  const getVerificationBadge = (user: UserData) => {
+    // Use email_confirmed_at like the user profile page does
+    const isVerified = user.email_confirmed_at
+    const status = isVerified ? "verified" : "unverified"
+    
     const statusConfig = {
       verified: { color: "bg-green-100 text-green-800", icon: <UserCheck className="h-3 w-3 mr-1" /> },
-      pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
-      rejected: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
       unverified: { color: "bg-gray-100 text-gray-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
     }
 
@@ -220,7 +226,7 @@ export default function AdminUsersPage() {
           u.email,
           u.phone || "",
           u.status,
-          u.verification_status,
+          u.email_confirmed_at ? "verified" : "unverified",
           new Date(u.created_at).toLocaleDateString(),
           formatCurrencyFromDB(u.totalVolume, u.base_currency),
         ].join(","),
@@ -263,6 +269,19 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error('Error syncing verification:', error)
       alert('Failed to sync verification status')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRefreshData = async () => {
+    setSaving(true)
+    try {
+      // Trigger a manual refresh of admin data
+      window.location.reload()
+    } catch (error) {
+      console.error('Error refreshing data:', error)
+      alert('Failed to refresh data')
     } finally {
       setSaving(false)
     }
@@ -338,6 +357,14 @@ export default function AdminUsersPage() {
             >
               <UserCheck className="h-4 w-4 mr-2" />
               Sync Verification
+            </Button>
+            <Button 
+              onClick={handleRefreshData} 
+              variant="outline"
+              disabled={saving}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Data
             </Button>
             <Button onClick={handleExport} variant="outline">
               <Download className="h-4 w-4 mr-2" />
@@ -515,7 +542,7 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
-                    <TableCell>{getVerificationBadge(user.verification_status)}</TableCell>
+                    <TableCell>{getVerificationBadge(user)}</TableCell>
                     <TableCell className="font-medium">{user.totalTransactions}</TableCell>
                     <TableCell className="font-medium">{formatCurrencyFromDB(user.totalVolume, user.base_currency)}</TableCell>
                     <TableCell>
@@ -567,7 +594,7 @@ export default function AdminUsersPage() {
                                         </div>
                                         <div className="flex items-center justify-between">
                                           <span className="text-sm">Verification:</span>
-                                          {getVerificationBadge(selectedUser.verification_status)}
+                                          {getVerificationBadge(selectedUser)}
                                         </div>
                                       </div>
                                     </div>
@@ -706,19 +733,10 @@ export default function AdminUsersPage() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => handleVerificationUpdate(selectedUser.id, "verified")}
-                                      disabled={selectedUser.verification_status === "verified"}
+                                      disabled={true}
+                                      title="Verification status is automatically managed based on email confirmation"
                                     >
-                                      Verify User
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleVerificationUpdate(selectedUser.id, "rejected")}
-                                      disabled={selectedUser.verification_status === "rejected"}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      Reject Verification
+                                      {selectedUser.email_confirmed_at ? "Email Verified" : "Email Not Verified"}
                                     </Button>
                                   </div>
                                 </div>
@@ -740,14 +758,8 @@ export default function AdminUsersPage() {
                             <DropdownMenuItem onClick={() => handleStatusUpdate(user.id, "suspended")}>
                               Suspend Account
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleVerificationUpdate(user.id, "verified")}>
-                              Verify User
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleVerificationUpdate(user.id, "rejected")}
-                              className="text-red-600"
-                            >
-                              Reject Verification
+                            <DropdownMenuItem disabled={true}>
+                              {user.email_confirmed_at ? "Email Verified" : "Email Not Verified"}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
