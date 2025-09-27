@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,8 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 interface EarlyAccessRequest {
   id: string
@@ -47,67 +49,33 @@ interface EarlyAccessRequest {
   updated_at: string
 }
 
-interface Stats {
-  total: number
-  pending: number
-  approved: number
-  contacted: number
-}
-
 export default function AdminEarlyAccessPage() {
-  const [requests, setRequests] = useState<EarlyAccessRequest[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, contacted: 0 })
-  const [loading, setLoading] = useState(true)
+  const { data } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedRequests, setSelectedRequests] = useState<string[]>([])
   const [selectedRequest, setSelectedRequest] = useState<EarlyAccessRequest | null>(null)
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      if (statusFilter !== "all") params.append("status", statusFilter)
-      if (searchTerm) params.append("search", searchTerm)
-
-      const response = await fetch(`/api/admin/early-access?${params.toString()}`)
-      const data = await response.json()
-
-      if (response.ok) {
-        setRequests(data.requests)
-        setStats(data.stats)
-      } else {
-        console.error("Error fetching requests:", data.error)
-      }
-    } catch (error) {
-      console.error("Error fetching requests:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const updateRequestStatus = async (id: string, status: string, notes?: string) => {
     try {
-      const response = await fetch("/api/admin/early-access", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status, notes })
-      })
-
-      if (response.ok) {
-        await fetchRequests() // Refresh the list
-        setSelectedRequest(null)
-      } else {
-        console.error("Error updating request")
-      }
+      await adminDataStore.updateEarlyAccessRequestStatus(id, status, notes)
+      setSelectedRequest(null)
     } catch (error) {
       console.error("Error updating request:", error)
     }
   }
 
-  useEffect(() => {
-    fetchRequests()
-  }, [statusFilter, searchTerm])
+  // Filter requests based on search and status
+  const filteredRequests = (data?.earlyAccessRequests || []).filter((request: EarlyAccessRequest) => {
+    const matchesSearch = 
+      request.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.whatsapp_telegram.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -381,7 +349,7 @@ export default function AdminEarlyAccessPage() {
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-bold">{data?.earlyAccessStats?.total || 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -390,7 +358,7 @@ export default function AdminEarlyAccessPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+              <div className="text-2xl font-bold text-yellow-600">{data?.earlyAccessStats?.pending || 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -399,7 +367,7 @@ export default function AdminEarlyAccessPage() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+              <div className="text-2xl font-bold text-green-600">{data?.earlyAccessStats?.approved || 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -408,7 +376,7 @@ export default function AdminEarlyAccessPage() {
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.contacted}</div>
+              <div className="text-2xl font-bold text-blue-600">{data?.earlyAccessStats?.contacted || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -457,7 +425,7 @@ export default function AdminEarlyAccessPage() {
               <div>
                 <CardTitle>Requests</CardTitle>
                 <CardDescription>
-                  {loading ? "Loading..." : `${requests.length} request(s) found`}
+                  {filteredRequests.length} request(s) found
                 </CardDescription>
               </div>
               {selectedRequests.length > 0 && (
@@ -473,9 +441,7 @@ export default function AdminEarlyAccessPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : requests.length === 0 ? (
+            {filteredRequests.length === 0 ? (
               <div className="text-center py-8 text-gray-500">No early access requests found.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -484,10 +450,10 @@ export default function AdminEarlyAccessPage() {
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedRequests.length === requests.length && requests.length > 0}
+                          checked={selectedRequests.length === filteredRequests.length && filteredRequests.length > 0}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setSelectedRequests(requests.map(r => r.id))
+                              setSelectedRequests(filteredRequests.map(r => r.id))
                             } else {
                               setSelectedRequests([])
                             }
@@ -504,7 +470,7 @@ export default function AdminEarlyAccessPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requests.map((request) => (
+                    {filteredRequests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell>
                           <Checkbox

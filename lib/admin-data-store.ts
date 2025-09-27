@@ -5,6 +5,7 @@ interface AdminData {
   transactions: any[]
   currencies: any[]
   exchangeRates: any[]
+  earlyAccessRequests: any[]
   baseCurrency: string
   stats: {
     totalUsers: number
@@ -13,6 +14,12 @@ interface AdminData {
     totalTransactions: number
     totalVolume: number
     pendingTransactions: number
+  }
+  earlyAccessStats: {
+    total: number
+    pending: number
+    approved: number
+    contacted: number
   }
   recentActivity: any[]
   currencyPairs: any[]
@@ -91,16 +98,18 @@ class AdminDataStore {
 
     try {
       // Load all data in parallel
-      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, baseCurrency] = await Promise.all([
+      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, earlyAccessResult, baseCurrency] = await Promise.all([
         this.loadUsers(),
         this.loadTransactions(),
         this.loadCurrencies(),
         this.loadExchangeRates(),
+        this.loadEarlyAccessRequests(),
         this.getAdminBaseCurrency(),
       ])
 
 
       const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
+      const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
@@ -109,8 +118,10 @@ class AdminDataStore {
         transactions: transactionsResult,
         currencies: currenciesResult,
         exchangeRates: exchangeRatesResult,
+        earlyAccessRequests: earlyAccessResult,
         baseCurrency,
         stats,
+        earlyAccessStats,
         recentActivity,
         currencyPairs,
         lastUpdated: Date.now(),
@@ -267,6 +278,26 @@ class AdminDataStore {
     }
   }
 
+  private async loadEarlyAccessRequests() {
+    try {
+      console.log("AdminDataStore: Loading early access requests...")
+      const { data, error } = await supabase
+        .from("early_access_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("AdminDataStore: Error loading early access requests:", error)
+        throw error
+      }
+      console.log("AdminDataStore: Early access requests loaded successfully:", data?.length || 0)
+      return data || []
+    } catch (error) {
+      console.error("Error loading early access requests:", error)
+      return [] // Return empty array on error to prevent crashes
+    }
+  }
+
   private async calculateStats(users: any[], transactions: any[], baseCurrency: string) {
     const totalUsers = users.length
     const activeUsers = users.filter((u) => u.status === "active").length
@@ -286,6 +317,20 @@ class AdminDataStore {
       totalTransactions,
       totalVolume,
       pendingTransactions,
+    }
+  }
+
+  private calculateEarlyAccessStats(requests: any[]) {
+    const total = requests.length
+    const pending = requests.filter((r) => r.status === "pending").length
+    const approved = requests.filter((r) => r.status === "approved").length
+    const contacted = requests.filter((r) => r.status === "contacted").length
+
+    return {
+      total,
+      pending,
+      approved,
+      contacted,
     }
   }
 
@@ -638,6 +683,39 @@ class AdminDataStore {
       }
     } catch (error) {
       console.error("Error updating user verification:", error)
+      throw error
+    }
+  }
+
+  async updateEarlyAccessRequestStatus(requestId: string, newStatus: string, notes?: string) {
+    try {
+      console.log(`AdminDataStore: Updating early access request ${requestId} status to ${newStatus}`)
+      
+      const { error } = await supabase
+        .from("early_access_requests")
+        .update({
+          status: newStatus,
+          notes: notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", requestId)
+
+      if (error) {
+        console.error("Database error:", error)
+        throw error
+      }
+
+      // Update local data
+      if (this.data) {
+        this.data.earlyAccessRequests = this.data.earlyAccessRequests.map((request) => 
+          request.id === requestId ? { ...request, status: newStatus, notes: notes || null, updated_at: new Date().toISOString() } : request
+        )
+        this.data.earlyAccessStats = this.calculateEarlyAccessStats(this.data.earlyAccessRequests)
+        this.notify()
+        console.log("Early access request data updated successfully")
+      }
+    } catch (error) {
+      console.error("Error updating early access request status:", error)
       throw error
     }
   }
