@@ -34,6 +34,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   const [receiveCurrencySearch, setReceiveCurrencySearch] = useState<string>("")
   const [sendDropdownOpen, setSendDropdownOpen] = useState<boolean>(false)
   const [receiveDropdownOpen, setReceiveDropdownOpen] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const sendDropdownRef = useRef<HTMLDivElement>(null)
   const receiveDropdownRef = useRef<HTMLDivElement>(null)
@@ -51,6 +52,8 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         setExchangeRates(ratesData || [])
       } catch (error) {
         console.error("Error loading currency data:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -304,6 +307,34 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
       exchangeRate,
       fee,
     })
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
+        <CardContent className="p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex justify-between items-center">
+                <div className="h-8 bg-gray-200 rounded animate-pulse w-24"></div>
+                <div className="h-8 bg-gray-200 rounded-full animate-pulse w-20"></div>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex justify-between items-center">
+                <div className="h-8 bg-gray-200 rounded animate-pulse w-24"></div>
+                <div className="h-8 bg-gray-200 rounded-full animate-pulse w-20"></div>
+              </div>
+            </div>
+          </div>
+          <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
