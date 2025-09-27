@@ -32,7 +32,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { supabase } from "@/lib/supabase"
 import { adminDataStore } from "@/lib/admin-data-store"
-import { paymentMethodService } from "@/lib/database"
 
 interface SystemSetting {
   id: string
@@ -231,8 +230,12 @@ export default function AdminSettingsPage() {
 
   const loadPaymentMethods = async () => {
     try {
-      const data = await paymentMethodService.getAll()
-      setPaymentMethods(data || [])
+      const response = await fetch("/api/admin/payment-methods")
+      if (!response.ok) {
+        throw new Error("Failed to load payment methods")
+      }
+      const { paymentMethods } = await response.json()
+      setPaymentMethods(paymentMethods || [])
     } catch (error) {
       console.error("Error loading payment methods:", error)
     }
@@ -371,19 +374,31 @@ export default function AdminSettingsPage() {
         qrCodeData = await uploadQrCodeFile(qrCodeFile)
       }
 
-      const data = await paymentMethodService.create({
-        currency: newPaymentMethod.currency,
-        type: newPaymentMethod.type,
-        name: newPaymentMethod.name,
-        accountName: newPaymentMethod.account_name || undefined,
-        accountNumber: newPaymentMethod.account_number || undefined,
-        bankName: newPaymentMethod.bank_name || undefined,
-        qrCodeData: qrCodeData || undefined,
-        instructions: newPaymentMethod.instructions || undefined,
-        isDefault: newPaymentMethod.is_default,
+      const response = await fetch("/api/admin/payment-methods", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currency: newPaymentMethod.currency,
+          type: newPaymentMethod.type,
+          name: newPaymentMethod.name,
+          accountName: newPaymentMethod.account_name || null,
+          accountNumber: newPaymentMethod.account_number || null,
+          bankName: newPaymentMethod.bank_name || null,
+          qrCodeData: qrCodeData || null,
+          instructions: newPaymentMethod.instructions || null,
+          isDefault: newPaymentMethod.is_default,
+        }),
       })
 
-      setPaymentMethods([...paymentMethods, data])
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create payment method")
+      }
+
+      const { paymentMethod } = await response.json()
+      setPaymentMethods([...paymentMethods, paymentMethod])
       setNewPaymentMethod({
         currency: "",
         type: "bank_account",
@@ -419,19 +434,31 @@ export default function AdminSettingsPage() {
         qrCodeData = await uploadQrCodeFile(editingQrCodeFile)
       }
 
-      const data = await paymentMethodService.update(editingPaymentMethod.id, {
-        currency: editingPaymentMethod.currency,
-        type: editingPaymentMethod.type,
-        name: editingPaymentMethod.name,
-        accountName: editingPaymentMethod.account_name || undefined,
-        accountNumber: editingPaymentMethod.account_number || undefined,
-        bankName: editingPaymentMethod.bank_name || undefined,
-        qrCodeData: qrCodeData || undefined,
-        instructions: editingPaymentMethod.instructions || undefined,
-        isDefault: editingPaymentMethod.is_default,
+      const response = await fetch(`/api/admin/payment-methods/${editingPaymentMethod.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currency: editingPaymentMethod.currency,
+          type: editingPaymentMethod.type,
+          name: editingPaymentMethod.name,
+          accountName: editingPaymentMethod.account_name || null,
+          accountNumber: editingPaymentMethod.account_number || null,
+          bankName: editingPaymentMethod.bank_name || null,
+          qrCodeData: qrCodeData || null,
+          instructions: editingPaymentMethod.instructions || null,
+          isDefault: editingPaymentMethod.is_default,
+        }),
       })
 
-      setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? data : pm)))
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to update payment method")
+      }
+
+      const { paymentMethod } = await response.json()
+      setPaymentMethods(paymentMethods.map((pm) => (pm.id === editingPaymentMethod.id ? paymentMethod : pm)))
       setEditingPaymentMethod(null)
       setEditingQrCodeFile(null)
       setIsEditPaymentMethodOpen(false)
@@ -451,8 +478,21 @@ export default function AdminSettingsPage() {
     const newStatus = method.status === "active" ? "inactive" : "active"
 
     try {
-      const data = await paymentMethodService.updateStatus(id, newStatus)
-      setPaymentMethods(paymentMethods.map((pm) => (pm.id === id ? data : pm)))
+      const response = await fetch(`/api/admin/payment-methods/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to update payment method status")
+      }
+
+      const { paymentMethod } = await response.json()
+      setPaymentMethods(paymentMethods.map((pm) => (pm.id === id ? paymentMethod : pm)))
       console.log("Payment method status updated successfully")
     } catch (error) {
       console.error("Error updating payment method status:", error)
@@ -464,7 +504,20 @@ export default function AdminSettingsPage() {
     if (!targetMethod) return
 
     try {
-      const data = await paymentMethodService.setDefault(id, targetMethod.currency)
+      const response = await fetch(`/api/admin/payment-methods/${id}/default`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currency: targetMethod.currency }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to set default payment method")
+      }
+
+      const { paymentMethod } = await response.json()
       setPaymentMethods(
         paymentMethods.map((pm) => ({
           ...pm,
@@ -479,7 +532,15 @@ export default function AdminSettingsPage() {
 
   const handleDeletePaymentMethod = async (id: string) => {
     try {
-      await paymentMethodService.delete(id)
+      const response = await fetch(`/api/admin/payment-methods/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to delete payment method")
+      }
+
       setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
       console.log("Payment method deleted successfully")
     } catch (error) {
