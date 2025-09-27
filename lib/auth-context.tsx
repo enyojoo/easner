@@ -252,6 +252,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      // First check if user already exists
+      const checkResponse = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json()
+        if (checkData.exists) {
+          return { error: { message: "An account with this email already exists. Please sign in instead." } }
+        }
+      }
+
+      // Proceed with signup if email doesn't exist
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -265,10 +282,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        // Check if it's a duplicate email error
-        if (error.message.includes("already registered") || error.message.includes("already exists")) {
-          return { error: { message: "An account with this email already exists. Please sign in instead." } }
-        }
         return { error }
       }
 

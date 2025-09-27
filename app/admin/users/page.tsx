@@ -673,14 +673,6 @@ export default function AdminUsersPage() {
                                     >
                                       Suspend Account
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={true}
-                                      title="Verification status is automatically managed based on email confirmation"
-                                    >
-                                      {selectedUser.email_confirmed_at ? "Email Verified" : "Email Not Verified"}
-                                    </Button>
                                   </div>
                                 </div>
                               </div>
@@ -700,9 +692,6 @@ export default function AdminUsersPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusUpdate(user.id, "suspended")}>
                               Suspend Account
-                            </DropdownMenuItem>
-                            <DropdownMenuItem disabled={true}>
-                              {user.email_confirmed_at ? "Email Verified" : "Email Not Verified"}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
