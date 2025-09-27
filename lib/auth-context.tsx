@@ -272,11 +272,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
 
-      // Check if signup was successful but user already exists
-      if (data.user && !data.session) {
-        return { error: { message: "An account with this email already exists. Please check your email for verification or sign in instead." } }
-      }
-
       return { error: null }
     } catch (error) {
       console.error("Sign up error:", error)

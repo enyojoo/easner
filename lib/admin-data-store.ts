@@ -99,10 +99,6 @@ class AdminDataStore {
         this.getAdminBaseCurrency(),
       ])
 
-      // Sync verification status in background (non-blocking)
-      this.syncVerificationStatus().catch(error => {
-        console.error("Background verification sync failed:", error)
-      })
 
       const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
@@ -142,9 +138,17 @@ class AdminDataStore {
       console.log("AdminDataStore: Users loaded successfully:", users?.length || 0)
 
       // Get auth users data to include email_confirmed_at
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-      if (authError) {
-        console.error("AdminDataStore: Error loading auth users:", authError)
+      let authUsers = null
+      try {
+        const response = await fetch('/api/admin/auth-users')
+        if (response.ok) {
+          const data = await response.json()
+          authUsers = { users: data.users }
+        } else {
+          console.error("AdminDataStore: Error loading auth users:", response.statusText)
+        }
+      } catch (error) {
+        console.error("AdminDataStore: Error fetching auth users:", error)
       }
 
       // Calculate transaction stats for each user and include auth data
@@ -638,74 +642,6 @@ class AdminDataStore {
     }
   }
 
-  async syncVerificationStatus() {
-    try {
-      console.log("AdminDataStore: Syncing verification status with email confirmation...")
-      
-      // Get all users and their auth data
-      const { data: users, error: usersError } = await supabase
-        .from("users")
-        .select("id, verification_status")
-      
-      if (usersError) {
-        console.error("Error fetching users:", usersError)
-        return
-      }
-
-      // Get auth users with email_confirmed_at
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-      
-      if (authError) {
-        console.error("Error fetching auth users:", authError)
-        return
-      }
-
-      const updates = []
-      
-      for (const user of users || []) {
-        const authUser = authUsers.users.find(au => au.id === user.id)
-        
-        if (authUser?.email_confirmed_at && user.verification_status !== "verified") {
-          console.log(`User ${user.id} email confirmed, updating verification status`)
-          updates.push({
-            id: user.id,
-            verification_status: "verified",
-            updated_at: new Date().toISOString()
-          })
-        }
-      }
-
-      if (updates.length > 0) {
-        console.log(`Updating verification status for ${updates.length} users`)
-        
-        // Update all users in batch
-        const { error: updateError } = await supabase
-          .from("users")
-          .upsert(updates)
-
-        if (updateError) {
-          console.error("Error updating verification status:", updateError)
-          return
-        }
-
-        // Refresh local data
-        if (this.data) {
-          this.data.users = this.data.users.map(user => {
-            const update = updates.find(u => u.id === user.id)
-            return update ? { ...user, ...update } : user
-          })
-          this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
-          this.notify()
-        }
-
-        console.log("Verification status sync completed successfully")
-      } else {
-        console.log("No verification status updates needed")
-      }
-    } catch (error) {
-      console.error("Error syncing verification status:", error)
-    }
-  }
 
   async updateCurrencyStatus(currencyId: string, newStatus: string) {
     try {

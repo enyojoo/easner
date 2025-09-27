@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { useAuth } from "@/lib/auth-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { useEffect } from "react"
 
 function LoginPageContent() {
@@ -38,14 +38,7 @@ function LoginPageContent() {
 
   // Show loading only while auth is loading, not for form submission
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-easner-primary mb-4" />
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { supabase } from "@/lib/supabase"
-import { Loader2 } from "lucide-react"
 
 function AdminLoginPageContent() {
   const [email, setEmail] = useState("")
