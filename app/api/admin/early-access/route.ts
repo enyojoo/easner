@@ -38,7 +38,10 @@ export async function GET(request: NextRequest) {
       requests = await earlyAccessService.getAll()
     }
 
-    return NextResponse.json({ requests })
+    // Get stats
+    const stats = await earlyAccessService.getStats()
+
+    return NextResponse.json({ requests, stats })
   } catch (error) {
     console.error('Error fetching early access requests:', error)
     return NextResponse.json(

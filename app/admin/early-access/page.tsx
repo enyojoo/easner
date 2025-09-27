@@ -75,6 +75,7 @@ export default function AdminEarlyAccessPage() {
 
       if (response.ok) {
         setRequests(data.requests)
+        setStats(data.stats)
       } else {
         console.error("Error fetching requests:", data.error)
       }
@@ -474,6 +475,8 @@ export default function AdminEarlyAccessPage() {
           <CardContent>
             {loading ? (
               <div className="text-center py-8">Loading...</div>
+            ) : requests.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No early access requests found.</div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
