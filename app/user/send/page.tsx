@@ -386,12 +386,16 @@ export default function UserSendPage() {
 
     return (
       <div className="relative" ref={dropdownRef}>
-        <Button
-          variant="outline"
-          className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-          onClick={() => {
+        <button
+          type="button"
+          className="bg-white border border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0 inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
             console.log('Dropdown clicked, current state:', isOpen)
+            console.log('About to call onToggle')
             onToggle()
+            console.log('onToggle called')
           }}
         >
           <div className="flex items-center gap-2">
@@ -399,7 +403,7 @@ export default function UserSendPage() {
             <span className="font-medium text-sm">{selectedCurrency}</span>
             <ChevronDown className="h-3 w-3 text-gray-500" />
           </div>
-        </Button>
+        </button>
 
         {isOpen && (
           <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
