@@ -67,29 +67,28 @@ const CurrencyDropdown = ({
             </div>
           </div>
 
-          {/* Currency List */}
-          <div className="max-h-60 overflow-y-auto">
-            {filteredCurrencies.length === 0 ? (
-              <div className="p-3 text-center text-gray-500 text-sm">
-                No currencies found
-              </div>
-            ) : (
+          {/* Currency List - Show 3 items in preview, rest scroll */}
+          <div className="max-h-[180px] overflow-y-auto">
+            {filteredCurrencies.length > 0 ? (
               filteredCurrencies.map((currency) => (
-                <button
+                <div
                   key={currency.code}
-                  className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
                   onClick={() => {
                     onCurrencyChange(currency.code)
                     onSearchChange("")
+                    onToggle()
                   }}
+                  className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 min-h-[60px]"
                 >
                   <FlagIcon currency={currency} />
                   <div className="flex-1">
-                    <div className="font-medium">{currency.name}</div>
-                    <div className="text-gray-500 text-xs">{currency.code}</div>
+                    <div className="font-medium text-sm">{currency.code}</div>
+                    <div className="text-xs text-muted-foreground truncate">{currency.name}</div>
                   </div>
-                </button>
+                </div>
               ))
+            ) : (
+              <div className="px-3 py-4 text-center text-sm text-gray-500">No currencies found</div>
             )}
           </div>
         </div>
