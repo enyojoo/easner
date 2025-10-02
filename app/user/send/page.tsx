@@ -1,7 +1,120 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+
+// WORKING CURRENCY DROPDOWN COMPONENT - OUTSIDE MAIN COMPONENT
+const CurrencyDropdown = ({
+  selectedCurrency,
+  onCurrencyChange,
+  searchTerm,
+  onSearchChange,
+  isOpen,
+  onToggle,
+  dropdownRef,
+  currencies,
+}: {
+  selectedCurrency: string
+  onCurrencyChange: (currency: string) => void
+  searchTerm: string
+  onSearchChange: (search: string) => void
+  isOpen: boolean
+  onToggle: () => void
+  dropdownRef: React.RefObject<HTMLDivElement>
+  currencies: Currency[]
+}) => {
+  const filteredCurrencies = useMemo(() => {
+    if (!searchTerm) return currencies
+    return currencies.filter(
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [searchTerm, currencies])
+
+  const selectedCurrencyData = useMemo(() => 
+    currencies.find((c) => c.code === selectedCurrency), 
+    [currencies, selectedCurrency]
+  )
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        className="bg-white border border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0 inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors"
+        onClick={onToggle}
+      >
+        <div className="flex items-center gap-2">
+          {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
+          <span className="font-medium text-sm">{selectedCurrency}</span>
+          <ChevronDown className="h-3 w-3 text-gray-500" />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          {/* Search Bar */}
+          <div className="p-3 border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search currencies..."
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-10 h-9"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          {/* Currency List */}
+          <div className="max-h-60 overflow-y-auto">
+            {filteredCurrencies.length === 0 ? (
+              <div className="p-3 text-center text-gray-500 text-sm">
+                No currencies found
+              </div>
+            ) : (
+              filteredCurrencies.map((currency) => (
+                <button
+                  key={currency.code}
+                  className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 text-sm"
+                  onClick={() => {
+                    onCurrencyChange(currency.code)
+                    onSearchChange("")
+                  }}
+                >
+                  <FlagIcon currency={currency} />
+                  <div className="flex-1">
+                    <div className="font-medium">{currency.name}</div>
+                    <div className="text-gray-500 text-xs">{currency.code}</div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// FlagIcon component
+const FlagIcon = ({ currency }: { currency: Currency }) => {
+  if (!currency.flag) return null
+
+  // If flag is already an SVG string, render it directly
+  if (currency.flag.startsWith("<svg")) {
+    return <div dangerouslySetInnerHTML={{ __html: currency.flag }} />
+  }
+
+  // If flag is a URL or path, render as img
+  if (currency.flag.startsWith("http") || currency.flag.startsWith("/")) {
+    return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={20} height={20} />
+  }
+
+  // Fallback to text
+  return <span className="text-xs">{currency.code}</span>
+}
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,6 +147,9 @@ export default function UserSendPage() {
   const router = useRouter()
   const { user, userProfile } = useAuth()
   const { currencies, exchangeRates, recipients, refreshRecipients } = useUserData()
+  
+  // Memoize exchangeRates to prevent infinite re-renders
+  const memoizedExchangeRates = useMemo(() => exchangeRates, [exchangeRates])
 
   // Initialize state with default values
   const [currentStep, setCurrentStep] = useState(1)
@@ -164,14 +280,16 @@ export default function UserSendPage() {
   }, [])
 
   // Filter currencies based on search
-  const filterCurrencies = (searchTerm: string) => {
-    if (!searchTerm) return currencies
-    return currencies.filter(
-      (currency) =>
-        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-  }
+  const filterCurrencies = useMemo(() => {
+    return (searchTerm: string) => {
+      if (!searchTerm) return currencies
+      return currencies.filter(
+        (currency) =>
+          currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+  }, [currencies])
 
   const filteredSavedRecipients = recipients.filter(
     (recipient) =>
@@ -313,7 +431,7 @@ export default function UserSendPage() {
 
   // Exchange rate and fee calculation functions
   const getExchangeRate = (from: string, to: string) => {
-    return exchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
+    return memoizedExchangeRates.find((r) => r.from_currency === from && r.to_currency === to)
   }
 
   const calculateFee = (amount: number, from: string, to: string) => {
@@ -356,104 +474,15 @@ export default function UserSendPage() {
     return <span className="text-xs">{currency.code}</span>
   }
 
-  // Custom Currency Dropdown Component
-  const CurrencyDropdown = ({
-    selectedCurrency,
-    onCurrencyChange,
-    searchTerm,
-    onSearchChange,
-    isOpen,
-    onToggle,
-    dropdownRef,
-  }: {
-    selectedCurrency: string
-    onCurrencyChange: (currency: string) => void
-    searchTerm: string
-    onSearchChange: (search: string) => void
-    isOpen: boolean
-    onToggle: () => void
-    dropdownRef: React.RefObject<HTMLDivElement>
-  }) => {
-    const filteredCurrencies = filterCurrencies(searchTerm)
-    const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
 
-    console.log('CurrencyDropdown render:', {
-      selectedCurrency,
-      isOpen,
-      currenciesLength: currencies.length,
-      filteredCurrenciesLength: filteredCurrencies.length
-    })
+  // Memoized toggle functions to prevent infinite re-renders
+  const toggleSendDropdown = useCallback(() => {
+    setSendDropdownOpen(!sendDropdownOpen)
+  }, [sendDropdownOpen])
 
-    return (
-      <div className="relative" ref={dropdownRef}>
-        <button
-          type="button"
-          className="bg-white border border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0 inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            alert('CLICK DETECTED! Current state: ' + isOpen)
-            console.log('Dropdown clicked, current state:', isOpen)
-            console.log('About to call onToggle')
-            onToggle()
-            console.log('onToggle called')
-          }}
-        >
-          <div className="flex items-center gap-2">
-            {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
-            <span className="font-medium text-sm">{selectedCurrency}</span>
-            <ChevronDown className="h-3 w-3 text-gray-500" />
-          </div>
-        </button>
-
-        {isOpen && (
-          <div className="absolute right-0 top-full mt-1 w-64 bg-red-500 border-4 border-yellow-400 rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
-            <div className="p-4 text-white font-bold text-center">
-              DROPDOWN IS OPEN! CLICK WORKED!
-            </div>
-            {/* Search Bar */}
-            <div className="p-3 border-b">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search currencies..."
-                  value={searchTerm}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="pl-10 h-9"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            {/* Currency List - Show 3 items in preview, rest scroll */}
-            <div className="max-h-[180px] overflow-y-auto">
-              {filteredCurrencies.length > 0 ? (
-                filteredCurrencies.map((currency) => (
-                  <div
-                    key={currency.code}
-                    onClick={() => {
-                      onCurrencyChange(currency.code)
-                      onSearchChange("")
-                      onToggle()
-                    }}
-                    className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 min-h-[60px]"
-                  >
-                    <FlagIcon currency={currency} />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{currency.code}</div>
-                      <div className="text-xs text-muted-foreground truncate">{currency.name}</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="px-3 py-4 text-center text-sm text-gray-500">No currencies found</div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
+  const toggleReceiveDropdown = useCallback(() => {
+    setReceiveDropdownOpen(!receiveDropdownOpen)
+  }, [receiveDropdownOpen])
 
   // Handle currency selection with same currency prevention
   const handleSendCurrencyChange = (newCurrency: string) => {
@@ -522,7 +551,7 @@ export default function UserSendPage() {
         setFee(0)
       }
     }
-  }, [sendAmount, receiveAmount, sendCurrency, receiveCurrency, exchangeRates, lastEditedField])
+  }, [sendAmount, receiveAmount, sendCurrency, receiveCurrency, memoizedExchangeRates, lastEditedField])
 
   // Add new useEffect to handle min/max amounts when currency changes
   useEffect(() => {
@@ -833,8 +862,9 @@ export default function UserSendPage() {
                             searchTerm={sendCurrencySearch}
                             onSearchChange={setSendCurrencySearch}
                             isOpen={sendDropdownOpen}
-                            onToggle={() => setSendDropdownOpen(!sendDropdownOpen)}
+                            onToggle={toggleSendDropdown}
                             dropdownRef={sendDropdownRef}
+                            currencies={currencies}
                           />
                         </div>
                       </div>
@@ -922,8 +952,9 @@ export default function UserSendPage() {
                             searchTerm={receiveCurrencySearch}
                             onSearchChange={setReceiveCurrencySearch}
                             isOpen={receiveDropdownOpen}
-                            onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
+                            onToggle={toggleReceiveDropdown}
                             dropdownRef={receiveDropdownRef}
+                            currencies={currencies}
                           />
                         </div>
                       </div>
