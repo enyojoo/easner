@@ -23,6 +23,8 @@ const CurrencyDropdown = ({
   dropdownRef: React.RefObject<HTMLDivElement>
   currencies: Currency[]
 }) => {
+  const [dropdownPosition, setDropdownPosition] = useState<'down' | 'up'>('down')
+
   const filteredCurrencies = useMemo(() => {
     if (!searchTerm) return currencies
     return currencies.filter(
@@ -36,6 +38,24 @@ const CurrencyDropdown = ({
     currencies.find((c) => c.code === selectedCurrency), 
     [currencies, selectedCurrency]
   )
+
+  // Calculate dropdown position when opening
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      const dropdownHeight = 200 // Approximate height of dropdown
+      const spaceBelow = viewportHeight - rect.bottom
+      const spaceAbove = rect.top
+
+      // If not enough space below but enough space above, position up
+      if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+        setDropdownPosition('up')
+      } else {
+        setDropdownPosition('down')
+      }
+    }
+  }, [isOpen, dropdownRef])
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -52,7 +72,18 @@ const CurrencyDropdown = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className={`absolute right-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 ${
+          dropdownPosition === 'up' 
+            ? 'bottom-full mb-1' 
+            : 'top-full mt-1'
+        }`}>
+          {/* Arrow indicator */}
+          <div className={`absolute right-4 w-0 h-0 ${
+            dropdownPosition === 'up'
+              ? 'top-full border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-200'
+              : 'bottom-full border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-200'
+          }`}></div>
+          
           {/* Search Bar */}
           <div className="p-3 border-b">
             <div className="relative">
