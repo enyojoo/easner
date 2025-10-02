@@ -392,11 +392,7 @@ export default function UserSendPage() {
         </Button>
 
         {isOpen && (
-          <div
-            className={`absolute right-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 ${
-              dropdownRef === receiveDropdownRef ? "bottom-full mb-1" : "top-full mt-1"
-            }`}
-          >
+          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
             {/* Search Bar */}
             <div className="p-3 border-b">
               <div className="relative">
