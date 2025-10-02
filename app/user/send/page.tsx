@@ -376,7 +376,7 @@ export default function UserSendPage() {
   }) => {
     const filteredCurrencies = filterCurrencies(searchTerm)
     const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
-    
+
     console.log('CurrencyDropdown render:', {
       selectedCurrency,
       isOpen,
@@ -392,6 +392,7 @@ export default function UserSendPage() {
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
+            alert('CLICK DETECTED! Current state: ' + isOpen)
             console.log('Dropdown clicked, current state:', isOpen)
             console.log('About to call onToggle')
             onToggle()
@@ -406,7 +407,10 @@ export default function UserSendPage() {
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
+          <div className="absolute right-0 top-full mt-1 w-64 bg-red-500 border-4 border-yellow-400 rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
+            <div className="p-4 text-white font-bold text-center">
+              DROPDOWN IS OPEN! CLICK WORKED!
+            </div>
             {/* Search Bar */}
             <div className="p-3 border-b">
               <div className="relative">
