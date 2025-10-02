@@ -376,13 +376,23 @@ export default function UserSendPage() {
   }) => {
     const filteredCurrencies = filterCurrencies(searchTerm)
     const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
+    
+    console.log('CurrencyDropdown render:', {
+      selectedCurrency,
+      isOpen,
+      currenciesLength: currencies.length,
+      filteredCurrenciesLength: filteredCurrencies.length
+    })
 
     return (
       <div className="relative" ref={dropdownRef}>
         <Button
           variant="outline"
           className="bg-white border-gray-200 rounded-full px-3 py-1.5 h-auto hover:bg-gray-50 flex-shrink-0"
-          onClick={onToggle}
+          onClick={() => {
+            console.log('Dropdown clicked, current state:', isOpen)
+            onToggle()
+          }}
         >
           <div className="flex items-center gap-2">
             {selectedCurrencyData && <FlagIcon currency={selectedCurrencyData} />}
@@ -392,7 +402,7 @@ export default function UserSendPage() {
         </Button>
 
         {isOpen && (
-          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50" style={{zIndex: 9999}}>
             {/* Search Bar */}
             <div className="p-3 border-b">
               <div className="relative">
