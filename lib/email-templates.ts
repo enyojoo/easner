@@ -74,10 +74,6 @@ Need help? Contact us at support@easner.com
     subject: (data: TransactionEmailData) => `Transaction Created - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
-        <p class="welcome-text">
-          Transaction Created Successfully!
-        </p>
-        
         <p class="confirmation-text">
           Your transfer to ${data.recipientName} has been created and is now being processed. 
           We'll send you updates as your money makes its way to its destination!
@@ -283,10 +279,6 @@ Need help? Contact us at support@easner.com
     subject: (data: TransactionEmailData) => `Transaction Cancelled - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
-        <p class="welcome-text">
-          Transfer Cancelled
-        </p>
-        
         <p class="confirmation-text">
           Your transfer to ${data.recipientName} has been cancelled. 
           ${data.failureReason ? `Reason: ${data.failureReason}` : 'This may have been cancelled by you or our support team.'}
