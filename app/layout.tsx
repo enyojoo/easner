@@ -18,9 +18,9 @@ const unbounded = Unbounded({
 })
 
 export const metadata: Metadata = {
-  title: "Easner: Zero-Fee International Money Transfer | Send Money Abroad Instantly",
+  title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
   description:
-    "Send money globally with zero fees using stablecoin technology. Instant transfers to 50+ countries. Save up to 15% vs traditional services. Trusted by diaspora families and businesses worldwide.",
+    "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
   keywords:
     "zero fee money transfer, instant international transfer, send money abroad free, stablecoin money transfer, diaspora money transfer, send money to Nigeria, send money to Ghana, send money to Kenya, cheapest money transfer, crypto money transfer, business international payments, send money to Africa, instant money transfer, money transfer app, international payments, transfer money overseas, send money online",
   formatDetection: {
@@ -38,9 +38,9 @@ export const metadata: Metadata = {
     apple: "https://cldup.com/iMvs-lKmIe.svg",
   },
   openGraph: {
-    title: "Easner: Zero-Fee International Money Transfer | Send Money Abroad Instantly",
+    title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
     description:
-      "Send money globally with zero fees using stablecoin technology. Instant transfers to 50+ countries. Save up to 15% vs traditional services. Trusted by diaspora families and businesses worldwide.",
+      "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -56,9 +56,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Easner: Zero-Fee International Money Transfer | Send Money Abroad Instantly",
+    title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
     description:
-      "Send money globally with zero fees! Instant transfers to 50+ countries. Save up to 15% vs traditional services. Trusted by diaspora families and businesses worldwide.",
+      "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
     creator: "@easner",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
   },
