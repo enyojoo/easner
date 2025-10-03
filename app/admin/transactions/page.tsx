@@ -394,16 +394,6 @@ export default function AdminTransactionsPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
-                                        handleStatusUpdate(selectedTransaction.transaction_id, "pending")
-                                      }
-                                      disabled={selectedTransaction.status === "pending"}
-                                    >
-                                      Mark Pending
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
                                         handleStatusUpdate(selectedTransaction.transaction_id, "processing")
                                       }
                                       disabled={selectedTransaction.status === "processing"}

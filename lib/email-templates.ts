@@ -71,40 +71,40 @@ Need help? Contact us at support@easner.com
 
   // Transaction Pending
   transactionPending: {
-    subject: (data: TransactionEmailData) => `Payment Required - Transaction #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transaction Created - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="welcome-text">
-          Payment Required for Your Transfer
+          Transaction Created Successfully!
         </p>
         
         <p class="confirmation-text">
-          Your transfer to ${data.recipientName} is ready to be processed. 
-          Complete your payment now and your money will reach its destination in under 5 minutes!
+          Your transfer to ${data.recipientName} has been created and is now being processed. 
+          We'll send you updates as your money makes its way to its destination!
         </p>
         
         ${generateTransactionDetails(data)}
         
         <div class="security-note">
-          <h3>Next Steps</h3>
-          <p>Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!</p>
+          <h3>What's Next</h3>
+          <p>We're working on your transfer and will notify you as soon as it's completed. You can track the progress in your dashboard.</p>
         </div>
       `
       
       return generateBaseEmailTemplate(
-        "Payment Required",
+        "Transaction Created",
         "",
         content,
         {
-          text: "Complete Payment",
+          text: "Track Transaction",
           url: `https://www.easner.com/user/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
     text: (data: TransactionEmailData) => `
-Payment Required - Transaction #${data.transactionId}
+Transaction Created - #${data.transactionId}
 
-Your transfer to ${data.recipientName} is ready to be processed. Complete your payment now and your money will reach its destination in under 5 minutes!
+Your transfer to ${data.recipientName} has been created and is now being processed. We'll send you updates as your money makes its way to its destination!
 
 Transaction Details:
 - Transaction ID: ${data.transactionId}
@@ -115,10 +115,10 @@ Transaction Details:
 - Fee: ${data.fee} ${data.sendCurrency}
 - Status: ${data.status}
 
-Next Steps:
-Complete your payment using the method provided in your dashboard. Once confirmed, your money will be sent and arrive in under 5 minutes!
+What's Next:
+We're working on your transfer and will notify you as soon as it's completed. You can track the progress in your dashboard.
 
-Complete Payment: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
+Track Transaction: https://www.easner.com/user/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `

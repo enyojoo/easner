@@ -166,7 +166,7 @@ function TransactionStatusPage() {
     return [
       {
         id: "pending",
-        title: "Transaction Initiated",
+        title: "Transaction Created",
         completed: true,
         icon: <Check className="h-4 w-4 text-white" />,
       },
@@ -231,8 +231,8 @@ function TransactionStatusPage() {
     switch (status) {
       case "pending":
         return {
-          title: "Payment Required",
-          description: "Complete your payment to process this transfer",
+          title: "Transaction Created",
+          description: "Your transfer has been created and is being processed",
           isCompleted: false,
         }
       case "processing":
