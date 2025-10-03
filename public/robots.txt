@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.easner.com/sitemap.xml
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Disallow authenticated user and admin areas
+Disallow: /user/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /debug-*
+Disallow: /test-*
+
+# Allow public pages (user auth pages are public, admin pages are private)
+Allow: /
+Allow: /terms
+Allow: /privacy
+Allow: /access
+Allow: /auth/user/
+

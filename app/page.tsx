@@ -335,6 +335,66 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* FAQ Section */}
+        <section className="py-12 sm:py-16 md:py-20 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-12 md:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6 font-unbounded">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto font-poppins">
+                Everything you need to know about sending money internationally with Easner
+              </p>
+            </div>
+
+            <div className="space-y-4 sm:space-y-6">
+              {[
+                {
+                  question: "How much does it cost to send money with Easner?",
+                  answer: "Easner charges zero fees for international money transfers. You only pay the real-time exchange rate with no hidden costs, saving you up to 15% compared to traditional services."
+                },
+                {
+                  question: "How fast are international money transfers?",
+                  answer: "Transfers are processed instantly using stablecoin technology. Money typically arrives in the recipient's bank account within minutes, not days like traditional services."
+                },
+                {
+                  question: "Which countries can I send money to?",
+                  answer: "Currently, we support transfers to Nigeria, Ghana, Kenya, Uganda, and South Africa. We're constantly expanding to more countries to serve the global diaspora community."
+                },
+                {
+                  question: "Is it safe to send money with Easner?",
+                  answer: "Yes, Easner uses bank-level security and stablecoin technology. All transfers are encrypted and processed through regulated financial institutions. Your money is always safe."
+                },
+                {
+                  question: "Do I need a bank account to use Easner?",
+                  answer: "Yes, you need a bank account to send money, and your recipient needs a bank account to receive it. We're working on additional payment methods for the future."
+                },
+                {
+                  question: "What currencies can I send money in?",
+                  answer: "You can send money in USD, EUR, GBP, and other major currencies. Recipients receive money in their local currency (NGN, GHS, KES, UGX, ZAR)."
+                },
+                {
+                  question: "How does Easner compare to Wise, Remitly, or WorldRemit?",
+                  answer: "Easner offers zero fees compared to 0.5-3% fees charged by competitors. We also provide instant transfers using stablecoin technology, while traditional services can take 1-3 business days."
+                },
+                {
+                  question: "Can businesses use Easner for international payments?",
+                  answer: "Yes, Easner offers business accounts for companies making international payments to suppliers, partners, or employees. We provide API integration and bulk transfer capabilities."
+                }
+              ].map((faq, index) => (
+                <div key={index} className="bg-gray-50 rounded-2xl p-4 sm:p-6 md:p-8">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 font-unbounded">
+                    {faq.question}
+                  </h3>
+                  <p className="text-sm sm:text-base md:text-lg text-gray-600 font-poppins leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-12 sm:py-16 md:py-20 bg-easner-primary">
           <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
