@@ -81,6 +81,36 @@ export const transactionService = {
       throw new Error(`Failed to create transaction: ${error.message}`)
     }
 
+    // Send initial pending status email via API (non-blocking)
+    try {
+      console.log('Sending initial pending email for transaction:', data.transaction_id)
+      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      
+      // Use fetch to call the email API endpoint
+      fetch(`${baseUrl}/api/send-email-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'transaction',
+          transactionId: data.transaction_id,
+          status: 'pending'
+        })
+      }).then(response => {
+        if (response.ok) {
+          console.log('Initial pending email sent successfully')
+        } else {
+          console.error('Failed to send initial transaction email:', response.statusText)
+        }
+      }).catch(error => {
+        console.error('Failed to send initial transaction email:', error)
+      })
+    } catch (emailError) {
+      console.error('Failed to send initial transaction email:', emailError)
+      // Don't fail the transaction creation if email fails
+    }
+
     return data
   },
 
@@ -137,6 +167,36 @@ export const transactionService = {
 
     if (error) {
       throw new Error(`Failed to update transaction status: ${error.message}`)
+    }
+
+    // Send status update email via API (non-blocking)
+    try {
+      console.log('Sending status update email for transaction:', transactionId, 'status:', status)
+      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      
+      // Use fetch to call the email API endpoint
+      fetch(`${baseUrl}/api/send-email-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'transaction',
+          transactionId: transactionId,
+          status: status
+        })
+      }).then(response => {
+        if (response.ok) {
+          console.log('Status update email sent successfully')
+        } else {
+          console.error('Failed to send status update email:', response.statusText)
+        }
+      }).catch(error => {
+        console.error('Failed to send status update email:', error)
+      })
+    } catch (emailError) {
+      console.error('Failed to send status update email:', emailError)
+      // Don't fail the status update if email fails
     }
   }
 }
