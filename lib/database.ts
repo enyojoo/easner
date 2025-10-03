@@ -326,12 +326,31 @@ export const transactionService = {
       // Force refresh user transactions cache
       dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
 
-      // Send initial pending status email (non-blocking)
+      // Send initial pending status email via API (non-blocking)
       try {
         console.log('Sending initial pending email for transaction:', data.transaction_id)
-        const { EmailNotificationService } = await import('./email-notification-service')
-        await EmailNotificationService.sendTransactionStatusEmail(data.transaction_id, 'pending')
-        console.log('Initial pending email sent successfully')
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        
+        // Use fetch to call the email API endpoint
+        fetch(`${baseUrl}/api/send-email-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'transaction',
+            transactionId: data.transaction_id,
+            status: 'pending'
+          })
+        }).then(response => {
+          if (response.ok) {
+            console.log('Initial pending email sent successfully')
+          } else {
+            console.error('Failed to send initial transaction email:', response.statusText)
+          }
+        }).catch(error => {
+          console.error('Failed to send initial transaction email:', error)
+        })
       } catch (emailError) {
         console.error('Failed to send initial transaction email:', emailError)
         // Don't fail the transaction creation if email fails

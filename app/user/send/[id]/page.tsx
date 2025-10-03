@@ -132,65 +132,85 @@ function TransactionStatusPage() {
     { number: 4, title: "Transaction Status", completed: transaction?.status === "completed" },
   ]
 
-  const getStatusSteps = (currentStatus: string) => [
-    {
-      id: "pending",
-      title: "Transaction Initiated",
-      completed: true,
-      icon: <Check className="h-4 w-4 text-white" />,
-    },
-    {
-      id: "processing",
-      title: "Payment Received",
-      completed: ["processing", "initiated", "completed"].includes(currentStatus),
-      icon: ["processing", "initiated", "completed"].includes(currentStatus) ? (
-        <Check className="h-4 w-4 text-white" />
-      ) : currentStatus === "pending" ? (
-        <Clock className="h-4 w-4 text-white animate-spin" />
-      ) : (
-        <span className="text-gray-500 text-xs">2</span>
-      ),
-    },
-    {
-      id: "initiated",
-      title: "Transfer Initiated",
-      completed: ["initiated", "completed"].includes(currentStatus),
-      icon: ["initiated", "completed"].includes(currentStatus) ? (
-        <Check className="h-4 w-4 text-white" />
-      ) : currentStatus === "processing" ? (
-        <Clock className="h-4 w-4 text-white animate-spin" />
-      ) : (
-        <span className="text-gray-500 text-xs">3</span>
-      ),
-    },
-    {
-      id: "completed",
-      title: "Transfer Complete",
-      completed: currentStatus === "completed",
-      icon:
-        currentStatus === "completed" ? (
-          <Check className="h-4 w-4 text-white" />
-        ) : currentStatus === "initiated" ? (
-          <Clock className="h-4 w-4 text-white animate-spin" />
-        ) : (
-          <span className="text-gray-500 text-xs">4</span>
-        ),
-    },
-  ]
+  const getStatusSteps = (currentStatus: string) => {
+    // If transaction is failed or cancelled, show different steps
+    if (currentStatus === "failed" || currentStatus === "cancelled") {
+      return [
+        {
+          id: "pending",
+          title: "Transaction Initiated",
+          completed: true,
+          icon: <Check className="h-4 w-4 text-white" />,
+        },
+        {
+          id: "processing",
+          title: "Payment Received",
+          completed: false,
+          icon: <XCircle className="h-4 w-4 text-white" />,
+        },
+        {
+          id: "initiated",
+          title: "Transfer Initiated",
+          completed: false,
+          icon: <XCircle className="h-4 w-4 text-white" />,
+        },
+        {
+          id: "completed",
+          title: currentStatus === "failed" ? "Transfer Failed" : "Transfer Cancelled",
+          completed: false,
+          icon: <XCircle className="h-4 w-4 text-white" />,
+        },
+      ]
+    }
+
+    return [
+      {
+        id: "pending",
+        title: "Transaction Initiated",
+        completed: true,
+        icon: <Check className="h-4 w-4 text-white" />,
+      },
+        {
+          id: "processing",
+          title: "Payment Received",
+          completed: ["processing", "completed"].includes(currentStatus),
+          icon: ["processing", "completed"].includes(currentStatus) ? (
+            <Check className="h-4 w-4 text-white" />
+          ) : currentStatus === "pending" ? (
+            <Clock className="h-4 w-4 text-white animate-spin" />
+          ) : (
+            <span className="text-gray-500 text-xs">2</span>
+          ),
+        },
+        {
+          id: "completed",
+          title: "Transfer Complete",
+          completed: currentStatus === "completed",
+          icon:
+            currentStatus === "completed" ? (
+              <Check className="h-4 w-4 text-white" />
+            ) : currentStatus === "processing" ? (
+              <Clock className="h-4 w-4 text-white animate-spin" />
+            ) : (
+              <span className="text-gray-500 text-xs">3</span>
+            ),
+        },
+    ]
+  }
 
   const getStatusColor = (step: any, currentStatus: string) => {
     if (step.completed) return "bg-green-500"
+    if (currentStatus === "failed" || currentStatus === "cancelled") return "bg-red-500"
     if (step.id === "processing" && currentStatus === "pending") return "bg-yellow-500"
-    if (step.id === "initiated" && currentStatus === "processing") return "bg-yellow-500"
-    if (step.id === "completed" && currentStatus === "initiated") return "bg-yellow-500"
+    if (step.id === "completed" && currentStatus === "processing") return "bg-yellow-500"
     return "bg-gray-300"
   }
 
   const getStatusTextColor = (step: any, currentStatus: string) => {
     if (step.completed) return "text-green-600"
+    if (currentStatus === "failed" || currentStatus === "cancelled") return "text-red-600"
     if (step.id === "processing" && currentStatus === "pending") return "text-yellow-600"
-    if (step.id === "initiated" && currentStatus === "processing") return "text-yellow-600"
-    if (step.id === "completed" && currentStatus === "initiated") return "text-yellow-600"
+    if (step.id === "completed" && currentStatus === "processing") return "text-yellow-600"
     return "text-gray-500"
   }
 
@@ -211,20 +231,14 @@ function TransactionStatusPage() {
     switch (status) {
       case "pending":
         return {
-          title: "Transaction Initiated",
-          description: "Waiting for payment confirmation",
+          title: "Payment Required",
+          description: "Complete your payment to process this transfer",
           isCompleted: false,
         }
       case "processing":
         return {
           title: "Payment Received",
           description: "Your payment has been received and is being processed",
-          isCompleted: false,
-        }
-      case "initiated":
-        return {
-          title: "Transfer in Progress",
-          description: "Your transfer has been initiated to the recipient",
           isCompleted: false,
         }
       case "completed":
@@ -237,6 +251,12 @@ function TransactionStatusPage() {
         return {
           title: "Transaction Failed",
           description: "There was an issue with your transaction. Please contact support.",
+          isCompleted: false,
+        }
+      case "cancelled":
+        return {
+          title: "Transaction Cancelled",
+          description: "This transaction has been cancelled. You will receive a refund if payment was made.",
           isCompleted: false,
         }
       default:
@@ -351,15 +371,19 @@ function TransactionStatusPage() {
                           ? "bg-green-100"
                           : transaction.status === "failed"
                             ? "bg-red-100"
-                            : isOverdue && transaction.status !== "completed"
-                              ? "bg-orange-100"
-                              : "bg-yellow-100"
+                            : transaction.status === "cancelled"
+                              ? "bg-gray-100"
+                              : isOverdue && transaction.status !== "completed"
+                                ? "bg-orange-100"
+                                : "bg-yellow-100"
                       }`}
                     >
                       {statusMessage.isCompleted ? (
                         <Check className="h-8 w-8 text-green-600" />
                       ) : transaction.status === "failed" ? (
                         <XCircle className="h-8 w-8 text-red-600" />
+                      ) : transaction.status === "cancelled" ? (
+                        <XCircle className="h-8 w-8 text-gray-600" />
                       ) : isOverdue && transaction.status !== "completed" ? (
                         <AlertTriangle className="h-8 w-8 text-orange-600" />
                       ) : (

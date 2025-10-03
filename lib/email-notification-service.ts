@@ -106,7 +106,7 @@ export class EmailNotificationService {
       let result
       if (status === 'completed') {
         result = await emailService.sendTransactionCompletedEmail(user.email, emailData)
-      } else if (status === 'processing' || status === 'initiated') {
+      } else if (status === 'processing') {
         result = await emailService.sendTransactionProcessingEmail(user.email, emailData)
       } else if (status === 'pending') {
         result = await emailService.sendTransactionPendingEmail(user.email, emailData)

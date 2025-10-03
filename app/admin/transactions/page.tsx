@@ -55,9 +55,9 @@ export default function AdminTransactionsPage() {
     const statusConfig = {
       pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
       processing: { color: "bg-blue-100 text-blue-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
-      initiated: { color: "bg-purple-100 text-purple-800", icon: <ArrowUpDown className="h-3 w-3 mr-1" /> },
       completed: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
       failed: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
+      cancelled: { color: "bg-gray-100 text-gray-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
@@ -389,13 +389,24 @@ export default function AdminTransactionsPage() {
 
                                 <div className="border-t pt-4">
                                   <label className="text-sm font-medium text-gray-600">Update Status</label>
-                                  <div className="flex gap-2 mt-2">
+                                  <div className="grid grid-cols-2 gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleStatusUpdate(selectedTransaction.transaction_id, "pending")
+                                      }
+                                      disabled={selectedTransaction.status === "pending"}
+                                    >
+                                      Mark Pending
+                                    </Button>
                                     <Button
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
                                         handleStatusUpdate(selectedTransaction.transaction_id, "processing")
                                       }
+                                      disabled={selectedTransaction.status === "processing"}
                                     >
                                       Payment Received
                                     </Button>
@@ -403,17 +414,10 @@ export default function AdminTransactionsPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() =>
-                                        handleStatusUpdate(selectedTransaction.transaction_id, "initiated")
-                                      }
-                                    >
-                                      Transfer Initiated
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
                                         handleStatusUpdate(selectedTransaction.transaction_id, "completed")
                                       }
+                                      disabled={selectedTransaction.status === "completed"}
+                                      className="text-green-600 hover:text-green-700"
                                     >
                                       Transfer Complete
                                     </Button>
@@ -421,9 +425,19 @@ export default function AdminTransactionsPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleStatusUpdate(selectedTransaction.transaction_id, "failed")}
+                                      disabled={selectedTransaction.status === "failed"}
                                       className="text-red-600 hover:text-red-700"
                                     >
                                       Mark Failed
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleStatusUpdate(selectedTransaction.transaction_id, "cancelled")}
+                                      disabled={selectedTransaction.status === "cancelled"}
+                                      className="text-gray-600 hover:text-gray-700"
+                                    >
+                                      Cancel Transfer
                                     </Button>
                                   </div>
                                 </div>
