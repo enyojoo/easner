@@ -15,6 +15,10 @@ export default function AdminDashboardPage() {
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case "transaction_failed":
         return <XCircle className="h-4 w-4 text-red-600" />
+      case "transaction_cancelled":
+        return <XCircle className="h-4 w-4 text-gray-600" />
+      case "transaction_processing":
+        return <AlertCircle className="h-4 w-4 text-blue-600" />
       case "transaction_pending":
         return <Clock className="h-4 w-4 text-yellow-600" />
       case "user_registered":

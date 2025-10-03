@@ -182,9 +182,9 @@ export default function AdminTransactionsPage() {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="initiated">Initiated</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -212,14 +212,14 @@ export default function AdminTransactionsPage() {
                   <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("processing")}>
                     Payment Received
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("initiated")}>
-                    Transfer Initiated
-                  </Button>
                   <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("completed")}>
                     Transfer Complete
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("failed")}>
                     Mark Failed
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("cancelled")}>
+                    Cancel Transfer
                   </Button>
                 </div>
               </div>
@@ -449,11 +449,6 @@ export default function AdminTransactionsPage() {
                               Payment Received
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(transaction.transaction_id, "initiated")}
-                            >
-                              Transfer Initiated
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
                               onClick={() => handleStatusUpdate(transaction.transaction_id, "completed")}
                             >
                               Transfer Complete
@@ -463,6 +458,12 @@ export default function AdminTransactionsPage() {
                               className="text-red-600"
                             >
                               Mark as Failed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusUpdate(transaction.transaction_id, "cancelled")}
+                              className="text-gray-600"
+                            >
+                              Cancel Transfer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
