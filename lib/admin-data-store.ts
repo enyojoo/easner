@@ -488,8 +488,11 @@ class AdminDataStore {
         return "transaction_completed"
       case "failed":
         return "transaction_failed"
-      case "pending":
+      case "cancelled":
+        return "transaction_cancelled"
       case "processing":
+        return "transaction_processing"
+      case "pending":
         return "transaction_pending"
       default:
         return "transaction_pending"
@@ -499,11 +502,15 @@ class AdminDataStore {
   private getActivityMessage(transaction: any) {
     switch (transaction.status) {
       case "completed":
-        return `Transaction ${transaction.transaction_id} completed successfully`
+        return `Transfer Complete - Transaction ${transaction.transaction_id}`
       case "failed":
-        return `Transaction ${transaction.transaction_id} failed`
+        return `Transaction Failed - ${transaction.transaction_id}`
+      case "cancelled":
+        return `Transfer Cancelled - Transaction ${transaction.transaction_id}`
+      case "processing":
+        return `Payment Received - Transaction ${transaction.transaction_id}`
       case "pending":
-        return `New transaction ${transaction.transaction_id} awaiting verification`
+        return `Transaction Created - ${transaction.transaction_id}`
       default:
         return `Transaction ${transaction.transaction_id} is being processed`
     }
@@ -515,8 +522,11 @@ class AdminDataStore {
         return "success"
       case "failed":
         return "error"
-      case "pending":
+      case "cancelled":
+        return "error"
       case "processing":
+        return "warning"
+      case "pending":
         return "warning"
       default:
         return "info"
