@@ -58,8 +58,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Easner: Zero-Fee International Money Transfer | Send Money Abroad Instantly",
     description:
-      "Send money globally with zero fees using stablecoin technology. Instant transfers to 50+ countries. Save up to 15% vs traditional services. Trusted by diaspora families and businesses worldwide.",
-    creator: "@easnerapp",
+      "Send money globally with zero fees! Instant transfers to 50+ countries. Save up to 15% vs traditional services. Trusted by diaspora families and businesses worldwide.",
+    creator: "@easner",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
   },
   robots: {
@@ -72,8 +72,7 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
-  },
-    generator: 'v0.app'
+  }
 }
 
 export default function RootLayout({

@@ -1,14 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PublicHeader } from "@/components/layout/public-header"
 import { CurrencyConverter } from "@/components/currency-converter"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Play, Shield, Zap, Globe, Users, TrendingUp, CheckCircle, Star, Download, Code, Building2, Heart, Smartphone, Send, DollarSign, Clock, Lock } from "lucide-react"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export default function HomePage() {
   const router = useRouter()
+  const [accordionValue, setAccordionValue] = useState("item-0")
 
   const handleSendMoney = (data: {
     sendAmount: string
@@ -32,9 +35,9 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
               {/* Left Side - Hero Content */}
-              <div className="space-y-6 sm:space-y-8 order-1 lg:order-1 text-left">
+              <div className="space-y-6 sm:space-y-8 order-1 lg:order-1 text-center lg:text-left">
                 <div className="space-y-4 sm:space-y-6">
-                  <h1 className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
                     Send money
                     <br />
                     globally like
@@ -44,39 +47,30 @@ export default function HomePage() {
                     <span className="text-easner-primary">transfer</span>
                   </h1>
 
-                  <p className="text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl font-poppins">
+                  <p className="text-lg sm:text-xl md:text-2xl lg:text-xl text-gray-600 leading-relaxed max-w-2xl font-poppins text-center lg:text-left">
                     Stop losing money to fees. Easner uses stablecoin infrastructure to make cross-border payments as simple and affordable as sending money to your neighbor.
                   </p>
                 </div>
 
                 {/* Key Benefits */}
-                <div className="flex flex-col sm:flex-row lg:flex-nowrap gap-4 sm:gap-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-5 h-5 text-green-600" />
+                <div className="grid grid-cols-3 gap-4 sm:gap-6 max-w-xl mx-auto lg:mx-0">
+                  <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                      <Clock className="w-4 h-4 text-green-600" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 font-unbounded text-sm sm:text-base">Instant</div>
-                      <div className="text-xs sm:text-sm text-gray-600 font-poppins">Minutes, not days</div>
-                    </div>
+                    <div className="font-semibold text-gray-900 font-unbounded text-xs sm:text-sm">Instant</div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-5 h-5 text-blue-600" />
+                  <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                      <DollarSign className="w-4 h-4 text-blue-600" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 font-unbounded text-sm sm:text-base">Zero fees</div>
-                      <div className="text-xs sm:text-sm text-gray-600 font-poppins">No hidden costs</div>
-                    </div>
+                    <div className="font-semibold text-gray-900 font-unbounded text-xs sm:text-sm">Zero fees</div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Lock className="w-5 h-5 text-purple-600" />
+                  <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mb-2">
+                      <Lock className="w-4 h-4 text-purple-600" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-900 font-unbounded text-sm sm:text-base">Bank-level security</div>
-                      <div className="text-xs sm:text-sm text-gray-600 font-poppins">Your money is safe</div>
-                    </div>
+                    <div className="font-semibold text-gray-900 font-unbounded text-xs sm:text-sm">Secure</div>
                   </div>
                 </div>
               </div>
@@ -208,7 +202,7 @@ export default function HomePage() {
                   </div>
                   <div className="text-xs sm:text-sm font-bold text-easner-primary mb-2">STEP {step.step}</div>
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 font-unbounded">{step.title}</h3>
-                  <p className="text-xs sm:text-sm md:text-base text-gray-600 font-poppins leading-relaxed">{step.description}</p>
+                  <p className="text-xs sm:text-sm md:text-base text-gray-600 font-poppins leading-relaxed max-w-48 mx-auto">{step.description}</p>
                 </div>
               ))}
             </div>
@@ -347,7 +341,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="space-y-4 sm:space-y-6">
+            <Accordion type="single" collapsible className="w-full" value={accordionValue} onValueChange={setAccordionValue}>
               {[
                 {
                   question: "How much does it cost to send money with Easner?",
@@ -382,16 +376,16 @@ export default function HomePage() {
                   answer: "Yes, Easner offers business accounts for companies making international payments to suppliers, partners, or employees. We provide API integration and bulk transfer capabilities."
                 }
               ].map((faq, index) => (
-                <div key={index} className="bg-gray-50 rounded-2xl p-4 sm:p-6 md:p-8">
-                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 font-unbounded">
+                <AccordionItem key={index} value={`item-${index}`} className="bg-gray-50 rounded-2xl px-4 sm:px-6 md:px-8 mb-4 sm:mb-6">
+                  <AccordionTrigger className="text-base sm:text-lg md:text-xl font-bold text-gray-900 font-unbounded hover:text-easner-primary hover:no-underline py-4 sm:py-6">
                     {faq.question}
-                  </h3>
-                  <p className="text-sm sm:text-base md:text-lg text-gray-600 font-poppins leading-relaxed">
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm sm:text-base md:text-lg text-gray-600 font-poppins leading-relaxed pb-4 sm:pb-6">
                     {faq.answer}
-                  </p>
-                </div>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         </section>
 
@@ -399,16 +393,15 @@ export default function HomePage() {
         <section className="py-12 sm:py-16 md:py-20 bg-easner-primary">
           <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4 md:mb-6 font-unbounded">
-              Ready to start saving on transfers?
+              Ready to Send money?
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-8 md:mb-12 font-poppins max-w-4xl mx-auto">
               From diaspora families supporting loved ones back home to businesses making global operations easy, Easner is transforming how the world moves money.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <div className="flex justify-center">
               <Button 
-                size="lg" 
-                className="bg-white text-easner-primary hover:bg-gray-50 px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 group"
+                className="bg-white text-easner-primary hover:bg-gray-50 px-6 py-2.5 text-sm font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 group w-auto"
                 onClick={() => router.push("/access")}
               >
                 Get Early Access
