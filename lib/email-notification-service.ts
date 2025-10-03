@@ -49,12 +49,12 @@ export class EmailNotificationService {
 
       if (transactionError) {
         console.error('Transaction query error:', transactionError)
-        return
+        throw new Error(`Transaction query failed: ${transactionError.message}`)
       }
 
       if (!transaction) {
         console.error('Transaction not found for ID:', transactionId)
-        return
+        throw new Error(`Transaction not found for ID: ${transactionId}`)
       }
 
       console.log('Transaction found:', transaction.transaction_id)
@@ -69,7 +69,7 @@ export class EmailNotificationService {
 
       if (userError || !user?.email) {
         console.error('User not found:', userError)
-        return
+        throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
       }
 
       console.log('User email found:', user.email)

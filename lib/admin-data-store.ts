@@ -602,7 +602,8 @@ class AdminDataStore {
       
       // Call server-side API route for email sending
       console.log('AdminDataStore: Making fetch request to /api/send-email-notification')
-      const response = await fetch('/api/send-email-notification', {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const response = await fetch(`${baseUrl}/api/send-email-notification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

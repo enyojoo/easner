@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Email notification API error:', error)
     return NextResponse.json({ 
-      error: 'Failed to queue email notification' 
+      error: 'Failed to send email notification',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }

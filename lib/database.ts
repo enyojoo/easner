@@ -326,6 +326,17 @@ export const transactionService = {
       // Force refresh user transactions cache
       dataCache.invalidate(CACHE_KEYS.USER_TRANSACTIONS(transactionData.userId))
 
+      // Send initial pending status email (non-blocking)
+      try {
+        console.log('Sending initial pending email for transaction:', data.transaction_id)
+        const { EmailNotificationService } = await import('./email-notification-service')
+        await EmailNotificationService.sendTransactionStatusEmail(data.transaction_id, 'pending')
+        console.log('Initial pending email sent successfully')
+      } catch (emailError) {
+        console.error('Failed to send initial transaction email:', emailError)
+        // Don't fail the transaction creation if email fails
+      }
+
       return data
     } catch (error) {
       console.error("Transaction creation error:", error)
