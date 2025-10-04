@@ -2,7 +2,7 @@ export const BRAND = {
   name: "Easner",
   tagline: "Send money globally with ease",
   description: "Fast, secure, and affordable international money transfers",
-  logo: "https://cldup.com/cwHk7-kSb4.svg",
+  logo: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.svg",
   domain: "easner.com",
   url: "https://www.easner.com/",
   email: "support@easner.com",

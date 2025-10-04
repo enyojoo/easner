@@ -33,9 +33,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "https://cldup.com/iMvs-lKmIe.svg",
-    shortcut: "https://cldup.com/iMvs-lKmIe.svg",
-    apple: "https://cldup.com/iMvs-lKmIe.svg",
+    icon: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
+    shortcut: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
+    apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
     title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
