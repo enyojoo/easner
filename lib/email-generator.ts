@@ -360,7 +360,7 @@ export function generateBaseEmailTemplate(
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <img src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/EASNER.png" alt="Easner Logo" class="logo">
+            <img src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.png" alt="Easner Logo" class="logo">
             <h1 class="email-title">${title}</h1>
             ${subtitle ? `<p class="email-subtitle">${subtitle}</p>` : ''}
         </div>
