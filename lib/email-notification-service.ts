@@ -154,4 +154,107 @@ export class EmailNotificationService {
       console.error('Error sending welcome email:', error)
     }
   }
+
+  /**
+   * Send admin notification email for transaction events
+   */
+  static async sendAdminTransactionNotification(
+    transactionId: string, 
+    status: string
+  ): Promise<void> {
+    console.log('Sending admin notification for transaction:', transactionId, 'status:', status)
+    
+    try {
+      // Get transaction data from database
+      console.log('Creating Supabase client...')
+      let supabase
+      try {
+        supabase = createServerClient()
+        console.log('Supabase client created successfully')
+      } catch (clientError) {
+        console.error('Failed to create Supabase client:', clientError)
+        return
+      }
+      
+      console.log('Fetching transaction data...')
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .single()
+
+      if (transactionError) {
+        console.error('Transaction query error:', transactionError)
+        throw new Error(`Transaction query failed: ${transactionError.message}`)
+      }
+
+      if (!transaction) {
+        console.error('Transaction not found for ID:', transactionId)
+        throw new Error(`Transaction not found for ID: ${transactionId}`)
+      }
+
+      console.log('Transaction found:', transaction.transaction_id)
+
+      // Get user data
+      console.log('Fetching user data...')
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('email, first_name, last_name')
+        .eq('id', transaction.user_id)
+        .single()
+
+      if (userError || !user?.email) {
+        console.error('User not found:', userError)
+        throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
+      }
+
+      console.log('User data found:', user.email)
+
+      // Get recipient name
+      console.log('Fetching recipient data...')
+      const { data: recipient, error: recipientError } = await supabase
+        .from('recipients')
+        .select('full_name')
+        .eq('id', transaction.recipient_id)
+        .single()
+
+      console.log('Recipient found:', recipient?.full_name || 'Unknown')
+
+      // Create admin email data
+      const adminEmailData = {
+        transactionId: transaction.transaction_id,
+        status: status,
+        sendAmount: transaction.send_amount,
+        sendCurrency: transaction.send_currency,
+        receiveAmount: transaction.receive_amount,
+        receiveCurrency: transaction.receive_currency,
+        exchangeRate: transaction.exchange_rate,
+        fee: transaction.fee_amount,
+        recipientName: recipient?.full_name || 'Unknown',
+        userId: transaction.user_id,
+        userEmail: user.email,
+        userName: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
+        createdAt: transaction.created_at,
+        updatedAt: transaction.updated_at,
+        failureReason: transaction.failure_reason
+      }
+
+      // Send admin notification email
+      console.log('Sending admin notification email to: enyo@easner.com')
+      
+      const result = await emailService.sendEmail({
+        to: 'enyo@easner.com',
+        template: 'adminTransactionNotification',
+        data: adminEmailData
+      })
+
+      if (result.success) {
+        console.log('Admin notification email sent successfully!', result.messageId)
+      } else {
+        console.error('Admin notification email sending failed:', result.error)
+      }
+    } catch (error) {
+      console.error('Error sending admin notification email:', error)
+    }
+  }
 }

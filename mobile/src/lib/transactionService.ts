@@ -111,6 +111,36 @@ export const transactionService = {
       // Don't fail the transaction creation if email fails
     }
 
+    // Send admin notification email via API (non-blocking)
+    try {
+      console.log('Sending admin notification for new transaction:', data.transaction_id)
+      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      
+      // Use fetch to call the admin notification API endpoint
+      fetch(`${baseUrl}/api/send-email-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'admin-transaction',
+          transactionId: data.transaction_id,
+          status: 'pending'
+        })
+      }).then(response => {
+        if (response.ok) {
+          console.log('Admin notification sent successfully')
+        } else {
+          console.error('Failed to send admin notification email:', response.statusText)
+        }
+      }).catch(error => {
+        console.error('Failed to send admin notification email:', error)
+      })
+    } catch (adminEmailError) {
+      console.error('Failed to send admin notification email:', adminEmailError)
+      // Don't fail the transaction creation if admin email fails
+    }
+
     return data
   },
 

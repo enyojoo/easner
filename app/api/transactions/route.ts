@@ -64,5 +64,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       // Don't fail the transaction creation if email fails
     }
 
+    // Send admin notification email (non-blocking)
+    try {
+      console.log('Sending admin notification for new transaction:', transaction.transaction_id)
+      const { EmailNotificationService } = await import('@/lib/email-notification-service')
+      await EmailNotificationService.sendAdminTransactionNotification(transaction.transaction_id, 'pending')
+      console.log('Admin notification sent successfully')
+    } catch (adminEmailError) {
+      console.error('Failed to send admin notification email:', adminEmailError)
+      // Don't fail the transaction creation if admin email fails
+    }
+
     return NextResponse.json({ transaction })
 })

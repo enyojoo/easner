@@ -455,5 +455,101 @@ If you have any questions about your early access request or our platform, feel 
 
 © 2025 Easner, Inc. All rights reserved.
     `
+  },
+
+  // Admin Transaction Notification
+  adminTransactionNotification: {
+    subject: (data: any) => `New Transaction ${data.status === 'pending' ? 'Created' : 'Updated'} - #${data.transactionId}`,
+    html: (data: any) => {
+      const content = `
+        <p class="welcome-text">
+          ${data.status === 'pending' ? 'New Transaction Created' : `Transaction Status Updated to ${data.status.toUpperCase()}`}
+        </p>
+        
+        <p class="confirmation-text">
+          ${data.status === 'pending' 
+            ? 'A new transaction has been created and requires your attention.' 
+            : `A transaction status has been updated to ${data.status}. Please review the details below.`}
+        </p>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">Transaction Details</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Transaction ID:</strong> ${data.transactionId}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Status:</strong> <span class="status-badge status-${data.status}">${data.status}</span></p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Amount:</strong> ${data.sendAmount} ${data.sendCurrency}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Receiving:</strong> ${data.receiveAmount} ${data.receiveCurrency}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Recipient:</strong> ${data.recipientName}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Exchange Rate:</strong> 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Fee:</strong> ${data.fee} ${data.sendCurrency}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>Created:</strong> ${new Date(data.createdAt).toLocaleString()}</p>
+          ${data.updatedAt !== data.createdAt ? `<p style="margin: 5px 0; font-size: 16px;"><strong>Last Updated:</strong> ${new Date(data.updatedAt).toLocaleString()}</p>` : ''}
+        </div>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">User Information</h3>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>User ID:</strong> ${data.userId}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>User Email:</strong> ${data.userEmail}</p>
+          <p style="margin: 5px 0; font-size: 16px;"><strong>User Name:</strong> ${data.userName}</p>
+        </div>
+        
+        ${data.failureReason ? `
+        <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="color: #dc2626; margin: 0 0 15px 0; font-size: 18px;">Failure Reason</h3>
+          <p style="margin: 0; color: #991b1b; font-size: 16px;">${data.failureReason}</p>
+        </div>
+        ` : ''}
+        
+        <div class="security-note">
+          <h3>Action Required</h3>
+          <p>${data.status === 'pending' 
+            ? 'Please review this transaction and process it according to your workflow. You can manage it from the admin dashboard.' 
+            : 'Please review this status change and take any necessary actions.'}</p>
+        </div>
+      `
+
+      return generateBaseEmailTemplate(
+        data.status === 'pending' ? "New Transaction Created" : `Transaction ${data.status.toUpperCase()}`,
+        "",
+        content,
+        {
+          text: "View in Admin Dashboard",
+          url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/transactions`
+        }
+      )
+    },
+    text: (data: any) => `
+${data.status === 'pending' ? 'New Transaction Created' : `Transaction Status Updated to ${data.status.toUpperCase()}`} - #${data.transactionId}
+
+${data.status === 'pending' 
+  ? 'A new transaction has been created and requires your attention.' 
+  : `A transaction status has been updated to ${data.status}. Please review the details below.`}
+
+Transaction Details:
+- Transaction ID: ${data.transactionId}
+- Status: ${data.status}
+- Amount: ${data.sendAmount} ${data.sendCurrency}
+- Receiving: ${data.receiveAmount} ${data.receiveCurrency}
+- Recipient: ${data.recipientName}
+- Exchange Rate: 1 ${data.sendCurrency} = ${data.exchangeRate} ${data.receiveCurrency}
+- Fee: ${data.fee} ${data.sendCurrency}
+- Created: ${new Date(data.createdAt).toLocaleString()}
+${data.updatedAt !== data.createdAt ? `- Last Updated: ${new Date(data.updatedAt).toLocaleString()}` : ''}
+
+User Information:
+- User ID: ${data.userId}
+- User Email: ${data.userEmail}
+- User Name: ${data.userName}
+
+${data.failureReason ? `Failure Reason: ${data.failureReason}` : ''}
+
+Action Required:
+${data.status === 'pending' 
+  ? 'Please review this transaction and process it according to your workflow. You can manage it from the admin dashboard.' 
+  : 'Please review this status change and take any necessary actions.'}
+
+View in Admin Dashboard: ${process.env.NEXT_PUBLIC_APP_URL}/admin/transactions
+
+© 2025 Easner, Inc. All rights reserved.
+    `
   }
 }

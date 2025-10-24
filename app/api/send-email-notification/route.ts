@@ -19,6 +19,15 @@ export async function POST(request: NextRequest) {
         success: true, 
         message: 'Transaction email notification sent' 
       })
+    } else if (type === 'admin-transaction' && transactionId && status) {
+      console.log('Email notification API: Sending admin transaction notification for:', transactionId, status)
+      // Send admin transaction notification email
+      await EmailNotificationService.sendAdminTransactionNotification(transactionId, status)
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Admin transaction notification sent' 
+      })
     } else if (type === 'welcome' && userEmail && firstName) {
       console.log('Email notification API: Sending welcome email to:', userEmail)
       // Send welcome email
