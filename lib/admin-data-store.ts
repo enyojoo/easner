@@ -612,7 +612,7 @@ class AdminDataStore {
       
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
-      // Send user notification email
+      // Send user notification email only (no admin notification for status updates)
       console.log('AdminDataStore: Sending user notification email')
       const userResponse = await fetch(`${baseUrl}/api/send-email-notification`, {
         method: 'POST',
@@ -629,24 +629,6 @@ class AdminDataStore {
       console.log('AdminDataStore: User email notification response:', userResponse.status, userResponse.statusText)
       const userResponseData = await userResponse.json()
       console.log('AdminDataStore: User email notification response data:', userResponseData)
-      
-      // Send admin notification email
-      console.log('AdminDataStore: Sending admin notification email')
-      const adminResponse = await fetch(`${baseUrl}/api/send-email-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'admin-transaction',
-          transactionId,
-          status
-        })
-      })
-      
-      console.log('AdminDataStore: Admin email notification response:', adminResponse.status, adminResponse.statusText)
-      const adminResponseData = await adminResponse.json()
-      console.log('AdminDataStore: Admin email notification response data:', adminResponseData)
     } catch (error) {
       console.error('Failed to send email notification:', error)
       // Don't throw - this is non-blocking

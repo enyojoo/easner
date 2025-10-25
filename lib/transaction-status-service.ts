@@ -196,7 +196,7 @@ export class TransactionStatusService {
       // Dynamically import email service only on server side
       const { emailService } = await import('./email-service')
       
-      // Send user notification email
+      // Send user notification email only (no admin notification for status updates)
       switch (status) {
         case 'pending':
           await emailService.sendTransactionPendingEmail(transaction.user.email, emailData)
@@ -217,32 +217,7 @@ export class TransactionStatusService {
           console.warn(`Unknown transaction status: ${status}`)
       }
 
-      // Send admin notification email
-      const adminEmailData = {
-        transactionId: transaction.transaction_id,
-        status: status,
-        sendAmount: transaction.send_amount,
-        sendCurrency: transaction.send_currency,
-        receiveAmount: transaction.receive_amount,
-        receiveCurrency: transaction.receive_currency,
-        exchangeRate: transaction.exchange_rate,
-        fee: transaction.fee_amount,
-        recipientName: transaction.recipient?.full_name || 'Unknown',
-        userId: transaction.user_id,
-        userEmail: transaction.user.email,
-        userName: `${transaction.user.first_name || ''} ${transaction.user.last_name || ''}`.trim() || 'Unknown',
-        createdAt: transaction.created_at,
-        updatedAt: transaction.updated_at,
-        failureReason: transaction.failure_reason
-      }
-
-      await emailService.sendEmail({
-        to: 'enyo@easner.com',
-        template: 'adminTransactionNotification',
-        data: adminEmailData
-      })
-
-      console.log('Both user and admin notification emails sent successfully')
+      console.log('User notification email sent successfully')
     } catch (error) {
       console.error('Failed to send status notification email:', error)
       // Don't throw error as email failure shouldn't break the status update
