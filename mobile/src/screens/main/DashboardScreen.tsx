@@ -195,14 +195,17 @@ function DashboardContent({ navigation }: NavigationProps) {
     return `${currency} ${amount.toLocaleString()}`
   }
 
-  const formatDate = (dateString: string) => {
+  const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const month = date.toLocaleString('en-US', { month: 'short' })
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   // Show skeleton while data is loading
@@ -315,7 +318,7 @@ function DashboardContent({ navigation }: NavigationProps) {
 
               {/* Footer with Date and Arrow */}
               <View style={styles.transactionFooter}>
-                <Text style={styles.transactionDate}>{formatDate(transaction.created_at)}</Text>
+                <Text style={styles.transactionDate}>{formatTimestamp(transaction.created_at)}</Text>
                 <Text style={styles.arrowIcon}>›</Text>
               </View>
             </TouchableOpacity>

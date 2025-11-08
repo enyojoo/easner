@@ -109,15 +109,17 @@ function TransactionsContent({ navigation }: NavigationProps) {
     return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const formatDate = (dateString: string) => {
+  const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const month = date.toLocaleString('en-US', { month: 'short' })
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
@@ -169,7 +171,7 @@ function TransactionsContent({ navigation }: NavigationProps) {
 
       {/* Footer with Date and Arrow */}
       <View style={styles.transactionFooter}>
-        <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
+        <Text style={styles.transactionDate}>{formatTimestamp(item.created_at)}</Text>
         <Text style={styles.arrowIcon}>›</Text>
       </View>
     </TouchableOpacity>

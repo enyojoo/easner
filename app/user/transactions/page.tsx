@@ -75,12 +75,17 @@ export default function UserTransactionsPage() {
     return `${symbol}${amount.toLocaleString()}`
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   const handleViewTransaction = (transactionId: string) => {
@@ -169,7 +174,7 @@ export default function UserTransactionsPage() {
                       {filteredTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
                           <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                          <TableCell>{formatDate(transaction.created_at)}</TableCell>
+                          <TableCell>{formatTimestamp(transaction.created_at)}</TableCell>
                           <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
                           <TableCell className="font-semibold">
                             {formatAmount(transaction.send_amount, transaction.send_currency)}
@@ -222,7 +227,7 @@ export default function UserTransactionsPage() {
                       </div>
 
                       <div className="flex justify-between items-center pt-2 border-t">
-                        <p className="text-sm text-gray-500">{formatDate(transaction.created_at)}</p>
+                        <p className="text-sm text-gray-500">{formatTimestamp(transaction.created_at)}</p>
                         <Button
                           variant="outline"
                           size="sm"

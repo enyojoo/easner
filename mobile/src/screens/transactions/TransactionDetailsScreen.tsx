@@ -202,19 +202,20 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     const numAmount = typeof amount === 'string' ? Number.parseFloat(amount) : amount
     const currencyData = currencies.find((c) => c.code === currency)
     const symbol = currencyData?.symbol || currency
-    return `${symbol}${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `${symbol}${numAmount.formatTimestamp('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const formatDate = (dateString: string) => {
+  const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const month = date.formatTimestamp('en-US', { month: 'short' })
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   const handleViewReceipt = async () => {
@@ -367,9 +368,9 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
           </Text>
           <Text style={styles.statusInfoValue}>
             {statusMessage.isCompleted
-              ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
+              ? formatTimestamp(transaction.completed_at || transaction.updated_at)
               : transaction.status === 'failed'
-                ? new Date(transaction.updated_at).toLocaleString()
+                ? formatTimestamp(transaction.updated_at)
                 : isOverdue && transaction.status !== 'completed'
                   ? 'Taking longer than expected'
                   : formatTime(timeRemaining)}
@@ -455,7 +456,7 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
           <Text style={styles.detailsTitle}>Transaction Details</Text>
           <Text style={styles.transactionIdText}>{transaction.transaction_id}</Text>
           <Text style={styles.createdDate}>
-            Created: {new Date(transaction.created_at).toLocaleString()}
+            Created: {formatTimestamp(transaction.created_at)}
           </Text>
       </View>
       </ScrollView>

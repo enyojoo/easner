@@ -55,6 +55,19 @@ export default function AdminTransactionsPage() {
     return matchesSearch && matchesStatus && matchesCurrency
   })
 
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
@@ -124,7 +137,7 @@ export default function AdminTransactionsPage() {
       ...filteredTransactions.map((t: any) =>
         [
           t.transaction_id,
-          new Date(t.created_at).toLocaleString(),
+          formatTimestamp(t.created_at),
           `${t.user?.first_name} ${t.user?.last_name}`,
           t.send_currency,
           t.receive_currency,
@@ -265,7 +278,7 @@ export default function AdminTransactionsPage() {
                       />
                     </TableCell>
                     <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                    <TableCell>{new Date(transaction.created_at).toLocaleString()}</TableCell>
+                    <TableCell>{formatTimestamp(transaction.created_at)}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
@@ -317,7 +330,7 @@ export default function AdminTransactionsPage() {
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Date</label>
-                                    <p>{new Date(selectedTransaction.created_at).toLocaleString()}</p>
+                                    <p>{formatTimestamp(selectedTransaction.created_at)}</p>
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Send Amount</label>
@@ -402,7 +415,7 @@ export default function AdminTransactionsPage() {
                                             {selectedTransaction.receipt_filename || "Receipt"}
                                           </p>
                                           <p className="text-xs text-gray-500">
-                                            Uploaded {new Date(selectedTransaction.updated_at).toLocaleString()}
+                                            Uploaded {formatTimestamp(selectedTransaction.updated_at)}
                                           </p>
                                         </div>
                                         <Button

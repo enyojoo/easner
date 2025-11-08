@@ -74,11 +74,21 @@ export const userService = {
     }
 
     // Get member since date from user profile
+    const formatTimestamp = (dateString: string) => {
+      const date = new Date(dateString)
+      const month = date.toLocaleString('en-US', { month: 'short' })
+      const day = date.getDate().toString().padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = date.getHours()
+      const minutes = date.getMinutes().toString().padStart(2, '0')
+      const ampm = hours >= 12 ? 'PM' : 'AM'
+      const displayHours = hours % 12 || 12
+      // Format: "Nov 07, 2025 • 7:29 PM"
+      return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+    }
+
     const memberSince = userProfile?.profile?.created_at
-      ? new Date(userProfile.profile.created_at).toLocaleDateString('en-US', {
-          month: 'short',
-          year: 'numeric',
-        })
+      ? formatTimestamp(userProfile.profile.created_at)
       : 'N/A'
 
     return {

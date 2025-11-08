@@ -80,6 +80,19 @@ export default function AdminUsersPage() {
     return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
   const fetchUserTransactions = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -226,7 +239,7 @@ export default function AdminUsersPage() {
           u.phone || "",
           u.status,
           u.email_confirmed_at ? "verified" : "unverified",
-          new Date(u.created_at).toLocaleDateString(),
+          formatTimestamp(u.created_at),
           formatCurrencyFromDB(u.totalVolume, u.base_currency),
         ].join(","),
       ),
@@ -549,14 +562,14 @@ export default function AdminUsersPage() {
                                         <div className="flex justify-between">
                                           <span className="text-sm text-gray-600">Registration:</span>
                                           <span className="text-sm">
-                                            {new Date(selectedUser.created_at).toLocaleDateString()}
+                                            {formatTimestamp(selectedUser.created_at)}
                                           </span>
                                         </div>
                                         {selectedUser.last_login && (
                                           <div className="flex justify-between">
                                             <span className="text-sm text-gray-600">Last Login:</span>
                                             <span className="text-sm">
-                                              {new Date(selectedUser.last_login).toLocaleDateString()}
+                                              {formatTimestamp(selectedUser.last_login)}
                                             </span>
                                           </div>
                                         )}
@@ -606,7 +619,7 @@ export default function AdminUsersPage() {
                                               {transaction.transaction_id}
                                             </TableCell>
                                             <TableCell>
-                                              {new Date(transaction.created_at).toLocaleDateString()}
+                                              {formatTimestamp(transaction.created_at)}
                                             </TableCell>
                                             <TableCell>
                                               {transaction.send_currency} → {transaction.receive_currency}

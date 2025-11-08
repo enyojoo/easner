@@ -38,6 +38,19 @@ const AdminRatesPage = () => {
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
 
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
   const handleAddCurrency = async () => {
     try {
       setSaving(true)
@@ -339,7 +352,7 @@ const AdminRatesPage = () => {
                         {currency.status === "active" ? "Active" : "Suspended"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(currency.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatTimestamp(currency.created_at)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

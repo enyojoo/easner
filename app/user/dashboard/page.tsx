@@ -87,6 +87,19 @@ export default function UserDashboardPage() {
     }
   }
 
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
   return (
     <UserDashboardLayout>
       <div className="p-6 space-y-6">
@@ -175,7 +188,7 @@ export default function UserDashboardPage() {
                           <div>
                             <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>
                             <p className="text-sm text-gray-500">
-                              {new Date(transaction.created_at).toLocaleDateString()}
+                              {formatTimestamp(transaction.created_at)}
                             </p>
                           </div>
                         </div>
@@ -192,7 +205,7 @@ export default function UserDashboardPage() {
                                   : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {transaction.status}
+                            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                           </span>
                         </div>
                       </div>

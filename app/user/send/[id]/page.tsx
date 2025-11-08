@@ -349,6 +349,19 @@ function TransactionStatusPage() {
     return `${symbol}${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
   const handleViewReceipt = () => {
     if (transaction?.receipt_url) {
       window.open(transaction.receipt_url, "_blank")
@@ -542,14 +555,14 @@ function TransactionStatusPage() {
                         <p className="text-sm sm:text-base text-gray-600 mb-4">{statusMessage.description}</p>
                         
                         {/* Transaction ID and Created for failed/cancelled */}
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <p className="text-gray-600">Transaction ID</p>
-                            <p className="font-mono text-gray-900">{transaction.transaction_id}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-2 sm:gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">Transaction ID:</span>
+                            <span className="font-mono text-gray-900">{transaction.transaction_id}</span>
                           </div>
-                          <div>
-                            <p className="text-gray-600">Created</p>
-                            <p className="text-gray-900">{new Date(transaction.created_at).toLocaleString()}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">Created:</span>
+                            <span className="text-gray-900">{formatTimestamp(transaction.created_at)}</span>
                           </div>
                         </div>
                       </div>
@@ -565,7 +578,7 @@ function TransactionStatusPage() {
                             {transaction.status === "failed" ? "Failed:" : "Status:"}
                           </span>
                           <span className="font-medium text-sm sm:text-base">
-                            {new Date(transaction.updated_at).toLocaleString()}
+                            {formatTimestamp(transaction.updated_at)}
                           </span>
                         </div>
                       </div>

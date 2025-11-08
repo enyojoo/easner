@@ -331,16 +331,17 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     return `${symbol}${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const formatDate = (dateString: string) => {
+  const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const month = date.toLocaleString('en-US', { month: 'short' })
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   const handleViewReceipt = async () => {
@@ -457,14 +458,14 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
               
               {/* Transaction ID and Created for failed/cancelled */}
               <View style={styles.failedTransactionDetails}>
-                <View style={styles.failedDetailRow}>
-                  <Text style={styles.failedDetailLabel}>Transaction ID</Text>
+                <View style={styles.failedDetailRowInline}>
+                  <Text style={styles.failedDetailLabel}>Transaction ID:</Text>
                   <Text style={styles.failedDetailValue}>{transaction.transaction_id}</Text>
                 </View>
-                <View style={styles.failedDetailRow}>
-                  <Text style={styles.failedDetailLabel}>Created</Text>
+                <View style={styles.failedDetailRowInline}>
+                  <Text style={styles.failedDetailLabel}>Created:</Text>
                   <Text style={styles.failedDetailValue}>
-                    {new Date(transaction.created_at).toLocaleString()}
+                    {formatTimestamp(transaction.created_at)}
                   </Text>
                 </View>
               </View>
@@ -481,7 +482,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
                 {transaction.status === 'failed' ? 'Failed:' : 'Status:'}
               </Text>
               <Text style={styles.statusInfoValue}>
-                {new Date(transaction.updated_at).toLocaleString()}
+                {formatTimestamp(transaction.updated_at)}
               </Text>
             </View>
           </>
@@ -739,14 +740,17 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
+    alignItems: 'center',
   },
-  failedDetailRow: {
-    marginBottom: 12,
+  failedDetailRowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   failedDetailLabel: {
     fontSize: 12,
     color: '#6b7280',
-    marginBottom: 4,
   },
   failedDetailValue: {
     fontSize: 14,
