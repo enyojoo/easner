@@ -67,33 +67,19 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     // Send admin notification email (non-blocking)
-    // Use same pattern as early access - call emailService.sendEmail() directly
+    // Simple notification - just transaction details, no user data fetching needed
     try {
       console.log('Sending admin notification for new transaction:', transaction.transaction_id)
       
-      // Get user and recipient data
+      // Get recipient name only (we already have all transaction data)
       const supabase = createServerClient()
-      
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email, first_name, last_name')
-        .eq('id', user.id)
-        .single()
-      
-      if (userError || !userData?.email) {
-        console.error('Failed to fetch user data for admin email:', userError)
-        throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
-      }
-      
-      // Get recipient data
-      const { data: recipientData, error: recipientError } = await supabase
+      const { data: recipientData } = await supabase
         .from('recipients')
         .select('full_name')
         .eq('id', recipientId)
         .single()
       
-      // Create admin email data
+      // Create admin email data - just transaction info
       const adminEmailData = {
         transactionId: transaction.transaction_id,
         status: 'pending',
@@ -105,14 +91,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         fee: transaction.fee_amount,
         recipientName: recipientData?.full_name || 'Unknown',
         userId: transaction.user_id,
-        userEmail: userData.email,
-        userName: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Unknown',
+        userEmail: user.email || 'Unknown', // We already have user from requireUser
+        userName: 'User', // Simple - admin can check dashboard for details
         createdAt: transaction.created_at,
         updatedAt: transaction.updated_at,
         failureReason: transaction.failure_reason
       }
       
-      // Send email directly using emailService (like early access does)
+      // Send email directly using emailService (exact same as early access)
       const adminEmailResult = await emailService.sendEmail({
         to: 'enyo@easner.com',
         template: 'adminTransactionNotification',
@@ -121,12 +107,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       
       if (!adminEmailResult.success) {
         console.error('Failed to send admin email:', adminEmailResult.error)
-        // Don't fail the transaction creation if admin email fails
       } else {
         console.log('Admin notification sent successfully!', adminEmailResult.messageId)
       }
     } catch (adminEmailError) {
-      console.error('Failed to send admin notification email:', adminEmailError)
+      console.error('Error in admin email sending:', adminEmailError)
       // Don't fail the transaction creation if admin email fails
     }
 
