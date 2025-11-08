@@ -1771,7 +1771,7 @@ export default function UserSendPage() {
                                   <li className="flex items-start gap-2">
                                     <span className="text-amber-500 mt-0.5 text-xs">•</span>
                                     <span>
-                                      Complete within <strong>60 minutes</strong>
+                                      Complete within <strong>a few minutes</strong>
                                     </span>
                                   </li>
                                   <li className="flex items-start gap-2">

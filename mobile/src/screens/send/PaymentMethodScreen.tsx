@@ -446,7 +446,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <Text style={styles.instructionText}>Complete within <Text style={styles.instructionBold}>60 minutes</Text></Text>
+                    <Text style={styles.instructionText}>Complete within <Text style={styles.instructionBold}>a few minutes</Text></Text>
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
