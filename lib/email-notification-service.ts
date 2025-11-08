@@ -156,94 +156,143 @@ export class EmailNotificationService {
   }
 
   /**
-   * Send admin notification email for transaction events
+   * Send admin notification email for transaction events (with direct data)
+   * This method accepts transaction, user, and recipient data directly
+   * to avoid database queries that may fail due to timing issues
    */
   static async sendAdminTransactionNotification(
-    transactionId: string, 
+    transaction: any,
+    user: { email: string; first_name?: string | null; last_name?: string | null },
+    recipient: { full_name?: string | null } | null,
     status: string
+  ): Promise<void>
+  /**
+   * Send admin notification email for transaction events (by transaction ID)
+   * This method queries the database for transaction data
+   */
+  static async sendAdminTransactionNotification(
+    transactionId: string,
+    status: string
+  ): Promise<void>
+  static async sendAdminTransactionNotification(
+    transactionOrId: any | string,
+    userOrStatus?: { email: string; first_name?: string | null; last_name?: string | null } | string,
+    recipientOrStatus?: { full_name?: string | null } | null | string,
+    status?: string
   ): Promise<void> {
-    console.log('Sending admin notification for transaction:', transactionId, 'status:', status)
+    // Check if called with direct data (transaction, user, recipient, status)
+    // or with transaction ID (transactionId, status)
+    const isDirectData = typeof transactionOrId === 'object' && userOrStatus && typeof userOrStatus === 'object'
     
-    try {
-      // Get transaction data from database
-      console.log('Creating Supabase client...')
-      let supabase
-      try {
-        supabase = createServerClient()
-        console.log('Supabase client created successfully')
-      } catch (clientError) {
-        console.error('Failed to create Supabase client:', clientError)
-        return
-      }
-      
-      console.log('Fetching transaction data...')
-      // Retry mechanism for database query (transaction might not be immediately available)
-      let transaction = null
-      let transactionError = null
-      const maxRetries = 3
-      const retryDelay = 500 // 500ms delay between retries
-      
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const { data, error } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('transaction_id', transactionId.toUpperCase())
-          .single()
+    let transaction: any
+    let user: { email: string; first_name?: string | null; last_name?: string | null }
+    let recipient: { full_name?: string | null } | null
+    let transactionStatus: string
 
-        if (!error && data) {
-          transaction = data
-          transactionError = null
-          break
-        } else {
-          transactionError = error
-          if (attempt < maxRetries) {
-            console.log(`Transaction query attempt ${attempt} failed, retrying in ${retryDelay}ms...`)
-            await new Promise(resolve => setTimeout(resolve, retryDelay))
+    if (isDirectData) {
+      // Called with direct data (transaction, user, recipient, status)
+      transaction = transactionOrId
+      user = userOrStatus as { email: string; first_name?: string | null; last_name?: string | null }
+      recipient = recipientOrStatus as { full_name?: string | null } | null
+      transactionStatus = status || 'pending'
+      
+      console.log('Sending admin notification for transaction (direct data):', transaction.transaction_id, 'status:', transactionStatus)
+    } else {
+      // Called with transaction ID (transactionId, status)
+      const transactionId = transactionOrId as string
+      transactionStatus = userOrStatus as string
+      
+      console.log('Sending admin notification for transaction (by ID):', transactionId, 'status:', transactionStatus)
+      
+      try {
+        // Get transaction data from database
+        console.log('Creating Supabase client...')
+        let supabase
+        try {
+          supabase = createServerClient()
+          console.log('Supabase client created successfully')
+        } catch (clientError) {
+          console.error('Failed to create Supabase client:', clientError)
+          return
+        }
+        
+        console.log('Fetching transaction data...')
+        // Retry mechanism for database query (transaction might not be immediately available)
+        let fetchedTransaction = null
+        let transactionError = null
+        const maxRetries = 3
+        const retryDelay = 500 // 500ms delay between retries
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          const { data, error } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('transaction_id', transactionId.toUpperCase())
+            .single()
+
+          if (!error && data) {
+            fetchedTransaction = data
+            transactionError = null
+            break
+          } else {
+            transactionError = error
+            if (attempt < maxRetries) {
+              console.log(`Transaction query attempt ${attempt} failed, retrying in ${retryDelay}ms...`)
+              await new Promise(resolve => setTimeout(resolve, retryDelay))
+            }
           }
         }
+
+        if (transactionError) {
+          console.error('Transaction query error after retries:', transactionError)
+          throw new Error(`Transaction query failed: ${transactionError.message}`)
+        }
+
+        if (!fetchedTransaction) {
+          console.error('Transaction not found for ID:', transactionId)
+          throw new Error(`Transaction not found for ID: ${transactionId}`)
+        }
+
+        transaction = fetchedTransaction
+        console.log('Transaction found:', transaction.transaction_id)
+
+        // Get user data
+        console.log('Fetching user data...')
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('email, first_name, last_name')
+          .eq('id', transaction.user_id)
+          .single()
+
+        if (userError || !userData?.email) {
+          console.error('User not found:', userError)
+          throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
+        }
+
+        user = userData
+        console.log('User data found:', user.email)
+
+        // Get recipient name
+        console.log('Fetching recipient data...')
+        const { data: recipientData, error: recipientError } = await supabase
+          .from('recipients')
+          .select('full_name')
+          .eq('id', transaction.recipient_id)
+          .single()
+
+        recipient = recipientData
+        console.log('Recipient found:', recipient?.full_name || 'Unknown')
+      } catch (error) {
+        console.error('Error fetching transaction data:', error)
+        throw error
       }
+    }
 
-      if (transactionError) {
-        console.error('Transaction query error after retries:', transactionError)
-        throw new Error(`Transaction query failed: ${transactionError.message}`)
-      }
-
-      if (!transaction) {
-        console.error('Transaction not found for ID:', transactionId)
-        throw new Error(`Transaction not found for ID: ${transactionId}`)
-      }
-
-      console.log('Transaction found:', transaction.transaction_id)
-
-      // Get user data
-      console.log('Fetching user data...')
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('email, first_name, last_name')
-        .eq('id', transaction.user_id)
-        .single()
-
-      if (userError || !user?.email) {
-        console.error('User not found:', userError)
-        throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
-      }
-
-      console.log('User data found:', user.email)
-
-      // Get recipient name
-      console.log('Fetching recipient data...')
-      const { data: recipient, error: recipientError } = await supabase
-        .from('recipients')
-        .select('full_name')
-        .eq('id', transaction.recipient_id)
-        .single()
-
-      console.log('Recipient found:', recipient?.full_name || 'Unknown')
-
+    try {
       // Create admin email data
       const adminEmailData = {
         transactionId: transaction.transaction_id,
-        status: status,
+        status: transactionStatus,
         sendAmount: transaction.send_amount,
         sendCurrency: transaction.send_currency,
         receiveAmount: transaction.receive_amount,
