@@ -56,11 +56,8 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
         },
         fieldFormatters: {
           routing_number: (value: string) => {
-            // Format as XXX-XXXXX-X
-            const digits = value.replace(/\D/g, "")
-            if (digits.length <= 3) return digits
-            if (digits.length <= 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-            return `${digits.slice(0, 3)}-${digits.slice(3, 8)}-${digits.slice(8, 9)}`
+            // Return digits only, no dashes
+            return value.replace(/\D/g, "")
           },
         },
       }
@@ -88,11 +85,8 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
         },
         fieldFormatters: {
           sort_code: (value: string) => {
-            // Format as XX-XX-XX
-            const digits = value.replace(/\D/g, "")
-            if (digits.length <= 2) return digits
-            if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`
-            return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 6)}`
+            // Return digits only, no dashes
+            return value.replace(/\D/g, "")
           },
           iban: (value: string) => {
             // Format IBAN with spaces every 4 characters
