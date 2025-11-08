@@ -67,6 +67,8 @@ export interface Transaction {
   }
 }
 
+export type AccountType = "us" | "uk" | "euro" | "generic"
+
 export interface PaymentMethod {
   id: string
   currency: string
@@ -75,6 +77,10 @@ export interface PaymentMethod {
   account_name?: string
   account_number?: string
   bank_name?: string
+  routing_number?: string
+  sort_code?: string
+  iban?: string
+  swift_bic?: string
   qr_code_data?: string
   instructions?: string
   is_default: boolean

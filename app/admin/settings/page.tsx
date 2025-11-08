@@ -30,6 +30,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { supabase } from "@/lib/supabase"
+import {
+  getAccountTypeConfigFromCurrency,
+  getAccountTypeFromCurrency,
+  validateField,
+  formatFieldValue,
+} from "@/lib/currency-account-types"
 
 interface SystemSetting {
   id: string
@@ -62,6 +68,10 @@ interface PaymentMethod {
   account_name?: string
   account_number?: string
   bank_name?: string
+  routing_number?: string
+  sort_code?: string
+  iban?: string
+  swift_bic?: string
   qr_code_data?: string
   instructions?: string
   is_default: boolean
@@ -88,6 +98,10 @@ export default function AdminSettingsPage() {
     account_name: "",
     account_number: "",
     bank_name: "",
+    routing_number: "",
+    sort_code: "",
+    iban: "",
+    swift_bic: "",
     qr_code_data: "",
     instructions: "",
     is_default: false,
@@ -355,6 +369,10 @@ export default function AdminSettingsPage() {
           account_name: newPaymentMethod.account_name || null,
           account_number: newPaymentMethod.account_number || null,
           bank_name: newPaymentMethod.bank_name || null,
+          routing_number: newPaymentMethod.routing_number || null,
+          sort_code: newPaymentMethod.sort_code || null,
+          iban: newPaymentMethod.iban || null,
+          swift_bic: newPaymentMethod.swift_bic || null,
           qr_code_data: qrCodeData || null,
           instructions: newPaymentMethod.instructions || null,
           is_default: newPaymentMethod.is_default,
@@ -373,6 +391,10 @@ export default function AdminSettingsPage() {
         account_name: "",
         account_number: "",
         bank_name: "",
+        routing_number: "",
+        sort_code: "",
+        iban: "",
+        swift_bic: "",
         qr_code_data: "",
         instructions: "",
         is_default: false,
@@ -419,6 +441,10 @@ export default function AdminSettingsPage() {
           account_name: editingPaymentMethod.account_name || null,
           account_number: editingPaymentMethod.account_number || null,
           bank_name: editingPaymentMethod.bank_name || null,
+          routing_number: editingPaymentMethod.routing_number || null,
+          sort_code: editingPaymentMethod.sort_code || null,
+          iban: editingPaymentMethod.iban || null,
+          swift_bic: editingPaymentMethod.swift_bic || null,
           qr_code_data: qrCodeData || null,
           instructions: editingPaymentMethod.instructions || null,
           is_default: editingPaymentMethod.is_default,
@@ -708,45 +734,198 @@ export default function AdminSettingsPage() {
                           />
                         </div>
 
-                        {newPaymentMethod.type === "bank_account" && (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="accountName">Account Name *</Label>
-                              <Input
-                                id="accountName"
-                                value={newPaymentMethod.account_name}
-                                onChange={(e) =>
-                                  setNewPaymentMethod({ ...newPaymentMethod, account_name: e.target.value })
-                                }
-                                placeholder="e.g., Novapay Russia LLC"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        {newPaymentMethod.type === "bank_account" && (() => {
+                          const accountConfig = newPaymentMethod.currency
+                            ? getAccountTypeConfigFromCurrency(newPaymentMethod.currency)
+                            : null
+
+                          if (!accountConfig) {
+                            return (
+                              <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
+                                Please select a currency first to see the required fields
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <>
+                              {/* Account Name - Always required */}
                               <div className="space-y-2">
-                                <Label htmlFor="accountNumber">Account Number *</Label>
+                                <Label htmlFor="accountName">
+                                  {accountConfig.fieldLabels.account_name} *
+                                </Label>
                                 <Input
-                                  id="accountNumber"
-                                  value={newPaymentMethod.account_number}
+                                  id="accountName"
+                                  value={newPaymentMethod.account_name}
                                   onChange={(e) =>
-                                    setNewPaymentMethod({ ...newPaymentMethod, account_number: e.target.value })
+                                    setNewPaymentMethod({ ...newPaymentMethod, account_name: e.target.value })
                                   }
-                                  placeholder="e.g., 40817810123456789012"
+                                  placeholder={accountConfig.fieldPlaceholders.account_name}
                                 />
                               </div>
+
+                              {/* Bank Name - Always required */}
                               <div className="space-y-2">
-                                <Label htmlFor="bankName">Bank Name *</Label>
+                                <Label htmlFor="bankName">
+                                  {accountConfig.fieldLabels.bank_name} *
+                                </Label>
                                 <Input
                                   id="bankName"
                                   value={newPaymentMethod.bank_name}
                                   onChange={(e) =>
                                     setNewPaymentMethod({ ...newPaymentMethod, bank_name: e.target.value })
                                   }
-                                  placeholder="e.g., Sberbank Russia"
+                                  placeholder={accountConfig.fieldPlaceholders.bank_name}
                                 />
                               </div>
-                            </div>
-                          </>
-                        )}
+
+                              {/* US Account Fields */}
+                              {accountConfig.accountType === "us" && (
+                                <>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="routingNumber">
+                                      {accountConfig.fieldLabels.routing_number} *
+                                    </Label>
+                                    <Input
+                                      id="routingNumber"
+                                      value={newPaymentMethod.routing_number}
+                                      onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, "").slice(0, 9)
+                                        setNewPaymentMethod({ ...newPaymentMethod, routing_number: value })
+                                      }}
+                                      placeholder={accountConfig.fieldPlaceholders.routing_number}
+                                      maxLength={9}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="accountNumber">
+                                      {accountConfig.fieldLabels.account_number} *
+                                    </Label>
+                                    <Input
+                                      id="accountNumber"
+                                      value={newPaymentMethod.account_number}
+                                      onChange={(e) =>
+                                        setNewPaymentMethod({ ...newPaymentMethod, account_number: e.target.value })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.account_number}
+                                    />
+                                  </div>
+                                </>
+                              )}
+
+                              {/* UK Account Fields */}
+                              {accountConfig.accountType === "uk" && (
+                                <>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="sortCode">
+                                        {accountConfig.fieldLabels.sort_code} *
+                                      </Label>
+                                      <Input
+                                        id="sortCode"
+                                        value={newPaymentMethod.sort_code}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/\D/g, "").slice(0, 6)
+                                          setNewPaymentMethod({ ...newPaymentMethod, sort_code: value })
+                                        }}
+                                        placeholder={accountConfig.fieldPlaceholders.sort_code}
+                                        maxLength={6}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="accountNumber">
+                                        {accountConfig.fieldLabels.account_number} *
+                                      </Label>
+                                      <Input
+                                        id="accountNumber"
+                                        value={newPaymentMethod.account_number}
+                                        onChange={(e) =>
+                                          setNewPaymentMethod({ ...newPaymentMethod, account_number: e.target.value })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.account_number}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="iban">
+                                      {accountConfig.fieldLabels.iban} (Optional)
+                                    </Label>
+                                    <Input
+                                      id="iban"
+                                      value={newPaymentMethod.iban}
+                                      onChange={(e) =>
+                                        setNewPaymentMethod({ ...newPaymentMethod, iban: e.target.value.toUpperCase() })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.iban}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="swiftBic">
+                                      {accountConfig.fieldLabels.swift_bic} (Optional)
+                                    </Label>
+                                    <Input
+                                      id="swiftBic"
+                                      value={newPaymentMethod.swift_bic}
+                                      onChange={(e) =>
+                                        setNewPaymentMethod({ ...newPaymentMethod, swift_bic: e.target.value.toUpperCase() })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                    />
+                                  </div>
+                                </>
+                              )}
+
+                              {/* EURO Account Fields */}
+                              {accountConfig.accountType === "euro" && (
+                                <>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="iban">
+                                      {accountConfig.fieldLabels.iban} *
+                                    </Label>
+                                    <Input
+                                      id="iban"
+                                      value={newPaymentMethod.iban}
+                                      onChange={(e) =>
+                                        setNewPaymentMethod({ ...newPaymentMethod, iban: e.target.value.toUpperCase() })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.iban}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="swiftBic">
+                                      {accountConfig.fieldLabels.swift_bic} (Optional)
+                                    </Label>
+                                    <Input
+                                      id="swiftBic"
+                                      value={newPaymentMethod.swift_bic}
+                                      onChange={(e) =>
+                                        setNewPaymentMethod({ ...newPaymentMethod, swift_bic: e.target.value.toUpperCase() })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                    />
+                                  </div>
+                                </>
+                              )}
+
+                              {/* Generic Account Fields */}
+                              {accountConfig.accountType === "generic" && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="accountNumber">
+                                    {accountConfig.fieldLabels.account_number} *
+                                  </Label>
+                                  <Input
+                                    id="accountNumber"
+                                    value={newPaymentMethod.account_number}
+                                    onChange={(e) =>
+                                      setNewPaymentMethod({ ...newPaymentMethod, account_number: e.target.value })
+                                    }
+                                    placeholder={accountConfig.fieldPlaceholders.account_number}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
 
                         {newPaymentMethod.type === "qr_code" && (
                           <>
@@ -823,17 +1002,29 @@ export default function AdminSettingsPage() {
                           </Button>
                           <Button
                             onClick={handleAddPaymentMethod}
-                            disabled={
-                              saving ||
-                              uploadingQrCode ||
-                              !newPaymentMethod.currency ||
-                              !newPaymentMethod.name ||
-                              (newPaymentMethod.type === "bank_account" &&
-                                (!newPaymentMethod.account_name ||
-                                  !newPaymentMethod.account_number ||
-                                  !newPaymentMethod.bank_name)) ||
-                              (newPaymentMethod.type === "qr_code" && !qrCodeFile && !newPaymentMethod.qr_code_data)
-                            }
+                            disabled={(() => {
+                              if (saving || uploadingQrCode || !newPaymentMethod.currency || !newPaymentMethod.name) {
+                                return true
+                              }
+
+                              if (newPaymentMethod.type === "qr_code") {
+                                return !qrCodeFile && !newPaymentMethod.qr_code_data
+                              }
+
+                              if (newPaymentMethod.type === "bank_account") {
+                                const accountConfig = getAccountTypeConfigFromCurrency(newPaymentMethod.currency)
+                                const requiredFields = accountConfig.requiredFields
+
+                                for (const field of requiredFields) {
+                                  const fieldValue = newPaymentMethod[field as keyof typeof newPaymentMethod]
+                                  if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                                    return true
+                                  }
+                                }
+                              }
+
+                              return false
+                            })()}
                             className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                           >
                             {saving ? "Adding..." : "Add Payment Method"}
@@ -920,48 +1111,219 @@ export default function AdminSettingsPage() {
                             />
                           </div>
 
-                          {editingPaymentMethod.type === "bank_account" && (
-                            <>
-                              <div className="space-y-2">
-                                <Label htmlFor="editAccountName">Account Name *</Label>
-                                <Input
-                                  id="editAccountName"
-                                  value={editingPaymentMethod.account_name || ""}
-                                  onChange={(e) =>
-                                    setEditingPaymentMethod({ ...editingPaymentMethod, account_name: e.target.value })
-                                  }
-                                  placeholder="e.g., Novapay Russia LLC"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
+                          {editingPaymentMethod.type === "bank_account" && (() => {
+                            const accountConfig = editingPaymentMethod.currency
+                              ? getAccountTypeConfigFromCurrency(editingPaymentMethod.currency)
+                              : null
+
+                            if (!accountConfig) {
+                              return (
+                                <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
+                                  Please select a currency first to see the required fields
+                                </div>
+                              )
+                            }
+
+                            return (
+                              <>
+                                {/* Account Name - Always required */}
                                 <div className="space-y-2">
-                                  <Label htmlFor="editAccountNumber">Account Number *</Label>
+                                  <Label htmlFor="editAccountName">
+                                    {accountConfig.fieldLabels.account_name} *
+                                  </Label>
                                   <Input
-                                    id="editAccountNumber"
-                                    value={editingPaymentMethod.account_number || ""}
+                                    id="editAccountName"
+                                    value={editingPaymentMethod.account_name || ""}
                                     onChange={(e) =>
-                                      setEditingPaymentMethod({
-                                        ...editingPaymentMethod,
-                                        account_number: e.target.value,
-                                      })
+                                      setEditingPaymentMethod({ ...editingPaymentMethod, account_name: e.target.value })
                                     }
-                                    placeholder="e.g., 40817810123456789012"
+                                    placeholder={accountConfig.fieldPlaceholders.account_name}
                                   />
                                 </div>
+
+                                {/* Bank Name - Always required */}
                                 <div className="space-y-2">
-                                  <Label htmlFor="editBankName">Bank Name *</Label>
+                                  <Label htmlFor="editBankName">
+                                    {accountConfig.fieldLabels.bank_name} *
+                                  </Label>
                                   <Input
                                     id="editBankName"
                                     value={editingPaymentMethod.bank_name || ""}
                                     onChange={(e) =>
                                       setEditingPaymentMethod({ ...editingPaymentMethod, bank_name: e.target.value })
                                     }
-                                    placeholder="e.g., Sberbank Russia"
+                                    placeholder={accountConfig.fieldPlaceholders.bank_name}
                                   />
                                 </div>
-                              </div>
-                            </>
-                          )}
+
+                                {/* US Account Fields */}
+                                {accountConfig.accountType === "us" && (
+                                  <>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editRoutingNumber">
+                                        {accountConfig.fieldLabels.routing_number} *
+                                      </Label>
+                                      <Input
+                                        id="editRoutingNumber"
+                                        value={editingPaymentMethod.routing_number || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/\D/g, "").slice(0, 9)
+                                          setEditingPaymentMethod({ ...editingPaymentMethod, routing_number: value })
+                                        }}
+                                        placeholder={accountConfig.fieldPlaceholders.routing_number}
+                                        maxLength={9}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editAccountNumber">
+                                        {accountConfig.fieldLabels.account_number} *
+                                      </Label>
+                                      <Input
+                                        id="editAccountNumber"
+                                        value={editingPaymentMethod.account_number || ""}
+                                        onChange={(e) =>
+                                          setEditingPaymentMethod({
+                                            ...editingPaymentMethod,
+                                            account_number: e.target.value,
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.account_number}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* UK Account Fields */}
+                                {accountConfig.accountType === "uk" && (
+                                  <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editSortCode">
+                                          {accountConfig.fieldLabels.sort_code} *
+                                        </Label>
+                                        <Input
+                                          id="editSortCode"
+                                          value={editingPaymentMethod.sort_code || ""}
+                                          onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, "").slice(0, 6)
+                                            setEditingPaymentMethod({ ...editingPaymentMethod, sort_code: value })
+                                          }}
+                                          placeholder={accountConfig.fieldPlaceholders.sort_code}
+                                          maxLength={6}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="editAccountNumber">
+                                          {accountConfig.fieldLabels.account_number} *
+                                        </Label>
+                                        <Input
+                                          id="editAccountNumber"
+                                          value={editingPaymentMethod.account_number || ""}
+                                          onChange={(e) =>
+                                            setEditingPaymentMethod({
+                                              ...editingPaymentMethod,
+                                              account_number: e.target.value,
+                                            })
+                                          }
+                                          placeholder={accountConfig.fieldPlaceholders.account_number}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editIban">
+                                        {accountConfig.fieldLabels.iban} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="editIban"
+                                        value={editingPaymentMethod.iban || ""}
+                                        onChange={(e) =>
+                                          setEditingPaymentMethod({
+                                            ...editingPaymentMethod,
+                                            iban: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.iban}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editSwiftBic">
+                                        {accountConfig.fieldLabels.swift_bic} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="editSwiftBic"
+                                        value={editingPaymentMethod.swift_bic || ""}
+                                        onChange={(e) =>
+                                          setEditingPaymentMethod({
+                                            ...editingPaymentMethod,
+                                            swift_bic: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* EURO Account Fields */}
+                                {accountConfig.accountType === "euro" && (
+                                  <>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editIban">
+                                        {accountConfig.fieldLabels.iban} *
+                                      </Label>
+                                      <Input
+                                        id="editIban"
+                                        value={editingPaymentMethod.iban || ""}
+                                        onChange={(e) =>
+                                          setEditingPaymentMethod({
+                                            ...editingPaymentMethod,
+                                            iban: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.iban}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="editSwiftBic">
+                                        {accountConfig.fieldLabels.swift_bic} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="editSwiftBic"
+                                        value={editingPaymentMethod.swift_bic || ""}
+                                        onChange={(e) =>
+                                          setEditingPaymentMethod({
+                                            ...editingPaymentMethod,
+                                            swift_bic: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* Generic Account Fields */}
+                                {accountConfig.accountType === "generic" && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="editAccountNumber">
+                                      {accountConfig.fieldLabels.account_number} *
+                                    </Label>
+                                    <Input
+                                      id="editAccountNumber"
+                                      value={editingPaymentMethod.account_number || ""}
+                                      onChange={(e) =>
+                                        setEditingPaymentMethod({
+                                          ...editingPaymentMethod,
+                                          account_number: e.target.value,
+                                        })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.account_number}
+                                    />
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
 
                           {editingPaymentMethod.type === "qr_code" && (
                             <>
@@ -1051,19 +1413,36 @@ export default function AdminSettingsPage() {
                             </Button>
                             <Button
                               onClick={handleEditPaymentMethod}
-                              disabled={
-                                saving ||
-                                uploadingQrCode ||
-                                !editingPaymentMethod.currency ||
-                                !editingPaymentMethod.name ||
-                                (editingPaymentMethod.type === "bank_account" &&
-                                  (!editingPaymentMethod.account_name ||
-                                    !editingPaymentMethod.account_number ||
-                                    !editingPaymentMethod.bank_name)) ||
-                                (editingPaymentMethod.type === "qr_code" &&
-                                  !editingQrCodeFile &&
-                                  !editingPaymentMethod.qr_code_data)
-                              }
+                              disabled={(() => {
+                                if (
+                                  saving ||
+                                  uploadingQrCode ||
+                                  !editingPaymentMethod.currency ||
+                                  !editingPaymentMethod.name
+                                ) {
+                                  return true
+                                }
+
+                                if (editingPaymentMethod.type === "qr_code") {
+                                  return !editingQrCodeFile && !editingPaymentMethod.qr_code_data
+                                }
+
+                                if (editingPaymentMethod.type === "bank_account") {
+                                  const accountConfig = getAccountTypeConfigFromCurrency(
+                                    editingPaymentMethod.currency
+                                  )
+                                  const requiredFields = accountConfig.requiredFields
+
+                                  for (const field of requiredFields) {
+                                    const fieldValue = editingPaymentMethod[field as keyof typeof editingPaymentMethod]
+                                    if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                                      return true
+                                    }
+                                  }
+                                }
+
+                                return false
+                              })()}
                               className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
                             >
                               {saving ? "Saving..." : "Save Changes"}
@@ -1105,13 +1484,40 @@ export default function AdminSettingsPage() {
                         </TableCell>
                         <TableCell className="font-medium">{method.name}</TableCell>
                         <TableCell>
-                          {method.type === "bank_account" ? (
-                            <div className="text-sm text-gray-600">
-                              <div>{method.account_name}</div>
-                              <div className="font-mono">{method.account_number}</div>
-                              <div>{method.bank_name}</div>
-                            </div>
-                          ) : (
+                          {method.type === "bank_account" ? (() => {
+                            const accountConfig = getAccountTypeConfigFromCurrency(method.currency)
+                            const accountType = accountConfig.accountType
+
+                            return (
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>{method.account_name}</div>
+                                {accountType === "us" && method.routing_number && (
+                                  <div className="font-mono text-xs">
+                                    Routing: {formatFieldValue(accountType, "routing_number", method.routing_number)}
+                                  </div>
+                                )}
+                                {accountType === "uk" && method.sort_code && (
+                                  <div className="font-mono text-xs">
+                                    Sort Code: {formatFieldValue(accountType, "sort_code", method.sort_code)}
+                                  </div>
+                                )}
+                                {method.account_number && (
+                                  <div className="font-mono text-xs">
+                                    {accountConfig.fieldLabels.account_number}: {method.account_number}
+                                  </div>
+                                )}
+                                {method.iban && (
+                                  <div className="font-mono text-xs">
+                                    IBAN: {formatFieldValue(accountType, "iban", method.iban)}
+                                  </div>
+                                )}
+                                {method.swift_bic && (
+                                  <div className="font-mono text-xs">SWIFT/BIC: {method.swift_bic}</div>
+                                )}
+                                <div>{method.bank_name}</div>
+                              </div>
+                            )
+                          })() : (
                             <div className="text-sm text-gray-600">
                               <div className="font-mono text-xs">{method.qr_code_data}</div>
                               {method.instructions && (

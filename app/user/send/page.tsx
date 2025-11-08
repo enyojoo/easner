@@ -173,6 +173,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import type { Currency } from "@/types"
+import {
+  getAccountTypeConfigFromCurrency,
+  formatFieldValue,
+} from "@/lib/currency-account-types"
 
 export default function UserSendPage() {
   const router = useRouter()
@@ -1221,90 +1225,215 @@ export default function UserSendPage() {
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {/* Payment Method Details */}
                             <div className="space-y-3">
-                              {defaultMethod?.type === "bank_account" && (
-                                <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <Building2 className="h-4 w-4 text-gray-600" />
-                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Account Name</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.account_name}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.account_name, "accountName")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.accountName ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
+                              {defaultMethod?.type === "bank_account" && (() => {
+                                const accountConfig = getAccountTypeConfigFromCurrency(sendCurrency)
+                                const accountType = accountConfig.accountType
+
+                                return (
+                                  <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <Building2 className="h-4 w-4 text-gray-600" />
+                                      <span className="font-medium text-sm">{defaultMethod.name}</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Account Number</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-sm">
-                                          {defaultMethod.account_number}
+                                    <div className="space-y-2">
+                                      {/* Account Name - Always shown */}
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.account_name}
                                         </span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.account_number, "accountNumber")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.accountNumber ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                          <span className="font-medium text-sm">{defaultMethod.account_name}</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(defaultMethod.account_name || "", "accountName")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.accountName ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Bank Name</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(defaultMethod.bank_name, "bankName")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.bankName ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
+
+                                      {/* US Account Fields */}
+                                      {accountType === "us" && defaultMethod.routing_number && (
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-gray-600 text-xs">
+                                            {accountConfig.fieldLabels.routing_number}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            <span className="font-medium font-mono text-sm">
+                                              {formatFieldValue(accountType, "routing_number", defaultMethod.routing_number)}
+                                            </span>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopy(defaultMethod.routing_number || "", "routingNumber")}
+                                              className="h-5 w-5 p-0"
+                                            >
+                                              {copiedStates.routingNumber ? (
+                                                <Check className="h-3 w-3 text-green-600" />
+                                              ) : (
+                                                <Copy className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* UK Account Fields */}
+                                      {accountType === "uk" && defaultMethod.sort_code && (
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-gray-600 text-xs">
+                                            {accountConfig.fieldLabels.sort_code}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            <span className="font-medium font-mono text-sm">
+                                              {formatFieldValue(accountType, "sort_code", defaultMethod.sort_code)}
+                                            </span>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopy(defaultMethod.sort_code || "", "sortCode")}
+                                              className="h-5 w-5 p-0"
+                                            >
+                                              {copiedStates.sortCode ? (
+                                                <Check className="h-3 w-3 text-green-600" />
+                                              ) : (
+                                                <Copy className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Account Number - Shown for US, UK, and Generic */}
+                                      {(accountType === "us" || accountType === "uk" || accountType === "generic") &&
+                                        defaultMethod.account_number && (
+                                          <div className="flex justify-between items-center">
+                                            <span className="text-gray-600 text-xs">
+                                              {accountConfig.fieldLabels.account_number}
+                                            </span>
+                                            <div className="flex items-center gap-1">
+                                              <span className="font-medium font-mono text-sm">
+                                                {defaultMethod.account_number}
+                                              </span>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
+                                                className="h-5 w-5 p-0"
+                                              >
+                                                {copiedStates.accountNumber ? (
+                                                  <Check className="h-3 w-3 text-green-600" />
+                                                ) : (
+                                                  <Copy className="h-3 w-3" />
+                                                )}
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                      {/* IBAN - Shown for UK and EURO */}
+                                      {(accountType === "uk" || accountType === "euro") && defaultMethod.iban && (
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-gray-600 text-xs">
+                                            {accountConfig.fieldLabels.iban}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            <span className="font-medium font-mono text-xs">
+                                              {formatFieldValue(accountType, "iban", defaultMethod.iban)}
+                                            </span>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopy(defaultMethod.iban || "", "iban")}
+                                              className="h-5 w-5 p-0"
+                                            >
+                                              {copiedStates.iban ? (
+                                                <Check className="h-3 w-3 text-green-600" />
+                                              ) : (
+                                                <Copy className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* SWIFT/BIC - Shown for UK and EURO if present */}
+                                      {(accountType === "uk" || accountType === "euro") && defaultMethod.swift_bic && (
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-gray-600 text-xs">
+                                            {accountConfig.fieldLabels.swift_bic}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            <span className="font-medium font-mono text-xs">
+                                              {defaultMethod.swift_bic}
+                                            </span>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => handleCopy(defaultMethod.swift_bic || "", "swiftBic")}
+                                              className="h-5 w-5 p-0"
+                                            >
+                                              {copiedStates.swiftBic ? (
+                                                <Check className="h-3 w-3 text-green-600" />
+                                              ) : (
+                                                <Copy className="h-3 w-3" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Bank Name - Always shown */}
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.bank_name}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.bankName ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                                      <span className="text-gray-600 text-xs">Transaction ID</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(transactionId, "transactionId")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.transactionId ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
+
+                                      {/* Transaction ID */}
+                                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                        <span className="text-gray-600 text-xs">Transaction ID</span>
+                                        <div className="flex items-center gap-1">
+                                          <span className="font-medium font-mono text-xs">{transactionId}</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(transactionId, "transactionId")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.transactionId ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
+                                )
+                              })()}
 
                               {defaultMethod?.type === "qr_code" && (
                                 <div className="bg-white rounded-lg p-3 border border-gray-100 text-center">

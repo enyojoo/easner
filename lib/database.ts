@@ -611,6 +611,10 @@ export const paymentMethodService = {
     accountName?: string
     accountNumber?: string
     bankName?: string
+    routingNumber?: string
+    sortCode?: string
+    iban?: string
+    swiftBic?: string
     qrCodeData?: string
     instructions?: string
     isDefault?: boolean
@@ -634,6 +638,10 @@ export const paymentMethodService = {
         account_name: paymentMethodData.accountName,
         account_number: paymentMethodData.accountNumber,
         bank_name: paymentMethodData.bankName,
+        routing_number: paymentMethodData.routingNumber,
+        sort_code: paymentMethodData.sortCode,
+        iban: paymentMethodData.iban,
+        swift_bic: paymentMethodData.swiftBic,
         qr_code_data: paymentMethodData.qrCodeData,
         instructions: paymentMethodData.instructions,
         is_default: paymentMethodData.isDefault || false,
@@ -659,6 +667,10 @@ export const paymentMethodService = {
       accountName?: string
       accountNumber?: string
       bankName?: string
+      routingNumber?: string
+      sortCode?: string
+      iban?: string
+      swiftBic?: string
       qrCodeData?: string
       instructions?: string
       isDefault?: boolean
@@ -675,19 +687,24 @@ export const paymentMethodService = {
         .neq("id", id)
     }
 
+    const updateData: Record<string, any> = {}
+    if (updates.currency !== undefined) updateData.currency = updates.currency
+    if (updates.type !== undefined) updateData.type = updates.type
+    if (updates.name !== undefined) updateData.name = updates.name
+    if (updates.accountName !== undefined) updateData.account_name = updates.accountName
+    if (updates.accountNumber !== undefined) updateData.account_number = updates.accountNumber
+    if (updates.bankName !== undefined) updateData.bank_name = updates.bankName
+    if (updates.routingNumber !== undefined) updateData.routing_number = updates.routingNumber
+    if (updates.sortCode !== undefined) updateData.sort_code = updates.sortCode
+    if (updates.iban !== undefined) updateData.iban = updates.iban
+    if (updates.swiftBic !== undefined) updateData.swift_bic = updates.swiftBic
+    if (updates.qrCodeData !== undefined) updateData.qr_code_data = updates.qrCodeData
+    if (updates.instructions !== undefined) updateData.instructions = updates.instructions
+    if (updates.isDefault !== undefined) updateData.is_default = updates.isDefault
+
     const { data, error } = await serverClient
       .from("payment_methods")
-      .update({
-        currency: updates.currency,
-        type: updates.type,
-        name: updates.name,
-        account_name: updates.accountName,
-        account_number: updates.accountNumber,
-        bank_name: updates.bankName,
-        qr_code_data: updates.qrCodeData,
-        instructions: updates.instructions,
-        is_default: updates.isDefault,
-      })
+      .update(updateData)
       .eq("id", id)
       .select()
       .single()
