@@ -22,6 +22,20 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
   const selectedCurrency = currencies.find((c) => c.code === formData.currency)
   const accountConfig = formData.currency ? getAccountTypeConfigFromCurrency(formData.currency) : null
 
+  // Map snake_case field names from config to camelCase form field names
+  const mapFieldName = (fieldName: string): string => {
+    const fieldMap: Record<string, string> = {
+      account_name: "name",
+      routing_number: "routingNumber",
+      account_number: "accountNumber",
+      bank_name: "bankName",
+      sort_code: "sortCode",
+      iban: "iban",
+      swift_bic: "swiftBic",
+    }
+    return fieldMap[fieldName] || fieldName
+  }
+
   const isFormValid = () => {
     if (!formData.name || !formData.bankName || isSubmitting) return false
 
@@ -29,7 +43,8 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
 
     const requiredFields = accountConfig.requiredFields
     for (const field of requiredFields) {
-      const fieldValue = formData[field as keyof typeof formData]
+      const formFieldName = mapFieldName(field)
+      const fieldValue = formData[formFieldName as keyof typeof formData]
       if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
         return false
       }
@@ -87,12 +102,12 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name *</Label>
+        <Label htmlFor="name">Account Name *</Label>
         <Input
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="Enter recipient's full name"
+          placeholder="Enter account name"
           disabled={isSubmitting}
         />
       </div>

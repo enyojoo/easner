@@ -1056,16 +1056,6 @@ export default function UserSendPage() {
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="newRecipientName">Full Name *</Label>
-                            <Input
-                              id="newRecipientName"
-                              value={newRecipientData.fullName}
-                              onChange={(e) => setNewRecipientData({ ...newRecipientData, fullName: e.target.value })}
-                              placeholder="Enter recipient's full name"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
                             <Label htmlFor="newRecipientCurrency">Currency</Label>
                             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
                               {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
@@ -1074,6 +1064,16 @@ export default function UserSendPage() {
                               </div>
                               <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
                             </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newRecipientName">Account Name *</Label>
+                            <Input
+                              id="newRecipientName"
+                              value={newRecipientData.fullName}
+                              onChange={(e) => setNewRecipientData({ ...newRecipientData, fullName: e.target.value })}
+                              placeholder="Enter account name"
+                              required
+                            />
                           </div>
                           {(() => {
                             const accountConfig = receiveCurrency
@@ -1273,8 +1273,23 @@ export default function UserSendPage() {
                               const accountConfig = getAccountTypeConfigFromCurrency(receiveCurrency)
                               const requiredFields = accountConfig.requiredFields
 
+                              // Map snake_case field names from config to camelCase form field names
+                              const mapFieldName = (fieldName: string): string => {
+                                const fieldMap: Record<string, string> = {
+                                  account_name: "fullName",
+                                  routing_number: "routingNumber",
+                                  account_number: "accountNumber",
+                                  bank_name: "bankName",
+                                  sort_code: "sortCode",
+                                  iban: "iban",
+                                  swift_bic: "swiftBic",
+                                }
+                                return fieldMap[fieldName] || fieldName
+                              }
+
                               for (const field of requiredFields) {
-                                const fieldValue = newRecipientData[field as keyof typeof newRecipientData]
+                                const formFieldName = mapFieldName(field)
+                                const fieldValue = newRecipientData[formFieldName as keyof typeof newRecipientData]
                                 if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
                                   return true
                                 }
