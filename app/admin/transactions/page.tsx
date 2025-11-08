@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,7 @@ import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
+import { paymentMethodService } from "@/lib/database"
 import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
@@ -39,6 +40,9 @@ export default function AdminTransactionsPage() {
   const [currencyFilter, setCurrencyFilter] = useState("all")
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [currentTime, setCurrentTime] = useState(Date.now())
+  const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
 
   const filteredTransactions = (data?.transactions || []).filter((transaction: any) => {
     const matchesSearch =
@@ -135,6 +139,120 @@ export default function AdminTransactionsPage() {
       setSelectedTransactions([])
     } catch (err) {
       console.error("Error updating transaction statuses:", err)
+    }
+  }
+
+  // Load payment methods
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      try {
+        const paymentMethodsData = await paymentMethodService.getAll()
+        setPaymentMethods(paymentMethodsData || [])
+      } catch (error) {
+        console.error("Error loading payment methods:", error)
+      }
+    }
+
+    loadPaymentMethods()
+  }, [])
+
+  // Initialize timer duration from payment method when transaction is selected
+  useEffect(() => {
+    if (selectedTransaction && paymentMethods.length > 0) {
+      const getDefaultPaymentMethod = (currency: string) => {
+        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
+        return methods.find((pm) => pm.is_default) || methods[0]
+      }
+
+      const defaultMethod = getDefaultPaymentMethod(selectedTransaction.send_currency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimerDuration(timerSeconds)
+    }
+  }, [selectedTransaction, paymentMethods])
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  // Calculate elapsed time in seconds
+  const getElapsedTime = (): number => {
+    if (!selectedTransaction) return 0
+    
+    const createdAt = new Date(selectedTransaction.created_at).getTime()
+    
+    if (selectedTransaction.status === "completed") {
+      const completedAt = selectedTransaction.completed_at
+        ? new Date(selectedTransaction.completed_at).getTime()
+        : new Date(selectedTransaction.updated_at).getTime()
+      return Math.floor((completedAt - createdAt) / 1000)
+    } else {
+      // For pending/processing, use current time
+      return Math.floor((currentTime - createdAt) / 1000)
+    }
+  }
+
+  // Calculate remaining time for pending/processing
+  const getRemainingTime = (): number => {
+    const elapsed = getElapsedTime()
+    const remaining = timerDuration - elapsed
+    return Math.max(0, remaining)
+  }
+
+  // Calculate delay for completed transactions or when timer has finished
+  const getDelay = (): number => {
+    if (!selectedTransaction) return 0
+    const elapsed = getElapsedTime()
+    const delay = elapsed - timerDuration
+    return Math.max(0, delay)
+  }
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const remainingSeconds = seconds % 60
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
+    }
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
+  }
+
+  // Get timer display text
+  const getTimerDisplay = (): string | null => {
+    if (!selectedTransaction) return null
+    
+    // Don't show timer for failed/cancelled
+    if (selectedTransaction.status === "failed" || selectedTransaction.status === "cancelled") {
+      return null
+    }
+
+    if (selectedTransaction.status === "completed") {
+      const elapsed = getElapsedTime()
+      const delay = getDelay()
+      
+      if (delay > 0) {
+        return `Took ${formatTime(elapsed)} • Delayed ${formatTime(delay)}`
+      } else {
+        return `Took ${formatTime(elapsed)}`
+      }
+    } else {
+      // Pending or processing
+      const remaining = getRemainingTime()
+      const delay = getDelay()
+      
+      // If timer has finished (remaining <= 0), show delayed time
+      if (remaining <= 0 && delay > 0) {
+        return `Delayed ${formatTime(delay)}`
+      }
+      
+      // Otherwise show countdown
+      return `Time left ${formatTime(remaining)}`
     }
   }
 
@@ -317,7 +435,15 @@ export default function AdminTransactionsPage() {
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                              <DialogTitle>Transaction Details</DialogTitle>
+                              <div className="flex items-center justify-between">
+                                <DialogTitle>Transaction Details</DialogTitle>
+                                {selectedTransaction && getTimerDisplay() && (
+                                  <div className="flex items-center text-orange-600">
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    <span className="font-mono text-sm">{getTimerDisplay()}</span>
+                                  </div>
+                                )}
+                              </div>
                             </DialogHeader>
                             {selectedTransaction && (
                               <div className="space-y-4">
