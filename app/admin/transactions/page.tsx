@@ -435,7 +435,7 @@ export default function AdminTransactionsPage() {
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-6">
                                 <DialogTitle>Transaction Details</DialogTitle>
                                 {selectedTransaction && getTimerDisplay() && (
                                   <div className="flex items-center text-orange-600">

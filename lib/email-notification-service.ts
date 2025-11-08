@@ -177,14 +177,34 @@ export class EmailNotificationService {
       }
       
       console.log('Fetching transaction data...')
-      const { data: transaction, error: transactionError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('transaction_id', transactionId)
-        .single()
+      // Retry mechanism for database query (transaction might not be immediately available)
+      let transaction = null
+      let transactionError = null
+      const maxRetries = 3
+      const retryDelay = 500 // 500ms delay between retries
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('transaction_id', transactionId.toUpperCase())
+          .single()
+
+        if (!error && data) {
+          transaction = data
+          transactionError = null
+          break
+        } else {
+          transactionError = error
+          if (attempt < maxRetries) {
+            console.log(`Transaction query attempt ${attempt} failed, retrying in ${retryDelay}ms...`)
+            await new Promise(resolve => setTimeout(resolve, retryDelay))
+          }
+        }
+      }
 
       if (transactionError) {
-        console.error('Transaction query error:', transactionError)
+        console.error('Transaction query error after retries:', transactionError)
         throw new Error(`Transaction query failed: ${transactionError.message}`)
       }
 
