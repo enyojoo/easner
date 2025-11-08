@@ -31,7 +31,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
-  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
+  const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
 
   const { transactionId, fromScreen } = route.params || {}
 
@@ -54,7 +54,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }, [])
   )
 
-  // Initialize timer from payment method when transaction is loaded
+  // Initialize timer duration from payment method when transaction is loaded
   useEffect(() => {
     if (transaction && paymentMethods.length > 0) {
       const getDefaultPaymentMethod = (currency: string) => {
@@ -64,17 +64,9 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 
       const defaultMethod = getDefaultPaymentMethod(transaction.send_currency)
       const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
-      setTimeLeft(timerSeconds)
+      setTimerDuration(timerSeconds)
     }
   }, [transaction, paymentMethods])
-
-  // Timer countdown
-  useEffect(() => {
-    if (transaction && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [transaction, timeLeft])
 
   // Update current time every second
   useEffect(() => {
@@ -84,12 +76,6 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 
     return () => clearInterval(timer)
   }, [])
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
 
   useEffect(() => {
     if (transactionId && userProfile?.id) {
@@ -197,7 +183,41 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }
   }
 
-  const formatTime = (seconds: number) => {
+  // Calculate elapsed time in seconds
+  const getElapsedTime = (): number => {
+    if (!transaction) return 0
+    
+    const createdAt = new Date(transaction.created_at).getTime()
+    
+    if (transaction.status === 'completed') {
+      // For completed, use completed_at or updated_at
+      const completedAt = transaction.completed_at 
+        ? new Date(transaction.completed_at).getTime()
+        : new Date(transaction.updated_at).getTime()
+      return Math.floor((completedAt - createdAt) / 1000)
+    } else {
+      // For pending/processing, use current time
+      return Math.floor((currentTime - createdAt) / 1000)
+    }
+  }
+
+  // Calculate remaining time for pending/processing
+  const getRemainingTime = (): number => {
+    const elapsed = getElapsedTime()
+    const remaining = timerDuration - elapsed
+    return Math.max(0, remaining)
+  }
+
+  // Calculate delay for completed transactions
+  const getDelay = (): number => {
+    if (transaction?.status !== 'completed') return 0
+    const elapsed = getElapsedTime()
+    const delay = elapsed - timerDuration
+    return Math.max(0, delay)
+  }
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const remainingSeconds = seconds % 60
@@ -206,6 +226,31 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
       return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
     }
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  // Get timer display text
+  const getTimerDisplay = (): string | null => {
+    if (!transaction) return null
+    
+    // Don't show timer for failed/cancelled
+    if (transaction.status === 'failed' || transaction.status === 'cancelled') {
+      return null
+    }
+
+    if (transaction.status === 'completed') {
+      const elapsed = getElapsedTime()
+      const delay = getDelay()
+      
+      if (delay > 0) {
+        return `Completed in ${formatTime(elapsed)} • Delayed by ${formatTime(delay)}`
+      } else {
+        return `Completed in ${formatTime(elapsed)}`
+      }
+    } else {
+      // Pending or processing
+      const remaining = getRemainingTime()
+      return formatTime(remaining)
+    }
   }
 
   const getStatusMessage = (status: string) => {
@@ -361,14 +406,12 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         contentContainerStyle={styles.scrollContent}
       >
         {/* Transaction Status Header with Timer */}
-        {(transaction.status === 'pending' ||
-          transaction.status === 'processing' ||
-          transaction.status === 'completed') && (
+        {transaction && getTimerDisplay() && (
           <View style={styles.statusHeaderWithTimer}>
             <Text style={styles.statusTitle}>Transaction Status</Text>
             <View style={styles.timerContainer}>
               <Ionicons name="time" size={16} color="#f59e0b" />
-              <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+              <Text style={styles.timerText}>{getTimerDisplay()}</Text>
             </View>
           </View>
         )}
@@ -618,11 +661,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   timerText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#f59e0b',
     marginLeft: 4,
     fontFamily: 'monospace',
+    flexShrink: 1,
   },
   timelineWrapper: {
     marginHorizontal: 16,
