@@ -310,6 +310,7 @@ export class EmailNotificationService {
 
       // Send admin notification email
       console.log('Sending admin notification email to: enyo@easner.com')
+      console.log('Admin email data:', JSON.stringify(adminEmailData, null, 2))
       
       const result = await emailService.sendEmail({
         to: 'enyo@easner.com',
@@ -321,9 +322,17 @@ export class EmailNotificationService {
         console.log('Admin notification email sent successfully!', result.messageId)
       } else {
         console.error('Admin notification email sending failed:', result.error)
+        throw new Error(`Failed to send admin email: ${result.error}`)
       }
     } catch (error) {
       console.error('Error sending admin notification email:', error)
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        transactionId: transaction?.transaction_id
+      })
+      // Re-throw to allow caller to handle
+      throw error
     }
   }
 }

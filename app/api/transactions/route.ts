@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { transactionService, currencyService } from "@/lib/database"
 import { requireUser, createErrorResponse, withErrorHandling } from "@/lib/auth-utils"
-import { createServerClient } from "@/lib/supabase"
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const user = await requireUser(request)
@@ -66,45 +65,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     // Send admin notification email (non-blocking)
-    // Use direct data to avoid database query timing issues (like early access flow)
+    // Use same pattern as user email - call with transaction ID
     try {
       console.log('Sending admin notification for new transaction:', transaction.transaction_id)
-      
-      // Fetch user and recipient data directly
-      const supabase = createServerClient()
-      
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('email, first_name, last_name')
-        .eq('id', user.id)
-        .single()
-      
-      if (userError || !userData?.email) {
-        console.error('Failed to fetch user data for admin email:', userError)
-        throw new Error(`User not found or no email: ${userError?.message || 'No email address'}`)
-      }
-      
-      // Get recipient data
-      const { data: recipientData, error: recipientError } = await supabase
-        .from('recipients')
-        .select('full_name')
-        .eq('id', recipientId)
-        .single()
-      
-      if (recipientError) {
-        console.error('Failed to fetch recipient data for admin email:', recipientError)
-        // Continue with null recipient - will show as 'Unknown'
-      }
-      
-      // Call the new method with direct data
       const { EmailNotificationService } = await import('@/lib/email-notification-service')
-      await EmailNotificationService.sendAdminTransactionNotification(
-        transaction,
-        userData,
-        recipientData,
-        'pending'
-      )
+      await EmailNotificationService.sendAdminTransactionNotification(transaction.transaction_id, 'pending')
       console.log('Admin notification sent successfully')
     } catch (adminEmailError) {
       console.error('Failed to send admin notification email:', adminEmailError)
