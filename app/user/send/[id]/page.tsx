@@ -369,9 +369,7 @@ function TransactionStatusPage() {
                   {transaction.status === "pending" ||
                   transaction.status === "processing" ||
                   transaction.status === "completed" ? (
-                    <div className="bg-gray-900 rounded-lg p-6">
-                      <TransactionTimeline transaction={transaction} />
-                    </div>
+                    <TransactionTimeline transaction={transaction} />
                   ) : (
                     /* Show current UI for failed/cancelled statuses */
                     <>

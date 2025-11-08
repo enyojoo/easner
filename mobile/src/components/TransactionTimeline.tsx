@@ -35,17 +35,17 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
 
     const stages: TimelineStage[] = [
       {
-        id: 'initiated',
+        id: 'pending',
         title: 'Initiated',
-        description: 'You made this transaction',
+        description: 'Pending payment confirmation',
         icon: 'arrow-up',
         completed: true,
         timestamp: formatTimestamp(transaction.created_at),
       },
       {
-        id: 'sent',
-        title: 'Sent',
-        description: 'Your transaction is on its way.',
+        id: 'processing',
+        title: 'Processing',
+        description: 'Your money is on its way.',
         icon: 'arrow-forward',
         completed: status === 'processing' || status === 'completed',
         timestamp:
@@ -168,21 +168,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   titleCompleted: {
-    color: '#ffffff',
+    color: '#1f2937',
   },
   titlePending: {
-    color: '#9ca3af',
+    color: '#6b7280',
   },
   timestamp: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: '#6b7280',
     marginBottom: 4,
   },
   description: {
     fontSize: 14,
   },
   descriptionCompleted: {
-    color: '#ffffff',
+    color: '#374151',
   },
   descriptionPending: {
     color: '#6b7280',

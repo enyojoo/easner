@@ -297,7 +297,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         {(transaction.status === 'pending' ||
           transaction.status === 'processing' ||
           transaction.status === 'completed') ? (
-          <View style={styles.timelineContainer}>
+          <View style={styles.timelineWrapper}>
             <TransactionTimeline transaction={transaction} />
           </View>
         ) : (
@@ -513,12 +513,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  timelineContainer: {
-    backgroundColor: '#1f2937',
+  timelineWrapper: {
     marginHorizontal: 16,
     marginBottom: 16,
-    padding: 24,
-    borderRadius: 8,
   },
   statusHeader: {
     backgroundColor: '#ffffff',
