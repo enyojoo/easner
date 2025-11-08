@@ -241,18 +241,23 @@ export class EmailNotificationService {
       }
 
       // Send admin notification email (exact same pattern as user email)
-      console.log('Sending admin notification email to: enyo@easner.com')
+      // Send to both admin emails
+      const adminEmails = ['enyo@easner.com', 'enyocreative@gmail.com']
       
-      const result = await emailService.sendEmail({
-        to: 'enyo@easner.com',
-        template: 'adminTransactionNotification',
-        data: adminEmailData
-      })
+      for (const adminEmail of adminEmails) {
+        console.log(`Sending admin notification email to: ${adminEmail}`)
+        
+        const result = await emailService.sendEmail({
+          to: adminEmail,
+          template: 'adminTransactionNotification',
+          data: adminEmailData
+        })
 
-      if (result.success) {
-        console.log('Admin notification email sent successfully!', result.messageId)
-      } else {
-        console.error('Admin notification email sending failed:', result.error)
+        if (result.success) {
+          console.log(`Admin notification email sent successfully to ${adminEmail}!`, result.messageId)
+        } else {
+          console.error(`Admin notification email sending failed to ${adminEmail}:`, result.error)
+        }
       }
     } catch (error) {
       console.error('Error sending admin notification email:', error)
