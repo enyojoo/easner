@@ -380,23 +380,6 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   )
                 })()}
 
-                {/* Transaction ID Display */}
-                      <View style={[styles.detailRowTwoLine, styles.transactionIdRow]}>
-                        <Text style={styles.detailLabel}>Transaction ID</Text>
-                        <View style={styles.detailValueRow}>
-                          <Text style={styles.detailText}>{transactionId}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(transactionId, "transactionId")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.transactionId ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
 
                 {defaultMethod?.type === "qr_code" && (
                   <View style={styles.qrCodeCard}>
@@ -444,9 +427,22 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <Text style={styles.instructionText}>
-                      Include transaction ID <Text style={styles.instructionBold}>{transactionId}</Text>
-                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Text style={styles.instructionText}>
+                        Note Transaction ID{' '}
+                      </Text>
+                      <Text style={styles.instructionBold}>{transactionId}</Text>
+                      <TouchableOpacity
+                        onPress={() => handleCopy(transactionId, "transactionIdInstructions")}
+                        style={{ marginLeft: 4, padding: 2 }}
+                      >
+                        {copiedStates.transactionIdInstructions ? (
+                          <Ionicons name="checkmark" size={12} color="#10b981" />
+                        ) : (
+                          <Ionicons name="copy" size={12} color="#92400e" />
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
@@ -454,7 +450,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <Text style={styles.instructionText}>Upload receipt for faster processing</Text>
+                    <Text style={styles.instructionText}>Upload receipt for quick verification</Text>
                   </View>
                   {defaultMethod?.type === "qr_code" && (
                     <View style={styles.instructionItem}>

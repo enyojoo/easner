@@ -1676,26 +1676,6 @@ export default function UserSendPage() {
                                           </Button>
                                         </div>
                                       </div>
-
-                                      {/* Transaction ID */}
-                                      <div className="space-y-1 pt-2 border-t border-gray-100">
-                                        <span className="text-gray-600 text-xs">Transaction ID</span>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium font-mono text-xs">{transactionId}</span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleCopy(transactionId, "transactionId")}
-                                            className="h-5 w-5 p-0"
-                                          >
-                                            {copiedStates.transactionId ? (
-                                              <Check className="h-3 w-3 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-3 w-3" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </div>
                                     </div>
                                   </div>
                                 )
@@ -1741,26 +1721,6 @@ export default function UserSendPage() {
                                   {defaultMethod.instructions && (
                                     <p className="text-xs text-gray-500 mb-2">{defaultMethod.instructions}</p>
                                   )}
-                                  <div className="mt-2 pt-2 border-t border-gray-100">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 text-xs">Transaction ID</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="font-medium font-mono text-xs">{transactionId}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => handleCopy(transactionId, "transactionId")}
-                                          className="h-5 w-5 p-0"
-                                        >
-                                          {copiedStates.transactionId ? (
-                                            <Check className="h-3 w-3 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
                                 </div>
                               )}
                             </div>
@@ -1789,8 +1749,23 @@ export default function UserSendPage() {
                                   </li>
                                   <li className="flex items-start gap-2">
                                     <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>
-                                      Include transaction ID <strong>{transactionId}</strong>
+                                    <span className="flex-1">
+                                      Note Transaction ID{" "}
+                                      <span className="inline-flex items-center gap-1">
+                                        <strong>{transactionId}</strong>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(transactionId, "transactionIdInstructions")}
+                                          className="h-4 w-4 p-0 hover:bg-amber-100"
+                                        >
+                                          {copiedStates.transactionIdInstructions ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3 text-amber-700" />
+                                          )}
+                                        </Button>
+                                      </span>
                                     </span>
                                   </li>
                                   <li className="flex items-start gap-2">
@@ -1801,7 +1776,7 @@ export default function UserSendPage() {
                                   </li>
                                   <li className="flex items-start gap-2">
                                     <span className="text-amber-500 mt-0.5 text-xs">•</span>
-                                    <span>Upload receipt for faster processing</span>
+                                    <span>Upload receipt for quick verification</span>
                                   </li>
                                   {defaultMethod?.type === "qr_code" && (
                                     <li className="flex items-start gap-2">
