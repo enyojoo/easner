@@ -30,6 +30,10 @@ const AdminRatesPage = () => {
   })
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [currencySettings, setCurrencySettings] = useState({
+    can_send: true,
+    can_receive: true,
+  })
 
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
@@ -113,6 +117,10 @@ const AdminRatesPage = () => {
     })
 
     setRateUpdates(updates)
+    setCurrencySettings({
+      can_send: currency.can_send ?? true,
+      can_receive: currency.can_receive ?? true,
+    })
     setIsEditingRates(true)
   }
 
@@ -140,9 +148,18 @@ const AdminRatesPage = () => {
         await adminDataStore.updateExchangeRates(updates)
       }
 
+      // Update currency send/receive settings
+      if (selectedCurrency) {
+        await adminDataStore.updateCurrency(selectedCurrency.id, {
+          can_send: currencySettings.can_send,
+          can_receive: currencySettings.can_receive,
+        })
+      }
+
       setIsEditingRates(false)
       setSelectedCurrency(null)
       setRateUpdates({})
+      setCurrencySettings({ can_send: true, can_receive: true })
     } catch (error) {
       console.error("Error saving rates:", error)
     } finally {
@@ -297,8 +314,6 @@ const AdminRatesPage = () => {
                   <TableHead>Currency</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Symbol</TableHead>
-                  <TableHead>Can Send</TableHead>
-                  <TableHead>Can Receive</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-[50px]">Actions</TableHead>
@@ -315,30 +330,6 @@ const AdminRatesPage = () => {
                     </TableCell>
                     <TableCell className="font-mono">{currency.code}</TableCell>
                     <TableCell className="font-medium">{currency.symbol}</TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={currency.can_send ?? true}
-                        onCheckedChange={async (checked) => {
-                          try {
-                            await adminDataStore.updateCurrency(currency.id, { can_send: checked as boolean })
-                          } catch (error) {
-                            console.error("Error updating can_send:", error)
-                          }
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Checkbox
-                        checked={currency.can_receive ?? true}
-                        onCheckedChange={async (checked) => {
-                          try {
-                            await adminDataStore.updateCurrency(currency.id, { can_receive: checked as boolean })
-                          } catch (error) {
-                            console.error("Error updating can_receive:", error)
-                          }
-                        }}
-                      />
-                    </TableCell>
                     <TableCell>
                       <Badge
                         className={
@@ -382,10 +373,36 @@ const AdminRatesPage = () => {
         {/* Edit Rates Dialog */}
         <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
           <DialogContent className="max-w-4xl max-h-[80vh]">
-            <DialogHeader>
+            <DialogHeader className="flex flex-row items-center justify-between">
               <DialogTitle>
                 Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
               </DialogTitle>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="editCanSend"
+                    checked={currencySettings.can_send}
+                    onCheckedChange={(checked) =>
+                      setCurrencySettings({ ...currencySettings, can_send: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="editCanSend" className="font-normal cursor-pointer text-sm">
+                    Can Send
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="editCanReceive"
+                    checked={currencySettings.can_receive}
+                    onCheckedChange={(checked) =>
+                      setCurrencySettings({ ...currencySettings, can_receive: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="editCanReceive" className="font-normal cursor-pointer text-sm">
+                    Can Receive
+                  </Label>
+                </div>
+              </div>
             </DialogHeader>
             <div className="space-y-6">
               <div className="max-h-[400px] overflow-y-auto space-y-4 pr-2">
