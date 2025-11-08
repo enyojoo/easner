@@ -227,7 +227,7 @@ class AdminDataStore {
         .select(`
           *,
           user:users(first_name, last_name, email),
-          recipient:recipients(full_name, bank_name, account_number)
+          recipient:recipients(full_name, bank_name, account_number, routing_number, sort_code, iban, swift_bic, currency)
         `)
         .order("created_at", { ascending: false })
         .limit(200)

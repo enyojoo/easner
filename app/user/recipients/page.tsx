@@ -13,9 +13,30 @@ import { Plus, Edit, Trash2, Search } from "lucide-react"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
+import {
+  getAccountTypeConfigFromCurrency,
+  formatFieldValue,
+} from "@/lib/currency-account-types"
 
 const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitting, currencies, onSubmit }) => {
   const selectedCurrency = currencies.find((c) => c.code === formData.currency)
+  const accountConfig = formData.currency ? getAccountTypeConfigFromCurrency(formData.currency) : null
+
+  const isFormValid = () => {
+    if (!formData.name || !formData.bankName || isSubmitting) return false
+
+    if (!accountConfig) return false
+
+    const requiredFields = accountConfig.requiredFields
+    for (const field of requiredFields) {
+      const fieldValue = formData[field as keyof typeof formData]
+      if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+        return false
+      }
+    }
+
+    return true
+  }
 
   return (
     <div className="space-y-4">
@@ -66,7 +87,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+        <Label htmlFor="name">Full Name *</Label>
         <Input
           id="name"
           value={formData.name}
@@ -76,32 +97,182 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="accountNumber">Account Number</Label>
-        <Input
-          id="accountNumber"
-          value={formData.accountNumber}
-          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-          placeholder="Enter account number"
-          disabled={isSubmitting}
-        />
-      </div>
+      {accountConfig && (
+        <>
+          {/* Bank Name - Always required */}
+          <div className="space-y-2">
+            <Label htmlFor="bankName">
+              {accountConfig.fieldLabels.bank_name} *
+            </Label>
+            <Input
+              id="bankName"
+              value={formData.bankName}
+              onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+              placeholder={accountConfig.fieldPlaceholders.bank_name}
+              disabled={isSubmitting}
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="bankName">Bank Name</Label>
-        <Input
-          id="bankName"
-          value={formData.bankName}
-          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-          placeholder="Enter bank name"
-          disabled={isSubmitting}
-        />
-      </div>
+          {/* US Account Fields */}
+          {accountConfig.accountType === "us" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="routingNumber">
+                  {accountConfig.fieldLabels.routing_number} *
+                </Label>
+                <Input
+                  id="routingNumber"
+                  value={formData.routingNumber || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 9)
+                    setFormData({ ...formData, routingNumber: value })
+                  }}
+                  placeholder={accountConfig.fieldPlaceholders.routing_number}
+                  maxLength={9}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountNumber">
+                  {accountConfig.fieldLabels.account_number} *
+                </Label>
+                <Input
+                  id="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  placeholder={accountConfig.fieldPlaceholders.account_number}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
+
+          {/* UK Account Fields */}
+          {accountConfig.accountType === "uk" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sortCode">
+                    {accountConfig.fieldLabels.sort_code} *
+                  </Label>
+                  <Input
+                    id="sortCode"
+                    value={formData.sortCode || ""}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "").slice(0, 6)
+                      setFormData({ ...formData, sortCode: value })
+                    }}
+                    placeholder={accountConfig.fieldPlaceholders.sort_code}
+                    maxLength={6}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">
+                    {accountConfig.fieldLabels.account_number} *
+                  </Label>
+                  <Input
+                    id="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                    placeholder={accountConfig.fieldPlaceholders.account_number}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="iban">
+                  {accountConfig.fieldLabels.iban} (Optional)
+                </Label>
+                <Input
+                  id="iban"
+                  value={formData.iban || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, iban: e.target.value.toUpperCase() })
+                  }
+                  placeholder={accountConfig.fieldPlaceholders.iban}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="swiftBic">
+                  {accountConfig.fieldLabels.swift_bic} (Optional)
+                </Label>
+                <Input
+                  id="swiftBic"
+                  value={formData.swiftBic || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, swiftBic: e.target.value.toUpperCase() })
+                  }
+                  placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
+
+          {/* EURO Account Fields */}
+          {accountConfig.accountType === "euro" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="iban">
+                  {accountConfig.fieldLabels.iban} *
+                </Label>
+                <Input
+                  id="iban"
+                  value={formData.iban || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, iban: e.target.value.toUpperCase() })
+                  }
+                  placeholder={accountConfig.fieldPlaceholders.iban}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="swiftBic">
+                  {accountConfig.fieldLabels.swift_bic} (Optional)
+                </Label>
+                <Input
+                  id="swiftBic"
+                  value={formData.swiftBic || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, swiftBic: e.target.value.toUpperCase() })
+                  }
+                  placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Generic Account Fields */}
+          {accountConfig.accountType === "generic" && (
+            <div className="space-y-2">
+              <Label htmlFor="accountNumber">
+                {accountConfig.fieldLabels.account_number} *
+              </Label>
+              <Input
+                id="accountNumber"
+                value={formData.accountNumber}
+                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                placeholder={accountConfig.fieldPlaceholders.account_number}
+                disabled={isSubmitting}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {!accountConfig && formData.currency && (
+        <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
+          Please select a currency first to see the required fields
+        </div>
+      )}
 
       <Button
         onClick={onSubmit}
         className="w-full bg-easner-primary hover:bg-easner-primary-600"
-        disabled={!formData.name || !formData.accountNumber || !formData.bankName || isSubmitting}
+        disabled={!isFormValid()}
       >
         {isSubmitting ? "Saving..." : isEdit ? "Update Recipient" : "Add Recipient"}
       </Button>
@@ -121,6 +292,10 @@ export default function UserRecipientsPage() {
     accountNumber: "",
     bankName: "",
     currency: "NGN",
+    routingNumber: "",
+    sortCode: "",
+    iban: "",
+    swiftBic: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -147,6 +322,10 @@ export default function UserRecipientsPage() {
         accountNumber: formData.accountNumber,
         bankName: formData.bankName,
         currency: formData.currency,
+        routingNumber: formData.routingNumber || undefined,
+        sortCode: formData.sortCode || undefined,
+        iban: formData.iban || undefined,
+        swiftBic: formData.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -154,7 +333,16 @@ export default function UserRecipientsPage() {
       setError("")
 
       // Reset form and close dialog
-      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+      setFormData({
+        name: "",
+        accountNumber: "",
+        bankName: "",
+        currency: "NGN",
+        routingNumber: "",
+        sortCode: "",
+        iban: "",
+        swiftBic: "",
+      })
       setIsAddDialogOpen(false)
     } catch (error) {
       console.error("Error adding recipient:", error)
@@ -168,9 +356,13 @@ export default function UserRecipientsPage() {
     setEditingRecipient(recipient)
     setFormData({
       name: recipient.full_name,
-      accountNumber: recipient.account_number,
+      accountNumber: recipient.account_number || "",
       bankName: recipient.bank_name,
       currency: recipient.currency,
+      routingNumber: recipient.routing_number || "",
+      sortCode: recipient.sort_code || "",
+      iban: recipient.iban || "",
+      swiftBic: recipient.swift_bic || "",
     })
   }
 
@@ -185,6 +377,10 @@ export default function UserRecipientsPage() {
         fullName: formData.name,
         accountNumber: formData.accountNumber,
         bankName: formData.bankName,
+        routingNumber: formData.routingNumber || undefined,
+        sortCode: formData.sortCode || undefined,
+        iban: formData.iban || undefined,
+        swiftBic: formData.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -193,7 +389,16 @@ export default function UserRecipientsPage() {
 
       // Reset form and close dialog
       setEditingRecipient(null)
-      setFormData({ name: "", accountNumber: "", bankName: "", currency: "NGN" })
+      setFormData({
+        name: "",
+        accountNumber: "",
+        bankName: "",
+        currency: "NGN",
+        routingNumber: "",
+        sortCode: "",
+        iban: "",
+        swiftBic: "",
+      })
     } catch (error) {
       console.error("Error updating recipient:", error)
       setError("Failed to update recipient")
@@ -315,9 +520,41 @@ export default function UserRecipientsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 truncate">{recipient.full_name}</p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {recipient.bank_name} - {recipient.account_number}
-                      </p>
+                      <div className="text-sm text-gray-500 space-y-0.5">
+                        {(() => {
+                          const accountConfig = getAccountTypeConfigFromCurrency(recipient.currency)
+                          const accountType = accountConfig.accountType
+
+                          return (
+                            <>
+                              {accountType === "us" && recipient.routing_number && (
+                                <p className="font-mono text-xs truncate">
+                                  Routing: {formatFieldValue(accountType, "routing_number", recipient.routing_number)}
+                                </p>
+                              )}
+                              {accountType === "uk" && recipient.sort_code && (
+                                <p className="font-mono text-xs truncate">
+                                  Sort Code: {formatFieldValue(accountType, "sort_code", recipient.sort_code)}
+                                </p>
+                              )}
+                              {recipient.account_number && (
+                                <p className="font-mono text-xs truncate">
+                                  {accountConfig.fieldLabels.account_number}: {recipient.account_number}
+                                </p>
+                              )}
+                              {recipient.iban && (
+                                <p className="font-mono text-xs truncate">
+                                  IBAN: {formatFieldValue(accountType, "iban", recipient.iban)}
+                                </p>
+                              )}
+                              {recipient.swift_bic && (
+                                <p className="font-mono text-xs truncate">SWIFT/BIC: {recipient.swift_bic}</p>
+                              )}
+                              <p className="truncate">{recipient.bank_name}</p>
+                            </>
+                          )
+                        })()}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end space-y-1">

@@ -215,6 +215,10 @@ export default function UserSendPage() {
     fullName: "",
     accountNumber: "",
     bankName: "",
+    routingNumber: "",
+    sortCode: "",
+    iban: "",
+    swiftBic: "",
   })
 
   // Copy feedback states
@@ -352,6 +356,10 @@ export default function UserSendPage() {
         accountNumber: newRecipientData.accountNumber,
         bankName: newRecipientData.bankName,
         currency: receiveCurrency,
+        routingNumber: newRecipientData.routingNumber || undefined,
+        sortCode: newRecipientData.sortCode || undefined,
+        iban: newRecipientData.iban || undefined,
+        swiftBic: newRecipientData.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -365,6 +373,10 @@ export default function UserSendPage() {
         fullName: "",
         accountNumber: "",
         bankName: "",
+        routingNumber: "",
+        sortCode: "",
+        iban: "",
+        swiftBic: "",
       })
 
       // Close the dialog
@@ -1054,28 +1066,6 @@ export default function UserSendPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="newRecipientAccount">Account Number *</Label>
-                            <Input
-                              id="newRecipientAccount"
-                              value={newRecipientData.accountNumber}
-                              onChange={(e) =>
-                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                              }
-                              placeholder="Enter account number"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="newRecipientBank">Bank Name *</Label>
-                            <Input
-                              id="newRecipientBank"
-                              value={newRecipientData.bankName}
-                              onChange={(e) => setNewRecipientData({ ...newRecipientData, bankName: e.target.value })}
-                              placeholder="Enter bank name"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
                             <Label htmlFor="newRecipientCurrency">Currency</Label>
                             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
                               {receiveCurrencyData && <FlagIcon currency={receiveCurrencyData} />}
@@ -1085,13 +1075,213 @@ export default function UserSendPage() {
                               <span className="ml-auto text-xs text-gray-500">Auto-selected</span>
                             </div>
                           </div>
+                          {(() => {
+                            const accountConfig = receiveCurrency
+                              ? getAccountTypeConfigFromCurrency(receiveCurrency)
+                              : null
+
+                            if (!accountConfig) {
+                              return (
+                                <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
+                                  Please select a currency first to see the required fields
+                                </div>
+                              )
+                            }
+
+                            return (
+                              <>
+                                {/* Bank Name - Always required */}
+                                <div className="space-y-2">
+                                  <Label htmlFor="newRecipientBank">
+                                    {accountConfig.fieldLabels.bank_name} *
+                                  </Label>
+                                  <Input
+                                    id="newRecipientBank"
+                                    value={newRecipientData.bankName}
+                                    onChange={(e) =>
+                                      setNewRecipientData({ ...newRecipientData, bankName: e.target.value })
+                                    }
+                                    placeholder={accountConfig.fieldPlaceholders.bank_name}
+                                    required
+                                  />
+                                </div>
+
+                                {/* US Account Fields */}
+                                {accountConfig.accountType === "us" && (
+                                  <>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientRoutingNumber">
+                                        {accountConfig.fieldLabels.routing_number} *
+                                      </Label>
+                                      <Input
+                                        id="newRecipientRoutingNumber"
+                                        value={newRecipientData.routingNumber}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/\D/g, "").slice(0, 9)
+                                          setNewRecipientData({ ...newRecipientData, routingNumber: value })
+                                        }}
+                                        placeholder={accountConfig.fieldPlaceholders.routing_number}
+                                        maxLength={9}
+                                        required
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientAccount">
+                                        {accountConfig.fieldLabels.account_number} *
+                                      </Label>
+                                      <Input
+                                        id="newRecipientAccount"
+                                        value={newRecipientData.accountNumber}
+                                        onChange={(e) =>
+                                          setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.account_number}
+                                        required
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* UK Account Fields */}
+                                {accountConfig.accountType === "uk" && (
+                                  <>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="newRecipientSortCode">
+                                          {accountConfig.fieldLabels.sort_code} *
+                                        </Label>
+                                        <Input
+                                          id="newRecipientSortCode"
+                                          value={newRecipientData.sortCode}
+                                          onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, "").slice(0, 6)
+                                            setNewRecipientData({ ...newRecipientData, sortCode: value })
+                                          }}
+                                          placeholder={accountConfig.fieldPlaceholders.sort_code}
+                                          maxLength={6}
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="newRecipientAccount">
+                                          {accountConfig.fieldLabels.account_number} *
+                                        </Label>
+                                        <Input
+                                          id="newRecipientAccount"
+                                          value={newRecipientData.accountNumber}
+                                          onChange={(e) =>
+                                            setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                                          }
+                                          placeholder={accountConfig.fieldPlaceholders.account_number}
+                                          required
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientIban">
+                                        {accountConfig.fieldLabels.iban} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="newRecipientIban"
+                                        value={newRecipientData.iban}
+                                        onChange={(e) =>
+                                          setNewRecipientData({ ...newRecipientData, iban: e.target.value.toUpperCase() })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.iban}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientSwiftBic">
+                                        {accountConfig.fieldLabels.swift_bic} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="newRecipientSwiftBic"
+                                        value={newRecipientData.swiftBic}
+                                        onChange={(e) =>
+                                          setNewRecipientData({
+                                            ...newRecipientData,
+                                            swiftBic: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* EURO Account Fields */}
+                                {accountConfig.accountType === "euro" && (
+                                  <>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientIban">
+                                        {accountConfig.fieldLabels.iban} *
+                                      </Label>
+                                      <Input
+                                        id="newRecipientIban"
+                                        value={newRecipientData.iban}
+                                        onChange={(e) =>
+                                          setNewRecipientData({ ...newRecipientData, iban: e.target.value.toUpperCase() })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.iban}
+                                        required
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientSwiftBic">
+                                        {accountConfig.fieldLabels.swift_bic} (Optional)
+                                      </Label>
+                                      <Input
+                                        id="newRecipientSwiftBic"
+                                        value={newRecipientData.swiftBic}
+                                        onChange={(e) =>
+                                          setNewRecipientData({
+                                            ...newRecipientData,
+                                            swiftBic: e.target.value.toUpperCase(),
+                                          })
+                                        }
+                                        placeholder={accountConfig.fieldPlaceholders.swift_bic}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* Generic Account Fields */}
+                                {accountConfig.accountType === "generic" && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="newRecipientAccount">
+                                      {accountConfig.fieldLabels.account_number} *
+                                    </Label>
+                                    <Input
+                                      id="newRecipientAccount"
+                                      value={newRecipientData.accountNumber}
+                                      onChange={(e) =>
+                                        setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                                      }
+                                      placeholder={accountConfig.fieldPlaceholders.account_number}
+                                      required
+                                    />
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
                           <Button
                             onClick={handleAddNewRecipient}
-                            disabled={
-                              !newRecipientData.fullName ||
-                              !newRecipientData.accountNumber ||
-                              !newRecipientData.bankName
-                            }
+                            disabled={(() => {
+                              if (!newRecipientData.fullName || !receiveCurrency) return true
+
+                              const accountConfig = getAccountTypeConfigFromCurrency(receiveCurrency)
+                              const requiredFields = accountConfig.requiredFields
+
+                              for (const field of requiredFields) {
+                                const fieldValue = newRecipientData[field as keyof typeof newRecipientData]
+                                if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                                  return true
+                                }
+                              }
+
+                              return false
+                            })()}
                             className="w-full bg-easner-primary hover:bg-easner-primary-600"
                           >
                             Add Recipient
@@ -1132,9 +1322,41 @@ export default function UserSendPage() {
                             </div>
                             <div>
                               <p className="font-medium text-gray-900">{recipient.full_name}</p>
-                              <p className="text-sm text-gray-500">
-                                {recipient.bank_name} - {recipient.account_number}
-                              </p>
+                              <div className="text-sm text-gray-500 space-y-0.5">
+                                {(() => {
+                                  const accountConfig = getAccountTypeConfigFromCurrency(recipient.currency)
+                                  const accountType = accountConfig.accountType
+
+                                  return (
+                                    <>
+                                      {accountType === "us" && recipient.routing_number && (
+                                        <p className="font-mono text-xs">
+                                          Routing: {formatFieldValue(accountType, "routing_number", recipient.routing_number)}
+                                        </p>
+                                      )}
+                                      {accountType === "uk" && recipient.sort_code && (
+                                        <p className="font-mono text-xs">
+                                          Sort Code: {formatFieldValue(accountType, "sort_code", recipient.sort_code)}
+                                        </p>
+                                      )}
+                                      {recipient.account_number && (
+                                        <p className="font-mono text-xs">
+                                          {accountConfig.fieldLabels.account_number}: {recipient.account_number}
+                                        </p>
+                                      )}
+                                      {recipient.iban && (
+                                        <p className="font-mono text-xs">
+                                          IBAN: {formatFieldValue(accountType, "iban", recipient.iban)}
+                                        </p>
+                                      )}
+                                      {recipient.swift_bic && (
+                                        <p className="font-mono text-xs">SWIFT/BIC: {recipient.swift_bic}</p>
+                                      )}
+                                      <p>{recipient.bank_name}</p>
+                                    </>
+                                  )
+                                })()}
+                              </div>
                             </div>
                           </div>
                           {selectedRecipientId === recipient.id && (
@@ -1237,11 +1459,11 @@ export default function UserSendPage() {
                                     </div>
                                     <div className="space-y-2">
                                       {/* Account Name - Always shown */}
-                                      <div className="flex justify-between items-center">
+                                      <div className="space-y-1">
                                         <span className="text-gray-600 text-xs">
                                           {accountConfig.fieldLabels.account_name}
                                         </span>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-2">
                                           <span className="font-medium text-sm">{defaultMethod.account_name}</span>
                                           <Button
                                             variant="ghost"
@@ -1260,11 +1482,11 @@ export default function UserSendPage() {
 
                                       {/* US Account Fields */}
                                       {accountType === "us" && defaultMethod.routing_number && (
-                                        <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
                                           <span className="text-gray-600 text-xs">
                                             {accountConfig.fieldLabels.routing_number}
                                           </span>
-                                          <div className="flex items-center gap-1">
+                                          <div className="flex items-center gap-2">
                                             <span className="font-medium font-mono text-sm">
                                               {formatFieldValue(accountType, "routing_number", defaultMethod.routing_number)}
                                             </span>
@@ -1286,11 +1508,11 @@ export default function UserSendPage() {
 
                                       {/* UK Account Fields */}
                                       {accountType === "uk" && defaultMethod.sort_code && (
-                                        <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
                                           <span className="text-gray-600 text-xs">
                                             {accountConfig.fieldLabels.sort_code}
                                           </span>
-                                          <div className="flex items-center gap-1">
+                                          <div className="flex items-center gap-2">
                                             <span className="font-medium font-mono text-sm">
                                               {formatFieldValue(accountType, "sort_code", defaultMethod.sort_code)}
                                             </span>
@@ -1313,11 +1535,11 @@ export default function UserSendPage() {
                                       {/* Account Number - Shown for US, UK, and Generic */}
                                       {(accountType === "us" || accountType === "uk" || accountType === "generic") &&
                                         defaultMethod.account_number && (
-                                          <div className="flex justify-between items-center">
+                                          <div className="space-y-1">
                                             <span className="text-gray-600 text-xs">
                                               {accountConfig.fieldLabels.account_number}
                                             </span>
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-2">
                                               <span className="font-medium font-mono text-sm">
                                                 {defaultMethod.account_number}
                                               </span>
@@ -1339,11 +1561,11 @@ export default function UserSendPage() {
 
                                       {/* IBAN - Shown for UK and EURO */}
                                       {(accountType === "uk" || accountType === "euro") && defaultMethod.iban && (
-                                        <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
                                           <span className="text-gray-600 text-xs">
                                             {accountConfig.fieldLabels.iban}
                                           </span>
-                                          <div className="flex items-center gap-1">
+                                          <div className="flex items-center gap-2">
                                             <span className="font-medium font-mono text-xs">
                                               {formatFieldValue(accountType, "iban", defaultMethod.iban)}
                                             </span>
@@ -1365,11 +1587,11 @@ export default function UserSendPage() {
 
                                       {/* SWIFT/BIC - Shown for UK and EURO if present */}
                                       {(accountType === "uk" || accountType === "euro") && defaultMethod.swift_bic && (
-                                        <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
                                           <span className="text-gray-600 text-xs">
                                             {accountConfig.fieldLabels.swift_bic}
                                           </span>
-                                          <div className="flex items-center gap-1">
+                                          <div className="flex items-center gap-2">
                                             <span className="font-medium font-mono text-xs">
                                               {defaultMethod.swift_bic}
                                             </span>
@@ -1390,11 +1612,11 @@ export default function UserSendPage() {
                                       )}
 
                                       {/* Bank Name - Always shown */}
-                                      <div className="flex justify-between items-center">
+                                      <div className="space-y-1">
                                         <span className="text-gray-600 text-xs">
                                           {accountConfig.fieldLabels.bank_name}
                                         </span>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-2">
                                           <span className="font-medium text-sm">{defaultMethod.bank_name}</span>
                                           <Button
                                             variant="ghost"
@@ -1412,9 +1634,9 @@ export default function UserSendPage() {
                                       </div>
 
                                       {/* Transaction ID */}
-                                      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                      <div className="space-y-1 pt-2 border-t border-gray-100">
                                         <span className="text-gray-600 text-xs">Transaction ID</span>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center gap-2">
                                           <span className="font-medium font-mono text-xs">{transactionId}</span>
                                           <Button
                                             variant="ghost"

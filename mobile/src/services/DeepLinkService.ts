@@ -113,15 +113,13 @@ export class DeepLinkService {
     try {
       console.log('DeepLinkService: Navigating to screen:', screen, 'with params:', params)
       
-      // This will be handled by the navigation system
-      // We'll emit a custom event that the navigation can listen to
-      const event = new CustomEvent('deepLinkNavigate', {
-        detail: { screen, params }
-      })
+      // For React Native, we'll use a different approach
+      // This will be handled by the navigation system through context or props
+      // For now, we'll just log the navigation intent
+      console.log('DeepLinkService: Navigation intent - Screen:', screen, 'Params:', params)
       
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(event)
-      }
+      // TODO: Implement proper navigation handling for React Native
+      // This could be done through a navigation context or by passing a navigation ref
     } catch (error) {
       console.error('DeepLinkService: Error navigating to screen:', error)
     }

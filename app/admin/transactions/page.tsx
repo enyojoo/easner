@@ -27,6 +27,10 @@ import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
+import {
+  getAccountTypeConfigFromCurrency,
+  formatFieldValue,
+} from "@/lib/currency-account-types"
 
 export default function AdminTransactionsPage() {
   const { data } = useAdminData()
@@ -342,10 +346,45 @@ export default function AdminTransactionsPage() {
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Recipient</label>
                                     <p>{selectedTransaction.recipient?.full_name}</p>
-                                    <p className="text-sm text-gray-500">{selectedTransaction.recipient?.bank_name}</p>
-                                    <p className="text-sm text-gray-500">
-                                      {selectedTransaction.recipient?.account_number}
-                                    </p>
+                                    {(() => {
+                                      const recipient = selectedTransaction.recipient as any
+                                      if (!recipient) return null
+
+                                      const recipientCurrency = recipient.currency || selectedTransaction.receive_currency
+                                      const accountConfig = recipientCurrency
+                                        ? getAccountTypeConfigFromCurrency(recipientCurrency)
+                                        : null
+                                      const accountType = accountConfig?.accountType
+
+                                      return (
+                                        <div className="text-sm text-gray-500 space-y-1">
+                                          {accountType === "us" && recipient.routing_number && (
+                                            <p className="font-mono text-xs">
+                                              Routing: {formatFieldValue(accountType, "routing_number", recipient.routing_number)}
+                                            </p>
+                                          )}
+                                          {accountType === "uk" && recipient.sort_code && (
+                                            <p className="font-mono text-xs">
+                                              Sort Code: {formatFieldValue(accountType, "sort_code", recipient.sort_code)}
+                                            </p>
+                                          )}
+                                          {recipient.account_number && (
+                                            <p className="font-mono text-xs">
+                                              {accountConfig?.fieldLabels.account_number || "Account Number"}: {recipient.account_number}
+                                            </p>
+                                          )}
+                                          {recipient.iban && (
+                                            <p className="font-mono text-xs">
+                                              IBAN: {formatFieldValue(accountType || "generic", "iban", recipient.iban)}
+                                            </p>
+                                          )}
+                                          {recipient.swift_bic && (
+                                            <p className="font-mono text-xs">SWIFT/BIC: {recipient.swift_bic}</p>
+                                          )}
+                                          <p>{recipient.bank_name}</p>
+                                        </div>
+                                      )
+                                    })()}
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Exchange Rate</label>

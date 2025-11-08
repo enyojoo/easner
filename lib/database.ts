@@ -181,6 +181,10 @@ export const recipientService = {
       bankName: string
       phoneNumber?: string
       currency: string
+      routingNumber?: string
+      sortCode?: string
+      iban?: string
+      swiftBic?: string
     },
   ) {
     const { data, error } = await supabase
@@ -192,6 +196,10 @@ export const recipientService = {
         bank_name: recipientData.bankName,
         phone_number: recipientData.phoneNumber,
         currency: recipientData.currency,
+        routing_number: recipientData.routingNumber,
+        sort_code: recipientData.sortCode,
+        iban: recipientData.iban,
+        swift_bic: recipientData.swiftBic,
       })
       .select()
       .single()
@@ -240,16 +248,25 @@ export const recipientService = {
       accountNumber?: string
       bankName?: string
       phoneNumber?: string
+      routingNumber?: string
+      sortCode?: string
+      iban?: string
+      swiftBic?: string
     },
   ) {
+    const updateData: Record<string, any> = {}
+    if (updates.fullName !== undefined) updateData.full_name = updates.fullName
+    if (updates.accountNumber !== undefined) updateData.account_number = updates.accountNumber
+    if (updates.bankName !== undefined) updateData.bank_name = updates.bankName
+    if (updates.phoneNumber !== undefined) updateData.phone_number = updates.phoneNumber
+    if (updates.routingNumber !== undefined) updateData.routing_number = updates.routingNumber
+    if (updates.sortCode !== undefined) updateData.sort_code = updates.sortCode
+    if (updates.iban !== undefined) updateData.iban = updates.iban
+    if (updates.swiftBic !== undefined) updateData.swift_bic = updates.swiftBic
+
     const { data, error } = await supabase
       .from("recipients")
-      .update({
-        full_name: updates.fullName,
-        account_number: updates.accountNumber,
-        bank_name: updates.bankName,
-        phone_number: updates.phoneNumber,
-      })
+      .update(updateData)
       .eq("id", recipientId)
       .select()
       .single()

@@ -34,6 +34,10 @@ export interface Recipient {
   bank_name: string
   phone_number?: string
   currency: string
+  routing_number?: string
+  sort_code?: string
+  iban?: string
+  swift_bic?: string
   created_at: string
   updated_at: string
 }
