@@ -11,6 +11,7 @@ import { useRouter, useParams } from "next/navigation"
 import { transactionService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
+import { TransactionTimeline } from "@/components/transaction-timeline"
 import type { Transaction } from "@/types"
 
 function TransactionStatusPage() {
@@ -364,69 +365,57 @@ function TransactionStatusPage() {
                   <CardTitle>Transaction Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                        statusMessage.isCompleted
-                          ? "bg-green-100"
-                          : transaction.status === "failed"
-                            ? "bg-red-100"
-                            : transaction.status === "cancelled"
-                              ? "bg-gray-100"
-                              : isOverdue && transaction.status !== "completed"
-                                ? "bg-orange-100"
+                  {/* Show Timeline for pending, processing, or completed statuses */}
+                  {transaction.status === "pending" ||
+                  transaction.status === "processing" ||
+                  transaction.status === "completed" ? (
+                    <div className="bg-gray-900 rounded-lg p-6">
+                      <TransactionTimeline transaction={transaction} />
+                    </div>
+                  ) : (
+                    /* Show current UI for failed/cancelled statuses */
+                    <>
+                      <div className="text-center">
+                        <div
+                          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                            transaction.status === "failed"
+                              ? "bg-red-100"
+                              : transaction.status === "cancelled"
+                                ? "bg-gray-100"
                                 : "bg-yellow-100"
-                      }`}
-                    >
-                      {statusMessage.isCompleted ? (
-                        <Check className="h-8 w-8 text-green-600" />
-                      ) : transaction.status === "failed" ? (
-                        <XCircle className="h-8 w-8 text-red-600" />
-                      ) : transaction.status === "cancelled" ? (
-                        <XCircle className="h-8 w-8 text-gray-600" />
-                      ) : isOverdue && transaction.status !== "completed" ? (
-                        <AlertTriangle className="h-8 w-8 text-orange-600" />
-                      ) : (
-                        <Clock className="h-8 w-8 text-yellow-600" />
-                      )}
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">{statusMessage.title}</h3>
-                    <p className="text-sm sm:text-base text-gray-600">{statusMessage.description}</p>
-                  </div>
+                          }`}
+                        >
+                          {transaction.status === "failed" ? (
+                            <XCircle className="h-8 w-8 text-red-600" />
+                          ) : transaction.status === "cancelled" ? (
+                            <XCircle className="h-8 w-8 text-gray-600" />
+                          ) : (
+                            <Clock className="h-8 w-8 text-yellow-600" />
+                          )}
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                          {statusMessage.title}
+                        </h3>
+                        <p className="text-sm sm:text-base text-gray-600">{statusMessage.description}</p>
+                      </div>
 
-                  {/* Status Information */}
-                  <div
-                    className={`rounded-lg p-4 ${
-                      statusMessage.isCompleted
-                        ? "bg-green-50"
-                        : transaction.status === "failed"
-                          ? "bg-red-50"
-                          : isOverdue && transaction.status !== "completed"
-                            ? "bg-orange-50"
-                            : "bg-blue-50"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">
-                        {statusMessage.isCompleted
-                          ? "Completed:"
-                          : transaction.status === "failed"
-                            ? "Failed:"
-                            : isOverdue && transaction.status !== "completed"
-                              ? "Status:"
-                              : "Estimated completion:"}
-                      </span>
-                      <span className="font-medium text-sm sm:text-base">
-                        {statusMessage.isCompleted
-                          ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
-                          : transaction.status === "failed"
-                            ? new Date(transaction.updated_at).toLocaleString()
-                            : isOverdue && transaction.status !== "completed"
-                              ? "Taking longer than expected"
-                              : formatTime(timeRemaining)}
-                      </span>
-                    </div>
-                  </div>
+                      {/* Status Information */}
+                      <div
+                        className={`rounded-lg p-4 ${
+                          transaction.status === "failed" ? "bg-red-50" : "bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">
+                            {transaction.status === "failed" ? "Failed:" : "Status:"}
+                          </span>
+                          <span className="font-medium text-sm sm:text-base">
+                            {new Date(transaction.updated_at).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Receipt Section */}
                   {transaction.receipt_url && (

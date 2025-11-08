@@ -25,7 +25,7 @@ import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/cu
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
   const { paymentMethods, refreshPaymentMethods, currencies, refreshTransactions } = useUserData()
-  const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
   const [transactionId, setTransactionId] = useState('')
   const [uploadedFile, setUploadedFile] = useState<any>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -45,6 +45,15 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
     // Generate transaction ID using new ETID prefix
     setTransactionId(`ETID${Date.now()}`)
   }, [])
+
+  // Initialize timer from payment method when screen loads
+  useEffect(() => {
+    if (sendCurrency && paymentMethods.length > 0) {
+      const defaultMethod = getDefaultPaymentMethod(sendCurrency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimeLeft(timerSeconds)
+    }
+  }, [sendCurrency, paymentMethods])
 
   // Timer countdown
   useEffect(() => {

@@ -636,6 +636,7 @@ export const paymentMethodService = {
     swiftBic?: string
     qrCodeData?: string
     instructions?: string
+    completionTimerSeconds?: number
     isDefault?: boolean
   }) {
     const serverClient = createServerClient()
@@ -663,6 +664,7 @@ export const paymentMethodService = {
         swift_bic: paymentMethodData.swiftBic,
         qr_code_data: paymentMethodData.qrCodeData,
         instructions: paymentMethodData.instructions,
+        completion_timer_seconds: paymentMethodData.completionTimerSeconds ?? 3600,
         is_default: paymentMethodData.isDefault || false,
         status: "active",
       })
@@ -692,6 +694,7 @@ export const paymentMethodService = {
       swiftBic?: string
       qrCodeData?: string
       instructions?: string
+      completionTimerSeconds?: number
       isDefault?: boolean
     },
   ) {
@@ -719,6 +722,7 @@ export const paymentMethodService = {
     if (updates.swiftBic !== undefined) updateData.swift_bic = updates.swiftBic
     if (updates.qrCodeData !== undefined) updateData.qr_code_data = updates.qrCodeData
     if (updates.instructions !== undefined) updateData.instructions = updates.instructions
+    if (updates.completionTimerSeconds !== undefined) updateData.completion_timer_seconds = updates.completionTimerSeconds
     if (updates.isDefault !== undefined) updateData.is_default = updates.isDefault
 
     const { data, error } = await serverClient

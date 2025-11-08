@@ -89,6 +89,7 @@ export interface PaymentMethod {
   swift_bic?: string
   qr_code_data?: string
   instructions?: string
+  completion_timer_seconds?: number
   is_default: boolean
   status: "active" | "inactive"
   created_at: string

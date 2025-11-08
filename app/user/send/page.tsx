@@ -221,7 +221,7 @@ export default function UserSendPage() {
     bankName: "",
     phoneNumber: "",
   })
-  const [timeLeft, setTimeLeft] = useState(3600) // 60 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
   const [transactionId, setTransactionId] = useState<string>("")
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -672,6 +672,15 @@ export default function UserSendPage() {
       }
     }
   }, [sendCurrency, receiveCurrency, exchangeRates])
+
+  // Initialize timer from payment method when step 3 is reached
+  useEffect(() => {
+    if (currentStep === 3 && sendCurrency) {
+      const defaultMethod = getDefaultPaymentMethod(sendCurrency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimeLeft(timerSeconds)
+    }
+  }, [currentStep, sendCurrency, paymentMethods])
 
   // Timer countdown
   useEffect(() => {

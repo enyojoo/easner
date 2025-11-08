@@ -19,6 +19,7 @@ import { transactionService, TransactionData } from '../../lib/transactionServic
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { analytics } from '../../lib/analytics'
+import { TransactionTimeline } from '../../components/TransactionTimeline'
 
 export default function SendTransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -292,78 +293,52 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         }
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Status Header */}
-        <View style={styles.statusHeader}>
-          <View style={[
-            styles.statusIconContainer,
-            {
-              backgroundColor: statusMessage.isCompleted
-                ? '#dcfce7'
-                : transaction.status === 'failed'
-                  ? '#fef2f2'
-                  : isOverdue && transaction.status !== 'completed'
-                    ? '#fff7ed'
-                    : '#fef3c7'
-            }
-          ]}>
-            <Ionicons
-              name={
-                statusMessage.isCompleted
-                  ? 'checkmark-circle'
-                  : transaction.status === 'failed'
-                    ? 'close-circle'
-                    : isOverdue && transaction.status !== 'completed'
-                      ? 'warning'
-                      : 'time'
-              }
-              size={32}
-              color={
-                statusMessage.isCompleted
-                  ? '#16a34a'
-                  : transaction.status === 'failed'
-                    ? '#dc2626'
-                    : isOverdue && transaction.status !== 'completed'
-                      ? '#ea580c'
-                      : '#d97706'
-              }
-            />
+        {/* Show Timeline for pending, processing, or completed statuses */}
+        {(transaction.status === 'pending' ||
+          transaction.status === 'processing' ||
+          transaction.status === 'completed') ? (
+          <View style={styles.timelineContainer}>
+            <TransactionTimeline transaction={transaction} />
           </View>
-          <Text style={styles.statusTitle}>{statusMessage.title}</Text>
-          <Text style={styles.statusDescription}>{statusMessage.description}</Text>
-        </View>
-        
-        {/* Status Information */}
-        <View style={[
-          styles.statusInfo,
-          {
-            backgroundColor: statusMessage.isCompleted
-              ? '#dcfce7'
-              : transaction.status === 'failed'
-                ? '#fef2f2'
-                : isOverdue && transaction.status !== 'completed'
-                  ? '#fff7ed'
-                  : '#eff6ff'
-          }
-        ]}>
-          <Text style={styles.statusInfoLabel}>
-            {statusMessage.isCompleted
-              ? 'Completed:'
-              : transaction.status === 'failed'
-                ? 'Failed:'
-                : isOverdue && transaction.status !== 'completed'
-                  ? 'Status:'
-                  : 'Estimated completion:'}
-          </Text>
-          <Text style={styles.statusInfoValue}>
-            {statusMessage.isCompleted
-              ? new Date(transaction.completed_at || transaction.updated_at).toLocaleString()
-              : transaction.status === 'failed'
-                ? new Date(transaction.updated_at).toLocaleString()
-                : isOverdue && transaction.status !== 'completed'
-                  ? 'Taking longer than expected'
-                  : formatTime(timeRemaining)}
-          </Text>
-        </View>
+        ) : (
+          /* Show current UI for failed/cancelled statuses */
+          <>
+            {/* Status Header */}
+            <View style={styles.statusHeader}>
+              <View style={[
+                styles.statusIconContainer,
+                {
+                  backgroundColor: transaction.status === 'failed'
+                    ? '#fef2f2'
+                    : '#f3f4f6'
+                }
+              ]}>
+                <Ionicons
+                  name={transaction.status === 'failed' ? 'close-circle' : 'time'}
+                  size={32}
+                  color={transaction.status === 'failed' ? '#dc2626' : '#6b7280'}
+                />
+              </View>
+              <Text style={styles.statusTitle}>{statusMessage.title}</Text>
+              <Text style={styles.statusDescription}>{statusMessage.description}</Text>
+            </View>
+            
+            {/* Status Information */}
+            <View style={[
+              styles.statusInfo,
+              {
+                backgroundColor: transaction.status === 'failed' ? '#fef2f2' : '#f3f4f6'
+              }
+            ]}>
+              <Text style={styles.statusInfoLabel}>
+                {transaction.status === 'failed' ? 'Failed:' : 'Status:'}
+              </Text>
+              <Text style={styles.statusInfoValue}>
+                {new Date(transaction.updated_at).toLocaleString()}
+              </Text>
+            </View>
+          </>
+        )}
         
         {/* Receipt Section */}
         {transaction.receipt_url && (
@@ -537,6 +512,13 @@ const styles = StyleSheet.create({
     color: '#007ACC',
     fontSize: 16,
     fontWeight: '600',
+  },
+  timelineContainer: {
+    backgroundColor: '#1f2937',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 24,
+    borderRadius: 8,
   },
   statusHeader: {
     backgroundColor: '#ffffff',
