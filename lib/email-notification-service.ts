@@ -137,12 +137,13 @@ export class EmailNotificationService {
     firstName: string
   ): Promise<void> {
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.easner.com'
       const result = await emailService.sendWelcomeEmail({
         firstName,
         lastName: '',
         email: userEmail,
         baseCurrency: 'USD',
-        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/user/dashboard`
+        dashboardUrl: `${appUrl}/user/dashboard`
       })
       
       if (result.success) {

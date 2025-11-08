@@ -470,18 +470,20 @@ If you have any questions about your early access request or our platform, feel 
         </p>
       `
 
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.easner.com'
       return generateBaseEmailTemplate(
         data.status === 'pending' ? "New Transaction Created" : `Transaction ${data.status.toUpperCase()}`,
         "",
         content,
         {
           text: "View in Admin Dashboard",
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/admin/transactions`
+          url: `${appUrl}/admin/transactions`
         }
       )
     },
     text: (data: any) => {
       const userName = data.userName && data.userName !== 'User' && data.userName !== 'Unknown' ? data.userName : 'a user'
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.easner.com'
       return `
 ${data.status === 'pending' ? 'New Transaction Created' : `Transaction Status Updated to ${data.status.toUpperCase()}`} - #${data.transactionId}
 
@@ -489,7 +491,7 @@ ${data.status === 'pending'
   ? `A new transaction has been created by ${userName} and requires your attention.` 
   : `A transaction status has been updated to ${data.status}. Please review the details below.`}
 
-View in Admin Dashboard: ${process.env.NEXT_PUBLIC_APP_URL}/admin/transactions
+View in Admin Dashboard: ${appUrl}/admin/transactions
 
 © 2025 Easner, Inc. All rights reserved.
     `

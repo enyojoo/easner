@@ -147,6 +147,7 @@ export class EmailService {
    * Test email sending (for development)
    */
   async sendTestEmail(to: string): Promise<SendGridResponse> {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.easner.com'
     return this.sendEmail({
       to,
       template: 'welcome',
@@ -155,7 +156,7 @@ export class EmailService {
         lastName: 'User',
         email: to,
         baseCurrency: 'USD',
-        dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/user/dashboard`
+        dashboardUrl: `${appUrl}/user/dashboard`
       }
     })
   }
