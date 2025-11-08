@@ -373,7 +373,7 @@ const AdminRatesPage = () => {
         {/* Edit Rates Dialog */}
         <Dialog open={isEditingRates} onOpenChange={setIsEditingRates}>
           <DialogContent className="max-w-4xl max-h-[80vh]">
-            <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogHeader className="flex flex-row items-center gap-6">
               <DialogTitle>
                 Edit Exchange Rates - {selectedCurrency?.name} ({selectedCurrency?.code})
               </DialogTitle>

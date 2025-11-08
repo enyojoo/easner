@@ -47,12 +47,37 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
   // Set default currencies
   useEffect(() => {
     if (currencies.length > 0 && !sendCurrency) {
-      setSendCurrency(currencies[0].code)
+      // Set send currency to first available currency that can send
+      const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
+      if (availableSendCurrencies.length > 0) {
+        setSendCurrency(availableSendCurrencies[0].code)
+      }
     }
-    if (currencies.length > 1 && !receiveCurrency) {
-      setReceiveCurrency(currencies[1].code)
+    if (currencies.length > 0 && !receiveCurrency) {
+      // Set receive currency to first available currency that can receive (and is not the send currency)
+      const availableReceiveCurrencies = currencies.filter(
+        (c) => c.can_receive !== false && c.code !== sendCurrency
+      )
+      if (availableReceiveCurrencies.length > 0) {
+        setReceiveCurrency(availableReceiveCurrencies[0].code)
+      }
     }
-  }, [currencies])
+  }, [currencies, sendCurrency])
+
+  // Ensure receive currency can receive when currencies change
+  useEffect(() => {
+    if (currencies.length > 0 && sendCurrency && receiveCurrency) {
+      const currentReceiveCurrency = currencies.find((c) => c.code === receiveCurrency)
+      if (currentReceiveCurrency && currentReceiveCurrency.can_receive === false) {
+        const availableReceiveCurrencies = currencies.filter(
+          (c) => c.can_receive !== false && c.code !== sendCurrency
+        )
+        if (availableReceiveCurrencies.length > 0) {
+          setReceiveCurrency(availableReceiveCurrencies[0].code)
+        }
+      }
+    }
+  }, [currencies, sendCurrency, receiveCurrency])
 
   // Exchange rate and fee calculation functions (matching web app)
   const getExchangeRate = (from: string, to: string) => {
@@ -140,17 +165,38 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
   // Handle currency selection with same currency prevention
   const handleSendCurrencyChange = (newCurrency: string) => {
     setSendCurrency(newCurrency)
-    // If user selects same currency as receive, swap them
+    // If user selects same currency as receive, find a different currency that can receive
     if (newCurrency === receiveCurrency) {
-      setReceiveCurrency(sendCurrency)
+      const availableReceiveCurrencies = currencies.filter(
+        (c) => c.can_receive !== false && c.code !== newCurrency
+      )
+      if (availableReceiveCurrencies.length > 0) {
+        setReceiveCurrency(availableReceiveCurrencies[0].code)
+      }
+    } else {
+      // Ensure receive currency can still receive
+      const currentReceiveCurrency = currencies.find((c) => c.code === receiveCurrency)
+      if (currentReceiveCurrency && currentReceiveCurrency.can_receive === false) {
+        const availableReceiveCurrencies = currencies.filter(
+          (c) => c.can_receive !== false && c.code !== newCurrency
+        )
+        if (availableReceiveCurrencies.length > 0) {
+          setReceiveCurrency(availableReceiveCurrencies[0].code)
+        }
+      }
     }
   }
 
   const handleReceiveCurrencyChange = (newCurrency: string) => {
     setReceiveCurrency(newCurrency)
-    // If user selects same currency as send, swap them
+    // If user selects same currency as send, find a different currency that can send
     if (newCurrency === sendCurrency) {
-      setSendCurrency(receiveCurrency)
+      const availableSendCurrencies = currencies.filter(
+        (c) => c.can_send !== false && c.code !== newCurrency
+      )
+      if (availableSendCurrencies.length > 0) {
+        setSendCurrency(availableSendCurrencies[0].code)
+      }
     }
   }
 

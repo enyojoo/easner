@@ -49,6 +49,31 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
         setCurrencies(currenciesData || [])
         setExchangeRates(ratesData || [])
+
+        // Set default send currency to first available currency that can send
+        if (currenciesData && currenciesData.length > 0 && sendCurrency === "USD") {
+          const availableSendCurrencies = currenciesData.filter((c) => c.can_send !== false)
+          if (availableSendCurrencies.length > 0) {
+            const newSendCurrency = availableSendCurrencies[0].code
+            setSendCurrency(newSendCurrency)
+            
+            // Set default receive currency to first available currency that can receive (and is not the send currency)
+            const availableReceiveCurrencies = currenciesData.filter(
+              (c) => c.can_receive !== false && c.code !== newSendCurrency
+            )
+            if (availableReceiveCurrencies.length > 0) {
+              setReceiveCurrency(availableReceiveCurrencies[0].code)
+            }
+          }
+        } else if (currenciesData && currenciesData.length > 0 && receiveCurrency === "NGN") {
+          // Set default receive currency to first available currency that can receive
+          const availableReceiveCurrencies = currenciesData.filter(
+            (c) => c.can_receive !== false && c.code !== sendCurrency
+          )
+          if (availableReceiveCurrencies.length > 0) {
+            setReceiveCurrency(availableReceiveCurrencies[0].code)
+          }
+        }
       } catch (error) {
         console.error("Error loading currency data:", error)
       }
@@ -56,6 +81,21 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
     loadData()
   }, [])
+
+  // Ensure receive currency can receive when currencies change
+  useEffect(() => {
+    if (currencies.length > 0 && sendCurrency && receiveCurrency) {
+      const currentReceiveCurrency = currencies.find((c) => c.code === receiveCurrency)
+      if (currentReceiveCurrency && currentReceiveCurrency.can_receive === false) {
+        const availableReceiveCurrencies = currencies.filter(
+          (c) => c.can_receive !== false && c.code !== sendCurrency
+        )
+        if (availableReceiveCurrencies.length > 0) {
+          setReceiveCurrency(availableReceiveCurrencies[0].code)
+        }
+      }
+    }
+  }, [currencies, sendCurrency, receiveCurrency])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -230,17 +270,38 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   // Handle currency selection with same currency prevention
   const handleSendCurrencyChange = (newCurrency: string) => {
     setSendCurrency(newCurrency)
-    // If user selects same currency as receive, swap them
+    // If user selects same currency as receive, find a different currency that can receive
     if (newCurrency === receiveCurrency) {
-      setReceiveCurrency(sendCurrency)
+      const availableReceiveCurrencies = currencies.filter(
+        (c) => c.can_receive !== false && c.code !== newCurrency
+      )
+      if (availableReceiveCurrencies.length > 0) {
+        setReceiveCurrency(availableReceiveCurrencies[0].code)
+      }
+    } else {
+      // Ensure receive currency can still receive
+      const currentReceiveCurrency = currencies.find((c) => c.code === receiveCurrency)
+      if (currentReceiveCurrency && currentReceiveCurrency.can_receive === false) {
+        const availableReceiveCurrencies = currencies.filter(
+          (c) => c.can_receive !== false && c.code !== newCurrency
+        )
+        if (availableReceiveCurrencies.length > 0) {
+          setReceiveCurrency(availableReceiveCurrencies[0].code)
+        }
+      }
     }
   }
 
   const handleReceiveCurrencyChange = (newCurrency: string) => {
     setReceiveCurrency(newCurrency)
-    // If user selects same currency as send, swap them
+    // If user selects same currency as send, find a different currency that can send
     if (newCurrency === sendCurrency) {
-      setSendCurrency(receiveCurrency)
+      const availableSendCurrencies = currencies.filter(
+        (c) => c.can_send !== false && c.code !== newCurrency
+      )
+      if (availableSendCurrencies.length > 0) {
+        setSendCurrency(availableSendCurrencies[0].code)
+      }
     }
   }
 
