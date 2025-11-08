@@ -197,7 +197,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
               </div>
               <div className="space-y-2">
                 <Label htmlFor="iban">
-                  {accountConfig.fieldLabels.iban} (Optional)
+                  {accountConfig.fieldLabels.iban}
                 </Label>
                 <Input
                   id="iban"
@@ -542,29 +542,16 @@ export default function UserRecipientsPage() {
 
                           return (
                             <>
-                              {accountType === "us" && recipient.routing_number && (
+                              {/* Show account number for US/UK/Generic, or IBAN for EURO */}
+                              {accountType === "euro" && recipient.iban ? (
                                 <p className="font-mono text-xs truncate">
-                                  Routing: {formatFieldValue(accountType, "routing_number", recipient.routing_number)}
+                                  {formatFieldValue(accountType, "iban", recipient.iban)}
                                 </p>
-                              )}
-                              {accountType === "uk" && recipient.sort_code && (
+                              ) : recipient.account_number ? (
                                 <p className="font-mono text-xs truncate">
-                                  Sort Code: {formatFieldValue(accountType, "sort_code", recipient.sort_code)}
+                                  {recipient.account_number}
                                 </p>
-                              )}
-                              {recipient.account_number && (
-                                <p className="font-mono text-xs truncate">
-                                  {accountConfig.fieldLabels.account_number}: {recipient.account_number}
-                                </p>
-                              )}
-                              {recipient.iban && (
-                                <p className="font-mono text-xs truncate">
-                                  IBAN: {formatFieldValue(accountType, "iban", recipient.iban)}
-                                </p>
-                              )}
-                              {recipient.swift_bic && (
-                                <p className="font-mono text-xs truncate">SWIFT/BIC: {recipient.swift_bic}</p>
-                              )}
+                              ) : null}
                               <p className="truncate">{recipient.bank_name}</p>
                             </>
                           )

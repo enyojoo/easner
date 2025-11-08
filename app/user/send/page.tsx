@@ -1179,7 +1179,7 @@ export default function UserSendPage() {
                                     </div>
                                     <div className="space-y-2">
                                       <Label htmlFor="newRecipientIban">
-                                        {accountConfig.fieldLabels.iban} (Optional)
+                                        {accountConfig.fieldLabels.iban}
                                       </Label>
                                       <Input
                                         id="newRecipientIban"
@@ -1344,29 +1344,16 @@ export default function UserSendPage() {
 
                                   return (
                                     <>
-                                      {accountType === "us" && recipient.routing_number && (
+                                      {/* Show account number for US/UK/Generic, or IBAN for EURO */}
+                                      {accountType === "euro" && recipient.iban ? (
                                         <p className="font-mono text-xs">
-                                          Routing: {formatFieldValue(accountType, "routing_number", recipient.routing_number)}
+                                          {formatFieldValue(accountType, "iban", recipient.iban)}
                                         </p>
-                                      )}
-                                      {accountType === "uk" && recipient.sort_code && (
+                                      ) : recipient.account_number ? (
                                         <p className="font-mono text-xs">
-                                          Sort Code: {formatFieldValue(accountType, "sort_code", recipient.sort_code)}
+                                          {recipient.account_number}
                                         </p>
-                                      )}
-                                      {recipient.account_number && (
-                                        <p className="font-mono text-xs">
-                                          {accountConfig.fieldLabels.account_number}: {recipient.account_number}
-                                        </p>
-                                      )}
-                                      {recipient.iban && (
-                                        <p className="font-mono text-xs">
-                                          IBAN: {formatFieldValue(accountType, "iban", recipient.iban)}
-                                        </p>
-                                      )}
-                                      {recipient.swift_bic && (
-                                        <p className="font-mono text-xs">SWIFT/BIC: {recipient.swift_bic}</p>
-                                      )}
+                                      ) : null}
                                       <p>{recipient.bank_name}</p>
                                     </>
                                   )
