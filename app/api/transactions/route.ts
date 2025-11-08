@@ -65,7 +65,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     // Send admin notification email (non-blocking)
-    // Use same pattern as user email - call with transaction ID
+    // Use exact same pattern as user email - call with transaction ID
     try {
       console.log('Sending admin notification for new transaction:', transaction.transaction_id)
       const { EmailNotificationService } = await import('@/lib/email-notification-service')
