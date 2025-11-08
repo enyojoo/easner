@@ -76,14 +76,27 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     }
   }, [])
 
-  // Filter currencies based on search
-  const filterCurrencies = (searchTerm: string) => {
-    if (!searchTerm) return currencies
-    return currencies.filter(
-      (currency) =>
-        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+  // Filter currencies based on search and send/receive capability
+  const filterCurrencies = (searchTerm: string, type: "send" | "receive") => {
+    let filtered = currencies
+
+    // Filter by send/receive capability
+    if (type === "send") {
+      filtered = filtered.filter((currency) => currency.can_send !== false)
+    } else if (type === "receive") {
+      filtered = filtered.filter((currency) => currency.can_receive !== false)
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (currency) =>
+          currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
+    return filtered
   }
 
   // Exchange rate and fee calculation functions
@@ -140,6 +153,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     isOpen,
     onToggle,
     dropdownRef,
+    type,
   }: {
     selectedCurrency: string
     onCurrencyChange: (currency: string) => void
@@ -148,8 +162,9 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     isOpen: boolean
     onToggle: () => void
     dropdownRef: React.RefObject<HTMLDivElement>
+    type: "send" | "receive"
   }) => {
-    const filteredCurrencies = filterCurrencies(searchTerm)
+    const filteredCurrencies = filterCurrencies(searchTerm, type)
     const selectedCurrencyData = currencies.find((c) => c.code === selectedCurrency)
 
     return (
@@ -341,6 +356,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 isOpen={sendDropdownOpen}
                 onToggle={() => setSendDropdownOpen(!sendDropdownOpen)}
                 dropdownRef={sendDropdownRef}
+                type="send"
               />
             </div>
           </div>
@@ -428,6 +444,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
                 isOpen={receiveDropdownOpen}
                 onToggle={() => setReceiveDropdownOpen(!receiveDropdownOpen)}
                 dropdownRef={receiveDropdownRef}
+                type="receive"
               />
             </div>
           </div>

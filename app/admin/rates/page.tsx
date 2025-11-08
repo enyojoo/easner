@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
@@ -24,6 +25,8 @@ const AdminRatesPage = () => {
     name: "",
     symbol: "",
     flag_svg: "",
+    can_send: true,
+    can_receive: true,
   })
   const [rateUpdates, setRateUpdates] = useState<any>({})
   const [saving, setSaving] = useState(false)
@@ -43,6 +46,8 @@ const AdminRatesPage = () => {
           newCurrencyData.flag_svg ||
           `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32"><rect width="32" height="32" fill="#ccc"/></svg>`,
         status: "active",
+        can_send: newCurrencyData.can_send ?? true,
+        can_receive: newCurrencyData.can_receive ?? true,
       }
 
       const newCurrency = await adminDataStore.addCurrency(currencyData)
@@ -83,7 +88,7 @@ const AdminRatesPage = () => {
         await adminDataStore.updateExchangeRates(newRates)
       }
 
-      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "" })
+      setNewCurrencyData({ code: "", name: "", symbol: "", flag_svg: "", can_send: true, can_receive: true })
       setIsAddingCurrency(false)
     } catch (error) {
       console.error("Error adding currency:", error)
@@ -244,6 +249,32 @@ const AdminRatesPage = () => {
                     placeholder="SVG code for flag"
                   />
                 </div>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="canSend"
+                      checked={newCurrencyData.can_send}
+                      onCheckedChange={(checked) =>
+                        setNewCurrencyData({ ...newCurrencyData, can_send: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="canSend" className="font-normal cursor-pointer">
+                      Can Send
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="canReceive"
+                      checked={newCurrencyData.can_receive}
+                      onCheckedChange={(checked) =>
+                        setNewCurrencyData({ ...newCurrencyData, can_receive: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="canReceive" className="font-normal cursor-pointer">
+                      Can Receive
+                    </Label>
+                  </div>
+                </div>
                 <Button
                   onClick={handleAddCurrency}
                   disabled={!newCurrencyData.code || !newCurrencyData.name || !newCurrencyData.symbol || saving}
@@ -266,6 +297,8 @@ const AdminRatesPage = () => {
                   <TableHead>Currency</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Symbol</TableHead>
+                  <TableHead>Can Send</TableHead>
+                  <TableHead>Can Receive</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-[50px]">Actions</TableHead>
@@ -282,6 +315,30 @@ const AdminRatesPage = () => {
                     </TableCell>
                     <TableCell className="font-mono">{currency.code}</TableCell>
                     <TableCell className="font-medium">{currency.symbol}</TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={currency.can_send ?? true}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await adminDataStore.updateCurrency(currency.id, { can_send: checked as boolean })
+                          } catch (error) {
+                            console.error("Error updating can_send:", error)
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={currency.can_receive ?? true}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await adminDataStore.updateCurrency(currency.id, { can_receive: checked as boolean })
+                          } catch (error) {
+                            console.error("Error updating can_receive:", error)
+                          }
+                        }}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Badge
                         className={

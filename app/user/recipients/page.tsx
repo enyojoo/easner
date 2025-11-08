@@ -345,19 +345,9 @@ export default function UserRecipientsPage() {
 
       // Refresh recipients data
       await refreshRecipients()
-      setError("")
 
       // Reset form and close dialog
-      setFormData({
-        name: "",
-        accountNumber: "",
-        bankName: "",
-        currency: "NGN",
-        routingNumber: "",
-        sortCode: "",
-        iban: "",
-        swiftBic: "",
-      })
+      resetForm()
       setIsAddDialogOpen(false)
     } catch (error) {
       console.error("Error adding recipient:", error)
@@ -400,20 +390,10 @@ export default function UserRecipientsPage() {
 
       // Refresh recipients data
       await refreshRecipients()
-      setError("")
 
       // Reset form and close dialog
       setEditingRecipient(null)
-      setFormData({
-        name: "",
-        accountNumber: "",
-        bankName: "",
-        currency: "NGN",
-        routingNumber: "",
-        sortCode: "",
-        iban: "",
-        swiftBic: "",
-      })
+      resetForm()
     } catch (error) {
       console.error("Error updating recipient:", error)
       setError("Failed to update recipient")
@@ -450,6 +430,29 @@ export default function UserRecipientsPage() {
     return currency?.flag_svg || ""
   }
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      accountNumber: "",
+      bankName: "",
+      currency: "NGN",
+      routingNumber: "",
+      sortCode: "",
+      iban: "",
+      swiftBic: "",
+    })
+    setError("")
+  }
+
+  const handleAddDialogOpenChange = (open) => {
+    setIsAddDialogOpen(open)
+    if (open) {
+      // Reset form and clear edit state when opening Add dialog
+      setEditingRecipient(null)
+      resetForm()
+    }
+  }
+
   return (
     <UserDashboardLayout>
       <div className="p-4 sm:p-6 space-y-6">
@@ -458,7 +461,7 @@ export default function UserRecipientsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
             <p className="text-gray-600">Manage your saved recipients</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
               <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
@@ -561,7 +564,15 @@ export default function UserRecipientsPage() {
                   </div>
                   <div className="flex flex-col items-end space-y-1">
                     <div className="flex items-center justify-end space-x-2 sm:justify-start">
-                      <Dialog open={!!editingRecipient} onOpenChange={(open) => !open && setEditingRecipient(null)}>
+                      <Dialog
+                        open={!!editingRecipient}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setEditingRecipient(null)
+                            resetForm()
+                          }
+                        }}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             variant="ghost"

@@ -760,6 +760,33 @@ class AdminDataStore {
     }
   }
 
+  async updateCurrency(currencyId: string, updates: { can_send?: boolean; can_receive?: boolean; [key: string]: any }) {
+    try {
+      // Update database first
+      const { error } = await supabase
+        .from("currencies")
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currencyId)
+
+      if (error) throw error
+
+      // Update local data immediately after successful database update
+      if (this.data) {
+        this.data.currencies = this.data.currencies.map((currency) =>
+          currency.id === currencyId
+            ? { ...currency, ...updates, updated_at: new Date().toISOString() }
+            : currency,
+        )
+        this.notify()
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
   async updateExchangeRates(updates: any[]) {
     try {
       // Update database first

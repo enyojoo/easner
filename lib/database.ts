@@ -64,7 +64,7 @@ export const currencyService = {
     const refreshFn = async () => {
       const { data, error } = await supabase
         .from("currencies")
-        .select("id, code, name, symbol, flag_svg, status, created_at, updated_at")
+        .select("id, code, name, symbol, flag_svg, status, can_send, can_receive, created_at, updated_at")
         .eq("status", "active")
         .order("code")
 
@@ -74,6 +74,8 @@ export const currencyService = {
         data?.map((currency) => ({
           ...currency,
           flag: currency.flag_svg,
+          can_send: currency.can_send ?? true,
+          can_receive: currency.can_receive ?? true,
         })) || []
       )
     }

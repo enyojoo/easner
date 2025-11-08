@@ -40,17 +40,19 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
     case "us":
       return {
         accountType: "us",
-        requiredFields: ["routing_number", "account_number", "bank_name"],
+        requiredFields: ["account_name", "bank_name", "routing_number", "account_number"],
         optionalFields: [],
         fieldLabels: {
+          account_name: "Account Name",
+          bank_name: "Bank Name",
           routing_number: "Routing Number",
           account_number: "Account Number",
-          bank_name: "Bank Name",
         },
         fieldPlaceholders: {
+          account_name: "e.g., John Doe",
+          bank_name: "e.g., Bank of America",
           routing_number: "e.g., 123456789",
           account_number: "e.g., 1234567890",
-          bank_name: "e.g., Bank of America",
         },
         fieldFormatters: {
           routing_number: (value: string) => {
@@ -66,21 +68,23 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
     case "uk":
       return {
         accountType: "uk",
-        requiredFields: ["sort_code", "account_number", "bank_name"],
+        requiredFields: ["account_name", "bank_name", "sort_code", "account_number"],
         optionalFields: ["iban", "swift_bic"],
         fieldLabels: {
+          account_name: "Account Name",
+          bank_name: "Bank Name",
           sort_code: "Sort Code",
           account_number: "Account Number",
           iban: "IBAN",
           swift_bic: "SWIFT/BIC",
-          bank_name: "Bank Name",
         },
         fieldPlaceholders: {
+          account_name: "e.g., Jane Smith",
+          bank_name: "e.g., Barclays Bank",
           sort_code: "e.g., 123456",
           account_number: "e.g., 12345678",
           iban: "e.g., GB82 WEST 1234 5698 7654 32",
           swift_bic: "e.g., NWBKGB2L",
-          bank_name: "e.g., Barclays Bank",
         },
         fieldFormatters: {
           sort_code: (value: string) => {
@@ -100,17 +104,19 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
     case "euro":
       return {
         accountType: "euro",
-        requiredFields: ["iban", "bank_name"],
+        requiredFields: ["account_name", "bank_name", "iban"],
         optionalFields: ["swift_bic"],
         fieldLabels: {
+          account_name: "Account Name",
+          bank_name: "Bank Name",
           iban: "IBAN",
           swift_bic: "SWIFT/BIC",
-          bank_name: "Bank Name",
         },
         fieldPlaceholders: {
+          account_name: "e.g., Max Mustermann",
+          bank_name: "e.g., Deutsche Bank",
           iban: "e.g., DE89 3704 0044 0532 0130 00",
           swift_bic: "e.g., COBADEFFXXX",
-          bank_name: "e.g., Deutsche Bank",
         },
         fieldFormatters: {
           iban: (value: string) => {
@@ -124,15 +130,17 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
     default:
       return {
         accountType: "generic",
-        requiredFields: ["account_number", "bank_name"],
+        requiredFields: ["account_name", "bank_name", "account_number"],
         optionalFields: [],
         fieldLabels: {
-          account_number: "Account Number",
+          account_name: "Account Name",
           bank_name: "Bank Name",
+          account_number: "Account Number",
         },
         fieldPlaceholders: {
+          account_name: "e.g., Recipient Name",
+          bank_name: "e.g., Local Bank",
           account_number: "e.g., 1234567890",
-          bank_name: "e.g., Bank Name",
         },
       }
   }

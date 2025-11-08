@@ -200,11 +200,25 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
   }
 
 
-  // Filtered currencies for picker
-  const filteredCurrencies = currencies.filter(currency =>
-    currency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    currency.code.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Filtered currencies for picker based on send/receive capability
+  const filteredCurrencies = currencies.filter(currency => {
+    // Filter by send/receive capability
+    if (showCurrencyPicker === 'send') {
+      if (currency.can_send === false) return false
+    } else if (showCurrencyPicker === 'receive') {
+      if (currency.can_receive === false) return false
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      return (
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    return true
+  })
 
   const formatCurrency = (amount: number, currency: string): string => {
     const curr = currencies.find((c) => c.code === currency)

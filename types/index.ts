@@ -6,6 +6,8 @@ export interface Currency {
   flag: string
   flag_svg?: string
   status: string
+  can_send?: boolean
+  can_receive?: boolean
   created_at: string
   updated_at: string
 }

@@ -18,6 +18,7 @@ import { getCountryFlag } from '../../utils/flagUtils'
 import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
 import { analytics } from '../../lib/analytics'
+import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
 
 export default function SelectRecipientScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -30,6 +31,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     accountNumber: '',
     bankName: '',
     phoneNumber: '',
+    routingNumber: '',
+    sortCode: '',
+    iban: '',
+    swiftBic: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -77,13 +82,44 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     setSelectedRecipient(recipient)
   }
 
+  // Map snake_case field names from config to camelCase form field names
+  const mapFieldName = (fieldName: string): string => {
+    const fieldMap: Record<string, string> = {
+      account_name: "fullName",
+      routing_number: "routingNumber",
+      account_number: "accountNumber",
+      bank_name: "bankName",
+      sort_code: "sortCode",
+      iban: "iban",
+      swift_bic: "swiftBic",
+    }
+    return fieldMap[fieldName] || fieldName
+  }
+
+  const isFormValid = () => {
+    if (!newRecipient.fullName || !receiveCurrency) return false
+
+    const accountConfig = getAccountTypeConfigFromCurrency(receiveCurrency)
+    const requiredFields = accountConfig.requiredFields
+
+    for (const field of requiredFields) {
+      const formFieldName = mapFieldName(field)
+      const fieldValue = newRecipient[formFieldName as keyof typeof newRecipient]
+      if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+        return false
+      }
+    }
+
+    return true
+  }
+
   const handleAddRecipient = async () => {
     if (!userProfile?.id) {
       Alert.alert('Error', 'User not authenticated')
       return
     }
 
-    if (!newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName) {
+    if (!isFormValid()) {
       Alert.alert('Error', 'Please fill in all required fields')
       return
     }
@@ -97,6 +133,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
         accountNumber: newRecipient.accountNumber,
         bankName: newRecipient.bankName,
         currency: receiveCurrency,
+        routingNumber: newRecipient.routingNumber || undefined,
+        sortCode: newRecipient.sortCode || undefined,
+        iban: newRecipient.iban || undefined,
+        swiftBic: newRecipient.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -110,7 +150,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
         fullName: '', 
         accountNumber: '', 
         bankName: '', 
-        phoneNumber: ''
+        phoneNumber: '',
+        routingNumber: '',
+        sortCode: '',
+        iban: '',
+        swiftBic: '',
       })
       setShowAddRecipient(false)
       
@@ -161,7 +205,22 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
         </View>
         <View style={styles.recipientInfo}>
           <Text style={styles.recipientName}>{item.full_name}</Text>
-          <Text style={styles.recipientBank}>{item.bank_name} - {item.account_number}</Text>
+          {(() => {
+            const accountConfig = getAccountTypeConfigFromCurrency(item.currency)
+            const accountType = accountConfig.accountType
+            const accountIdentifier = accountType === "euro" && item.iban 
+              ? formatFieldValue(accountType, "iban", item.iban)
+              : item.account_number
+
+            return (
+              <View>
+                {accountIdentifier ? (
+                  <Text style={styles.recipientAccount}>{accountIdentifier}</Text>
+                ) : null}
+                <Text style={styles.recipientBank}>{item.bank_name}</Text>
+              </View>
+            )
+          })()}
         </View>
       </View>
     </TouchableOpacity>
@@ -248,26 +307,133 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               style={styles.modalInput}
               value={newRecipient.fullName}
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
-              placeholder="Full Name *"
+              placeholder="Account Name *"
               editable={!isSubmitting}
             />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.accountNumber}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-              placeholder="Account Number *"
-              keyboardType="numeric"
-              editable={!isSubmitting}
-            />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.bankName}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
-              placeholder="Bank Name *"
-              editable={!isSubmitting}
-            />
+
+            {(() => {
+              const accountConfig = receiveCurrency
+                ? getAccountTypeConfigFromCurrency(receiveCurrency)
+                : null
+
+              if (!accountConfig) {
+                return (
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+                  </View>
+                )
+              }
+
+              return (
+                <>
+                  {/* Bank Name - Always required */}
+                  <TextInput
+                    style={styles.modalInput}
+                    value={newRecipient.bankName}
+                    onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
+                    placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                    editable={!isSubmitting}
+                  />
+
+                  {/* US Account Fields */}
+                  {accountConfig.accountType === "us" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.routingNumber}
+                        onChangeText={(text) => {
+                          const value = text.replace(/\D/g, "").slice(0, 9)
+                          setNewRecipient(prev => ({ ...prev, routingNumber: value }))
+                        }}
+                        placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                        keyboardType="numeric"
+                        maxLength={9}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.accountNumber}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                        placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* UK Account Fields */}
+                  {accountConfig.accountType === "uk" && (
+                    <>
+                      <View style={styles.twoColumnRow}>
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.sortCode}
+                          onChangeText={(text) => {
+                            const value = text.replace(/\D/g, "").slice(0, 6)
+                            setNewRecipient(prev => ({ ...prev, sortCode: value }))
+                          }}
+                          placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                          keyboardType="numeric"
+                          maxLength={6}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.accountNumber}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          editable={!isSubmitting}
+                        />
+                      </View>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.iban}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* EURO Account Fields */}
+                  {accountConfig.accountType === "euro" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={`${accountConfig.fieldLabels.iban} *`}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* Generic Account Fields */}
+                  {accountConfig.accountType === "generic" && (
+                    <TextInput
+                      style={styles.modalInput}
+                      value={newRecipient.accountNumber}
+                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                      placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                      editable={!isSubmitting}
+                    />
+                  )}
+                </>
+              )
+            })()}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -281,9 +447,9 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, isSubmitting && styles.disabledButton]}
+                style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
                 onPress={handleAddRecipient}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFormValid()}
               >
                 <Text style={styles.saveButtonText}>
                   {isSubmitting ? 'Adding...' : 'Add'}
@@ -436,6 +602,13 @@ const styles = StyleSheet.create({
   recipientBank: {
     fontSize: 14,
     color: '#6b7280',
+    marginTop: 2,
+  },
+  recipientAccount: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+    color: '#6b7280',
+    marginBottom: 2,
   },
   emptyState: {
     alignItems: 'center',
@@ -571,5 +744,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
     fontStyle: 'italic',
+  },
+  infoBox: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  twoColumnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  halfInput: {
+    flex: 1,
+    marginBottom: 0,
   },
 })

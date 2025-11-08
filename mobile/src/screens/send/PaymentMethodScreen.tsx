@@ -20,6 +20,7 @@ import { NavigationProps, PaymentMethod, Currency } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { analytics } from '../../lib/analytics'
 import { transactionService } from '../../lib/transactionService'
+import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
 
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -253,69 +254,169 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
             <View style={styles.paymentDetails}>
               {/* Payment Method Details */}
               <View style={styles.methodDetails}>
-                {defaultMethod?.type === "bank_account" && (
-                  <View style={styles.bankAccountCard}>
-                    <View style={styles.methodHeader}>
-                      <Ionicons name="business" size={16} color="#6b7280" />
-                      <Text style={styles.methodName}>{defaultMethod.name}</Text>
+                {defaultMethod?.type === "bank_account" && (() => {
+                  const accountConfig = sendCurrency
+                    ? getAccountTypeConfigFromCurrency(sendCurrency)
+                    : null
+                  const accountType = accountConfig?.accountType
+
+                  return (
+                    <View style={styles.bankAccountCard}>
+                      <View style={styles.methodHeader}>
+                        <Ionicons name="business" size={16} color="#6b7280" />
+                        <Text style={styles.methodName}>{defaultMethod.name}</Text>
+                      </View>
+                      <View style={styles.accountDetails}>
+                        {/* Account Name - Always shown */}
+                        <View style={styles.detailRowTwoLine}>
+                          <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_name || "Account Name"}</Text>
+                          <View style={styles.detailValueRow}>
+                            <Text style={styles.detailText}>{defaultMethod.account_name}</Text>
+                            <TouchableOpacity
+                              onPress={() => handleCopy(defaultMethod.account_name || "", "accountName")}
+                              style={styles.copyButton}
+                            >
+                              {copiedStates.accountName ? (
+                                <Ionicons name="checkmark" size={12} color="#10b981" />
+                              ) : (
+                                <Ionicons name="copy" size={12} color="#6b7280" />
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        {/* US Account Fields */}
+                        {accountType === "us" && defaultMethod.routing_number && (
+                          <View style={styles.detailRowTwoLine}>
+                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.routing_number || "Routing Number"}</Text>
+                            <View style={styles.detailValueRow}>
+                              <Text style={styles.detailText}>
+                                {formatFieldValue(accountType, "routing_number", defaultMethod.routing_number)}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => handleCopy(defaultMethod.routing_number || "", "routingNumber")}
+                                style={styles.copyButton}
+                              >
+                                {copiedStates.routingNumber ? (
+                                  <Ionicons name="checkmark" size={12} color="#10b981" />
+                                ) : (
+                                  <Ionicons name="copy" size={12} color="#6b7280" />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* UK Account Fields */}
+                        {accountType === "uk" && defaultMethod.sort_code && (
+                          <View style={styles.detailRowTwoLine}>
+                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.sort_code || "Sort Code"}</Text>
+                            <View style={styles.detailValueRow}>
+                              <Text style={styles.detailText}>
+                                {formatFieldValue(accountType, "sort_code", defaultMethod.sort_code)}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => handleCopy(defaultMethod.sort_code || "", "sortCode")}
+                                style={styles.copyButton}
+                              >
+                                {copiedStates.sortCode ? (
+                                  <Ionicons name="checkmark" size={12} color="#10b981" />
+                                ) : (
+                                  <Ionicons name="copy" size={12} color="#6b7280" />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* Account Number - US/UK/Generic accounts */}
+                        {(accountType === "us" || accountType === "uk" || accountType === "generic") && defaultMethod.account_number && (
+                          <View style={styles.detailRowTwoLine}>
+                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_number || "Account Number"}</Text>
+                            <View style={styles.detailValueRow}>
+                              <Text style={styles.detailText}>{defaultMethod.account_number}</Text>
+                              <TouchableOpacity
+                                onPress={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
+                                style={styles.copyButton}
+                              >
+                                {copiedStates.accountNumber ? (
+                                  <Ionicons name="checkmark" size={12} color="#10b981" />
+                                ) : (
+                                  <Ionicons name="copy" size={12} color="#6b7280" />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* IBAN - UK/EURO accounts */}
+                        {(accountType === "uk" || accountType === "euro") && defaultMethod.iban && (
+                          <View style={styles.detailRowTwoLine}>
+                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.iban || "IBAN"}</Text>
+                            <View style={styles.detailValueRow}>
+                              <Text style={styles.detailText}>
+                                {formatFieldValue(accountType, "iban", defaultMethod.iban)}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => handleCopy(defaultMethod.iban || "", "iban")}
+                                style={styles.copyButton}
+                              >
+                                {copiedStates.iban ? (
+                                  <Ionicons name="checkmark" size={12} color="#10b981" />
+                                ) : (
+                                  <Ionicons name="copy" size={12} color="#6b7280" />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* SWIFT/BIC - UK/EURO accounts */}
+                        {(accountType === "uk" || accountType === "euro") && defaultMethod.swift_bic && (
+                          <View style={styles.detailRowTwoLine}>
+                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.swift_bic || "SWIFT/BIC"}</Text>
+                            <View style={styles.detailValueRow}>
+                              <Text style={styles.detailText}>{defaultMethod.swift_bic}</Text>
+                              <TouchableOpacity
+                                onPress={() => handleCopy(defaultMethod.swift_bic || "", "swiftBic")}
+                                style={styles.copyButton}
+                              >
+                                {copiedStates.swiftBic ? (
+                                  <Ionicons name="checkmark" size={12} color="#10b981" />
+                                ) : (
+                                  <Ionicons name="copy" size={12} color="#6b7280" />
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+
+                        {/* Bank Name - Always shown */}
+                        <View style={styles.detailRowTwoLine}>
+                          <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.bank_name || "Bank Name"}</Text>
+                          <View style={styles.detailValueRow}>
+                            <Text style={styles.detailText}>{defaultMethod.bank_name}</Text>
+                            <TouchableOpacity
+                              onPress={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
+                              style={styles.copyButton}
+                            >
+                              {copiedStates.bankName ? (
+                                <Ionicons name="checkmark" size={12} color="#10b981" />
+                              ) : (
+                                <Ionicons name="copy" size={12} color="#6b7280" />
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.accountDetails}>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Account Name</Text>
-                        <View style={styles.detailValue}>
-                          <Text style={styles.detailText}>{defaultMethod.account_name}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.account_name || "", "accountName")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.accountName ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Account Number</Text>
-                        <View style={styles.detailValue}>
-                          <Text style={styles.detailText}>{defaultMethod.account_number}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.accountNumber ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Bank Name</Text>
-                        <View style={styles.detailValue}>
-                          <Text style={styles.detailText}>{defaultMethod.bank_name}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.bankName ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                )}
+                  )
+                })()}
 
                 {/* Transaction ID Display */}
-                      <View style={[styles.detailRow, styles.transactionIdRow]}>
+                      <View style={[styles.detailRowTwoLine, styles.transactionIdRow]}>
                         <Text style={styles.detailLabel}>Transaction ID</Text>
-                        <View style={styles.detailValue}>
+                        <View style={styles.detailValueRow}>
                           <Text style={styles.detailText}>{transactionId}</Text>
                           <TouchableOpacity
                             onPress={() => handleCopy(transactionId, "transactionId")}
@@ -619,21 +720,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  detailRowTwoLine: {
+    marginBottom: 12,
+  },
   transactionIdRow: {
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
+    marginTop: 8,
   },
   detailLabel: {
     fontSize: 12,
     color: '#6b7280',
-    flex: 1,
+    marginBottom: 4,
   },
   detailValue: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 2,
     justifyContent: 'flex-end',
+  },
+  detailValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   detailText: {
     fontSize: 14,

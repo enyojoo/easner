@@ -14,6 +14,7 @@ const CurrencyDropdown = ({
   onToggle,
   dropdownRef,
   currencies,
+  type,
 }: {
   selectedCurrency: string
   onCurrencyChange: (currency: string) => void
@@ -23,17 +24,31 @@ const CurrencyDropdown = ({
   onToggle: () => void
   dropdownRef: React.RefObject<HTMLDivElement>
   currencies: Currency[]
+  type: "send" | "receive"
 }) => {
   const [dropdownPosition, setDropdownPosition] = useState<'down' | 'up'>('down')
 
   const filteredCurrencies = useMemo(() => {
-    if (!searchTerm) return currencies
-    return currencies.filter(
-      (currency) =>
-        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-  }, [searchTerm, currencies])
+    let filtered = currencies
+
+    // Filter by send/receive capability
+    if (type === "send") {
+      filtered = filtered.filter((currency) => currency.can_send !== false)
+    } else if (type === "receive") {
+      filtered = filtered.filter((currency) => currency.can_receive !== false)
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (currency) =>
+          currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    }
+
+    return filtered
+  }, [searchTerm, currencies, type])
 
   const selectedCurrencyData = useMemo(() => 
     currencies.find((c) => c.code === selectedCurrency), 
@@ -912,6 +927,7 @@ export default function UserSendPage() {
                             onToggle={toggleSendDropdown}
                             dropdownRef={sendDropdownRef}
                             currencies={currencies}
+                            type="send"
                           />
                         </div>
                       </div>
@@ -1002,6 +1018,7 @@ export default function UserSendPage() {
                             onToggle={toggleReceiveDropdown}
                             dropdownRef={receiveDropdownRef}
                             currencies={currencies}
+                            type="receive"
                           />
                         </div>
                       </div>

@@ -18,6 +18,7 @@ import { getCountryFlag } from '../../utils/flagUtils'
 import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
 import { analytics } from '../../lib/analytics'
+import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
 
 function RecipientsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -36,6 +37,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
     accountNumber: '',
     bankName: '',
     currency: 'NGN',
+    routingNumber: '',
+    sortCode: '',
+    iban: '',
+    swiftBic: '',
   })
 
   // Track screen view
@@ -123,7 +128,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
       return
     }
 
-    if (!newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName) {
+    if (!isFormValid()) {
       Alert.alert('Error', 'Please fill in all required fields')
       return
     }
@@ -137,6 +142,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
         accountNumber: newRecipient.accountNumber,
         bankName: newRecipient.bankName,
         currency: newRecipient.currency,
+        routingNumber: newRecipient.routingNumber || undefined,
+        sortCode: newRecipient.sortCode || undefined,
+        iban: newRecipient.iban || undefined,
+        swiftBic: newRecipient.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -144,7 +153,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
       setError('')
 
       // Reset form and close modal
-      setNewRecipient({ fullName: '', accountNumber: '', bankName: '', currency: 'NGN' })
+      resetForm()
       setShowAddRecipient(false)
       Alert.alert('Success', 'Recipient added successfully')
     } catch (error) {
@@ -160,9 +169,13 @@ function RecipientsContent({ navigation }: NavigationProps) {
     setEditingRecipient(recipient)
     setNewRecipient({
       fullName: recipient.full_name,
-      accountNumber: recipient.account_number,
+      accountNumber: recipient.account_number || '',
       bankName: recipient.bank_name,
       currency: recipient.currency,
+      routingNumber: recipient.routing_number || '',
+      sortCode: recipient.sort_code || '',
+      iban: recipient.iban || '',
+      swiftBic: recipient.swift_bic || '',
     })
     setShowEditRecipient(true)
   }
@@ -170,7 +183,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
   const handleUpdateRecipient = async () => {
     if (!editingRecipient) return
 
-    if (!newRecipient.fullName || !newRecipient.accountNumber || !newRecipient.bankName) {
+    if (!isFormValid()) {
       Alert.alert('Error', 'Please fill in all required fields')
       return
     }
@@ -183,6 +196,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
         fullName: newRecipient.fullName,
         accountNumber: newRecipient.accountNumber,
         bankName: newRecipient.bankName,
+        routingNumber: newRecipient.routingNumber || undefined,
+        sortCode: newRecipient.sortCode || undefined,
+        iban: newRecipient.iban || undefined,
+        swiftBic: newRecipient.swiftBic || undefined,
       })
 
       // Refresh recipients data
@@ -191,7 +208,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
 
       // Reset form and close modal
       setEditingRecipient(null)
-      setNewRecipient({ fullName: '', accountNumber: '', bankName: '', currency: 'NGN' })
+      resetForm()
       setShowEditRecipient(false)
       Alert.alert('Success', 'Recipient updated successfully')
     } catch (error) {
@@ -233,6 +250,51 @@ function RecipientsContent({ navigation }: NavigationProps) {
     )
   }
 
+  // Map snake_case field names from config to camelCase form field names
+  const mapFieldName = (fieldName: string): string => {
+    const fieldMap: Record<string, string> = {
+      account_name: "fullName",
+      routing_number: "routingNumber",
+      account_number: "accountNumber",
+      bank_name: "bankName",
+      sort_code: "sortCode",
+      iban: "iban",
+      swift_bic: "swiftBic",
+    }
+    return fieldMap[fieldName] || fieldName
+  }
+
+  const isFormValid = () => {
+    if (!newRecipient.fullName || !newRecipient.bankName || !newRecipient.currency) return false
+
+    const accountConfig = getAccountTypeConfigFromCurrency(newRecipient.currency)
+    const requiredFields = accountConfig.requiredFields
+
+    for (const field of requiredFields) {
+      const formFieldName = mapFieldName(field)
+      const fieldValue = newRecipient[formFieldName as keyof typeof newRecipient]
+      if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  const resetForm = () => {
+    setNewRecipient({
+      fullName: '',
+      accountNumber: '',
+      bankName: '',
+      currency: 'NGN',
+      routingNumber: '',
+      sortCode: '',
+      iban: '',
+      swiftBic: '',
+    })
+    setError('')
+  }
+
   const renderRecipient = ({ item }: { item: Recipient }) => (
     <View style={styles.recipientCard}>
       <View style={styles.recipientLeft}>
@@ -246,7 +308,22 @@ function RecipientsContent({ navigation }: NavigationProps) {
         </View>
         <View style={styles.recipientInfo}>
           <Text style={styles.recipientName}>{item.full_name}</Text>
-          <Text style={styles.recipientBank}>{item.bank_name} - {item.account_number}</Text>
+          {(() => {
+            const accountConfig = getAccountTypeConfigFromCurrency(item.currency)
+            const accountType = accountConfig.accountType
+            const accountIdentifier = accountType === "euro" && item.iban 
+              ? formatFieldValue(accountType, "iban", item.iban)
+              : item.account_number
+
+            return (
+              <View>
+                {accountIdentifier ? (
+                  <Text style={styles.recipientAccount}>{accountIdentifier}</Text>
+                ) : null}
+                <Text style={styles.recipientBank}>{item.bank_name}</Text>
+              </View>
+            )
+          })()}
         </View>
       </View>
       <View style={styles.recipientActions}>
@@ -295,8 +372,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => {
-          setNewRecipient({ fullName: '', accountNumber: '', bankName: '', currency: 'NGN' })
-          setError('')
+          resetForm()
           setShowAddRecipient(true)
         }}
       >
@@ -350,26 +426,133 @@ function RecipientsContent({ navigation }: NavigationProps) {
               style={styles.modalInput}
               value={newRecipient.fullName}
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
-              placeholder="Full Name *"
+              placeholder="Account Name *"
               editable={!isSubmitting}
             />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.accountNumber}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-              placeholder="Account Number *"
-              keyboardType="numeric"
-              editable={!isSubmitting}
-            />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.bankName}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
-              placeholder="Bank Name *"
-              editable={!isSubmitting}
-            />
+
+            {(() => {
+              const accountConfig = newRecipient.currency
+                ? getAccountTypeConfigFromCurrency(newRecipient.currency)
+                : null
+
+              if (!accountConfig) {
+                return (
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+                  </View>
+                )
+              }
+
+              return (
+                <>
+                  {/* Bank Name - Always required */}
+                  <TextInput
+                    style={styles.modalInput}
+                    value={newRecipient.bankName}
+                    onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
+                    placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                    editable={!isSubmitting}
+                  />
+
+                  {/* US Account Fields */}
+                  {accountConfig.accountType === "us" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.routingNumber}
+                        onChangeText={(text) => {
+                          const value = text.replace(/\D/g, "").slice(0, 9)
+                          setNewRecipient(prev => ({ ...prev, routingNumber: value }))
+                        }}
+                        placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                        keyboardType="numeric"
+                        maxLength={9}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.accountNumber}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                        placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* UK Account Fields */}
+                  {accountConfig.accountType === "uk" && (
+                    <>
+                      <View style={styles.twoColumnRow}>
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.sortCode}
+                          onChangeText={(text) => {
+                            const value = text.replace(/\D/g, "").slice(0, 6)
+                            setNewRecipient(prev => ({ ...prev, sortCode: value }))
+                          }}
+                          placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                          keyboardType="numeric"
+                          maxLength={6}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.accountNumber}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          editable={!isSubmitting}
+                        />
+                      </View>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.iban}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* EURO Account Fields */}
+                  {accountConfig.accountType === "euro" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={`${accountConfig.fieldLabels.iban} *`}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* Generic Account Fields */}
+                  {accountConfig.accountType === "generic" && (
+                    <TextInput
+                      style={styles.modalInput}
+                      value={newRecipient.accountNumber}
+                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                      placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                      editable={!isSubmitting}
+                    />
+                  )}
+                </>
+              )
+            })()}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -383,9 +566,9 @@ function RecipientsContent({ navigation }: NavigationProps) {
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, isSubmitting && styles.disabledButton]}
+                style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
                 onPress={handleAddRecipient}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFormValid()}
               >
                 <Text style={styles.saveButtonText}>
                   {isSubmitting ? 'Adding...' : 'Add'}
@@ -425,26 +608,133 @@ function RecipientsContent({ navigation }: NavigationProps) {
               style={styles.modalInput}
               value={newRecipient.fullName}
               onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
-              placeholder="Full Name *"
+              placeholder="Account Name *"
               editable={!isSubmitting}
             />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.accountNumber}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-              placeholder="Account Number *"
-              keyboardType="numeric"
-              editable={!isSubmitting}
-            />
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.bankName}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
-              placeholder="Bank Name *"
-              editable={!isSubmitting}
-            />
+
+            {(() => {
+              const accountConfig = newRecipient.currency
+                ? getAccountTypeConfigFromCurrency(newRecipient.currency)
+                : null
+
+              if (!accountConfig) {
+                return (
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+                  </View>
+                )
+              }
+
+              return (
+                <>
+                  {/* Bank Name - Always required */}
+                  <TextInput
+                    style={styles.modalInput}
+                    value={newRecipient.bankName}
+                    onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
+                    placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                    editable={!isSubmitting}
+                  />
+
+                  {/* US Account Fields */}
+                  {accountConfig.accountType === "us" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.routingNumber}
+                        onChangeText={(text) => {
+                          const value = text.replace(/\D/g, "").slice(0, 9)
+                          setNewRecipient(prev => ({ ...prev, routingNumber: value }))
+                        }}
+                        placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                        keyboardType="numeric"
+                        maxLength={9}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.accountNumber}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                        placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* UK Account Fields */}
+                  {accountConfig.accountType === "uk" && (
+                    <>
+                      <View style={styles.twoColumnRow}>
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.sortCode}
+                          onChangeText={(text) => {
+                            const value = text.replace(/\D/g, "").slice(0, 6)
+                            setNewRecipient(prev => ({ ...prev, sortCode: value }))
+                          }}
+                          placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                          keyboardType="numeric"
+                          maxLength={6}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={[styles.modalInput, styles.halfInput]}
+                          value={newRecipient.accountNumber}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          editable={!isSubmitting}
+                        />
+                      </View>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.iban}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* EURO Account Fields */}
+                  {accountConfig.accountType === "euro" && (
+                    <>
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.iban}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                        placeholder={`${accountConfig.fieldLabels.iban} *`}
+                        editable={!isSubmitting}
+                      />
+                      <TextInput
+                        style={styles.modalInput}
+                        value={newRecipient.swiftBic}
+                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                        placeholder={accountConfig.fieldLabels.swift_bic}
+                        editable={!isSubmitting}
+                      />
+                    </>
+                  )}
+
+                  {/* Generic Account Fields */}
+                  {accountConfig.accountType === "generic" && (
+                    <TextInput
+                      style={styles.modalInput}
+                      value={newRecipient.accountNumber}
+                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                      placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                      editable={!isSubmitting}
+                    />
+                  )}
+                </>
+              )
+            })()}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -452,16 +742,16 @@ function RecipientsContent({ navigation }: NavigationProps) {
                 onPress={() => {
                   setShowEditRecipient(false)
                   setEditingRecipient(null)
-                  setError('')
+                  resetForm()
                 }}
                 disabled={isSubmitting}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, isSubmitting && styles.disabledButton]}
+                style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
                 onPress={handleUpdateRecipient}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isFormValid()}
               >
                 <Text style={styles.saveButtonText}>
                   {isSubmitting ? 'Updating...' : 'Update'}
@@ -596,6 +886,13 @@ const styles = StyleSheet.create({
   recipientBank: {
     fontSize: 14,
     color: '#6b7280',
+    marginTop: 2,
+  },
+  recipientAccount: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+    color: '#6b7280',
+    marginBottom: 2,
   },
   recipientActions: {
     flexDirection: 'row',
@@ -763,6 +1060,26 @@ const styles = StyleSheet.create({
   },
   disabledSelector: {
     opacity: 0.6,
+  },
+  infoBox: {
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  twoColumnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  halfInput: {
+    flex: 1,
+    marginBottom: 0,
   },
 })
 

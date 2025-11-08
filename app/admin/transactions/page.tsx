@@ -248,7 +248,6 @@ export default function AdminTransactionsPage() {
                   <TableHead>Transaction ID</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>User</TableHead>
-                  <TableHead>Currency Pair</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -274,11 +273,6 @@ export default function AdminTransactionsPage() {
                         </div>
                         <div className="text-sm text-gray-500">{transaction.user?.email}</div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">
-                        {transaction.send_currency} → {transaction.receive_currency}
-                      </span>
                     </TableCell>
                     <TableCell>
                       <div>
