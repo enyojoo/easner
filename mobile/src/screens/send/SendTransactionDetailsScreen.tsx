@@ -416,6 +416,16 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
           </View>
         )}
 
+        {/* Transaction ID for pending, processing, or completed statuses */}
+        {(transaction.status === 'pending' ||
+          transaction.status === 'processing' ||
+          transaction.status === 'completed') && (
+          <View style={styles.transactionIdSection}>
+            <Text style={styles.transactionIdLabel}>Transaction ID</Text>
+            <Text style={styles.transactionIdValue}>{transaction.transaction_id}</Text>
+          </View>
+        )}
+
         {/* Show Timeline for pending, processing, or completed statuses */}
         {(transaction.status === 'pending' ||
           transaction.status === 'processing' ||
@@ -444,6 +454,20 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
               </View>
               <Text style={styles.statusTitle}>{statusMessage.title}</Text>
               <Text style={styles.statusDescription}>{statusMessage.description}</Text>
+              
+              {/* Transaction ID and Created for failed/cancelled */}
+              <View style={styles.failedTransactionDetails}>
+                <View style={styles.failedDetailRow}>
+                  <Text style={styles.failedDetailLabel}>Transaction ID</Text>
+                  <Text style={styles.failedDetailValue}>{transaction.transaction_id}</Text>
+                </View>
+                <View style={styles.failedDetailRow}>
+                  <Text style={styles.failedDetailLabel}>Created</Text>
+                  <Text style={styles.failedDetailValue}>
+                    {new Date(transaction.created_at).toLocaleString()}
+                  </Text>
+                </View>
+              </View>
             </View>
             
             {/* Status Information */}
@@ -536,15 +560,6 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
             <Text style={styles.recipientBank}>{transaction.recipient.bank_name}</Text>
           </View>
         )}
-
-        {/* Transaction Details */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsTitle}>Transaction Details</Text>
-          <Text style={styles.transactionIdText}>{transaction.transaction_id}</Text>
-          <Text style={styles.createdDate}>
-            Created: {new Date(transaction.created_at).toLocaleString()}
-          </Text>
-        </View>
       </ScrollView>
 
       {/* Bottom Action Buttons */}
@@ -668,6 +683,25 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     flexShrink: 1,
   },
+  transactionIdSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  transactionIdLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  transactionIdValue: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    color: '#1f2937',
+  },
   timelineWrapper: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -698,6 +732,26 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 16,
+  },
+  failedTransactionDetails: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  failedDetailRow: {
+    marginBottom: 12,
+  },
+  failedDetailLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  failedDetailValue: {
+    fontSize: 14,
+    color: '#1f2937',
+    fontFamily: 'monospace',
   },
   statusInfo: {
     marginHorizontal: 16,
@@ -836,29 +890,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   recipientBank: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  detailsSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 8,
-  },
-  detailsTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  transactionIdText: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  createdDate: {
     fontSize: 14,
     color: '#6b7280',
   },

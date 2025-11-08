@@ -500,6 +500,16 @@ function TransactionStatusPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Transaction ID for pending, processing, or completed statuses */}
+                  {transaction.status === "pending" ||
+                  transaction.status === "processing" ||
+                  transaction.status === "completed" ? (
+                    <div className="pb-4 border-b">
+                      <p className="text-sm text-gray-600 mb-1">Transaction ID</p>
+                      <p className="font-mono text-sm">{transaction.transaction_id}</p>
+                    </div>
+                  ) : null}
+
                   {/* Show Timeline for pending, processing, or completed statuses */}
                   {transaction.status === "pending" ||
                   transaction.status === "processing" ||
@@ -529,7 +539,19 @@ function TransactionStatusPage() {
                         <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
                           {statusMessage.title}
                         </h3>
-                        <p className="text-sm sm:text-base text-gray-600">{statusMessage.description}</p>
+                        <p className="text-sm sm:text-base text-gray-600 mb-4">{statusMessage.description}</p>
+                        
+                        {/* Transaction ID and Created for failed/cancelled */}
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <p className="text-gray-600">Transaction ID</p>
+                            <p className="font-mono text-gray-900">{transaction.transaction_id}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Created</p>
+                            <p className="text-gray-900">{new Date(transaction.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Status Information */}
@@ -656,16 +678,6 @@ function TransactionStatusPage() {
                       </div>
                     </div>
                   )}
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600">Transaction ID</p>
-                    <p className="font-mono text-sm">{transaction.transaction_id}</p>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600">Created</p>
-                    <p className="text-sm">{new Date(transaction.created_at).toLocaleString()}</p>
-                  </div>
                 </CardContent>
               </Card>
             </div>
