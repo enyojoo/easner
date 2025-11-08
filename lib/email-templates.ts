@@ -461,32 +461,13 @@ If you have any questions about your early access request or our platform, feel 
   adminTransactionNotification: {
     subject: (data: any) => `New Transaction ${data.status === 'pending' ? 'Created' : 'Updated'} - #${data.transactionId}`,
     html: (data: any) => {
+      const userName = data.userName && data.userName !== 'User' && data.userName !== 'Unknown' ? data.userName : 'a user'
       const content = `
-        <p class="welcome-text">
-          ${data.status === 'pending' ? 'New Transaction Created' : `Transaction Status Updated to ${data.status.toUpperCase()}`}
-        </p>
-        
         <p class="confirmation-text">
           ${data.status === 'pending' 
-            ? 'A new transaction has been created and requires your attention.' 
+            ? `A new transaction has been created by ${userName} and requires your attention.` 
             : `A transaction status has been updated to ${data.status}. Please review the details below.`}
         </p>
-        
-        ${data.userEmail && data.userEmail !== 'Unknown' ? `
-        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h3 style="color: #007ACC; margin: 0 0 15px 0; font-size: 18px;">User Information</h3>
-          <p style="margin: 5px 0; font-size: 16px;"><strong>User ID:</strong> ${data.userId}</p>
-          <p style="margin: 5px 0; font-size: 16px;"><strong>User Email:</strong> ${data.userEmail}</p>
-          ${data.userName && data.userName !== 'User' ? `<p style="margin: 5px 0; font-size: 16px;"><strong>User Name:</strong> ${data.userName}</p>` : ''}
-        </div>
-        ` : ''}
-        
-        <div class="security-note">
-          <h3>Action Required</h3>
-          <p>${data.status === 'pending' 
-            ? 'Please review this transaction and process it according to your workflow. You can manage it from the admin dashboard.' 
-            : 'Please review this status change and take any necessary actions.'}</p>
-        </div>
       `
 
       return generateBaseEmailTemplate(
@@ -499,28 +480,19 @@ If you have any questions about your early access request or our platform, feel 
         }
       )
     },
-    text: (data: any) => `
+    text: (data: any) => {
+      const userName = data.userName && data.userName !== 'User' && data.userName !== 'Unknown' ? data.userName : 'a user'
+      return `
 ${data.status === 'pending' ? 'New Transaction Created' : `Transaction Status Updated to ${data.status.toUpperCase()}`} - #${data.transactionId}
 
 ${data.status === 'pending' 
-  ? 'A new transaction has been created and requires your attention.' 
+  ? `A new transaction has been created by ${userName} and requires your attention.` 
   : `A transaction status has been updated to ${data.status}. Please review the details below.`}
-
-${data.userEmail && data.userEmail !== 'Unknown' ? `
-User Information:
-- User ID: ${data.userId}
-- User Email: ${data.userEmail}
-${data.userName && data.userName !== 'User' ? `- User Name: ${data.userName}` : ''}
-` : ''}
-
-Action Required:
-${data.status === 'pending' 
-  ? 'Please review this transaction and process it according to your workflow. You can manage it from the admin dashboard.' 
-  : 'Please review this status change and take any necessary actions.'}
 
 View in Admin Dashboard: ${process.env.NEXT_PUBLIC_APP_URL}/admin/transactions
 
 © 2025 Easner, Inc. All rights reserved.
     `
+    }
   }
 }
