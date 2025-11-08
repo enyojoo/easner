@@ -87,21 +87,17 @@ export default function UserProfilePage() {
       }
 
       // Get member since date
-      const formatTimestamp = (dateString: string) => {
+      const formatDate = (dateString: string) => {
         const date = new Date(dateString)
         const month = date.toLocaleString("en-US", { month: "short" })
         const day = date.getDate().toString().padStart(2, "0")
         const year = date.getFullYear()
-        const hours = date.getHours()
-        const minutes = date.getMinutes().toString().padStart(2, "0")
-        const ampm = hours >= 12 ? "PM" : "AM"
-        const displayHours = hours % 12 || 12
-        // Format: "Nov 07, 2025 • 7:29 PM"
-        return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+        // Format: "Nov 07, 2025"
+        return `${month} ${day}, ${year}`
       }
 
       const memberSince = userProfile?.created_at
-        ? formatTimestamp(userProfile.created_at)
+        ? formatDate(userProfile.created_at)
         : "N/A"
 
       setUserStats({

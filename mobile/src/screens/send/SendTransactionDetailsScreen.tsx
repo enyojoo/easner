@@ -208,9 +208,9 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     return Math.max(0, remaining)
   }
 
-  // Calculate delay for completed transactions
+  // Calculate delay for completed transactions or when timer has finished
   const getDelay = (): number => {
-    if (transaction?.status !== 'completed') return 0
+    if (!transaction) return 0
     const elapsed = getElapsedTime()
     const delay = elapsed - timerDuration
     return Math.max(0, delay)
@@ -242,14 +242,22 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
       const delay = getDelay()
       
       if (delay > 0) {
-        return `Completed in ${formatTime(elapsed)} • Delayed by ${formatTime(delay)}`
+        return `Took ${formatTime(elapsed)} • Delayed ${formatTime(delay)}`
       } else {
-        return `Completed in ${formatTime(elapsed)}`
+        return `Took ${formatTime(elapsed)}`
       }
     } else {
       // Pending or processing
       const remaining = getRemainingTime()
-      return formatTime(remaining)
+      const delay = getDelay()
+      
+      // If timer has finished (remaining <= 0), show delayed time
+      if (remaining <= 0 && delay > 0) {
+        return `Delayed ${formatTime(delay)}`
+      }
+      
+      // Otherwise show countdown
+      return `Time left ${formatTime(remaining)}`
     }
   }
 

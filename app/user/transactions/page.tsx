@@ -88,6 +88,15 @@ export default function UserTransactionsPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
+  }
+
   const handleViewTransaction = (transactionId: string) => {
     router.push(`/user/send/${transactionId.toLowerCase()}`)
   }
@@ -174,7 +183,7 @@ export default function UserTransactionsPage() {
                       {filteredTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
                           <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                          <TableCell>{formatTimestamp(transaction.created_at)}</TableCell>
+                          <TableCell>{formatDate(transaction.created_at)}</TableCell>
                           <TableCell className="font-medium">{transaction.recipient?.full_name || "N/A"}</TableCell>
                           <TableCell className="font-semibold">
                             {formatAmount(transaction.send_amount, transaction.send_currency)}

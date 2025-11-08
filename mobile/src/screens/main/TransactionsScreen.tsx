@@ -122,6 +122,15 @@ function TransactionsContent({ navigation }: NavigationProps) {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString('en-US', { month: 'short' })
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
+  }
+
   const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
   const filteredTransactions = currentTransactions.filter(transaction => {
     const matchesSearch = transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,7 +180,7 @@ function TransactionsContent({ navigation }: NavigationProps) {
 
       {/* Footer with Date and Arrow */}
       <View style={styles.transactionFooter}>
-        <Text style={styles.transactionDate}>{formatTimestamp(item.created_at)}</Text>
+        <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
         <Text style={styles.arrowIcon}>›</Text>
       </View>
     </TouchableOpacity>

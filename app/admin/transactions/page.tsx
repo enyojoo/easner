@@ -68,6 +68,15 @@ export default function AdminTransactionsPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
@@ -278,7 +287,7 @@ export default function AdminTransactionsPage() {
                       />
                     </TableCell>
                     <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
-                    <TableCell>{formatTimestamp(transaction.created_at)}</TableCell>
+                    <TableCell>{formatDate(transaction.created_at)}</TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
