@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
 import { transactionService, TransactionData } from '../../lib/transactionService'
+import { supabase } from '../../lib/supabase'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { analytics } from '../../lib/analytics'
@@ -23,13 +24,14 @@ import { TransactionTimeline } from '../../components/TransactionTimeline'
 
 export default function SendTransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
-  const { refreshTransactions, currencies } = useUserData()
+  const { refreshTransactions, currencies, paymentMethods } = useUserData()
   const insets = useSafeAreaInsets()
   const [transaction, setTransaction] = useState<TransactionData | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
+  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
 
   const { transactionId, fromScreen } = route.params || {}
 
@@ -52,6 +54,28 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }, [])
   )
 
+  // Initialize timer from payment method when transaction is loaded
+  useEffect(() => {
+    if (transaction && paymentMethods.length > 0) {
+      const getDefaultPaymentMethod = (currency: string) => {
+        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === 'active')
+        return methods.find((pm) => pm.is_default) || methods[0]
+      }
+
+      const defaultMethod = getDefaultPaymentMethod(transaction.send_currency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimeLeft(timerSeconds)
+    }
+  }, [transaction, paymentMethods])
+
+  // Timer countdown
+  useEffect(() => {
+    if (transaction && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [transaction, timeLeft])
+
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -61,29 +85,72 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     return () => clearInterval(timer)
   }, [])
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
   useEffect(() => {
     if (transactionId && userProfile?.id) {
       fetchTransactionDetails()
     }
   }, [transactionId, userProfile?.id])
 
-  // Poll for transaction updates every 10 seconds
+  // Real-time subscription for transaction updates
   useEffect(() => {
-    if (!transaction || !userProfile?.id) return
+    if (!transaction || !userProfile?.id || !transactionId) return
 
+    // Set up Supabase Realtime subscription for instant updates
+    const channel = supabase
+      .channel(`transaction-${transactionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'transactions',
+          filter: `transaction_id=eq.${transactionId.toUpperCase()}`,
+        },
+        async (payload) => {
+          console.log('Transaction update received via Realtime:', payload)
+          try {
+            // Fetch full transaction data with relations
+            const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
+            if (updatedTransaction) {
+              setTransaction(updatedTransaction)
+            }
+          } catch (error) {
+            console.error('Error fetching updated transaction:', error)
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to transaction updates via Realtime')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Realtime subscription error, falling back to polling')
+        }
+      })
+
+    // Fallback: Poll every 5 seconds if Realtime is not available
     const pollInterval = setInterval(async () => {
       try {
         const updatedTransaction = await transactionService.getById(transaction.transaction_id)
-        if (updatedTransaction.status !== transaction.status) {
+        if (updatedTransaction.status !== transaction.status || 
+            updatedTransaction.updated_at !== transaction.updated_at) {
           setTransaction(updatedTransaction)
         }
       } catch (error) {
         console.error('Error polling transaction status:', error)
       }
-    }, 10000) // Poll every 10 seconds
+    }, 5000) // Poll every 5 seconds as fallback
 
-    return () => clearInterval(pollInterval)
-  }, [transaction, userProfile?.id])
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(pollInterval)
+    }
+  }, [transaction, userProfile?.id, transactionId])
 
   const fetchTransactionDetails = async () => {
     try {
@@ -293,6 +360,19 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         }
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Transaction Status Header with Timer */}
+        {(transaction.status === 'pending' ||
+          transaction.status === 'processing' ||
+          transaction.status === 'completed') && (
+          <View style={styles.statusHeaderWithTimer}>
+            <Text style={styles.statusTitle}>Transaction Status</Text>
+            <View style={styles.timerContainer}>
+              <Ionicons name="time" size={16} color="#f59e0b" />
+              <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Show Timeline for pending, processing, or completed statuses */}
         {(transaction.status === 'pending' ||
           transaction.status === 'processing' ||
@@ -512,6 +592,37 @@ const styles = StyleSheet.create({
     color: '#007ACC',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statusHeaderWithTimer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 8,
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  timerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  timerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#f59e0b',
+    marginLeft: 4,
+    fontFamily: 'monospace',
   },
   timelineWrapper: {
     marginHorizontal: 16,

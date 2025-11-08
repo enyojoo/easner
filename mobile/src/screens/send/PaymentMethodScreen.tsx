@@ -25,7 +25,6 @@ import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/cu
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
   const { paymentMethods, refreshPaymentMethods, currencies, refreshTransactions } = useUserData()
-  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
   const [transactionId, setTransactionId] = useState('')
   const [uploadedFile, setUploadedFile] = useState<any>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -46,41 +45,6 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
     setTransactionId(`ETID${Date.now()}`)
   }, [])
 
-  // Initialize timer from payment method when screen loads
-  useEffect(() => {
-    if (sendCurrency && paymentMethods.length > 0) {
-      const defaultMethod = getDefaultPaymentMethod(sendCurrency)
-      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
-      setTimeLeft(timerSeconds)
-    }
-  }, [sendCurrency, paymentMethods])
-
-  // Timer countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
-
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
 
   const getPaymentMethodsForCurrency = (currency: string) => {
     return paymentMethods.filter(method => 
@@ -226,13 +190,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
       <View style={styles.content}>
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.title}>Make Payment</Text>
-            <View style={styles.timerContainer}>
-              <Ionicons name="time" size={16} color="#f59e0b" />
-              <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
-            </View>
-          </View>
+          <Text style={styles.title}>Make Payment</Text>
         </View>
 
         {/* Payment Method - Dynamic based on admin settings */}
@@ -608,30 +566,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
-  },
-  timerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  timerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#f59e0b',
-    marginLeft: 4,
-    fontFamily: 'monospace',
   },
   paymentContainer: {
     margin: 20,

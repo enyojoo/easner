@@ -697,11 +697,11 @@ export default function AdminSettingsPage() {
                         Add Payment Method
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                       <DialogHeader>
                         <DialogTitle>Add New Payment Method</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4">
+                      <div className="space-y-4 overflow-y-auto flex-1 pr-2">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="currency">Currency *</Label>
@@ -1086,52 +1086,53 @@ export default function AdminSettingsPage() {
                           </Label>
                         </div>
 
-                        <div className="flex gap-4 pt-4">
-                          <Button variant="outline" onClick={() => setIsAddPaymentMethodOpen(false)} className="flex-1">
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={handleAddPaymentMethod}
-                            disabled={(() => {
-                              if (saving || uploadingQrCode || !newPaymentMethod.currency || !newPaymentMethod.name) {
-                                return true
-                              }
+                      </div>
+                      <div className="flex gap-4 pt-4 border-t mt-4">
+                        <Button variant="outline" onClick={() => setIsAddPaymentMethodOpen(false)} className="flex-1">
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleAddPaymentMethod}
+                          disabled={(() => {
+                            if (saving || uploadingQrCode || !newPaymentMethod.currency || !newPaymentMethod.name) {
+                              return true
+                            }
 
-                              if (newPaymentMethod.type === "qr_code") {
-                                return !qrCodeFile && !newPaymentMethod.qr_code_data
-                              }
+                            if (newPaymentMethod.type === "qr_code") {
+                              return !qrCodeFile && !newPaymentMethod.qr_code_data
+                            }
 
-                              if (newPaymentMethod.type === "bank_account") {
-                                const accountConfig = getAccountTypeConfigFromCurrency(newPaymentMethod.currency)
-                                const requiredFields = accountConfig.requiredFields
+                            if (newPaymentMethod.type === "bank_account") {
+                              const accountConfig = getAccountTypeConfigFromCurrency(newPaymentMethod.currency)
+                              const requiredFields = accountConfig.requiredFields
 
-                                for (const field of requiredFields) {
-                                  const fieldValue = newPaymentMethod[field as keyof typeof newPaymentMethod]
-                                  if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
-                                    return true
-                                  }
+                              for (const field of requiredFields) {
+                                const fieldValue = newPaymentMethod[field as keyof typeof newPaymentMethod]
+                                if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                                  return true
                                 }
                               }
+                            }
 
-                              return false
-                            })()}
-                            className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
-                          >
-                            {saving ? "Adding..." : "Add Payment Method"}
-                          </Button>
-                        </div>
+                            return false
+                          })()}
+                          className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                        >
+                          {saving ? "Adding..." : "Add Payment Method"}
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
 
                   {/* Edit Payment Method Dialog */}
                   <Dialog open={isEditPaymentMethodOpen} onOpenChange={setIsEditPaymentMethodOpen}>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                       <DialogHeader>
                         <DialogTitle>Edit Payment Method</DialogTitle>
                       </DialogHeader>
                       {editingPaymentMethod && (
-                        <div className="space-y-4">
+                        <>
+                          <div className="space-y-4 overflow-y-auto flex-1 pr-2">
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="editCurrency">Currency *</Label>
@@ -1552,7 +1553,8 @@ export default function AdminSettingsPage() {
                             </Label>
                           </div>
 
-                          <div className="flex gap-4 pt-4">
+                          </div>
+                          <div className="flex gap-4 pt-4 border-t mt-4">
                             <Button
                               variant="outline"
                               onClick={() => setIsEditPaymentMethodOpen(false)}
@@ -1597,7 +1599,7 @@ export default function AdminSettingsPage() {
                               {saving ? "Saving..." : "Save Changes"}
                             </Button>
                           </div>
-                        </div>
+                        </>
                       )}
                     </DialogContent>
                   </Dialog>

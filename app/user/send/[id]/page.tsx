@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Check, Clock, ExternalLink, XCircle, AlertTriangle } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
-import { transactionService } from "@/lib/database"
+import { transactionService, paymentMethodService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import { TransactionTimeline } from "@/components/transaction-timeline"
+import { supabase } from "@/lib/supabase"
 import type { Transaction } from "@/types"
 
 function TransactionStatusPage() {
@@ -26,6 +27,44 @@ function TransactionStatusPage() {
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+
+  // Load payment methods
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      try {
+        const paymentMethodsData = await paymentMethodService.getAll()
+        setPaymentMethods(paymentMethodsData || [])
+      } catch (error) {
+        console.error("Error loading payment methods:", error)
+      }
+    }
+
+    loadPaymentMethods()
+  }, [])
+
+  // Initialize timer from payment method when transaction is loaded
+  useEffect(() => {
+    if (transaction && paymentMethods.length > 0) {
+      const getDefaultPaymentMethod = (currency: string) => {
+        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
+        return methods.find((pm) => pm.is_default) || methods[0]
+      }
+
+      const defaultMethod = getDefaultPaymentMethod(transaction.send_currency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimeLeft(timerSeconds)
+    }
+  }, [transaction, paymentMethods])
+
+  // Timer countdown
+  useEffect(() => {
+    if (transaction && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [transaction, timeLeft])
 
   // Update current time every second
   useEffect(() => {
@@ -80,23 +119,60 @@ function TransactionStatusPage() {
     loadTransaction()
   }, [transactionId, user?.id, authLoading])
 
-  // Poll for transaction updates every 30 seconds
+  // Real-time subscription for transaction updates
   useEffect(() => {
-    if (!transaction || !user?.id) return
+    if (!transaction || !user?.id || !transactionId) return
 
+    // Set up Supabase Realtime subscription for instant updates
+    const channel = supabase
+      .channel(`transaction-${transactionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'transactions',
+          filter: `transaction_id=eq.${transactionId.toUpperCase()}`,
+        },
+        async (payload) => {
+          console.log('Transaction update received via Realtime:', payload)
+          try {
+            // Fetch full transaction data with relations
+            const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
+            if (updatedTransaction) {
+              setTransaction(updatedTransaction)
+            }
+          } catch (error) {
+            console.error("Error fetching updated transaction:", error)
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to transaction updates via Realtime')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Realtime subscription error, falling back to polling')
+        }
+      })
+
+    // Fallback: Poll every 5 seconds if Realtime is not available
     const pollInterval = setInterval(async () => {
       try {
         const updatedTransaction = await transactionService.getById(transaction.transaction_id)
-        if (updatedTransaction.status !== transaction.status) {
+        if (updatedTransaction.status !== transaction.status || 
+            updatedTransaction.updated_at !== transaction.updated_at) {
           setTransaction(updatedTransaction)
         }
       } catch (error) {
         console.error("Error polling transaction status:", error)
       }
-    }, 10000) // Poll every 10 seconds
+    }, 5000) // Poll every 5 seconds as fallback
 
-    return () => clearInterval(pollInterval)
-  }, [transaction, user?.id])
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(pollInterval)
+    }
+  }, [transaction, user?.id, transactionId])
 
   const getTimeInfo = () => {
     if (!transaction) return { timeRemaining: 0, isOverdue: false, elapsedTime: 0 }
@@ -362,7 +438,17 @@ function TransactionStatusPage() {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Transaction Status</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    Transaction Status
+                    {transaction && (transaction.status === "pending" ||
+                      transaction.status === "processing" ||
+                      transaction.status === "completed") && (
+                      <div className="flex items-center text-orange-600">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
+                      </div>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Show Timeline for pending, processing, or completed statuses */}

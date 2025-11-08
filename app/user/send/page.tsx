@@ -221,7 +221,6 @@ export default function UserSendPage() {
     bankName: "",
     phoneNumber: "",
   })
-  const [timeLeft, setTimeLeft] = useState(3600) // Will be set from payment method
   const [transactionId, setTransactionId] = useState<string>("")
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -673,28 +672,6 @@ export default function UserSendPage() {
     }
   }, [sendCurrency, receiveCurrency, exchangeRates])
 
-  // Initialize timer from payment method when step 3 is reached
-  useEffect(() => {
-    if (currentStep === 3 && sendCurrency) {
-      const defaultMethod = getDefaultPaymentMethod(sendCurrency)
-      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
-      setTimeLeft(timerSeconds)
-    }
-  }, [currentStep, sendCurrency, paymentMethods])
-
-  // Timer countdown
-  useEffect(() => {
-    if (currentStep === 3 && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [currentStep, timeLeft])
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
 
   const handleResendVerificationEmail = async () => {
     if (!user?.email) return
@@ -1475,13 +1452,7 @@ export default function UserSendPage() {
               {currentStep === 3 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      Make Payment
-                      <div className="flex items-center text-orange-600">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
-                      </div>
-                    </CardTitle>
+                    <CardTitle>Make Payment</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Payment Method - Dynamic based on admin settings */}
