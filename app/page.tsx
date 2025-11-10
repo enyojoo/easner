@@ -94,7 +94,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
                 <span className="text-easner-primary">Globally Like SMS</span>.
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl lg:text-xl text-gray-500 leading-relaxed max-w-2xl text-center lg:text-left">
-                Easner lets individuals, businesses, and financial institutions send and receive money across borders — instantly, compliantly, and powered by stablecoins under the hood.
+                Easner lets individuals, businesses, and financial institutions send and receive money across borders; bank-to-bank powered by stablecoins under the hood.
               </p>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-3 justify-center lg:justify-start">

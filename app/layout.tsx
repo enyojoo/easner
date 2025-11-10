@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
+        url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png",
         width: 1200,
         height: 630,
         alt: "Easner - Global Money Transfer Platform",
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     description:
       "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
     creator: "@easner",
-    images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
+    images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png"],
   },
   robots: {
     index: true,
