@@ -21,11 +21,11 @@ const unbounded = Unbounded({
 const geistSans = GeistSans
 
 export const metadata: Metadata = {
-  title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
+  title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
   description:
-    "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
+    "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood. For individuals and businesses.",
   keywords:
-    "zero fee money transfer, instant international transfer, send money abroad free, stablecoin money transfer, diaspora money transfer, send money to Nigeria, send money to Ghana, send money to Kenya, cheapest money transfer, crypto money transfer, business international payments, send money to Africa, instant money transfer, money transfer app, international payments, transfer money overseas, send money online",
+    "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, stablecoin payment infrastructure, Stellar network, business banking, global payments, EU Africa Asia transfers, instant cross border transfer, no wallet money transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
   formatDetection: {
     email: false,
     address: false,
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
-    title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
+    title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
     description:
-      "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
+      "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood. For individuals and businesses.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -53,15 +53,15 @@ export const metadata: Metadata = {
         url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
         width: 1200,
         height: 630,
-        alt: "Easner",
+        alt: "Easner - Global Money Transfer Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
+    title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
     description:
-      "Send money abroad with zero fees - save up to 15%, instant transfers to 50+ countries powered by Stablecoin. Trusted by diaspora families and businesses.",
+      "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood.",
     creator: "@easner",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
   },
@@ -147,7 +147,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "FinancialService",
               "name": "Easner",
-              "description": "Zero-fee international money transfer service using stablecoin technology",
+              "description": "Technology platform facilitating instant cross-border money transfers. Bank-to-bank transfers powered by stablecoin infrastructure on the Stellar network. No wallets required.",
               "url": "https://www.easner.com",
               "logo": "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
               "serviceType": "Money Transfer",
@@ -156,7 +156,8 @@ export default function RootLayout({
                 { "@type": "Country", "name": "Ghana" },
                 { "@type": "Country", "name": "Kenya" },
                 { "@type": "Country", "name": "Uganda" },
-                { "@type": "Country", "name": "South Africa" }
+                { "@type": "Country", "name": "South Africa" },
+                { "@type": "Country", "name": "European Union" }
               ],
               "feesAndCommissionsSpecification": {
                 "@type": "UnitPriceSpecification",
@@ -166,7 +167,7 @@ export default function RootLayout({
               },
               "offers": {
                 "@type": "Offer",
-                "description": "Instant international money transfers with zero fees",
+                "description": "Instant bank-to-bank international money transfers with zero fees. No wallets, no crypto apps required.",
                 "price": "0",
                 "priceCurrency": "USD"
               },
