@@ -190,7 +190,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
       <View style={styles.content}>
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Make Payment</Text>
+            <Text style={styles.title}>Make Payment</Text>
         </View>
 
         {/* Payment Method - Dynamic based on admin settings */}
@@ -228,29 +228,29 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   const accountType = accountConfig?.accountType
 
                   return (
-                    <View style={styles.bankAccountCard}>
-                      <View style={styles.methodHeader}>
-                        <Ionicons name="business" size={16} color="#6b7280" />
-                        <Text style={styles.methodName}>{defaultMethod.name}</Text>
-                      </View>
-                      <View style={styles.accountDetails}>
+                  <View style={styles.bankAccountCard}>
+                    <View style={styles.methodHeader}>
+                      <Ionicons name="business" size={16} color="#6b7280" />
+                      <Text style={styles.methodName}>{defaultMethod.name}</Text>
+                    </View>
+                    <View style={styles.accountDetails}>
                         {/* Account Name - Always shown */}
                         <View style={styles.detailRowTwoLine}>
                           <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_name || "Account Name"}</Text>
                           <View style={styles.detailValueRow}>
-                            <Text style={styles.detailText}>{defaultMethod.account_name}</Text>
-                            <TouchableOpacity
-                              onPress={() => handleCopy(defaultMethod.account_name || "", "accountName")}
-                              style={styles.copyButton}
-                            >
-                              {copiedStates.accountName ? (
-                                <Ionicons name="checkmark" size={12} color="#10b981" />
-                              ) : (
-                                <Ionicons name="copy" size={12} color="#6b7280" />
-                              )}
-                            </TouchableOpacity>
-                          </View>
+                          <Text style={styles.detailText}>{defaultMethod.account_name}</Text>
+                          <TouchableOpacity
+                            onPress={() => handleCopy(defaultMethod.account_name || "", "accountName")}
+                            style={styles.copyButton}
+                          >
+                            {copiedStates.accountName ? (
+                              <Ionicons name="checkmark" size={12} color="#10b981" />
+                            ) : (
+                              <Ionicons name="copy" size={12} color="#6b7280" />
+                            )}
+                          </TouchableOpacity>
                         </View>
+                      </View>
 
                         {/* US Account Fields */}
                         {accountType === "us" && defaultMethod.routing_number && (
@@ -301,19 +301,19 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                           <View style={styles.detailRowTwoLine}>
                             <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_number || "Account Number"}</Text>
                             <View style={styles.detailValueRow}>
-                              <Text style={styles.detailText}>{defaultMethod.account_number}</Text>
-                              <TouchableOpacity
-                                onPress={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
-                                style={styles.copyButton}
-                              >
-                                {copiedStates.accountNumber ? (
-                                  <Ionicons name="checkmark" size={12} color="#10b981" />
-                                ) : (
-                                  <Ionicons name="copy" size={12} color="#6b7280" />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </View>
+                          <Text style={styles.detailText}>{defaultMethod.account_number}</Text>
+                          <TouchableOpacity
+                            onPress={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
+                            style={styles.copyButton}
+                          >
+                            {copiedStates.accountNumber ? (
+                              <Ionicons name="checkmark" size={12} color="#10b981" />
+                            ) : (
+                              <Ionicons name="copy" size={12} color="#6b7280" />
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                         )}
 
                         {/* IBAN - UK/EURO accounts */}
@@ -362,21 +362,21 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                         <View style={styles.detailRowTwoLine}>
                           <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.bank_name || "Bank Name"}</Text>
                           <View style={styles.detailValueRow}>
-                            <Text style={styles.detailText}>{defaultMethod.bank_name}</Text>
-                            <TouchableOpacity
-                              onPress={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
-                              style={styles.copyButton}
-                            >
-                              {copiedStates.bankName ? (
-                                <Ionicons name="checkmark" size={12} color="#10b981" />
-                              ) : (
-                                <Ionicons name="copy" size={12} color="#6b7280" />
-                              )}
-                            </TouchableOpacity>
-                          </View>
+                          <Text style={styles.detailText}>{defaultMethod.bank_name}</Text>
+                          <TouchableOpacity
+                            onPress={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
+                            style={styles.copyButton}
+                          >
+                            {copiedStates.bankName ? (
+                              <Ionicons name="checkmark" size={12} color="#10b981" />
+                            ) : (
+                              <Ionicons name="copy" size={12} color="#6b7280" />
+                            )}
+                          </TouchableOpacity>
                         </View>
                       </View>
                     </View>
+                  </View>
                   )
                 })()}
 
@@ -428,9 +428,9 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <Text style={styles.instructionText}>
+                    <Text style={styles.instructionText}>
                         Note Transaction ID{' '}
-                      </Text>
+                    </Text>
                       <Text style={styles.instructionBold}>{transactionId}</Text>
                       <TouchableOpacity
                         onPress={() => handleCopy(transactionId, "transactionIdInstructions")}

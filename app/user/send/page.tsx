@@ -41,10 +41,10 @@ const CurrencyDropdown = ({
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
-        (currency) =>
-          currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
     }
 
     return filtered
@@ -1139,7 +1139,7 @@ export default function UserSendPage() {
                             return (
                               <>
                                 {/* Bank Name - Always required */}
-                                <div className="space-y-2">
+                          <div className="space-y-2">
                                   <Label htmlFor="newRecipientBank">
                                     {accountConfig.fieldLabels.bank_name} *
                                   </Label>
@@ -1177,16 +1177,16 @@ export default function UserSendPage() {
                                       <Label htmlFor="newRecipientAccount">
                                         {accountConfig.fieldLabels.account_number} *
                                       </Label>
-                                      <Input
-                                        id="newRecipientAccount"
-                                        value={newRecipientData.accountNumber}
-                                        onChange={(e) =>
-                                          setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                                        }
+                            <Input
+                              id="newRecipientAccount"
+                              value={newRecipientData.accountNumber}
+                              onChange={(e) =>
+                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
+                              }
                                         placeholder={accountConfig.fieldPlaceholders.account_number}
-                                        required
-                                      />
-                                    </div>
+                              required
+                            />
+                          </div>
                                   </>
                                 )}
 
@@ -1194,11 +1194,11 @@ export default function UserSendPage() {
                                 {accountConfig.accountType === "uk" && (
                                   <>
                                     <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-2">
+                          <div className="space-y-2">
                                         <Label htmlFor="newRecipientSortCode">
                                           {accountConfig.fieldLabels.sort_code} *
                                         </Label>
-                                        <Input
+                            <Input
                                           id="newRecipientSortCode"
                                           value={newRecipientData.sortCode}
                                           onChange={(e) => {
@@ -1207,10 +1207,10 @@ export default function UserSendPage() {
                                           }}
                                           placeholder={accountConfig.fieldPlaceholders.sort_code}
                                           maxLength={6}
-                                          required
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
                                         <Label htmlFor="newRecipientAccount">
                                           {accountConfig.fieldLabels.account_number} *
                                         </Label>
@@ -1223,8 +1223,8 @@ export default function UserSendPage() {
                                           placeholder={accountConfig.fieldPlaceholders.account_number}
                                           required
                                         />
-                                      </div>
-                                    </div>
+                              </div>
+                            </div>
                                     <div className="space-y-2">
                                       <Label htmlFor="newRecipientIban">
                                         {accountConfig.fieldLabels.iban}
@@ -1237,7 +1237,7 @@ export default function UserSendPage() {
                                         }
                                         placeholder={accountConfig.fieldPlaceholders.iban}
                                       />
-                                    </div>
+                          </div>
                                     <div className="space-y-2">
                                       <Label htmlFor="newRecipientSwiftBic">
                                         {accountConfig.fieldLabels.swift_bic} (Optional)
@@ -1400,7 +1400,7 @@ export default function UserSendPage() {
                                       ) : recipient.account_number ? (
                                         <p className="font-mono text-xs">
                                           {recipient.account_number}
-                                        </p>
+                              </p>
                                       ) : null}
                                       <p>{recipient.bank_name}</p>
                                     </>
@@ -1496,33 +1496,33 @@ export default function UserSendPage() {
                                 const accountType = accountConfig.accountType
 
                                 return (
-                                  <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <Building2 className="h-4 w-4 text-gray-600" />
-                                      <span className="font-medium text-sm">{defaultMethod.name}</span>
-                                    </div>
-                                    <div className="space-y-2">
+                                <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="h-4 w-4 text-gray-600" />
+                                    <span className="font-medium text-sm">{defaultMethod.name}</span>
+                                  </div>
+                                  <div className="space-y-2">
                                       {/* Account Name - Always shown */}
                                       <div className="space-y-1">
                                         <span className="text-gray-600 text-xs">
                                           {accountConfig.fieldLabels.account_name}
                                         </span>
                                         <div className="flex items-center gap-2">
-                                          <span className="font-medium text-sm">{defaultMethod.account_name}</span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
+                                        <span className="font-medium text-sm">{defaultMethod.account_name}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
                                             onClick={() => handleCopy(defaultMethod.account_name || "", "accountName")}
-                                            className="h-5 w-5 p-0"
-                                          >
-                                            {copiedStates.accountName ? (
-                                              <Check className="h-3 w-3 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-3 w-3" />
-                                            )}
-                                          </Button>
-                                        </div>
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.accountName ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
                                       </div>
+                                    </div>
 
                                       {/* US Account Fields */}
                                       {accountType === "us" && defaultMethod.routing_number && (
@@ -1584,23 +1584,23 @@ export default function UserSendPage() {
                                               {accountConfig.fieldLabels.account_number}
                                             </span>
                                             <div className="flex items-center gap-2">
-                                              <span className="font-medium font-mono text-sm">
-                                                {defaultMethod.account_number}
-                                              </span>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
+                                        <span className="font-medium font-mono text-sm">
+                                          {defaultMethod.account_number}
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
                                                 onClick={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
-                                                className="h-5 w-5 p-0"
-                                              >
-                                                {copiedStates.accountNumber ? (
-                                                  <Check className="h-3 w-3 text-green-600" />
-                                                ) : (
-                                                  <Copy className="h-3 w-3" />
-                                                )}
-                                              </Button>
-                                            </div>
-                                          </div>
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.accountNumber ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
                                         )}
 
                                       {/* IBAN - Shown for UK and EURO */}
@@ -1613,20 +1613,20 @@ export default function UserSendPage() {
                                             <span className="font-medium font-mono text-xs">
                                               {formatFieldValue(accountType, "iban", defaultMethod.iban)}
                                             </span>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
                                               onClick={() => handleCopy(defaultMethod.iban || "", "iban")}
-                                              className="h-5 w-5 p-0"
-                                            >
+                                          className="h-5 w-5 p-0"
+                                        >
                                               {copiedStates.iban ? (
-                                                <Check className="h-3 w-3 text-green-600" />
-                                              ) : (
-                                                <Copy className="h-3 w-3" />
-                                              )}
-                                            </Button>
-                                          </div>
-                                        </div>
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
                                       )}
 
                                       {/* SWIFT/BIC - Shown for UK and EURO if present */}
@@ -1639,20 +1639,20 @@ export default function UserSendPage() {
                                             <span className="font-medium font-mono text-xs">
                                               {defaultMethod.swift_bic}
                                             </span>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
                                               onClick={() => handleCopy(defaultMethod.swift_bic || "", "swiftBic")}
-                                              className="h-5 w-5 p-0"
-                                            >
+                                          className="h-5 w-5 p-0"
+                                        >
                                               {copiedStates.swiftBic ? (
-                                                <Check className="h-3 w-3 text-green-600" />
-                                              ) : (
-                                                <Copy className="h-3 w-3" />
-                                              )}
-                                            </Button>
-                                          </div>
-                                        </div>
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
                                       )}
 
                                       {/* Bank Name - Always shown */}
@@ -1674,8 +1674,8 @@ export default function UserSendPage() {
                                               <Copy className="h-3 w-3" />
                                             )}
                                           </Button>
-                                        </div>
-                                      </div>
+                                  </div>
+                                </div>
                                     </div>
                                   </div>
                                 )
