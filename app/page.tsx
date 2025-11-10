@@ -152,11 +152,12 @@ function EasnerForIndividuals() {
                 className="relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-easner-primary"
               >
                 <Image
-                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/ew.png"
+                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/ew1.png"
                   alt="Easner Web App"
                   width={1200}
                   height={800}
                   className="w-full h-auto"
+                  style={{ maxHeight: '500px', objectFit: 'contain' }}
                   unoptimized
                 />
               </motion.div>
@@ -186,11 +187,12 @@ function EasnerForBusiness() {
                 className="relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-easner-primary"
               >
                 <Image
-                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/eb.png"
+                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/eb1.png"
                   alt="Easner Business Banking"
                   width={1200}
                   height={800}
                   className="w-full h-auto"
+                  style={{ maxHeight: '500px', objectFit: 'contain' }}
                   unoptimized
                 />
               </motion.div>
