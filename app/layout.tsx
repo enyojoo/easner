@@ -21,9 +21,9 @@ const unbounded = Unbounded({
 const geistSans = GeistSans
 
 export const metadata: Metadata = {
-  title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
+  title: "Easner - Move Money Globally Like SMS",
   description:
-    "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood. For individuals and businesses.",
+    "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
   keywords:
     "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, stablecoin payment infrastructure, Stellar network, business banking, global payments, EU Africa Asia transfers, instant cross border transfer, no wallet money transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
   formatDetection: {
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
-    title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
+    title: "Easner - Move Money Globally Like SMS",
     description:
-      "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood. For individuals and businesses.",
+      "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -59,9 +59,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Easner - Move Money Globally Like SMS | Instant Cross-Border Transfers",
+    title: "Easner - Move Money Globally Like SMS",
     description:
-      "Move money globally, instantly - bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins under the hood.",
+      "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
     creator: "@easner",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png"],
   },
