@@ -310,7 +310,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               placeholder="Account Name *"
               editable={!isSubmitting}
             />
-
+            
             {(() => {
               const accountConfig = receiveCurrency
                 ? getAccountTypeConfigFromCurrency(receiveCurrency)
@@ -350,10 +350,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                         maxLength={9}
                         editable={!isSubmitting}
                       />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.accountNumber}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+            <TextInput
+              style={styles.modalInput}
+              value={newRecipient.accountNumber}
+              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                         placeholder={`${accountConfig.fieldLabels.account_number} *`}
                         editable={!isSubmitting}
                       />
@@ -372,7 +372,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                             setNewRecipient(prev => ({ ...prev, sortCode: value }))
                           }}
                           placeholder={`${accountConfig.fieldLabels.sort_code} *`}
-                          keyboardType="numeric"
+              keyboardType="numeric"
                           maxLength={6}
                           editable={!isSubmitting}
                         />
@@ -416,20 +416,20 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                         value={newRecipient.swiftBic}
                         onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                         placeholder={accountConfig.fieldLabels.swift_bic}
-                        editable={!isSubmitting}
-                      />
+              editable={!isSubmitting}
+            />
                     </>
                   )}
-
+            
                   {/* Generic Account Fields */}
                   {accountConfig.accountType === "generic" && (
-                    <TextInput
-                      style={styles.modalInput}
+            <TextInput
+              style={styles.modalInput}
                       value={newRecipient.accountNumber}
                       onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                       placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                      editable={!isSubmitting}
-                    />
+              editable={!isSubmitting}
+            />
                   )}
                 </>
               )

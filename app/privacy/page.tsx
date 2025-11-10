@@ -43,7 +43,10 @@ export default function PrivacyPage() {
                 <p className="text-gray-700 leading-relaxed">
                   This Privacy Policy describes how Easner, Inc. ("Easner," "we," "us," or "our") collects, uses, and
                   shares information about you when you use our platform and mobile application. Easner provides
-                  instant, zero-fee cross-border transfers through licensed financial service partners.
+                  instant, zero-fee cross-border transfers through licensed financial service partners. Easner is a
+                  technology platform that facilitates money movement services and does not hold cryptocurrency or other
+                  digital assets. All financial services are provided through licensed partners and regulated financial
+                  institutions.
                 </p>
               </section>
 
@@ -173,12 +176,26 @@ export default function PrivacyPage() {
                   As a platform facilitating financial services, we and our licensed partners are subject to various
                   regulatory requirements including anti-money laundering (AML), know-your-customer (KYC), and sanctions
                   screening obligations. This may require us to collect, process, and retain additional information and
-                  to share information with regulatory authorities.
+                  to share information with regulatory authorities. Easner embeds verification, AML, and encryption at
+                  the core of every transaction, powered by Stellar, to ensure compliance and security.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Service Evolution</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Cryptocurrency and Digital Assets</h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Easner does not hold, store, or manage cryptocurrency or other digital assets on behalf of users.
+                  While Easner's infrastructure leverages stablecoin technology and blockchain settlement (powered by the
+                  Stellar network) to facilitate instant cross-border transfers, end users interact only with traditional
+                  fiat currencies through bank-to-bank transfers. Users do not need to create cryptocurrency wallets,
+                  hold digital assets, or interact with blockchain technology directly. All user funds are processed
+                  through licensed financial service partners who handle fiat currency transactions in compliance with
+                  applicable regulations.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. Service Evolution</h2>
                 <p className="text-gray-700 leading-relaxed">
                   As we expand our services and enter new markets, our privacy practices may evolve to meet local
                   regulatory requirements and enhance user experience. We remain committed to maintaining the highest
@@ -187,7 +204,7 @@ export default function PrivacyPage() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">13. Changes to This Policy</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Changes to This Policy</h2>
                 <p className="text-gray-700 leading-relaxed">
                   We may update this Privacy Policy from time to time. We will notify you of any material changes by
                   posting the new Privacy Policy on our website and updating the "Last updated" date.
@@ -195,7 +212,7 @@ export default function PrivacyPage() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">14. Contact Us</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">15. Contact Us</h2>
                 <p className="text-gray-700 leading-relaxed">
                   If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
                 </p>

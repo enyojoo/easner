@@ -130,10 +130,10 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
-        (currency) =>
-          currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+      (currency) =>
+        currency.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        currency.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
     }
 
     return filtered

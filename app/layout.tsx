@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Poppins, Unbounded } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
 import "./globals.css"
@@ -16,6 +17,8 @@ const unbounded = Unbounded({
   weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-unbounded",
 })
+
+const geistSans = GeistSans
 
 export const metadata: Metadata = {
   title: "Easner - Zero Fee Money Transfer | Send Money Abroad",
@@ -201,7 +204,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${poppins.variable} ${unbounded.variable} font-sans`} suppressHydrationWarning>
+      <body className={`${poppins.variable} ${unbounded.variable} ${geistSans.variable} font-sans`} suppressHydrationWarning>
         <PostHogProvider>
           <AuthProvider>{children}</AuthProvider>
         </PostHogProvider>

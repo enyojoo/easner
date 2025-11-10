@@ -51,14 +51,17 @@ export default function TermsPage() {
                 <p className="text-gray-700 leading-relaxed mb-4">
                   Easner, Inc. is a Delaware C-corporation that operates the Easner platform and mobile application.
                   Easner provides instant, zero-fee cross-border transfers where users send money from their local bank
-                  and recipients receive funds in their bank account within 3 minutes, with no virtual wallets required.
+                  and recipients receive funds in their bank account within minutes, with no virtual wallets required.
                   Users can transfer money between supported currencies with competitive exchange rates and zero fees
-                  online with Easner.
+                  online with Easner. Easner's infrastructure leverages modern payment standards and blockchain settlement
+                  technology, powered by the Stellar network, to make cross-border transfers instant, transparent, and secure.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
                   <strong>Important:</strong> Financial services are facilitated by licensed partners with appropriate
                   regulatory permissions in different jurisdictions. Easner acts as a technology platform connecting
-                  users with these licensed financial service providers.
+                  users with these licensed financial service providers. Easner is not a bank and does not hold
+                  cryptocurrency or other digital assets. All financial services are provided through licensed partners
+                  and regulated financial institutions.
                 </p>
               </section>
 
@@ -167,7 +170,13 @@ export default function TermsPage() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Disclaimers</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  Easner is not a bank, money transmitter, or financial institution. All financial services are provided by licensed third-party partners who hold appropriate regulatory licenses in their respective jurisdictions. Easner acts solely as a technology platform facilitating connections between users and licensed financial service providers. 
+                  Easner is not a bank, money transmitter, or financial institution. Easner does not hold cryptocurrency
+                  or other digital assets. All financial services are provided by licensed third-party partners who hold
+                  appropriate regulatory licenses in their respective jurisdictions. Easner acts solely as a technology
+                  platform facilitating connections between users and licensed financial service providers. While Easner's
+                  infrastructure leverages stablecoin technology and the Stellar network for settlement, end users interact
+                  only with traditional fiat currencies through bank-to-bank transfers. Users do not need to hold, manage,
+                  or interact with cryptocurrency or digital assets to use Easner's services.
                 </p>
               </section>
 

@@ -13,7 +13,7 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
-  			sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+  			sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
   		},
   		colors: {
   			background: 'hsl(var(--background))',

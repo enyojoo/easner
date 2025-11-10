@@ -304,6 +304,10 @@
     font-family: var(--font-poppins);
   }
 
+  .font-geist-sans {
+    font-family: var(--font-geist-sans);
+  }
+
   /* Custom Max Width */
   .max-w-8xl {
     max-width: 96rem; /* 1536px */
