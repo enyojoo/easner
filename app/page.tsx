@@ -76,7 +76,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
   const router = useRouter()
 
   return (
-    <section className="relative bg-gradient-to-br from-easner-primary-50 via-blue-50 to-purple-50 py-12 sm:py-16 md:py-20 lg:py-24 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-easner-primary-50 via-blue-50 to-purple-50 pt-8 pb-12 sm:pt-10 sm:pb-16 md:pt-12 md:pb-20 lg:pt-16 lg:pb-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-easner-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
