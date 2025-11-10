@@ -119,18 +119,6 @@ eas build --platform android --profile production
 eas build --platform ios --profile production
 ```
 
-## Recent Updates
-
-✅ **Landing Page Redesign**: Complete modern redesign with responsive design across all devices
-✅ **Brand Identity**: Updated from NovaPay to Easner throughout the application
-✅ **Zero-Fee Messaging**: Updated all messaging to reflect zero-fee structure
-✅ **Font Integration**: Added Unbounded font for headings and Poppins for body text
-✅ **Mobile Optimization**: Enhanced mobile and tablet layouts for better user experience
-✅ **Authentication System**: Standardized on Supabase Auth, removed JWT inconsistencies  
-✅ **Error Handling**: Added comprehensive error boundaries and error handling
-✅ **API Security**: Improved authentication for API routes
-✅ **Documentation**: Added comprehensive setup and development guide
-
 ## Next Steps for Development
 
 1. **Stellar Integration**: Implement Stellar network integration for stablecoin transfers
