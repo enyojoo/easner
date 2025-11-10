@@ -89,7 +89,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
           >
             <div className="space-y-4 sm:space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
-                Money Move
+                Move Money
                 <br />
                 <span className="text-easner-primary">Globally Like SMS</span>.
               </h1>
