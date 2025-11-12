@@ -50,28 +50,31 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
         setCurrencies(currenciesData || [])
         setExchangeRates(ratesData || [])
 
-        // Set default send currency to first available currency that can send
-        if (currenciesData && currenciesData.length > 0 && sendCurrency === "USD") {
+        // Set default send currency - prefer USD if available, otherwise first available currency that can send
+        if (currenciesData && currenciesData.length > 0) {
           const availableSendCurrencies = currenciesData.filter((c) => c.can_send !== false)
           if (availableSendCurrencies.length > 0) {
-            const newSendCurrency = availableSendCurrencies[0].code
-            setSendCurrency(newSendCurrency)
+            // Check if USD is available and can send
+            const usdCurrency = availableSendCurrencies.find((c) => c.code === "USD")
+            const newSendCurrency = usdCurrency ? "USD" : availableSendCurrencies[0].code
+            
+            // Only update if different from current
+            if (newSendCurrency !== sendCurrency) {
+              setSendCurrency(newSendCurrency)
+            }
             
             // Set default receive currency to first available currency that can receive (and is not the send currency)
             const availableReceiveCurrencies = currenciesData.filter(
               (c) => c.can_receive !== false && c.code !== newSendCurrency
             )
             if (availableReceiveCurrencies.length > 0) {
-              setReceiveCurrency(availableReceiveCurrencies[0].code)
+              // Prefer NGN if available, otherwise first available
+              const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+              const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+              if (newReceiveCurrency !== receiveCurrency) {
+                setReceiveCurrency(newReceiveCurrency)
+              }
             }
-          }
-        } else if (currenciesData && currenciesData.length > 0 && receiveCurrency === "NGN") {
-          // Set default receive currency to first available currency that can receive
-          const availableReceiveCurrencies = currenciesData.filter(
-            (c) => c.can_receive !== false && c.code !== sendCurrency
-          )
-          if (availableReceiveCurrencies.length > 0) {
-            setReceiveCurrency(availableReceiveCurrencies[0].code)
           }
         }
       } catch (error) {
