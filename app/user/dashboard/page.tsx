@@ -1,19 +1,22 @@
 "use client"
 
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, TrendingUp } from "lucide-react"
+import { Send, Users, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
+import { useRouter } from "next/navigation"
 
 interface Transaction {
   id: string
   transaction_id: string
   send_amount: number
   send_currency: string
+  receive_amount?: number
+  receive_currency?: string
   status: string
   created_at: string
   recipient: {
@@ -22,6 +25,7 @@ interface Transaction {
 }
 
 export default function UserDashboardPage() {
+  const router = useRouter()
   const { userProfile } = useAuth()
   const { transactions, currencies, exchangeRates, loading } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
@@ -87,6 +91,28 @@ export default function UserDashboardPage() {
     }
   }
 
+  const formatAmount = (amount: number, currency: string) => {
+    const currencyInfo = currencies?.find((c) => c && c.code === currency)
+    return `${currencyInfo?.symbol || currency} ${amount.toLocaleString()}`
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "#10b981" // green
+      case "processing":
+        return "#f59e0b" // yellow
+      case "pending":
+        return "#6b7280" // gray
+      case "failed":
+        return "#ef4444" // red
+      case "cancelled":
+        return "#6b7280" // gray
+      default:
+        return "#6b7280"
+    }
+  }
+
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
     const month = date.toLocaleString("en-US", { month: "short" })
@@ -100,122 +126,157 @@ export default function UserDashboardPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
+  const recentTransactions = transactions?.slice(0, 3) || []
+
   return (
     <UserDashboardLayout>
-      <div className="p-6 space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
-          <p className="text-gray-600">Overview of your account and recent activity</p>
+      <div className="space-y-5 sm:space-y-6">
+        {/* Page Header - Mobile Style */}
+        <div className="bg-white p-5 sm:p-6 mb-5 sm:mb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
+            <button
+              onClick={() => router.push("/user/support")}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              aria-label="Support"
+            >
+              <MessageCircle className="h-6 w-6 text-gray-600" />
+            </button>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Sent</CardTitle>
-              <TrendingUp className="h-4 w-4 text-easner-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
+        {/* Stats Cards - Mobile Style */}
+        <div className="px-5 sm:px-6 flex gap-3 sm:gap-6">
+          <Card className="flex-[1.5] sm:flex-1">
+            <CardContent className="p-5 sm:p-6 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                 {formatCurrencyValue(totalSentValue, baseCurrency)}
               </div>
-              <p className="text-xs text-gray-500">From all currencies in your base currency</p>
+              <div className="text-base sm:text-lg font-medium text-gray-600">Total Sent</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Transactions</CardTitle>
-              <Send className="h-4 w-4 text-easner-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{completedTransactions}</div>
-              <p className="text-xs text-green-600">Completed transactions</p>
+          <Card className="flex-1">
+            <CardContent className="p-5 sm:p-6 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{completedTransactions}</div>
+              <div className="text-base sm:text-lg font-medium text-gray-600">Transactions</div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Send Money Card */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900">Quick Send</CardTitle>
-              <CardDescription>Send money instantly</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center py-6">
-                <div className="w-16 h-16 bg-easner-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="h-8 w-8 text-easner-primary" />
-                </div>
-                <p className="text-sm text-gray-600 mb-4">Start a new money transfer</p>
-                <Link href="/user/send">
-                  <Button className="w-full bg-easner-primary hover:bg-easner-primary-600">Send Money</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Quick Actions - Mobile Style */}
+        <div className="px-5 sm:px-6 flex gap-3 sm:gap-6">
+          <Link href="/user/send" className="flex-1">
+            <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 h-14 sm:h-16 text-base sm:text-lg font-semibold">
+              <Send className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+              Send Money
+            </Button>
+          </Link>
+          <Link href="/user/recipients" className="flex-1">
+            <Button variant="outline" className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold border-easner-primary text-easner-primary hover:bg-easner-primary-50">
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
+              Recipients
+            </Button>
+          </Link>
+        </div>
 
-          {/* Recent Transactions */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Recent Transactions</CardTitle>
-                <CardDescription>Your latest money transfers</CardDescription>
-              </div>
-              <Link href="/user/transactions">
-                <Button variant="outline" size="sm">
-                  View All
+        {/* Recent Transactions - Mobile Style */}
+        <div className="px-5 sm:px-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Recent Transactions</h2>
+            <Link href="/user/transactions">
+              <button className="text-sm sm:text-base text-easner-primary font-medium hover:underline">
+                See All
+              </button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">Loading transactions...</div>
+          ) : !transactions || transactions.length === 0 ? (
+            <div className="bg-white rounded-xl p-8 sm:p-12 text-center border border-gray-200">
+              <p className="text-base sm:text-lg text-gray-600 mb-4">No recent transactions</p>
+              <Link href="/user/send">
+                <Button className="bg-easner-primary hover:bg-easner-primary-600">
+                  Send Your First Transfer
                 </Button>
               </Link>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-            { loading ? (
-                  <div className="text-center py-8 text-gray-500">Loading transactions...</div>
-                ) : !transactions || transactions.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No transactions yet</div>
-                ) : (
-                  transactions.slice(0, 3).map((transaction) => {
-                    if (!transaction) return null
-                    return (
-                    <Link href={`/user/send/${transaction.transaction_id.toLowerCase()}`} key={transaction.id}>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-easner-primary-100 rounded-full flex items-center justify-center">
-                            <Send className="h-5 w-5 text-easner-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{transaction.recipient?.full_name || "Unknown"}</p>
-                            <p className="text-sm text-gray-500">
-                              {formatTimestamp(transaction.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">
-                            {formatCurrencyValue(transaction.send_amount, transaction.send_currency)}
-                          </p>
+            </div>
+          ) : (
+            <div className="space-y-4 sm:space-y-5">
+              {recentTransactions.map((transaction) => {
+                if (!transaction) return null
+                const statusColor = getStatusColor(transaction.status)
+                return (
+                  <Link
+                    href={`/user/send/${transaction.transaction_id.toLowerCase()}`}
+                    key={transaction.id}
+                    className="block"
+                  >
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                      <CardContent className="p-4 sm:p-5">
+                        {/* Transaction Header */}
+                        <div className="flex items-center justify-between mb-3 sm:mb-4">
+                          <span className="text-xs sm:text-sm text-gray-500 font-mono">
+                            {transaction.transaction_id}
+                          </span>
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              transaction.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : transaction.status === "processing"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-gray-100 text-gray-800"
-                            }`}
+                            className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold"
+                            style={{
+                              backgroundColor: `${statusColor}20`,
+                              color: statusColor,
+                            }}
                           >
-                            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                            {transaction.status.toUpperCase()}
                           </span>
                         </div>
-                      </div>
-                    </Link>
-                    )
-                  })
-                )}
-              </div>
-            </CardContent>
-          </Card>
+
+                        {/* Recipient Info */}
+                        <div className="mb-4 sm:mb-5">
+                          <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                            To
+                          </div>
+                          <div className="text-base sm:text-lg font-semibold text-gray-900">
+                            {transaction.recipient?.full_name || "Unknown"}
+                          </div>
+                        </div>
+
+                        {/* Amount Section */}
+                        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                              Send Amount
+                            </span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-900">
+                              {formatAmount(transaction.send_amount, transaction.send_currency)}
+                            </span>
+                          </div>
+                          {transaction.receive_amount && transaction.receive_currency && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                Receive Amount
+                              </span>
+                              <span className="text-base sm:text-lg font-semibold text-green-600">
+                                {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
+                          <span className="text-xs sm:text-sm text-gray-500">
+                            {formatTimestamp(transaction.created_at)}
+                          </span>
+                          <span className="text-lg sm:text-xl text-gray-300 font-light">›</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </UserDashboardLayout>
