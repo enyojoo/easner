@@ -511,9 +511,9 @@ function TransactionStatusPage() {
                   transaction.status === "processing" ||
                   transaction.status === "completed" ? (
                     <div className="pb-4 border-b">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-                        <span className="text-sm text-gray-600 text-center sm:text-left">Transaction ID</span>
-                        <div className="flex items-center justify-center sm:justify-end gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm text-gray-600">Transaction ID</span>
+                        <div className="flex items-center gap-2">
                           <span className="font-mono text-sm text-gray-900">{transaction.transaction_id}</span>
                           <button
                             onClick={() => handleCopy(transaction.transaction_id, "transactionId")}
