@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BrandLogo } from "@/components/brand/brand-logo"
+import { BRAND } from "@/components/brand/brand-constants"
 import { useAuth } from "@/lib/auth-context"
 import { CheckCircle, Eye, EyeOff } from "lucide-react"
 import { useRouteProtection } from "@/hooks/use-route-protection"
@@ -111,8 +112,8 @@ function RegisterPageContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
         <div className="w-full max-w-md text-center">
-          <div className="mb-5">
-            <Link href="/">
+          <div className="mb-5 flex justify-center">
+            <Link href={BRAND.url}>
               <BrandLogo size="lg" />
             </Link>
           </div>
@@ -133,8 +134,8 @@ function RegisterPageContent() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="mb-5">
-            <Link href="/">
+          <div className="mb-5 flex justify-center">
+            <Link href={BRAND.url}>
               <BrandLogo size="lg" />
             </Link>
           </div>

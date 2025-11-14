@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BrandLogo } from "@/components/brand/brand-logo"
+import { BRAND } from "@/components/brand/brand-constants"
 import { ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
@@ -158,8 +159,8 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="mb-5">
-            <Link href="/">
+          <div className="mb-5 flex justify-center">
+            <Link href={BRAND.url}>
               <BrandLogo size="lg" />
             </Link>
           </div>
