@@ -7,10 +7,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { ArrowLeft, Mail, Shield } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<"email" | "otp">("email")
@@ -156,142 +154,138 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <BrandLogo size="md" className="mx-auto mb-4" />
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="mb-5">
+            <Link href="/">
+              <BrandLogo size="lg" />
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {step === "email" ? "Forgot Password" : "Enter Verification Code"}
+          </h1>
+          <p className="text-base text-gray-500">
+            {step === "email"
+              ? "Enter your email for verification code"
+              : `We've sent a 6-digit code to ${email}`}
+          </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {step === "email" ? (
-                <>
-                  <Mail className="h-5 w-5 text-easner-primary" />
-                  Forgot Password
-                </>
-              ) : (
-                <>
-                  <Shield className="h-5 w-5 text-easner-primary" />
-                  Enter Verification Code
-                </>
-              )}
-            </CardTitle>
-            <CardDescription>
-              {step === "email"
-                ? "Enter your email for verification code"
-                : `We've sent a 6-digit code to ${email}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {message && (
-              <Alert className="mb-4 border-green-200 bg-green-50">
-                <AlertDescription className="text-green-800">{message}</AlertDescription>
-              </Alert>
-            )}
-
-            {step === "email" ? (
-              <form onSubmit={handleEmailSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending..." : "Send Verification Code"}
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleOtpSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Enter 6-digit code</Label>
-                  <div className="flex gap-2 justify-center">
-                    {otp.map((digit, index) => (
-                      <Input
-                        key={index}
-                        id={`otp-${index}`}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        className="w-12 h-12 text-center text-lg font-semibold"
-                        disabled={isLoading}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
-                  disabled={isLoading || otp.join("").length !== 6}
-                >
-                  {isLoading ? "Verifying..." : "Verify Code"}
-                </Button>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={resendCooldown > 0 || isLoading}
-                    className="text-sm text-easner-primary hover:text-easner-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="mt-6 flex flex-col gap-2 text-center text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  if (step === "otp") {
-                    setStep("email")
-                    setOtp(["", "", "", "", "", ""])
-                    setError("")
-                    setMessage("")
-                  } else {
-                    router.push("/auth/user/login")
-                  }
-                }}
-                className="inline-flex items-center justify-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {step === "otp" ? "Change Email" : "Back to Sign In"}
-              </button>
-              <div className="text-gray-600">
-                Don't have an account?{" "}
-                <Link
-                  href="/auth/user/register"
-                  className="text-easner-primary hover:text-easner-primary-600 transition-colors"
-                >
-                  Sign up
-                </Link>
-              </div>
+        {/* Form */}
+        <div className="space-y-5">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {message && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-800">{message}</p>
+            </div>
+          )}
+
+          {step === "email" ? (
+            <form onSubmit={handleEmailSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-base font-semibold text-gray-700">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Sending..." : "Send Verification Code"}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleOtpSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold text-gray-700">Enter 6-digit code</Label>
+                <div className="flex gap-2 justify-center">
+                  {otp.map((digit, index) => (
+                    <Input
+                      key={index}
+                      id={`otp-${index}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className="w-12 h-12 text-center text-lg font-semibold border-gray-300 focus:border-easner-primary focus:ring-easner-primary"
+                      disabled={isLoading}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                disabled={isLoading || otp.join("").length !== 6}
+              >
+                {isLoading ? "Verifying..." : "Verify Code"}
+              </Button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendCooldown > 0 || isLoading}
+                  className="text-sm text-easner-primary hover:text-easner-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 flex flex-col gap-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (step === "otp") {
+                  setStep("email")
+                  setOtp(["", "", "", "", "", ""])
+                  setError("")
+                  setMessage("")
+                } else {
+                  router.push("/auth/user/login")
+                }
+              }}
+              className="inline-flex items-center justify-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {step === "otp" ? "Change Email" : "Back to Sign In"}
+            </button>
+            <p className="text-sm text-gray-500">
+              Don't have an account?{" "}
+              <Link
+                href="/auth/user/register"
+                className="text-sm text-easner-primary font-semibold hover:text-easner-primary-600"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

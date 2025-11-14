@@ -7,12 +7,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { useAuth } from "@/lib/auth-context"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { useEffect } from "react"
 
 function LoginPageContent() {
@@ -88,114 +85,119 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-easner-primary-50 via-white to-blue-50">
-      <main className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-        {/* Logo */}
-        <div className="mb-8">
-          <Link href="/">
-            <BrandLogo size="md" />
-          </Link>
+    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="mb-5">
+            <Link href="/">
+              <BrandLogo size="lg" />
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back!</h1>
+          <p className="text-base text-gray-500">Sign in to your account</p>
         </div>
 
-        <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-gray-900">Welcome back</CardTitle>
-            <CardDescription className="text-gray-600">Sign in to your Easner account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert className="mb-4" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        {/* Form */}
+        <div className="space-y-5">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">
-                  Email
-                </Label>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-base font-semibold text-gray-700">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                required
+                disabled={formLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-base font-semibold text-gray-700">
+                Password
+              </Label>
+              <div className="relative">
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
                   required
                   disabled={formLoading}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary pr-10"
-                    required
-                    disabled={formLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    disabled={formLoading}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    disabled={formLoading}
-                  />
-                  <Label htmlFor="remember" className="text-sm text-gray-600">
-                    Remember me
-                  </Label>
-                </div>
-                <Link
-                  href="/auth/user/forgot-password"
-                  className="text-sm text-easner-primary hover:text-easner-primary-600 hover:underline"
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  disabled={formLoading}
                 >
-                  Forgot password?
-                </Link>
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-
-              <Button
-                type="submit"
-                disabled={formLoading}
-                className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                {formLoading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                {"Don't have an account? "}
-                <Link
-                  href="/auth/user/register"
-                  className="text-easner-primary hover:text-easner-primary-600 hover:underline font-medium"
-                >
-                  Sign up
-                </Link>
-              </p>
             </div>
-          </CardContent>
-        </Card>
-      </main>
+
+            {/* Remember Me */}
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => setRememberMe(!rememberMe)}
+                className="flex items-center space-x-3"
+                disabled={formLoading}
+              >
+                <div className={`w-5 h-5 border-2 rounded ${rememberMe ? 'bg-easner-primary border-easner-primary' : 'border-gray-300 bg-white'} flex items-center justify-center`}>
+                  {rememberMe && <span className="text-white text-xs">✓</span>}
+                </div>
+                <Label htmlFor="remember" className="text-base font-medium text-gray-700 cursor-pointer">
+                  Remember me
+                </Label>
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={formLoading}
+              className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+            >
+              {formLoading ? "Signing In..." : "Sign In"}
+            </Button>
+
+            <div className="text-center">
+              <Link
+                href="/auth/user/forgot-password"
+                className="text-sm text-easner-primary hover:text-easner-primary-600"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">
+            Don't have an account?{" "}
+            <Link
+              href="/auth/user/register"
+              className="text-sm text-easner-primary font-semibold hover:text-easner-primary-600"
+            >
+              Sign Up
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

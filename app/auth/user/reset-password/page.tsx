@@ -7,10 +7,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BrandLogo } from "@/components/brand/brand-logo"
-import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 
 function ResetPasswordForm() {
@@ -114,98 +112,102 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-easner-primary-50 to-white p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <BrandLogo size="md" className="mx-auto mb-4" />
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="mb-5">
+            <Link href="/">
+              <BrandLogo size="lg" />
+            </Link>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
+          <p className="text-base text-gray-500">Enter your new password below</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-easner-primary" />
-              Reset Password
-            </CardTitle>
-            <CardDescription>Enter your new password below</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {isValidSession && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="newPassword"
-                      type={showPassword.new ? "text" : "password"}
-                      placeholder="Enter new password"
-                      value={passwords.newPassword}
-                      onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                      required
-                      disabled={isLoading}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      disabled={isLoading}
-                    >
-                      {showPassword.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showPassword.confirm ? "text" : "password"}
-                      placeholder="Confirm new password"
-                      value={passwords.confirmPassword}
-                      onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                      required
-                      disabled={isLoading}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      disabled={isLoading}
-                    >
-                      {showPassword.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Resetting..." : "Reset Password"}
-                </Button>
-              </form>
-            )}
-
-            <div className="mt-6 text-center">
-              <Link
-                href="/auth/user/login"
-                className="inline-flex items-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Sign In
-              </Link>
+        {/* Form */}
+        <div className="space-y-5">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {isValidSession && (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword" className="text-base font-semibold text-gray-700">
+                  New Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showPassword.new ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={passwords.newPassword}
+                    onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    disabled={isLoading}
+                  >
+                    {showPassword.new ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-base font-semibold text-gray-700">
+                  Confirm New Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword.confirm ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={passwords.confirmPassword}
+                    onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                    className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    disabled={isLoading}
+                  >
+                    {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Resetting..." : "Reset Password"}
+              </Button>
+            </form>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <Link
+              href="/auth/user/login"
+              className="inline-flex items-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Sign In
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
