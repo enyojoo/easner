@@ -197,7 +197,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
         <View style={styles.paymentContainer}>
           <View style={styles.paymentHeader}>
             <View style={styles.currencyIcon}>
-              <FlagComponent currencyCode={sendCurrency} size={16} />
+              <FlagComponent currencyCode={sendCurrency} size={24} />
             </View>
             <View style={styles.paymentInfo}>
               <Text style={styles.paymentTitle}>
@@ -427,10 +427,8 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   </View>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Text style={styles.instructionText}>
-                        Note Transaction ID{' '}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Text style={[styles.instructionText, { flex: 0 }]}>Note Transaction ID: </Text>
                       <Text style={styles.instructionBold}>{transactionId}</Text>
                       <TouchableOpacity
                         onPress={() => handleCopy(transactionId, "transactionIdInstructions")}
@@ -581,13 +579,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   currencyIcon: {
-    width: 32,
-    height: 32,
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#007ACC',
+    borderRadius: 8,
   },
   currencyFlag: {
     fontSize: 16,

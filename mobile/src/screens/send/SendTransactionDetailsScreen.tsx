@@ -415,13 +415,15 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         contentContainerStyle={styles.scrollContent}
       >
         {/* Transaction Status Header with Timer */}
-        {transaction && getTimerDisplay() && (
+        {transaction && (
           <View style={styles.statusHeaderWithTimer}>
             <Text style={styles.statusTitle}>Transaction Status</Text>
-            <View style={styles.timerContainer}>
-              <Ionicons name="time" size={16} color="#f59e0b" />
-              <Text style={styles.timerText}>{getTimerDisplay()}</Text>
-            </View>
+            {getTimerDisplay() && (
+              <View style={styles.timerContainer}>
+                <Ionicons name="time-outline" size={16} color="#ea580c" />
+                <Text style={styles.timerText}>{getTimerDisplay()}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -679,18 +681,13 @@ const styles = StyleSheet.create({
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
   },
   timerText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#f59e0b',
+    fontWeight: '400',
+    color: '#ea580c',
     marginLeft: 4,
     fontFamily: 'monospace',
-    flexShrink: 1,
   },
   transactionIdSection: {
     backgroundColor: '#ffffff',

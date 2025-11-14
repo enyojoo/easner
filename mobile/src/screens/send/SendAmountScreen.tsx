@@ -24,7 +24,7 @@ import { getCountryFlag } from '../../utils/flagUtils'
 
 export default function SendAmountScreen({ navigation }: NavigationProps) {
   const { currencies, exchangeRates, loading } = useUserData()
-  const { user } = useAuth()
+  const { user, userProfile } = useAuth()
   const [sendAmount, setSendAmount] = useState('100')
   const [sendCurrency, setSendCurrency] = useState('')
   const [receiveCurrency, setReceiveCurrency] = useState('')
@@ -46,23 +46,71 @@ export default function SendAmountScreen({ navigation }: NavigationProps) {
 
   // Set default currencies
   useEffect(() => {
-    if (currencies.length > 0 && !sendCurrency) {
-      // Set send currency to first available currency that can send
+    if (currencies.length > 0 && userProfile && !sendCurrency) {
+      // Prioritize user's base currency from profile, otherwise USD, then first available currency that can send
+      const userBaseCurrency = userProfile.profile?.base_currency || "USD"
+      const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
+      
+      if (availableSendCurrencies.length > 0) {
+        // Check if user's base currency is available and can send
+        const baseCurrencyExists = availableSendCurrencies.find((c) => c.code === userBaseCurrency)
+        let newSendCurrency: string
+        
+        if (baseCurrencyExists) {
+          newSendCurrency = userBaseCurrency
+        } else {
+          // Fallback to USD if available, otherwise first available
+          const usdCurrency = availableSendCurrencies.find((c) => c.code === "USD")
+          newSendCurrency = usdCurrency ? "USD" : availableSendCurrencies[0].code
+        }
+        
+        setSendCurrency(newSendCurrency)
+        
+        // Set receive currency to first available currency that can receive (and is not the send currency)
+        if (!receiveCurrency) {
+          const availableReceiveCurrencies = currencies.filter(
+            (c) => c.can_receive !== false && c.code !== newSendCurrency
+          )
+          if (availableReceiveCurrencies.length > 0) {
+            // Prefer NGN if available, otherwise first available
+            const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+            const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+            setReceiveCurrency(newReceiveCurrency)
+          }
+        }
+      }
+    } else if (currencies.length > 0 && !userProfile && !sendCurrency) {
+      // If no user profile, fallback to USD or first available
       const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
       if (availableSendCurrencies.length > 0) {
-        setSendCurrency(availableSendCurrencies[0].code)
+        const usdCurrency = availableSendCurrencies.find((c) => c.code === "USD")
+        const newSendCurrency = usdCurrency ? "USD" : availableSendCurrencies[0].code
+        setSendCurrency(newSendCurrency)
+        
+        if (!receiveCurrency) {
+          const availableReceiveCurrencies = currencies.filter(
+            (c) => c.can_receive !== false && c.code !== newSendCurrency
+          )
+          if (availableReceiveCurrencies.length > 0) {
+            const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+            const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+            setReceiveCurrency(newReceiveCurrency)
+          }
+        }
       }
-    }
-    if (currencies.length > 0 && !receiveCurrency) {
-      // Set receive currency to first available currency that can receive (and is not the send currency)
+    } else if (currencies.length > 0 && sendCurrency && !receiveCurrency) {
+      // Set receive currency if send currency is already set but receive currency is not
       const availableReceiveCurrencies = currencies.filter(
         (c) => c.can_receive !== false && c.code !== sendCurrency
       )
       if (availableReceiveCurrencies.length > 0) {
-        setReceiveCurrency(availableReceiveCurrencies[0].code)
+        // Prefer NGN if available, otherwise first available
+        const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+        const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+        setReceiveCurrency(newReceiveCurrency)
       }
     }
-  }, [currencies, sendCurrency])
+  }, [currencies, userProfile, sendCurrency, receiveCurrency])
 
   // Ensure receive currency can receive when currencies change
   useEffect(() => {

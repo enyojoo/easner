@@ -155,7 +155,7 @@ const FlagIcon = ({ currency }: { currency: Currency }) => {
 
   // If flag is a URL or path, render as img
   if (currency.flag.startsWith("http") || currency.flag.startsWith("/")) {
-    return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={20} height={20} />
+    return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={24} height={24} />
   }
 
   // Fallback to text
@@ -281,30 +281,52 @@ export default function UserSendPage() {
   // Set default currencies when data is loaded - only if not already set
   useEffect(() => {
     if (currencies.length > 0 && userProfile && !sendCurrency && !receiveCurrency) {
+      // Prioritize user's base currency from profile, otherwise USD, then first available currency that can send
       const userBaseCurrency = userProfile.base_currency || "USD"
-      const baseCurrencyExists = currencies.find((c) => c.code === userBaseCurrency && c.can_send !== false)
-
-      if (baseCurrencyExists) {
-        setSendCurrency(userBaseCurrency)
+      const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
+      
+      if (availableSendCurrencies.length > 0) {
+        // Check if user's base currency is available and can send
+        const baseCurrencyExists = availableSendCurrencies.find((c) => c.code === userBaseCurrency)
+        let newSendCurrency: string
+        
+        if (baseCurrencyExists) {
+          newSendCurrency = userBaseCurrency
+        } else {
+          // Fallback to USD if available, otherwise first available
+          const usdCurrency = availableSendCurrencies.find((c) => c.code === "USD")
+          newSendCurrency = usdCurrency ? "USD" : availableSendCurrencies[0].code
+        }
+        
+        setSendCurrency(newSendCurrency)
+        
         // Set receive currency to first available currency that can receive (and is not the send currency)
         const availableReceiveCurrencies = currencies.filter(
-          (c) => c.can_receive !== false && c.code !== userBaseCurrency
+          (c) => c.can_receive !== false && c.code !== newSendCurrency
         )
         if (availableReceiveCurrencies.length > 0) {
-          setReceiveCurrency(availableReceiveCurrencies[0].code)
+          // Prefer NGN if available, otherwise first available
+          const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+          const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+          setReceiveCurrency(newReceiveCurrency)
         }
-      } else {
-        // Fallback to first currency that can send
-        const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
-        if (availableSendCurrencies.length > 0) {
-          setSendCurrency(availableSendCurrencies[0].code)
-          // Set receive currency to first available currency that can receive (and is not the send currency)
-          const availableReceiveCurrencies = currencies.filter(
-            (c) => c.can_receive !== false && c.code !== availableSendCurrencies[0].code
-          )
-          if (availableReceiveCurrencies.length > 0) {
-            setReceiveCurrency(availableReceiveCurrencies[0].code)
-          }
+      }
+      setLoading(false)
+    } else if (currencies.length > 0 && !userProfile && !sendCurrency && !receiveCurrency) {
+      // If no user profile, fallback to USD or first available
+      const availableSendCurrencies = currencies.filter((c) => c.can_send !== false)
+      if (availableSendCurrencies.length > 0) {
+        const usdCurrency = availableSendCurrencies.find((c) => c.code === "USD")
+        const newSendCurrency = usdCurrency ? "USD" : availableSendCurrencies[0].code
+        setSendCurrency(newSendCurrency)
+        
+        const availableReceiveCurrencies = currencies.filter(
+          (c) => c.can_receive !== false && c.code !== newSendCurrency
+        )
+        if (availableReceiveCurrencies.length > 0) {
+          const ngnCurrency = availableReceiveCurrencies.find((c) => c.code === "NGN")
+          const newReceiveCurrency = ngnCurrency ? "NGN" : availableReceiveCurrencies[0].code
+          setReceiveCurrency(newReceiveCurrency)
         }
       }
       setLoading(false)
@@ -552,7 +574,7 @@ export default function UserSendPage() {
 
     // If flag is a URL or path, render as img
     if (currency.flag.startsWith("http") || currency.flag.startsWith("/")) {
-      return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={20} height={20} />
+      return <img src={currency.flag || "/placeholder.svg"} alt={`${currency.name} flag`} width={24} height={24} />
     }
 
     // Fallback to text
@@ -1458,7 +1480,7 @@ export default function UserSendPage() {
                     {/* Payment Method - Dynamic based on admin settings */}
                     <div className="bg-gradient-to-br from-easner-primary-50 to-blue-50 rounded-xl p-4 border border-easner-primary-100">
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-easner-primary rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 border border-easner-primary rounded-lg flex items-center justify-center">
                           {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
                         </div>
                         <div>
