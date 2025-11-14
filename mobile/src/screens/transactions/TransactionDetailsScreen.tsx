@@ -700,11 +700,10 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   amountText: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 36,
+    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 8,
-    lineHeight: 36,
   },
   transactionIdSection: {
     backgroundColor: '#ffffff',

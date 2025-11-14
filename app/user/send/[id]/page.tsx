@@ -6,7 +6,7 @@ import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Check, Clock, ExternalLink, XCircle, AlertTriangle } from "lucide-react"
+import { Check, Clock, ExternalLink, XCircle, AlertTriangle, Copy } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { transactionService, paymentMethodService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
@@ -29,6 +29,7 @@ function TransactionStatusPage() {
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
 
   // Load payment methods
   useEffect(() => {
@@ -357,6 +358,18 @@ function TransactionStatusPage() {
     return `${symbol}${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedStates((prev) => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (error) {
+      console.error("Failed to copy:", error)
+    }
+  }
+
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
     const month = date.toLocaleString("en-US", { month: "short" })
@@ -510,13 +523,21 @@ function TransactionStatusPage() {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex flex-col gap-1 leading-none">
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Transaction Status</span>
-                    <span className="text-3xl font-bold text-gray-900 leading-tight">
-                      {transaction && formatCurrency(transaction.send_amount, transaction.send_currency)}
-                    </span>
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-0 leading-none">
+                    <div className="flex flex-col gap-1 items-center sm:items-start">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Transaction Status</span>
+                      <span className="text-3xl font-bold text-gray-900 leading-tight">
+                        {transaction && formatCurrency(transaction.send_amount, transaction.send_currency)}
+                      </span>
+                      {transaction && getTimerDisplay() && (
+                        <div className="flex items-center justify-center sm:hidden text-orange-600 mt-2">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span className="font-mono text-sm">{getTimerDisplay()}</span>
+                        </div>
+                      )}
+                    </div>
                     {transaction && getTimerDisplay() && (
-                      <div className="flex items-center justify-center sm:justify-start text-orange-600 mt-2">
+                      <div className="hidden sm:flex items-center text-orange-600">
                         <Clock className="h-4 w-4 mr-1" />
                         <span className="font-mono text-sm">{getTimerDisplay()}</span>
                       </div>
@@ -529,8 +550,23 @@ function TransactionStatusPage() {
                   transaction.status === "processing" ||
                   transaction.status === "completed" ? (
                     <div className="pb-4 border-b">
-                      <p className="text-sm text-gray-600 mb-1">Transaction ID</p>
-                      <p className="font-mono text-sm">{transaction.transaction_id}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                        <span className="text-sm text-gray-600 text-center sm:text-left">Transaction ID</span>
+                        <div className="flex items-center justify-center sm:justify-end gap-2">
+                          <span className="font-mono text-sm text-gray-900">{transaction.transaction_id}</span>
+                          <button
+                            onClick={() => handleCopy(transaction.transaction_id, "transactionId")}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            title="Copy Transaction ID"
+                          >
+                            {copiedStates.transactionId ? (
+                              <Check className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <Copy className="h-3 w-3 text-gray-500" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
 
