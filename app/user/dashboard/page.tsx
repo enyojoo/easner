@@ -126,11 +126,11 @@ export default function UserDashboardPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
-  const recentTransactions = transactions?.slice(0, 3) || []
+  const recentTransactions = transactions?.slice(0, 2) || []
 
   return (
     <UserDashboardLayout>
-      <div className="space-y-5 sm:space-y-6">
+      <div className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
         {/* Page Header - Mobile Style */}
         <div className="bg-white p-5 sm:p-6 mb-5 sm:mb-6">
           <div className="flex items-center justify-between">

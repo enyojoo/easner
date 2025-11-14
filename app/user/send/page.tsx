@@ -787,11 +787,6 @@ export default function UserSendPage() {
   const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
 
-  const steps = [
-    { number: 1, title: "Amount", completed: currentStep > 1 },
-    { number: 2, title: "Recipient", completed: currentStep > 2 },
-    { number: 3, title: "Payment", completed: currentStep > 3 },
-  ]
 
   const TransactionSummary = () => (
     <Card className="sticky top-6">
@@ -900,50 +895,6 @@ export default function UserSendPage() {
     <UserDashboardLayout>
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between w-full">
-              {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center flex-1">
-                    {/* Step Circle */}
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
-                        step.completed
-                          ? "bg-green-500 text-white"
-                          : currentStep === step.number
-                            ? "bg-easner-primary text-white"
-                            : "bg-gray-200 text-gray-500"
-                      }`}
-                    >
-                      {step.completed ? <Check className="h-4 w-4" /> : step.number}
-                    </div>
-                    {/* Step Title */}
-                    <span
-                      className={`mt-2 text-[10px] sm:text-xs font-medium text-center ${
-                        step.completed || currentStep === step.number
-                          ? "text-gray-900"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {step.title}
-                    </span>
-                  </div>
-                  {/* Connecting Line */}
-                  {index < steps.length - 1 && (
-                    <div className="flex-1 mx-2 sm:mx-3 md:mx-4 h-0.5 bg-gray-200 relative -mt-5">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          step.completed ? "bg-green-500 w-full" : "bg-transparent w-0"
-                        }`}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">

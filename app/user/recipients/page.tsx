@@ -301,7 +301,6 @@ export default function UserRecipientsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currencyFilter, setCurrencyFilter] = useState("all")
   const [formData, setFormData] = useState({
     name: "",
     accountNumber: "",
@@ -321,8 +320,7 @@ export default function UserRecipientsPage() {
     const matchesSearch =
       recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       recipient.account_number.includes(searchTerm)
-    const matchesCurrency = currencyFilter === "all" || recipient.currency === currencyFilter
-    return matchesSearch && matchesCurrency
+    return matchesSearch
   })
 
   const handleAddRecipient = async () => {
@@ -486,31 +484,14 @@ export default function UserRecipientsPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex flex-col space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search recipients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                  <SelectTrigger className="w-full sm:w-32">
-                    <SelectValue placeholder="Currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Currency</SelectItem>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search recipients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -620,7 +601,7 @@ export default function UserRecipientsPage() {
             {filteredRecipients.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <p className="text-sm px-4">
-                  {searchTerm || currencyFilter !== "all"
+                  {searchTerm
                     ? "No recipients found matching your criteria."
                     : "No recipients added yet."}
                 </p>
