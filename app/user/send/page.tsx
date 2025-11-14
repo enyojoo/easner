@@ -900,8 +900,8 @@ export default function UserSendPage() {
     <UserDashboardLayout>
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Progress Indicator - Temporarily Hidden */}
-          {/* <div className="mb-8">
+          {/* Progress Indicator */}
+          <div className="mb-8">
             <div className="flex items-center justify-between w-full">
               {steps.map((step, index) => (
                 <div key={step.number} className="flex items-center flex-1">
@@ -942,7 +942,7 @@ export default function UserSendPage() {
                 </div>
               ))}
             </div>
-          </div> */}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}

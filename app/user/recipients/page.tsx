@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -301,7 +301,6 @@ export default function UserRecipientsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currencyFilter, setCurrencyFilter] = useState("all")
   const [formData, setFormData] = useState({
     name: "",
     accountNumber: "",
@@ -320,10 +319,19 @@ export default function UserRecipientsPage() {
   const filteredRecipients = recipients.filter((recipient) => {
     const matchesSearch =
       recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipient.account_number.includes(searchTerm)
-    const matchesCurrency = currencyFilter === "all" || recipient.currency === currencyFilter
-    return matchesSearch && matchesCurrency
+      recipient.bank_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (recipient.account_number && recipient.account_number.includes(searchTerm))
+    return matchesSearch
   })
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   const handleAddRecipient = async () => {
     if (!userProfile?.id) return
@@ -455,17 +463,33 @@ export default function UserRecipientsPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="p-4 sm:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
-            <p className="text-gray-600">Manage your saved recipients</p>
+      <div className="space-y-0">
+        {/* Header - Mobile Style */}
+        <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Recipients</h1>
+          <p className="text-base text-gray-600">Manage your saved recipients</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-5 sm:p-6 pb-3 sm:pb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search recipients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12 border-gray-300"
+            />
           </div>
+        </div>
+
+        {/* Add New Recipient Button */}
+        <div className="px-5 sm:px-6 mb-5 sm:mb-6">
           <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
             <DialogTrigger asChild>
-              <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Recipient
+              <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 h-12 text-base font-semibold">
+                <Plus className="h-5 w-5 mr-2" />
+                Add New Recipient
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] max-w-md mx-auto">
@@ -484,150 +508,117 @@ export default function UserRecipientsPage() {
           </Dialog>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search recipients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                  <SelectTrigger className="w-full sm:w-32">
-                    <SelectValue placeholder="Currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Currency</SelectItem>
-                    {currencies.map((currency) => (
-                      <SelectItem key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Recipients List */}
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-3 sm:space-y-4">
+          {filteredRecipients.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-base text-gray-600 mb-2">No recipients found</p>
+              <p className="text-sm text-gray-500">
+                {searchTerm
+                  ? "Try adjusting your search"
+                  : "Add a new recipient to get started"}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {filteredRecipients.map((recipient) => (
-                <div
-                  key={recipient.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-easner-primary-200 transition-colors gap-4 sm:gap-0"
-                >
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className="w-12 h-12 bg-easner-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
-                      <span className="text-easner-primary font-semibold text-sm">
-                        {recipient.full_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </span>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-4 rounded-sm overflow-hidden">
-                        <div
-                          dangerouslySetInnerHTML={{ __html: getCurrencyFlag(recipient.currency) }}
-                          className="w-full h-full"
-                        />
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{recipient.full_name}</p>
-                      <div className="text-sm text-gray-500 space-y-0.5">
-                        {(() => {
-                          const accountConfig = getAccountTypeConfigFromCurrency(recipient.currency)
-                          const accountType = accountConfig.accountType
+          ) : (
+            filteredRecipients.map((recipient) => {
+              const accountConfig = getAccountTypeConfigFromCurrency(recipient.currency)
+              const accountType = accountConfig.accountType
+              const accountIdentifier =
+                accountType === "euro" && recipient.iban
+                  ? formatFieldValue(accountType, "iban", recipient.iban)
+                  : recipient.account_number
 
-                          return (
-                            <>
-                              {/* Show account number for US/UK/Generic, or IBAN for EURO */}
-                              {accountType === "euro" && recipient.iban ? (
-                                <p className="font-mono text-xs truncate">
-                                  {formatFieldValue(accountType, "iban", recipient.iban)}
-                                </p>
-                              ) : recipient.account_number ? (
-                                <p className="font-mono text-xs truncate">
-                                  {recipient.account_number}
-                      </p>
-                              ) : null}
-                              <p className="truncate">{recipient.bank_name}</p>
-                            </>
-                          )
-                        })()}
+              return (
+                <Card key={recipient.id} className="border border-blue-100 hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center flex-1 min-w-0">
+                        {/* Avatar with Flag */}
+                        <div className="relative mr-3 sm:mr-4 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center">
+                            <span className="text-base font-bold text-blue-700">
+                              {getInitials(recipient.full_name)}
+                            </span>
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm overflow-hidden border border-white">
+                            <div
+                              dangerouslySetInnerHTML={{ __html: getCurrencyFlag(recipient.currency) }}
+                              className="w-full h-full"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Recipient Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base sm:text-lg font-bold text-gray-900 mb-1 truncate">
+                            {recipient.full_name}
+                          </p>
+                          {accountIdentifier && (
+                            <p className="text-xs font-mono text-gray-600 mb-1 truncate">
+                              {accountIdentifier}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-600 truncate">{recipient.bank_name}</p>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-3 ml-3 flex-shrink-0">
+                        <Dialog
+                          open={editingRecipient?.id === recipient.id}
+                          onOpenChange={(open) => {
+                            if (!open) {
+                              setEditingRecipient(null)
+                              resetForm()
+                            }
+                          }}
+                        >
+                          <DialogTrigger asChild>
+                            <button
+                              onClick={() => handleEditRecipient(recipient)}
+                              className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+                              disabled={isSubmitting}
+                            >
+                              <Edit className="h-5 w-5 text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[95vw] max-w-md mx-auto">
+                            <DialogHeader>
+                              <DialogTitle>Edit Recipient</DialogTitle>
+                            </DialogHeader>
+                            <RecipientForm
+                              isEdit
+                              formData={formData}
+                              setFormData={setFormData}
+                              error={error}
+                              isSubmitting={isSubmitting}
+                              currencies={currencies}
+                              onSubmit={handleUpdateRecipient}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <button
+                          onClick={() => handleDeleteRecipient(recipient.id)}
+                          disabled={deletingId === recipient.id}
+                          className="p-2 rounded-md bg-gray-100 hover:bg-red-50 transition-colors"
+                        >
+                          {deletingId === recipient.id ? (
+                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                          ) : (
+                            <Trash2 className="h-5 w-5 text-red-600" />
+                          )}
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end space-y-1">
-                    <div className="flex items-center justify-end space-x-2 sm:justify-start">
-                      <Dialog
-                        open={!!editingRecipient}
-                        onOpenChange={(open) => {
-                          if (!open) {
-                            setEditingRecipient(null)
-                            resetForm()
-                          }
-                        }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditRecipient(recipient)}
-                            className="h-10 w-10 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="w-[95vw] max-w-md mx-auto">
-                          <DialogHeader>
-                            <DialogTitle>Edit Recipient</DialogTitle>
-                          </DialogHeader>
-                          <RecipientForm
-                            isEdit
-                            formData={formData}
-                            setFormData={setFormData}
-                            error={error}
-                            isSubmitting={isSubmitting}
-                            currencies={currencies}
-                            onSubmit={handleUpdateRecipient}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteRecipient(recipient.id)}
-                        disabled={deletingId === recipient.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
-                      >
-                        {deletingId === recipient.id ? (
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {deleteErrors[recipient.id] && <p className="text-xs text-red-600">{deleteErrors[recipient.id]}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {filteredRecipients.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm px-4">
-                  {searchTerm || currencyFilter !== "all"
-                    ? "No recipients found matching your criteria."
-                    : "No recipients added yet."}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    {deleteErrors[recipient.id] && (
+                      <p className="text-xs text-red-600 mt-2">{deleteErrors[recipient.id]}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })
+          )}
+        </div>
       </div>
     </UserDashboardLayout>
   )
