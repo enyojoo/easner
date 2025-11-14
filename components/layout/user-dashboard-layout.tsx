@@ -8,7 +8,6 @@ import { LayoutDashboard, Send, History, Users, User, LogOut, X, MoreHorizontal 
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface UserDashboardLayoutProps {
   children: React.ReactNode
@@ -29,9 +28,6 @@ const bottomNavItems = [
   { name: "Recipients", href: "/user/recipients", icon: Users },
 ]
 
-const moreMenuItems = [
-  { name: "Profile", href: "/user/profile", icon: User },
-]
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
@@ -149,28 +145,17 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               )
             })}
 
-            {/* More Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex flex-col items-center justify-center p-2 min-w-0 flex-1">
-                  <MoreHorizontal
-                    className={`h-6 w-6 ${
-                      pathname === "/user/profile" ? "text-easner-primary" : "text-gray-600"
-                    }`}
-                  />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="top" className="mb-2">
-                {moreMenuItems.map((item) => (
-                  <DropdownMenuItem key={item.name} asChild>
-                    <Link href={item.href} className="flex items-center">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {item.name}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* More Menu - Direct link to Profile */}
+            <Link
+              href="/user/profile"
+              className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
+            >
+              <MoreHorizontal
+                className={`h-6 w-6 ${
+                  pathname === "/user/profile" ? "text-easner-primary" : "text-gray-600"
+                }`}
+              />
+            </Link>
           </div>
         </div>
       </div>
