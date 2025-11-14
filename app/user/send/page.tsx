@@ -166,7 +166,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import {
   ChevronDown,
   Upload,
@@ -792,7 +791,6 @@ export default function UserSendPage() {
     { number: 1, title: "Amount to Send", completed: currentStep > 1 },
     { number: 2, title: "Add Recipient", completed: currentStep > 2 },
     { number: 3, title: "Make Payment", completed: currentStep > 3 },
-    { number: 4, title: "Transaction Status", completed: false },
   ]
 
   const TransactionSummary = () => (
@@ -904,34 +902,50 @@ export default function UserSendPage() {
         <div className="max-w-6xl mx-auto">
           {/* Progress Indicator */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center">
+            <div className="flex flex-col items-center gap-4">
+              {/* Step Circles and Connecting Lines */}
+              <div className="flex items-center justify-center w-full">
+                {steps.map((step, index) => (
+                  <div key={step.number} className="flex items-center">
+                    <div
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
+                        step.completed
+                          ? "bg-green-500 text-white"
+                          : currentStep === step.number
+                            ? "bg-easner-primary text-white"
+                            : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {step.completed ? <Check className="h-4 w-4 sm:h-5 sm:w-5" /> : step.number}
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className="w-12 sm:w-16 md:w-24 h-0.5 bg-gray-200 mx-2 sm:mx-3 md:mx-4">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {/* Step Titles */}
+              <div className="flex items-center justify-center w-full gap-4 sm:gap-8 md:gap-12">
+                {steps.map((step, index) => (
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.completed
-                        ? "bg-green-500 text-white"
-                        : currentStep === step.number
-                          ? "bg-easner-primary text-white"
-                          : "bg-gray-200 text-gray-600"
+                    key={step.number}
+                    className={`flex-1 text-center ${
+                      step.completed || currentStep === step.number
+                        ? "text-gray-900"
+                        : "text-gray-500"
                     }`}
                   >
-                    {step.completed ? <Check className="h-4 w-4" /> : step.number}
+                    <span className="text-xs sm:text-sm font-medium">{step.title}</span>
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
-                  {index < steps.length - 1 && (
-                    <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
-                        }`}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            <Progress value={(currentStep / 4) * 100} className="h-2" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

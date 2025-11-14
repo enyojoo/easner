@@ -5,7 +5,6 @@ import { useState, useEffect, memo } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Check, Clock, ExternalLink, XCircle, AlertTriangle, Copy } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { transactionService, paymentMethodService } from "@/lib/database"
@@ -262,12 +261,6 @@ function TransactionStatusPage() {
     }
   }
 
-  const steps = [
-    { number: 1, title: "Amount to Send", completed: true },
-    { number: 2, title: "Add Recipient", completed: true },
-    { number: 3, title: "Make Payment", completed: true },
-    { number: 4, title: "Transaction Status", completed: transaction?.status === "completed" },
-  ]
 
   const getStatusSteps = (currentStatus: string) => {
     // If transaction is failed or cancelled, show different steps
@@ -486,38 +479,6 @@ function TransactionStatusPage() {
     <UserDashboardLayout>
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
-          {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div key={step.number} className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.completed
-                        ? "bg-green-500 text-white"
-                        : step.number === 4
-                          ? "bg-easner-primary text-white"
-                          : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {step.completed ? <Check className="h-4 w-4" /> : step.number}
-                  </div>
-                  <span className="ml-2 text-sm font-medium text-gray-900 hidden sm:block">{step.title}</span>
-                  {index < steps.length - 1 && (
-                    <div className="w-12 h-0.5 bg-gray-200 mx-4 hidden sm:block">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          step.completed ? "bg-green-500 w-full" : "bg-gray-200 w-0"
-                        }`}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <Progress value={100} className="h-2" />
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
