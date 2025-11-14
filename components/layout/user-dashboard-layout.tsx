@@ -70,6 +70,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  prefetch={true}
                   className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                     isActive
                       ? "bg-easner-primary-100 text-easner-primary"
@@ -121,6 +122,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   <Link
                     key={item.name}
                     href={item.href}
+                    prefetch={true}
                     className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                   >
                     <div
@@ -138,6 +140,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  prefetch={true}
                   className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                 >
                   <item.icon className={`h-6 w-6 ${isActive ? "text-easner-primary" : "text-gray-600"}`} />
@@ -148,6 +151,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
             {/* More Menu - Direct link to Profile */}
             <Link
               href="/user/profile"
+              prefetch={true}
               className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
             >
               <MoreHorizontal

@@ -11,6 +11,7 @@ import { transactionService, paymentMethodService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
 import { TransactionTimeline } from "@/components/transaction-timeline"
+import { TransactionDetailsSkeleton } from "@/components/transaction-details-skeleton"
 import { supabase } from "@/lib/supabase"
 import type { Transaction } from "@/types"
 
@@ -457,16 +458,7 @@ function TransactionStatusPage() {
   if (authLoading || (!hasAttemptedLoad && !transaction)) {
     return (
       <UserDashboardLayout>
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-easner-primary mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading transaction...</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <TransactionDetailsSkeleton />
       </UserDashboardLayout>
     )
   }

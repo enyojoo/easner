@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle, RefreshCw } from "lucide-react"
@@ -62,6 +63,8 @@ interface DefaultErrorFallbackProps {
 }
 
 function DefaultErrorFallback({ error, onReset }: DefaultErrorFallbackProps) {
+  const router = useRouter()
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -88,7 +91,7 @@ function DefaultErrorFallback({ error, onReset }: DefaultErrorFallbackProps) {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = "/"}
+              onClick={() => router.push("/")}
               className="w-full"
             >
               Go Home

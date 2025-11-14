@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable Turbopack for Next.js 15
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+  // Enable Turbopack for Next.js 15 (already enabled via --turbo flag in dev script)
   // Enable compression
   compress: true,
   // Optimize images
@@ -21,7 +13,18 @@ const nextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+    // Enable optimized package imports for better performance
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
+  // Optimize production builds
+  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -449,24 +449,24 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         ) : (
           /* Show current UI for failed/cancelled statuses */
           <>
-            {/* Status Header */}
-            <View style={styles.statusHeader}>
-              <View style={[
-                styles.statusIconContainer,
-                {
+        {/* Status Header */}
+        <View style={styles.statusHeader}>
+          <View style={[
+            styles.statusIconContainer,
+            {
                   backgroundColor: transaction.status === 'failed'
-                    ? '#fef2f2'
+                  ? '#fef2f2'
                     : '#f3f4f6'
-                }
-              ]}>
-                <Ionicons
+            }
+          ]}>
+            <Ionicons
                   name={transaction.status === 'failed' ? 'close-circle' : 'time'}
-                  size={32}
+              size={32}
                   color={transaction.status === 'failed' ? '#dc2626' : '#6b7280'}
-                />
-              </View>
-              <Text style={styles.statusTitle}>{statusMessage.title}</Text>
-              <Text style={styles.statusDescription}>{statusMessage.description}</Text>
+            />
+      </View>
+          <Text style={styles.statusTitle}>{statusMessage.title}</Text>
+          <Text style={styles.statusDescription}>{statusMessage.description}</Text>
               
               {/* Transaction ID and Created for failed/cancelled */}
               <View style={styles.failedTransactionDetails}>
@@ -481,22 +481,22 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
                   </Text>
                 </View>
               </View>
-            </View>
-            
-            {/* Status Information */}
-            <View style={[
-              styles.statusInfo,
-              {
+        </View>
+        
+        {/* Status Information */}
+        <View style={[
+          styles.statusInfo,
+          {
                 backgroundColor: transaction.status === 'failed' ? '#fef2f2' : '#f3f4f6'
-              }
-            ]}>
-              <Text style={styles.statusInfoLabel}>
+          }
+        ]}>
+          <Text style={styles.statusInfoLabel}>
                 {transaction.status === 'failed' ? 'Failed:' : 'Status:'}
-              </Text>
-              <Text style={styles.statusInfoValue}>
+          </Text>
+          <Text style={styles.statusInfoValue}>
                 {formatTimestamp(transaction.updated_at)}
-              </Text>
-            </View>
+          </Text>
+        </View>
           </>
         )}
         

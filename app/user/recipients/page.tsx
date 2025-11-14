@@ -13,6 +13,7 @@ import { Plus, Edit, Trash2, Search } from "lucide-react"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
+import { RecipientsSkeleton } from "@/components/recipients-skeleton"
 import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
@@ -297,7 +298,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
 
 export default function UserRecipientsPage() {
   const { userProfile } = useAuth()
-  const { recipients, currencies, refreshRecipients } = useUserData()
+  const { recipients, currencies, loading, refreshRecipients } = useUserData()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingRecipient, setEditingRecipient] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -449,6 +450,15 @@ export default function UserRecipientsPage() {
       setEditingRecipient(null)
       resetForm()
     }
+  }
+
+  // Show skeleton while data is loading
+  if (loading || !userProfile || !currencies?.length) {
+    return (
+      <UserDashboardLayout>
+        <RecipientsSkeleton />
+      </UserDashboardLayout>
+    )
   }
 
   return (

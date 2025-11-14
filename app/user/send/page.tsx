@@ -186,6 +186,7 @@ import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
+import { SendPageSkeleton } from "@/components/send-page-skeleton"
 import type { Currency } from "@/types"
 import {
   getAccountTypeConfigFromCurrency,
@@ -848,14 +849,7 @@ export default function UserSendPage() {
   if (loading) {
     return (
       <UserDashboardLayout>
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded mb-4"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </div>
-          </div>
-        </div>
+        <SendPageSkeleton />
       </UserDashboardLayout>
     )
   }
@@ -867,7 +861,7 @@ export default function UserSendPage() {
           <div className="max-w-6xl mx-auto">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-700">{error}</p>
-              <Button onClick={() => window.location.reload()} className="mt-2">
+              <Button onClick={() => router.refresh()} className="mt-2">
                 Retry
               </Button>
             </div>

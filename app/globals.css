@@ -87,8 +87,15 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    /* Smooth transitions for better UX */
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
   
   /* Ensure cursor is visible on mobile inputs */

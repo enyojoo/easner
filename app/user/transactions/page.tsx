@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { useUserData } from "@/hooks/use-user-data"
+import { TransactionsSkeleton } from "@/components/transactions-skeleton"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 
 interface Transaction {
@@ -26,8 +28,18 @@ interface Transaction {
 }
 
 export default function UserTransactionsPage() {
+  const { userProfile } = useAuth()
   const { transactions, currencies, loading } = useUserData()
   const [searchTerm, setSearchTerm] = useState("")
+
+  // Show skeleton while data is loading
+  if (loading || !userProfile || !currencies?.length) {
+    return (
+      <UserDashboardLayout>
+        <TransactionsSkeleton />
+      </UserDashboardLayout>
+    )
+  }
 
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
