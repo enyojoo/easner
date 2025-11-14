@@ -90,6 +90,28 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Ensure cursor is visible on mobile inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  textarea {
+    caret-color: hsl(var(--foreground));
+  }
+  
+  /* Ensure cursor is visible on mobile inputs when focused */
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  textarea:focus {
+    caret-color: hsl(var(--easner-primary));
+  }
 }
 
 @layer utilities {

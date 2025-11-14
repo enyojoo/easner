@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, Users, User, HelpCircle, LogOut, X, MoreHorizontal } from "lucide-react"
+import { LayoutDashboard, Send, History, Users, User, LogOut, X, MoreHorizontal } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -20,7 +20,6 @@ const navigation = [
   { name: "Transactions", href: "/user/transactions", icon: History },
   { name: "Recipients", href: "/user/recipients", icon: Users },
   { name: "Profile", href: "/user/profile", icon: User },
-  { name: "Support", href: "/user/support", icon: HelpCircle },
 ]
 
 const bottomNavItems = [
@@ -32,7 +31,6 @@ const bottomNavItems = [
 
 const moreMenuItems = [
   { name: "Profile", href: "/user/profile", icon: User },
-  { name: "Support", href: "/user/support", icon: HelpCircle },
 ]
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
@@ -157,7 +155,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                 <button className="flex flex-col items-center justify-center p-2 min-w-0 flex-1">
                   <MoreHorizontal
                     className={`h-6 w-6 ${
-                      ["/user/profile", "/user/support"].includes(pathname) ? "text-easner-primary" : "text-gray-600"
+                      pathname === "/user/profile" ? "text-easner-primary" : "text-gray-600"
                     }`}
                   />
                 </button>
@@ -171,10 +169,6 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

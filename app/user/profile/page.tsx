@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,13 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Mail, Edit } from "lucide-react"
+import { Mail, Pencil, ChevronRight } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService } from "@/lib/database"
 import { useUserData } from "@/hooks/use-user-data"
 
 export default function UserProfilePage() {
-  const { user, userProfile, refreshUserProfile } = useAuth()
+  const router = useRouter()
+  const { user, userProfile, refreshUserProfile, signOut } = useAuth()
   const { transactions, currencies, exchangeRates } = useUserData()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -148,190 +150,277 @@ export default function UserProfilePage() {
     return currencies.find((c) => c.code === profileData.baseCurrency)
   }
 
+  const formatNumber = (num: number) => {
+    // Values less than 1,000: show with decimals (e.g., 12.50)
+    if (num < 1000) {
+      return num.toFixed(2)
+    }
+    
+    // Values 1,000 to 9,999: show as whole numbers (e.g., 1,000, 1,500)
+    if (num < 10000) {
+      return Math.round(num).toLocaleString()
+    }
+    
+    // Values 10,000 and above: apply K/M/B/T rounding
+    if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T'
+    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
+    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
+    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
+    return num.toFixed(0)
+  }
+
   const formatCurrency = (amount: number, currency: string) => {
     const currencyInfo = currencies.find((c) => c.code === currency)
-    return `${currencyInfo?.symbol || ""}${amount.toLocaleString()}`
+    const formattedNumber = formatNumber(amount)
+    return `${currencyInfo?.symbol || ""}${formattedNumber}`
+  }
+
+  const handleSignOut = async () => {
+    if (confirm("Are you sure you want to sign out?")) {
+      await signOut()
+      router.push("/auth/user/login")
+    }
+  }
+
+  const handleSupport = () => {
+    router.push("/user/support")
+  }
+
+  const handlePrivacy = () => {
+    window.open("https://www.easner.com/privacy", "_blank")
+  }
+
+  const handleTerms = () => {
+    window.open("https://www.easner.com/terms", "_blank")
   }
 
   return (
     <UserDashboardLayout>
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage your account information</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Settings</h1>
+            <p className="text-base text-gray-500">Manage your account information</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Profile</CardTitle>
-                  {!isEditingProfile && (
+        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
+          {/* Profile Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold">Profile</CardTitle>
+                {!isEditingProfile ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingProfile(true)}
+                    className="bg-blue-50 border-blue-200 hover:bg-blue-100"
+                  >
+                    <Pencil className="h-4 w-4 mr-2 text-easner-primary" />
+                    <span className="text-easner-primary font-semibold">Edit</span>
+                  </Button>
+                ) : (
+                  <div className="flex gap-3">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsEditingProfile(true)}
-                      className="bg-transparent"
+                      onClick={handleCancelEdit}
+                      disabled={loading}
+                      className="bg-gray-50"
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      Discard
                     </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {isEditingProfile ? (
-                  <>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label htmlFor="firstName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
-                        <Input
-                          id="firstName"
-                          value={editProfileData.firstName}
-                          onChange={(e) => setEditProfileData({ ...editProfileData, firstName: e.target.value })}
-                          disabled={loading}
-                          className="font-medium"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="lastName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          value={editProfileData.lastName}
-                          onChange={(e) => setEditProfileData({ ...editProfileData, lastName: e.target.value })}
-                          disabled={loading}
-                          className="font-medium"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <Label htmlFor="email" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
-                        <Input id="email" type="email" value={editProfileData.email} disabled className="bg-gray-50 font-medium" />
-                        <p className="text-xs text-gray-500">Email cannot be changed</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="phone" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={editProfileData.phone}
-                          onChange={(e) => setEditProfileData({ ...editProfileData, phone: e.target.value })}
-                          disabled={loading}
-                          className="font-medium"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="baseCurrency" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
-                      <Select
-                        value={editProfileData.baseCurrency}
-                        onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
-                        disabled={loading}
-                      >
-                        <SelectTrigger className="font-medium">
-                          <SelectValue placeholder="Select base currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currencies.map((currency) => (
-                            <SelectItem key={currency.code} value={currency.code}>
-                              <div className="flex items-center gap-3">
-                                <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
-                                <div className="font-medium">{currency.code}</div>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500">
-                        Used for reporting your total sent amount
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handleProfileUpdate}
-                        disabled={loading}
-                        className="bg-easner-primary hover:bg-easner-primary-600"
-                      >
-                        {loading ? "Saving..." : "Save"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                        className="bg-transparent"
-                      >
-                        Discard
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
-                        <p className="font-medium text-gray-900">{profileData.firstName || "Not set"}</p>
-                      </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
-                        <p className="font-medium text-gray-900">{profileData.lastName || "Not set"}</p>
-                      </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
-                        <p className="font-medium text-gray-900">{profileData.email}</p>
-                      </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
-                        <p className="font-medium text-gray-900">{profileData.phone || "Not set"}</p>
-                      </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
-                      <div className="flex items-center gap-2">
-                        <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag_svg || "" }} />
-                        <span className="font-semibold text-gray-900">{getSelectedCurrency()?.code}</span>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        Used for reporting your total sent amount
-                      </p>
-                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleProfileUpdate}
+                      disabled={loading}
+                      className="bg-easner-primary hover:bg-easner-primary-600"
+                    >
+                      {loading ? "Saving..." : "Save"}
+                    </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              {isEditingProfile ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="firstName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
+                      <Input
+                        id="firstName"
+                        value={editProfileData.firstName}
+                        onChange={(e) => setEditProfileData({ ...editProfileData, firstName: e.target.value })}
+                        disabled={loading}
+                        className="font-medium"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="lastName" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={editProfileData.lastName}
+                        onChange={(e) => setEditProfileData({ ...editProfileData, lastName: e.target.value })}
+                        disabled={loading}
+                        className="font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="email" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
+                    <Input id="email" type="email" value={editProfileData.email} disabled className="bg-gray-50 font-medium" />
+                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="phone" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={editProfileData.phone}
+                      onChange={(e) => setEditProfileData({ ...editProfileData, phone: e.target.value })}
+                      disabled={loading}
+                      className="font-medium"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="baseCurrency" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
+                    <Select
+                      value={editProfileData.baseCurrency}
+                      onValueChange={(value) => setEditProfileData({ ...editProfileData, baseCurrency: value })}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="font-medium">
+                        <SelectValue placeholder="Select base currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            <div className="flex items-center gap-3">
+                              <div dangerouslySetInnerHTML={{ __html: currency.flag_svg }} />
+                              <div className="font-medium">{currency.code}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Used for reporting your total sent amount
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">First Name</Label>
+                    <p className="text-base font-medium text-gray-900 pt-2">{profileData.firstName || "Not set"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Last Name</Label>
+                    <p className="text-base font-medium text-gray-900 pt-2">{profileData.lastName || "Not set"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Email Address</Label>
+                    <p className="text-base font-medium text-gray-900 pt-2">{profileData.email}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Phone Number</Label>
+                    <p className="text-base font-medium text-gray-900 pt-2">{profileData.phone || "Not set"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-normal text-gray-500 uppercase tracking-wide">Base Currency</Label>
+                    <div className="flex items-center gap-2 pt-2">
+                      <div dangerouslySetInnerHTML={{ __html: getSelectedCurrency()?.flag_svg || "" }} />
+                      <span className="text-base font-semibold text-gray-900">{getSelectedCurrency()?.code}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Used for reporting your total sent amount
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Account Status Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Email</span>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                    {user?.email_confirmed_at ? "Verified" : "Pending"}
-                  </Badge>
+          {/* Status Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-gray-700">Email</span>
                 </div>
-                <div className="border-t pt-4 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Member since</span>
-                    <span>{userStats.memberSince}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total transactions</span>
-                    <span>{userStats.totalTransactions}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total sent</span>
-                    <span>{formatCurrency(userStats.totalSent, profileData.baseCurrency)}</span>
-                  </div>
+                <Badge className={`${user?.email_confirmed_at ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"} hover:bg-opacity-100`}>
+                  {user?.email_confirmed_at ? "Verified" : "Pending"}
+                </Badge>
+              </div>
+              <div className="border-t border-gray-200 pt-3 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Member since</span>
+                  <span className="text-sm font-medium text-gray-900">{userStats.memberSince}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Total transactions</span>
+                  <span className="text-sm font-medium text-gray-900">{userStats.totalTransactions}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Total sent</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCurrency(userStats.totalSent, profileData.baseCurrency)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* App Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">App</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-0 pt-4">
+              <button
+                onClick={handleSupport}
+                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-base text-gray-900">Support</span>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </button>
+              <button
+                onClick={handlePrivacy}
+                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-base text-gray-900">Privacy Policy</span>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </button>
+              <button
+                onClick={handleTerms}
+                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-base text-gray-900">Terms of Service</span>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </button>
+            </CardContent>
+          </Card>
+
+          {/* Sign Out Section - Mobile Only */}
+          <Card className="lg:hidden">
+            <CardContent className="pt-6">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center justify-between py-4"
+              >
+                <span className="text-base text-red-600 font-medium">Sign Out</span>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </button>
+            </CardContent>
+          </Card>
+
+          {/* App Version */}
+          <div className="text-center py-5">
+            <p className="text-sm text-gray-400">Version 1.0.0</p>
           </div>
         </div>
       </div>
