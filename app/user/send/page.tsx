@@ -898,11 +898,12 @@ export default function UserSendPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {/* Step 1: Amount to Send */}
+              {/* Step 1: Send Money */}
               {currentStep === 1 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Amount to Send</CardTitle>
+                    <CardTitle>Send Money</CardTitle>
+                    <p className="text-base text-gray-500 mt-1">Enter amount and select currencies</p>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* You Send Section */}
