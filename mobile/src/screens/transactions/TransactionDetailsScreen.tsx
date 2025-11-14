@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Linking,
+  Clipboard,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
@@ -18,15 +19,18 @@ import { transactionService, TransactionData } from '../../lib/transactionServic
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { analytics } from '../../lib/analytics'
+import { TransactionTimeline } from '../../components/TransactionTimeline'
 
 export default function TransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
-  const { refreshTransactions, currencies } = useUserData()
+  const { refreshTransactions, currencies, paymentMethods } = useUserData()
   const insets = useSafeAreaInsets()
   const [transaction, setTransaction] = useState<TransactionData | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
+  const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
 
   const { transactionId, fromScreen } = route.params || {}
 
@@ -40,6 +44,20 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
   useEffect(() => {
     analytics.trackScreenView('TransactionDetails')
   }, [])
+
+  // Initialize timer duration from payment method when transaction is loaded
+  useEffect(() => {
+    if (transaction && paymentMethods.length > 0) {
+      const getDefaultPaymentMethod = (currency: string) => {
+        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === 'active')
+        return methods.find((pm) => pm.is_default) || methods[0]
+      }
+
+      const defaultMethod = getDefaultPaymentMethod(transaction.send_currency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimerDuration(timerSeconds)
+    }
+  }, [transaction, paymentMethods])
 
   // Update current time every second
   useEffect(() => {
@@ -202,12 +220,78 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     const numAmount = typeof amount === 'string' ? Number.parseFloat(amount) : amount
     const currencyData = currencies.find((c) => c.code === currency)
     const symbol = currencyData?.symbol || currency
-    return `${symbol}${numAmount.formatTimestamp('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `${symbol}${numAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  // Calculate elapsed time in seconds
+  const getElapsedTime = (): number => {
+    if (!transaction) return 0
+    
+    const createdAt = new Date(transaction.created_at).getTime()
+    
+    if (transaction.status === 'completed') {
+      // For completed, use completed_at or updated_at
+      const completedAt = transaction.completed_at 
+        ? new Date(transaction.completed_at).getTime()
+        : new Date(transaction.updated_at).getTime()
+      return Math.floor((completedAt - createdAt) / 1000)
+    } else {
+      // For pending/processing, use current time
+      return Math.floor((currentTime - createdAt) / 1000)
+    }
+  }
+
+  // Calculate remaining time for pending/processing
+  const getRemainingTime = (): number => {
+    const elapsed = getElapsedTime()
+    const remaining = timerDuration - elapsed
+    return Math.max(0, remaining)
+  }
+
+  // Calculate delay for completed transactions or when timer has finished
+  const getDelay = (): number => {
+    if (!transaction) return 0
+    const elapsed = getElapsedTime()
+    const delay = elapsed - timerDuration
+    return Math.max(0, delay)
+  }
+
+  // Get timer display text
+  const getTimerDisplay = (): string | null => {
+    if (!transaction) return null
+    
+    // Don't show timer for failed/cancelled
+    if (transaction.status === 'failed' || transaction.status === 'cancelled') {
+      return null
+    }
+
+    if (transaction.status === 'completed') {
+      const elapsed = getElapsedTime()
+      const delay = getDelay()
+      
+      if (delay > 0) {
+        return `Took ${formatTime(elapsed)} • Delayed ${formatTime(delay)}`
+      } else {
+        return `Took ${formatTime(elapsed)}`
+      }
+    } else {
+      // Pending or processing
+      const remaining = getRemainingTime()
+      const delay = getDelay()
+      
+      // If timer has finished (remaining <= 0), show delayed time
+      if (remaining <= 0 && delay > 0) {
+        return `Delayed ${formatTime(delay)}`
+      }
+      
+      // Otherwise show countdown
+      return `Time left ${formatTime(remaining)}`
+    }
   }
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString)
-    const month = date.formatTimestamp('en-US', { month: 'short' })
+    const month = date.toLocaleString('en-US', { month: 'short' })
     const day = date.getDate().toString().padStart(2, '0')
     const year = date.getFullYear()
     const hours = date.getHours()
@@ -237,6 +321,17 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
     Alert.alert('Contact Support', 'Support functionality will be implemented')
   }
 
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await Clipboard.setString(text)
+      setCopiedStates(prev => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy to clipboard')
+    }
+  }
 
   if (error) {
     return (
@@ -304,78 +399,106 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
         }
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Status Header */}
-        <View style={styles.statusHeader}>
-          <View style={[
-            styles.statusIconContainer,
-            {
-              backgroundColor: statusMessage.isCompleted
-                ? '#dcfce7'
-                : transaction.status === 'failed'
-                  ? '#fef2f2'
-                  : isOverdue && transaction.status !== 'completed'
-                    ? '#fff7ed'
-                    : '#fef3c7'
-            }
-          ]}>
-            <Ionicons
-              name={
-                statusMessage.isCompleted
-                  ? 'checkmark-circle'
-                  : transaction.status === 'failed'
-                    ? 'close-circle'
-                    : isOverdue && transaction.status !== 'completed'
-                      ? 'warning'
-                      : 'time'
+        {/* Transaction Status Header with Amount */}
+        {transaction && (
+          <View style={styles.statusHeaderWithTimer}>
+            <Text style={styles.statusTitleSmall}>Transaction Status</Text>
+            <Text style={styles.amountText}>
+              {formatCurrency(transaction.send_amount, transaction.send_currency)}
+            </Text>
+            {getTimerDisplay() && (
+              <View style={styles.timerContainer}>
+                <Ionicons name="time-outline" size={16} color="#ea580c" />
+                <Text style={styles.timerText}>{getTimerDisplay()}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Transaction ID for pending, processing, or completed statuses */}
+        {(transaction.status === 'pending' ||
+          transaction.status === 'processing' ||
+          transaction.status === 'completed') && (
+          <View style={styles.transactionIdSection}>
+            <View style={styles.transactionIdRow}>
+              <Text style={styles.transactionIdLabel}>Transaction ID</Text>
+              <View style={styles.transactionIdValueRow}>
+                <Text style={styles.transactionIdValue}>{transaction.transaction_id}</Text>
+                <TouchableOpacity
+                  onPress={() => handleCopy(transaction.transaction_id, "transactionId")}
+                  style={styles.copyButton}
+                >
+                  {copiedStates.transactionId ? (
+                    <Ionicons name="checkmark" size={12} color="#10b981" />
+                  ) : (
+                    <Ionicons name="copy" size={12} color="#6b7280" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Show Timeline for pending, processing, or completed statuses */}
+        {(transaction.status === 'pending' ||
+          transaction.status === 'processing' ||
+          transaction.status === 'completed') ? (
+          <View style={styles.timelineWrapper}>
+            <TransactionTimeline transaction={transaction} />
+          </View>
+        ) : (
+          /* Show current UI for failed/cancelled statuses */
+          <>
+            {/* Status Header */}
+            <View style={styles.statusHeader}>
+              <View style={[
+                styles.statusIconContainer,
+                {
+                  backgroundColor: transaction.status === 'failed'
+                    ? '#fef2f2'
+                    : '#f3f4f6'
+                }
+              ]}>
+                <Ionicons
+                  name={transaction.status === 'failed' ? 'close-circle' : 'time'}
+                  size={32}
+                  color={transaction.status === 'failed' ? '#dc2626' : '#6b7280'}
+                />
+              </View>
+              <Text style={styles.statusTitle}>{statusMessage.title}</Text>
+              <Text style={styles.statusDescription}>{statusMessage.description}</Text>
+              
+              {/* Transaction ID and Created for failed/cancelled */}
+              <View style={styles.failedTransactionDetails}>
+                <View style={styles.failedDetailRowInline}>
+                  <Text style={styles.failedDetailLabel}>Transaction ID:</Text>
+                  <Text style={styles.failedDetailValue}>{transaction.transaction_id}</Text>
+                </View>
+                <View style={styles.failedDetailRowInline}>
+                  <Text style={styles.failedDetailLabel}>Created:</Text>
+                  <Text style={styles.failedDetailValue}>
+                    {formatTimestamp(transaction.created_at)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            
+            {/* Status Information */}
+            <View style={[
+              styles.statusInfo,
+              {
+                backgroundColor: transaction.status === 'failed' ? '#fef2f2' : '#f3f4f6'
               }
-              size={32}
-              color={
-                statusMessage.isCompleted
-                  ? '#16a34a'
-                  : transaction.status === 'failed'
-                    ? '#dc2626'
-                    : isOverdue && transaction.status !== 'completed'
-                      ? '#ea580c'
-                      : '#d97706'
-              }
-            />
-      </View>
-          <Text style={styles.statusTitle}>{statusMessage.title}</Text>
-          <Text style={styles.statusDescription}>{statusMessage.description}</Text>
-        </View>
-        
-        {/* Status Information */}
-        <View style={[
-          styles.statusInfo,
-          {
-            backgroundColor: statusMessage.isCompleted
-              ? '#dcfce7'
-              : transaction.status === 'failed'
-                ? '#fef2f2'
-                : isOverdue && transaction.status !== 'completed'
-                  ? '#fff7ed'
-                  : '#eff6ff'
-          }
-        ]}>
-          <Text style={styles.statusInfoLabel}>
-            {statusMessage.isCompleted
-              ? 'Completed:'
-              : transaction.status === 'failed'
-                ? 'Failed:'
-                : isOverdue && transaction.status !== 'completed'
-                  ? 'Status:'
-                  : 'Estimated completion:'}
-          </Text>
-          <Text style={styles.statusInfoValue}>
-            {statusMessage.isCompleted
-              ? formatTimestamp(transaction.completed_at || transaction.updated_at)
-              : transaction.status === 'failed'
-                ? formatTimestamp(transaction.updated_at)
-                : isOverdue && transaction.status !== 'completed'
-                  ? 'Taking longer than expected'
-                  : formatTime(timeRemaining)}
-          </Text>
-        </View>
+            ]}>
+              <Text style={styles.statusInfoLabel}>
+                {transaction.status === 'failed' ? 'Failed:' : 'Status:'}
+              </Text>
+              <Text style={styles.statusInfoValue}>
+                {formatTimestamp(transaction.updated_at)}
+              </Text>
+            </View>
+          </>
+        )}
         
         {/* Receipt Section */}
         {transaction.receipt_url && (
@@ -451,14 +574,6 @@ export default function TransactionDetailsScreen({ navigation, route }: Navigati
           </View>
         )}
 
-        {/* Transaction Details */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.detailsTitle}>Transaction Details</Text>
-          <Text style={styles.transactionIdText}>{transaction.transaction_id}</Text>
-          <Text style={styles.createdDate}>
-            Created: {formatTimestamp(transaction.created_at)}
-          </Text>
-      </View>
       </ScrollView>
 
       {/* Bottom Action Buttons */}
@@ -553,11 +668,84 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  timerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  timerText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#ea580c',
+    marginLeft: 4,
+    fontFamily: 'monospace',
+  },
+  statusHeaderWithTimer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 8,
+    gap: 0,
+  },
+  statusTitleSmall: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    lineHeight: 14,
+  },
+  amountText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 8,
+    lineHeight: 36,
+  },
+  transactionIdSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  transactionIdRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  transactionIdLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  transactionIdValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  transactionIdValue: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    color: '#1f2937',
+  },
+  timelineWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
   statusHeader: {
     backgroundColor: '#ffffff',
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 8,
   },
   statusIconContainer: {
     width: 64,
@@ -579,6 +767,11 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 16,
+  },
+  copyButton: {
+    padding: 4,
+    marginLeft: 4,
   },
   statusInfo: {
     marginHorizontal: 16,
@@ -717,29 +910,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   recipientBank: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  detailsSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 8,
-  },
-  detailsTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  transactionIdText: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  createdDate: {
     fontSize: 14,
     color: '#6b7280',
   },

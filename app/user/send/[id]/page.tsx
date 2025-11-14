@@ -510,10 +510,13 @@ function TransactionStatusPage() {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Transaction Status
+                  <CardTitle className="flex flex-col gap-1 leading-none">
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Transaction Status</span>
+                    <span className="text-3xl font-bold text-gray-900 leading-tight">
+                      {transaction && formatCurrency(transaction.send_amount, transaction.send_currency)}
+                    </span>
                     {transaction && getTimerDisplay() && (
-                      <div className="flex items-center text-orange-600">
+                      <div className="flex items-center justify-center sm:justify-start text-orange-600 mt-2">
                         <Clock className="h-4 w-4 mr-1" />
                         <span className="font-mono text-sm">{getTimerDisplay()}</span>
                       </div>

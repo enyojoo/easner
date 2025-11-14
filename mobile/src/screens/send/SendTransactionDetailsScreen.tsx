@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Linking,
   BackHandler,
+  Clipboard,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
@@ -32,6 +33,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
 
   const { transactionId, fromScreen } = route.params || {}
 
@@ -371,6 +373,18 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     Alert.alert('Contact Support', 'Support functionality will be implemented')
   }
 
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await Clipboard.setString(text)
+      setCopiedStates(prev => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [key]: false }))
+      }, 2000)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy to clipboard')
+    }
+  }
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -414,10 +428,13 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         }
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Transaction Status Header with Timer */}
+        {/* Transaction Status Header with Amount */}
         {transaction && (
           <View style={styles.statusHeaderWithTimer}>
-            <Text style={styles.statusTitle}>Transaction Status</Text>
+            <Text style={styles.statusTitleSmall}>Transaction Status</Text>
+            <Text style={styles.amountText}>
+              {formatCurrency(transaction.send_amount, transaction.send_currency)}
+            </Text>
             {getTimerDisplay() && (
               <View style={styles.timerContainer}>
                 <Ionicons name="time-outline" size={16} color="#ea580c" />
@@ -432,8 +449,22 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
           transaction.status === 'processing' ||
           transaction.status === 'completed') && (
           <View style={styles.transactionIdSection}>
-            <Text style={styles.transactionIdLabel}>Transaction ID</Text>
-            <Text style={styles.transactionIdValue}>{transaction.transaction_id}</Text>
+            <View style={styles.transactionIdRow}>
+              <Text style={styles.transactionIdLabel}>Transaction ID</Text>
+              <View style={styles.transactionIdValueRow}>
+                <Text style={styles.transactionIdValue}>{transaction.transaction_id}</Text>
+                <TouchableOpacity
+                  onPress={() => handleCopy(transaction.transaction_id, "transactionId")}
+                  style={styles.copyButton}
+                >
+                  {copiedStates.transactionId ? (
+                    <Ionicons name="checkmark" size={12} color="#10b981" />
+                  ) : (
+                    <Ionicons name="copy" size={12} color="#6b7280" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
 
@@ -663,8 +694,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusHeaderWithTimer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
@@ -672,11 +702,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 20,
     borderRadius: 8,
+    gap: 0,
   },
-  statusTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  statusTitleSmall: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    lineHeight: 14,
+  },
+  amountText: {
+    fontSize: 32,
+    fontWeight: '700',
     color: '#1f2937',
+    marginBottom: 8,
+    lineHeight: 36,
   },
   timerContainer: {
     flexDirection: 'row',
@@ -698,15 +740,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  transactionIdRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   transactionIdLabel: {
     fontSize: 12,
     color: '#6b7280',
-    marginBottom: 4,
+  },
+  transactionIdValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   transactionIdValue: {
     fontSize: 14,
     fontFamily: 'monospace',
     color: '#1f2937',
+  },
+  copyButton: {
+    padding: 4,
   },
   timelineWrapper: {
     marginHorizontal: 16,
