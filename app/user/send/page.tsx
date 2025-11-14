@@ -788,9 +788,9 @@ export default function UserSendPage() {
   const receiveCurrencyData = currencies.find((c) => c.code === receiveCurrency)
 
   const steps = [
-    { number: 1, title: "Amount to Send", completed: currentStep > 1 },
-    { number: 2, title: "Add Recipient", completed: currentStep > 2 },
-    { number: 3, title: "Make Payment", completed: currentStep > 3 },
+    { number: 1, title: "Amount", completed: currentStep > 1 },
+    { number: 2, title: "Recipient", completed: currentStep > 2 },
+    { number: 3, title: "Payment", completed: currentStep > 3 },
   ]
 
   const TransactionSummary = () => (
@@ -902,13 +902,13 @@ export default function UserSendPage() {
         <div className="max-w-6xl mx-auto">
           {/* Progress Indicator */}
           <div className="mb-8">
-            <div className="flex items-start max-w-2xl mx-auto">
+            <div className="flex items-center justify-between w-full">
               {steps.map((step, index) => (
-                <div key={step.number} className="flex items-start flex-1">
+                <div key={step.number} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     {/* Step Circle */}
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                         step.completed
                           ? "bg-green-500 text-white"
                           : currentStep === step.number
@@ -916,11 +916,11 @@ export default function UserSendPage() {
                             : "bg-gray-200 text-gray-500"
                       }`}
                     >
-                      {step.completed ? <Check className="h-5 w-5" /> : step.number}
+                      {step.completed ? <Check className="h-4 w-4" /> : step.number}
                     </div>
                     {/* Step Title */}
                     <span
-                      className={`mt-2 text-xs sm:text-sm font-medium text-center px-1 ${
+                      className={`mt-2 text-[10px] sm:text-xs font-medium text-center ${
                         step.completed || currentStep === step.number
                           ? "text-gray-900"
                           : "text-gray-500"
@@ -931,7 +931,7 @@ export default function UserSendPage() {
                   </div>
                   {/* Connecting Line */}
                   {index < steps.length - 1 && (
-                    <div className="flex-1 mx-2 sm:mx-4 h-0.5 bg-gray-200 relative top-5">
+                    <div className="flex-1 mx-2 sm:mx-3 md:mx-4 h-0.5 bg-gray-200 relative -mt-5">
                       <div
                         className={`h-full transition-all duration-300 ${
                           step.completed ? "bg-green-500 w-full" : "bg-transparent w-0"
