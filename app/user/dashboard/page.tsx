@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
 import { useUserData } from "@/hooks/use-user-data"
 import { useRouter } from "next/navigation"
+import { DashboardSkeleton } from "@/components/dashboard-skeleton"
 
 interface Transaction {
   id: string
@@ -128,6 +129,15 @@ export default function UserDashboardPage() {
 
   const recentTransactions = transactions?.slice(0, 2) || []
 
+  // Show skeleton while data is loading
+  if (loading || !userProfile || !currencies?.length || !exchangeRates?.length) {
+    return (
+      <UserDashboardLayout>
+        <DashboardSkeleton />
+      </UserDashboardLayout>
+    )
+  }
+
   return (
     <UserDashboardLayout>
       <div className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
@@ -191,9 +201,7 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">Loading transactions...</div>
-          ) : !transactions || transactions.length === 0 ? (
+          {!transactions || transactions.length === 0 ? (
             <div className="bg-white rounded-xl p-8 sm:p-12 text-center border border-gray-200">
               <p className="text-base sm:text-lg text-gray-600 mb-4">No recent transactions</p>
               <Link href="/user/send">
