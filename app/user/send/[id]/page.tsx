@@ -308,7 +308,7 @@ function TransactionStatusPage() {
           icon: ["processing", "completed"].includes(currentStatus) ? (
             <Check className="h-4 w-4 text-white" />
           ) : currentStatus === "pending" ? (
-            <Clock className="h-4 w-4 text-white animate-spin" />
+            <Clock className="h-4 w-4 text-white" />
           ) : (
             <span className="text-gray-500 text-xs">2</span>
           ),
@@ -317,11 +317,11 @@ function TransactionStatusPage() {
           id: "completed",
           title: "Transfer Complete",
           completed: currentStatus === "completed",
-          icon:
+            icon:
             currentStatus === "completed" ? (
               <Check className="h-4 w-4 text-white" />
             ) : currentStatus === "processing" ? (
-              <Clock className="h-4 w-4 text-white animate-spin" />
+              <Clock className="h-4 w-4 text-white" />
             ) : (
               <span className="text-gray-500 text-xs">3</span>
             ),

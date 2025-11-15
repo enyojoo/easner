@@ -594,13 +594,9 @@ export default function UserRecipientsPage() {
                         size="sm"
                         onClick={() => handleDeleteRecipient(recipient.id)}
                         disabled={deletingId === recipient.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 p-0 disabled:opacity-50"
                       >
-                        {deletingId === recipient.id ? (
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
+                        <Trash2 className={`h-4 w-4 ${deletingId === recipient.id ? 'opacity-50' : ''}`} />
                       </Button>
                     </div>
                     {deleteErrors[recipient.id] && <p className="text-xs text-red-600">{deleteErrors[recipient.id]}</p>}
