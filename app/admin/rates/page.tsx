@@ -14,9 +14,19 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
+import { AdminRatesSkeleton } from "@/components/admin-rates-skeleton"
+import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 
 const AdminRatesPage = () => {
-  const { data } = useAdminData()
+  const { data, loading } = useAdminData()
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminRatesSkeleton />
+      </AdminDashboardLayout>
+    )
+  }
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)

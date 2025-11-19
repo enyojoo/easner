@@ -33,6 +33,7 @@ import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
+import { AdminUsersSkeleton } from "@/components/admin-users-skeleton"
 
 interface UserData {
   id: string
@@ -64,7 +65,7 @@ interface TransactionData {
 }
 
 export default function AdminUsersPage() {
-  const { data } = useAdminData()
+  const { data, loading } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verificationFilter, setVerificationFilter] = useState("all")
@@ -130,6 +131,14 @@ export default function AdminUsersPage() {
       console.error("Error fetching user transactions:", err)
       setUserTransactions([])
     }
+  }
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminUsersSkeleton />
+      </AdminDashboardLayout>
+    )
   }
 
   const filteredUsers = (data?.users || []).filter((user: any) => {

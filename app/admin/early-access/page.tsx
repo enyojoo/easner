@@ -32,6 +32,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
+import { AdminEarlyAccessSkeleton } from "@/components/admin-early-access-skeleton"
 
 interface EarlyAccessRequest {
   id: string
@@ -50,7 +51,7 @@ interface EarlyAccessRequest {
 }
 
 export default function AdminEarlyAccessPage() {
-  const { data } = useAdminData()
+  const { data, loading } = useAdminData()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedRequests, setSelectedRequests] = useState<string[]>([])
@@ -76,6 +77,14 @@ export default function AdminEarlyAccessPage() {
     } catch (error) {
       console.error("Error updating request:", error)
     }
+  }
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminEarlyAccessSkeleton />
+      </AdminDashboardLayout>
+    )
   }
 
   // Filter requests based on search and status

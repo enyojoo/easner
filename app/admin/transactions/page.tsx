@@ -32,9 +32,18 @@ import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
 } from "@/lib/currency-account-types"
+import { AdminTransactionsSkeleton } from "@/components/admin-transactions-skeleton"
 
 export default function AdminTransactionsPage() {
-  const { data } = useAdminData()
+  const { data, loading } = useAdminData()
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminTransactionsSkeleton />
+      </AdminDashboardLayout>
+    )
+  }
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
