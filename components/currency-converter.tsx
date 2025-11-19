@@ -461,7 +461,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
               <span className="text-sm text-gray-600">Rate</span>
             </div>
             <span className="font-medium text-easner-primary">
-              1 {sendCurrency} = {getExchangeRate(sendCurrency, receiveCurrency)?.rate.toFixed(4) || "0.0000"}{" "}
+              1 {sendCurrency} = {getExchangeRate(sendCurrency, receiveCurrency)?.rate.toFixed(2) || "0.00"}{" "}
               {receiveCurrency}
             </span>
           </div>

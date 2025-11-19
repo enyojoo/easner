@@ -675,7 +675,7 @@ function TransactionStatusPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Exchange Rate</span>
                       <span className="text-sm">
-                        1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(4)}{" "}
+                        1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(2)}{" "}
                         {transaction.receive_currency}
                       </span>
                     </div>

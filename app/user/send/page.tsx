@@ -821,7 +821,7 @@ export default function UserSendPage() {
           <div className="flex justify-between">
             <span className="text-gray-600">Exchange Rate</span>
             <span className="text-sm">
-              1 {sendCurrency} = {exchangeRateData?.rate.toFixed(4)} {receiveCurrency}
+              1 {sendCurrency} = {exchangeRateData?.rate.toFixed(2)} {receiveCurrency}
             </span>
           </div>
         </div>
@@ -977,7 +977,7 @@ export default function UserSendPage() {
                           <span className="text-sm text-gray-600">Rate</span>
                         </div>
                         <span className="font-medium text-easner-primary">
-                          1 {sendCurrency} = {exchangeRate?.toFixed(4) || "0.0000"} {receiveCurrency}
+                          1 {sendCurrency} = {exchangeRate?.toFixed(2) || "0.00"} {receiveCurrency}
                         </span>
                       </div>
                     </div>
