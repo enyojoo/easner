@@ -15,6 +15,7 @@ import { Plus, MoreHorizontal, Edit, Pause, Trash2, Loader2 } from "lucide-react
 import { useAdminData } from "@/hooks/use-admin-data"
 import { adminDataStore } from "@/lib/admin-data-store"
 import { AdminRatesSkeleton } from "@/components/admin-rates-skeleton"
+import { AdminDashboardLayout } from "@/components/layout/admin-dashboard-layout"
 
 const AdminRatesPage = () => {
   const { data, loading } = useAdminData()
