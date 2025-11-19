@@ -32,6 +32,8 @@ class AdminDataStore {
   private refreshInterval: ReturnType<typeof setInterval> | null = null
   private listeners: Set<() => void> = new Set()
   private initialized = false
+  private loadingPromise: Promise<AdminData> | null = null
+  private realtimeChannels: ReturnType<typeof supabase.channel>[] = []
 
   constructor() {
     // Don't preload data immediately - wait for explicit initialization
@@ -45,35 +47,51 @@ class AdminDataStore {
     // Start loading data immediately
     this.loadData().catch(console.error)
     this.startAutoRefresh()
+    this.setupRealtimeSubscriptions()
   }
 
   // Public method to initialize when user is authenticated
+  // Skip admin check since we already know from auth context
   async initializeWhenReady() {
-    // Check if user is admin by checking if they exist in admin_users table
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        console.log("AdminDataStore: No user found, not initializing")
-        return
-      }
-
-      // Check if user is admin by querying admin_users table
-      const { data: adminUser } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("id", user.id)
-        .single()
-
-      if (!adminUser) {
-        console.log("AdminDataStore: User is not admin, not initializing")
-        return
-      }
-
-      console.log("AdminDataStore: User is admin, initializing...")
-      await this.initialize()
-    } catch (error) {
-      console.error("AdminDataStore: Error checking admin status:", error)
+    // Return existing loading promise if already loading
+    if (this.loading && this.loadingPromise) {
+      return this.loadingPromise
     }
+
+    // Check if data is fresh (loaded within last minute)
+    if (this.isDataFresh()) {
+      return this.data
+    }
+
+    console.log("AdminDataStore: Initializing...")
+    await this.initialize()
+  }
+
+  // Direct initialize method (used when admin status is already confirmed)
+  async initializeDirect() {
+    if (this.initialized && this.isDataFresh()) {
+      return this.data
+    }
+
+    // Return existing loading promise if already loading
+    if (this.loading && this.loadingPromise) {
+      return this.loadingPromise
+    }
+
+    if (!this.initialized) {
+      this.initialized = true
+      this.startAutoRefresh()
+      this.setupRealtimeSubscriptions()
+    }
+
+    this.loadingPromise = this.loadData()
+    return this.loadingPromise
+  }
+
+  private isDataFresh(): boolean {
+    if (!this.data) return false
+    const oneMinute = 60 * 1000
+    return Date.now() - this.data.lastUpdated < oneMinute
   }
 
   subscribe(callback: () => void) {
@@ -94,11 +112,20 @@ class AdminDataStore {
   }
 
   private async loadData(): Promise<AdminData> {
+    if (this.loading && this.loadingPromise) {
+      return this.loadingPromise
+    }
+
     this.loading = true
 
     try {
-      // Load all data in parallel
-      const [usersResult, transactionsResult, currenciesResult, exchangeRatesResult, earlyAccessResult, baseCurrency] = await Promise.all([
+      // Create timeout promise (15 seconds)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Data loading timeout")), 15000),
+      )
+
+      // Load all data in parallel with timeout protection
+      const dataPromise = Promise.allSettled([
         this.loadUsers(),
         this.loadTransactions(),
         this.loadCurrencies(),
@@ -107,6 +134,15 @@ class AdminDataStore {
         this.getAdminBaseCurrency(),
       ])
 
+      const results = (await Promise.race([dataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
+
+      // Extract results with fallbacks to existing data
+      const usersResult = results[0].status === "fulfilled" ? results[0].value || [] : (this.data?.users || [])
+      const transactionsResult = results[1].status === "fulfilled" ? results[1].value || [] : (this.data?.transactions || [])
+      const currenciesResult = results[2].status === "fulfilled" ? results[2].value || [] : (this.data?.currencies || [])
+      const exchangeRatesResult = results[3].status === "fulfilled" ? results[3].value || [] : (this.data?.exchangeRates || [])
+      const earlyAccessResult = results[4].status === "fulfilled" ? results[4].value || [] : (this.data?.earlyAccessRequests || [])
+      const baseCurrency = results[5].status === "fulfilled" ? results[5].value || "NGN" : (this.data?.baseCurrency || "NGN")
 
       const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
       const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
@@ -129,8 +165,17 @@ class AdminDataStore {
 
       this.notify()
       return this.data
+    } catch (error) {
+      console.error("Error loading admin data:", error)
+      // Return existing data on error to prevent blank screens
+      if (this.data) {
+        return this.data
+      }
+      // If no existing data, return minimal structure
+      throw error
     } finally {
       this.loading = false
+      this.loadingPromise = null
     }
   }
 
@@ -559,13 +604,232 @@ class AdminDataStore {
   }
 
   private startAutoRefresh() {
-    // Refresh data every 5 minutes in background
+    // Refresh data every 30 seconds in background (as fallback if real-time fails)
     this.refreshInterval = setInterval(
       () => {
         this.loadData().catch(console.error)
       },
-      5 * 60 * 1000,
+      30 * 1000, // 30 seconds
     )
+  }
+
+  private setupRealtimeSubscriptions() {
+    // Clean up any existing channels
+    this.cleanupRealtimeSubscriptions()
+
+    // Subscribe to transactions table changes
+    const transactionsChannel = supabase
+      .channel('admin-transactions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'transactions',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: Transaction change received via Realtime:', payload.eventType)
+          // Reload transactions and recalculate stats
+          await this.refreshTransactionsAndStats()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Transactions subscription error')
+        }
+      })
+
+    // Subscribe to users table changes
+    const usersChannel = supabase
+      .channel('admin-users')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'users',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: User change received via Realtime:', payload.eventType)
+          // Reload users and recalculate stats
+          await this.refreshUsersAndStats()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to users real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Users subscription error')
+        }
+      })
+
+    // Subscribe to currencies table changes
+    const currenciesChannel = supabase
+      .channel('admin-currencies')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'currencies',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: Currency change received via Realtime:', payload.eventType)
+          // Reload currencies
+          await this.refreshCurrencies()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to currencies real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Currencies subscription error')
+        }
+      })
+
+    // Subscribe to exchange_rates table changes
+    const exchangeRatesChannel = supabase
+      .channel('admin-exchange-rates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'exchange_rates',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: Exchange rate change received via Realtime:', payload.eventType)
+          // Reload exchange rates
+          await this.refreshExchangeRates()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to exchange rates real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Exchange rates subscription error')
+        }
+      })
+
+    // Subscribe to early_access_requests table changes
+    const earlyAccessChannel = supabase
+      .channel('admin-early-access')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'early_access_requests',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: Early access request change received via Realtime:', payload.eventType)
+          // Reload early access requests
+          await this.refreshEarlyAccessRequests()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to early access requests real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Early access requests subscription error')
+        }
+      })
+
+    // Store channels for cleanup
+    this.realtimeChannels = [
+      transactionsChannel,
+      usersChannel,
+      currenciesChannel,
+      exchangeRatesChannel,
+      earlyAccessChannel,
+    ]
+  }
+
+  private async refreshTransactionsAndStats() {
+    if (!this.data) return
+
+    try {
+      const transactionsResult = await this.loadTransactions()
+      const stats = await this.calculateStats(this.data.users, transactionsResult, this.data.baseCurrency)
+      const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
+      const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
+
+      this.data.transactions = transactionsResult
+      this.data.stats = stats
+      this.data.recentActivity = recentActivity
+      this.data.currencyPairs = currencyPairs
+      this.data.lastUpdated = Date.now()
+      this.notify()
+    } catch (error) {
+      console.error('AdminDataStore: Error refreshing transactions:', error)
+    }
+  }
+
+  private async refreshUsersAndStats() {
+    if (!this.data) return
+
+    try {
+      const usersResult = await this.loadUsers()
+      const stats = await this.calculateStats(usersResult, this.data.transactions, this.data.baseCurrency)
+
+      this.data.users = usersResult
+      this.data.stats = stats
+      this.data.lastUpdated = Date.now()
+      this.notify()
+    } catch (error) {
+      console.error('AdminDataStore: Error refreshing users:', error)
+    }
+  }
+
+  private async refreshCurrencies() {
+    if (!this.data) return
+
+    try {
+      const currenciesResult = await this.loadCurrencies()
+      this.data.currencies = currenciesResult
+      this.data.lastUpdated = Date.now()
+      this.notify()
+    } catch (error) {
+      console.error('AdminDataStore: Error refreshing currencies:', error)
+    }
+  }
+
+  private async refreshExchangeRates() {
+    if (!this.data) return
+
+    try {
+      const exchangeRatesResult = await this.loadExchangeRates()
+      this.data.exchangeRates = exchangeRatesResult
+      this.data.lastUpdated = Date.now()
+      this.notify()
+    } catch (error) {
+      console.error('AdminDataStore: Error refreshing exchange rates:', error)
+    }
+  }
+
+  private async refreshEarlyAccessRequests() {
+    if (!this.data) return
+
+    try {
+      const earlyAccessResult = await this.loadEarlyAccessRequests()
+      const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
+
+      this.data.earlyAccessRequests = earlyAccessResult
+      this.data.earlyAccessStats = earlyAccessStats
+      this.data.lastUpdated = Date.now()
+      this.notify()
+    } catch (error) {
+      console.error('AdminDataStore: Error refreshing early access requests:', error)
+    }
+  }
+
+  private cleanupRealtimeSubscriptions() {
+    this.realtimeChannels.forEach((channel) => {
+      supabase.removeChannel(channel)
+    })
+    this.realtimeChannels = []
   }
 
   async updateTransactionStatus(transactionId: string, newStatus: string) {
@@ -1107,6 +1371,7 @@ class AdminDataStore {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
     }
+    this.cleanupRealtimeSubscriptions()
     this.listeners.clear()
   }
 }

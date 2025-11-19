@@ -16,10 +16,13 @@ export function useAdminData() {
     // Only initialize if user is admin and authenticated
     if (isAdmin && userProfile) {
       const initializeData = async () => {
+        if (!mounted) return
+
         try {
           setLoading(true)
           setError(null)
-          await adminDataStore.initializeWhenReady()
+          // Use initializeDirect since we already know user is admin from auth context
+          await adminDataStore.initializeDirect()
           if (mounted) {
             setData(adminDataStore.getData())
             setLoading(false)
@@ -27,7 +30,14 @@ export function useAdminData() {
         } catch (err) {
           console.error("Failed to initialize admin data:", err)
           if (mounted) {
-            setError("Failed to load admin data")
+            // Set error but don't block UI - use existing data if available
+            const existingData = adminDataStore.getData()
+            if (existingData) {
+              setData(existingData)
+              setError(null)
+            } else {
+              setError("Failed to load admin data")
+            }
             setLoading(false)
           }
         }
