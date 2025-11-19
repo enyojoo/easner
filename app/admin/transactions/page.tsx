@@ -45,6 +45,43 @@ export default function AdminTransactionsPage() {
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
 
+  // Load payment methods
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      try {
+        const paymentMethodsData = await paymentMethodService.getAll()
+        setPaymentMethods(paymentMethodsData || [])
+      } catch (error) {
+        console.error("Error loading payment methods:", error)
+      }
+    }
+
+    loadPaymentMethods()
+  }, [])
+
+  // Initialize timer duration from payment method when transaction is selected
+  useEffect(() => {
+    if (selectedTransaction && paymentMethods.length > 0) {
+      const getDefaultPaymentMethod = (currency: string) => {
+        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
+        return methods.find((pm) => pm.is_default) || methods[0]
+      }
+
+      const defaultMethod = getDefaultPaymentMethod(selectedTransaction.send_currency)
+      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
+      setTimerDuration(timerSeconds)
+    }
+  }, [selectedTransaction, paymentMethods])
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
   if (loading || !data) {
     return (
       <AdminDashboardLayout>
@@ -150,43 +187,6 @@ export default function AdminTransactionsPage() {
       console.error("Error updating transaction statuses:", err)
     }
   }
-
-  // Load payment methods
-  useEffect(() => {
-    const loadPaymentMethods = async () => {
-      try {
-        const paymentMethodsData = await paymentMethodService.getAll()
-        setPaymentMethods(paymentMethodsData || [])
-      } catch (error) {
-        console.error("Error loading payment methods:", error)
-      }
-    }
-
-    loadPaymentMethods()
-  }, [])
-
-  // Initialize timer duration from payment method when transaction is selected
-  useEffect(() => {
-    if (selectedTransaction && paymentMethods.length > 0) {
-      const getDefaultPaymentMethod = (currency: string) => {
-        const methods = paymentMethods.filter((pm) => pm.currency === currency && pm.status === "active")
-        return methods.find((pm) => pm.is_default) || methods[0]
-      }
-
-      const defaultMethod = getDefaultPaymentMethod(selectedTransaction.send_currency)
-      const timerSeconds = defaultMethod?.completion_timer_seconds ?? 3600
-      setTimerDuration(timerSeconds)
-    }
-  }, [selectedTransaction, paymentMethods])
-
-  // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(Date.now())
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
 
   // Calculate elapsed time in seconds
   const getElapsedTime = (): number => {
