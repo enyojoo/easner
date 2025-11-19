@@ -69,6 +69,16 @@ class AdminDataStore {
 
   // Direct initialize method (used when admin status is already confirmed)
   async initializeDirect() {
+    // Try to load from cache first (for instant page loads)
+    if (!this.data) {
+      this.loadFromCache()
+      if (this.data) {
+        // Notify listeners with cached data immediately
+        this.notify()
+      }
+    }
+
+    // If data is fresh, return immediately
     if (this.initialized && this.isDataFresh()) {
       return this.data
     }
@@ -84,14 +94,68 @@ class AdminDataStore {
       this.setupRealtimeSubscriptions()
     }
 
+    // Load fresh data in background (will update cache)
     this.loadingPromise = this.loadData()
     return this.loadingPromise
   }
 
   private isDataFresh(): boolean {
-    if (!this.data) return false
-    const oneMinute = 60 * 1000
-    return Date.now() - this.data.lastUpdated < oneMinute
+    if (!this.data) {
+      // Try to load from localStorage cache
+      this.loadFromCache()
+      if (!this.data) return false
+    }
+    // Extend freshness to 5 minutes since we have real-time updates
+    const fiveMinutes = 5 * 60 * 1000
+    return Date.now() - this.data.lastUpdated < fiveMinutes
+  }
+
+  private saveToCache() {
+    if (typeof window === 'undefined' || !this.data) return
+    try {
+      const cacheKey = 'admin_data_cache'
+      const cacheData = {
+        data: this.data,
+        timestamp: Date.now(),
+      }
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+    } catch (error) {
+      console.error('AdminDataStore: Error saving to cache:', error)
+    }
+  }
+
+  private loadFromCache(): boolean {
+    if (typeof window === 'undefined') return false
+    try {
+      const cacheKey = 'admin_data_cache'
+      const cached = localStorage.getItem(cacheKey)
+      if (!cached) return false
+
+      const { data, timestamp } = JSON.parse(cached)
+      // Check if cache is still fresh (5 minutes)
+      const fiveMinutes = 5 * 60 * 1000
+      if (Date.now() - timestamp < fiveMinutes) {
+        this.data = data
+        console.log('AdminDataStore: Loaded data from cache')
+        return true
+      } else {
+        // Cache expired, remove it
+        localStorage.removeItem(cacheKey)
+        return false
+      }
+    } catch (error) {
+      console.error('AdminDataStore: Error loading from cache:', error)
+      return false
+    }
+  }
+
+  private clearCache() {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem('admin_data_cache')
+    } catch (error) {
+      console.error('AdminDataStore: Error clearing cache:', error)
+    }
   }
 
   subscribe(callback: () => void) {
@@ -124,31 +188,63 @@ class AdminDataStore {
         setTimeout(() => reject(new Error("Data loading timeout")), 15000),
       )
 
-      // Load all data in parallel with timeout protection
-      const dataPromise = Promise.allSettled([
-        this.loadUsers(),
+      // Load critical data first (transactions, currencies, exchange rates, base currency)
+      // These are needed for dashboard stats and can be shown immediately
+      const criticalDataPromise = Promise.allSettled([
         this.loadTransactions(),
         this.loadCurrencies(),
         this.loadExchangeRates(),
-        this.loadEarlyAccessRequests(),
         this.getAdminBaseCurrency(),
       ])
 
-      const results = (await Promise.race([dataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
+      const criticalResults = (await Promise.race([criticalDataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
 
-      // Extract results with fallbacks to existing data
-      const usersResult = results[0].status === "fulfilled" ? results[0].value || [] : (this.data?.users || [])
-      const transactionsResult = results[1].status === "fulfilled" ? results[1].value || [] : (this.data?.transactions || [])
-      const currenciesResult = results[2].status === "fulfilled" ? results[2].value || [] : (this.data?.currencies || [])
-      const exchangeRatesResult = results[3].status === "fulfilled" ? results[3].value || [] : (this.data?.exchangeRates || [])
-      const earlyAccessResult = results[4].status === "fulfilled" ? results[4].value || [] : (this.data?.earlyAccessRequests || [])
-      const baseCurrency = results[5].status === "fulfilled" ? results[5].value || "NGN" : (this.data?.baseCurrency || "NGN")
+      // Extract critical results with fallbacks
+      const transactionsResult = criticalResults[0].status === "fulfilled" ? criticalResults[0].value || [] : (this.data?.transactions || [])
+      const currenciesResult = criticalResults[1].status === "fulfilled" ? criticalResults[1].value || [] : (this.data?.currencies || [])
+      const exchangeRatesResult = criticalResults[2].status === "fulfilled" ? criticalResults[2].value || [] : (this.data?.exchangeRates || [])
+      const baseCurrency = criticalResults[3].status === "fulfilled" ? criticalResults[3].value || "NGN" : (this.data?.baseCurrency || "NGN")
 
-      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
-      const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
+      // Calculate stats from transactions (we'll update with user count later)
+      const tempStats = await this.calculateStatsFromTransactions(transactionsResult, baseCurrency)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
+      // Create initial data structure with critical data and notify listeners
+      this.data = {
+        users: this.data?.users || [], // Keep existing users or empty array
+        transactions: transactionsResult,
+        currencies: currenciesResult,
+        exchangeRates: exchangeRatesResult,
+        earlyAccessRequests: this.data?.earlyAccessRequests || [], // Will load in background
+        baseCurrency,
+        stats: tempStats,
+        earlyAccessStats: this.data?.earlyAccessStats || { total: 0, pending: 0, approved: 0, contacted: 0 },
+        recentActivity,
+        currencyPairs,
+        lastUpdated: Date.now(),
+      }
+
+      // Notify listeners with critical data immediately
+      this.notify()
+
+      // Load users and early access requests in background (these take longer)
+      const backgroundDataPromise = Promise.allSettled([
+        this.loadUsers(transactionsResult), // Pass transactions to avoid re-querying
+        this.loadEarlyAccessRequests(),
+      ])
+
+      const backgroundResults = (await Promise.race([backgroundDataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
+
+      // Extract background results
+      const usersResult = backgroundResults[0].status === "fulfilled" ? backgroundResults[0].value || [] : (this.data?.users || [])
+      const earlyAccessResult = backgroundResults[1].status === "fulfilled" ? backgroundResults[1].value || [] : (this.data?.earlyAccessRequests || [])
+
+      // Recalculate stats with actual user count
+      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
+      const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
+
+      // Update data with background-loaded data
       this.data = {
         users: usersResult,
         transactions: transactionsResult,
@@ -163,12 +259,22 @@ class AdminDataStore {
         lastUpdated: Date.now(),
       }
 
+      // Notify listeners again with complete data
       this.notify()
+      
+      // Save to cache for next page load
+      this.saveToCache()
+      
       return this.data
     } catch (error) {
       console.error("Error loading admin data:", error)
       // Return existing data on error to prevent blank screens
       if (this.data) {
+        return this.data
+      }
+      // Try to load from cache as fallback
+      if (this.loadFromCache()) {
+        this.notify()
         return this.data
       }
       // If no existing data, return minimal structure
@@ -179,7 +285,7 @@ class AdminDataStore {
     }
   }
 
-  private async loadUsers() {
+  private async loadUsers(transactions?: any[]) {
     try {
       console.log("AdminDataStore: Loading users...")
       const { data: users, error } = await supabase
@@ -207,17 +313,24 @@ class AdminDataStore {
         console.error("AdminDataStore: Error fetching auth users:", error)
       }
 
-      // Calculate transaction stats for each user and include auth data
-      const usersWithStats = await Promise.all(
-        (users || []).map(async (user) => {
-          const { data: transactions } = await supabase
-            .from("transactions")
-            .select("send_amount, send_currency, status")
-            .eq("user_id", user.id)
+      // Calculate transaction stats for each user from already-loaded transactions
+      // This avoids N+1 queries - much faster!
+      const transactionMap = new Map<string, any[]>()
+      if (transactions && transactions.length > 0) {
+        transactions.forEach((tx) => {
+          const userId = tx.user_id
+          if (!transactionMap.has(userId)) {
+            transactionMap.set(userId, [])
+          }
+          transactionMap.get(userId)!.push(tx)
+        })
+      }
 
-          const totalTransactions = transactions?.length || 0
-          const totalVolume = (transactions || []).reduce((sum, tx) => {
-            let amount = Number(tx.send_amount)
+      const usersWithStats = (users || []).map((user) => {
+        const userTransactions = transactionMap.get(user.id) || []
+        const totalTransactions = userTransactions.length
+        const totalVolume = userTransactions.reduce((sum, tx) => {
+          let amount = Number(tx.send_amount)
 
             // Convert to NGN based on actual currency
             switch (tx.send_currency) {
@@ -239,23 +352,22 @@ class AdminDataStore {
                 break
             }
 
-            return sum + amount
-          }, 0)
+          return sum + amount
+        }, 0)
 
-          // Find corresponding auth user to get email_confirmed_at
-          const authUser = authUsers?.users?.find(au => au.id === user.id)
-          
-          return {
-            ...user,
-            totalTransactions,
-            totalVolume,
-            // Use email_confirmed_at from auth system for verification status
-            email_confirmed_at: authUser?.email_confirmed_at,
-            // Keep verification_status for backward compatibility but use email_confirmed_at as source of truth
-            verification_status: authUser?.email_confirmed_at ? "verified" : (user.verification_status || "unverified"),
-          }
-        }),
-      )
+        // Find corresponding auth user to get email_confirmed_at
+        const authUser = authUsers?.users?.find(au => au.id === user.id)
+        
+        return {
+          ...user,
+          totalTransactions,
+          totalVolume,
+          // Use email_confirmed_at from auth system for verification status
+          email_confirmed_at: authUser?.email_confirmed_at,
+          // Keep verification_status for backward compatibility but use email_confirmed_at as source of truth
+          verification_status: authUser?.email_confirmed_at ? "verified" : (user.verification_status || "unverified"),
+        }
+      })
 
       return usersWithStats
     } catch (error) {
@@ -340,6 +452,24 @@ class AdminDataStore {
     } catch (error) {
       console.error("Error loading early access requests:", error)
       return [] // Return empty array on error to prevent crashes
+    }
+  }
+
+  private async calculateStatsFromTransactions(transactions: any[], baseCurrency: string) {
+    const totalTransactions = transactions.length
+    const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
+
+    // Calculate total volume in admin's base currency
+    const completedTransactions = transactions.filter((t) => t.status === "completed")
+    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency)
+
+    return {
+      totalUsers: 0, // Will be updated when users load
+      activeUsers: 0,
+      verifiedUsers: 0,
+      totalTransactions,
+      totalVolume,
+      pendingTransactions,
     }
   }
 
@@ -771,7 +901,8 @@ class AdminDataStore {
     if (!this.data) return
 
     try {
-      const usersResult = await this.loadUsers()
+      // Pass existing transactions to avoid re-querying
+      const usersResult = await this.loadUsers(this.data.transactions)
       const stats = await this.calculateStats(usersResult, this.data.transactions, this.data.baseCurrency)
 
       this.data.users = usersResult
@@ -1373,6 +1504,14 @@ class AdminDataStore {
     }
     this.cleanupRealtimeSubscriptions()
     this.listeners.clear()
+    // Note: We keep cache in localStorage for next session
+  }
+
+  // Method to clear cache (useful for logout or forced refresh)
+  clearDataCache() {
+    this.clearCache()
+    this.data = null
+    this.initialized = false
   }
 }
 
