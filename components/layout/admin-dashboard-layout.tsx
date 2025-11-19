@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, CreditCard, Users, TrendingUp, Settings, LogOut, Menu, X, UserPlus } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/lib/auth-context"
+import { adminDataStore } from "@/lib/admin-data-store"
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode
@@ -25,12 +27,24 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useAuth()
 
   const handleLogout = async () => {
-    // Properly sign out and redirect to admin login
-    const { signOut } = await import("@/lib/supabase")
-    await signOut()
-    router.push("/auth/admin/login")
+    try {
+      // Clear admin data store cache and destroy subscriptions
+      adminDataStore.clearDataCache()
+      adminDataStore.destroy()
+
+      // Sign out from AuthContext (clears user state, isAdmin flag, and Supabase session)
+      await signOut()
+
+      // Redirect to admin login
+      router.push("/auth/admin/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+      // Force redirect even if sign out fails
+      router.push("/auth/admin/login")
+    }
   }
 
   return (

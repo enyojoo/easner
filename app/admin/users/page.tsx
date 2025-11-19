@@ -32,7 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase } from "@/lib/supabase"
 import { formatCurrency } from "@/utils/currency"
 import { useAdminData } from "@/hooks/use-admin-data"
-import { adminDataStore } from "@/lib/admin-data-store"
+import { adminDataStore, calculateUserVolume } from "@/lib/admin-data-store"
 import { AdminUsersSkeleton } from "@/components/admin-users-skeleton"
 
 interface UserData {
@@ -284,41 +284,14 @@ export default function AdminUsersPage() {
     const userExchangeRates = data?.exchangeRates || []
     const baseCurrency = user.base_currency || "NGN"
 
-    let totalSentInBaseCurrency = 0
-
-    // Calculate total sent in base currency for completed transactions
-    for (const transaction of userTransactions) {
-      if (transaction.status === "completed") {
-        let amountInBaseCurrency = transaction.send_amount
-
-        // If transaction currency is different from base currency, convert it
-        if (transaction.send_currency !== baseCurrency) {
-          // Find exchange rate from transaction currency to base currency
-          const rate = userExchangeRates.find(
-            (r: any) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-          )
-
-          if (rate) {
-            amountInBaseCurrency = transaction.send_amount * rate.rate
-          } else {
-            // If direct rate not found, try reverse rate
-            const reverseRate = userExchangeRates.find(
-              (r: any) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-            )
-            if (reverseRate && reverseRate.rate > 0) {
-              amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-            }
-          }
-        }
-
-        totalSentInBaseCurrency += amountInBaseCurrency
-      }
-    }
+    // Use the same calculation method as the dashboard for consistency
+    const totalVolume = calculateUserVolume(userTransactions, baseCurrency, userExchangeRates)
+    const completedTransactions = userTransactions.filter((t: any) => t.status === "completed")
 
     return {
       ...user,
-      totalTransactions: userTransactions.filter((t: any) => t.status === "completed").length,
-      totalVolume: totalSentInBaseCurrency,
+      totalTransactions: completedTransactions.length,
+      totalVolume,
     }
   })
 

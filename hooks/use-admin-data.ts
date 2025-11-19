@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth-context"
 
 export function useAdminData() {
   const { userProfile, isAdmin } = useAuth()
-  const [data, setData] = useState<any>(adminDataStore.getData())
-  const [loading, setLoading] = useState(true)
+  // Initialize with cached data if available to prevent flickering
+  const initialData = adminDataStore.getData()
+  const [data, setData] = useState<any>(initialData)
+  const [loading, setLoading] = useState(!initialData) // Only show loading if no cached data
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -19,12 +21,18 @@ export function useAdminData() {
         if (!mounted) return
 
         try {
-          setLoading(true)
+          // Only set loading if we don't have cached data
+          if (!initialData) {
+            setLoading(true)
+          }
           setError(null)
           // Use initializeDirect since we already know user is admin from auth context
           await adminDataStore.initializeDirect()
           if (mounted) {
-            setData(adminDataStore.getData())
+            const newData = adminDataStore.getData()
+            if (newData) {
+              setData(newData)
+            }
             setLoading(false)
           }
         } catch (err) {
@@ -53,8 +61,10 @@ export function useAdminData() {
       if (mounted) {
         const newData = adminDataStore.getData()
         if (newData) {
-          setData(newData)
-          setLoading(false)
+          // Only update if we have valid data - preserve existing data to prevent flickering
+          setData((prevData: any) => newData || prevData)
+          // Only set loading to false if we have data and were previously loading
+          setLoading((prevLoading) => prevLoading && newData ? false : prevLoading)
           setError(null)
         }
       }

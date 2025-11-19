@@ -206,20 +206,21 @@ class AdminDataStore {
       const baseCurrency = criticalResults[3].status === "fulfilled" ? criticalResults[3].value || "NGN" : (this.data?.baseCurrency || "NGN")
 
       // Calculate stats from transactions (we'll update with user count later)
-      const tempStats = await this.calculateStatsFromTransactions(transactionsResult, baseCurrency)
+      const tempStats = await this.calculateStatsFromTransactions(transactionsResult, baseCurrency, exchangeRatesResult)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
-      // Create initial data structure with critical data and notify listeners
+      // Create initial data structure with critical data - preserve existing data to prevent flickering
+      const existingData = this.data
       this.data = {
-        users: this.data?.users || [], // Keep existing users or empty array
+        users: existingData?.users || [], // Keep existing users or empty array
         transactions: transactionsResult,
         currencies: currenciesResult,
         exchangeRates: exchangeRatesResult,
-        earlyAccessRequests: this.data?.earlyAccessRequests || [], // Will load in background
+        earlyAccessRequests: existingData?.earlyAccessRequests || [], // Will load in background
         baseCurrency,
         stats: tempStats,
-        earlyAccessStats: this.data?.earlyAccessStats || { total: 0, pending: 0, approved: 0, contacted: 0 },
+        earlyAccessStats: existingData?.earlyAccessStats || { total: 0, pending: 0, approved: 0, contacted: 0 },
         recentActivity,
         currencyPairs,
         lastUpdated: Date.now(),
@@ -236,12 +237,12 @@ class AdminDataStore {
 
       const backgroundResults = (await Promise.race([backgroundDataPromise, timeoutPromise])) as PromiseSettledResult<any>[]
 
-      // Extract background results
-      const usersResult = backgroundResults[0].status === "fulfilled" ? backgroundResults[0].value || [] : (this.data?.users || [])
-      const earlyAccessResult = backgroundResults[1].status === "fulfilled" ? backgroundResults[1].value || [] : (this.data?.earlyAccessRequests || [])
+      // Extract background results - preserve existing data if loading fails
+      const usersResult = backgroundResults[0].status === "fulfilled" ? backgroundResults[0].value || [] : (this.data?.users || existingData?.users || [])
+      const earlyAccessResult = backgroundResults[1].status === "fulfilled" ? backgroundResults[1].value || [] : (this.data?.earlyAccessRequests || existingData?.earlyAccessRequests || [])
 
-      // Recalculate stats with actual user count
-      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency)
+      // Recalculate stats with actual user count using already-loaded exchange rates
+      const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency, exchangeRatesResult)
       const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
 
       // Update data with background-loaded data
@@ -328,32 +329,12 @@ class AdminDataStore {
 
       const usersWithStats = (users || []).map((user) => {
         const userTransactions = transactionMap.get(user.id) || []
-        const totalTransactions = userTransactions.length
-        const totalVolume = userTransactions.reduce((sum, tx) => {
-          let amount = Number(tx.send_amount)
-
-            // Convert to NGN based on actual currency
-            switch (tx.send_currency) {
-              case "RUB":
-                amount = amount * 0.011 // RUB to NGN rate
-                break
-              case "USD":
-                amount = amount * 1650 // USD to NGN rate
-                break
-              case "EUR":
-                amount = amount * 1750 // EUR to NGN rate
-                break
-              case "GBP":
-                amount = amount * 2000 // GBP to NGN rate
-                break
-              case "NGN":
-              default:
-                // Already in NGN, no conversion needed
-                break
-            }
-
-          return sum + amount
-        }, 0)
+        const completedTransactions = userTransactions.filter((tx) => tx.status === "completed")
+        const totalTransactions = completedTransactions.length
+        
+        // Volume will be calculated in the users page using exchange rates
+        // This avoids needing exchange rates here and ensures consistency
+        const totalVolume = 0
 
         // Find corresponding auth user to get email_confirmed_at
         const authUser = authUsers?.users?.find(au => au.id === user.id)
@@ -455,13 +436,13 @@ class AdminDataStore {
     }
   }
 
-  private async calculateStatsFromTransactions(transactions: any[], baseCurrency: string) {
+  private async calculateStatsFromTransactions(transactions: any[], baseCurrency: string, exchangeRates: any[] = []) {
     const totalTransactions = transactions.length
     const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
 
-    // Calculate total volume in admin's base currency
+    // Calculate total volume in admin's base currency using already-loaded exchange rates
     const completedTransactions = transactions.filter((t) => t.status === "completed")
-    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency)
+    const totalVolume = this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency, exchangeRates)
 
     return {
       totalUsers: 0, // Will be updated when users load
@@ -473,7 +454,7 @@ class AdminDataStore {
     }
   }
 
-  private async calculateStats(users: any[], transactions: any[], baseCurrency: string) {
+  private async calculateStats(users: any[], transactions: any[], baseCurrency: string, exchangeRates: any[] = []) {
     const totalUsers = users.length
     const activeUsers = users.filter((u) => u.status === "active").length
     const verifiedUsers = users.filter((u) => u.verification_status === "verified").length
@@ -481,9 +462,9 @@ class AdminDataStore {
     const totalTransactions = transactions.length
     const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
 
-    // Calculate total volume in admin's base currency
+    // Calculate total volume in admin's base currency using already-loaded exchange rates
     const completedTransactions = transactions.filter((t) => t.status === "completed")
-    const totalVolume = await this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency)
+    const totalVolume = this.calculateVolumeInBaseCurrency(completedTransactions, baseCurrency, exchangeRates)
 
     return {
       totalUsers,
@@ -524,19 +505,28 @@ class AdminDataStore {
     }
   }
 
-  private async calculateVolumeInBaseCurrency(transactions: any[], baseCurrency: string): Promise<number> {
+  private calculateVolumeInBaseCurrency(transactions: any[], baseCurrency: string, exchangeRates: any[] = []): number {
     let totalVolume = 0
 
+    // Create a map of exchange rates for fast lookup
+    const rateMap = new Map<string, number>()
+    exchangeRates
+      .filter((r) => r.status === "active")
+      .forEach((r) => {
+        const key = `${r.from_currency}_${r.to_currency}`
+        rateMap.set(key, r.rate)
+      })
+
     for (const tx of transactions) {
-      const amount = Number(tx.send_amount)
+      const amount = Number(tx.send_amount) || 0
       const fromCurrency = tx.send_currency
 
       if (fromCurrency === baseCurrency) {
         // Same currency, no conversion needed
         totalVolume += amount
       } else {
-        // Convert using exchange rate
-        const convertedAmount = await this.convertCurrency(amount, fromCurrency, baseCurrency)
+        // Convert using exchange rate from loaded rates
+        const convertedAmount = this.convertCurrencyWithRates(amount, fromCurrency, baseCurrency, rateMap)
         totalVolume += convertedAmount
       }
     }
@@ -544,81 +534,25 @@ class AdminDataStore {
     return totalVolume
   }
 
-  private async convertCurrency(amount: number, fromCurrency: string, toCurrency: string): Promise<number> {
-    try {
-      // Get exchange rate from database
-      const { data: rate, error } = await supabase
-        .from("exchange_rates")
-        .select("rate")
-        .eq("from_currency", fromCurrency)
-        .eq("to_currency", toCurrency)
-        .eq("status", "active")
-        .single()
-
-      if (error || !rate) {
-        // Fallback to hardcoded rates if no rate found
-        return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
-      }
-
-      return amount * rate.rate
-    } catch {
-      // Fallback to hardcoded rates
-      return this.convertWithFallbackRates(amount, fromCurrency, toCurrency)
-    }
-  }
-
-  private convertWithFallbackRates(amount: number, fromCurrency: string, toCurrency: string): number {
-    // Fallback exchange rates (these should be updated regularly)
-    const rates: { [key: string]: { [key: string]: number } } = {
-      NGN: {
-        RUB: 0.011,
-        USD: 0.00061,
-        EUR: 0.00057,
-        GBP: 0.0005,
-      },
-      RUB: {
-        NGN: 91.0,
-        USD: 0.055,
-        EUR: 0.052,
-        GBP: 0.045,
-      },
-      USD: {
-        NGN: 1650,
-        RUB: 18.2,
-        EUR: 0.93,
-        GBP: 0.82,
-      },
-      EUR: {
-        NGN: 1750,
-        RUB: 19.5,
-        USD: 1.08,
-        GBP: 0.88,
-      },
-      GBP: {
-        NGN: 2000,
-        RUB: 22.2,
-        USD: 1.22,
-        EUR: 1.14,
-      },
+  private convertCurrencyWithRates(amount: number, fromCurrency: string, toCurrency: string, rateMap: Map<string, number>): number {
+    // Try direct rate first
+    const directKey = `${fromCurrency}_${toCurrency}`
+    const directRate = rateMap.get(directKey)
+    if (directRate) {
+      return amount * directRate
     }
 
-    if (fromCurrency === toCurrency) return amount
-
-    const rate = rates[fromCurrency]?.[toCurrency]
-    if (rate) {
-      return amount * rate
+    // Try reverse rate
+    const reverseKey = `${toCurrency}_${fromCurrency}`
+    const reverseRate = rateMap.get(reverseKey)
+    if (reverseRate && reverseRate > 0) {
+      return amount / reverseRate
     }
 
-    // If direct rate not found, convert through USD
-    const toUsdRate = rates[fromCurrency]?.["USD"]
-    const fromUsdRate = rates["USD"]?.[toCurrency]
-
-    if (toUsdRate && fromUsdRate) {
-      return amount * toUsdRate * fromUsdRate
-    }
-
-    // Last fallback - return original amount
-    return amount
+    // No rate found in database - return 0 to exclude from volume calculations
+    // This ensures we only use database rates
+    console.warn(`No exchange rate found for ${fromCurrency} to ${toCurrency} in database`)
+    return 0
   }
 
   private processRecentActivity(transactions: any[]) {
@@ -882,7 +816,8 @@ class AdminDataStore {
 
     try {
       const transactionsResult = await this.loadTransactions()
-      const stats = await this.calculateStats(this.data.users, transactionsResult, this.data.baseCurrency)
+      // Use already-loaded exchange rates for volume calculation
+      const stats = await this.calculateStats(this.data.users, transactionsResult, this.data.baseCurrency, this.data.exchangeRates)
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
@@ -903,7 +838,8 @@ class AdminDataStore {
     try {
       // Pass existing transactions to avoid re-querying
       const usersResult = await this.loadUsers(this.data.transactions)
-      const stats = await this.calculateStats(usersResult, this.data.transactions, this.data.baseCurrency)
+      // Use already-loaded exchange rates for volume calculation
+      const stats = await this.calculateStats(usersResult, this.data.transactions, this.data.baseCurrency, this.data.exchangeRates)
 
       this.data.users = usersResult
       this.data.stats = stats
@@ -933,6 +869,9 @@ class AdminDataStore {
     try {
       const exchangeRatesResult = await this.loadExchangeRates()
       this.data.exchangeRates = exchangeRatesResult
+      // Recalculate stats since exchange rates affect volume calculations
+      const stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency, exchangeRatesResult)
+      this.data.stats = stats
       this.data.lastUpdated = Date.now()
       this.notify()
     } catch (error) {
@@ -1516,3 +1455,67 @@ class AdminDataStore {
 }
 
 export const adminDataStore = new AdminDataStore()
+
+// Helper function to calculate user volume - can be used by users page
+export function calculateUserVolume(
+  transactions: any[],
+  baseCurrency: string,
+  exchangeRates: any[]
+): number {
+  // Create a map of exchange rates for fast lookup
+  const rateMap = new Map<string, number>()
+  exchangeRates
+    .filter((r) => r.status === "active")
+    .forEach((r) => {
+      const key = `${r.from_currency}_${r.to_currency}`
+      rateMap.set(key, r.rate)
+    })
+
+  let totalVolume = 0
+
+  // Only count completed transactions
+  const completedTransactions = transactions.filter((tx) => tx.status === "completed")
+
+  for (const tx of completedTransactions) {
+    const amount = Number(tx.send_amount) || 0
+    const fromCurrency = tx.send_currency
+
+    if (fromCurrency === baseCurrency) {
+      // Same currency, no conversion needed
+      totalVolume += amount
+    } else {
+      // Convert using exchange rate
+      const convertedAmount = convertCurrencyWithRatesHelper(amount, fromCurrency, baseCurrency, rateMap)
+      totalVolume += convertedAmount
+    }
+  }
+
+  return totalVolume
+}
+
+// Helper function for currency conversion
+function convertCurrencyWithRatesHelper(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rateMap: Map<string, number>
+): number {
+  // Try direct rate first
+  const directKey = `${fromCurrency}_${toCurrency}`
+  const directRate = rateMap.get(directKey)
+  if (directRate) {
+    return amount * directRate
+  }
+
+  // Try reverse rate
+  const reverseKey = `${toCurrency}_${fromCurrency}`
+  const reverseRate = rateMap.get(reverseKey)
+  if (reverseRate && reverseRate > 0) {
+    return amount / reverseRate
+  }
+
+  // No rate found in database - return 0 to exclude from volume calculations
+  // This ensures we only use database rates
+  console.warn(`No exchange rate found for ${fromCurrency} to ${toCurrency} in database`)
+  return 0
+}
