@@ -13,18 +13,16 @@ const nextConfig = {
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
-    // Enable optimized package imports for better performance
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+  // Turbopack configuration (moved from experimental.turbo)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
-  // Optimize production builds
-  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
