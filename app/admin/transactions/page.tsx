@@ -36,14 +36,6 @@ import { AdminTransactionsSkeleton } from "@/components/admin-transactions-skele
 
 export default function AdminTransactionsPage() {
   const { data, loading } = useAdminData()
-
-  if (loading || !data) {
-    return (
-      <AdminDashboardLayout>
-        <AdminTransactionsSkeleton />
-      </AdminDashboardLayout>
-    )
-  }
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
@@ -52,6 +44,14 @@ export default function AdminTransactionsPage() {
   const [currentTime, setCurrentTime] = useState(Date.now())
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminTransactionsSkeleton />
+      </AdminDashboardLayout>
+    )
+  }
 
   const filteredTransactions = (data?.transactions || []).filter((transaction: any) => {
     const matchesSearch =

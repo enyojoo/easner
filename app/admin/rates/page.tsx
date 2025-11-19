@@ -18,14 +18,6 @@ import { AdminRatesSkeleton } from "@/components/admin-rates-skeleton"
 
 const AdminRatesPage = () => {
   const { data, loading } = useAdminData()
-
-  if (loading || !data) {
-    return (
-      <AdminDashboardLayout>
-        <AdminRatesSkeleton />
-      </AdminDashboardLayout>
-    )
-  }
   const [selectedCurrency, setSelectedCurrency] = useState<any>(null)
   const [isEditingRates, setIsEditingRates] = useState(false)
   const [isAddingCurrency, setIsAddingCurrency] = useState(false)
@@ -43,6 +35,14 @@ const AdminRatesPage = () => {
     can_send: true,
     can_receive: true,
   })
+
+  if (loading || !data) {
+    return (
+      <AdminDashboardLayout>
+        <AdminRatesSkeleton />
+      </AdminDashboardLayout>
+    )
+  }
 
   const currencies = data?.currencies || []
   const exchangeRates = data?.exchangeRates || []
