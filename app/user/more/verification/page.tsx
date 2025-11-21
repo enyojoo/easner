@@ -187,37 +187,27 @@ export default function VerificationPage() {
     setUploadingIdentity(true)
     setIdentityUploadError(null)
     try {
-      const formData = new FormData()
-      formData.append("type", "identity")
-      formData.append("country_code", selectedCountry)
-      formData.append("id_type", selectedIdType)
-      formData.append("file", identityFile)
-
-      const response = await fetch("/api/kyc/submissions", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
+      // Upload directly using client-side supabase (same as receipt upload)
+      const { kycService } = await import("@/lib/kyc-service")
+      const submission = await kycService.createIdentitySubmission(userProfile.id, {
+        country_code: selectedCountry,
+        id_type: selectedIdType,
+        id_document_file: identityFile,
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setSubmissions(prev => {
-          const filtered = prev.filter(s => s.type !== "identity")
-          return [data.submission, ...filtered]
-        })
-        setIdentityDialogOpen(false)
-        setSelectedCountry("")
-        setSelectedIdType("")
-        setIdentityFile(null)
-        setCountrySearch("")
-        setIdentityUploadError(null)
-      } else {
-        const error = await response.json()
-        setIdentityUploadError(error.error || "Failed to upload document")
-      }
-    } catch (error) {
+      setSubmissions(prev => {
+        const filtered = prev.filter(s => s.type !== "identity")
+        return [submission, ...filtered]
+      })
+      setIdentityDialogOpen(false)
+      setSelectedCountry("")
+      setSelectedIdType("")
+      setIdentityFile(null)
+      setCountrySearch("")
+      setIdentityUploadError(null)
+    } catch (error: any) {
       console.error("Error uploading identity document:", error)
-      setIdentityUploadError("Failed to upload document")
+      setIdentityUploadError(error.message || "Failed to upload document")
     } finally {
       setUploadingIdentity(false)
     }
@@ -292,34 +282,24 @@ export default function VerificationPage() {
     setUploadingAddress(true)
     setAddressUploadError(null)
     try {
-      const formData = new FormData()
-      formData.append("type", "address")
-      formData.append("document_type", selectedDocumentType)
-      formData.append("file", addressFile)
-
-      const response = await fetch("/api/kyc/submissions", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
+      // Upload directly using client-side supabase (same as receipt upload)
+      const { kycService } = await import("@/lib/kyc-service")
+      const submission = await kycService.createAddressSubmission(userProfile.id, {
+        document_type: selectedDocumentType as "utility_bill" | "bank_statement",
+        address_document_file: addressFile,
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setSubmissions(prev => {
-          const filtered = prev.filter(s => s.type !== "address")
-          return [data.submission, ...filtered]
-        })
-        setAddressDialogOpen(false)
-        setSelectedDocumentType("")
-        setAddressFile(null)
-        setAddressUploadError(null)
-      } else {
-        const error = await response.json()
-        setAddressUploadError(error.error || "Failed to upload document")
-      }
-    } catch (error) {
+      setSubmissions(prev => {
+        const filtered = prev.filter(s => s.type !== "address")
+        return [submission, ...filtered]
+      })
+      setAddressDialogOpen(false)
+      setSelectedDocumentType("")
+      setAddressFile(null)
+      setAddressUploadError(null)
+    } catch (error: any) {
       console.error("Error uploading address document:", error)
-      setAddressUploadError("Failed to upload document")
+      setAddressUploadError(error.message || "Failed to upload document")
     } finally {
       setUploadingAddress(false)
     }
