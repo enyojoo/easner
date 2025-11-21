@@ -49,7 +49,13 @@ class UserDataStore {
   async initialize(userId: string) {
     this.updateActivity()
 
+    // If data is fresh for this user, return immediately without reloading
     if (this.currentUserId === userId && this.isDataFresh()) {
+      // Only start background refresh if not already started
+      if (!this.refreshInterval) {
+        this.startBackgroundRefresh(userId)
+        this.startActivityMonitoring()
+      }
       return this.data
     }
 
@@ -113,16 +119,28 @@ class UserDataStore {
       const transactions = results[2].status === "fulfilled" ? results[2].value || [] : this.data.transactions
       const recipients = results[3].status === "fulfilled" ? results[3].value || [] : this.data.recipients
 
-      this.data = {
-        transactions,
-        recipients,
-        currencies,
-        exchangeRates,
-        lastUpdated: Date.now(),
-      }
+      // Only update and notify if data actually changed to prevent unnecessary re-renders
+      const dataChanged = 
+        JSON.stringify(transactions) !== JSON.stringify(this.data.transactions) ||
+        JSON.stringify(recipients) !== JSON.stringify(this.data.recipients) ||
+        JSON.stringify(currencies) !== JSON.stringify(this.data.currencies) ||
+        JSON.stringify(exchangeRates) !== JSON.stringify(this.data.exchangeRates)
 
-      if (!silent) {
-        this.notify()
+      if (dataChanged) {
+        this.data = {
+          transactions,
+          recipients,
+          currencies,
+          exchangeRates,
+          lastUpdated: Date.now(),
+        }
+
+        if (!silent) {
+          this.notify()
+        }
+      } else {
+        // Update timestamp even if data didn't change to keep it fresh
+        this.data.lastUpdated = Date.now()
       }
 
       return this.data
@@ -137,8 +155,9 @@ class UserDataStore {
   }
 
   private isDataFresh(): boolean {
-    const oneMinute = 60 * 1000
-    return Date.now() - this.data.lastUpdated < oneMinute
+    // Increase freshness window to 5 minutes to prevent unnecessary reloads
+    const fiveMinutes = 5 * 60 * 1000
+    return Date.now() - this.data.lastUpdated < fiveMinutes
   }
 
   private startBackgroundRefresh(userId: string) {

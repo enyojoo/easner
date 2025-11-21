@@ -83,3 +83,4 @@ export function getIdTypeLabel(idType: string): string {
   return idTypeLabels[idType] || idType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
+

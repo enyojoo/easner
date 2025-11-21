@@ -99,7 +99,7 @@ export default function VerificationPage() {
         )
       case "in_review":
         return (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
             In review
           </span>
         )
@@ -327,67 +327,76 @@ export default function VerificationPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-1">
-              <Link href="/user/more">
-                <Button variant="ghost" size="sm" className="p-2">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Account Verification</h1>
-            </div>
+      <div className="min-h-screen bg-white">
+        {/* Header - Simple and clean */}
+        <div className="bg-white px-5 py-6">
+          <div className="flex items-center gap-3">
+            <Link href="/user/more">
+              <button className="p-1 -ml-1">
+                <ArrowLeft className="h-6 w-6 text-gray-900" />
+              </button>
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900">Account Verification</h1>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-4">
+        {/* Cards Container */}
+        <div className="px-5 pb-6 space-y-4">
           {/* Identity Verification Card */}
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setIdentityDialogOpen(true)}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <User className="h-6 w-6 text-blue-600" />
+          <div 
+            className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setIdentityDialogOpen(true)}
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  {/* Icon on top */}
+                  <div className="w-12 h-12 rounded-full bg-easner-primary-100 flex items-center justify-center mb-3">
+                    <MapPin className="h-5 w-5 text-easner-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Identity verification</h3>
-                    <p className="text-sm text-gray-600">
-                      Your ID document and ID verification information.
-                    </p>
-                  </div>
+                  {/* Title below icon */}
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Identity verification</h3>
+                  {/* Description below title */}
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Your ID document and ID verification information.
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
+                {/* Status Badge and Arrow on the right */}
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {getStatusBadge(identitySubmission?.status || "pending")}
                   <ChevronRight className="h-5 w-5 text-gray-400" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Address Information Card */}
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setAddressDialogOpen(true)}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="h-6 w-6 text-blue-600" />
+          <div 
+            className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setAddressDialogOpen(true)}
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  {/* Icon on top */}
+                  <div className="w-12 h-12 rounded-full bg-easner-primary-100 flex items-center justify-center mb-3">
+                    <User className="h-5 w-5 text-easner-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Address information</h3>
-                    <p className="text-sm text-gray-600">
-                      Your home address and utility bill document.
-                    </p>
-                  </div>
+                  {/* Title below icon */}
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Address information</h3>
+                  {/* Description below title */}
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Your home address and utility bill document.
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
+                {/* Status Badge and Arrow on the right */}
+                <div className="flex items-center gap-3 flex-shrink-0">
                   {getStatusBadge(addressSubmission?.status || "pending")}
                   <ChevronRight className="h-5 w-5 text-gray-400" />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Identity Verification Dialog */}

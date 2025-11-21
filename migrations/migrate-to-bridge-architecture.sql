@@ -190,3 +190,4 @@ CREATE INDEX IF NOT EXISTS idx_crypto_receive_transactions_destination_type ON c
 CREATE INDEX IF NOT EXISTS idx_crypto_receive_transactions_bridge_liquidation_address_id ON crypto_receive_transactions(bridge_liquidation_address_id);
 CREATE INDEX IF NOT EXISTS idx_crypto_receive_transactions_bridge_card_account_id ON crypto_receive_transactions(bridge_card_account_id);
 
+

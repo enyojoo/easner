@@ -61,7 +61,14 @@ export function useUserData() {
 
     const unsubscribe = userDataStore.subscribe(() => {
       if (mountedRef.current) {
-        setData(userDataStore.getData())
+        const newData = userDataStore.getData()
+        // Only update state if data actually changed to prevent unnecessary re-renders
+        setData((prevData) => {
+          if (JSON.stringify(prevData) === JSON.stringify(newData)) {
+            return prevData
+          }
+          return newData
+        })
       }
     })
 

@@ -92,3 +92,4 @@ CREATE TRIGGER update_kyc_submissions_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_kyc_submissions_updated_at();
 
+
