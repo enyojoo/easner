@@ -45,6 +45,11 @@ export function getAccessTokenFromRequest(request: NextRequest): string | null {
           console.log(`Found access_token in cookie: ${cookie.name}`)
           return parsed.access_token
         }
+        // Also check for nested session structure
+        if (parsed.session?.access_token) {
+          console.log(`Found access_token in nested session: ${cookie.name}`)
+          return parsed.session.access_token
+        }
       } catch (e) {
         // If not JSON, might be the token directly (less common)
         if (cookie.value && cookie.value.length > 50 && cookie.value.startsWith('eyJ')) {
@@ -58,17 +63,30 @@ export function getAccessTokenFromRequest(request: NextRequest): string | null {
 
   // Fallback: try common cookie name patterns
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  const projectRef = supabaseUrl.split('//')[1]?.split('.')[0] || ''
+  // Extract project ref from Supabase URL (e.g., https://xyz.supabase.co -> xyz)
+  let projectRef = ''
+  try {
+    const urlMatch = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)
+    if (urlMatch) {
+      projectRef = urlMatch[1]
+    }
+  } catch (e) {
+    // Ignore URL parsing errors
+  }
   
   // Try specific cookie names (Supabase uses sb-<project-ref>-auth-token format)
   const cookieNames = [
     `sb-${projectRef}-auth-token`,
+    `sb-${projectRef}-auth-token.0`,
+    `sb-${projectRef}-auth-token.1`,
     `sb-access-token`,
     `sb-${projectRef}-access-token`,
     `access_token`,
     `sb-access_token`,
     // Also try without project ref
-    `sb-auth-token`
+    `sb-auth-token`,
+    `sb-auth-token.0`,
+    `sb-auth-token.1`,
   ]
   
   for (const cookieName of cookieNames) {
@@ -88,6 +106,11 @@ export function getAccessTokenFromRequest(request: NextRequest): string | null {
           console.log(`Found access_token in fallback cookie: ${cookieName}`)
           return parsed.access_token
         }
+        // Also check for nested session structure
+        if (parsed.session?.access_token) {
+          console.log(`Found access_token in nested session (fallback): ${cookieName}`)
+          return parsed.session.access_token
+        }
       } catch (e) {
         // If it's a direct token
         if (cookie.value && cookie.value.startsWith('eyJ')) {
@@ -98,7 +121,57 @@ export function getAccessTokenFromRequest(request: NextRequest): string | null {
     }
   }
   
-  console.log("No access token found in any cookie")
+  if (process.env.NODE_ENV === 'development') {
+    console.log("No access token found in any cookie. Available cookies:", allCookies.map(c => `${c.name} (${c.value.substring(0, 50)}...)`))
+  }
+  return null
+}
+
+/**
+ * Extract access token from cookie value
+ */
+function extractTokenFromCookieValue(cookieValue: string, cookieName: string): string | null {
+  try {
+    // Handle URL encoding
+    let decodedValue = cookieValue
+    try {
+      decodedValue = decodeURIComponent(cookieValue)
+    } catch (e) {
+      // Already decoded or not URL encoded
+    }
+    
+    // Try parsing as JSON first (Supabase stores session as JSON)
+    try {
+      const parsed = JSON.parse(decodedValue)
+      if (parsed.access_token) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Found access_token in cookie: ${cookieName}`)
+        }
+        return parsed.access_token
+      }
+      // Also check for nested session structure
+      if (parsed.session?.access_token) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Found access_token in nested session: ${cookieName}`)
+        }
+        return parsed.session.access_token
+      }
+    } catch (e) {
+      // Not JSON, continue to check if it's a direct token
+    }
+    
+    // If not JSON, might be the token directly (less common)
+    if (decodedValue && decodedValue.length > 50 && decodedValue.startsWith('eyJ')) {
+      // JWT tokens start with 'eyJ'
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Found JWT token directly in cookie: ${cookieName}`)
+      }
+      return decodedValue
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
   return null
 }
 

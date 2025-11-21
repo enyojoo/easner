@@ -1,4 +1,5 @@
 import { type NextRequest } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 import { createServerClient } from "./supabase"
 import { getAccessTokenFromRequest } from "./supabase-server-helpers"
 
@@ -14,18 +15,25 @@ export interface AuthenticatedUser {
  */
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   try {
-    const supabase = createServerClient()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    
+    // Use anon key client to verify user token (not service role)
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
     
     // Use the robust token extraction helper
     const token = getAccessTokenFromRequest(request)
     
     if (!token) {
-      console.log("No authentication token found")
+      if (process.env.NODE_ENV === 'development') {
+        const allCookies = request.cookies.getAll()
+        console.log("No authentication token found. Available cookies:", allCookies.map(c => c.name))
+      }
       return null
     }
 
     // Verify the token with Supabase with timeout
-    const authPromise = supabase.auth.getUser(token)
+    const authPromise = anonClient.auth.getUser(token)
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("Auth timeout")), 10000)
     )
@@ -43,12 +51,14 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     }
 
     // Get user profile from database with enhanced validation
+    // Use service role client for database queries (bypasses RLS)
+    const serverClient = createServerClient()
     let userProfile = null
     let isAdmin = false
 
     try {
       // Try regular users table first
-      const { data: regularUser, error: regularUserError } = await supabase
+      const { data: regularUser, error: regularUserError } = await serverClient
         .from("users")
         .select("*")
         .eq("id", user.id)
@@ -60,7 +70,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
         console.log("Regular user authenticated:", regularUser.email)
       } else {
         // Check admin_users table
-        const { data: adminUser, error: adminError } = await supabase
+        const { data: adminUser, error: adminError } = await serverClient
           .from("admin_users")
           .select("*")
           .eq("id", user.id)
