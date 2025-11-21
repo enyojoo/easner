@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 export interface KYCSubmission {
   id: string
@@ -32,8 +33,9 @@ export interface CreateAddressSubmission {
 
 export const kycService = {
   // Get user's KYC submissions
-  async getByUserId(userId: string): Promise<KYCSubmission[]> {
-    const { data, error } = await supabase
+  async getByUserId(userId: string, client?: SupabaseClient): Promise<KYCSubmission[]> {
+    const dbClient = client || supabase
+    const { data, error } = await dbClient
       .from("kyc_submissions")
       .select("*")
       .eq("user_id", userId)
@@ -51,8 +53,9 @@ export const kycService = {
   },
 
   // Get specific submission
-  async getById(submissionId: string): Promise<KYCSubmission | null> {
-    const { data, error } = await supabase
+  async getById(submissionId: string, client?: SupabaseClient): Promise<KYCSubmission | null> {
+    const dbClient = client || supabase
+    const { data, error } = await dbClient
       .from("kyc_submissions")
       .select("*")
       .eq("id", submissionId)
@@ -66,12 +69,13 @@ export const kycService = {
   },
 
   // Upload file to Supabase Storage
-  async uploadFile(file: File, folder: string, userId: string): Promise<{ url: string; filename: string }> {
+  async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient): Promise<{ url: string; filename: string }> {
+    const storageClient = client || supabase
     const fileExt = file.name.split(".").pop()
     const fileName = `${userId}_${Date.now()}.${fileExt}`
     const filePath = `${folder}/${fileName}`
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await storageClient.storage
       .from("kyc-documents")
       .upload(filePath, file, {
         cacheControl: "3600",
@@ -79,12 +83,13 @@ export const kycService = {
       })
 
     if (uploadError) {
+      console.error("Storage upload error:", uploadError)
       throw new Error(`Upload failed: ${uploadError.message}`)
     }
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from("kyc-documents").getPublicUrl(filePath)
+    } = storageClient.storage.from("kyc-documents").getPublicUrl(filePath)
 
     return { url: publicUrl, filename: fileName }
   },
@@ -92,17 +97,20 @@ export const kycService = {
   // Create identity verification submission
   async createIdentitySubmission(
     userId: string,
-    data: CreateIdentitySubmission
+    data: CreateIdentitySubmission,
+    client?: SupabaseClient
   ): Promise<KYCSubmission> {
+    const dbClient = client || supabase
     // Upload document
     const { url, filename } = await this.uploadFile(
       data.id_document_file,
       "identity",
-      userId
+      userId,
+      client
     )
 
     // Check if user already has a pending identity submission
-    const existing = await supabase
+    const existing = await dbClient
       .from("kyc_submissions")
       .select("id")
       .eq("user_id", userId)
@@ -112,7 +120,7 @@ export const kycService = {
 
     if (existing.data) {
       // Update existing submission
-      const { data: updatedData, error } = await supabase
+      const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
           country_code: data.country_code,
@@ -130,7 +138,7 @@ export const kycService = {
       return updatedData
     } else {
       // Create new submission
-      const { data, error } = await supabase
+      const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
@@ -145,24 +153,27 @@ export const kycService = {
         .single()
 
       if (error) throw error
-      return data
+      return submissionData
     }
   },
 
   // Create address verification submission
   async createAddressSubmission(
     userId: string,
-    data: CreateAddressSubmission
+    data: CreateAddressSubmission,
+    client?: SupabaseClient
   ): Promise<KYCSubmission> {
+    const dbClient = client || supabase
     // Upload document
     const { url, filename } = await this.uploadFile(
       data.address_document_file,
       "address",
-      userId
+      userId,
+      client
     )
 
     // Check if user already has a pending address submission
-    const existing = await supabase
+    const existing = await dbClient
       .from("kyc_submissions")
       .select("id")
       .eq("user_id", userId)
@@ -172,7 +183,7 @@ export const kycService = {
 
     if (existing.data) {
       // Update existing submission
-      const { data: updatedData, error } = await supabase
+      const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
           document_type: data.document_type,
@@ -189,7 +200,7 @@ export const kycService = {
       return updatedData
     } else {
       // Create new submission
-      const { data, error } = await supabase
+      const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
@@ -203,7 +214,7 @@ export const kycService = {
         .single()
 
       if (error) throw error
-      return data
+      return submissionData
     }
   },
 

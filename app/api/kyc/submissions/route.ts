@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireUser, createErrorResponse, withErrorHandling } from "@/lib/auth-utils"
 import { kycService } from "@/lib/kyc-service"
+import { createServerSupabaseClient } from "@/lib/supabase-server-helpers"
 
 // GET - Get user's KYC submissions
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const user = await requireUser(request)
-  const submissions = await kycService.getByUserId(user.id)
+  // Use server-side client with user's session
+  const { client } = createServerSupabaseClient(request)
+  const submissions = await kycService.getByUserId(user.id, client)
   return NextResponse.json({ submissions })
 })
 
 // POST - Create new KYC submission
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const user = await requireUser(request)
+  // Use server-side client with user's session for storage uploads
+  const { client } = createServerSupabaseClient(request)
 
   const formData = await request.formData()
   const type = formData.get("type") as string
@@ -33,7 +38,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       country_code,
       id_type,
       id_document_file: file,
-    })
+    }, client)
 
     return NextResponse.json({ submission })
   } else if (type === "address") {
@@ -46,7 +51,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const submission = await kycService.createAddressSubmission(user.id, {
       document_type: document_type as "utility_bill" | "bank_statement",
       address_document_file: file,
-    })
+    }, client)
 
     return NextResponse.json({ submission })
   } else {

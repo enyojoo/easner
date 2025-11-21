@@ -6,8 +6,10 @@ import { useAuth } from "@/lib/auth-context"
 
 export function useUserData() {
   const { userProfile } = useAuth()
-  const [data, setData] = useState(userDataStore.getData())
-  const [loading, setLoading] = useState(false)
+  const initialData = userDataStore.getData()
+  const initialLoading = !initialData || initialData.lastUpdated === 0 || !userDataStore.checkDataFreshness()
+  const [data, setData] = useState(initialData)
+  const [loading, setLoading] = useState(initialLoading)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
@@ -38,17 +40,38 @@ export function useUserData() {
     const initializeData = async () => {
       if (!mountedRef.current) return
 
-      setLoading(true)
+      // Check if data is already fresh - if so, don't show loading state
+      const existingData = userDataStore.getData()
+      const hasData = existingData && existingData.lastUpdated > 0
+      const isDataFresh = userDataStore.checkDataFreshness()
+
+      // Only show loading if we don't have fresh data
+      // This prevents flickering when navigating to the dashboard with cached data
+      if (!hasData || !isDataFresh) {
+        setLoading(true)
+      }
       setError(null)
+      
       try {
+        // Initialize will return immediately if data is fresh, preventing unnecessary loading
         await userDataStore.initialize(userProfile.id)
         if (mountedRef.current) {
-          setData(userDataStore.getData())
+          const newData = userDataStore.getData()
+          // Only update if data actually changed
+          setData((prevData) => {
+            if (JSON.stringify(prevData) === JSON.stringify(newData)) {
+              return prevData
+            }
+            return newData
+          })
         }
       } catch (err) {
         console.error("Failed to initialize user data:", err)
         if (mountedRef.current) {
-          setError("Failed to load data. Please try again.")
+          // Only set error if we don't have existing data to fall back to
+          if (!hasData) {
+            setError("Failed to load data. Please try again.")
+          }
         }
       } finally {
         if (mountedRef.current) {

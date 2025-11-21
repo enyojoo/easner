@@ -79,12 +79,16 @@ CREATE POLICY "Admins can update all KYC submissions"
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_kyc_submissions_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create trigger
 CREATE TRIGGER update_kyc_submissions_updated_at

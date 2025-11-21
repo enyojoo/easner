@@ -289,8 +289,17 @@ export default function UserDashboardPage() {
 
   const recentTransactions = transactions?.slice(0, 2) || []
 
-  // Show skeleton while data is loading
-  if (loading || !userProfile || !currencies?.length || !exchangeRates?.length) {
+  // Check if we have valid data to display
+  const hasValidData = 
+    transactions && 
+    currencies && currencies.length > 0 && 
+    exchangeRates && exchangeRates.length > 0
+
+  // Show skeleton only if:
+  // 1. Actually loading AND no data available, OR
+  // 2. No user profile
+  // This prevents flickering when navigating with cached data
+  if ((loading && !hasValidData) || !userProfile) {
     return (
       <UserDashboardLayout>
         <DashboardSkeleton />

@@ -206,6 +206,12 @@ class UserDataStore {
     return this.data
   }
 
+  // Public method to check if data is fresh (uses same logic as private isDataFresh)
+  checkDataFreshness(): boolean {
+    const fiveMinutes = 5 * 60 * 1000
+    return Date.now() - this.data.lastUpdated < fiveMinutes
+  }
+
   getTransactions() {
     this.updateActivity()
     return this.data.transactions
