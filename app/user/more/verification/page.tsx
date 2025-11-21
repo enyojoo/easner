@@ -71,13 +71,10 @@ export default function VerificationPage() {
     
     const loadSubmissions = async () => {
       try {
-        const response = await fetch("/api/kyc/submissions", {
-          credentials: "include",
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setSubmissions(data.submissions || [])
-        }
+        // Use client-side kycService directly (same as receipt upload)
+        const { kycService } = await import("@/lib/kyc-service")
+        const submissions = await kycService.getByUserId(userProfile.id)
+        setSubmissions(submissions || [])
       } catch (error) {
         console.error("Error loading submissions:", error)
       }

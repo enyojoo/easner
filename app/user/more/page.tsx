@@ -112,15 +112,11 @@ export default function MorePage() {
     // Only fetch missing or expired data
     const loadKycSubmissions = async () => {
       try {
-        const response = await fetch("/api/kyc/submissions", {
-          credentials: "include",
-        })
-        if (response.ok) {
-          const data = await response.json()
-          const submissions = data.submissions || []
-          setKycSubmissions(submissions)
-          setCachedSubmissions(submissions)
-        }
+        // Use client-side kycService directly (same as receipt upload)
+        const { kycService } = await import("@/lib/kyc-service")
+        const submissions = await kycService.getByUserId(userProfile.id)
+        setKycSubmissions(submissions || [])
+        setCachedSubmissions(submissions || [])
       } catch (error) {
         console.error("Error loading KYC submissions:", error)
       }
