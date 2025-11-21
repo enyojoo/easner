@@ -176,6 +176,12 @@ export default function VerificationPage() {
   }
 
   const handleIdentityUpload = async () => {
+    // Prevent upload if already in review or approved
+    if (identitySubmission?.status === "in_review" || identitySubmission?.status === "approved") {
+      setIdentityUploadError("Your identity verification is already under review or approved. You cannot upload a new document.")
+      return
+    }
+
     if (!selectedCountry || !selectedIdType || !identityFile || !userProfile?.id) {
       alert("Please select country, ID type, and upload a file")
       return
@@ -271,6 +277,12 @@ export default function VerificationPage() {
   }
 
   const handleAddressUpload = async () => {
+    // Prevent upload if already in review or approved
+    if (addressSubmission?.status === "in_review" || addressSubmission?.status === "approved") {
+      setAddressUploadError("Your address verification is already under review or approved. You cannot upload a new document.")
+      return
+    }
+
     if (!selectedDocumentType || !addressFile || !userProfile?.id) {
       alert("Please select document type and upload a file")
       return
@@ -321,8 +333,17 @@ export default function VerificationPage() {
         <div className="px-5 pb-6 space-y-4">
           {/* Identity Verification Card */}
           <div 
-            className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setIdentityDialogOpen(true)}
+            className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow ${
+              identitySubmission?.status === "in_review" || identitySubmission?.status === "approved"
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer hover:shadow-md"
+            }`}
+            onClick={() => {
+              // Don't open dialog if already in review or approved
+              if (identitySubmission?.status !== "in_review" && identitySubmission?.status !== "approved") {
+                setIdentityDialogOpen(true)
+              }
+            }}
           >
             <div className="p-5">
               <div className="flex items-start justify-between gap-4">
@@ -349,8 +370,17 @@ export default function VerificationPage() {
 
           {/* Address Information Card */}
           <div 
-            className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setAddressDialogOpen(true)}
+            className={`bg-white rounded-xl border border-gray-200 shadow-sm transition-shadow ${
+              addressSubmission?.status === "in_review" || addressSubmission?.status === "approved"
+                ? "cursor-not-allowed opacity-60"
+                : "cursor-pointer hover:shadow-md"
+            }`}
+            onClick={() => {
+              // Don't open dialog if already in review or approved
+              if (addressSubmission?.status !== "in_review" && addressSubmission?.status !== "approved") {
+                setAddressDialogOpen(true)
+              }
+            }}
           >
             <div className="p-5">
               <div className="flex items-start justify-between gap-4">

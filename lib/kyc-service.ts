@@ -109,17 +109,26 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending identity submission
-    const existing = await dbClient
+    // Check if user already has a pending or in_review identity submission
+    const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
-      .select("id")
+      .select("id, status")
       .eq("user_id", userId)
       .eq("type", "identity")
-      .eq("status", "pending")
-      .single()
+      .in("status", ["pending", "in_review"])
+      .maybeSingle()
 
-    if (existing.data) {
-      // Update existing submission
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError
+    }
+
+    if (existing) {
+      // If already in review, don't allow updates
+      if (existing.status === "in_review") {
+        throw new Error("Your identity verification is already under review. Please wait for admin approval.")
+      }
+      
+      // Update existing pending submission
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
@@ -127,23 +136,23 @@ export const kycService = {
           id_type: data.id_type,
           id_document_url: url,
           id_document_filename: filename,
-          status: "pending",
+          status: "in_review", // Change to in_review after upload
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existing.data.id)
+        .eq("id", existing.id)
         .select()
         .single()
 
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission
+      // Create new submission with in_review status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "identity",
-          status: "pending",
+          status: "in_review", // Start as in_review after upload
           country_code: data.country_code,
           id_type: data.id_type,
           id_document_url: url,
@@ -172,40 +181,49 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending address submission
-    const existing = await dbClient
+    // Check if user already has a pending or in_review address submission
+    const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
-      .select("id")
+      .select("id, status")
       .eq("user_id", userId)
       .eq("type", "address")
-      .eq("status", "pending")
-      .single()
+      .in("status", ["pending", "in_review"])
+      .maybeSingle()
 
-    if (existing.data) {
-      // Update existing submission
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError
+    }
+
+    if (existing) {
+      // If already in review, don't allow updates
+      if (existing.status === "in_review") {
+        throw new Error("Your address verification is already under review. Please wait for admin approval.")
+      }
+      
+      // Update existing pending submission
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
           document_type: data.document_type,
           address_document_url: url,
           address_document_filename: filename,
-          status: "pending",
+          status: "in_review", // Change to in_review after upload
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existing.data.id)
+        .eq("id", existing.id)
         .select()
         .single()
 
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission
+      // Create new submission with in_review status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "address",
-          status: "pending",
+          status: "in_review", // Start as in_review after upload
           document_type: data.document_type,
           address_document_url: url,
           address_document_filename: filename,
