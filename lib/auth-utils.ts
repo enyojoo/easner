@@ -11,80 +11,64 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Enhanced authentication with better error handling and validation
+ * Get authenticated user from request - uses same pattern as admin-auth-utils
+ * First gets user from session using anon key, then checks users/admin_users with service role
  */
 export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     
-    // Use anon key client to verify user token (not service role)
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
-    
-    // Use the robust token extraction helper
+    // Get access token from cookies (same as admin-auth-utils)
     const token = getAccessTokenFromRequest(request)
     
     if (!token) {
-      if (process.env.NODE_ENV === 'development') {
-        const allCookies = request.cookies.getAll()
-        console.log("No authentication token found. Available cookies:", allCookies.map(c => c.name))
-      }
+      console.log("No authentication token found")
+      const allCookies = request.cookies.getAll()
+      console.log("Available cookies:", allCookies.map(c => c.name))
       return null
     }
 
-    // Verify the token with Supabase with timeout
-    const authPromise = anonClient.auth.getUser(token)
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Auth timeout")), 10000)
-    )
-
-    const { data: { user }, error } = await Promise.race([authPromise, timeoutPromise]) as any
+    // Create anon client to verify token and get user (same as admin-auth-utils)
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
+    const { data: { user }, error: userError } = await anonClient.auth.getUser(token)
     
-    if (error) {
-      console.error("Auth token verification failed:", error.message)
-      return null
-    }
-    
-    if (!user) {
-      console.log("No user found in token")
+    if (userError || !user) {
+      console.log("Failed to get user from token:", userError?.message)
       return null
     }
 
-    // Get user profile from database with enhanced validation
-    // Use service role client for database queries (bypasses RLS)
+    console.log("Authenticated user found:", user.id, user.email)
+
+    // Use service role client to check users/admin_users table (bypasses RLS) - same as admin-auth-utils
     const serverClient = createServerClient()
     let userProfile = null
     let isAdmin = false
 
-    try {
-      // Try regular users table first
-      const { data: regularUser, error: regularUserError } = await serverClient
-        .from("users")
+    // Try regular users table first
+    const { data: regularUser, error: regularUserError } = await serverClient
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+
+    if (regularUser && !regularUserError) {
+      userProfile = regularUser
+      isAdmin = false
+      console.log("Regular user authenticated:", regularUser.email)
+    } else {
+      // Check admin_users table
+      const { data: adminUser, error: adminError } = await serverClient
+        .from("admin_users")
         .select("*")
         .eq("id", user.id)
         .single()
 
-      if (regularUser && !regularUserError) {
-        userProfile = regularUser
-        isAdmin = false
-        console.log("Regular user authenticated:", regularUser.email)
-      } else {
-        // Check admin_users table
-        const { data: adminUser, error: adminError } = await serverClient
-          .from("admin_users")
-          .select("*")
-          .eq("id", user.id)
-          .single()
-
-        if (adminUser && !adminError) {
-          userProfile = adminUser
-          isAdmin = true
-          console.log("Admin user authenticated:", adminUser.email)
-        }
+      if (adminUser && !adminError) {
+        userProfile = adminUser
+        isAdmin = true
+        console.log("Admin user authenticated:", adminUser.email)
       }
-    } catch (dbError) {
-      console.error("Database profile lookup failed:", dbError)
-      return null
     }
 
     if (!userProfile) {
@@ -92,11 +76,13 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
       return null
     }
 
-    // Additional validation
+    // Check if user is active (if status field exists)
     if (userProfile.status && userProfile.status !== "active") {
       console.log("User account is not active:", userProfile.status)
       return null
     }
+
+    console.log("User verified:", userProfile.email)
 
     return {
       id: user.id,
