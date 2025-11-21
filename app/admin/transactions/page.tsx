@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -21,26 +22,72 @@ import {
   XCircle,
   AlertCircle,
   ArrowUpDown,
+  X,
+  ChevronDown,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
-import { useAdminData } from "@/hooks/use-admin-data"
-import { adminDataStore } from "@/lib/admin-data-store"
 import { paymentMethodService } from "@/lib/database"
 import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
 } from "@/lib/currency-account-types"
 import { AdminTransactionsSkeleton } from "@/components/admin-transactions-skeleton"
+import { adminDataStore } from "@/lib/admin-data-store"
+import { useAdminData } from "@/hooks/use-admin-data"
+
+interface CombinedTransaction {
+  id: string
+  transaction_id: string
+  type: "send" | "receive" | "card_funding"
+  status: string
+  created_at: string
+  user?: {
+    first_name: string
+    last_name: string
+    email: string
+  }
+  // Send transaction fields
+  send_amount?: number
+  send_currency?: string
+  receive_amount?: number
+  receive_currency?: string
+  recipient?: {
+    full_name: string
+    account_number: string
+    bank_name: string
+  }
+  // Receive transaction fields
+  crypto_amount?: number
+  crypto_currency?: string
+  fiat_amount?: number
+  fiat_currency?: string
+  stellar_transaction_hash?: string
+  blockchain_tx_hash?: string
+  crypto_wallet?: {
+    wallet_address: string
+    crypto_currency: string
+  }
+  // Card funding fields
+  destination_type?: "bank" | "card"
+  bridge_card_account_id?: string
+  // Receipt fields
+  receipt_url?: string
+  receipt_filename?: string
+  exchange_rate?: number
+}
 
 export default function AdminTransactionsPage() {
-  const { data, loading } = useAdminData()
+  const { data: adminData, loading: adminDataLoading } = useAdminData()
+  const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [typeFilter, setTypeFilter] = useState<"all" | "send" | "receive">("all")
   const [currencyFilter, setCurrencyFilter] = useState("all")
   const [selectedTransactions, setSelectedTransactions] = useState<string[]>([])
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<CombinedTransaction | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -73,6 +120,87 @@ export default function AdminTransactionsPage() {
     }
   }, [selectedTransaction, paymentMethods])
 
+  // Load transactions from adminDataStore (same pattern as users page)
+  useEffect(() => {
+    if (adminData?.transactions) {
+      // Transform transactions to match CombinedTransaction interface
+      const transformedTransactions: CombinedTransaction[] = (adminData.transactions || []).map((tx: any) => {
+        // If it's already transformed (has type), use it as is
+        if (tx.type) {
+          return {
+            id: tx.id,
+            transaction_id: tx.transaction_id || tx.id,
+            type: tx.type,
+            status: tx.status,
+            created_at: tx.created_at,
+            updated_at: tx.updated_at,
+            user: tx.user,
+            user_id: tx.user_id,
+            // Send fields
+            send_amount: tx.send_amount,
+            send_currency: tx.send_currency,
+            receive_amount: tx.receive_amount,
+            receive_currency: tx.receive_currency,
+            recipient: tx.recipient,
+            // Receive fields
+            crypto_amount: tx.crypto_amount,
+            crypto_currency: tx.crypto_currency,
+            fiat_amount: tx.fiat_amount,
+            fiat_currency: tx.fiat_currency,
+            stellar_transaction_hash: tx.stellar_transaction_hash || tx.blockchain_tx_hash,
+            blockchain_tx_hash: tx.blockchain_tx_hash,
+            crypto_wallet: tx.crypto_wallet,
+            destination_type: tx.destination_type,
+            bridge_card_account_id: tx.bridge_card_account_id,
+            // Receipt fields
+            receipt_url: tx.receipt_url,
+            receipt_filename: tx.receipt_filename,
+            exchange_rate: tx.exchange_rate,
+          }
+        }
+        // Otherwise, determine type from transaction structure
+        const isReceive = tx.crypto_amount || tx.fiat_amount
+        const isCardFunding = tx.destination_type === "card" || tx.bridge_card_account_id
+        return {
+          id: tx.id,
+          transaction_id: tx.transaction_id || tx.id,
+          type: isReceive ? (isCardFunding ? "card_funding" : "receive") : "send",
+          status: tx.status,
+          created_at: tx.created_at,
+          updated_at: tx.updated_at,
+          user: tx.user,
+          user_id: tx.user_id,
+          // Send fields
+          send_amount: tx.send_amount,
+          send_currency: tx.send_currency,
+          receive_amount: tx.receive_amount,
+          receive_currency: tx.receive_currency,
+          recipient: tx.recipient,
+          // Receive fields
+          crypto_amount: tx.crypto_amount,
+          crypto_currency: tx.crypto_currency,
+          fiat_amount: tx.fiat_amount,
+          fiat_currency: tx.fiat_currency,
+          stellar_transaction_hash: tx.stellar_transaction_hash || tx.blockchain_tx_hash,
+          blockchain_tx_hash: tx.blockchain_tx_hash,
+          crypto_wallet: tx.crypto_wallet,
+          destination_type: tx.destination_type,
+          bridge_card_account_id: tx.bridge_card_account_id,
+          // Receipt fields
+          receipt_url: tx.receipt_url,
+          receipt_filename: tx.receipt_filename,
+          exchange_rate: tx.exchange_rate,
+        }
+      })
+      setTransactions(transformedTransactions)
+      setLoading(false)
+    } else if (!adminDataLoading) {
+      // If adminData is loaded but has no transactions, set empty array
+      setTransactions([])
+      setLoading(false)
+    }
+  }, [adminData, adminDataLoading])
+
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -82,7 +210,7 @@ export default function AdminTransactionsPage() {
     return () => clearInterval(timer)
   }, [])
 
-  if (loading || !data) {
+  if (loading || adminDataLoading || !adminData) {
     return (
       <AdminDashboardLayout>
         <AdminTransactionsSkeleton />
@@ -90,19 +218,27 @@ export default function AdminTransactionsPage() {
     )
   }
 
-  const filteredTransactions = (data?.transactions || []).filter((transaction: any) => {
+  const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
       searchTerm === "" ||
-      transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      transaction.transaction_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (transaction.type === "receive" || transaction.type === "card_funding") &&
+        (transaction.stellar_transaction_hash?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          transaction.blockchain_tx_hash?.toLowerCase().includes(searchTerm.toLowerCase()))
 
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter
+    const matchesType = typeFilter === "all" || 
+      (typeFilter === "send" && transaction.type === "send") ||
+      (typeFilter === "receive" && (transaction.type === "receive" || transaction.type === "card_funding"))
     const matchesCurrency =
       currencyFilter === "all" ||
-      transaction.send_currency === currencyFilter ||
-      transaction.receive_currency === currencyFilter
+      (transaction.type === "send" &&
+        (transaction.send_currency === currencyFilter || transaction.receive_currency === currencyFilter)) ||
+      ((transaction.type === "receive" || transaction.type === "card_funding") &&
+        (transaction.crypto_currency === currencyFilter || transaction.fiat_currency === currencyFilter))
 
-    return matchesSearch && matchesStatus && matchesCurrency
+    return matchesSearch && matchesStatus && matchesType && matchesCurrency
   })
 
   const formatTimestamp = (dateString: string) => {
@@ -132,6 +268,10 @@ export default function AdminTransactionsPage() {
       pending: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
       processing: { color: "bg-blue-100 text-blue-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
       completed: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      confirmed: { color: "bg-blue-100 text-blue-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      converting: { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="h-3 w-3 mr-1" /> },
+      converted: { color: "bg-blue-100 text-blue-800", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
+      deposited: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
       failed: { color: "bg-red-100 text-red-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
       cancelled: { color: "bg-gray-100 text-gray-800", icon: <XCircle className="h-3 w-3 mr-1" /> },
     }
@@ -307,53 +447,154 @@ export default function AdminTransactionsPage() {
           </Button>
         </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Search and Filters */}
+        <div className="space-y-4">
+          {/* Search and Filters Row */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Type Filter Tabs */}
+            <Tabs value={typeFilter} onValueChange={(v) => setTypeFilter(v as "all" | "send" | "receive")}>
+              <TabsList className="bg-gray-100">
+                <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  All Transactions
+                </TabsTrigger>
+                <TabsTrigger value="send" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  Send (Fiat)
+                </TabsTrigger>
+                <TabsTrigger value="receive" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  Receive & Card
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Currencies" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Currencies</SelectItem>
-                  <SelectItem value="NGN">NGN</SelectItem>
-                  <SelectItem value="RUB">RUB</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Search Bar */}
+            <div className="relative flex-1 min-w-[300px]">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="Search by transaction ID, email, or blockchain hash..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 h-12 text-base"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-white">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <SelectValue placeholder="Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="converting">Converting</SelectItem>
+                <SelectItem value="converted">Converted</SelectItem>
+                <SelectItem value="deposited">Deposited</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Currency Filter */}
+            <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+              <SelectTrigger className="w-[160px] bg-white">
+                <SelectValue placeholder="Currency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Currencies</SelectItem>
+                {adminData?.currencies?.map((currency: any) => (
+                  <SelectItem key={currency.code} value={currency.code}>
+                    {currency.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Clear Filters Button */}
+            {(searchTerm || statusFilter !== "all" || currencyFilter !== "all" || typeFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm("")
+                  setStatusFilter("all")
+                  setCurrencyFilter("all")
+                  setTypeFilter("all")
+                }}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear filters
+              </Button>
+            )}
+          </div>
+
+          {/* Active Filters Badges */}
+          {(searchTerm || statusFilter !== "all" || currencyFilter !== "all" || typeFilter !== "all") && (
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200">
+              <span className="text-sm text-gray-500">Active filters:</span>
+              {typeFilter !== "all" && (
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                  Type: {typeFilter === "send" ? "Send (Fiat)" : "Receive & Card"}
+                  <button
+                    onClick={() => setTypeFilter("all")}
+                    className="ml-2 hover:bg-blue-100 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {statusFilter !== "all" && (
+                <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200">
+                  Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="ml-2 hover:bg-purple-100 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {currencyFilter !== "all" && (
+                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                  Currency: {currencyFilter}
+                  <button
+                    onClick={() => setCurrencyFilter("all")}
+                    className="ml-2 hover:bg-green-100 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {searchTerm && (
+                <Badge variant="secondary" className="bg-gray-50 text-gray-700 border-gray-200">
+                  Search: &quot;{searchTerm}&quot;
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="ml-2 hover:bg-gray-100 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              <span className="text-sm text-gray-500 ml-2">
+                {filteredTransactions.length} {filteredTransactions.length === 1 ? "transaction" : "transactions"}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Bulk Actions */}
         {selectedTransactions.length > 0 && (
@@ -394,6 +635,7 @@ export default function AdminTransactionsPage() {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Transaction ID</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>User</TableHead>
@@ -413,6 +655,11 @@ export default function AdminTransactionsPage() {
                         }
                       />
                     </TableCell>
+                    <TableCell>
+                      <Badge variant={transaction.type === "send" ? "default" : transaction.type === "card_funding" ? "outline" : "secondary"}>
+                        {transaction.type === "send" ? "Send" : transaction.type === "card_funding" ? "Card" : "Receive"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
                     <TableCell>{formatDate(transaction.created_at)}</TableCell>
                     <TableCell>
@@ -424,14 +671,28 @@ export default function AdminTransactionsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                      {transaction.type === "send" ? (
+                        <div>
+                          <div className="font-medium">
+                            {formatCurrency(transaction.send_amount || 0, transaction.send_currency || "")}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            → {formatCurrency(transaction.receive_amount || 0, transaction.receive_currency || "")}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          → {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
+                      ) : (
+                        <div>
+                          <div className="font-medium">
+                            {transaction.crypto_amount} {transaction.crypto_currency}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            → {formatCurrency(transaction.fiat_amount || 0, transaction.fiat_currency || "")}
+                            {transaction.type === "card_funding" && (
+                              <span className="ml-2 text-xs text-blue-600">(Card Funding)</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(transaction.status)}</TableCell>
                     <TableCell>
@@ -476,27 +737,29 @@ export default function AdminTransactionsPage() {
                                     <label className="text-sm font-medium text-gray-600">Date</label>
                                     <p>{formatTimestamp(selectedTransaction.created_at)}</p>
                                   </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Send Amount</label>
-                                    <p className="font-medium">
-                                      {formatCurrency(
-                                        selectedTransaction.send_amount,
-                                        selectedTransaction.send_currency,
-                                      )}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Receive Amount</label>
-                                    <p className="font-medium">
-                                      {formatCurrency(
-                                        selectedTransaction.receive_amount,
-                                        selectedTransaction.receive_currency,
-                                      )}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Recipient</label>
-                                    <p>{selectedTransaction.recipient?.full_name}</p>
+                                  {selectedTransaction.type === "send" ? (
+                                    <>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Send Amount</label>
+                                        <p className="font-medium">
+                                          {formatCurrency(
+                                            selectedTransaction.send_amount || 0,
+                                            selectedTransaction.send_currency || "",
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Receive Amount</label>
+                                        <p className="font-medium">
+                                          {formatCurrency(
+                                            selectedTransaction.receive_amount || 0,
+                                            selectedTransaction.receive_currency || "",
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Recipient</label>
+                                        <p>{selectedTransaction.recipient?.full_name}</p>
                                     {(() => {
                                       const recipient = selectedTransaction.recipient as any
                                       if (!recipient) return null
@@ -536,14 +799,63 @@ export default function AdminTransactionsPage() {
                                         </div>
                                       )
                                     })()}
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
-                                    <p className="font-medium">
-                                      1 {selectedTransaction.send_currency} = {selectedTransaction.exchange_rate}{" "}
-                                      {selectedTransaction.receive_currency}
-                                    </p>
-                                  </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
+                                        <p className="font-medium">
+                                          1 {selectedTransaction.send_currency} = {selectedTransaction.exchange_rate}{" "}
+                                          {selectedTransaction.receive_currency}
+                                        </p>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Stablecoin Received</label>
+                                        <p className="font-medium">
+                                          {selectedTransaction.crypto_amount} {selectedTransaction.crypto_currency}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Fiat Amount</label>
+                                        <p className="font-medium">
+                                          {formatCurrency(
+                                            selectedTransaction.fiat_amount || 0,
+                                            selectedTransaction.fiat_currency || "",
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Exchange Rate</label>
+                                        <p className="font-medium">
+                                          1 {selectedTransaction.crypto_currency} = {selectedTransaction.exchange_rate}{" "}
+                                          {selectedTransaction.fiat_currency}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Stellar Transaction Hash</label>
+                                        <p className="font-mono text-xs break-all">
+                                          {selectedTransaction.stellar_transaction_hash}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Wallet Address</label>
+                                        <p className="font-mono text-xs">
+                                          {selectedTransaction.crypto_wallet?.wallet_address}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Deposit Account</label>
+                                        <p>{selectedTransaction.crypto_wallet?.recipient?.full_name}</p>
+                                        <p className="text-sm text-gray-500">
+                                          {selectedTransaction.crypto_wallet?.recipient?.account_number}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                          {selectedTransaction.crypto_wallet?.recipient?.bank_name}
+                                        </p>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
 
                                 <div>

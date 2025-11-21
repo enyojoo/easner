@@ -248,6 +248,9 @@ export default function UserSendPage() {
 
   const [feeType, setFeeType] = useState<string>("free")
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
+  const [virtualAccountDetails, setVirtualAccountDetails] = useState<any>(null)
+  const [loadingPaymentDetails, setLoadingPaymentDetails] = useState(false)
+  const [paymentDetailsFetchAttempted, setPaymentDetailsFetchAttempted] = useState(false)
 
   // Add this state near the other state declarations
   const [isAddRecipientDialogOpen, setIsAddRecipientDialogOpen] = useState(false)
@@ -358,6 +361,43 @@ export default function UserSendPage() {
       setTransactionId(newTransactionId)
     }
   }, [currentStep, transactionId])
+
+  // Fetch payment collection details when reaching step 3
+  useEffect(() => {
+    if (currentStep === 3 && sendCurrency && sendAmount && !virtualAccountDetails && !loadingPaymentDetails && !paymentDetailsFetchAttempted) {
+      const fetchPaymentDetails = async () => {
+        setLoadingPaymentDetails(true)
+        setPaymentDetailsFetchAttempted(true)
+        try {
+          const response = await fetch(
+            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${transactionId || `ETID${Date.now()}`}`,
+            {
+              credentials: "include",
+            }
+          )
+          if (response.ok) {
+            const data = await response.json()
+            setVirtualAccountDetails(data.virtualAccount)
+          } else {
+            // API call failed - silently fall back to static payment methods
+            // Don't log errors for 401/403 as these are expected when API keys aren't configured
+            if (response.status !== 401 && response.status !== 403) {
+              const errorData = await response.json().catch(() => ({}))
+              console.warn("Payment collection API unavailable, using static methods:", response.status)
+            }
+            // Fallback to static payment methods - don't set virtualAccountDetails
+          }
+        } catch (error) {
+          // Network or other errors - silently fall back to static payment methods
+          console.warn("Payment collection unavailable, using static methods")
+        } finally {
+          setLoadingPaymentDetails(false)
+        }
+      }
+
+      fetchPaymentDetails()
+    }
+  }, [currentStep, sendCurrency, sendAmount, transactionId, virtualAccountDetails, loadingPaymentDetails, paymentDetailsFetchAttempted])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -1451,8 +1491,215 @@ export default function UserSendPage() {
                         </div>
                       </div>
 
-                      {/* Render payment methods based on admin configuration */}
+                      {/* Render payment methods - Dynamic from Yellow Card/Bridge or fallback to static */}
                       {(() => {
+                        // Use dynamic virtual account if available, otherwise fallback to static
+                        const useDynamic = virtualAccountDetails && !loadingPaymentDetails
+                        const accountConfig = getAccountTypeConfigFromCurrency(sendCurrency)
+                        const accountType = accountConfig.accountType
+
+                        // Show loading only if we're actively fetching
+                        if (loadingPaymentDetails) {
+                          return (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                              <p className="text-gray-600">Loading payment details...</p>
+                            </div>
+                          )
+                        }
+
+                        // If we have dynamic details, use them
+                        if (useDynamic && virtualAccountDetails) {
+                          // Render dynamic virtual account details from Yellow Card or Bridge
+                          return (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                              <div className="space-y-3">
+                                <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <Building2 className="h-4 w-4 text-gray-600" />
+                                    <span className="font-medium text-sm">
+                                      {virtualAccountDetails.provider === "yellow_card" ? "Yellow Card" : "Bridge"} Virtual Account
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    {/* Account Name */}
+                                    <div className="space-y-1">
+                                      <span className="text-gray-600 text-xs">
+                                        {accountConfig.fieldLabels.account_name}
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-sm">{virtualAccountDetails.accountName}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(virtualAccountDetails.accountName || "", "accountName")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.accountName ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+
+                                    {/* US Account Fields */}
+                                    {accountType === "us" && virtualAccountDetails.routingNumber && (
+                                      <div className="space-y-1">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.routing_number}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium font-mono text-sm">
+                                            {formatFieldValue(accountType, "routing_number", virtualAccountDetails.routingNumber)}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(virtualAccountDetails.routingNumber || "", "routingNumber")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.routingNumber ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Account Number */}
+                                    {virtualAccountDetails.accountNumber && (
+                                      <div className="space-y-1">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.account_number}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium font-mono text-sm">
+                                            {virtualAccountDetails.accountNumber}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(virtualAccountDetails.accountNumber || "", "accountNumber")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.accountNumber ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* IBAN */}
+                                    {virtualAccountDetails.iban && (
+                                      <div className="space-y-1">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.iban}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium font-mono text-xs">
+                                            {formatFieldValue(accountType, "iban", virtualAccountDetails.iban)}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(virtualAccountDetails.iban || "", "iban")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.iban ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* SWIFT/BIC */}
+                                    {virtualAccountDetails.swiftBic && (
+                                      <div className="space-y-1">
+                                        <span className="text-gray-600 text-xs">
+                                          {accountConfig.fieldLabels.swift_bic}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium font-mono text-xs">
+                                            {virtualAccountDetails.swiftBic}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(virtualAccountDetails.swiftBic || "", "swiftBic")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.swiftBic ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Mobile Money Number (Yellow Card) */}
+                                    {virtualAccountDetails.mobileMoneyNumber && (
+                                      <div className="space-y-1">
+                                        <span className="text-gray-600 text-xs">Mobile Money Number</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium font-mono text-sm">
+                                            {virtualAccountDetails.mobileMoneyNumber}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleCopy(virtualAccountDetails.mobileMoneyNumber || "", "mobileMoney")}
+                                            className="h-5 w-5 p-0"
+                                          >
+                                            {copiedStates.mobileMoney ? (
+                                              <Check className="h-3 w-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Bank Name */}
+                                    <div className="space-y-1">
+                                      <span className="text-gray-600 text-xs">
+                                        {accountConfig.fieldLabels.bank_name}
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-sm">{virtualAccountDetails.bankName}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleCopy(virtualAccountDetails.bankName || "", "bankName")}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          {copiedStates.bankName ? (
+                                            <Check className="h-3 w-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        // Fallback to static payment methods
                         const paymentMethodsForCurrency = getPaymentMethodsForCurrency(sendCurrency)
                         const defaultMethod = getDefaultPaymentMethod(sendCurrency)
 
@@ -1470,9 +1717,6 @@ export default function UserSendPage() {
                             {/* Payment Method Details */}
                             <div className="space-y-3">
                               {defaultMethod?.type === "bank_account" && (() => {
-                                const accountConfig = getAccountTypeConfigFromCurrency(sendCurrency)
-                                const accountType = accountConfig.accountType
-
                                 return (
                                 <div className="bg-white rounded-lg p-3 border border-gray-100">
                                   <div className="flex items-center gap-2 mb-3">

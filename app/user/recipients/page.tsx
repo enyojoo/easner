@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
+import { Plus, Edit, Trash2, Search, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { recipientService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
@@ -463,34 +464,46 @@ export default function UserRecipientsPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="p-4 sm:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
-            <p className="text-gray-600">Manage your saved recipients</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-4 mb-1">
+              <Link href="/user/more">
+                <Button variant="ghost" size="sm" className="p-2">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
+            </div>
+            <p className="text-base text-gray-500 ml-12">Manage your payment recipients</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Recipient
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md mx-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Recipient</DialogTitle>
-              </DialogHeader>
-              <RecipientForm
-                formData={formData}
-                setFormData={setFormData}
-                error={error}
-                isSubmitting={isSubmitting}
-                currencies={currencies}
-                onSubmit={handleAddRecipient}
-              />
-            </DialogContent>
-          </Dialog>
         </div>
+
+        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Recipient
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-md mx-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Recipient</DialogTitle>
+                </DialogHeader>
+                <RecipientForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  error={error}
+                  isSubmitting={isSubmitting}
+                  currencies={currencies}
+                  onSubmit={handleAddRecipient}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
 
         <Card>
           <CardHeader>
@@ -615,6 +628,7 @@ export default function UserRecipientsPage() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </UserDashboardLayout>
   )

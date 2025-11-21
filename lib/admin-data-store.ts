@@ -78,7 +78,7 @@ class AdminDataStore {
       }
     }
 
-    // If data is fresh, return immediately
+    // If data is fresh, don't reload - just return existing data
     if (this.initialized && this.isDataFresh()) {
       return this.data
     }
@@ -94,9 +94,14 @@ class AdminDataStore {
       this.setupRealtimeSubscriptions()
     }
 
-    // Load fresh data in background (will update cache)
-    this.loadingPromise = this.loadData()
-    return this.loadingPromise
+    // Only load fresh data if cache is stale or doesn't exist
+    if (!this.isDataFresh()) {
+      this.loadingPromise = this.loadData()
+      return this.loadingPromise
+    }
+
+    // Data is fresh, return it
+    return this.data
   }
 
   private isDataFresh(): boolean {
@@ -164,7 +169,10 @@ class AdminDataStore {
   }
 
   private notify() {
-    this.listeners.forEach((callback) => callback())
+    // Only notify if we have data to prevent unnecessary re-renders
+    if (this.data) {
+      this.listeners.forEach((callback) => callback())
+    }
   }
 
   getData(): AdminData | null {
@@ -207,7 +215,13 @@ class AdminDataStore {
 
       // Calculate stats from transactions (we'll update with user count later)
       const tempStats = await this.calculateStatsFromTransactions(transactionsResult, baseCurrency, exchangeRatesResult)
-      const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
+      // Sort transactions by created_at (most recent first) before processing recent activity
+      const sortedTransactions = [...transactionsResult].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime()
+        const dateB = new Date(b.created_at || 0).getTime()
+        return dateB - dateA
+      })
+      const recentActivity = this.processRecentActivity(sortedTransactions.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
       // Create initial data structure with critical data - preserve existing data to prevent flickering
@@ -245,23 +259,30 @@ class AdminDataStore {
       const stats = await this.calculateStats(usersResult, transactionsResult, baseCurrency, exchangeRatesResult)
       const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
 
-      // Update data with background-loaded data
-      this.data = {
-        users: usersResult,
-        transactions: transactionsResult,
-        currencies: currenciesResult,
-        exchangeRates: exchangeRatesResult,
-        earlyAccessRequests: earlyAccessResult,
-        baseCurrency,
-        stats,
-        earlyAccessStats,
-        recentActivity,
-        currencyPairs,
-        lastUpdated: Date.now(),
-      }
+      // Only update if data actually changed to prevent flickering
+      const usersChanged = JSON.stringify(usersResult) !== JSON.stringify(this.data?.users)
+      const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data?.stats)
+      const earlyAccessChanged = JSON.stringify(earlyAccessStats) !== JSON.stringify(this.data?.earlyAccessStats)
 
-      // Notify listeners again with complete data
-      this.notify()
+      // Update data with background-loaded data only if something changed
+      if (usersChanged || statsChanged || earlyAccessChanged) {
+        this.data = {
+          users: usersResult,
+          transactions: transactionsResult,
+          currencies: currenciesResult,
+          exchangeRates: exchangeRatesResult,
+          earlyAccessRequests: earlyAccessResult,
+          baseCurrency,
+          stats,
+          earlyAccessStats,
+          recentActivity,
+          currencyPairs,
+          lastUpdated: Date.now(),
+        }
+
+        // Notify listeners again with complete data
+        this.notify()
+      }
       
       // Save to cache for next page load
       this.saveToCache()
@@ -360,7 +381,9 @@ class AdminDataStore {
   private async loadTransactions() {
     try {
       console.log("AdminDataStore: Loading transactions...")
-      const { data, error } = await supabase
+      
+      // Load send transactions
+      const { data: sendTransactions, error: sendError } = await supabase
         .from("transactions")
         .select(`
           *,
@@ -370,12 +393,45 @@ class AdminDataStore {
         .order("created_at", { ascending: false })
         .limit(200)
 
-      if (error) {
-        console.error("AdminDataStore: Error loading transactions:", error)
-        throw error
+      if (sendError) {
+        console.error("AdminDataStore: Error loading send transactions:", sendError)
+        throw sendError
       }
-      console.log("AdminDataStore: Transactions loaded successfully:", data?.length || 0)
-      return data || []
+
+      // Load receive transactions
+      const { data: receiveTransactions, error: receiveError } = await supabase
+        .from("crypto_receive_transactions")
+        .select(`
+          *,
+          user:users(first_name, last_name, email)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(200)
+
+      if (receiveError) {
+        console.error("AdminDataStore: Error loading receive transactions:", receiveError)
+        // Don't throw - continue with send transactions only
+      }
+
+      // Transform receive transactions to match send transaction structure
+      const transformedReceive = (receiveTransactions || []).map((tx: any) => ({
+        ...tx,
+        type: tx.destination_type === "card" ? "card_funding" : "receive",
+      }))
+
+      // Combine all transactions
+      const allTransactions = [
+        ...(sendTransactions || []).map((tx: any) => ({ ...tx, type: "send" })),
+        ...transformedReceive,
+      ]
+
+      console.log("AdminDataStore: Transactions loaded successfully:", {
+        send: sendTransactions?.length || 0,
+        receive: receiveTransactions?.length || 0,
+        total: allTransactions.length,
+      })
+      
+      return allTransactions
     } catch (error) {
       console.error("Error loading transactions:", error)
       return [] // Return empty array on error to prevent crashes
@@ -517,18 +573,40 @@ class AdminDataStore {
         rateMap.set(key, r.rate)
       })
 
-    for (const tx of transactions) {
-      const amount = Number(tx.send_amount) || 0
-      const fromCurrency = tx.send_currency
-
+    // Helper to convert currency
+    const convertCurrency = (amount: number, fromCurrency: string): number => {
       if (fromCurrency === baseCurrency) {
-        // Same currency, no conversion needed
-        totalVolume += amount
-      } else {
-        // Convert using exchange rate from loaded rates
-        const convertedAmount = this.convertCurrencyWithRates(amount, fromCurrency, baseCurrency, rateMap)
-        totalVolume += convertedAmount
+        return amount
       }
+      return this.convertCurrencyWithRates(amount, fromCurrency, baseCurrency, rateMap)
+    }
+
+    // Filter only completed transactions
+    const completedTransactions = transactions.filter((tx) => tx.status === "completed")
+
+    for (const tx of completedTransactions) {
+      const txType = tx.type || (tx.send_amount ? "send" : tx.crypto_amount ? "receive" : null)
+
+      if (txType === "send") {
+        // Send transactions: use receive_amount (what recipient gets)
+        const amount = Number(tx.receive_amount) || Number(tx.send_amount) || 0
+        const currency = tx.receive_currency || tx.send_currency || baseCurrency
+        if (amount > 0) {
+          totalVolume += convertCurrency(amount, currency)
+        }
+      } else if (txType === "receive") {
+        // Receive transactions: use fiat_amount (what user received as payout)
+        // Only include bank payouts (not card funding)
+        if (tx.destination_type === "bank" && tx.fiat_amount && tx.fiat_currency) {
+          const amount = Number(tx.fiat_amount) || 0
+          if (amount > 0) {
+            totalVolume += convertCurrency(amount, tx.fiat_currency)
+          }
+        }
+      }
+      // Note: Card funding and card spending are not included in admin volume
+      // Card funding is just moving money to card, not actual spending
+      // Card spending would need to be fetched from Bridge Cards API separately
     }
 
     return totalVolume
@@ -556,15 +634,35 @@ class AdminDataStore {
   }
 
   private processRecentActivity(transactions: any[]) {
-    return transactions.map((tx) => ({
-      id: tx.id,
-      type: this.getActivityType(tx.status),
-      message: this.getActivityMessage(tx),
-      user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
-      amount: this.formatCurrency(tx.send_amount, tx.send_currency),
-      time: this.getRelativeTime(tx.created_at),
-      status: this.getActivityStatus(tx.status),
-    }))
+    return transactions.map((tx) => {
+      // Determine transaction type
+      const txType = tx.type || (tx.send_amount ? "send" : tx.crypto_amount ? "receive" : null)
+      const isCardFunding = txType === "card_funding" || (tx.destination_type === "card" || tx.bridge_card_account_id)
+      
+      // Format amount based on transaction type
+      let amount = ""
+      if (txType === "send") {
+        amount = this.formatCurrency(tx.receive_amount || tx.send_amount || 0, tx.receive_currency || tx.send_currency || "")
+      } else if (txType === "receive" || isCardFunding) {
+        if (isCardFunding) {
+          amount = `${tx.crypto_amount || 0} ${tx.crypto_currency || ""}`
+        } else {
+          amount = this.formatCurrency(tx.fiat_amount || 0, tx.fiat_currency || "")
+        }
+      } else {
+        amount = this.formatCurrency(tx.send_amount || 0, tx.send_currency || "")
+      }
+
+      return {
+        id: tx.id || tx.transaction_id,
+        type: this.getActivityType(tx.status, txType, isCardFunding),
+        message: this.getActivityMessage(tx, txType, isCardFunding),
+        user: tx.user ? `${tx.user.first_name} ${tx.user.last_name}` : undefined,
+        amount,
+        time: this.getRelativeTime(tx.created_at),
+        status: this.getActivityStatus(tx.status),
+      }
+    })
   }
 
   private processCurrencyPairs(transactions: any[]) {
@@ -591,37 +689,55 @@ class AdminDataStore {
       .slice(0, 4)
   }
 
-  private getActivityType(status: string) {
-    switch (status) {
-      case "completed":
-        return "transaction_completed"
-      case "failed":
-        return "transaction_failed"
-      case "cancelled":
-        return "transaction_cancelled"
-      case "processing":
-        return "transaction_processing"
-      case "pending":
-        return "transaction_pending"
-      default:
-        return "transaction_pending"
+  private getActivityType(status: string, txType?: string, isCardFunding?: boolean) {
+    const baseType = (() => {
+      switch (status) {
+        case "completed":
+          return "transaction_completed"
+        case "failed":
+          return "transaction_failed"
+        case "cancelled":
+          return "transaction_cancelled"
+        case "processing":
+          return "transaction_processing"
+        case "pending":
+          return "transaction_pending"
+        default:
+          return "transaction_pending"
+      }
+    })()
+    
+    // Add transaction type context if needed
+    if (isCardFunding) {
+      return baseType.replace("transaction_", "card_funding_")
     }
+    return baseType
   }
 
-  private getActivityMessage(transaction: any) {
+  private getActivityMessage(transaction: any, txType?: string, isCardFunding?: boolean) {
+    // Determine transaction type label
+    let typeLabel = "Transaction"
+    if (txType === "send") {
+      typeLabel = "Send Money"
+    } else if (isCardFunding) {
+      typeLabel = "Card Funding"
+    } else if (txType === "receive") {
+      typeLabel = "Receive Money"
+    }
+
     switch (transaction.status) {
       case "completed":
-        return `Transfer Complete - Transaction ${transaction.transaction_id}`
+        return `${typeLabel} Completed`
       case "failed":
-        return `Transaction Failed - ${transaction.transaction_id}`
+        return `${typeLabel} Failed`
       case "cancelled":
-        return `Transfer Cancelled - Transaction ${transaction.transaction_id}`
+        return `${typeLabel} Cancelled`
       case "processing":
-        return `Payment Received - Transaction ${transaction.transaction_id}`
+        return `${typeLabel} Processing`
       case "pending":
-        return `Transaction Created - ${transaction.transaction_id}`
+        return `${typeLabel} Created`
       default:
-        return `Transaction ${transaction.transaction_id} is being processed`
+        return `${typeLabel} is being processed`
     }
   }
 
@@ -668,12 +784,15 @@ class AdminDataStore {
   }
 
   private startAutoRefresh() {
-    // Refresh data every 30 seconds in background (as fallback if real-time fails)
+    // Refresh data every 5 minutes in background (as fallback if real-time fails)
+    // Only refresh if data is stale (older than 5 minutes)
     this.refreshInterval = setInterval(
       () => {
-        this.loadData().catch(console.error)
+        if (!this.isDataFresh()) {
+          this.loadData().catch(console.error)
+        }
       },
-      30 * 1000, // 30 seconds
+      5 * 60 * 1000, // 5 minutes
     )
   }
 
@@ -821,12 +940,21 @@ class AdminDataStore {
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
-      this.data.transactions = transactionsResult
-      this.data.stats = stats
-      this.data.recentActivity = recentActivity
-      this.data.currencyPairs = currencyPairs
-      this.data.lastUpdated = Date.now()
-      this.notify()
+      // Only update if data actually changed
+      const transactionsChanged = JSON.stringify(transactionsResult) !== JSON.stringify(this.data.transactions)
+      const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
+      const recentActivityChanged = JSON.stringify(recentActivity) !== JSON.stringify(this.data.recentActivity)
+      const currencyPairsChanged = JSON.stringify(currencyPairs) !== JSON.stringify(this.data.currencyPairs)
+
+      if (transactionsChanged || statsChanged || recentActivityChanged || currencyPairsChanged) {
+        this.data.transactions = transactionsResult
+        this.data.stats = stats
+        this.data.recentActivity = recentActivity
+        this.data.currencyPairs = currencyPairs
+        this.data.lastUpdated = Date.now()
+        this.saveToCache()
+        this.notify()
+      }
     } catch (error) {
       console.error('AdminDataStore: Error refreshing transactions:', error)
     }
@@ -841,10 +969,17 @@ class AdminDataStore {
       // Use already-loaded exchange rates for volume calculation
       const stats = await this.calculateStats(usersResult, this.data.transactions, this.data.baseCurrency, this.data.exchangeRates)
 
-      this.data.users = usersResult
-      this.data.stats = stats
-      this.data.lastUpdated = Date.now()
-      this.notify()
+      // Only update if data actually changed
+      const usersChanged = JSON.stringify(usersResult) !== JSON.stringify(this.data.users)
+      const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
+
+      if (usersChanged || statsChanged) {
+        this.data.users = usersResult
+        this.data.stats = stats
+        this.data.lastUpdated = Date.now()
+        this.saveToCache()
+        this.notify()
+      }
     } catch (error) {
       console.error('AdminDataStore: Error refreshing users:', error)
     }
@@ -855,9 +990,16 @@ class AdminDataStore {
 
     try {
       const currenciesResult = await this.loadCurrencies()
-      this.data.currencies = currenciesResult
-      this.data.lastUpdated = Date.now()
-      this.notify()
+      
+      // Only update if data actually changed
+      const currenciesChanged = JSON.stringify(currenciesResult) !== JSON.stringify(this.data.currencies)
+      
+      if (currenciesChanged) {
+        this.data.currencies = currenciesResult
+        this.data.lastUpdated = Date.now()
+        this.saveToCache()
+        this.notify()
+      }
     } catch (error) {
       console.error('AdminDataStore: Error refreshing currencies:', error)
     }
@@ -868,12 +1010,20 @@ class AdminDataStore {
 
     try {
       const exchangeRatesResult = await this.loadExchangeRates()
-      this.data.exchangeRates = exchangeRatesResult
       // Recalculate stats since exchange rates affect volume calculations
       const stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency, exchangeRatesResult)
-      this.data.stats = stats
-      this.data.lastUpdated = Date.now()
-      this.notify()
+      
+      // Only update if data actually changed
+      const exchangeRatesChanged = JSON.stringify(exchangeRatesResult) !== JSON.stringify(this.data.exchangeRates)
+      const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
+      
+      if (exchangeRatesChanged || statsChanged) {
+        this.data.exchangeRates = exchangeRatesResult
+        this.data.stats = stats
+        this.data.lastUpdated = Date.now()
+        this.saveToCache()
+        this.notify()
+      }
     } catch (error) {
       console.error('AdminDataStore: Error refreshing exchange rates:', error)
     }
@@ -886,10 +1036,17 @@ class AdminDataStore {
       const earlyAccessResult = await this.loadEarlyAccessRequests()
       const earlyAccessStats = this.calculateEarlyAccessStats(earlyAccessResult)
 
-      this.data.earlyAccessRequests = earlyAccessResult
-      this.data.earlyAccessStats = earlyAccessStats
-      this.data.lastUpdated = Date.now()
-      this.notify()
+      // Only update if data actually changed
+      const earlyAccessChanged = JSON.stringify(earlyAccessResult) !== JSON.stringify(this.data.earlyAccessRequests)
+      const statsChanged = JSON.stringify(earlyAccessStats) !== JSON.stringify(this.data.earlyAccessStats)
+
+      if (earlyAccessChanged || statsChanged) {
+        this.data.earlyAccessRequests = earlyAccessResult
+        this.data.earlyAccessStats = earlyAccessStats
+        this.data.lastUpdated = Date.now()
+        this.saveToCache()
+        this.notify()
+      }
     } catch (error) {
       console.error('AdminDataStore: Error refreshing early access requests:', error)
     }
@@ -918,12 +1075,25 @@ class AdminDataStore {
 
       // Update local data after successful update
       if (this.data) {
-        this.data.transactions = this.data.transactions.map((tx) =>
+        const updatedTransactions = this.data.transactions.map((tx) =>
           tx.transaction_id === transactionId ? { ...tx, status: newStatus } : tx,
         )
-        this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
-        this.data.recentActivity = this.processRecentActivity(this.data.transactions.slice(0, 10))
-        this.notify()
+        const updatedStats = await this.calculateStats(this.data.users, updatedTransactions, this.data.baseCurrency, this.data.exchangeRates)
+        const updatedRecentActivity = this.processRecentActivity(updatedTransactions.slice(0, 10))
+        
+        // Only update if something actually changed
+        const transactionsChanged = JSON.stringify(updatedTransactions) !== JSON.stringify(this.data.transactions)
+        const statsChanged = JSON.stringify(updatedStats) !== JSON.stringify(this.data.stats)
+        const recentActivityChanged = JSON.stringify(updatedRecentActivity) !== JSON.stringify(this.data.recentActivity)
+        
+        if (transactionsChanged || statsChanged || recentActivityChanged) {
+          this.data.transactions = updatedTransactions
+          this.data.stats = updatedStats
+          this.data.recentActivity = updatedRecentActivity
+          this.data.lastUpdated = Date.now()
+          this.saveToCache()
+          this.notify()
+        }
       }
 
       // Send email notification in background (non-blocking)
@@ -1471,22 +1641,40 @@ export function calculateUserVolume(
       rateMap.set(key, r.rate)
     })
 
+  // Helper to convert currency
+  const convertCurrency = (amount: number, fromCurrency: string): number => {
+    if (fromCurrency === baseCurrency) {
+      return amount
+    }
+    return convertCurrencyWithRatesHelper(amount, fromCurrency, baseCurrency, rateMap)
+  }
+
   let totalVolume = 0
 
   // Only count completed transactions
   const completedTransactions = transactions.filter((tx) => tx.status === "completed")
 
   for (const tx of completedTransactions) {
-    const amount = Number(tx.send_amount) || 0
-    const fromCurrency = tx.send_currency
+    const txType = tx.type || (tx.send_amount ? "send" : tx.crypto_amount ? "receive" : null)
 
-    if (fromCurrency === baseCurrency) {
-      // Same currency, no conversion needed
-      totalVolume += amount
-    } else {
-      // Convert using exchange rate
-      const convertedAmount = convertCurrencyWithRatesHelper(amount, fromCurrency, baseCurrency, rateMap)
-      totalVolume += convertedAmount
+    if (txType === "send") {
+      // Send transactions: use receive_amount (what recipient gets)
+      const amount = Number(tx.receive_amount) || Number(tx.send_amount) || 0
+      const currency = tx.receive_currency || tx.send_currency || baseCurrency
+      if (amount > 0) {
+        totalVolume += convertCurrency(amount, currency)
+      }
+    } else if (txType === "receive" || txType === "card_funding") {
+      // Receive transactions: use fiat_amount (what user received as payout)
+      // Only include bank payouts (not card funding)
+      if (txType === "receive" && tx.destination_type === "bank" && tx.fiat_amount && tx.fiat_currency) {
+        const amount = Number(tx.fiat_amount) || 0
+        if (amount > 0) {
+          totalVolume += convertCurrency(amount, tx.fiat_currency)
+        }
+      }
+      // Note: Card funding is not included in volume (it's just moving money to card)
+      // Card spending would need to be fetched from Bridge Cards API separately
     }
   }
 

@@ -89,6 +89,21 @@ export default function AdminDashboardPage() {
   }
 
   const getActivityIcon = (type: string) => {
+    // Handle card funding types
+    if (type.includes("card_funding")) {
+      if (type.includes("completed")) {
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      } else if (type.includes("failed")) {
+        return <XCircle className="h-4 w-4 text-red-600" />
+      } else if (type.includes("cancelled")) {
+        return <XCircle className="h-4 w-4 text-gray-600" />
+      } else if (type.includes("processing")) {
+        return <AlertCircle className="h-4 w-4 text-blue-600" />
+      } else {
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      }
+    }
+    
     switch (type) {
       case "transaction_completed":
         return <CheckCircle className="h-4 w-4 text-green-600" />

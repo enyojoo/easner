@@ -23,6 +23,8 @@ import {
   MoreHorizontal,
   X,
   Upload,
+  Coins,
+  ToggleLeft,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -92,6 +94,18 @@ export default function AdminSettingsPage() {
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<PaymentMethod | null>(null)
   const [editingTimer, setEditingTimer] = useState({ hours: 1, minutes: 0, seconds: 0 })
   const [isEditingSecuritySettings, setIsEditingSecuritySettings] = useState(false)
+  const [featureFlags, setFeatureFlags] = useState<any[]>([])
+  const [supportedCryptos, setSupportedCryptos] = useState<any[]>([])
+  const [isAddCryptoOpen, setIsAddCryptoOpen] = useState(false)
+  const [newCrypto, setNewCrypto] = useState({
+    code: "",
+    name: "",
+    blockchain: "stellar",
+    is_stablecoin: true,
+    stellar_asset_code: "",
+    stellar_asset_issuer: "",
+    icon_url: "",
+  })
   const [newPaymentMethod, setNewPaymentMethod] = useState({
     currency: "",
     type: "bank_account",
@@ -147,9 +161,185 @@ export default function AdminSettingsPage() {
 
   const loadAllData = async () => {
     try {
-      await Promise.all([loadSystemSettings(), loadCurrencies(), loadPaymentMethods()])
+      await Promise.all([
+        loadSystemSettings(),
+        loadCurrencies(),
+        loadPaymentMethods(),
+        loadFeatureFlags(),
+        loadSupportedCryptos(),
+      ])
     } catch (error) {
       console.error("Error loading data:", error)
+    }
+  }
+
+  const loadFeatureFlags = async () => {
+    try {
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch("/api/admin/feature-flags", {
+        credentials: 'include',
+        headers
+      })
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Feature flags loaded:", data.flags)
+        setFeatureFlags(data.flags || [])
+        
+        // If no flags exist, show a message
+        if (!data.flags || data.flags.length === 0) {
+          console.warn("No feature flags found. Make sure the migration has been run.")
+        }
+      } else {
+        const errorText = await response.text()
+        console.error("Failed to load feature flags:", response.status, response.statusText, errorText)
+      }
+    } catch (error) {
+      console.error("Error loading feature flags:", error)
+    }
+  }
+
+  const loadSupportedCryptos = async () => {
+    try {
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch("/api/admin/cryptocurrencies", {
+        credentials: 'include',
+        headers
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSupportedCryptos(data.cryptocurrencies || [])
+      }
+    } catch (error) {
+      console.error("Error loading supported cryptocurrencies:", error)
+    }
+  }
+
+  const handleToggleFeatureFlag = async (featureKey: string, isEnabled: boolean) => {
+    try {
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        alert("Session expired. Please log in again.")
+        return
+      }
+      
+      const headers: HeadersInit = { "Content-Type": "application/json" }
+      headers['Authorization'] = `Bearer ${session.access_token}`
+      
+      console.log(`Toggling feature flag ${featureKey} to ${isEnabled}`)
+      
+      const response = await fetch("/api/admin/feature-flags", {
+        method: "PATCH",
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ feature_key: featureKey, is_enabled: isEnabled }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Feature flag updated successfully:", data)
+        await loadFeatureFlags()
+      } else {
+        const errorText = await response.text()
+        let errorMessage = "Failed to update feature flag"
+        
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.error || errorMessage
+        } catch (e) {
+          errorMessage = errorText || errorMessage
+        }
+        
+        console.error("Failed to update feature flag:", response.status, errorMessage)
+        alert(`Error: ${errorMessage}`)
+      }
+    } catch (error: any) {
+      console.error("Error updating feature flag:", error)
+      alert(`Failed to update feature flag: ${error.message || "Unknown error"}`)
+    }
+  }
+
+  const handleAddCrypto = async () => {
+    if (!newCrypto.code || !newCrypto.name || !newCrypto.stellar_asset_code || !newCrypto.stellar_asset_issuer) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    try {
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: HeadersInit = { "Content-Type": "application/json" }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch("/api/admin/cryptocurrencies", {
+        method: "POST",
+        headers,
+        credentials: 'include',
+        body: JSON.stringify(newCrypto),
+      })
+
+      if (response.ok) {
+        await loadSupportedCryptos()
+        setIsAddCryptoOpen(false)
+        setNewCrypto({
+          code: "",
+          name: "",
+          blockchain: "stellar",
+          is_stablecoin: true,
+          stellar_asset_code: "",
+          stellar_asset_issuer: "",
+          icon_url: "",
+        })
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to add cryptocurrency")
+      }
+    } catch (error) {
+      console.error("Error adding cryptocurrency:", error)
+      alert("Failed to add cryptocurrency")
+    }
+  }
+
+  const handleToggleCryptoStatus = async (id: string, currentStatus: string) => {
+    try {
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: HeadersInit = { "Content-Type": "application/json" }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch(`/api/admin/cryptocurrencies/${id}`, {
+        method: "PATCH",
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ status: currentStatus === "active" ? "inactive" : "active" }),
+      })
+
+      if (response.ok) {
+        await loadSupportedCryptos()
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to update cryptocurrency")
+      }
+    } catch (error) {
+      console.error("Error updating cryptocurrency:", error)
+      alert("Failed to update cryptocurrency")
     }
   }
 
@@ -675,6 +865,222 @@ export default function AdminSettingsPage() {
                     </Select>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Feature Flags Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ToggleLeft className="h-5 w-5" />
+                  Feature Flags
+                </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Enable or disable platform features for all users
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {featureFlags.length > 0 ? (
+                  featureFlags.map((flag) => (
+                  <div key={flag.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{flag.feature_name}</div>
+                      {flag.description && (
+                        <p className="text-sm text-gray-500 mt-1">{flag.description}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Last updated: {new Date(flag.updated_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={flag.is_enabled}
+                      onCheckedChange={(checked) => handleToggleFeatureFlag(flag.feature_key, checked)}
+                    />
+                  </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <ToggleLeft className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No feature flags configured</p>
+                    <p className="text-xs mt-2 text-gray-400">
+                      Make sure the migration has been run and the feature_flags table exists.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => {
+                        console.log("Current feature flags state:", featureFlags)
+                        loadFeatureFlags()
+                      }}
+                    >
+                      Retry Load
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Supported Cryptocurrencies Management */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Coins className="h-5 w-5" />
+                      Supported Cryptocurrencies
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Manage stablecoins available for receiving money
+                    </p>
+                  </div>
+                  <Dialog open={isAddCryptoOpen} onOpenChange={setIsAddCryptoOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-easner-primary hover:bg-easner-primary-600">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Cryptocurrency
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Supported Cryptocurrency</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="cryptoCode">Code *</Label>
+                            <Input
+                              id="cryptoCode"
+                              value={newCrypto.code}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, code: e.target.value.toUpperCase() })}
+                              placeholder="USDC"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="cryptoName">Name *</Label>
+                            <Input
+                              id="cryptoName"
+                              value={newCrypto.name}
+                              onChange={(e) => setNewCrypto({ ...newCrypto, name: e.target.value })}
+                              placeholder="USD Coin"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="blockchain">Blockchain</Label>
+                          <Select
+                            value={newCrypto.blockchain}
+                            onValueChange={(value) => setNewCrypto({ ...newCrypto, blockchain: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="stellar">Stellar</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="stellarAssetCode">Stellar Asset Code *</Label>
+                          <Input
+                            id="stellarAssetCode"
+                            value={newCrypto.stellar_asset_code}
+                            onChange={(e) =>
+                              setNewCrypto({ ...newCrypto, stellar_asset_code: e.target.value.toUpperCase() })
+                            }
+                            placeholder="USDC"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="stellarAssetIssuer">Stellar Asset Issuer *</Label>
+                          <Input
+                            id="stellarAssetIssuer"
+                            value={newCrypto.stellar_asset_issuer}
+                            onChange={(e) => setNewCrypto({ ...newCrypto, stellar_asset_issuer: e.target.value })}
+                            placeholder="GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="iconUrl">Icon URL (optional)</Label>
+                          <Input
+                            id="iconUrl"
+                            value={newCrypto.icon_url}
+                            onChange={(e) => setNewCrypto({ ...newCrypto, icon_url: e.target.value })}
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="isStablecoin"
+                            checked={newCrypto.is_stablecoin}
+                            onCheckedChange={(checked) =>
+                              setNewCrypto({ ...newCrypto, is_stablecoin: checked as boolean })
+                            }
+                          />
+                          <Label htmlFor="isStablecoin">Is Stablecoin</Label>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => setIsAddCryptoOpen(false)} className="flex-1">
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddCrypto} className="flex-1 bg-easner-primary hover:bg-easner-primary-600">
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Blockchain</TableHead>
+                      <TableHead>Stellar Asset</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {supportedCryptos.map((crypto) => (
+                      <TableRow key={crypto.id}>
+                        <TableCell className="font-medium">{crypto.code}</TableCell>
+                        <TableCell>{crypto.name}</TableCell>
+                        <TableCell>{crypto.blockchain}</TableCell>
+                        <TableCell>
+                          <div className="text-xs font-mono">
+                            {crypto.stellar_asset_code}
+                            <br />
+                            <span className="text-gray-500">{crypto.stellar_asset_issuer.slice(0, 20)}...</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={crypto.status === "active" ? "default" : "secondary"}>
+                            {crypto.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleCryptoStatus(crypto.id, crypto.status)}
+                          >
+                            {crypto.status === "active" ? "Disable" : "Enable"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {supportedCryptos.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Coins className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No cryptocurrencies configured yet</p>
+                    <p className="text-sm">Add cryptocurrencies to enable the Receive Money feature</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

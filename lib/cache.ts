@@ -128,4 +128,5 @@ export const CACHE_KEYS = {
   USER_TRANSACTIONS: (userId: string) => `user_transactions_${userId}`,
   TRANSACTION: (transactionId: string) => `transaction_${transactionId}`,
   USER_PROFILE: (userId: string) => `user_profile_${userId}`,
+  FEATURE_FLAG: (key: string) => `feature_flag_${key}`,
 } as const

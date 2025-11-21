@@ -57,17 +57,13 @@ export default function AdminEarlyAccessPage() {
   const [selectedRequests, setSelectedRequests] = useState<string[]>([])
   const [selectedRequest, setSelectedRequest] = useState<EarlyAccessRequest | null>(null)
 
-  const formatTimestamp = (dateString: string) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const month = date.toLocaleString("en-US", { month: "short" })
     const day = date.getDate().toString().padStart(2, "0")
     const year = date.getFullYear()
-    const hours = date.getHours()
-    const minutes = date.getMinutes().toString().padStart(2, "0")
-    const ampm = hours >= 12 ? "PM" : "AM"
-    const displayHours = hours % 12 || 12
-    // Format: "Nov 07, 2025 • 7:29 PM"
-    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
   }
 
   const updateRequestStatus = async (id: string, status: string, notes?: string) => {
@@ -524,7 +520,7 @@ export default function AdminEarlyAccessPage() {
                         <TableCell>
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <Calendar className="h-3 w-3" />
-                            {formatTimestamp(request.created_at)}
+                            {formatDate(request.created_at)}
                           </div>
                         </TableCell>
                         <TableCell>

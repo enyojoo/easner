@@ -7,24 +7,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Mail, Pencil, ChevronRight } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Pencil, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { userService } from "@/lib/database"
 import { useUserData } from "@/hooks/use-user-data"
+import Link from "next/link"
 
-export default function UserProfilePage() {
+export default function ProfilePage() {
   const router = useRouter()
-  const { user, userProfile, refreshUserProfile, signOut } = useAuth()
-  const { transactions, currencies, exchangeRates } = useUserData()
+  const { user, userProfile, refreshUserProfile } = useAuth()
+  const { currencies } = useUserData()
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [userStats, setUserStats] = useState({
-    totalTransactions: 0,
-    totalSent: 0,
-    memberSince: "",
-  })
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [profileData, setProfileData] = useState({
     firstName: "",
@@ -51,73 +56,11 @@ export default function UserProfilePage() {
     }
   }, [userProfile])
 
-  // Load user statistics
-  useEffect(() => {
-    if (!user || !transactions.length || !exchangeRates.length) return
-
-    const calculateUserStats = () => {
-      const baseCurrency = userProfile?.base_currency || "NGN"
-      let totalSentInBaseCurrency = 0
-
-      // Calculate total sent in base currency for completed transactions
-      for (const transaction of transactions) {
-        if (transaction.status === "completed") {
-          let amountInBaseCurrency = transaction.send_amount
-
-          // If transaction currency is different from base currency, convert it
-          if (transaction.send_currency !== baseCurrency) {
-            // Find exchange rate from transaction currency to base currency
-            const rate = exchangeRates.find(
-              (r) => r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-            )
-
-            if (rate) {
-              amountInBaseCurrency = transaction.send_amount * rate.rate
-            } else {
-              // If direct rate not found, try reverse rate
-              const reverseRate = exchangeRates.find(
-                (r) => r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-              )
-              if (reverseRate && reverseRate.rate > 0) {
-                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-              }
-            }
-          }
-
-          totalSentInBaseCurrency += amountInBaseCurrency
-        }
-      }
-
-      // Get member since date
-      const formatDate = (dateString: string) => {
-        const date = new Date(dateString)
-        const month = date.toLocaleString("en-US", { month: "short" })
-        const day = date.getDate().toString().padStart(2, "0")
-        const year = date.getFullYear()
-        // Format: "Nov 07, 2025"
-        return `${month} ${day}, ${year}`
-      }
-
-      const memberSince = userProfile?.created_at
-        ? formatDate(userProfile.created_at)
-        : "N/A"
-
-      setUserStats({
-        totalTransactions: transactions.filter((t) => t.status === "completed").length,
-        totalSent: totalSentInBaseCurrency,
-        memberSince,
-      })
-    }
-
-    calculateUserStats()
-  }, [user, userProfile, transactions, exchangeRates])
-
   const handleProfileUpdate = async () => {
     if (!user) return
 
     setLoading(true)
     try {
-      // Update profile in database
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
         lastName: editProfileData.lastName,
@@ -125,10 +68,8 @@ export default function UserProfilePage() {
         baseCurrency: editProfileData.baseCurrency,
       })
 
-      // Update local state
       setProfileData(editProfileData)
 
-      // Refresh user profile from auth context to get updated data
       if (refreshUserProfile) {
         await refreshUserProfile()
       }
@@ -146,52 +87,23 @@ export default function UserProfilePage() {
     setIsEditingProfile(false)
   }
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true)
+    try {
+      // TODO: Implement account deletion API call
+      // await deleteAccount(user.id)
+      alert("Account deletion is not yet implemented")
+      setShowDeleteDialog(false)
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      alert("Failed to delete account. Please try again.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const getSelectedCurrency = () => {
     return currencies.find((c) => c.code === profileData.baseCurrency)
-  }
-
-  const formatNumber = (num: number) => {
-    // Values less than 1,000: show with decimals (e.g., 12.50)
-    if (num < 1000) {
-      return num.toFixed(2)
-    }
-    
-    // Values 1,000 to 9,999: show as whole numbers (e.g., 1,000, 1,500)
-    if (num < 10000) {
-      return Math.round(num).toLocaleString()
-    }
-    
-    // Values 10,000 and above: apply K/M/B/T rounding
-    if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T'
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
-    return num.toFixed(0)
-  }
-
-  const formatCurrency = (amount: number, currency: string) => {
-    const currencyInfo = currencies.find((c) => c.code === currency)
-    const formattedNumber = formatNumber(amount)
-    return `${currencyInfo?.symbol || ""}${formattedNumber}`
-  }
-
-  const handleSignOut = async () => {
-    if (confirm("Are you sure you want to sign out?")) {
-      await signOut()
-      router.push("/auth/user/login")
-    }
-  }
-
-  const handleSupport = () => {
-    router.push("/user/support")
-  }
-
-  const handlePrivacy = () => {
-    window.open("https://www.easner.com/privacy", "_blank")
-  }
-
-  const handleTerms = () => {
-    window.open("https://www.easner.com/terms", "_blank")
   }
 
   return (
@@ -200,17 +112,23 @@ export default function UserProfilePage() {
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Settings</h1>
-            <p className="text-base text-gray-500">Manage your account information</p>
+            <div className="flex items-center gap-4 mb-1">
+              <Link href="/user/more">
+                <Button variant="ghost" size="sm" className="p-2">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Your Profile</h1>
+            </div>
+            <p className="text-base text-gray-500 ml-12">Manage your personal information</p>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
-          {/* Profile Section */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">Profile</CardTitle>
+                <CardTitle className="text-lg font-semibold">Profile Information</CardTitle>
                 {!isEditingProfile ? (
                   <Button
                     variant="outline"
@@ -343,87 +261,49 @@ export default function UserProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Status Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-4">
-              <div className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-gray-700">Email</span>
-                </div>
-                <Badge className={`${user?.email_confirmed_at ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"} hover:bg-opacity-100`}>
-                  {user?.email_confirmed_at ? "Verified" : "Pending"}
-                </Badge>
-              </div>
-              <div className="border-t border-gray-200 pt-3 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Member since</span>
-                  <span className="text-sm font-medium text-gray-900">{userStats.memberSince}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Total transactions</span>
-                  <span className="text-sm font-medium text-gray-900">{userStats.totalTransactions}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Total sent</span>
-                  <span className="text-sm font-medium text-gray-900">{formatCurrency(userStats.totalSent, profileData.baseCurrency)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* App Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">App</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-0 pt-4">
-              <button
-                onClick={handleSupport}
-                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+          {/* Delete Account */}
+          <div className="pt-6">
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2"
               >
-                <span className="text-base text-gray-900">Support</span>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              </button>
-              <button
-                onClick={handlePrivacy}
-                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-base text-gray-900">Privacy Policy</span>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              </button>
-              <button
-                onClick={handleTerms}
-                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-base text-gray-900">Terms of Service</span>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              </button>
-            </CardContent>
-          </Card>
-
-          {/* Sign Out Section - Mobile Only */}
-          <Card className="lg:hidden">
-            <CardContent className="pt-6">
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center justify-between py-4"
-              >
-                <span className="text-base text-red-600 font-medium">Sign Out</span>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              </button>
-            </CardContent>
-          </Card>
-
-          {/* App Version */}
-          <div className="text-center py-5">
-            <p className="text-sm text-gray-400">Version 1.0.0</p>
+                <span>Delete Account</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Account</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete your account? This action cannot be undone. All your data, transactions, and account information will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? "Deleting..." : "Delete Account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </UserDashboardLayout>
   )
 }
+

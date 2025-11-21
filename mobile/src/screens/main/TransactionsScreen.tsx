@@ -13,90 +13,91 @@ import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
+import { useAuth } from '../../contexts/AuthContext'
+
+interface CombinedTransaction {
+  id: string
+  transaction_id: string
+  type: 'send' | 'receive'
+  status: string
+  created_at: string
+  send_amount?: number
+  send_currency?: string
+  receive_amount?: number
+  receive_currency?: string
+  recipient?: {
+    full_name: string
+    account_number: string
+    bank_name: string
+  }
+  crypto_amount?: number
+  crypto_currency?: string
+  fiat_amount?: number
+  fiat_currency?: string
+  stellar_transaction_hash?: string
+  crypto_wallet?: {
+    wallet_address: string
+    crypto_currency: string
+  }
+}
 
 function TransactionsContent({ navigation }: NavigationProps) {
-  const { transactions, loading, refreshTransactions } = useUserData()
+  const { userProfile } = useAuth()
+  const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
+  const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
+  const [typeFilter, setTypeFilter] = useState<'all' | 'send' | 'receive'>('all')
 
   // Track screen view
   useEffect(() => {
     analytics.trackScreenView('Transactions')
   }, [])
 
-  // Initialize live transactions with current data
+  // Fetch combined transactions
   useEffect(() => {
-    if (transactions.length > 0) {
-      setLiveTransactions(transactions)
+    if (userProfile?.id) {
+      loadTransactions()
     }
-  }, [transactions])
+  }, [userProfile?.id, typeFilter])
 
-  // Poll for transaction updates every 10 seconds for all transactions
-  useEffect(() => {
-    if (liveTransactions.length === 0) return
+  const loadTransactions = async () => {
+    try {
+      setLoading(true)
+      const apiBase = process.env.EXPO_PUBLIC_API_URL || ''
+      const params = new URLSearchParams()
+      if (typeFilter !== 'all') params.append('type', typeFilter)
+      params.append('limit', '100')
 
-    const pollInterval = setInterval(async () => {
-      try {
-        const updatedTransactions = await Promise.all(
-          liveTransactions.map(async (transaction) => {
-            try {
-              const updatedTransaction = await transactionService.getById(transaction.transaction_id)
-              return updatedTransaction
-            } catch (error) {
-              console.error('Error polling transaction:', error)
-              return transaction
-            }
-          })
-        )
-
-        // Update only if status has changed
-        const hasChanges = updatedTransactions.some((updated, index) => 
-          updated.status !== liveTransactions[index].status
-        )
-
-        if (hasChanges) {
-          // Update the live transactions with new data
-          setLiveTransactions(prev => {
-            const updated = [...prev]
-            updatedTransactions.forEach((updatedTransaction, index) => {
-              const originalIndex = prev.findIndex(t => t.transaction_id === updatedTransaction.transaction_id)
-              if (originalIndex !== -1) {
-                updated[originalIndex] = updatedTransaction as Transaction
-              }
-            })
-            return updated
-          })
-        }
-      } catch (error) {
-        console.error('Error polling transactions:', error)
+      const response = await fetch(`${apiBase}/api/transactions?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setTransactions(data.transactions || [])
       }
-    }, 10000) // Poll every 10 seconds
-
-    return () => clearInterval(pollInterval)
-  }, [liveTransactions])
-
-  useEffect(() => {
-    refreshTransactions()
-  }, [])
+    } catch (error) {
+      console.error('Error loading transactions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await refreshTransactions()
-    // Also refresh live transactions
-    if (liveTransactions.length > 0) {
-      setLiveTransactions(transactions)
-    }
+    await loadTransactions()
     setRefreshing(false)
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
+      case 'deposited':
         return '#10b981'
       case 'pending':
+      case 'confirmed':
         return '#f59e0b'
       case 'processing':
+      case 'converting':
+      case 'converted':
         return '#007ACC'
       case 'failed':
         return '#ef4444'
@@ -131,60 +132,101 @@ function TransactionsContent({ navigation }: NavigationProps) {
     return `${month} ${day}, ${year}`
   }
 
-  const currentTransactions = liveTransactions.length > 0 ? liveTransactions : transactions
-  const filteredTransactions = currentTransactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.recipient?.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+                         (transaction.type === 'send' && transaction.recipient?.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (transaction.type === 'receive' && transaction.crypto_wallet?.wallet_address.toLowerCase().includes(searchTerm.toLowerCase()))
     return matchesSearch
   })
 
-  const renderTransaction = ({ item }: { item: Transaction }) => (
-    <TouchableOpacity
-      style={styles.transactionItem}
-      onPress={() => navigation.navigate('TransactionDetails', { 
-        transactionId: item.transaction_id,
-        fromScreen: 'Transactions'
-      })}
-    >
-      {/* Header with Transaction ID and Status */}
-      <View style={styles.transactionHeader}>
-        <Text style={styles.transactionId}>{item.transaction_id}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {item.status.toUpperCase()}
-          </Text>
+  const renderTransaction = ({ item }: { item: CombinedTransaction }) => {
+    const detailScreen = item.type === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
+    
+    return (
+      <TouchableOpacity
+        style={styles.transactionItem}
+        onPress={() => navigation.navigate(detailScreen, { 
+          transactionId: item.transaction_id,
+          fromScreen: 'Transactions'
+        })}
+      >
+        {/* Header with Type Badge, Transaction ID and Status */}
+        <View style={styles.transactionHeader}>
+          <View style={styles.headerLeft}>
+            <View style={[styles.typeBadge, item.type === 'send' ? styles.typeBadgeSend : styles.typeBadgeReceive]}>
+              <Text style={styles.typeBadgeText}>{item.type === 'send' ? 'Send' : 'Receive'}</Text>
+            </View>
+            <Text style={styles.transactionId}>{item.transaction_id}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status.toUpperCase()}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* Recipient Info */}
-      <View style={styles.recipientSection}>
-        <Text style={styles.recipientLabel}>To</Text>
-        <Text style={styles.recipientName}>{item.recipient?.full_name || 'Unknown'}</Text>
-      </View>
+        {item.type === 'send' ? (
+          <>
+            {/* Recipient Info */}
+            <View style={styles.recipientSection}>
+              <Text style={styles.recipientLabel}>To</Text>
+              <Text style={styles.recipientName}>{item.recipient?.full_name || 'Unknown'}</Text>
+            </View>
 
-      {/* Amount Section */}
-      <View style={styles.amountSection}>
-        <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>Send Amount</Text>
-          <Text style={styles.sendAmount}>
-            {formatAmount(item.send_amount, item.send_currency)}
-          </Text>
+            {/* Amount Section */}
+            <View style={styles.amountSection}>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountLabel}>Send Amount</Text>
+                <Text style={styles.sendAmount}>
+                  {formatAmount(item.send_amount || 0, item.send_currency || '')}
+                </Text>
+              </View>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountLabel}>Receive Amount</Text>
+                <Text style={styles.receiveAmount}>
+                  {formatAmount(item.receive_amount || 0, item.receive_currency || '')}
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Stablecoin Info */}
+            <View style={styles.recipientSection}>
+              <Text style={styles.recipientLabel}>Stablecoin Received</Text>
+              <Text style={styles.recipientName}>
+                {item.crypto_amount} {item.crypto_currency}
+              </Text>
+            </View>
+
+            {/* Amount Section */}
+            <View style={styles.amountSection}>
+              <View style={styles.amountRow}>
+                <Text style={styles.amountLabel}>Converted To</Text>
+                <Text style={styles.receiveAmount}>
+                  {formatAmount(item.fiat_amount || 0, item.fiat_currency || '')}
+                </Text>
+              </View>
+              {item.crypto_wallet?.wallet_address && (
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountLabel}>Wallet</Text>
+                  <Text style={styles.walletAddress}>
+                    {item.crypto_wallet.wallet_address.slice(0, 8)}...{item.crypto_wallet.wallet_address.slice(-6)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
+
+        {/* Footer with Date and Arrow */}
+        <View style={styles.transactionFooter}>
+          <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
+          <Text style={styles.arrowIcon}>›</Text>
         </View>
-        <View style={styles.amountRow}>
-          <Text style={styles.amountLabel}>Receive Amount</Text>
-          <Text style={styles.receiveAmount}>
-            {formatAmount(item.receive_amount, item.receive_currency)}
-          </Text>
-        </View>
-      </View>
-
-      {/* Footer with Date and Arrow */}
-      <View style={styles.transactionFooter}>
-        <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
-        <Text style={styles.arrowIcon}>›</Text>
-      </View>
-    </TouchableOpacity>
-  )
+      </TouchableOpacity>
+    )
+  }
 
 
   return (
@@ -193,6 +235,34 @@ function TransactionsContent({ navigation }: NavigationProps) {
       <View style={styles.header}>
         <Text style={styles.title}>Transaction History</Text>
         <Text style={styles.subtitle}>View all your transfers</Text>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterTab, typeFilter === 'all' && styles.filterTabActive]}
+          onPress={() => setTypeFilter('all')}
+        >
+          <Text style={[styles.filterTabText, typeFilter === 'all' && styles.filterTabTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterTab, typeFilter === 'send' && styles.filterTabActive]}
+          onPress={() => setTypeFilter('send')}
+        >
+          <Text style={[styles.filterTabText, typeFilter === 'send' && styles.filterTabTextActive]}>
+            Send
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterTab, typeFilter === 'receive' && styles.filterTabActive]}
+          onPress={() => setTypeFilter('receive')}
+        >
+          <Text style={[styles.filterTabText, typeFilter === 'receive' && styles.filterTabTextActive]}>
+            Receive
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -287,11 +357,62 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: '#007ACC',
+  },
+  filterTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  filterTabTextActive: {
+    color: '#ffffff',
+  },
   transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  typeBadgeSend: {
+    backgroundColor: '#007ACC',
+  },
+  typeBadgeReceive: {
+    backgroundColor: '#8b5cf6',
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   transactionId: {
     fontSize: 12,
@@ -347,6 +468,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#10b981',
+  },
+  walletAddress: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontFamily: 'monospace',
   },
   transactionFooter: {
     flexDirection: 'row',

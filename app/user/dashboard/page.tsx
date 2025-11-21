@@ -3,7 +3,8 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, Users, MessageCircle } from "lucide-react"
+import { Send, Users, MessageCircle, Download, CreditCard } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
@@ -14,15 +15,24 @@ import { DashboardSkeleton } from "@/components/dashboard-skeleton"
 interface Transaction {
   id: string
   transaction_id: string
-  send_amount: number
-  send_currency: string
+  type?: "send" | "receive" | "card_funding"
+  send_amount?: number
+  send_currency?: string
   receive_amount?: number
   receive_currency?: string
   status: string
   created_at: string
-  recipient: {
+  recipient?: {
     full_name: string
   }
+  // Receive transaction fields
+  crypto_amount?: number
+  crypto_currency?: string
+  fiat_amount?: number
+  fiat_currency?: string
+  // Card funding fields
+  destination_type?: "bank" | "card"
+  bridge_card_account_id?: string
 }
 
 export default function UserDashboardPage() {
@@ -30,57 +40,203 @@ export default function UserDashboardPage() {
   const { userProfile } = useAuth()
   const { transactions, currencies, exchangeRates, loading } = useUserData()
   const [totalSent, setTotalSent] = useState(0)
+  const [cardTransactions, setCardTransactions] = useState<any[]>([])
+
+  // Fetch card transactions
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const fetchCardTransactions = async () => {
+      try {
+        // Fetch all cards first
+        const cardsResponse = await fetch("/api/cards", {
+          credentials: "include",
+        })
+        
+        if (cardsResponse.ok) {
+          const cardsData = await cardsResponse.json()
+          const cards = cardsData.cards || []
+          
+          // Fetch transactions for all cards
+          const transactionPromises = cards.map((card: any) =>
+            fetch(`/api/cards/${card.id}/transactions`, {
+              credentials: "include",
+            })
+              .then(res => res.ok ? res.json() : null)
+              .catch(() => null)
+          )
+          
+          const transactionResults = await Promise.all(transactionPromises)
+          
+          // Combine all card transactions (only debit/spending transactions)
+          const allCardTransactions: any[] = []
+          transactionResults.forEach((result) => {
+            if (result && result.transactions) {
+              const debitTransactions = result.transactions
+                .filter((tx: any) => {
+                  // Only include debit transactions (spending)
+                  const amount = parseFloat(tx.amount || "0")
+                  return amount < 0 || tx.type === "debit"
+                })
+                .map((tx: any) => ({
+                  ...tx,
+                  amount: Math.abs(parseFloat(tx.amount || "0")),
+                  currency: tx.currency || "USD",
+                }))
+              allCardTransactions.push(...debitTransactions)
+            }
+          })
+          
+          setCardTransactions(allCardTransactions)
+        }
+      } catch (error) {
+        console.error("Error fetching card transactions:", error)
+      }
+    }
+
+    fetchCardTransactions()
+  }, [userProfile?.id])
+
+  // Helper function to convert amount to base currency
+  const convertToBaseCurrency = (
+    amount: number,
+    fromCurrency: string,
+    baseCurrency: string,
+    exchangeRates: any[]
+  ): number => {
+    if (fromCurrency === baseCurrency) return amount
+
+    // Find exchange rate from transaction currency to base currency
+    const rate = exchangeRates.find(
+      (r) => r && r.from_currency === fromCurrency && r.to_currency === baseCurrency,
+    )
+
+    if (rate && rate.rate > 0) {
+      return amount * rate.rate
+    }
+
+    // If direct rate not found, try reverse rate
+    const reverseRate = exchangeRates.find(
+      (r) => r && r.from_currency === baseCurrency && r.to_currency === fromCurrency,
+    )
+    if (reverseRate && reverseRate.rate > 0) {
+      return amount / reverseRate.rate
+    }
+
+    // If no rate found, return original amount (assume same currency)
+    return amount
+  }
 
   useEffect(() => {
-    if (!userProfile?.id || !transactions?.length || !exchangeRates?.length) return
+    if (!userProfile?.id) {
+      setTotalSent(0)
+      return
+    }
+
+    // Need exchange rates for currency conversion
+    if (!exchangeRates || exchangeRates.length === 0) {
+      // If no exchange rates yet, wait (don't set to 0, keep previous value)
+      return
+    }
+
+    // If transactions is not loaded yet (still loading), wait
+    if (loading) {
+      return
+    }
 
     try {
-      const calculateTotalSent = () => {
+      const calculateTotalSpent = () => {
         const baseCurrency = userProfile.base_currency || "NGN"
         let totalInBaseCurrency = 0
 
-        for (const transaction of transactions) {
-          if (!transaction || transaction.status !== "completed") continue
+        const transactionsList = transactions || []
 
-          let amountInBaseCurrency = transaction.send_amount || 0
+        // 1. Send transactions: use receive_amount (what recipient gets)
+        const sendTransactions = transactionsList.filter((t) => {
+          if (!t) return false
+          // Must be completed
+          if (t.status !== "completed") return false
+          // If type is explicitly set, use it
+          if (t.type === "send") return true
+          // Exclude receive and card_funding
+          if (t.type === "receive" || t.type === "card_funding") return false
+          // If type is not set but has send_amount/receive_amount, it's a send transaction
+          // Also check if it has recipient (send transactions have recipients)
+          if (t.send_amount || t.receive_amount || t.recipient) return true
+          return false
+        })
 
-          // If transaction currency is different from base currency, convert it
-          if (transaction.send_currency !== baseCurrency) {
-            // Find exchange rate from transaction currency to base currency
-            const rate = exchangeRates.find(
-              (r) => r && r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
+
+        for (const transaction of sendTransactions) {
+          // Use receive_amount if available, otherwise fall back to send_amount
+          const amount = transaction.receive_amount || transaction.send_amount || 0
+          const currency = transaction.receive_currency || transaction.send_currency || baseCurrency
+          
+          if (amount > 0) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              amount,
+              currency,
+              baseCurrency,
+              exchangeRates
             )
-
-            if (rate && rate.rate > 0) {
-              amountInBaseCurrency = transaction.send_amount * rate.rate
-            } else {
-              // If direct rate not found, try reverse rate
-              const reverseRate = exchangeRates.find(
-                (r) => r && r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-              )
-              if (reverseRate && reverseRate.rate > 0) {
-                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-              }
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
             }
           }
+        }
 
-          totalInBaseCurrency += amountInBaseCurrency
+        // 2. Receive transactions: use fiat_amount (what user received as payout)
+        // Only include if type is explicitly "receive" (not card_funding)
+        const receiveTransactions = transactionsList.filter((t) => {
+          if (!t) return false
+          if (t.status !== "completed") return false
+          // Must be explicitly marked as receive (not card_funding)
+          return t.type === "receive" && t.destination_type === "bank"
+        })
+
+        for (const transaction of receiveTransactions) {
+          if (transaction.fiat_amount && transaction.fiat_currency) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              transaction.fiat_amount,
+              transaction.fiat_currency,
+              baseCurrency,
+              exchangeRates
+            )
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
+            }
+          }
+        }
+
+        // 3. Card transactions: use amount spent (debit transactions)
+        for (const cardTx of cardTransactions || []) {
+          if (cardTx.amount && cardTx.currency && cardTx.amount > 0) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              cardTx.amount,
+              cardTx.currency,
+              baseCurrency,
+              exchangeRates
+            )
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
+            }
+          }
         }
 
         setTotalSent(totalInBaseCurrency)
       }
 
-      calculateTotalSent()
+      calculateTotalSpent()
     } catch (error) {
-      console.error("Error calculating total sent:", error)
+      console.error("Error calculating total spent:", error)
       setTotalSent(0)
     }
-  }, [transactions, exchangeRates, userProfile])
+  }, [transactions, exchangeRates, userProfile, cardTransactions])
 
   const userName = userProfile?.first_name || "User"
   const baseCurrency = userProfile?.base_currency || "NGN"
   const completedTransactions = transactions?.filter((t) => t && t.status === "completed").length || 0
-  const totalSentValue = totalSent || 0
+  const totalSentValue = totalSent > 0 ? totalSent : 0
 
   const formatCurrencyValue = (amount: number, currencyCode: string) => {
     try {
@@ -100,10 +256,14 @@ export default function UserDashboardPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
+      case "deposited":
         return "#10b981" // green
       case "processing":
+      case "converting":
+      case "converted":
         return "#f59e0b" // yellow
       case "pending":
+      case "confirmed":
         return "#6b7280" // gray
       case "failed":
         return "#ef4444" // red
@@ -162,7 +322,7 @@ export default function UserDashboardPage() {
               <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
                 {formatCurrencyValue(totalSentValue, baseCurrency)}
               </div>
-              <div className="text-base sm:text-lg font-medium text-gray-600">Total Sent</div>
+              <div className="text-base sm:text-lg font-medium text-gray-600">Total Volume</div>
             </CardContent>
           </Card>
 
@@ -174,18 +334,24 @@ export default function UserDashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions - Mobile Style */}
-        <div className="px-5 sm:px-6 flex gap-3 sm:gap-6">
+        {/* Quick Actions - Three Buttons: Send, Receive, Card */}
+        <div className="px-5 sm:px-6 grid grid-cols-3 gap-3 sm:gap-4">
           <Link href="/user/send" className="flex-1">
-            <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 h-14 sm:h-16 text-base sm:text-lg font-semibold">
-              <Send className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Send Money
+            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
+              <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span>Send</span>
             </Button>
           </Link>
-          <Link href="/user/recipients" className="flex-1">
-            <Button variant="outline" className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold border-easner-primary text-easner-primary hover:bg-easner-primary-50">
-              <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Recipients
+          <Link href="/user/receive" className="flex-1">
+            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
+              <Download className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span>Receive</span>
+            </Button>
+          </Link>
+          <Link href="/user/card" className="flex-1">
+            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
+              <CreditCard className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span>Card</span>
             </Button>
           </Link>
         </div>
@@ -215,9 +381,25 @@ export default function UserDashboardPage() {
               {recentTransactions.map((transaction) => {
                 if (!transaction) return null
                 const statusColor = getStatusColor(transaction.status)
+                
+                // Determine transaction type: send, receive (bank), or card_funding
+                let transactionType: "send" | "receive" | "card_funding" = "send"
+                if (transaction.type === "receive" || transaction.type === "card_funding") {
+                  transactionType = transaction.type
+                } else if (transaction.destination_type === "card") {
+                  transactionType = "card_funding"
+                } else if (transaction.destination_type === "bank" || transaction.crypto_amount) {
+                  transactionType = "receive"
+                }
+                
+                const detailUrl =
+                  transactionType === "send"
+                    ? `/user/send/${transaction.transaction_id.toLowerCase()}`
+                    : `/user/receive/${transaction.transaction_id.toLowerCase()}`
+
                 return (
                   <Link
-                    href={`/user/send/${transaction.transaction_id.toLowerCase()}`}
+                    href={detailUrl}
                     key={transaction.id}
                     className="block"
                   >
@@ -225,9 +407,27 @@ export default function UserDashboardPage() {
                       <CardContent className="p-4 sm:p-5">
                         {/* Transaction Header */}
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
-                          <span className="text-xs sm:text-sm text-gray-500 font-mono">
-                            {transaction.transaction_id}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                transactionType === "send"
+                                  ? "default"
+                                  : transactionType === "card_funding"
+                                  ? "outline"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {transactionType === "send"
+                                ? "Send"
+                                : transactionType === "card_funding"
+                                ? "Card Funding"
+                                : "Receive"}
+                            </Badge>
+                            <span className="text-xs sm:text-sm text-gray-500 font-mono">
+                              {transaction.transaction_id}
+                            </span>
+                          </div>
                           <span
                             className="px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold"
                             style={{
@@ -239,37 +439,93 @@ export default function UserDashboardPage() {
                           </span>
                         </div>
 
-                        {/* Recipient Info */}
-                        <div className="mb-4 sm:mb-5">
-                          <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                            To
-                          </div>
-                          <div className="text-base sm:text-lg font-semibold text-gray-900">
-                            {transaction.recipient?.full_name || "Unknown"}
-                          </div>
-                        </div>
-
-                        {/* Amount Section */}
-                        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                              Send Amount
-                            </span>
-                            <span className="text-base sm:text-lg font-semibold text-gray-900">
-                              {formatAmount(transaction.send_amount, transaction.send_currency)}
-                            </span>
-                          </div>
-                          {transaction.receive_amount && transaction.receive_currency && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                Receive Amount
-                              </span>
-                              <span className="text-base sm:text-lg font-semibold text-green-600">
-                                {formatAmount(transaction.receive_amount, transaction.receive_currency)}
-                              </span>
+                        {transactionType === "send" ? (
+                          <>
+                            {/* Recipient Info */}
+                            <div className="mb-4 sm:mb-5">
+                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                                To
+                              </div>
+                              <div className="text-base sm:text-lg font-semibold text-gray-900">
+                                {transaction.recipient?.full_name || "Unknown"}
+                              </div>
                             </div>
-                          )}
-                        </div>
+
+                            {/* Amount Section */}
+                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                  Send Amount
+                                </span>
+                                <span className="text-base sm:text-lg font-semibold text-gray-900">
+                                  {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
+                                </span>
+                              </div>
+                              {transaction.receive_amount && transaction.receive_currency && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                    Receive Amount
+                                  </span>
+                                  <span className="text-base sm:text-lg font-semibold text-green-600">
+                                    {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : transactionType === "card_funding" ? (
+                          <>
+                            {/* Card Funding Info */}
+                            <div className="mb-4 sm:mb-5">
+                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                                Card Top-Up
+                              </div>
+                              <div className="text-base sm:text-lg font-semibold text-gray-900">
+                                {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || "USDC")}
+                              </div>
+                            </div>
+
+                            {/* Amount Section */}
+                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                              {transaction.fiat_amount && transaction.fiat_currency && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                    Card Currency
+                                  </span>
+                                  <span className="text-base sm:text-lg font-semibold text-green-600">
+                                    {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Receive Transaction Info */}
+                            <div className="mb-4 sm:mb-5">
+                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                                Stablecoin Received
+                              </div>
+                              <div className="text-base sm:text-lg font-semibold text-gray-900">
+                                {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || "USDC")}
+                              </div>
+                            </div>
+
+                            {/* Amount Section */}
+                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                              {transaction.fiat_amount && transaction.fiat_currency && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                    Converted To
+                                  </span>
+                                  <span className="text-base sm:text-lg font-semibold text-green-600">
+                                    {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
 
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">

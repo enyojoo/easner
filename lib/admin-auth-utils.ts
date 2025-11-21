@@ -1,5 +1,7 @@
 import { type NextRequest } from "next/server"
+import { createServerClient } from "@/lib/supabase"
 import { createClient } from "@supabase/supabase-js"
+import { getAccessTokenFromRequest } from "@/lib/supabase-server-helpers"
 
 export interface AdminUser {
   id: string
@@ -10,60 +12,62 @@ export interface AdminUser {
 }
 
 /**
- * Simple admin authentication that works with the existing session
+ * Get admin user from request - checks admin_users table
+ * First gets user from session using anon key, then checks admin_users with service role
  */
 export async function getAdminUser(request: NextRequest): Promise<AdminUser | null> {
   try {
-    // Get the session from cookies - try multiple cookie names
-    const accessToken = request.cookies.get("sb-access-token")?.value ||
-                       request.cookies.get("sb-easner-access-token")?.value ||
-                       request.cookies.get("access_token")?.value
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     
-    const refreshToken = request.cookies.get("sb-refresh-token")?.value ||
-                        request.cookies.get("sb-easner-refresh-token")?.value ||
-                        request.cookies.get("refresh_token")?.value
+    // Get access token from cookies
+    const token = getAccessTokenFromRequest(request)
     
-    console.log("Debug: Looking for session tokens...")
-    console.log("Debug: Access token found:", !!accessToken)
-    console.log("Debug: Refresh token found:", !!refreshToken)
-    
-    if (!accessToken) {
-      console.log("No access token found in any cookie")
+    if (!token) {
+      console.log("No authentication token found")
+      const allCookies = request.cookies.getAll()
+      console.log("Available cookies:", allCookies.map(c => c.name))
       return null
     }
 
-    // Create a regular Supabase client (not service role)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
-    // Set the session
-    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    // Create anon client to verify token and get user
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
+    const { data: { user }, error: userError } = await anonClient.auth.getUser(token)
     
-    if (error || !user) {
-      console.log("Failed to get user from token:", error?.message)
+    if (userError || !user) {
+      console.log("Failed to get user from token:", userError?.message)
       return null
     }
 
-    // Check if user has admin metadata
-    const isAdmin = user.user_metadata?.isAdmin === true
-    const role = user.user_metadata?.role || "user"
-    const name = user.user_metadata?.name || ""
+    console.log("Authenticated user found:", user.id, user.email)
 
-    // Temporary: Allow any authenticated user to be admin for testing
-    // TODO: Remove this and implement proper admin check
-    if (!isAdmin) {
-      console.log("User is not marked as admin, but allowing for testing")
-      // return null // Commented out for testing
+    // Use service role client to check admin_users table (bypasses RLS)
+    const serverClient = createServerClient()
+    const { data: adminUser, error: adminError } = await serverClient
+      .from("admin_users")
+      .select("*")
+      .eq("id", user.id)
+      .single()
+    
+    if (adminError || !adminUser) {
+      console.log("User is not an admin:", adminError?.message)
+      return null
     }
+
+    // Check if admin user is active (if status field exists)
+    if (adminUser.status && adminUser.status !== "active") {
+      console.log("Admin user is not active:", adminUser.status)
+      return null
+    }
+
+    console.log("Admin user verified:", adminUser.email)
 
     return {
-      id: user.id,
-      email: user.email!,
+      id: adminUser.id,
+      email: adminUser.email,
       isAdmin: true,
-      role,
-      name
+      role: adminUser.role || "admin",
+      name: adminUser.name || ""
     }
   } catch (error) {
     console.error("Admin auth error:", error)

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, Users, User, LogOut, X, MoreHorizontal } from "lucide-react"
+import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, Download, CreditCard } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -13,21 +13,20 @@ interface UserDashboardLayoutProps {
   children: React.ReactNode
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+const baseNavigation = [
+  { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
   { name: "Send Money", href: "/user/send", icon: Send },
+  { name: "Receive Money", href: "/user/receive", icon: Download },
   { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Recipients", href: "/user/recipients", icon: Users },
-  { name: "Profile", href: "/user/profile", icon: User },
+  { name: "Cards", href: "/user/card", icon: CreditCard },
+  { name: "More", href: "/user/more", icon: MoreHorizontal },
 ]
 
 const bottomNavItems = [
-  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
   { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Send Money", href: "/user/send", icon: Send, isPrimary: true },
-  { name: "Recipients", href: "/user/recipients", icon: Users },
+  { name: "Card", href: "/user/card", icon: CreditCard },
 ]
-
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const pathname = usePathname()
@@ -64,7 +63,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-6 space-y-1">
-            {navigation.map((item) => {
+            {baseNavigation.map((item) => {
               const isActive = pathname === item.href
               return (
                 <Link
@@ -113,28 +112,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
         {/* Bottom Navigation - Mobile/Tablet only */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
-          <div className="flex justify-around items-center py-3 px-2">
+          <div className="flex justify-around items-center py-2 px-2">
             {bottomNavItems.map((item) => {
               const isActive = pathname === item.href
-
-              if (item.isPrimary) {
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    prefetch={true}
-                    className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
-                  >
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isActive ? "bg-easner-primary" : "bg-easner-primary"
-                      }`}
-                    >
-                      <item.icon className="h-6 w-6 text-white" />
-                    </div>
-                  </Link>
-                )
-              }
 
               return (
                 <Link
@@ -143,22 +123,30 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   prefetch={true}
                   className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                 >
-                  <item.icon className={`h-6 w-6 ${isActive ? "text-easner-primary" : "text-gray-600"}`} />
+                  <item.icon className={`h-5 w-5 ${isActive ? "text-easner-primary" : "text-gray-600"}`} />
+                  <span className={`text-xs mt-1 ${isActive ? "text-easner-primary" : "text-gray-600"}`}>
+                    {item.name}
+                  </span>
                 </Link>
               )
             })}
 
-            {/* More Menu - Direct link to Profile */}
+            {/* More Menu */}
             <Link
-              href="/user/profile"
+              href="/user/more"
               prefetch={true}
               className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
             >
               <MoreHorizontal
-                className={`h-6 w-6 ${
-                  pathname === "/user/profile" ? "text-easner-primary" : "text-gray-600"
+                className={`h-5 w-5 ${
+                  pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-easner-primary" : "text-gray-600"
                 }`}
               />
+              <span className={`text-xs mt-1 ${
+                pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-easner-primary" : "text-gray-600"
+              }`}>
+                More
+              </span>
             </Link>
           </div>
         </div>

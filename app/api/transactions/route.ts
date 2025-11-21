@@ -1,10 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { transactionService, currencyService } from "@/lib/database"
+import { combinedTransactionService } from "@/lib/combined-transaction-service"
 import { requireUser, createErrorResponse, withErrorHandling } from "@/lib/auth-utils"
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const user = await requireUser(request)
-  const transactions = await transactionService.getByUserId(user.id, 20, user.id)
+  const { searchParams } = new URL(request.url)
+  const type = (searchParams.get("type") || "all") as "all" | "send" | "receive"
+  const status = searchParams.get("status") || undefined
+  const limit = parseInt(searchParams.get("limit") || "100")
+
+  // Get combined transactions
+  const transactions = await combinedTransactionService.getUserAllTransactions(user.id, {
+    type,
+    status,
+    limit,
+  })
 
   return NextResponse.json({ transactions })
 })

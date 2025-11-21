@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server"
 import { createServerClient } from "./supabase"
+import { getAccessTokenFromRequest } from "./supabase-server-helpers"
 
 export interface AuthenticatedUser {
   id: string
@@ -15,18 +16,8 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
   try {
     const supabase = createServerClient()
     
-    // Try to get token from Authorization header first
-    const authHeader = request.headers.get("authorization")
-    let token: string | null = null
-    
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7)
-    }
-    
-    // If no auth header, try to get from cookies
-    if (!token) {
-      token = request.cookies.get("sb-access-token")?.value || null
-    }
+    // Use the robust token extraction helper
+    const token = getAccessTokenFromRequest(request)
     
     if (!token) {
       console.log("No authentication token found")

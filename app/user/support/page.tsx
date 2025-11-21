@@ -4,8 +4,9 @@ import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Clock } from "lucide-react"
+import { Clock, ArrowLeft } from "lucide-react"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function UserSupportPage() {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
@@ -42,14 +43,21 @@ export default function UserSupportPage() {
     <UserDashboardLayout>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-8">
+        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Support</h1>
-            <p className="text-gray-600">We're here to help you</p>
+            <div className="flex items-center gap-4 mb-1">
+              <Link href="/user/more">
+                <Button variant="ghost" size="sm" className="p-2">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Support</h1>
+            </div>
+            <p className="text-base text-gray-500 ml-12">We're here to help you</p>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-6 p-6">
+        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
           {/* Contact Options */}
           <Card className="bg-white">
             <CardHeader className="pb-4">

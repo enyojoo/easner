@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { View, Platform, TouchableOpacity } from 'react-native'
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
@@ -27,6 +27,10 @@ import SelectRecipientScreen from '../screens/send/SelectRecipientScreen'
 import PaymentMethodScreen from '../screens/send/PaymentMethodScreen'
 import ConfirmationScreen from '../screens/send/ConfirmationScreen'
 import SendTransactionDetailsScreen from '../screens/send/SendTransactionDetailsScreen'
+
+// Receive Money Flow Screens
+import ReceiveMoneyScreen from '../screens/receive/ReceiveMoneyScreen'
+import ReceiveTransactionDetailsScreen from '../screens/receive/ReceiveTransactionDetailsScreen'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -241,6 +245,26 @@ function AuthStack() {
 }
 
 function MainTabs() {
+  const [cryptoReceiveEnabled, setCryptoReceiveEnabled] = useState(false)
+
+  useEffect(() => {
+    const checkFeatureFlag = async () => {
+      try {
+        // Use relative path - will be resolved by the app's API base URL
+        const apiBase = process.env.EXPO_PUBLIC_API_URL || ''
+        const response = await fetch(`${apiBase}/api/feature-flags/crypto_receive_enabled`)
+        if (response.ok) {
+          const data = await response.json()
+          setCryptoReceiveEnabled(data.is_enabled || false)
+        }
+      } catch (error) {
+        console.error('Error checking feature flag:', error)
+        setCryptoReceiveEnabled(false)
+      }
+    }
+    checkFeatureFlag()
+  }, [])
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -307,6 +331,21 @@ function MainTabs() {
           ),
         }}
       />
+      {cryptoReceiveEnabled && (
+        <Tab.Screen 
+          name="Receive" 
+          component={ReceiveMoneyScreen}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <Ionicons 
+                name="download-outline" 
+                size={28} 
+                color={focused ? '#007ACC' : '#6b7280'} 
+              />
+            ),
+          }}
+        />
+      )}
       <Tab.Screen 
         name="Recipients" 
         component={RecipientsScreen}
@@ -405,6 +444,22 @@ function MainStack() {
       <Stack.Screen 
         name="Support" 
         component={SupportScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ReceiveMoney" 
+        component={ReceiveMoneyScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ReceiveTransactionDetails" 
+        component={ReceiveTransactionDetailsScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),

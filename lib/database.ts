@@ -865,8 +865,14 @@ export const adminService = {
 
     const { data, error } = await query.order("created_at", { ascending: false }).limit(filters.limit || 50)
 
-    if (error) throw error
-    return data
+    if (error) {
+      console.error("adminService.getAllTransactions error:", error)
+      console.error("Error code:", error.code)
+      console.error("Error message:", error.message)
+      console.error("Error details:", error.details)
+      throw error
+    }
+    return data || []
   },
 
   async getAllUsers(
@@ -997,7 +1003,450 @@ export const settingsService = {
       return { key, value: stringValue, data_type: dataType }
     })
 
-    const { data, error } = await serverClient.from("system_settings").upsert(updates).select()
+      const { data, error } = await serverClient.from("system_settings").upsert(updates).select()
+
+    if (error) throw error
+    return data
+  },
+}
+
+// Crypto Wallet operations
+export const cryptoWalletService = {
+  async create(
+    userId: string,
+    cryptoCurrency: string,
+    fiatCurrency: string,
+    recipientId: string,
+    stellarAccountId: string,
+    encryptedSecretKey: string,
+    xlmReserve: number = 0,
+    usdcTrustlineEstablished: boolean = false,
+  ) {
+    const serverClient = createServerClient()
+
+    const { data, error } = await serverClient
+      .from("crypto_wallets")
+      .insert({
+        user_id: userId,
+        crypto_currency: cryptoCurrency,
+        blockchain: "stellar",
+        stellar_account_id: stellarAccountId,
+        stellar_secret_key_encrypted: encryptedSecretKey,
+        wallet_address: stellarAccountId,
+        fiat_currency: fiatCurrency,
+        recipient_id: recipientId,
+        xlm_reserve: xlmReserve,
+        usdc_trustline_established: usdcTrustlineEstablished,
+        status: "active",
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserAndCurrency(
+    userId: string,
+    cryptoCurrency: string,
+    destinationType?: "bank" | "card",
+  ) {
+    let query = supabase
+      .from("crypto_wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("crypto_currency", cryptoCurrency)
+      .eq("status", "active")
+
+    if (destinationType) {
+      query = query.eq("destination_type", destinationType)
+    }
+
+    const { data, error } = await query.single()
+
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  },
+
+  async getAllByUser(userId: string) {
+    const { data, error } = await supabase
+      .from("crypto_wallets")
+      .select(`
+        *,
+        recipient:recipients(*)
+      `)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    // Get transaction counts for each wallet
+    const walletsWithCounts = await Promise.all(
+      (data || []).map(async (wallet) => {
+        const { count } = await supabase
+          .from("crypto_receive_transactions")
+          .select("*", { count: "exact", head: true })
+          .eq("crypto_wallet_id", wallet.id)
+
+        return {
+          ...wallet,
+          transaction_count: count || 0,
+        }
+      }),
+    )
+
+    return walletsWithCounts
+  },
+
+  async getById(walletId: string) {
+    const { data, error } = await supabase
+      .from("crypto_wallets")
+      .select(`
+        *,
+        recipient:recipients(*)
+      `)
+      .eq("id", walletId)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(walletId: string, updates: {
+    xlm_reserve?: number
+    usdc_trustline_established?: boolean
+    status?: string
+  }) {
+    const serverClient = createServerClient()
+
+    const { data, error } = await serverClient
+      .from("crypto_wallets")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", walletId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async deactivate(walletId: string) {
+    return this.update(walletId, { status: "inactive" })
+  },
+
+  /**
+   * Create a Bridge address (Liquidation Address for bank or Top-Up deposit address for card)
+   */
+  async createBridgeAddress(
+    userId: string,
+    bridgeData: {
+      bridgeCustomerId: string
+      destinationType: "bank" | "card"
+      cryptoCurrency: string
+      fiatCurrency: string
+      chain: string
+      blockchainAddress: string
+      blockchainMemo?: string
+      // Bank-specific
+      recipientId?: string
+      bridgeLiquidationAddressId?: string
+      externalAccountId?: string
+      destinationPaymentRail?: string
+      destinationCurrency?: string
+      destinationWireMessage?: string
+      // Card-specific
+      bridgeCardAccountId?: string
+    },
+  ) {
+    const serverClient = createServerClient()
+
+    const insertData: any = {
+      user_id: userId,
+      bridge_customer_id: bridgeData.bridgeCustomerId,
+      destination_type: bridgeData.destinationType,
+      crypto_currency: bridgeData.cryptoCurrency,
+      fiat_currency: bridgeData.fiatCurrency,
+      blockchain: bridgeData.chain,
+      chain: bridgeData.chain,
+      blockchain_address: bridgeData.blockchainAddress,
+      wallet_address: bridgeData.blockchainAddress, // For backward compatibility
+      blockchain_memo: bridgeData.blockchainMemo,
+      recipient_id: bridgeData.recipientId || null,
+      status: "active",
+    }
+
+    // Add bank-specific fields
+    if (bridgeData.destinationType === "bank") {
+      insertData.bridge_liquidation_address_id = bridgeData.bridgeLiquidationAddressId
+      insertData.external_account_id = bridgeData.externalAccountId
+      insertData.destination_payment_rail = bridgeData.destinationPaymentRail || "wire"
+      insertData.destination_currency = bridgeData.destinationCurrency
+      insertData.destination_wire_message = bridgeData.destinationWireMessage
+    }
+
+    // Add card-specific fields
+    if (bridgeData.destinationType === "card") {
+      insertData.bridge_card_account_id = bridgeData.bridgeCardAccountId
+      insertData.destination_payment_rail = "card"
+      insertData.destination_currency = bridgeData.fiatCurrency
+    }
+
+    const { data, error } = await serverClient
+      .from("crypto_wallets")
+      .insert(insertData)
+      .select(`
+        *,
+        recipient:recipients(*)
+      `)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+}
+
+// Crypto Receive Transaction operations
+export const cryptoReceiveTransactionService = {
+  async create(
+    walletId: string,
+    blockchainTxHash: string, // Changed from stellarTxHash to support all blockchains
+    cryptoAmount: number,
+    cryptoCurrency: string,
+    fiatAmount: number,
+    fiatCurrency: string,
+    exchangeRate: number,
+    userId: string,
+    bridgeFields?: {
+      bridge_liquidation_address_id?: string
+      bridge_liquidation_id?: string
+      blockchain_memo?: string
+      external_account_id?: string
+      bridge_card_account_id?: string
+      destination_type?: "bank" | "card"
+      destination_currency?: string
+    },
+  ) {
+    const serverClient = createServerClient()
+    const transactionId = `CRTID${Date.now()}`
+
+    const insertData: any = {
+      transaction_id: transactionId,
+      blockchain_tx_hash: blockchainTxHash,
+      stellar_transaction_hash: blockchainTxHash, // Keep for backward compatibility
+      user_id: userId,
+      crypto_wallet_id: walletId || null, // Make nullable for Bridge
+      crypto_amount: cryptoAmount,
+      crypto_currency: cryptoCurrency,
+      fiat_amount: fiatAmount,
+      fiat_currency: fiatCurrency,
+      exchange_rate: exchangeRate,
+      status: "pending",
+    }
+
+    // Add Bridge-specific fields if provided
+    if (bridgeFields) {
+      Object.assign(insertData, bridgeFields)
+    }
+
+    const { data, error } = await serverClient
+      .from("crypto_receive_transactions")
+      .insert(insertData)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateStatus(
+    transactionId: string,
+    status: string,
+    updates: {
+      circle_conversion_id?: string
+      circle_payout_id?: string
+      confirmed_at?: string
+      converted_at?: string
+      deposited_at?: string
+      // Bridge-specific fields
+      bridge_liquidation_address_id?: string
+      bridge_liquidation_id?: string
+      blockchain_tx_hash?: string
+      blockchain_memo?: string
+      external_account_id?: string
+      bridge_card_account_id?: string
+      destination_type?: "bank" | "card"
+      destination_currency?: string
+      liquidation_status?: string
+      card_top_up_status?: string
+    } = {},
+  ) {
+    const serverClient = createServerClient()
+
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString(),
+      ...updates,
+    }
+
+    const { data, error } = await serverClient
+      .from("crypto_receive_transactions")
+      .update(updateData)
+      .eq("transaction_id", transactionId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByTransactionId(transactionId: string) {
+    const { data, error } = await supabase
+      .from("crypto_receive_transactions")
+      .select(`
+        *,
+        crypto_wallet:crypto_wallets(*, recipient:recipients(*)),
+        user:users(first_name, last_name, email)
+      `)
+      .eq("transaction_id", transactionId)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUser(userId: string, limit: number = 100) {
+    const { data, error } = await supabase
+      .from("crypto_receive_transactions")
+      .select(`
+        *,
+        crypto_wallet:crypto_wallets(*, recipient:recipients(*))
+      `)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+    return data || []
+  },
+
+  async getByWallet(walletId: string) {
+    const { data, error } = await supabase
+      .from("crypto_receive_transactions")
+      .select("*")
+      .eq("crypto_wallet_id", walletId)
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  async getAll(filters: {
+    status?: string
+    cryptoCurrency?: string
+    search?: string
+    limit?: number
+  } = {}) {
+    const serverClient = createServerClient()
+    let query = serverClient
+      .from("crypto_receive_transactions")
+      .select(`
+        *,
+        crypto_wallet:crypto_wallets(*, recipient:recipients(*)),
+        user:users(first_name, last_name, email)
+      `)
+
+    if (filters.status) {
+      query = query.eq("status", filters.status)
+    }
+
+    if (filters.cryptoCurrency) {
+      query = query.eq("crypto_currency", filters.cryptoCurrency)
+    }
+
+    if (filters.search) {
+      query = query.or(
+        `transaction_id.ilike.%${filters.search}%,stellar_transaction_hash.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`,
+      )
+    }
+
+    query = query.order("created_at", { ascending: false }).limit(filters.limit || 100)
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data || []
+  },
+}
+
+// Supported Cryptocurrencies operations
+export const supportedCryptocurrencyService = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from("supported_cryptocurrencies")
+      .select("*")
+      .eq("status", "active")
+      .order("code")
+
+    if (error) throw error
+    return data || []
+  },
+
+  async getByCode(code: string) {
+    const { data, error } = await supabase
+      .from("supported_cryptocurrencies")
+      .select("*")
+      .eq("code", code)
+      .eq("status", "active")
+      .single()
+
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  },
+
+  async create(cryptoData: {
+    code: string
+    name: string
+    blockchain: string
+    is_stablecoin: boolean
+    stellar_asset_code: string
+    stellar_asset_issuer: string
+    icon_url?: string
+  }) {
+    const serverClient = createServerClient()
+
+    const { data, error } = await serverClient
+      .from("supported_cryptocurrencies")
+      .insert({
+        ...cryptoData,
+        status: "active",
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: {
+    name?: string
+    status?: string
+    icon_url?: string
+  }) {
+    const serverClient = createServerClient()
+
+    const { data, error } = await serverClient
+      .from("supported_cryptocurrencies")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single()
 
     if (error) throw error
     return data

@@ -79,10 +79,29 @@ class UserDataStore {
       )
 
       // Load all data with timeout protection
+      // Fetch combined transactions (send + receive) from API
+      const transactionsPromise = (async () => {
+        try {
+          const res = await fetch(`/api/transactions?type=all&limit=20`, {
+            credentials: 'include',
+          })
+          if (res.ok) {
+            const data = await res.json()
+            return data.transactions || []
+          }
+          // Fallback to old method if API fails
+          return await transactionService.getByUserId(userId, 20)
+        } catch (error) {
+          console.error("Error fetching combined transactions, falling back to send only:", error)
+          // Fallback to old method if fetch fails
+          return await transactionService.getByUserId(userId, 20)
+        }
+      })()
+
       const dataPromise = Promise.allSettled([
         currencyService.getAll(),
         currencyService.getExchangeRates(),
-        transactionService.getByUserId(userId, 20),
+        transactionsPromise,
         recipientService.getByUserId(userId),
       ])
 
@@ -203,8 +222,18 @@ class UserDataStore {
   async refreshTransactions(userId: string) {
     try {
       this.updateActivity()
-      const transactions = await transactionService.getByUserId(userId, 20)
-      this.data.transactions = transactions || []
+      // Fetch combined transactions (send + receive) from API
+      const response = await fetch(`/api/transactions?type=all&limit=20`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        this.data.transactions = data.transactions || []
+      } else {
+        // Fallback to old method if API fails
+        const transactions = await transactionService.getByUserId(userId, 20)
+        this.data.transactions = transactions || []
+      }
       this.data.lastUpdated = Date.now()
       this.notify()
     } catch (error) {

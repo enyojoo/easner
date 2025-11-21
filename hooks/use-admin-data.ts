@@ -61,8 +61,14 @@ export function useAdminData() {
       if (mounted) {
         const newData = adminDataStore.getData()
         if (newData) {
-          // Only update if we have valid data - preserve existing data to prevent flickering
-          setData((prevData: any) => newData || prevData)
+          // Only update if data actually changed to prevent flickering
+          setData((prevData: any) => {
+            // Deep comparison to prevent unnecessary updates
+            if (JSON.stringify(prevData) === JSON.stringify(newData)) {
+              return prevData
+            }
+            return newData
+          })
           // Only set loading to false if we have data and were previously loading
           setLoading((prevLoading) => prevLoading && newData ? false : prevLoading)
           setError(null)

@@ -1,0 +1,252 @@
+import { supabase } from "@/lib/supabase"
+
+export interface KYCSubmission {
+  id: string
+  user_id: string
+  type: "identity" | "address"
+  status: "pending" | "in_review" | "approved" | "rejected"
+  country_code?: string
+  id_type?: string
+  id_document_url?: string
+  id_document_filename?: string
+  document_type?: string // 'utility_bill' or 'bank_statement'
+  address_document_url?: string
+  address_document_filename?: string
+  reviewed_by?: string
+  reviewed_at?: string
+  rejection_reason?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateIdentitySubmission {
+  country_code: string
+  id_type: string
+  id_document_file: File
+}
+
+export interface CreateAddressSubmission {
+  document_type: "utility_bill" | "bank_statement"
+  address_document_file: File
+}
+
+export const kycService = {
+  // Get user's KYC submissions
+  async getByUserId(userId: string): Promise<KYCSubmission[]> {
+    const { data, error } = await supabase
+      .from("kyc_submissions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      // If table doesn't exist, return empty array instead of throwing
+      if (error.code === 'PGRST205' || error.message?.includes('kyc_submissions')) {
+        console.warn("KYC submissions table not found. Please run the migration.")
+        return []
+      }
+      throw error
+    }
+    return data || []
+  },
+
+  // Get specific submission
+  async getById(submissionId: string): Promise<KYCSubmission | null> {
+    const { data, error } = await supabase
+      .from("kyc_submissions")
+      .select("*")
+      .eq("id", submissionId)
+      .single()
+
+    if (error) {
+      if (error.code === "PGRST116") return null // Not found
+      throw error
+    }
+    return data
+  },
+
+  // Upload file to Supabase Storage
+  async uploadFile(file: File, folder: string, userId: string): Promise<{ url: string; filename: string }> {
+    const fileExt = file.name.split(".").pop()
+    const fileName = `${userId}_${Date.now()}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("kyc-documents")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      })
+
+    if (uploadError) {
+      throw new Error(`Upload failed: ${uploadError.message}`)
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("kyc-documents").getPublicUrl(filePath)
+
+    return { url: publicUrl, filename: fileName }
+  },
+
+  // Create identity verification submission
+  async createIdentitySubmission(
+    userId: string,
+    data: CreateIdentitySubmission
+  ): Promise<KYCSubmission> {
+    // Upload document
+    const { url, filename } = await this.uploadFile(
+      data.id_document_file,
+      "identity",
+      userId
+    )
+
+    // Check if user already has a pending identity submission
+    const existing = await supabase
+      .from("kyc_submissions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("type", "identity")
+      .eq("status", "pending")
+      .single()
+
+    if (existing.data) {
+      // Update existing submission
+      const { data: updatedData, error } = await supabase
+        .from("kyc_submissions")
+        .update({
+          country_code: data.country_code,
+          id_type: data.id_type,
+          id_document_url: url,
+          id_document_filename: filename,
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.data.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return updatedData
+    } else {
+      // Create new submission
+      const { data, error } = await supabase
+        .from("kyc_submissions")
+        .insert({
+          user_id: userId,
+          type: "identity",
+          status: "pending",
+          country_code: data.country_code,
+          id_type: data.id_type,
+          id_document_url: url,
+          id_document_filename: filename,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    }
+  },
+
+  // Create address verification submission
+  async createAddressSubmission(
+    userId: string,
+    data: CreateAddressSubmission
+  ): Promise<KYCSubmission> {
+    // Upload document
+    const { url, filename } = await this.uploadFile(
+      data.address_document_file,
+      "address",
+      userId
+    )
+
+    // Check if user already has a pending address submission
+    const existing = await supabase
+      .from("kyc_submissions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("type", "address")
+      .eq("status", "pending")
+      .single()
+
+    if (existing.data) {
+      // Update existing submission
+      const { data: updatedData, error } = await supabase
+        .from("kyc_submissions")
+        .update({
+          document_type: data.document_type,
+          address_document_url: url,
+          address_document_filename: filename,
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.data.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return updatedData
+    } else {
+      // Create new submission
+      const { data, error } = await supabase
+        .from("kyc_submissions")
+        .insert({
+          user_id: userId,
+          type: "address",
+          status: "pending",
+          document_type: data.document_type,
+          address_document_url: url,
+          address_document_filename: filename,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    }
+  },
+
+  // Admin: Get all submissions
+  async getAllSubmissions(status?: string): Promise<KYCSubmission[]> {
+    let query = supabase.from("kyc_submissions").select("*")
+
+    if (status) {
+      query = query.eq("status", status)
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false })
+
+    if (error) throw error
+    return data || []
+  },
+
+  // Admin: Update submission status
+  async updateStatus(
+    submissionId: string,
+    status: "in_review" | "approved" | "rejected",
+    reviewedBy: string,
+    rejectionReason?: string
+  ): Promise<KYCSubmission> {
+    const updateData: any = {
+      status,
+      reviewed_by: reviewedBy,
+      reviewed_at: new Date().toISOString(),
+    }
+
+    if (status === "rejected" && rejectionReason) {
+      updateData.rejection_reason = rejectionReason
+    }
+
+    const { data, error } = await supabase
+      .from("kyc_submissions")
+      .update(updateData)
+      .eq("id", submissionId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+}
+

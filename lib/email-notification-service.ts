@@ -130,6 +130,90 @@ export class EmailNotificationService {
   }
 
   /**
+   * Send crypto receive transaction status email notification
+   */
+  static async sendCryptoReceiveTransactionEmail(
+    transactionId: string,
+    status: string
+  ): Promise<void> {
+    console.log('Sending email for crypto receive transaction:', transactionId, 'status:', status)
+
+    try {
+      const supabase = createServerClient()
+
+      // Get crypto receive transaction data
+      const { data: transaction, error: transactionError } = await supabase
+        .from('crypto_receive_transactions')
+        .select(`
+          *,
+          crypto_wallet:crypto_wallets(*, recipient:recipients(*)),
+          user:users(first_name, last_name, email)
+        `)
+        .eq('transaction_id', transactionId)
+        .single()
+
+      if (transactionError || !transaction) {
+        console.error('Crypto receive transaction not found:', transactionError)
+        return
+      }
+
+      const userEmail = transaction.user?.email
+      if (!userEmail) {
+        console.error('User email not found')
+        return
+      }
+
+      // Map crypto receive status to transaction email status
+      let emailStatus: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' = 'processing'
+      if (status === 'deposited') {
+        emailStatus = 'completed'
+      } else if (status === 'failed') {
+        emailStatus = 'failed'
+      } else if (status === 'pending') {
+        emailStatus = 'pending'
+      }
+
+      // Create email data for crypto receive transaction
+      const emailData: TransactionEmailData = {
+        transactionId: transaction.transaction_id,
+        recipientName: transaction.crypto_wallet?.recipient?.full_name || 'Your Account',
+        sendAmount: transaction.crypto_amount,
+        sendCurrency: transaction.crypto_currency,
+        receiveAmount: transaction.fiat_amount,
+        receiveCurrency: transaction.fiat_currency,
+        exchangeRate: transaction.exchange_rate,
+        fee: 0,
+        status: emailStatus,
+        createdAt: transaction.created_at,
+        updatedAt: transaction.updated_at,
+      }
+
+      // Send email based on status
+      let result
+      if (status === 'deposited') {
+        result = await emailService.sendTransactionCompletedEmail(userEmail, emailData)
+      } else if (status === 'converting' || status === 'converted' || status === 'confirmed') {
+        result = await emailService.sendTransactionProcessingEmail(userEmail, emailData)
+      } else if (status === 'pending') {
+        result = await emailService.sendTransactionPendingEmail(userEmail, emailData)
+      } else if (status === 'failed') {
+        result = await emailService.sendTransactionFailedEmail(userEmail, emailData)
+      } else {
+        console.log('Unknown crypto receive status:', status)
+        return
+      }
+
+      if (result.success) {
+        console.log('Crypto receive email sent successfully!', result.messageId)
+      } else {
+        console.error('Crypto receive email sending failed:', result.error)
+      }
+    } catch (error) {
+      console.error('Error sending crypto receive email:', error)
+    }
+  }
+
+  /**
    * Send welcome email
    */
   static async sendWelcomeEmail(
