@@ -11,6 +11,7 @@ export interface KYCSubmission {
   id_document_url?: string
   id_document_filename?: string
   document_type?: string // 'utility_bill' or 'bank_statement'
+  address?: string // User-entered address text
   address_document_url?: string
   address_document_filename?: string
   reviewed_by?: string
@@ -27,6 +28,8 @@ export interface CreateIdentitySubmission {
 }
 
 export interface CreateAddressSubmission {
+  country_code: string
+  address: string
   document_type: "utility_bill" | "bank_statement"
   address_document_file: File
 }
@@ -109,13 +112,13 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending or in_review identity submission
+    // Check if user already has a pending identity submission (allow updates to pending only)
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
       .select("id, status")
       .eq("user_id", userId)
       .eq("type", "identity")
-      .in("status", ["pending", "in_review"])
+      .eq("status", "pending")
       .maybeSingle()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -123,10 +126,7 @@ export const kycService = {
     }
 
     if (existing) {
-      // If already in review, don't allow updates
-      if (existing.status === "in_review") {
-        throw new Error("Your identity verification is already under review. Please wait for admin approval.")
-      }
+      // Allow updates to pending submissions
       
       // Update existing pending submission
       const { data: updatedData, error } = await dbClient
@@ -136,7 +136,7 @@ export const kycService = {
           id_type: data.id_type,
           id_document_url: url,
           id_document_filename: filename,
-          status: "in_review", // Change to in_review after upload
+          status: "pending", // Start as pending
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -146,13 +146,13 @@ export const kycService = {
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission with in_review status
+      // Create new submission with pending status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "identity",
-          status: "in_review", // Start as in_review after upload
+          status: "pending", // Start as pending
           country_code: data.country_code,
           id_type: data.id_type,
           id_document_url: url,
@@ -181,13 +181,13 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending or in_review address submission
+    // Check if user already has a pending address submission (allow updates to pending only)
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
       .select("id, status")
       .eq("user_id", userId)
       .eq("type", "address")
-      .in("status", ["pending", "in_review"])
+      .eq("status", "pending")
       .maybeSingle()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -195,19 +195,18 @@ export const kycService = {
     }
 
     if (existing) {
-      // If already in review, don't allow updates
-      if (existing.status === "in_review") {
-        throw new Error("Your address verification is already under review. Please wait for admin approval.")
-      }
+      // Allow updates to pending submissions
       
       // Update existing pending submission
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
+          country_code: data.country_code,
+          address: data.address,
           document_type: data.document_type,
           address_document_url: url,
           address_document_filename: filename,
-          status: "in_review", // Change to in_review after upload
+          status: "pending", // Start as pending
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -217,13 +216,15 @@ export const kycService = {
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission with in_review status
+      // Create new submission with pending status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "address",
-          status: "in_review", // Start as in_review after upload
+          status: "pending", // Start as pending
+          country_code: data.country_code,
+          address: data.address,
           document_type: data.document_type,
           address_document_url: url,
           address_document_filename: filename,
