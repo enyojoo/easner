@@ -9,17 +9,80 @@ import { kycService, KYCSubmission } from "@/lib/kyc-service"
 
 export default function VerificationPage() {
   const { userProfile } = useAuth()
-  const [submissions, setSubmissions] = useState<KYCSubmission[]>([])
+  
+  // Initialize from cache synchronously to prevent flicker
+  const getInitialSubmissions = (): KYCSubmission[] | null => {
+    if (typeof window === "undefined") return null
+    if (!userProfile?.id) return null
+    try {
+      const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
+      if (!cached) return null
+      const { value, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+        return value
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const [submissions, setSubmissions] = useState<KYCSubmission[]>(() => getInitialSubmissions() || [])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!userProfile?.id) return
-    
-    const loadSubmissions = async () => {
+
+    const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+    const getCachedSubmissions = (): KYCSubmission[] | null => {
       try {
+        const cached = localStorage.getItem(CACHE_KEY)
+        if (!cached) return null
+        const { value, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_TTL) {
+          return value
+        }
+        localStorage.removeItem(CACHE_KEY)
+        return null
+      } catch {
+        return null
+      }
+    }
+
+    const setCachedSubmissions = (value: KYCSubmission[]) => {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    // Check cache first
+    const cachedSubmissions = getCachedSubmissions()
+    
+    // Update state if cache exists and state is empty (only on first mount)
+    if (cachedSubmissions !== null && submissions.length === 0) {
+      setSubmissions(cachedSubmissions)
+    }
+
+    // If cache exists and is valid, no need to fetch
+    if (cachedSubmissions !== null) {
+      return
+    }
+
+    // Only fetch missing or expired data
+    const loadSubmissions = async () => {
+      // Only show loading if we don't have any cached data
+      if (submissions.length === 0) {
         setLoading(true)
-        const submissions = await kycService.getByUserId(userProfile.id)
-        setSubmissions(submissions || [])
+      }
+      try {
+        const submissionsData = await kycService.getByUserId(userProfile.id)
+        setSubmissions(submissionsData || [])
+        setCachedSubmissions(submissionsData || [])
       } catch (error) {
         console.error("Error loading submissions:", error)
       } finally {
@@ -78,7 +141,7 @@ export default function VerificationPage() {
         </div>
 
         {/* Cards Container */}
-        <div className="px-5 pb-6 space-y-4">
+        <div className="px-5 pb-6 space-y-6">
           {/* Identity Verification Card */}
           <Link href="/user/more/verification/identity">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow">

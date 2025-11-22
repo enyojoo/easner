@@ -21,12 +21,34 @@ import { countryService, Country, getCountryFlag } from "@/lib/country-service"
 
 export default function AddressVerificationPage() {
   const { userProfile } = useAuth()
-  const [submission, setSubmission] = useState<KYCSubmission | null>(null)
-  const [loading, setLoading] = useState(true)
+  
+  // Initialize from cache synchronously to prevent flicker
+  const getInitialSubmission = (): KYCSubmission | null => {
+    if (typeof window === "undefined") return null
+    if (!userProfile?.id) return null
+    try {
+      const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
+      if (!cached) return null
+      const { value, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+        const submissions = value as KYCSubmission[]
+        return submissions.find(s => s.type === "address") || null
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const initialSubmission = getInitialSubmission()
+  const [submission, setSubmission] = useState<KYCSubmission | null>(initialSubmission)
+  const [loading, setLoading] = useState(false)
   const [countries, setCountries] = useState<Country[]>([])
-  const [selectedCountry, setSelectedCountry] = useState("")
-  const [address, setAddress] = useState("")
-  const [selectedDocumentType, setSelectedDocumentType] = useState<"utility_bill" | "bank_statement" | "">("")
+  const [selectedCountry, setSelectedCountry] = useState(initialSubmission?.country_code || "")
+  const [address, setAddress] = useState(initialSubmission?.address || "")
+  const [selectedDocumentType, setSelectedDocumentType] = useState<"utility_bill" | "bank_statement" | "">(
+    (initialSubmission?.document_type as "utility_bill" | "bank_statement") || ""
+  )
   const [addressFile, setAddressFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [countrySearch, setCountrySearch] = useState("")
@@ -36,6 +58,75 @@ export default function AddressVerificationPage() {
 
   useEffect(() => {
     loadCountries()
+  }, [])
+
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+    const getCachedSubmissions = (): KYCSubmission[] | null => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY)
+        if (!cached) return null
+        const { value, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_TTL) {
+          return value
+        }
+        localStorage.removeItem(CACHE_KEY)
+        return null
+      } catch {
+        return null
+      }
+    }
+
+    const setCachedSubmissions = (value: KYCSubmission[]) => {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    // Check cache first
+    const cachedSubmissions = getCachedSubmissions()
+    
+    if (cachedSubmissions) {
+      const addressSubmission = cachedSubmissions.find(s => s.type === "address")
+      if (addressSubmission) {
+        setSubmission(addressSubmission)
+        setSelectedCountry(addressSubmission.country_code || "")
+        setAddress(addressSubmission.address || "")
+        setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
+      }
+      return // Don't fetch if cache is valid
+    }
+
+    // Only fetch missing or expired data
+    const loadSubmission = async () => {
+      // Only show loading if we don't have any cached data
+      if (!submission) {
+        setLoading(true)
+      }
+      try {
+        const submissions = await kycService.getByUserId(userProfile.id)
+        const addressSubmission = submissions.find(s => s.type === "address")
+        if (addressSubmission) {
+          setSubmission(addressSubmission)
+          setSelectedCountry(addressSubmission.country_code || "")
+          setAddress(addressSubmission.address || "")
+          setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
+        }
+        setCachedSubmissions(submissions)
+      } catch (error) {
+        console.error("Error loading submission:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     loadSubmission()
   }, [userProfile?.id])
 
@@ -45,25 +136,6 @@ export default function AddressVerificationPage() {
       setCountries(data)
     } catch (error) {
       console.error("Error loading countries:", error)
-    }
-  }
-
-  const loadSubmission = async () => {
-    if (!userProfile?.id) return
-    try {
-      setLoading(true)
-      const submissions = await kycService.getByUserId(userProfile.id)
-      const addressSubmission = submissions.find(s => s.type === "address")
-      if (addressSubmission) {
-        setSubmission(addressSubmission)
-        setSelectedCountry(addressSubmission.country_code || "")
-        setAddress(addressSubmission.address || "")
-        setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
-      }
-    } catch (error) {
-      console.error("Error loading submission:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -149,6 +221,30 @@ export default function AddressVerificationPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
+
+      // Update cache
+      const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+      try {
+        const cached = localStorage.getItem(CACHE_KEY)
+        let submissions: KYCSubmission[] = []
+        if (cached) {
+          try {
+            const { value } = JSON.parse(cached)
+            submissions = value || []
+          } catch {}
+        }
+        // Update or add address submission
+        const existingIndex = submissions.findIndex(s => s.type === "address")
+        if (existingIndex >= 0) {
+          submissions[existingIndex] = newSubmission
+        } else {
+          submissions.push(newSubmission)
+        }
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value: submissions,
+          timestamp: Date.now()
+        }))
+      } catch {}
     } catch (error: any) {
       console.error("Error uploading address document:", error)
       setUploadError(error.message || "Failed to upload document")
@@ -187,16 +283,6 @@ export default function AddressVerificationPage() {
   }
 
   const selectedCountryData = countries.find(c => c.code === selectedCountry)
-
-  if (loading) {
-    return (
-      <UserDashboardLayout>
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
 
   return (
     <UserDashboardLayout>

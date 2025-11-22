@@ -21,11 +21,31 @@ import { countryService, Country, getCountryFlag } from "@/lib/country-service"
 
 export default function IdentityVerificationPage() {
   const { userProfile } = useAuth()
-  const [submission, setSubmission] = useState<KYCSubmission | null>(null)
-  const [loading, setLoading] = useState(true)
+  
+  // Initialize from cache synchronously to prevent flicker
+  const getInitialSubmission = (): KYCSubmission | null => {
+    if (typeof window === "undefined") return null
+    if (!userProfile?.id) return null
+    try {
+      const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
+      if (!cached) return null
+      const { value, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+        const submissions = value as KYCSubmission[]
+        return submissions.find(s => s.type === "identity") || null
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const initialSubmission = getInitialSubmission()
+  const [submission, setSubmission] = useState<KYCSubmission | null>(initialSubmission)
+  const [loading, setLoading] = useState(false)
   const [countries, setCountries] = useState<Country[]>([])
-  const [selectedCountry, setSelectedCountry] = useState("")
-  const [selectedIdType, setSelectedIdType] = useState("")
+  const [selectedCountry, setSelectedCountry] = useState(initialSubmission?.country_code || "")
+  const [selectedIdType, setSelectedIdType] = useState(initialSubmission?.id_type || "")
   const [identityFile, setIdentityFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [countrySearch, setCountrySearch] = useState("")
@@ -35,6 +55,73 @@ export default function IdentityVerificationPage() {
 
   useEffect(() => {
     loadCountries()
+  }, [])
+
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+    const getCachedSubmissions = (): KYCSubmission[] | null => {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY)
+        if (!cached) return null
+        const { value, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_TTL) {
+          return value
+        }
+        localStorage.removeItem(CACHE_KEY)
+        return null
+      } catch {
+        return null
+      }
+    }
+
+    const setCachedSubmissions = (value: KYCSubmission[]) => {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    // Check cache first
+    const cachedSubmissions = getCachedSubmissions()
+    
+    if (cachedSubmissions) {
+      const identity = cachedSubmissions.find(s => s.type === "identity")
+      if (identity) {
+        setSubmission(identity)
+        setSelectedCountry(identity.country_code || "")
+        setSelectedIdType(identity.id_type || "")
+      }
+      return // Don't fetch if cache is valid
+    }
+
+    // Only fetch missing or expired data
+    const loadSubmission = async () => {
+      // Only show loading if we don't have any cached data
+      if (!submission) {
+        setLoading(true)
+      }
+      try {
+        const submissions = await kycService.getByUserId(userProfile.id)
+        const identity = submissions.find(s => s.type === "identity")
+        if (identity) {
+          setSubmission(identity)
+          setSelectedCountry(identity.country_code || "")
+          setSelectedIdType(identity.id_type || "")
+        }
+        setCachedSubmissions(submissions)
+      } catch (error) {
+        console.error("Error loading submission:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     loadSubmission()
   }, [userProfile?.id])
 
@@ -44,24 +131,6 @@ export default function IdentityVerificationPage() {
       setCountries(data)
     } catch (error) {
       console.error("Error loading countries:", error)
-    }
-  }
-
-  const loadSubmission = async () => {
-    if (!userProfile?.id) return
-    try {
-      setLoading(true)
-      const submissions = await kycService.getByUserId(userProfile.id)
-      const identity = submissions.find(s => s.type === "identity")
-      if (identity) {
-        setSubmission(identity)
-        setSelectedCountry(identity.country_code || "")
-        setSelectedIdType(identity.id_type || "")
-      }
-    } catch (error) {
-      console.error("Error loading submission:", error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -146,6 +215,30 @@ export default function IdentityVerificationPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
+
+      // Update cache
+      const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+      try {
+        const cached = localStorage.getItem(CACHE_KEY)
+        let submissions: KYCSubmission[] = []
+        if (cached) {
+          try {
+            const { value } = JSON.parse(cached)
+            submissions = value || []
+          } catch {}
+        }
+        // Update or add identity submission
+        const existingIndex = submissions.findIndex(s => s.type === "identity")
+        if (existingIndex >= 0) {
+          submissions[existingIndex] = newSubmission
+        } else {
+          submissions.push(newSubmission)
+        }
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value: submissions,
+          timestamp: Date.now()
+        }))
+      } catch {}
     } catch (error: any) {
       console.error("Error uploading identity document:", error)
       setUploadError(error.message || "Failed to upload document")
@@ -184,16 +277,6 @@ export default function IdentityVerificationPage() {
   }
 
   const selectedCountryData = countries.find(c => c.code === selectedCountry)
-
-  if (loading) {
-    return (
-      <UserDashboardLayout>
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      </UserDashboardLayout>
-    )
-  }
 
   return (
     <UserDashboardLayout>
