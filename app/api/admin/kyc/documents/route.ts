@@ -30,87 +30,40 @@ export async function GET(request: NextRequest) {
 
     console.log(`Admin ${adminUser.email} requesting document: ${filePath}`)
 
-    // Get access token from request to create authenticated client
-    const token = getAccessTokenFromRequest(request)
-    if (!token) {
-      console.error("No access token found in request")
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
-    }
-
-    // Create authenticated client using admin's session
-    // This respects Storage RLS policies that allow admins to view all files
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    // Since we've already verified the user is an admin, use service role key
+    // to bypass Storage RLS entirely. This is safe because:
+    // 1. We've verified admin status via getAdminUser()
+    // 2. Service role key bypasses all RLS policies
+    // 3. This ensures admins can always access files regardless of RLS configuration
+    const { createServerClient } = await import("@/lib/supabase")
+    const serverClient = createServerClient()
     
-    const authenticatedClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      },
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    })
-    
-    // First, try to generate signed URL using admin's authenticated session
-    // Storage RLS policies should allow admins to view all files
-    let { data, error } = await authenticatedClient.storage
+    // Generate signed URL using service role key (bypasses RLS)
+    const { data, error } = await serverClient.storage
       .from("kyc-documents")
       .createSignedUrl(filePath, 3600) // 1 hour expiry
     
-    // If we get a 403 error, Storage RLS might be blocking access
-    // Fall back to service role key (bypasses RLS) since we've already verified admin status
-    if (error && (error.statusCode === "403" || error.message?.includes("Forbidden"))) {
-      console.warn("Storage RLS blocked authenticated access, falling back to service role key:", {
-        error: error.message,
-        filePath,
-        adminId: adminUser.id,
-        adminEmail: adminUser.email
-      })
-      
-      // Use service role key to generate signed URL (bypasses RLS)
-      // This is safe because we've already verified the user is an admin
-      const { createServerClient } = await import("@/lib/supabase")
-      const serverClient = createServerClient()
-      
-      const fallbackResult = await serverClient.storage
-        .from("kyc-documents")
-        .createSignedUrl(filePath, 3600)
-      
-      if (fallbackResult.error) {
-        console.error("Error generating signed URL with service role key:", {
-          error: fallbackResult.error.message,
-          code: fallbackResult.error.statusCode,
-          filePath
-        })
-        
-        // If it's a 404, the file doesn't exist
-        if (fallbackResult.error.statusCode === "404" || fallbackResult.error.message?.includes("not found")) {
-          return NextResponse.json({ error: "File not found" }, { status: 404 })
-        }
-        
-        return NextResponse.json({ 
-          error: "Failed to generate signed URL",
-          details: fallbackResult.error.message 
-        }, { status: 500 })
-      }
-      
-      data = fallbackResult.data
-      error = null
-    } else if (error) {
+    if (error) {
       console.error("Error generating signed URL:", {
         error: error.message,
         code: error.statusCode,
+        statusCode: error.statusCode,
         filePath,
         adminId: adminUser.id,
         adminEmail: adminUser.email
       })
       
       // If it's a 404, the file doesn't exist
-      if (error.statusCode === "404" || error.message?.includes("not found")) {
+      if (error.statusCode === 404 || error.statusCode === "404" || error.message?.includes("not found")) {
         return NextResponse.json({ error: "File not found" }, { status: 404 })
+      }
+      
+      // If it's a 403, log it but this shouldn't happen with service role key
+      if (error.statusCode === 403 || error.statusCode === "403" || error.message?.includes("Forbidden")) {
+        console.error("Unexpected 403 error with service role key - this should not happen")
+        return NextResponse.json({ 
+          error: "Access denied. Please check Storage configuration." 
+        }, { status: 403 })
       }
       
       return NextResponse.json({ 
