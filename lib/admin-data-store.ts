@@ -800,7 +800,7 @@ class AdminDataStore {
     // Clean up any existing channels
     this.cleanupRealtimeSubscriptions()
 
-    // Subscribe to transactions table changes
+    // Subscribe to transactions table changes (send transactions)
     const transactionsChannel = supabase
       .channel('admin-transactions')
       .on(
@@ -821,6 +821,30 @@ class AdminDataStore {
           console.log('AdminDataStore: Subscribed to transactions real-time updates')
         } else if (status === 'CHANNEL_ERROR') {
           console.error('AdminDataStore: Transactions subscription error')
+        }
+      })
+
+    // Subscribe to crypto_receive_transactions table changes (receive transactions)
+    const cryptoReceiveTransactionsChannel = supabase
+      .channel('admin-crypto-receive-transactions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'crypto_receive_transactions',
+        },
+        async (payload) => {
+          console.log('AdminDataStore: Crypto receive transaction change received via Realtime:', payload.eventType)
+          // Reload transactions and recalculate stats
+          await this.refreshTransactionsAndStats()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('AdminDataStore: Subscribed to crypto_receive_transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('AdminDataStore: Crypto receive transactions subscription error')
         }
       })
 
@@ -923,6 +947,7 @@ class AdminDataStore {
     // Store channels for cleanup
     this.realtimeChannels = [
       transactionsChannel,
+      cryptoReceiveTransactionsChannel,
       usersChannel,
       currenciesChannel,
       exchangeRatesChannel,
@@ -940,21 +965,15 @@ class AdminDataStore {
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
-      // Only update if data actually changed
-      const transactionsChanged = JSON.stringify(transactionsResult) !== JSON.stringify(this.data.transactions)
-      const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
-      const recentActivityChanged = JSON.stringify(recentActivity) !== JSON.stringify(this.data.recentActivity)
-      const currencyPairsChanged = JSON.stringify(currencyPairs) !== JSON.stringify(this.data.currencyPairs)
-
-      if (transactionsChanged || statsChanged || recentActivityChanged || currencyPairsChanged) {
-        this.data.transactions = transactionsResult
-        this.data.stats = stats
-        this.data.recentActivity = recentActivity
-        this.data.currencyPairs = currencyPairs
-        this.data.lastUpdated = Date.now()
-        this.saveToCache()
-        this.notify()
-      }
+      // Always update when called from realtime subscription (data may have changed)
+      // Update lastUpdated timestamp to trigger UI updates
+      this.data.transactions = transactionsResult
+      this.data.stats = stats
+      this.data.recentActivity = recentActivity
+      this.data.currencyPairs = currencyPairs
+      this.data.lastUpdated = Date.now()
+      this.saveToCache()
+      this.notify()
     } catch (error) {
       console.error('AdminDataStore: Error refreshing transactions:', error)
     }

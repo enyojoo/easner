@@ -10,6 +10,7 @@ import { Search } from "lucide-react"
 import { TransactionsSkeleton } from "@/components/transactions-skeleton"
 import { useAuth } from "@/lib/auth-context"
 import { useUserData } from "@/hooks/use-user-data"
+import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
 interface CombinedTransaction {
@@ -152,6 +153,96 @@ export default function UserTransactionsPage() {
 
     fetchCombinedTransactions()
   }, [userProfile?.id]) // Only fetch when user changes, not when userTransactions changes
+
+  // Real-time subscription for transaction updates
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
+    
+    const setCachedTransactions = (value: CombinedTransaction[]) => {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    const fetchCombinedTransactions = async () => {
+      try {
+        const txResponse = await fetch(
+          `/api/transactions?type=all&limit=100`,
+          {
+            credentials: 'include',
+          }
+        )
+        if (txResponse.ok) {
+          const txData = await txResponse.json()
+          const transactionsList = txData.transactions || []
+          setTransactions(transactionsList)
+          setCachedTransactions(transactionsList)
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error)
+      }
+    }
+
+    // Subscribe to send transactions table changes
+    const sendTransactionsChannel = supabase
+      .channel(`user-transactions-${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${userProfile.id}`,
+        },
+        async (payload) => {
+          console.log('User transaction change received via Realtime:', payload.eventType)
+          // Refetch transactions to get updated data
+          await fetchCombinedTransactions()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to user send transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('User send transactions subscription error')
+        }
+      })
+
+    // Subscribe to receive transactions table changes
+    const receiveTransactionsChannel = supabase
+      .channel(`user-crypto-receive-transactions-${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'crypto_receive_transactions',
+          filter: `user_id=eq.${userProfile.id}`,
+        },
+        async (payload) => {
+          console.log('User crypto receive transaction change received via Realtime:', payload.eventType)
+          // Refetch transactions to get updated data
+          await fetchCombinedTransactions()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to user crypto receive transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('User crypto receive transactions subscription error')
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(sendTransactionsChannel)
+      supabase.removeChannel(receiveTransactionsChannel)
+    }
+  }, [userProfile?.id])
 
   // Show skeleton only if we're loading and have no data at all
   if ((loading || userDataLoading) && transactions.length === 0 && !userTransactions?.length) {

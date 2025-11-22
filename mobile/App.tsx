@@ -35,6 +35,24 @@ export default function App() {
                       border: '#e5e7eb',
                       notification: '#ef4444',
                     },
+                    fonts: {
+                      regular: {
+                        fontFamily: 'System',
+                        fontWeight: '400' as const,
+                      },
+                      medium: {
+                        fontFamily: 'System',
+                        fontWeight: '500' as const,
+                      },
+                      bold: {
+                        fontFamily: 'System',
+                        fontWeight: '700' as const,
+                      },
+                      heavy: {
+                        fontFamily: 'System',
+                        fontWeight: '800' as const,
+                      },
+                    },
                   }}
                 >
                   <StatusBar style="dark" />

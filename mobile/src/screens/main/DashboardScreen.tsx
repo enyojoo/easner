@@ -8,6 +8,8 @@ import ScreenWrapper from '../../components/ScreenWrapper'
 import DashboardSkeleton from '../../components/DashboardSkeleton'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
+import { apiGet } from '../../lib/apiClient'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 function DashboardContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -15,8 +17,9 @@ function DashboardContent({ navigation }: NavigationProps) {
   const [refreshing, setRefreshing] = useState(false)
   const [totalSent, setTotalSent] = useState(0)
   const [liveTransactions, setLiveTransactions] = useState<Transaction[]>([])
+  const [cardTransactions, setCardTransactions] = useState<any[]>([])
 
-  const recentTransactions = liveTransactions.length > 0 ? liveTransactions.slice(0, 3) : transactions.slice(0, 3)
+  const recentTransactions = liveTransactions.length > 0 ? liveTransactions.slice(0, 2) : transactions.slice(0, 2)
 
   // Calculate transaction stats
   const getTransactionStats = () => {
@@ -44,6 +47,57 @@ function DashboardContent({ navigation }: NavigationProps) {
       setLiveTransactions(transactions)
     }
   }, [transactions])
+
+  // Fetch card transactions
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const fetchCardTransactions = async () => {
+      try {
+        // Fetch all cards first
+        const cardsResponse = await apiGet('/api/cards')
+        
+        if (cardsResponse.ok) {
+          const cardsData = await cardsResponse.json()
+          const cards = cardsData.cards || []
+          
+          // Fetch transactions for all cards
+          const transactionPromises = cards.map((card: any) =>
+            apiGet(`/api/cards/${card.id}/transactions`)
+              .then(res => res.ok ? res.json() : null)
+              .catch(() => null)
+          )
+          
+          const transactionResults = await Promise.all(transactionPromises)
+          
+          // Combine all card transactions (only debit/spending transactions)
+          const allCardTransactions: any[] = []
+          transactionResults.forEach((result) => {
+            if (result && result.transactions) {
+              const debitTransactions = result.transactions
+                .filter((tx: any) => {
+                  // Only include debit transactions (spending)
+                  const amount = parseFloat(tx.amount || "0")
+                  return amount < 0 || tx.type === "debit"
+                })
+                .map((tx: any) => ({
+                  ...tx,
+                  amount: Math.abs(parseFloat(tx.amount || "0")),
+                  currency: tx.currency || "USD",
+                }))
+              allCardTransactions.push(...debitTransactions)
+            }
+          })
+          
+          setCardTransactions(allCardTransactions)
+        }
+      } catch (error) {
+        console.error("Error fetching card transactions:", error)
+      }
+    }
+
+    fetchCardTransactions()
+  }, [userProfile?.id])
 
   // Poll for transaction updates every 10 seconds for all transactions
   useEffect(() => {
@@ -98,32 +152,105 @@ function DashboardContent({ navigation }: NavigationProps) {
         const baseCurrency = userProfile.profile.base_currency || "NGN"
         let totalInBaseCurrency = 0
 
-        for (const transaction of currentTransactions) {
-          if (!transaction || transaction.status !== "completed") continue
+        // Helper function to convert amount to base currency
+        const convertToBaseCurrency = (
+          amount: number,
+          fromCurrency: string,
+          baseCurrency: string,
+          exchangeRates: any[]
+        ): number => {
+          if (fromCurrency === baseCurrency) return amount
 
-          let amountInBaseCurrency = transaction.send_amount || 0
+          // Find exchange rate from transaction currency to base currency
+          const rate = exchangeRates.find(
+            (r) => r && r.from_currency === fromCurrency && r.to_currency === baseCurrency,
+          )
 
-          // If transaction currency is different from base currency, convert it
-          if (transaction.send_currency !== baseCurrency) {
-            // Find exchange rate from transaction currency to base currency
-            const rate = exchangeRates.find(
-              (r) => r && r.from_currency === transaction.send_currency && r.to_currency === baseCurrency,
-            )
-
-            if (rate && rate.rate > 0) {
-              amountInBaseCurrency = transaction.send_amount * rate.rate
-            } else {
-              // If direct rate not found, try reverse rate
-              const reverseRate = exchangeRates.find(
-                (r) => r && r.from_currency === baseCurrency && r.to_currency === transaction.send_currency,
-              )
-              if (reverseRate && reverseRate.rate > 0) {
-                amountInBaseCurrency = transaction.send_amount / reverseRate.rate
-              }
-            }
+          if (rate && rate.rate > 0) {
+            return amount * rate.rate
           }
 
-          totalInBaseCurrency += amountInBaseCurrency
+          // If direct rate not found, try reverse rate
+          const reverseRate = exchangeRates.find(
+            (r) => r && r.from_currency === baseCurrency && r.to_currency === fromCurrency,
+          )
+          if (reverseRate && reverseRate.rate > 0) {
+            return amount / reverseRate.rate
+          }
+
+          // If no rate found, return original amount (assume same currency)
+          return amount
+        }
+
+        // 1. Send transactions: use receive_amount (what recipient gets)
+        const sendTransactions = currentTransactions.filter((t) => {
+          if (!t) return false
+          // Must be completed
+          if (t.status !== "completed") return false
+          // If type is explicitly set, use it
+          if (t.type === "send") return true
+          // Exclude receive and card_funding
+          if (t.type === "receive" || t.type === "card_funding") return false
+          // If type is not set but has send_amount/receive_amount, it's a send transaction
+          // Also check if it has recipient (send transactions have recipients)
+          if (t.send_amount || t.receive_amount || t.recipient) return true
+          return false
+        })
+
+        for (const transaction of sendTransactions) {
+          // Use receive_amount if available, otherwise fall back to send_amount
+          const amount = transaction.receive_amount || transaction.send_amount || 0
+          const currency = transaction.receive_currency || transaction.send_currency || baseCurrency
+          
+          if (amount > 0) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              amount,
+              currency,
+              baseCurrency,
+              exchangeRates
+            )
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
+            }
+          }
+        }
+
+        // 2. Receive transactions: use fiat_amount (what user received as payout)
+        // Only include if type is explicitly "receive" (not card_funding)
+        const receiveTransactions = currentTransactions.filter((t) => {
+          if (!t) return false
+          if (t.status !== "completed") return false
+          // Must be explicitly marked as receive (not card_funding)
+          return t.type === "receive" && t.destination_type === "bank"
+        })
+
+        for (const transaction of receiveTransactions) {
+          if (transaction.fiat_amount && transaction.fiat_currency) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              transaction.fiat_amount,
+              transaction.fiat_currency,
+              baseCurrency,
+              exchangeRates
+            )
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
+            }
+          }
+        }
+
+        // 3. Card transactions: use amount spent (debit transactions)
+        for (const cardTx of cardTransactions || []) {
+          if (cardTx.amount && cardTx.currency && cardTx.amount > 0) {
+            const amountInBaseCurrency = convertToBaseCurrency(
+              cardTx.amount,
+              cardTx.currency,
+              baseCurrency,
+              exchangeRates
+            )
+            if (amountInBaseCurrency > 0) {
+              totalInBaseCurrency += amountInBaseCurrency
+            }
+          }
         }
 
         setTotalSent(totalInBaseCurrency)
@@ -134,7 +261,7 @@ function DashboardContent({ navigation }: NavigationProps) {
       console.error("Error calculating total sent:", error)
       setTotalSent(0)
     }
-  }, [liveTransactions, transactions, exchangeRates, userProfile])
+  }, [liveTransactions, transactions, exchangeRates, userProfile, cardTransactions])
 
   const formatNumber = (num: number) => {
     // Values less than 1,000: show with decimals (e.g., 12.50)
@@ -247,21 +374,41 @@ function DashboardContent({ navigation }: NavigationProps) {
         </View>
       </View>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - Minimal Modern Banking Style */}
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Send')}
+            onPress={() => navigation.navigate('SendAmount')}
           >
-            <Ionicons name="send" size={20} color="#ffffff" style={styles.buttonIcon} />
-            <Text style={styles.actionButtonText}>Send Money</Text>
+            <View style={styles.actionIconContainer}>
+              <Ionicons name="send" size={24} color="#007ACC" />
+            </View>
+            <Text style={styles.actionButtonText}>Send</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('Recipients')}
+            onPress={() => {
+              // Navigate to ReceiveMoney - use the tab navigator directly
+              // Dashboard is in MainTabs, so getParent() gives us the Tab navigator
+              const tabNavigator = navigation.getParent()
+              if (tabNavigator) {
+                tabNavigator.navigate('ReceiveMoney')
+              }
+            }}
           >
-            <Ionicons name="people" size={20} color="#ffffff" style={styles.buttonIcon} />
-            <Text style={styles.actionButtonText}>Recipients</Text>
+            <View style={styles.actionIconContainer}>
+              <Ionicons name="download-outline" size={24} color="#007ACC" />
+            </View>
+            <Text style={styles.actionButtonText}>Receive</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('Card')}
+          >
+            <View style={styles.actionIconContainer}>
+              <Ionicons name="card-outline" size={24} color="#007ACC" />
+            </View>
+            <Text style={styles.actionButtonText}>Card</Text>
           </TouchableOpacity>
         </View>
 
@@ -275,60 +422,150 @@ function DashboardContent({ navigation }: NavigationProps) {
         </View>
         
         {recentTransactions.length > 0 ? (
-          recentTransactions.map((transaction) => (
-            <TouchableOpacity 
-              key={transaction.id} 
-              style={styles.transactionItem}
-              onPress={() => navigation.navigate('TransactionDetails', { 
-                transactionId: transaction.transaction_id,
-                fromScreen: 'Dashboard'
-              })}
-            >
-              {/* Header with Transaction ID and Status */}
-              <View style={styles.transactionHeader}>
-                <Text style={styles.transactionId}>{transaction.transaction_id}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(transaction.status) + '20' }]}>
-                  <Text style={[styles.statusText, { color: getStatusColor(transaction.status) }]}>
-                    {transaction.status.toUpperCase()}
-                  </Text>
+          recentTransactions.map((transaction) => {
+            if (!transaction) return null
+            const statusColor = getStatusColor(transaction.status)
+            
+            // Determine transaction type: send, receive (bank), or card_funding
+            let transactionType: 'send' | 'receive' | 'card_funding' = 'send'
+            if (transaction.type === 'receive' || transaction.type === 'card_funding') {
+              transactionType = transaction.type
+            } else if (transaction.destination_type === 'card') {
+              transactionType = 'card_funding'
+            } else if (transaction.destination_type === 'bank' || transaction.crypto_amount) {
+              transactionType = 'receive'
+            }
+            
+            const detailScreen = transactionType === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
+            
+            return (
+              <TouchableOpacity 
+                key={transaction.id} 
+                style={styles.transactionItem}
+                onPress={() => {
+                  if (transactionType === 'card_funding') {
+                    navigation.navigate('Card')
+                  } else {
+                    navigation.navigate(detailScreen, { 
+                      transactionId: transaction.transaction_id,
+                      fromScreen: 'Dashboard'
+                    })
+                  }
+                }}
+              >
+                {/* Header with Type Badge, Transaction ID and Status */}
+                <View style={styles.transactionHeader}>
+                  <View style={styles.headerLeft}>
+                    <View style={[
+                      styles.typeBadge,
+                      transactionType === 'send' ? styles.typeBadgeSend :
+                      transactionType === 'card_funding' ? styles.typeBadgeCard :
+                      styles.typeBadgeReceive
+                    ]}>
+                      <Text style={[
+                        styles.typeBadgeText,
+                        transactionType === 'card_funding' && styles.typeBadgeCardText
+                      ]}>
+                        {transactionType === 'send' ? 'Send' :
+                         transactionType === 'card_funding' ? 'Card Funding' :
+                         'Receive'}
+                      </Text>
+                    </View>
+                    <Text style={styles.transactionId}>{transaction.transaction_id}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                      {transaction.status.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              {/* Recipient Info */}
-              <View style={styles.recipientSection}>
-                <Text style={styles.recipientLabel}>To</Text>
-                <Text style={styles.recipientName}>{transaction.recipient?.full_name || 'Unknown'}</Text>
-              </View>
+                {transactionType === 'send' ? (
+                  <>
+                    {/* Recipient Info */}
+                    <View style={styles.recipientSection}>
+                      <Text style={styles.recipientLabel}>To</Text>
+                      <Text style={styles.recipientName}>{transaction.recipient?.full_name || 'Unknown'}</Text>
+                    </View>
 
-              {/* Amount Section */}
-              <View style={styles.amountSection}>
-                <View style={styles.amountRow}>
-                  <Text style={styles.amountLabel}>Send Amount</Text>
-                  <Text style={styles.sendAmount}>
-                    {formatAmount(transaction.send_amount, transaction.send_currency)}
-                  </Text>
+                    {/* Amount Section */}
+                    <View style={styles.amountSection}>
+                      <View style={styles.amountRow}>
+                        <Text style={styles.amountLabel}>Send Amount</Text>
+                        <Text style={styles.sendAmount}>
+                          {formatAmount(transaction.send_amount || 0, transaction.send_currency || '')}
+                        </Text>
+                      </View>
+                      {transaction.receive_amount && transaction.receive_currency && (
+                        <View style={styles.amountRow}>
+                          <Text style={styles.amountLabel}>Receive Amount</Text>
+                          <Text style={styles.receiveAmount}>
+                            {formatAmount(transaction.receive_amount, transaction.receive_currency)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                ) : transactionType === 'card_funding' ? (
+                  <>
+                    {/* Card Funding Info */}
+                    <View style={styles.recipientSection}>
+                      <Text style={styles.recipientLabel}>Card Top-Up</Text>
+                      <Text style={styles.recipientName}>
+                        {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || 'USDC')}
+                      </Text>
+                    </View>
+
+                    {/* Amount Section */}
+                    <View style={styles.amountSection}>
+                      {transaction.fiat_amount && transaction.fiat_currency && (
+                        <View style={styles.amountRow}>
+                          <Text style={styles.amountLabel}>Card Currency</Text>
+                          <Text style={styles.receiveAmount}>
+                            {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    {/* Receive Transaction Info */}
+                    <View style={styles.recipientSection}>
+                      <Text style={styles.recipientLabel}>Stablecoin Received</Text>
+                      <Text style={styles.recipientName}>
+                        {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || 'USDC')}
+                      </Text>
+                    </View>
+
+                    {/* Amount Section */}
+                    <View style={styles.amountSection}>
+                      {transaction.fiat_amount && transaction.fiat_currency && (
+                        <View style={styles.amountRow}>
+                          <Text style={styles.amountLabel}>Converted To</Text>
+                          <Text style={styles.receiveAmount}>
+                            {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </>
+                )}
+
+                {/* Footer with Date and Arrow */}
+                <View style={styles.transactionFooter}>
+                  <Text style={styles.transactionDate}>{formatTimestamp(transaction.created_at)}</Text>
+                  <Text style={styles.arrowIcon}>›</Text>
                 </View>
-                <View style={styles.amountRow}>
-                  <Text style={styles.amountLabel}>Receive Amount</Text>
-                  <Text style={styles.receiveAmount}>
-                    {formatAmount(transaction.receive_amount, transaction.receive_currency)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Footer with Date and Arrow */}
-              <View style={styles.transactionFooter}>
-                <Text style={styles.transactionDate}>{formatTimestamp(transaction.created_at)}</Text>
-                <Text style={styles.arrowIcon}>›</Text>
-              </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            )
+          })
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No recent transactions</Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => navigation.navigate('Send')}
+              onPress={() => navigation.navigate('SendAmount')}
             >
               <Text style={styles.emptyButtonText}>Send Your First Transfer</Text>
             </TouchableOpacity>
@@ -424,32 +661,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
   },
   actionButton: {
-    backgroundColor: '#007ACC',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
     flex: 1,
-    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
   },
-  secondaryButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#007ACC',
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 122, 204, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   actionButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  buttonIcon: {
-    marginRight: 0,
-  },
-  secondaryButtonText: {
     color: '#007ACC',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   section: {
     paddingHorizontal: 20,
@@ -493,11 +728,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  typeBadgeSend: {
+    backgroundColor: '#007ACC',
+  },
+  typeBadgeReceive: {
+    backgroundColor: '#8b5cf6',
+  },
+  typeBadgeCard: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  typeBadgeCardText: {
+    color: '#1f2937',
+  },
   transactionId: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#6b7280',
     fontFamily: 'monospace',
-    flex: 1,
   },
   statusBadge: {
     paddingHorizontal: 8,

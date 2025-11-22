@@ -121,3 +121,25 @@ export interface NavigationProps {
   navigation: any
   route: any
 }
+
+export interface KYCSubmission {
+  id: string
+  user_id: string
+  type: "identity" | "address"
+  status: "pending" | "in_review" | "approved" | "rejected"
+  country_code?: string
+  full_name?: string
+  date_of_birth?: string
+  id_type?: string
+  id_document_url?: string
+  id_document_filename?: string
+  document_type?: string
+  address?: string
+  address_document_url?: string
+  address_document_filename?: string
+  reviewed_by?: string
+  reviewed_at?: string
+  rejection_reason?: string
+  created_at: string
+  updated_at: string
+}

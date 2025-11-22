@@ -14,11 +14,20 @@ import { NavigationProps, Transaction } from '../../types'
 import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
 import { useAuth } from '../../contexts/AuthContext'
+import { apiGet } from '../../lib/apiClient'
+import { supabase } from '../../lib/supabase'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+// Get currencies from useUserData for formatAmount
+function useCurrencies() {
+  const { currencies } = useUserData()
+  return currencies || []
+}
 
 interface CombinedTransaction {
   id: string
   transaction_id: string
-  type: 'send' | 'receive'
+  type: 'send' | 'receive' | 'card_funding'
   status: string
   created_at: string
   send_amount?: number
@@ -39,52 +48,256 @@ interface CombinedTransaction {
     wallet_address: string
     crypto_currency: string
   }
+  destination_type?: 'bank' | 'card'
+  // Card transaction fields
+  amount?: number
+  currency?: string
+  merchant_name?: string
+  description?: string
+  direction?: 'credit' | 'debit'
 }
 
 function TransactionsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
+  const currencies = useCurrencies()
+  const { transactions: userTransactions, loading: userDataLoading } = useUserData()
+  
   const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'send' | 'receive'>('all')
 
   // Track screen view
   useEffect(() => {
     analytics.trackScreenView('Transactions')
   }, [])
 
-  // Fetch combined transactions
+  // Fetch combined transactions - only if not in cache
   useEffect(() => {
-    if (userProfile?.id) {
-      loadTransactions()
-    }
-  }, [userProfile?.id, typeFilter])
+    if (!userProfile?.id) return
 
-  const loadTransactions = async () => {
-    try {
-      setLoading(true)
-      const apiBase = process.env.EXPO_PUBLIC_API_URL || ''
-      const params = new URLSearchParams()
-      if (typeFilter !== 'all') params.append('type', typeFilter)
-      params.append('limit', '100')
+    const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
+    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
-      const response = await fetch(`${apiBase}/api/transactions?${params.toString()}`)
-      if (response.ok) {
-        const data = await response.json()
-        setTransactions(data.transactions || [])
+    const getCachedTransactions = async (): Promise<CombinedTransaction[] | null> => {
+      try {
+        const cached = await AsyncStorage.getItem(CACHE_KEY)
+        if (!cached) return null
+        const { value, timestamp } = JSON.parse(cached)
+        if (Date.now() - timestamp < CACHE_TTL) {
+          return value
+        }
+        await AsyncStorage.removeItem(CACHE_KEY)
+        return null
+      } catch {
+        return null
       }
-    } catch (error) {
-      console.error('Error loading transactions:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    const setCachedTransactions = async (value: CombinedTransaction[]) => {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    // Load from cache first
+    const loadFromCache = async () => {
+      const cachedTransactions = await getCachedTransactions()
+      
+      // Update state if cache exists and state is empty (only on first mount)
+      if (cachedTransactions !== null && transactions.length === 0) {
+        setTransactions(cachedTransactions)
+      }
+
+      // If cached and valid, no need to fetch immediately
+      if (cachedTransactions !== null) {
+        // Fetch in background to update cache
+        const fetchInBackground = async () => {
+          try {
+            const params = new URLSearchParams()
+            params.append('type', 'all')
+            params.append('limit', '100')
+
+            const response = await apiGet(`/api/transactions?${params.toString()}`)
+            if (response.ok) {
+              const data = await response.json()
+              const transactionsList = data.transactions || []
+              setTransactions(transactionsList)
+              await setCachedTransactions(transactionsList)
+            }
+          } catch (error) {
+            console.error("Error fetching transactions in background:", error)
+          }
+        }
+        fetchInBackground()
+        return
+      }
+
+      // Only fetch missing or expired data
+      const fetchCombinedTransactions = async () => {
+        // Only show loading if we don't have any cached data
+        if (transactions.length === 0) {
+          setLoading(true)
+        }
+        try {
+          const params = new URLSearchParams()
+          params.append('type', 'all')
+          params.append('limit', '100')
+
+          const response = await apiGet(`/api/transactions?${params.toString()}`)
+          if (response.ok) {
+            const data = await response.json()
+            const transactionsList = data.transactions || []
+            setTransactions(transactionsList)
+            await setCachedTransactions(transactionsList)
+          } else {
+            // If API fails, fall back to userTransactions from useUserData
+            console.warn("API fetch failed, using cached transactions from useUserData")
+            const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
+            setTransactions(fallbackTransactions)
+            if (fallbackTransactions.length > 0) {
+              await setCachedTransactions(fallbackTransactions)
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching transactions:", error)
+          // Fall back to userTransactions from useUserData
+          const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
+          setTransactions(fallbackTransactions)
+          if (fallbackTransactions.length > 0) {
+            await setCachedTransactions(fallbackTransactions)
+          }
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      await fetchCombinedTransactions()
+    }
+
+    loadFromCache()
+  }, [userProfile?.id]) // Only fetch when user changes, not when userTransactions changes
+
+  // Real-time subscription for transaction updates
+  useEffect(() => {
+    if (!userProfile?.id) return
+
+    const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
+    
+    const setCachedTransactions = async (value: CombinedTransaction[]) => {
+      try {
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+          value,
+          timestamp: Date.now()
+        }))
+      } catch {}
+    }
+
+    const fetchCombinedTransactions = async () => {
+      try {
+        const params = new URLSearchParams()
+        params.append('type', 'all')
+        params.append('limit', '100')
+
+        const response = await apiGet(`/api/transactions?${params.toString()}`)
+        if (response.ok) {
+          const data = await response.json()
+          const transactionsList = data.transactions || []
+          setTransactions(transactionsList)
+          await setCachedTransactions(transactionsList)
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error)
+      }
+    }
+
+    // Subscribe to send transactions table changes
+    const sendTransactionsChannel = supabase
+      .channel(`user-transactions-${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${userProfile.id}`,
+        },
+        async (payload) => {
+          console.log('User transaction change received via Realtime:', payload.eventType)
+          // Refetch transactions to get updated data
+          await fetchCombinedTransactions()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to user send transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('User send transactions subscription error')
+        }
+      })
+
+    // Subscribe to receive transactions table changes
+    const receiveTransactionsChannel = supabase
+      .channel(`user-crypto-receive-transactions-${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'crypto_receive_transactions',
+          filter: `user_id=eq.${userProfile.id}`,
+        },
+        async (payload) => {
+          console.log('User crypto receive transaction change received via Realtime:', payload.eventType)
+          // Refetch transactions to get updated data
+          await fetchCombinedTransactions()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to user crypto receive transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('User crypto receive transactions subscription error')
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(sendTransactionsChannel)
+      supabase.removeChannel(receiveTransactionsChannel)
+    }
+  }, [userProfile?.id])
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await loadTransactions()
-    setRefreshing(false)
+    try {
+      const params = new URLSearchParams()
+      params.append('type', 'all')
+      params.append('limit', '100')
+
+      const response = await apiGet(`/api/transactions?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        const transactionsList = data.transactions || []
+        
+        // Cache transactions
+        if (userProfile?.id) {
+          const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+            value: transactionsList,
+            timestamp: Date.now()
+          }))
+        }
+        
+        setTransactions(transactionsList)
+      }
+    } catch (error) {
+      console.error('Error refreshing transactions:', error)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -107,20 +320,9 @@ function TransactionsContent({ navigation }: NavigationProps) {
   }
 
   const formatAmount = (amount: number, currency: string) => {
-    return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
-
-  const formatTimestamp = (dateString: string) => {
-    const date = new Date(dateString)
-    const month = date.toLocaleString('en-US', { month: 'short' })
-    const day = date.getDate().toString().padStart(2, '0')
-    const year = date.getFullYear()
-    const hours = date.getHours()
-    const minutes = date.getMinutes().toString().padStart(2, '0')
-    const ampm = hours >= 12 ? 'PM' : 'AM'
-    const displayHours = hours % 12 || 12
-    // Format: "Nov 07, 2025 • 7:29 PM"
-    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+    const currencyData = currencies.find((c) => c && c.code === currency)
+    const symbol = currencyData?.symbol || currency
+    return `${symbol}${amount.toLocaleString()}`
   }
 
   const formatDate = (dateString: string) => {
@@ -133,30 +335,50 @@ function TransactionsContent({ navigation }: NavigationProps) {
   }
 
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (transaction.type === 'send' && transaction.recipient?.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (transaction.type === 'receive' && transaction.crypto_wallet?.wallet_address.toLowerCase().includes(searchTerm.toLowerCase()))
+    if (!transaction) return false
+    
+    // If no search term, show all transactions
+    if (!searchTerm.trim()) return true
+    
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch =
+      (transaction.transaction_id || transaction.id)?.toLowerCase().includes(searchLower) ||
+      (transaction.type === 'send' &&
+        transaction.recipient?.full_name?.toLowerCase().includes(searchLower)) ||
+      (transaction.type === 'receive' &&
+        transaction.crypto_wallet?.wallet_address?.toLowerCase().includes(searchLower))
     return matchesSearch
   })
 
   const renderTransaction = ({ item }: { item: CombinedTransaction }) => {
-    const detailScreen = item.type === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
+    // Determine transaction type: send or receive (match web logic)
+    // Default to send for backward compatibility
+    const transactionType = item.type || 'send'
+    
+    const detailScreen = transactionType === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
     
     return (
       <TouchableOpacity
         style={styles.transactionItem}
-        onPress={() => navigation.navigate(detailScreen, { 
-          transactionId: item.transaction_id,
-          fromScreen: 'Transactions'
-        })}
+        onPress={() => {
+          navigation.navigate(detailScreen, { 
+            transactionId: item.transaction_id,
+            fromScreen: 'Transactions'
+          })
+        }}
       >
         {/* Header with Type Badge, Transaction ID and Status */}
         <View style={styles.transactionHeader}>
           <View style={styles.headerLeft}>
-            <View style={[styles.typeBadge, item.type === 'send' ? styles.typeBadgeSend : styles.typeBadgeReceive]}>
-              <Text style={styles.typeBadgeText}>{item.type === 'send' ? 'Send' : 'Receive'}</Text>
+            <View style={[
+              styles.typeBadge, 
+              transactionType === 'send' ? styles.typeBadgeSend : styles.typeBadgeReceive
+            ]}>
+              <Text style={styles.typeBadgeText}>
+                {transactionType === 'send' ? 'Send' : 'Receive'}
+              </Text>
             </View>
-            <Text style={styles.transactionId}>{item.transaction_id}</Text>
+            <Text style={styles.transactionId}>{item.transaction_id || item.id}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
             <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
@@ -165,7 +387,7 @@ function TransactionsContent({ navigation }: NavigationProps) {
           </View>
         </View>
 
-        {item.type === 'send' ? (
+        {transactionType === 'send' ? (
           <>
             {/* Recipient Info */}
             <View style={styles.recipientSection}>
@@ -195,7 +417,7 @@ function TransactionsContent({ navigation }: NavigationProps) {
             <View style={styles.recipientSection}>
               <Text style={styles.recipientLabel}>Stablecoin Received</Text>
               <Text style={styles.recipientName}>
-                {item.crypto_amount} {item.crypto_currency}
+                {formatAmount(item.crypto_amount || 0, item.crypto_currency || 'USDC')}
               </Text>
             </View>
 
@@ -235,34 +457,6 @@ function TransactionsContent({ navigation }: NavigationProps) {
       <View style={styles.header}>
         <Text style={styles.title}>Transaction History</Text>
         <Text style={styles.subtitle}>View all your transfers</Text>
-      </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[styles.filterTab, typeFilter === 'all' && styles.filterTabActive]}
-          onPress={() => setTypeFilter('all')}
-        >
-          <Text style={[styles.filterTabText, typeFilter === 'all' && styles.filterTabTextActive]}>
-            All
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, typeFilter === 'send' && styles.filterTabActive]}
-          onPress={() => setTypeFilter('send')}
-        >
-          <Text style={[styles.filterTabText, typeFilter === 'send' && styles.filterTabTextActive]}>
-            Send
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.filterTab, typeFilter === 'receive' && styles.filterTabActive]}
-          onPress={() => setTypeFilter('receive')}
-        >
-          <Text style={[styles.filterTabText, typeFilter === 'receive' && styles.filterTabTextActive]}>
-            Receive
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -357,35 +551,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  filterTab: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginHorizontal: 4,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-  },
-  filterTabActive: {
-    backgroundColor: '#007ACC',
-  },
-  filterTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  filterTabTextActive: {
-    color: '#ffffff',
-  },
   transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -409,10 +574,18 @@ const styles = StyleSheet.create({
   typeBadgeReceive: {
     backgroundColor: '#8b5cf6',
   },
+  typeBadgeCard: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
   typeBadgeText: {
     fontSize: 10,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  typeBadgeCardText: {
+    color: '#1f2937',
   },
   transactionId: {
     fontSize: 12,

@@ -24,7 +24,6 @@ import {
   X,
   Upload,
   Coins,
-  ToggleLeft,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -94,7 +93,6 @@ export default function AdminSettingsPage() {
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<PaymentMethod | null>(null)
   const [editingTimer, setEditingTimer] = useState({ hours: 1, minutes: 0, seconds: 0 })
   const [isEditingSecuritySettings, setIsEditingSecuritySettings] = useState(false)
-  const [featureFlags, setFeatureFlags] = useState<any[]>([])
   const [supportedCryptos, setSupportedCryptos] = useState<any[]>([])
   const [isAddCryptoOpen, setIsAddCryptoOpen] = useState(false)
   const [newCrypto, setNewCrypto] = useState({
@@ -165,7 +163,6 @@ export default function AdminSettingsPage() {
         loadSystemSettings(),
         loadCurrencies(),
         loadPaymentMethods(),
-        loadFeatureFlags(),
         loadSupportedCryptos(),
       ])
     } catch (error) {
@@ -173,36 +170,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const loadFeatureFlags = async () => {
-    try {
-      // Get access token from Supabase session
-      const { data: { session } } = await supabase.auth.getSession()
-      const headers: HeadersInit = {}
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`
-      }
-      
-      const response = await fetch("/api/admin/feature-flags", {
-        credentials: 'include',
-        headers
-      })
-      if (response.ok) {
-        const data = await response.json()
-        console.log("Feature flags loaded:", data.flags)
-        setFeatureFlags(data.flags || [])
-        
-        // If no flags exist, show a message
-        if (!data.flags || data.flags.length === 0) {
-          console.warn("No feature flags found. Make sure the migration has been run.")
-        }
-      } else {
-        const errorText = await response.text()
-        console.error("Failed to load feature flags:", response.status, response.statusText, errorText)
-      }
-    } catch (error) {
-      console.error("Error loading feature flags:", error)
-    }
-  }
 
   const loadSupportedCryptos = async () => {
     try {
@@ -226,51 +193,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const handleToggleFeatureFlag = async (featureKey: string, isEnabled: boolean) => {
-    try {
-      // Get access token from Supabase session
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session?.access_token) {
-        alert("Session expired. Please log in again.")
-        return
-      }
-      
-      const headers: HeadersInit = { "Content-Type": "application/json" }
-      headers['Authorization'] = `Bearer ${session.access_token}`
-      
-      console.log(`Toggling feature flag ${featureKey} to ${isEnabled}`)
-      
-      const response = await fetch("/api/admin/feature-flags", {
-        method: "PATCH",
-        headers,
-        credentials: 'include',
-        body: JSON.stringify({ feature_key: featureKey, is_enabled: isEnabled }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log("Feature flag updated successfully:", data)
-        await loadFeatureFlags()
-      } else {
-        const errorText = await response.text()
-        let errorMessage = "Failed to update feature flag"
-        
-        try {
-          const errorJson = JSON.parse(errorText)
-          errorMessage = errorJson.error || errorMessage
-        } catch (e) {
-          errorMessage = errorText || errorMessage
-        }
-        
-        console.error("Failed to update feature flag:", response.status, errorMessage)
-        alert(`Error: ${errorMessage}`)
-      }
-    } catch (error: any) {
-      console.error("Error updating feature flag:", error)
-      alert(`Failed to update feature flag: ${error.message || "Unknown error"}`)
-    }
-  }
 
   const handleAddCrypto = async () => {
     if (!newCrypto.code || !newCrypto.name || !newCrypto.stellar_asset_code || !newCrypto.stellar_asset_issuer) {
@@ -868,57 +790,6 @@ export default function AdminSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Feature Flags Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ToggleLeft className="h-5 w-5" />
-                  Feature Flags
-                </CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
-                  Enable or disable platform features for all users
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {featureFlags.length > 0 ? (
-                  featureFlags.map((flag) => (
-                  <div key={flag.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{flag.feature_name}</div>
-                      {flag.description && (
-                        <p className="text-sm text-gray-500 mt-1">{flag.description}</p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        Last updated: {new Date(flag.updated_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={flag.is_enabled}
-                      onCheckedChange={(checked) => handleToggleFeatureFlag(flag.feature_key, checked)}
-                    />
-                  </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <ToggleLeft className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No feature flags configured</p>
-                    <p className="text-xs mt-2 text-gray-400">
-                      Make sure the migration has been run and the feature_flags table exists.
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => {
-                        console.log("Current feature flags state:", featureFlags)
-                        loadFeatureFlags()
-                      }}
-                    >
-                      Retry Load
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
             {/* Supported Cryptocurrencies Management */}
             <Card>

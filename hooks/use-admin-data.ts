@@ -61,10 +61,11 @@ export function useAdminData() {
       if (mounted) {
         const newData = adminDataStore.getData()
         if (newData) {
-          // Only update if data actually changed to prevent flickering
+          // Update data - use lastUpdated timestamp to detect changes instead of deep comparison
+          // This ensures we always get fresh data when the store notifies us
           setData((prevData: any) => {
-            // Deep comparison to prevent unnecessary updates
-            if (JSON.stringify(prevData) === JSON.stringify(newData)) {
+            // Compare by lastUpdated timestamp to detect actual changes
+            if (prevData?.lastUpdated === newData.lastUpdated) {
               return prevData
             }
             return newData

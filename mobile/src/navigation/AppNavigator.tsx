@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { View, Platform, TouchableOpacity } from 'react-native'
+import { View, Platform, TouchableOpacity, Text } from 'react-native'
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../contexts/AuthContext'
 
 // Auth Screens
@@ -15,8 +16,10 @@ import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen'
 import DashboardScreen from '../screens/main/DashboardScreen'
 import RecipientsScreen from '../screens/main/RecipientsScreen'
 import TransactionsScreen from '../screens/main/TransactionsScreen'
-import ProfileScreen from '../screens/main/ProfileScreen'
+import MoreScreen from '../screens/main/MoreScreen'
+import ProfileEditScreen from '../screens/main/ProfileEditScreen'
 import SupportScreen from '../screens/main/SupportScreen'
+import CardScreen from '../screens/main/CardScreen'
 
 // Transaction Screens
 import TransactionDetailsScreen from '../screens/transactions/TransactionDetailsScreen'
@@ -31,6 +34,11 @@ import SendTransactionDetailsScreen from '../screens/send/SendTransactionDetails
 // Receive Money Flow Screens
 import ReceiveMoneyScreen from '../screens/receive/ReceiveMoneyScreen'
 import ReceiveTransactionDetailsScreen from '../screens/receive/ReceiveTransactionDetailsScreen'
+
+// Verification Screens
+import AccountVerificationScreen from '../screens/verification/AccountVerificationScreen'
+import IdentityVerificationScreen from '../screens/verification/IdentityVerificationScreen'
+import AddressVerificationScreen from '../screens/verification/AddressVerificationScreen'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -245,51 +253,42 @@ function AuthStack() {
 }
 
 function MainTabs() {
-  const [cryptoReceiveEnabled, setCryptoReceiveEnabled] = useState(false)
-
-  useEffect(() => {
-    const checkFeatureFlag = async () => {
-      try {
-        // Use relative path - will be resolved by the app's API base URL
-        const apiBase = process.env.EXPO_PUBLIC_API_URL || ''
-        const response = await fetch(`${apiBase}/api/feature-flags/crypto_receive_enabled`)
-        if (response.ok) {
-          const data = await response.json()
-          setCryptoReceiveEnabled(data.is_enabled || false)
-        }
-      } catch (error) {
-        console.error('Error checking feature flag:', error)
-        setCryptoReceiveEnabled(false)
-      }
-    }
-    checkFeatureFlag()
-  }, [])
-
+  const insets = useSafeAreaInsets()
+  
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#ffffff',
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: '#e5e7eb',
           elevation: 0,
           shadowOpacity: 0,
-          height: Platform.OS === 'android' ? 90 : 80,
-          paddingBottom: Platform.OS === 'android' ? 20 : 10,
-          paddingTop: 10,
+          height: Platform.OS === 'android' ? 70 : 65 + insets.bottom,
+          paddingBottom: Platform.OS === 'android' ? 10 : Math.max(insets.bottom, 8),
+          paddingTop: 8,
         },
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: '#007ACC',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarLabelPosition: 'below-icon',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: 'normal' as const,
+        },
       }}
     >
       <Tab.Screen 
         name="Dashboard" 
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name="grid-outline" 
-              size={28} 
-              color={focused ? '#007ACC' : '#6b7280'} 
+              size={20} 
+              color={color} 
             />
           ),
         }}
@@ -298,76 +297,58 @@ function MainTabs() {
         name="Transactions" 
         component={TransactionsScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarLabel: 'Transactions',
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name="time-outline" 
-              size={28} 
-              color={focused ? '#007ACC' : '#6b7280'} 
+              size={20} 
+              color={color} 
             />
           ),
         }}
       />
       <Tab.Screen 
-        name="Send"
-        component={SendAmountScreen}
+        name="Card" 
+        component={CardScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={{
-              width: 60,
-              height: 60,
-              borderRadius: 30,
-              backgroundColor: '#007ACC',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: 20,
-              shadowColor: '#007ACC',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}>
-              <Ionicons name="send" size={28} color="#ffffff" />
-            </View>
-          ),
-        }}
-      />
-      {cryptoReceiveEnabled && (
-        <Tab.Screen 
-          name="Receive" 
-          component={ReceiveMoneyScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <Ionicons 
-                name="download-outline" 
-                size={28} 
-                color={focused ? '#007ACC' : '#6b7280'} 
-              />
-            ),
-          }}
-        />
-      )}
-      <Tab.Screen 
-        name="Recipients" 
-        component={RecipientsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarLabel: 'Card',
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
-              name="people-outline" 
-              size={28} 
-              color={focused ? '#007ACC' : '#6b7280'} 
+              name="card-outline" 
+              size={20} 
+              color={color} 
             />
           ),
         }}
       />
       <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
+        name="ReceiveMoney" 
+        component={ReceiveMoneyScreen}
+        options={({ route }) => ({
+          tabBarButton: () => null, // Hide from tab bar but keep in tabs for navigation
+          tabBarStyle: {
+            backgroundColor: '#ffffff',
+            borderTopWidth: 1,
+            borderTopColor: '#e5e7eb',
+            elevation: 0,
+            shadowOpacity: 0,
+            height: Platform.OS === 'android' ? 70 : 65 + insets.bottom,
+            paddingBottom: Platform.OS === 'android' ? 10 : Math.max(insets.bottom, 8),
+            paddingTop: 8,
+            display: 'flex', // Ensure tab bar is always visible
+          },
+        })}
+      />
+      <Tab.Screen 
+        name="More" 
+        component={MoreScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
+          tabBarLabel: 'More',
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons 
               name="ellipsis-horizontal-outline" 
-              size={28} 
-              color={focused ? '#007ACC' : '#6b7280'} 
+              size={20} 
+              color={color} 
             />
           ),
         }}
@@ -442,6 +423,22 @@ function MainStack() {
         }}
       />
       <Stack.Screen 
+        name="Recipients" 
+        component={RecipientsScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="Card" 
+        component={CardScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
         name="Support" 
         component={SupportScreen}
         options={{ 
@@ -450,16 +447,56 @@ function MainStack() {
         }}
       />
       <Stack.Screen 
-        name="ReceiveMoney" 
-        component={ReceiveMoneyScreen}
+        name="ReceiveTransactionDetails" 
+        component={ReceiveTransactionDetailsScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
         }}
       />
       <Stack.Screen 
-        name="ReceiveTransactionDetails" 
-        component={ReceiveTransactionDetailsScreen}
+        name="AccountVerification" 
+        component={AccountVerificationScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="IdentityVerification" 
+        component={IdentityVerificationScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="AddressVerification" 
+        component={AddressVerificationScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ProfileEdit" 
+        component={ProfileEditScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ChangePassword" 
+        component={SupportScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="Notifications" 
+        component={SupportScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
