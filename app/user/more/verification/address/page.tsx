@@ -93,23 +93,50 @@ export default function AddressVerificationPage() {
     // Check cache first
     const cachedSubmissions = getCachedSubmissions()
     
+    // If we have cached data, it's already set in useState initializer
+    // Just fetch in background to ensure we have latest data
     if (cachedSubmissions) {
       const addressSubmission = cachedSubmissions.find(s => s.type === "address")
-      if (addressSubmission) {
+      if (addressSubmission && !submission) {
+        // Only update if submission wasn't already set from initializer
         setSubmission(addressSubmission)
         setSelectedCountry(addressSubmission.country_code || "")
         setAddress(addressSubmission.address || "")
         setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
       }
-      return // Don't fetch if cache is valid
+      
+      // Fetch in background to ensure we have latest data
+      const loadSubmission = async () => {
+        try {
+          const submissions = await kycService.getByUserId(userProfile.id)
+          const addressSubmission = submissions.find(s => s.type === "address")
+          if (addressSubmission) {
+            // Only update if data changed (prevent flickering)
+            setSubmission(prev => {
+              if (!prev || JSON.stringify(prev) !== JSON.stringify(addressSubmission)) {
+                setSelectedCountry(addressSubmission.country_code || "")
+                setAddress(addressSubmission.address || "")
+                setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
+                return addressSubmission
+              }
+              return prev
+            })
+          } else if (submission) {
+            // If submission was deleted, clear it
+            setSubmission(null)
+          }
+          setCachedSubmissions(submissions)
+        } catch (error) {
+          console.error("Error loading submission:", error)
+        }
+      }
+      loadSubmission()
+      return
     }
 
-    // Only fetch missing or expired data
+    // No cache - load with loading state
     const loadSubmission = async () => {
-      // Only show loading if we don't have any cached data
-      if (!submission) {
-        setLoading(true)
-      }
+      setLoading(true)
       try {
         const submissions = await kycService.getByUserId(userProfile.id)
         const addressSubmission = submissions.find(s => s.type === "address")
@@ -118,6 +145,8 @@ export default function AddressVerificationPage() {
           setSelectedCountry(addressSubmission.country_code || "")
           setAddress(addressSubmission.address || "")
           setSelectedDocumentType((addressSubmission.document_type as "utility_bill" | "bank_statement") || "")
+        } else {
+          setSubmission(null)
         }
         setCachedSubmissions(submissions)
       } catch (error) {
@@ -305,11 +334,23 @@ export default function AddressVerificationPage() {
         </div>
 
         <div className="px-5 py-6 max-w-2xl mx-auto">
-          {submission ? (
+          {loading && !submission ? (
+            // Show loading skeleton while fetching
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-lg p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          ) : submission ? (
             // Show record view if submission exists
             <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Address Information</h2>
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm text-gray-600">Country</Label>

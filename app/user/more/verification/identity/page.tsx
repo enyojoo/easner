@@ -92,24 +92,52 @@ export default function IdentityVerificationPage() {
     // Check cache first
     const cachedSubmissions = getCachedSubmissions()
     
+    // If we have cached data, it's already set in useState initializer
+    // Just fetch in background to ensure we have latest data
     if (cachedSubmissions) {
       const identity = cachedSubmissions.find(s => s.type === "identity")
-      if (identity) {
+      if (identity && !submission) {
+        // Only update if submission wasn't already set from initializer
         setSubmission(identity)
         setFullName(identity.full_name || "")
         setDateOfBirth(identity.date_of_birth || "")
         setSelectedCountry(identity.country_code || "")
         setSelectedIdType(identity.id_type || "")
       }
-      return // Don't fetch if cache is valid
+      
+      // Fetch in background to ensure we have latest data
+      const loadSubmission = async () => {
+        try {
+          const submissions = await kycService.getByUserId(userProfile.id)
+          const identity = submissions.find(s => s.type === "identity")
+          if (identity) {
+            // Only update if data changed (prevent flickering)
+            setSubmission(prev => {
+              if (!prev || JSON.stringify(prev) !== JSON.stringify(identity)) {
+                setFullName(identity.full_name || "")
+                setDateOfBirth(identity.date_of_birth || "")
+                setSelectedCountry(identity.country_code || "")
+                setSelectedIdType(identity.id_type || "")
+                return identity
+              }
+              return prev
+            })
+          } else if (submission) {
+            // If submission was deleted, clear it
+            setSubmission(null)
+          }
+          setCachedSubmissions(submissions)
+        } catch (error) {
+          console.error("Error loading submission:", error)
+        }
+      }
+      loadSubmission()
+      return
     }
 
-    // Only fetch missing or expired data
+    // No cache - load with loading state
     const loadSubmission = async () => {
-      // Only show loading if we don't have any cached data
-      if (!submission) {
-        setLoading(true)
-      }
+      setLoading(true)
       try {
         const submissions = await kycService.getByUserId(userProfile.id)
         const identity = submissions.find(s => s.type === "identity")
@@ -119,6 +147,8 @@ export default function IdentityVerificationPage() {
           setDateOfBirth(identity.date_of_birth || "")
           setSelectedCountry(identity.country_code || "")
           setSelectedIdType(identity.id_type || "")
+        } else {
+          setSubmission(null)
         }
         setCachedSubmissions(submissions)
       } catch (error) {
@@ -302,11 +332,23 @@ export default function IdentityVerificationPage() {
         </div>
 
         <div className="px-5 py-6 max-w-2xl mx-auto">
-          {submission ? (
+          {loading && !submission ? (
+            // Show loading skeleton while fetching
+            <div className="space-y-6">
+              <div className="bg-gray-50 rounded-lg p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          ) : submission ? (
             // Show record view if submission exists
             <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Identity Verification</h2>
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm text-gray-600">Full Name</Label>

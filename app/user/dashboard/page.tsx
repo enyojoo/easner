@@ -343,25 +343,36 @@ export default function UserDashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions - Three Buttons: Send, Receive, Card */}
-        <div className="px-5 sm:px-6 grid grid-cols-3 gap-3 sm:gap-4">
-          <Link href="/user/send" className="flex-1">
-            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
-              <Send className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span>Send</span>
-            </Button>
+        {/* Quick Actions - Minimal Modern Banking Style (Mobile & Tablet Only) */}
+        <div className="px-5 sm:px-6 grid grid-cols-3 gap-3 sm:gap-4 lg:hidden">
+          {/* Send Button */}
+          <Link href="/user/send" className="flex-1 group">
+            <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
+              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
+                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+              </div>
+              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Send</span>
+            </div>
           </Link>
-          <Link href="/user/receive" className="flex-1">
-            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
-              <Download className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span>Receive</span>
-            </Button>
+          
+          {/* Receive Button */}
+          <Link href="/user/receive" className="flex-1 group">
+            <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
+              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
+                <Download className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+              </div>
+              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Receive</span>
+            </div>
           </Link>
-          <Link href="/user/card" className="flex-1">
-            <Button className="w-full bg-primary hover:bg-primary/90 h-14 sm:h-16 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg">
-              <CreditCard className="h-5 w-5 sm:h-6 sm:w-6" />
-              <span>Card</span>
-            </Button>
+          
+          {/* Card Button */}
+          <Link href="/user/card" className="flex-1 group">
+            <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
+              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
+                <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+              </div>
+              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Card</span>
+            </div>
           </Link>
         </div>
 
@@ -380,9 +391,9 @@ export default function UserDashboardPage() {
             <div className="bg-white rounded-xl p-8 sm:p-12 text-center border border-gray-200">
               <p className="text-base sm:text-lg text-gray-600 mb-4">No recent transactions</p>
               <Link href="/user/send">
-                <Button className="bg-easner-primary hover:bg-easner-primary-600">
+                <div className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#007ACC] to-[#005A9E] hover:from-[#0088E0] hover:to-[#0066B8] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer">
                   Send Your First Transfer
-                </Button>
+                </div>
               </Link>
             </div>
           ) : (

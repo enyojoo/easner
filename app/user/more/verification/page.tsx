@@ -28,22 +28,7 @@ export default function VerificationPage() {
     }
   }
 
-  const [submissions, setSubmissions] = useState<KYCSubmission[]>(() => {
-    // Use lazy initializer to ensure userProfile is available
-    if (typeof window === "undefined") return []
-    if (!userProfile?.id) return []
-    try {
-      const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
-      if (!cached) return []
-      const { value, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) {
-        return value || []
-      }
-      return []
-    } catch {
-      return []
-    }
-  })
+  const [submissions, setSubmissions] = useState<KYCSubmission[]>(getInitialSubmissions)
   const [loading, setLoading] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const channelRef = useRef<any>(null)
@@ -273,7 +258,11 @@ export default function VerificationPage() {
                   </div>
                   {/* Status Badge and Arrow on the right */}
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    {getStatusBadge(identitySubmission?.status || "pending")}
+                    {identitySubmission ? getStatusBadge(identitySubmission.status) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        Not started
+                      </span>
+                    )}
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
@@ -300,7 +289,11 @@ export default function VerificationPage() {
                   </div>
                   {/* Status Badge and Arrow on the right */}
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    {getStatusBadge(addressSubmission?.status || "pending")}
+                    {addressSubmission ? getStatusBadge(addressSubmission.status) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        Not started
+                      </span>
+                    )}
                     <ChevronRight className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
