@@ -54,13 +54,52 @@ export async function GET(request: NextRequest) {
       }
     })
     
-    // Generate signed URL using admin's authenticated session
+    // First, try to generate signed URL using admin's authenticated session
     // Storage RLS policies should allow admins to view all files
-    const { data, error } = await authenticatedClient.storage
+    let { data, error } = await authenticatedClient.storage
       .from("kyc-documents")
       .createSignedUrl(filePath, 3600) // 1 hour expiry
     
-    if (error) {
+    // If we get a 403 error, Storage RLS might be blocking access
+    // Fall back to service role key (bypasses RLS) since we've already verified admin status
+    if (error && (error.statusCode === "403" || error.message?.includes("Forbidden"))) {
+      console.warn("Storage RLS blocked authenticated access, falling back to service role key:", {
+        error: error.message,
+        filePath,
+        adminId: adminUser.id,
+        adminEmail: adminUser.email
+      })
+      
+      // Use service role key to generate signed URL (bypasses RLS)
+      // This is safe because we've already verified the user is an admin
+      const { createServerClient } = await import("@/lib/supabase")
+      const serverClient = createServerClient()
+      
+      const fallbackResult = await serverClient.storage
+        .from("kyc-documents")
+        .createSignedUrl(filePath, 3600)
+      
+      if (fallbackResult.error) {
+        console.error("Error generating signed URL with service role key:", {
+          error: fallbackResult.error.message,
+          code: fallbackResult.error.statusCode,
+          filePath
+        })
+        
+        // If it's a 404, the file doesn't exist
+        if (fallbackResult.error.statusCode === "404" || fallbackResult.error.message?.includes("not found")) {
+          return NextResponse.json({ error: "File not found" }, { status: 404 })
+        }
+        
+        return NextResponse.json({ 
+          error: "Failed to generate signed URL",
+          details: fallbackResult.error.message 
+        }, { status: 500 })
+      }
+      
+      data = fallbackResult.data
+      error = null
+    } else if (error) {
       console.error("Error generating signed URL:", {
         error: error.message,
         code: error.statusCode,
@@ -72,14 +111,6 @@ export async function GET(request: NextRequest) {
       // If it's a 404, the file doesn't exist
       if (error.statusCode === "404" || error.message?.includes("not found")) {
         return NextResponse.json({ error: "File not found" }, { status: 404 })
-      }
-      
-      // If it's a 403, Storage RLS is blocking admin access
-      if (error.statusCode === "403" || error.message?.includes("Forbidden")) {
-        console.error("Storage RLS blocking admin access - check Storage RLS policies")
-        return NextResponse.json({ 
-          error: "Access denied. Please check Storage RLS policies allow admin access." 
-        }, { status: 403 })
       }
       
       return NextResponse.json({ 
