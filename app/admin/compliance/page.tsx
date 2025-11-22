@@ -28,23 +28,39 @@ interface ComplianceUser {
 
 export default function AdminCompliancePage() {
   // Initialize from cache synchronously to prevent flicker
+  // Use cached data even if expired to prevent skeleton flash
   const getInitialUsers = (): ComplianceUser[] => {
     if (typeof window === "undefined") return []
     try {
       const cached = localStorage.getItem("easner_compliance_users")
       if (!cached) return []
       const { value, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-        return value || []
-      }
-      return []
+      // Return cached data even if expired - we'll refresh in background
+      return value || []
     } catch {
       return []
     }
   }
 
-  const [users, setUsers] = useState<ComplianceUser[]>(getInitialUsers)
-  const [loading, setLoading] = useState(false)
+  const getCacheTimestamp = (): number | null => {
+    if (typeof window === "undefined") return null
+    try {
+      const cached = localStorage.getItem("easner_compliance_users")
+      if (!cached) return null
+      const { timestamp } = JSON.parse(cached)
+      return timestamp
+    } catch {
+      return null
+    }
+  }
+
+  const initialUsers = getInitialUsers()
+  const cacheTimestamp = getCacheTimestamp()
+  const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+  const isCacheFresh = cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_TTL)
+
+  const [users, setUsers] = useState<ComplianceUser[]>(initialUsers)
+  const [loading, setLoading] = useState(!initialUsers.length) // Only show loading if no cached data
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedUser, setSelectedUser] = useState<ComplianceUser | null>(null)
@@ -59,120 +75,10 @@ export default function AdminCompliancePage() {
     loadCountries()
   }, [])
 
-  useEffect(() => {
-    if (initialized) return // Don't re-initialize if already done
-
-    const CACHE_KEY = "easner_compliance_users"
-    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-    const getCachedUsers = (): ComplianceUser[] | null => {
-      try {
-        const cached = localStorage.getItem(CACHE_KEY)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        localStorage.removeItem(CACHE_KEY)
-        return null
-      } catch {
-        return null
-      }
-    }
-
-    const setCachedUsers = (value: ComplianceUser[]) => {
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
-    // Check cache first and set synchronously
-    const cachedUsers = getCachedUsers()
-    
-    if (cachedUsers !== null) {
-      // Set cached data immediately (synchronous)
-      setUsers(cachedUsers)
-      setInitialized(true)
-      // Don't fetch if cache is valid
-      return
-    }
-
-    // Only fetch missing or expired data
-    loadData().then(() => {
-      setInitialized(true)
-    })
-  }, [initialized])
-
-  // Real-time subscription for KYC submission updates
-  useEffect(() => {
-    if (!initialized) return
-
-    // Set up Supabase Realtime subscription for instant updates
-    const channel = supabase
-      .channel('admin-compliance-kyc-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'kyc_submissions',
-        },
-        async (payload) => {
-          console.log('Admin compliance: KYC submission update received via Realtime:', payload.eventType)
-          try {
-            // Reload data to get updated submissions
-            const updatedUsers = await loadData()
-            
-            // Update selected user if dialog is open and this update affects them
-            if (selectedUser) {
-              const updatedUser = updatedUsers.find(u => u.id === selectedUser.id)
-              if (updatedUser) {
-                // Check if the submission that changed belongs to this user
-                const changedSubmission = payload.new || payload.old
-                if (changedSubmission && changedSubmission.user_id === selectedUser.id) {
-                  setSelectedUser(updatedUser)
-                }
-              }
-            }
-          } catch (error) {
-            console.error("Error handling real-time update:", error)
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Admin compliance: Subscribed to KYC submissions real-time updates')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Admin compliance: Realtime subscription error for KYC submissions')
-        }
-      })
-
-    channelRef.current = channel
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
-      }
-    }
-  }, [initialized, selectedUser?.id])
-
-  const loadCountries = async () => {
+  const loadData = async (showLoading: boolean = true): Promise<ComplianceUser[]> => {
     try {
-      const data = await countryService.getAll()
-      setCountries(data)
-    } catch (error) {
-      console.error("Error loading countries:", error)
-    }
-  }
-
-  const loadData = async (): Promise<ComplianceUser[]> => {
-    try {
-      // Only show loading if we don't have any cached data
-      if (users.length === 0) {
+      // Only show loading if explicitly requested and we don't have cached data
+      if (showLoading && users.length === 0) {
         setLoading(true)
       }
       
@@ -219,9 +125,99 @@ export default function AdminCompliancePage() {
       return usersWithKyc
     } catch (error) {
       console.error("Error loading compliance data:", error)
-      return []
+      // On error, keep existing data if available
+      return users.length > 0 ? users : []
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (initialized) return // Don't re-initialize if already done
+
+    // If we have cached data (even if expired), show it immediately and refresh in background
+    // Only show loading if we truly have no data
+    if (initialUsers.length > 0) {
+      // We have cached data, refresh in background if expired
+      if (!isCacheFresh) {
+        // Cache expired, refresh in background without showing loading
+        loadData(false).then(() => {
+          setInitialized(true)
+        })
+      } else {
+        // Cache is fresh, we're done
+        setInitialized(true)
+      }
+    } else {
+      // No cached data, fetch and show loading
+      loadData(true).then(() => {
+        setInitialized(true)
+      })
+    }
+  }, [initialized, initialUsers.length, isCacheFresh])
+
+  // Real-time subscription for KYC submission updates
+  useEffect(() => {
+    if (!initialized) return
+
+    // Set up Supabase Realtime subscription for instant updates
+    const channel = supabase
+      .channel('admin-compliance-kyc-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'kyc_submissions',
+        },
+        async (payload) => {
+          console.log('Admin compliance: KYC submission update received via Realtime:', payload.eventType)
+          try {
+            // Reload data to get updated submissions (silent refresh, no loading state)
+            const updatedUsers = await loadData(false)
+            
+            // Update selected user if dialog is open and this update affects them
+            if (selectedUser) {
+              const updatedUser = updatedUsers.find(u => u.id === selectedUser.id)
+              if (updatedUser) {
+                // Check if the submission that changed belongs to this user
+                const changedSubmission = payload.new || payload.old
+                if (changedSubmission && changedSubmission.user_id === selectedUser.id) {
+                  setSelectedUser(updatedUser)
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error handling real-time update:", error)
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Admin compliance: Subscribed to KYC submissions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Admin compliance: Realtime subscription error for KYC submissions')
+        }
+      })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  }, [initialized, selectedUser?.id])
+
+  const loadCountries = async () => {
+    try {
+      const data = await countryService.getAll()
+      setCountries(data)
+    } catch (error) {
+      console.error("Error loading countries:", error)
     }
   }
 
@@ -369,8 +365,8 @@ export default function AdminCompliancePage() {
     return country ? `${country.flag_emoji} ${country.name}` : code
   }
 
-  // Show skeleton only if loading and no cached data
-  if (loading && users.length === 0) {
+  // Only show skeleton if we're truly loading and have no cached data
+  if (loading && !users.length) {
     return (
       <AdminDashboardLayout>
         <AdminComplianceSkeleton />
