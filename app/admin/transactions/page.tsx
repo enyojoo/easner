@@ -80,8 +80,83 @@ interface CombinedTransaction {
 
 export default function AdminTransactionsPage() {
   const { data: adminData, loading: adminDataLoading } = useAdminData()
-  const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
-  const [loading, setLoading] = useState(true)
+  
+  // Initialize from cache synchronously to prevent flicker
+  const getInitialTransactions = (): CombinedTransaction[] => {
+    if (!adminData?.transactions) return []
+    // Transform transactions to match CombinedTransaction interface
+    return (adminData.transactions || []).map((tx: any) => {
+      // If it's already transformed (has type), use it as is
+      if (tx.type) {
+        return {
+          id: tx.id,
+          transaction_id: tx.transaction_id || tx.id,
+          type: tx.type,
+          status: tx.status,
+          created_at: tx.created_at,
+          updated_at: tx.updated_at,
+          user: tx.user,
+          user_id: tx.user_id,
+          // Send fields
+          send_amount: tx.send_amount,
+          send_currency: tx.send_currency,
+          receive_amount: tx.receive_amount,
+          receive_currency: tx.receive_currency,
+          recipient: tx.recipient,
+          // Receive fields
+          crypto_amount: tx.crypto_amount,
+          crypto_currency: tx.crypto_currency,
+          fiat_amount: tx.fiat_amount,
+          fiat_currency: tx.fiat_currency,
+          stellar_transaction_hash: tx.stellar_transaction_hash || tx.blockchain_tx_hash,
+          blockchain_tx_hash: tx.blockchain_tx_hash,
+          crypto_wallet: tx.crypto_wallet,
+          destination_type: tx.destination_type,
+          bridge_card_account_id: tx.bridge_card_account_id,
+          // Receipt fields
+          receipt_url: tx.receipt_url,
+          receipt_filename: tx.receipt_filename,
+          exchange_rate: tx.exchange_rate,
+        }
+      }
+      // Otherwise, determine type from transaction structure
+      const isReceive = tx.crypto_amount || tx.fiat_amount
+      const isCardFunding = tx.destination_type === "card" || tx.bridge_card_account_id
+      return {
+        id: tx.id,
+        transaction_id: tx.transaction_id || tx.id,
+        type: isReceive ? (isCardFunding ? "card_funding" : "receive") : "send",
+        status: tx.status,
+        created_at: tx.created_at,
+        updated_at: tx.updated_at,
+        user: tx.user,
+        user_id: tx.user_id,
+        // Send fields
+        send_amount: tx.send_amount,
+        send_currency: tx.send_currency,
+        receive_amount: tx.receive_amount,
+        receive_currency: tx.receive_currency,
+        recipient: tx.recipient,
+        // Receive fields
+        crypto_amount: tx.crypto_amount,
+        crypto_currency: tx.crypto_currency,
+        fiat_amount: tx.fiat_amount,
+        fiat_currency: tx.fiat_currency,
+        stellar_transaction_hash: tx.stellar_transaction_hash || tx.blockchain_tx_hash,
+        blockchain_tx_hash: tx.blockchain_tx_hash,
+        crypto_wallet: tx.crypto_wallet,
+        destination_type: tx.destination_type,
+        bridge_card_account_id: tx.bridge_card_account_id,
+        // Receipt fields
+        receipt_url: tx.receipt_url,
+        receipt_filename: tx.receipt_filename,
+        exchange_rate: tx.exchange_rate,
+      }
+    })
+  }
+
+  const [transactions, setTransactions] = useState<CombinedTransaction[]>(() => getInitialTransactions())
+  const [loading, setLoading] = useState(!adminData?.transactions) // Only show loading if no cached data
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState<"all" | "send" | "receive">("all")
@@ -120,7 +195,7 @@ export default function AdminTransactionsPage() {
     }
   }, [selectedTransaction, paymentMethods])
 
-  // Load transactions from adminDataStore (same pattern as users page)
+  // Update transactions when adminData changes (from realtime updates or initial load)
   useEffect(() => {
     if (adminData?.transactions) {
       // Transform transactions to match CombinedTransaction interface
@@ -210,7 +285,8 @@ export default function AdminTransactionsPage() {
     return () => clearInterval(timer)
   }, [])
 
-  if (loading || adminDataLoading || !adminData) {
+  // Only show skeleton if we're truly loading and have no data
+  if ((loading || adminDataLoading) && transactions.length === 0 && !adminData?.transactions?.length) {
     return (
       <AdminDashboardLayout>
         <AdminTransactionsSkeleton />
