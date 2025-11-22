@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function PrivacyPage() {
   const handleBack = () => {
@@ -178,6 +179,17 @@ export default function PrivacyPage() {
                   screening obligations. This may require us to collect, process, and retain additional information and
                   to share information with regulatory authorities. Easner embeds verification, AML, and encryption at
                   the core of every transaction, powered by Stellar, to ensure compliance and security.
+                </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  For detailed information about our compliance procedures, please review our{" "}
+                  <Link href="/kyc-policy" className="text-easner-primary hover:underline">
+                    KYC/KYB Policy
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/aml-policy" className="text-easner-primary hover:underline">
+                    AML Policy
+                  </Link>
+                  .
                 </p>
               </section>
 

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function TermsPage() {
   const handleBack = () => {
@@ -121,7 +122,16 @@ export default function TermsPage() {
                   Transaction limits may apply based on your verification level, destination country, and regulatory
                   requirements imposed by our licensed partners. These limits are in place to ensure compliance with
                   anti-money laundering regulations, know-your-customer requirements, and to protect our users. Limits
-                  may vary by jurisdiction and are subject to change.
+                  may vary by jurisdiction and are subject to change. For detailed information about our compliance
+                  procedures, please review our{" "}
+                  <Link href="/kyc-policy" className="text-easner-primary hover:underline">
+                    KYC/KYB Policy
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/aml-policy" className="text-easner-primary hover:underline">
+                    AML Policy
+                  </Link>
+                  .
                 </p>
               </section>
 
