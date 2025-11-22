@@ -201,7 +201,7 @@ export default function AddressVerificationPage() {
     }
 
     // Don't allow if already in review or approved
-    if (submission && submission.status !== "pending") {
+    if (submission && (submission.status === "in_review" || submission.status === "approved")) {
       setUploadError("Your address verification is already under review or approved. You cannot upload a new document.")
       return
     }
@@ -216,6 +216,11 @@ export default function AddressVerificationPage() {
         address_document_file: addressFile,
       })
 
+      // Ensure status is in_review after upload
+      if (newSubmission.status !== "in_review") {
+        newSubmission.status = "in_review"
+      }
+      
       setSubmission(newSubmission)
       setAddressFile(null)
       if (fileInputRef.current) {
@@ -296,11 +301,6 @@ export default function AddressVerificationPage() {
               </button>
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">Address Information</h1>
-            {submission && (
-              <div className="ml-auto">
-                {getStatusBadge(submission.status)}
-              </div>
-            )}
           </div>
         </div>
 
@@ -351,10 +351,10 @@ export default function AddressVerificationPage() {
                   </div>
                 </div>
               </div>
-              {submission.status === "pending" && (
+              {submission.status === "in_review" && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-700">
-                    Your submission is pending review. You can update it by submitting a new document.
+                    Your KYC address information is in review. We will provide an update account soonest. Please check your email for updates.
                   </p>
                 </div>
               )}
@@ -424,7 +424,7 @@ export default function AddressVerificationPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>Address Document</Label>
                 <input
                   type="file"
@@ -434,6 +434,7 @@ export default function AddressVerificationPage() {
                   className="hidden"
                 />
 
+                {/* Upload Error Alert */}
                 {uploadError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <div className="flex items-start gap-2">
@@ -462,16 +463,54 @@ export default function AddressVerificationPage() {
                   className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                     isDragOver
                       ? "border-easner-primary bg-easner-primary-50"
-                      : "border-gray-300 hover:border-gray-400"
+                      : addressFile
+                        ? "border-green-300 bg-green-50"
+                        : uploadError
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-200 hover:border-easner-primary-300"
                   }`}
                 >
-                  {addressFile ? (
-                    <div className="space-y-2">
-                      <Check className="h-8 w-8 text-green-600 mx-auto" />
-                      <p className="text-sm font-medium text-gray-900">{addressFile.name}</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                        addressFile
+                          ? "bg-green-100"
+                          : uploadError
+                            ? "bg-red-100"
+                            : isDragOver
+                              ? "bg-easner-primary-100"
+                              : "bg-gray-100 group-hover:bg-easner-primary-50"
+                      }`}
+                    >
+                      {addressFile ? (
+                        <Check className="h-5 w-5 text-green-600" />
+                      ) : uploadError ? (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      ) : (
+                        <Upload
+                          className={`h-5 w-5 transition-colors ${
+                            isDragOver ? "text-easner-primary" : "text-gray-400"
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-medium text-gray-900 text-sm">
+                        {addressFile
+                          ? addressFile.name
+                          : uploadError
+                            ? "Upload Failed"
+                            : "Upload Address Document"}
+                      </h3>
                       <p className="text-xs text-gray-500">
-                        {(addressFile.size / 1024 / 1024).toFixed(2)} MB
+                        {addressFile
+                          ? `${(addressFile.size / 1024 / 1024).toFixed(2)} MB`
+                          : uploadError
+                            ? "Click to try again"
+                            : "JPG, PNG or PDF (Max 10MB)"}
                       </p>
+                    </div>
+                    {addressFile && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -479,21 +518,12 @@ export default function AddressVerificationPage() {
                           e.stopPropagation()
                           handleRemoveFile()
                         }}
-                        className="mt-2"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
+                        <X className="h-3 w-3" />
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                      <p className="text-sm text-gray-600">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">JPG, PNG, or PDF (max 10MB)</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 

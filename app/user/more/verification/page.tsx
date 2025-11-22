@@ -1,37 +1,56 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { ArrowLeft, MapPin, User, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { kycService, KYCSubmission } from "@/lib/kyc-service"
+import { supabase } from "@/lib/supabase"
 
 export default function VerificationPage() {
   const { userProfile } = useAuth()
   
   // Initialize from cache synchronously to prevent flicker
-  const getInitialSubmissions = (): KYCSubmission[] | null => {
-    if (typeof window === "undefined") return null
-    if (!userProfile?.id) return null
+  const getInitialSubmissions = (): KYCSubmission[] => {
+    if (typeof window === "undefined") return []
+    if (!userProfile?.id) return []
     try {
       const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
-      if (!cached) return null
+      if (!cached) return []
       const { value, timestamp } = JSON.parse(cached)
       if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-        return value
+        return value || []
       }
-      return null
+      return []
     } catch {
-      return null
+      return []
     }
   }
 
-  const [submissions, setSubmissions] = useState<KYCSubmission[]>(() => getInitialSubmissions() || [])
+  const [submissions, setSubmissions] = useState<KYCSubmission[]>(() => {
+    // Use lazy initializer to ensure userProfile is available
+    if (typeof window === "undefined") return []
+    if (!userProfile?.id) return []
+    try {
+      const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
+      if (!cached) return []
+      const { value, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp < 5 * 60 * 1000) {
+        return value || []
+      }
+      return []
+    } catch {
+      return []
+    }
+  })
   const [loading, setLoading] = useState(false)
+  const [initialized, setInitialized] = useState(false)
+  const channelRef = useRef<any>(null)
 
   useEffect(() => {
     if (!userProfile?.id) return
+    if (initialized) return // Don't re-initialize if already done
 
     const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
     const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -63,38 +82,120 @@ export default function VerificationPage() {
     // Check cache first
     const cachedSubmissions = getCachedSubmissions()
     
-    // Update state if cache exists and state is empty (only on first mount)
-    if (cachedSubmissions !== null && submissions.length === 0) {
-      setSubmissions(cachedSubmissions)
-    }
-
-    // If cache exists and is valid, no need to fetch
-    if (cachedSubmissions !== null) {
+    // If we have cached data, it's already set in useState initializer
+    // Just mark as initialized and fetch in background
+    if (cachedSubmissions !== null && cachedSubmissions.length >= 0) {
+      setInitialized(true)
+      // Fetch in background to ensure we have latest data
+      const loadSubmissions = async () => {
+        try {
+          const submissionsData = await kycService.getByUserId(userProfile.id)
+          // Only update if data changed (prevent flickering)
+          setSubmissions(prev => {
+            const prevStr = JSON.stringify(prev)
+            const newStr = JSON.stringify(submissionsData)
+            if (prevStr !== newStr) {
+              setCachedSubmissions(submissionsData || [])
+              return submissionsData || []
+            }
+            return prev
+          })
+        } catch (error) {
+          console.error("Error loading submissions:", error)
+        }
+      }
+      loadSubmissions()
       return
     }
 
-    // Only fetch missing or expired data
+    // No cache or expired - load with loading state
     const loadSubmissions = async () => {
-      // Only show loading if we don't have any cached data
-      if (submissions.length === 0) {
-        setLoading(true)
-      }
+      setLoading(true)
       try {
         const submissionsData = await kycService.getByUserId(userProfile.id)
         setSubmissions(submissionsData || [])
         setCachedSubmissions(submissionsData || [])
+        setInitialized(true)
       } catch (error) {
         console.error("Error loading submissions:", error)
+        setInitialized(true)
       } finally {
         setLoading(false)
       }
     }
     
     loadSubmissions()
-  }, [userProfile?.id])
+  }, [userProfile?.id, initialized])
+
+  // Real-time subscription for KYC submission updates
+  useEffect(() => {
+    if (!userProfile?.id || !initialized) return
+
+    // Set up Supabase Realtime subscription for instant updates
+    const channel = supabase
+      .channel(`kyc-submissions-${userProfile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'kyc_submissions',
+          filter: `user_id=eq.${userProfile.id}`,
+        },
+        async (payload) => {
+          console.log('KYC submission update received via Realtime:', payload.eventType)
+          try {
+            // Fetch updated submissions
+            const updatedSubmissions = await kycService.getByUserId(userProfile.id)
+            
+            // Update state only if data actually changed (prevent unnecessary re-renders)
+            setSubmissions(prev => {
+              const prevStr = JSON.stringify(prev)
+              const newStr = JSON.stringify(updatedSubmissions)
+              if (prevStr !== newStr) {
+                return updatedSubmissions || []
+              }
+              return prev
+            })
+            
+            // Update cache
+            const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({
+                value: updatedSubmissions || [],
+                timestamp: Date.now()
+              }))
+            } catch {}
+          } catch (error) {
+            console.error("Error fetching updated submissions:", error)
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to KYC submissions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Realtime subscription error for KYC submissions')
+        }
+      })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  }, [userProfile?.id, initialized])
 
   const identitySubmission = submissions.find(s => s.type === "identity")
   const addressSubmission = submissions.find(s => s.type === "address")
+
+  // Check if both are approved (done)
+  const bothCompleted = 
+    identitySubmission?.status === "approved" && 
+    addressSubmission?.status === "approved"
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -140,10 +241,21 @@ export default function VerificationPage() {
           </div>
         </div>
 
+        {/* Info Message - Only show if both are not completed */}
+        {!bothCompleted && (
+          <div className="px-5 pt-2 pb-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-700">
+                Please complete KYC Identity and Address information for compliance.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Cards Container */}
         <div className="px-5 pb-6 space-y-6">
           {/* Identity Verification Card */}
-          <Link href="/user/more/verification/identity">
+          <Link href="/user/more/verification/identity" className="block">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
               <div className="p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -170,7 +282,7 @@ export default function VerificationPage() {
           </Link>
 
           {/* Address Information Card */}
-          <Link href="/user/more/verification/address">
+          <Link href="/user/more/verification/address" className="block">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow">
               <div className="p-5">
                 <div className="flex items-start justify-between gap-4">

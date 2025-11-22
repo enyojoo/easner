@@ -1066,9 +1066,6 @@ export default function AdminUsersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleKycOpen(user)}>
-                              KYC
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusUpdate(user.id, "active")}>
                               Activate Account
                             </DropdownMenuItem>

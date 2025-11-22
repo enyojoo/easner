@@ -44,6 +44,8 @@ export default function IdentityVerificationPage() {
   const [submission, setSubmission] = useState<KYCSubmission | null>(initialSubmission)
   const [loading, setLoading] = useState(false)
   const [countries, setCountries] = useState<Country[]>([])
+  const [fullName, setFullName] = useState(initialSubmission?.full_name || "")
+  const [dateOfBirth, setDateOfBirth] = useState(initialSubmission?.date_of_birth || "")
   const [selectedCountry, setSelectedCountry] = useState(initialSubmission?.country_code || "")
   const [selectedIdType, setSelectedIdType] = useState(initialSubmission?.id_type || "")
   const [identityFile, setIdentityFile] = useState<File | null>(null)
@@ -94,6 +96,8 @@ export default function IdentityVerificationPage() {
       const identity = cachedSubmissions.find(s => s.type === "identity")
       if (identity) {
         setSubmission(identity)
+        setFullName(identity.full_name || "")
+        setDateOfBirth(identity.date_of_birth || "")
         setSelectedCountry(identity.country_code || "")
         setSelectedIdType(identity.id_type || "")
       }
@@ -111,6 +115,8 @@ export default function IdentityVerificationPage() {
         const identity = submissions.find(s => s.type === "identity")
         if (identity) {
           setSubmission(identity)
+          setFullName(identity.full_name || "")
+          setDateOfBirth(identity.date_of_birth || "")
           setSelectedCountry(identity.country_code || "")
           setSelectedIdType(identity.id_type || "")
         }
@@ -190,13 +196,13 @@ export default function IdentityVerificationPage() {
   }
 
   const handleSubmit = async () => {
-    if (!selectedCountry || !selectedIdType || !identityFile || !userProfile?.id) {
+    if (!fullName || !dateOfBirth || !selectedCountry || !selectedIdType || !identityFile || !userProfile?.id) {
       setUploadError("Please fill in all fields and upload a file")
       return
     }
 
     // Don't allow if already in review or approved
-    if (submission && submission.status !== "pending") {
+    if (submission && (submission.status === "in_review" || submission.status === "approved")) {
       setUploadError("Your identity verification is already under review or approved. You cannot upload a new document.")
       return
     }
@@ -205,6 +211,8 @@ export default function IdentityVerificationPage() {
     setUploadError(null)
     try {
       const newSubmission = await kycService.createIdentitySubmission(userProfile.id, {
+        full_name: fullName,
+        date_of_birth: dateOfBirth,
         country_code: selectedCountry,
         id_type: selectedIdType,
         id_document_file: identityFile,
@@ -290,11 +298,6 @@ export default function IdentityVerificationPage() {
               </button>
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">Identity Verification</h1>
-            {submission && (
-              <div className="ml-auto">
-                {getStatusBadge(submission.status)}
-              </div>
-            )}
           </div>
         </div>
 
@@ -305,6 +308,18 @@ export default function IdentityVerificationPage() {
               <div className="bg-gray-50 rounded-lg p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Identity Verification</h2>
                 <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm text-gray-600">Full Name</Label>
+                    <p className="text-base text-gray-900 mt-1">
+                      {submission.full_name || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-gray-600">Date of Birth</Label>
+                    <p className="text-base text-gray-900 mt-1">
+                      {submission.date_of_birth ? new Date(submission.date_of_birth).toLocaleDateString() : "-"}
+                    </p>
+                  </div>
                   <div>
                     <Label className="text-sm text-gray-600">Country</Label>
                     <p className="text-base text-gray-900 mt-1">
@@ -338,6 +353,13 @@ export default function IdentityVerificationPage() {
                   </div>
                 </div>
               </div>
+              {submission.status === "in_review" && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-700">
+                    Your KYC identity information is in review. We will provide an update account soonest. Please check your email for updates.
+                  </p>
+                </div>
+              )}
               {submission.status === "pending" && (
                 <div className="space-y-4">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -349,6 +371,24 @@ export default function IdentityVerificationPage() {
                     <h3 className="text-lg font-semibold mb-4">Update Submission</h3>
                     {/* Form fields for update */}
                     <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Full Name</Label>
+                        <Input
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Enter your full name as it appears on your ID"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date of Birth</Label>
+                        <Input
+                          type="date"
+                          value={dateOfBirth}
+                          onChange={(e) => setDateOfBirth(e.target.value)}
+                          max={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
                       <div className="space-y-2">
                         <Label>Country</Label>
                         <Select value={selectedCountry} onValueChange={setSelectedCountry}>
@@ -406,7 +446,7 @@ export default function IdentityVerificationPage() {
                         </div>
                       )}
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <Label>ID Document</Label>
                         <input
                           type="file"
@@ -416,6 +456,7 @@ export default function IdentityVerificationPage() {
                           className="hidden"
                         />
 
+                        {/* Upload Error Alert */}
                         {uploadError && (
                           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                             <div className="flex items-start gap-2">
@@ -444,16 +485,54 @@ export default function IdentityVerificationPage() {
                           className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                             isDragOver
                               ? "border-easner-primary bg-easner-primary-50"
-                              : "border-gray-300 hover:border-gray-400"
+                              : identityFile
+                                ? "border-green-300 bg-green-50"
+                                : uploadError
+                                  ? "border-red-300 bg-red-50"
+                                  : "border-gray-200 hover:border-easner-primary-300"
                           }`}
                         >
-                          {identityFile ? (
-                            <div className="space-y-2">
-                              <Check className="h-8 w-8 text-green-600 mx-auto" />
-                              <p className="text-sm font-medium text-gray-900">{identityFile.name}</p>
+                          <div className="flex items-center justify-center gap-3">
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                                identityFile
+                                  ? "bg-green-100"
+                                  : uploadError
+                                    ? "bg-red-100"
+                                    : isDragOver
+                                      ? "bg-easner-primary-100"
+                                      : "bg-gray-100 group-hover:bg-easner-primary-50"
+                              }`}
+                            >
+                              {identityFile ? (
+                                <Check className="h-5 w-5 text-green-600" />
+                              ) : uploadError ? (
+                                <AlertCircle className="h-5 w-5 text-red-600" />
+                              ) : (
+                                <Upload
+                                  className={`h-5 w-5 transition-colors ${
+                                    isDragOver ? "text-easner-primary" : "text-gray-400"
+                                  }`}
+                                />
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <h3 className="font-medium text-gray-900 text-sm">
+                                {identityFile
+                                  ? identityFile.name
+                                  : uploadError
+                                    ? "Upload Failed"
+                                    : "Upload ID Document"}
+                              </h3>
                               <p className="text-xs text-gray-500">
-                                {(identityFile.size / 1024 / 1024).toFixed(2)} MB
+                                {identityFile
+                                  ? `${(identityFile.size / 1024 / 1024).toFixed(2)} MB`
+                                  : uploadError
+                                    ? "Click to try again"
+                                    : "JPG, PNG or PDF (Max 10MB)"}
                               </p>
+                            </div>
+                            {identityFile && (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -461,27 +540,18 @@ export default function IdentityVerificationPage() {
                                   e.stopPropagation()
                                   handleRemoveFile()
                                 }}
-                                className="mt-2"
+                                className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
                               >
-                                <X className="h-4 w-4 mr-1" />
-                                Remove
+                                <X className="h-3 w-3" />
                               </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                              <p className="text-sm text-gray-600">
-                                Click to upload or drag and drop
-                              </p>
-                              <p className="text-xs text-gray-500">JPG, PNG, or PDF (max 10MB)</p>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
 
                       <Button
                         onClick={handleSubmit}
-                        disabled={!selectedCountry || !selectedIdType || !identityFile || uploading}
+                        disabled={!fullName || !dateOfBirth || !selectedCountry || !selectedIdType || !identityFile || uploading}
                         className="w-full"
                       >
                         {uploading ? "Updating..." : "Update Submission"}
@@ -494,6 +564,24 @@ export default function IdentityVerificationPage() {
           ) : (
             // Show form view
             <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <Input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name as it appears on your ID"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Date of Birth</Label>
+                <Input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Country</Label>
                 <Select value={selectedCountry} onValueChange={setSelectedCountry}>
@@ -551,7 +639,7 @@ export default function IdentityVerificationPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label>ID Document</Label>
                 <input
                   type="file"
@@ -561,6 +649,7 @@ export default function IdentityVerificationPage() {
                   className="hidden"
                 />
 
+                {/* Upload Error Alert */}
                 {uploadError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                     <div className="flex items-start gap-2">
@@ -589,16 +678,54 @@ export default function IdentityVerificationPage() {
                   className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                     isDragOver
                       ? "border-easner-primary bg-easner-primary-50"
-                      : "border-gray-300 hover:border-gray-400"
+                      : identityFile
+                        ? "border-green-300 bg-green-50"
+                        : uploadError
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-200 hover:border-easner-primary-300"
                   }`}
                 >
-                  {identityFile ? (
-                    <div className="space-y-2">
-                      <Check className="h-8 w-8 text-green-600 mx-auto" />
-                      <p className="text-sm font-medium text-gray-900">{identityFile.name}</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                        identityFile
+                          ? "bg-green-100"
+                          : uploadError
+                            ? "bg-red-100"
+                            : isDragOver
+                              ? "bg-easner-primary-100"
+                              : "bg-gray-100 group-hover:bg-easner-primary-50"
+                      }`}
+                    >
+                      {identityFile ? (
+                        <Check className="h-5 w-5 text-green-600" />
+                      ) : uploadError ? (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      ) : (
+                        <Upload
+                          className={`h-5 w-5 transition-colors ${
+                            isDragOver ? "text-easner-primary" : "text-gray-400"
+                          }`}
+                        />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-medium text-gray-900 text-sm">
+                        {identityFile
+                          ? identityFile.name
+                          : uploadError
+                            ? "Upload Failed"
+                            : "Upload ID Document"}
+                      </h3>
                       <p className="text-xs text-gray-500">
-                        {(identityFile.size / 1024 / 1024).toFixed(2)} MB
+                        {identityFile
+                          ? `${(identityFile.size / 1024 / 1024).toFixed(2)} MB`
+                          : uploadError
+                            ? "Click to try again"
+                            : "JPG, PNG or PDF (Max 10MB)"}
                       </p>
+                    </div>
+                    {identityFile && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -606,27 +733,18 @@ export default function IdentityVerificationPage() {
                           e.stopPropagation()
                           handleRemoveFile()
                         }}
-                        className="mt-2"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Remove
+                        <X className="h-3 w-3" />
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                      <p className="text-sm text-gray-600">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500">JPG, PNG, or PDF (max 10MB)</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
               <Button
                 onClick={handleSubmit}
-                disabled={!selectedCountry || !selectedIdType || !identityFile || uploading}
+                disabled={!fullName || !dateOfBirth || !selectedCountry || !selectedIdType || !identityFile || uploading}
                 className="w-full"
               >
                 {uploading ? "Uploading..." : "Submit"}

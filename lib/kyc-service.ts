@@ -7,6 +7,8 @@ export interface KYCSubmission {
   type: "identity" | "address"
   status: "pending" | "in_review" | "approved" | "rejected"
   country_code?: string
+  full_name?: string // Full name from identity document
+  date_of_birth?: string // Date of birth from identity document (ISO date string)
   id_type?: string
   id_document_url?: string
   id_document_filename?: string
@@ -22,6 +24,8 @@ export interface KYCSubmission {
 }
 
 export interface CreateIdentitySubmission {
+  full_name: string
+  date_of_birth: string // ISO date string (YYYY-MM-DD)
   country_code: string
   id_type: string
   id_document_file: File
@@ -74,8 +78,30 @@ export const kycService = {
   // Upload file to Supabase Storage
   async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient): Promise<{ url: string; filename: string }> {
     const storageClient = client || supabase
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${userId}_${Date.now()}.${fileExt}`
+    
+    // Sanitize the original filename: remove special characters, replace spaces with underscores
+    // Keep only alphanumeric, dots, hyphens, and underscores
+    const sanitizeFilename = (name: string): string => {
+      // Get the base name and extension separately
+      const lastDotIndex = name.lastIndexOf('.')
+      const baseName = lastDotIndex > 0 ? name.substring(0, lastDotIndex) : name
+      const extension = lastDotIndex > 0 ? name.substring(lastDotIndex) : ''
+      
+      // Sanitize base name: replace spaces and special chars, keep only safe characters
+      const sanitized = baseName
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace invalid chars with underscore
+        .replace(/_+/g, '_') // Replace multiple underscores with single
+        .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+      
+      // Limit length to prevent issues (max 200 chars for base name)
+      const truncated = sanitized.length > 200 ? sanitized.substring(0, 200) : sanitized
+      
+      return truncated + extension
+    }
+    
+    const sanitizedOriginalName = sanitizeFilename(file.name)
+    // Keep userId prefix for RLS policy compatibility: userId_originalfilename.ext
+    const fileName = `${userId}_${sanitizedOriginalName}`
     const filePath = `${folder}/${fileName}`
 
     const { data: uploadData, error: uploadError } = await storageClient.storage
@@ -94,7 +120,8 @@ export const kycService = {
       data: { publicUrl },
     } = storageClient.storage.from("kyc-documents").getPublicUrl(filePath)
 
-    return { url: publicUrl, filename: fileName }
+    // Return the original filename (not the sanitized one) for display purposes
+    return { url: publicUrl, filename: file.name }
   },
 
   // Create identity verification submission
@@ -112,17 +139,21 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending identity submission (allow updates to pending only)
+    // Check if user already has an identity submission
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
       .select("id, status")
       .eq("user_id", userId)
       .eq("type", "identity")
-      .eq("status", "pending")
       .maybeSingle()
 
     if (checkError && checkError.code !== 'PGRST116') {
       throw checkError
+    }
+
+    // Prevent new uploads if already in_review or approved
+    if (existing && (existing.status === "in_review" || existing.status === "approved")) {
+      throw new Error("Your identity verification is already under review or approved. You cannot upload a new document.")
     }
 
     if (existing) {
@@ -132,11 +163,13 @@ export const kycService = {
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth,
           country_code: data.country_code,
           id_type: data.id_type,
           id_document_url: url,
           id_document_filename: filename,
-          status: "pending", // Start as pending
+          status: "in_review", // Change status to in_review after upload
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -146,13 +179,15 @@ export const kycService = {
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission with pending status
+      // Create new submission with in_review status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "identity",
-          status: "pending", // Start as pending
+          status: "in_review", // New submissions start as in_review
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth,
           country_code: data.country_code,
           id_type: data.id_type,
           id_document_url: url,
@@ -181,13 +216,13 @@ export const kycService = {
       client
     )
 
-    // Check if user already has a pending address submission (allow updates to pending only)
+    // Check if user already has a pending or in_review address submission
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
       .select("id, status")
       .eq("user_id", userId)
       .eq("type", "address")
-      .eq("status", "pending")
+      .in("status", ["pending", "in_review"])
       .maybeSingle()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -195,9 +230,12 @@ export const kycService = {
     }
 
     if (existing) {
-      // Allow updates to pending submissions
+      // If already in review, don't allow updates
+      if (existing.status === "in_review") {
+        throw new Error("Your address verification is already under review. Please wait for admin approval.")
+      }
       
-      // Update existing pending submission
+      // Allow updates to pending submissions - change to in_review after upload
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
@@ -206,7 +244,7 @@ export const kycService = {
           document_type: data.document_type,
           address_document_url: url,
           address_document_filename: filename,
-          status: "pending", // Start as pending
+          status: "in_review", // Change to in_review after upload
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -216,13 +254,13 @@ export const kycService = {
       if (error) throw error
       return updatedData
     } else {
-      // Create new submission with pending status
+      // Create new submission with in_review status
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
           user_id: userId,
           type: "address",
-          status: "pending", // Start as pending
+          status: "in_review", // Start as in_review after upload
           country_code: data.country_code,
           address: data.address,
           document_type: data.document_type,
@@ -277,6 +315,17 @@ export const kycService = {
 
     if (error) throw error
     return data
+  },
+
+  // Admin: Delete submission
+  async deleteSubmission(submissionId: string, client?: SupabaseClient): Promise<void> {
+    const dbClient = client || supabase
+    const { error } = await dbClient
+      .from("kyc_submissions")
+      .delete()
+      .eq("id", submissionId)
+
+    if (error) throw error
   },
 }
 
