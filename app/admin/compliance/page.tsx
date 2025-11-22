@@ -312,14 +312,25 @@ export default function AdminCompliancePage() {
         })
         
         if (response.ok) {
-          const { url } = await response.json()
-          window.open(url, "_blank")
+          const data = await response.json()
+          if (data.url) {
+            window.open(data.url, "_blank")
+          } else {
+            console.error("No URL in response:", data)
+            alert("Failed to access document: No URL returned from server.")
+          }
         } else {
-          alert("Failed to access document. Please try again.")
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+          console.error("Failed to fetch signed URL:", {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          })
+          alert(`Failed to access document: ${errorData.error || response.statusText || "Please try again."}`)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching signed URL:", error)
-        alert("Failed to access document. Please try again.")
+        alert(`Failed to access document: ${error.message || "Please try again."}`)
       }
     } else {
       // Old format: public URL (for backward compatibility with existing records)

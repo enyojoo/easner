@@ -77,7 +77,7 @@ export const kycService = {
 
   // Upload file to Supabase Storage
   // Returns file path (not public URL) for secure access via RLS policies
-  async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient): Promise<{ path: string; filename: string }> {
+  async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient, existingFilePath?: string): Promise<{ path: string; filename: string }> {
     const storageClient = client || supabase
     
     // Sanitize the original filename: remove special characters, replace spaces with underscores
@@ -101,16 +101,34 @@ export const kycService = {
     }
     
     const sanitizedOriginalName = sanitizeFilename(file.name)
-    // Keep userId prefix for RLS policy compatibility: userId_originalfilename.ext
-    // Store files in folder structure: folder/userId_filename.ext
-    const fileName = `${userId}_${sanitizedOriginalName}`
+    
+    // Generate unique filename with timestamp to avoid conflicts
+    // Format: userId_originalfilename_timestamp.ext
+    const timestamp = Date.now()
+    const lastDotIndex = sanitizedOriginalName.lastIndexOf('.')
+    const fileName = lastDotIndex > 0 
+      ? `${userId}_${sanitizedOriginalName.substring(0, lastDotIndex)}_${timestamp}${sanitizedOriginalName.substring(lastDotIndex)}`
+      : `${userId}_${sanitizedOriginalName}_${timestamp}`
     const filePath = `${folder}/${fileName}`
 
+    // If there's an existing file path, try to delete it first (for overwrite scenario)
+    if (existingFilePath) {
+      try {
+        await storageClient.storage
+          .from("kyc-documents")
+          .remove([existingFilePath])
+      } catch (deleteError) {
+        // Ignore delete errors - file might not exist, which is fine
+        console.log("Could not delete existing file (may not exist):", deleteError)
+      }
+    }
+
+    // Upload with upsert enabled to allow overwriting if needed
     const { data: uploadData, error: uploadError } = await storageClient.storage
       .from("kyc-documents")
       .upload(filePath, file, {
         cacheControl: "3600",
-        upsert: false,
+        upsert: true, // Allow overwriting
       })
 
     if (uploadError) {
@@ -119,7 +137,7 @@ export const kycService = {
     }
 
     // Return the file path (not public URL) for secure storage
-    // Path format: "identity/userId_filename.ext" or "address/userId_filename.ext"
+    // Path format: "identity/userId_filename_timestamp.ext" or "address/userId_filename_timestamp.ext"
     return { path: filePath, filename: file.name }
   },
 
@@ -130,18 +148,11 @@ export const kycService = {
     client?: SupabaseClient
   ): Promise<KYCSubmission> {
     const dbClient = client || supabase
-    // Upload document - returns path, not public URL
-    const { path, filename } = await this.uploadFile(
-      data.id_document_file,
-      "identity",
-      userId,
-      client
-    )
 
     // Check if user already has an identity submission
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
-      .select("id, status")
+      .select("id, status, id_document_url")
       .eq("user_id", userId)
       .eq("type", "identity")
       .maybeSingle()
@@ -154,6 +165,16 @@ export const kycService = {
     if (existing && (existing.status === "in_review" || existing.status === "approved")) {
       throw new Error("Your identity verification is already under review or approved. You cannot upload a new document.")
     }
+
+    // Upload document - pass existing file path to delete it if updating
+    // Returns path, not public URL
+    const { path, filename } = await this.uploadFile(
+      data.id_document_file,
+      "identity",
+      userId,
+      client,
+      existing?.id_document_url // Pass existing path to delete old file
+    )
 
     if (existing) {
       // Allow updates to pending submissions
@@ -209,18 +230,11 @@ export const kycService = {
     client?: SupabaseClient
   ): Promise<KYCSubmission> {
     const dbClient = client || supabase
-    // Upload document - returns path, not public URL
-    const { path, filename } = await this.uploadFile(
-      data.address_document_file,
-      "address",
-      userId,
-      client
-    )
 
     // Check if user already has a pending or in_review address submission
     const { data: existing, error: checkError } = await dbClient
       .from("kyc_submissions")
-      .select("id, status")
+      .select("id, status, address_document_url")
       .eq("user_id", userId)
       .eq("type", "address")
       .in("status", ["pending", "in_review"])
@@ -235,7 +249,19 @@ export const kycService = {
       if (existing.status === "in_review") {
         throw new Error("Your address verification is already under review. Please wait for admin approval.")
       }
-      
+    }
+
+    // Upload document - pass existing file path to delete it if updating
+    // Returns path, not public URL
+    const { path, filename } = await this.uploadFile(
+      data.address_document_file,
+      "address",
+      userId,
+      client,
+      existing?.address_document_url // Pass existing path to delete old file
+    )
+
+    if (existing) {
       // Allow updates to pending submissions - change to in_review after upload
       // Store file path in address_document_url field (for backward compatibility)
       const { data: updatedData, error } = await dbClient
