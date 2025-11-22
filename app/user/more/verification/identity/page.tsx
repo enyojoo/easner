@@ -23,18 +23,17 @@ export default function IdentityVerificationPage() {
   const { userProfile } = useAuth()
   
   // Initialize from cache synchronously to prevent flicker
+  // Use cached data even if expired to prevent skeleton flash
   const getInitialSubmission = (): KYCSubmission | null => {
     if (typeof window === "undefined") return null
     if (!userProfile?.id) return null
     try {
       const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
       if (!cached) return null
-      const { value, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-        const submissions = value as KYCSubmission[]
-        return submissions.find(s => s.type === "identity") || null
-      }
-      return null
+      const { value } = JSON.parse(cached)
+      // Always return cached value if it exists (even if expired) to prevent flicker
+      const submissions = value as KYCSubmission[]
+      return submissions.find(s => s.type === "identity") || null
     } catch {
       return null
     }

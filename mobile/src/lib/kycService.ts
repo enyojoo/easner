@@ -72,7 +72,8 @@ export const kycService = {
   },
 
   // Upload file to Supabase Storage
-  async uploadFile(file: any, folder: string, userId: string): Promise<{ url: string; filename: string }> {
+  // Returns file path (not public URL) for secure access via RLS policies
+  async uploadFile(file: any, folder: string, userId: string): Promise<{ path: string; filename: string }> {
     // For React Native, file comes from DocumentPicker with uri property
     const originalFileName = file.name || `document.${file.mimeType?.split('/')[1] || 'jpg'}`
     
@@ -112,11 +113,9 @@ export const kycService = {
       throw new Error(`Upload failed: ${uploadError.message}`)
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("kyc-documents").getPublicUrl(filePath)
-
-    return { url: publicUrl, filename: originalFileName }
+    // Return the file path (not public URL) for secure storage
+    // Path format: "identity/userId_filename.ext" or "address/userId_filename.ext"
+    return { path: filePath, filename: originalFileName }
   },
 
   // Create identity submission
@@ -124,7 +123,7 @@ export const kycService = {
     userId: string,
     data: CreateIdentitySubmission
   ): Promise<KYCSubmission> {
-    const { url, filename } = await this.uploadFile(
+    const { path, filename } = await this.uploadFile(
       data.id_document_file,
       "identity",
       userId
@@ -154,7 +153,7 @@ export const kycService = {
       date_of_birth: data.date_of_birth,
       country_code: data.country_code,
       id_type: data.id_type,
-      id_document_url: url,
+      id_document_url: path, // Store path instead of public URL
       id_document_filename: filename,
     }
 
@@ -187,7 +186,7 @@ export const kycService = {
     userId: string,
     data: CreateAddressSubmission
   ): Promise<KYCSubmission> {
-    const { url, filename } = await this.uploadFile(
+    const { path, filename } = await this.uploadFile(
       data.address_document_file,
       "address",
       userId
@@ -216,7 +215,7 @@ export const kycService = {
       country_code: data.country_code,
       address: data.address,
       document_type: data.document_type,
-      address_document_url: url,
+      address_document_url: path, // Store path instead of public URL
       address_document_filename: filename,
     }
 

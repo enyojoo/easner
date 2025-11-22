@@ -75,7 +75,8 @@ export default function AdminEarlyAccessPage() {
     }
   }
 
-  if (loading || !data) {
+  // Only show skeleton if we're truly loading and have no cached data
+  if (loading && !data) {
     return (
       <AdminDashboardLayout>
         <AdminEarlyAccessSkeleton />

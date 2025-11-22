@@ -298,9 +298,32 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const handleViewFile = (url: string) => {
-    if (url) {
-      window.open(url, "_blank")
+  const handleViewFile = async (filePathOrUrl: string) => {
+    if (!filePathOrUrl) return
+    
+    // Check if it's a file path (starts with "identity/" or "address/") or an old public URL
+    const isPath = filePathOrUrl.startsWith("identity/") || filePathOrUrl.startsWith("address/")
+    
+    if (isPath) {
+      // New format: file path - get signed URL from API
+      try {
+        const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(filePathOrUrl)}`, {
+          credentials: "include",
+        })
+        
+        if (response.ok) {
+          const { url } = await response.json()
+          window.open(url, "_blank")
+        } else {
+          alert("Failed to access document. Please try again.")
+        }
+      } catch (error) {
+        console.error("Error fetching signed URL:", error)
+        alert("Failed to access document. Please try again.")
+      }
+    } else {
+      // Old format: public URL (for backward compatibility with existing records)
+      window.open(filePathOrUrl, "_blank")
     }
   }
 

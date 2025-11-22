@@ -76,7 +76,8 @@ export const kycService = {
   },
 
   // Upload file to Supabase Storage
-  async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient): Promise<{ url: string; filename: string }> {
+  // Returns file path (not public URL) for secure access via RLS policies
+  async uploadFile(file: File, folder: string, userId: string, client?: SupabaseClient): Promise<{ path: string; filename: string }> {
     const storageClient = client || supabase
     
     // Sanitize the original filename: remove special characters, replace spaces with underscores
@@ -101,6 +102,7 @@ export const kycService = {
     
     const sanitizedOriginalName = sanitizeFilename(file.name)
     // Keep userId prefix for RLS policy compatibility: userId_originalfilename.ext
+    // Store files in folder structure: folder/userId_filename.ext
     const fileName = `${userId}_${sanitizedOriginalName}`
     const filePath = `${folder}/${fileName}`
 
@@ -116,12 +118,9 @@ export const kycService = {
       throw new Error(`Upload failed: ${uploadError.message}`)
     }
 
-    const {
-      data: { publicUrl },
-    } = storageClient.storage.from("kyc-documents").getPublicUrl(filePath)
-
-    // Return the original filename (not the sanitized one) for display purposes
-    return { url: publicUrl, filename: file.name }
+    // Return the file path (not public URL) for secure storage
+    // Path format: "identity/userId_filename.ext" or "address/userId_filename.ext"
+    return { path: filePath, filename: file.name }
   },
 
   // Create identity verification submission
@@ -131,8 +130,8 @@ export const kycService = {
     client?: SupabaseClient
   ): Promise<KYCSubmission> {
     const dbClient = client || supabase
-    // Upload document
-    const { url, filename } = await this.uploadFile(
+    // Upload document - returns path, not public URL
+    const { path, filename } = await this.uploadFile(
       data.id_document_file,
       "identity",
       userId,
@@ -160,6 +159,7 @@ export const kycService = {
       // Allow updates to pending submissions
       
       // Update existing pending submission
+      // Store file path in id_document_url field (for backward compatibility)
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
@@ -167,7 +167,7 @@ export const kycService = {
           date_of_birth: data.date_of_birth,
           country_code: data.country_code,
           id_type: data.id_type,
-          id_document_url: url,
+          id_document_url: path, // Store path instead of public URL
           id_document_filename: filename,
           status: "in_review", // Change status to in_review after upload
           updated_at: new Date().toISOString(),
@@ -180,6 +180,7 @@ export const kycService = {
       return updatedData
     } else {
       // Create new submission with in_review status
+      // Store file path in id_document_url field (for backward compatibility)
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
@@ -190,7 +191,7 @@ export const kycService = {
           date_of_birth: data.date_of_birth,
           country_code: data.country_code,
           id_type: data.id_type,
-          id_document_url: url,
+          id_document_url: path, // Store path instead of public URL
           id_document_filename: filename,
         })
         .select()
@@ -208,8 +209,8 @@ export const kycService = {
     client?: SupabaseClient
   ): Promise<KYCSubmission> {
     const dbClient = client || supabase
-    // Upload document
-    const { url, filename } = await this.uploadFile(
+    // Upload document - returns path, not public URL
+    const { path, filename } = await this.uploadFile(
       data.address_document_file,
       "address",
       userId,
@@ -236,13 +237,14 @@ export const kycService = {
       }
       
       // Allow updates to pending submissions - change to in_review after upload
+      // Store file path in address_document_url field (for backward compatibility)
       const { data: updatedData, error } = await dbClient
         .from("kyc_submissions")
         .update({
           country_code: data.country_code,
           address: data.address,
           document_type: data.document_type,
-          address_document_url: url,
+          address_document_url: path, // Store path instead of public URL
           address_document_filename: filename,
           status: "in_review", // Change to in_review after upload
           updated_at: new Date().toISOString(),
@@ -255,6 +257,7 @@ export const kycService = {
       return updatedData
     } else {
       // Create new submission with in_review status
+      // Store file path in address_document_url field (for backward compatibility)
       const { data: submissionData, error } = await dbClient
         .from("kyc_submissions")
         .insert({
@@ -264,7 +267,7 @@ export const kycService = {
           country_code: data.country_code,
           address: data.address,
           document_type: data.document_type,
-          address_document_url: url,
+          address_document_url: path, // Store path instead of public URL
           address_document_filename: filename,
         })
         .select()
@@ -326,6 +329,22 @@ export const kycService = {
       .eq("id", submissionId)
 
     if (error) throw error
+  },
+
+  // Get signed URL for viewing a document (for users viewing their own files)
+  async getSignedUrl(filePath: string, expiresIn: number = 3600, client?: SupabaseClient): Promise<string> {
+    const storageClient = client || supabase
+    
+    const { data, error } = await storageClient.storage
+      .from("kyc-documents")
+      .createSignedUrl(filePath, expiresIn)
+    
+    if (error) {
+      console.error("Error generating signed URL:", error)
+      throw new Error(`Failed to generate signed URL: ${error.message}`)
+    }
+    
+    return data.signedUrl
   },
 }
 

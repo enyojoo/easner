@@ -80,7 +80,8 @@ function AdminDashboardSkeleton() {
 export default function AdminDashboardPage() {
   const { data, loading } = useAdminData()
 
-  if (loading || !data) {
+  // Only show skeleton if we're truly loading and have no cached data
+  if (loading && !data) {
     return (
       <AdminDashboardLayout>
         <AdminDashboardSkeleton />

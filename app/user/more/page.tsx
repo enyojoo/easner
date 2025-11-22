@@ -23,18 +23,16 @@ export default function MorePage() {
   const { signOut, userProfile } = useAuth()
   
   // Initialize from cache synchronously to prevent flicker
+  // Use cached data even if expired to prevent skeleton flash
   const getInitialKycSubmissions = (): KYCSubmission[] => {
     if (typeof window === "undefined" || !userProfile?.id) return []
     try {
       const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
       const cached = localStorage.getItem(CACHE_KEY)
       if (!cached) return []
-      const { value, timestamp } = JSON.parse(cached)
-      const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-      if (Date.now() - timestamp < CACHE_TTL) {
-        return value || []
-      }
-      return []
+      const { value } = JSON.parse(cached)
+      // Always return cached value if it exists (even if expired) to prevent flicker
+      return value || []
     } catch {
       return []
     }
@@ -99,17 +97,33 @@ export default function MorePage() {
     // Check cache first
     const cachedSubmissions = getCachedSubmissions()
     
-    // Update state if cache exists and state is empty (only on first mount)
-    if (cachedSubmissions !== null && kycSubmissions.length === 0) {
-      setKycSubmissions(cachedSubmissions)
-    }
-
-    // If cache exists and is valid, no need to fetch
+    // If cache exists and is valid, no need to fetch (data already in state from initializer)
     if (cachedSubmissions !== null) {
+      // Fetch in background to ensure we have latest data, but don't show loading
+      const loadKycSubmissions = async () => {
+        try {
+          // Use client-side kycService directly (same as receipt upload)
+          const { kycService } = await import("@/lib/kyc-service")
+          const submissions = await kycService.getByUserId(userProfile.id)
+          // Only update if data changed (prevent flickering)
+          setKycSubmissions(prev => {
+            const prevStr = JSON.stringify(prev)
+            const newStr = JSON.stringify(submissions)
+            if (prevStr !== newStr) {
+              setCachedSubmissions(submissions || [])
+              return submissions || []
+            }
+            return prev
+          })
+        } catch (error) {
+          console.error("Error loading KYC submissions:", error)
+        }
+      }
+      loadKycSubmissions()
       return
     }
 
-    // Only fetch missing or expired data
+    // No cache - fetch and update state
     const loadKycSubmissions = async () => {
       try {
         // Use client-side kycService directly (same as receipt upload)
@@ -125,18 +139,33 @@ export default function MorePage() {
     loadKycSubmissions()
   }, [userProfile?.id])
 
-  // Determine verification status
-  const getVerificationStatus = (): "verified" | "pending" => {
+  // Determine verification status and badge
+  const getVerificationStatus = () => {
     const identitySubmission = kycSubmissions.find(s => s.type === "identity")
     const addressSubmission = kycSubmissions.find(s => s.type === "address")
 
     // Both must be approved to be "Verified"
     if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-      return "verified"
+      return { status: "verified", label: "Verified", className: "bg-green-100 text-green-700" }
     }
 
-    // Otherwise, show "Take action" (pending, in_review, rejected, or missing)
-    return "pending"
+    // Check for in_review status (either one)
+    if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+      return { status: "in_review", label: "In review", className: "bg-yellow-100 text-yellow-700" }
+    }
+
+    // Check for rejected status (either one)
+    if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
+      return { status: "rejected", label: "Rejected", className: "bg-red-100 text-red-700" }
+    }
+
+    // If at least one submission exists but not approved, show pending
+    if (identitySubmission || addressSubmission) {
+      return { status: "pending", label: "Pending", className: "bg-gray-100 text-gray-700" }
+    }
+
+    // No submissions yet
+    return { status: "not_started", label: "Take action", className: "bg-amber-100 text-amber-700" }
   }
 
   const verificationStatus = getVerificationStatus()
@@ -173,13 +202,9 @@ export default function MorePage() {
                 <span className="text-base text-gray-900">Account Verification</span>
                 <div className="flex items-center gap-2">
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      verificationStatus === "verified"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${verificationStatus.className}`}
                   >
-                    {verificationStatus === "verified" ? "Verified" : "Take action"}
+                    {verificationStatus.label}
                   </span>
                   <ChevronRight className="h-5 w-5 text-gray-400" />
                 </div>
@@ -238,8 +263,8 @@ export default function MorePage() {
             </CardContent>
           </Card>
 
-          {/* Sign Out Button */}
-          <div className="pt-6">
+          {/* Sign Out Button - Mobile/Tablet only */}
+          <div className="pt-6 lg:hidden">
             <div className="flex justify-center">
               <Button
                 variant="ghost"

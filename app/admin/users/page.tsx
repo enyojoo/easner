@@ -184,10 +184,24 @@ export default function AdminUsersPage() {
     fetchAllKyc()
   }, [data?.users])
 
-  if (loading || !data) {
+  // Only show skeleton if we're truly loading and have no cached data
+  if (loading && (!data || !data.users?.length)) {
     return (
       <AdminDashboardLayout>
         <AdminUsersSkeleton />
+      </AdminDashboardLayout>
+    )
+  }
+
+  // Ensure we have data structure even if empty
+  if (!data) {
+    return (
+      <AdminDashboardLayout>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <p className="text-gray-600">No data available. Please refresh the page.</p>
+          </div>
+        </div>
       </AdminDashboardLayout>
     )
   }
@@ -853,7 +867,35 @@ export default function AdminUsersPage() {
                                                       <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        onClick={() => window.open(identitySubmission.id_document_url, "_blank")}
+                                                        onClick={async () => {
+                                                          const filePathOrUrl = identitySubmission.id_document_url
+                                                          if (!filePathOrUrl) return
+                                                          
+                                                          // Check if it's a file path (starts with "identity/" or "address/") or an old public URL
+                                                          const isPath = filePathOrUrl.startsWith("identity/") || filePathOrUrl.startsWith("address/")
+                                                          
+                                                          if (isPath) {
+                                                            // New format: file path - get signed URL from API
+                                                            try {
+                                                              const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(filePathOrUrl)}`, {
+                                                                credentials: "include",
+                                                              })
+                                                              
+                                                              if (response.ok) {
+                                                                const { url } = await response.json()
+                                                                window.open(url, "_blank")
+                                                              } else {
+                                                                alert("Failed to access document. Please try again.")
+                                                              }
+                                                            } catch (error) {
+                                                              console.error("Error fetching signed URL:", error)
+                                                              alert("Failed to access document. Please try again.")
+                                                            }
+                                                          } else {
+                                                            // Old format: public URL (for backward compatibility)
+                                                            window.open(filePathOrUrl, "_blank")
+                                                          }
+                                                        }}
                                                       >
                                                         <Eye className="h-4 w-4 mr-2" />
                                                         View Document

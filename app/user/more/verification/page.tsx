@@ -12,17 +12,16 @@ export default function VerificationPage() {
   const { userProfile } = useAuth()
   
   // Initialize from cache synchronously to prevent flicker
+  // Use cached data even if expired to prevent skeleton flash
   const getInitialSubmissions = (): KYCSubmission[] => {
     if (typeof window === "undefined") return []
     if (!userProfile?.id) return []
     try {
       const cached = localStorage.getItem(`easner_kyc_submissions_${userProfile.id}`)
       if (!cached) return []
-      const { value, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-        return value || []
-      }
-      return []
+      const { value } = JSON.parse(cached)
+      // Always return cached value if it exists (even if expired) to prevent flicker
+      return value || []
     } catch {
       return []
     }
