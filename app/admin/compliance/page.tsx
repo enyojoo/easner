@@ -620,9 +620,32 @@ export default function AdminCompliancePage() {
         <Dialog open={userDetailsDialogOpen} onOpenChange={setUserDetailsDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                Compliance Details - {selectedUser?.first_name} {selectedUser?.last_name}
-              </DialogTitle>
+              <div className="flex items-center justify-between">
+                <DialogTitle>
+                  Compliance Details - {selectedUser?.first_name} {selectedUser?.last_name}
+                </DialogTitle>
+                {selectedUser && canSendToBridge(selectedUser) && (
+                  <Button
+                    onClick={() => handleSendToBridge(selectedUser.id)}
+                    disabled={sendingToBridge === selectedUser.id}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-xs"
+                  >
+                    {sendingToBridge === selectedUser.id ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3 w-3 mr-1.5" />
+                        Send to Bridge
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             {selectedUser && (
               <div className="space-y-6">
@@ -785,25 +808,7 @@ export default function AdminCompliancePage() {
                           )}
                         </div>
                       )}
-                      {canSendToBridge(selectedUser) ? (
-                        <Button
-                          onClick={() => handleSendToBridge(selectedUser.id)}
-                          disabled={sendingToBridge === selectedUser.id}
-                          className="bg-easner-primary hover:bg-easner-primary-600"
-                        >
-                          {sendingToBridge === selectedUser.id ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4 mr-2" />
-                              Send to Bridge
-                            </>
-                          )}
-                        </Button>
-                      ) : !selectedUser.bridge_customer_id && (
+                      {!selectedUser.bridge_customer_id && !canSendToBridge(selectedUser) && (
                         <div className="space-y-2">
                           {!selectedUser.identitySubmission && (
                             <p className="text-sm text-gray-600">⚠ Identity verification required</p>

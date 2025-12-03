@@ -18,14 +18,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
-
-    if (profile?.role !== "admin") {
+    // Check if user is admin (getAuthenticatedUser already checks admin_users table)
+    if (!user.isAdmin) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
