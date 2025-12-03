@@ -43,37 +43,83 @@ function verifyWebhookSignature(
     const timestamp = timestampMatch[1]
     const base64Signature = signatureMatch[1]
     
+    // Validate base64 signature format
+    if (!base64Signature || base64Signature.trim().length === 0) {
+      console.warn("Base64 signature is empty")
+      return false
+    }
+    
     // Create signed payload: timestamp.raw_body
     const signedPayload = `${timestamp}.${payload}`
     
-    // Ensure the public key has proper PEM format
+    // Normalize and format the public key
     let pemKey = publicKey.trim()
-    if (!pemKey.includes("BEGIN PUBLIC KEY")) {
-      // If it's just the key without headers, add them
-      pemKey = `-----BEGIN PUBLIC KEY-----\n${pemKey.replace(/\s/g, "")}\n-----END PUBLIC KEY-----`
-    } else {
-      // Ensure proper line breaks (handle both \n and \\n)
-      pemKey = pemKey.replace(/\\n/g, "\n")
-    }
     
-    // Decode the base64 signature
-    const signatureBuffer = Buffer.from(base64Signature, "base64")
+    // Remove any existing headers/footers to start fresh
+    pemKey = pemKey
+      .replace(/-----BEGIN PUBLIC KEY-----/g, "")
+      .replace(/-----END PUBLIC KEY-----/g, "")
+      .replace(/-----BEGIN RSA PUBLIC KEY-----/g, "")
+      .replace(/-----END RSA PUBLIC KEY-----/g, "")
+      .replace(/\s/g, "") // Remove all whitespace
+    
+    // Try PKCS#8 format first (standard format)
+    let formattedKey = `-----BEGIN PUBLIC KEY-----\n${pemKey.match(/.{1,64}/g)?.join("\n") || pemKey}\n-----END PUBLIC KEY-----`
+    
+    // Decode the base64 signature with validation
+    let signatureBuffer: Buffer
+    try {
+      signatureBuffer = Buffer.from(base64Signature, "base64")
+      if (signatureBuffer.length === 0) {
+        console.warn("Decoded signature buffer is empty")
+        return false
+      }
+    } catch (decodeError: any) {
+      console.error("Error decoding base64 signature:", decodeError.message)
+      return false
+    }
     
     // Verify the signature using RSA public key
     // Bridge signs: SHA256(timestamp.raw_body) with RSA
     const verify = crypto.createVerify("RSA-SHA256")
-    verify.update(signedPayload)
-    verify.end()
+    verify.update(signedPayload, "utf8")
     
-    const isValid = verify.verify(pemKey, signatureBuffer)
+    let isValid = false
+    try {
+      isValid = verify.verify(formattedKey, signatureBuffer)
+    } catch (verifyError: any) {
+      // If PKCS#8 fails, try PKCS#1 format (RSA public key)
+      if (verifyError.message?.includes("DECODER") || verifyError.message?.includes("unsupported")) {
+        console.log("Trying PKCS#1 format (RSA PUBLIC KEY)")
+        try {
+          formattedKey = `-----BEGIN RSA PUBLIC KEY-----\n${pemKey.match(/.{1,64}/g)?.join("\n") || pemKey}\n-----END RSA PUBLIC KEY-----`
+          const verify2 = crypto.createVerify("RSA-SHA256")
+          verify2.update(signedPayload, "utf8")
+          isValid = verify2.verify(formattedKey, signatureBuffer)
+        } catch (pkcs1Error: any) {
+          console.error("Error verifying with PKCS#1 format:", pkcs1Error.message)
+          console.error("Public key format issue. Key length:", pemKey.length)
+          console.error("Signature buffer length:", signatureBuffer.length)
+          return false
+        }
+      } else {
+        console.error("Error verifying webhook signature:", verifyError.message)
+        return false
+      }
+    }
     
     if (!isValid) {
-      console.warn("Webhook signature verification failed")
+      console.warn("Webhook signature verification failed - signature does not match")
     }
     
     return isValid
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error verifying webhook signature:", error)
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      opensslErrorStack: error.opensslErrorStack,
+    })
     return false
   }
 }
@@ -410,9 +456,21 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook signature
     if (BRIDGE_WEBHOOK_PUBLIC_KEY) {
-      const isValid = verifyWebhookSignature(payload, signatureHeader, BRIDGE_WEBHOOK_PUBLIC_KEY)
-      if (!isValid) {
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      try {
+        const isValid = verifyWebhookSignature(payload, signatureHeader, BRIDGE_WEBHOOK_PUBLIC_KEY)
+        if (!isValid) {
+          console.error("[WEBHOOK] Signature verification failed")
+          return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+        }
+      } catch (verifyError: any) {
+        // Log the error but don't fail in development
+        console.error("[WEBHOOK] Error during signature verification:", verifyError.message)
+        // In production, we should fail, but in development we might want to allow it
+        if (process.env.NODE_ENV === "production") {
+          return NextResponse.json({ error: "Signature verification error" }, { status: 401 })
+        } else {
+          console.warn("[WEBHOOK] Allowing webhook in development mode despite verification error")
+        }
       }
     }
 
