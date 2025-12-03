@@ -1295,46 +1295,35 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     payload.source_of_funds = sourceOfFunds
   }
   
-  // KYC Documents - include in production
-  // Bridge requires identifying_information array format for ID documents
-  console.log(`[BRIDGE-SERVICE] Including KYC documents in identifying_information array`)
+  // KYC Documents - Bridge requires drivers_license and passport objects directly
+  console.log(`[BRIDGE-SERVICE] Including KYC documents in payload`)
   
-  const identifyingInformation: any[] = []
-  
-  // Driver's license (US) - add to identifying_information array
-  if (dlNumber && dlFrontBase64 && dlBackBase64) {
-    const dlEntry: any = {
-      type: 'drivers_license',
-      front: dlFrontBase64,
+  // Driver's license (US) - add as drivers_license object
+  if (dlNumber && dlFrontBase64) {
+    payload.drivers_license = {
       number: dlNumber,
+      front: dlFrontBase64,
     }
     if (dlBackBase64) {
-      dlEntry.back = dlBackBase64
+      payload.drivers_license.back = dlBackBase64
     }
-    identifyingInformation.push(dlEntry)
-    console.log(`[BRIDGE-SERVICE] Added driver's license to identifying_information`)
+    console.log(`[BRIDGE-SERVICE] Added driver's license to payload`)
   }
   
-  // Passport (non-US) - add to identifying_information array
+  // Passport (non-US) - add as passport object
   if (passportNumber && passportFrontBase64) {
-    const passportEntry: any = {
-      type: 'passport',
-      front: passportFrontBase64,
+    payload.passport = {
       number: passportNumber,
+      front: passportFrontBase64,
     }
     if (passportBackBase64) {
-      passportEntry.back = passportBackBase64
+      payload.passport.back = passportBackBase64
     }
-    identifyingInformation.push(passportEntry)
-    console.log(`[BRIDGE-SERVICE] Added passport to identifying_information`)
+    console.log(`[BRIDGE-SERVICE] Added passport to payload`)
   }
   
-  // Add identifying_information array to payload if we have any documents
-  if (identifyingInformation.length > 0) {
-    payload.identifying_information = identifyingInformation
-    console.log(`[BRIDGE-SERVICE] Added ${identifyingInformation.length} identifying_information items to payload`)
-  } else {
-    console.warn(`[BRIDGE-SERVICE] WARNING: No identifying_information provided. Customer creation may fail if ID documents are required.`)
+  if (!payload.drivers_license && !payload.passport) {
+    console.warn(`[BRIDGE-SERVICE] WARNING: No ID documents provided. Customer creation may fail if ID documents are required.`)
   }
 
   // Proof of address (separate field, not in identifying_information)
@@ -1359,12 +1348,19 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
 
   // Log final payload structure (without base64 images to avoid log spam)
   const payloadForLogging = { ...payload }
-  if (payloadForLogging.identifying_information) {
-    payloadForLogging.identifying_information = payloadForLogging.identifying_information.map((item: any) => ({
-      ...item,
-      front: item.front ? '[BASE64_IMAGE]' : undefined,
-      back: item.back ? '[BASE64_IMAGE]' : undefined,
-    }))
+  if (payloadForLogging.drivers_license) {
+    payloadForLogging.drivers_license = {
+      ...payloadForLogging.drivers_license,
+      front: payloadForLogging.drivers_license.front ? '[BASE64_IMAGE]' : undefined,
+      back: payloadForLogging.drivers_license.back ? '[BASE64_IMAGE]' : undefined,
+    }
+  }
+  if (payloadForLogging.passport) {
+    payloadForLogging.passport = {
+      ...payloadForLogging.passport,
+      front: payloadForLogging.passport.front ? '[BASE64_IMAGE]' : undefined,
+      back: payloadForLogging.passport.back ? '[BASE64_IMAGE]' : undefined,
+    }
   }
   if (payloadForLogging.proof_of_address) {
     payloadForLogging.proof_of_address = {
