@@ -5,10 +5,10 @@ import { BrandLogo } from "@/components/brand/brand-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 
-export default function KYCPolicyPage() {
+function KYCPolicyPageContent() {
   const searchParams = useSearchParams()
   const [showBackButton, setShowBackButton] = useState(false)
 
@@ -403,6 +403,18 @@ export default function KYCPolicyPage() {
         </Card>
       </main>
     </div>
+  )
+}
+
+export default function KYCPolicyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    }>
+      <KYCPolicyPageContent />
+    </Suspense>
   )
 }
 
