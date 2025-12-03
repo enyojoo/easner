@@ -732,7 +732,22 @@ export const bridgeService = {
             if (existingCustomers && existingCustomers.length > 0) {
               const existingCustomer = existingCustomers[0]
               console.log(`[BRIDGE-SERVICE] Found existing customer with email ${email}: ${existingCustomer.id}`)
-              return existingCustomer
+              
+              // Update existing customer with latest KYC data
+              // Bridge requires all fields (even unchanged ones) to be resubmitted
+              console.log(`[BRIDGE-SERVICE] Updating existing customer ${existingCustomer.id} with latest KYC data...`)
+              try {
+                const updatedCustomer = await bridgeService.updateCustomerWithFullKyc(
+                  existingCustomer.id,
+                  customerPayload
+                )
+                console.log(`[BRIDGE-SERVICE] Successfully updated existing customer with new KYC data`)
+                return updatedCustomer
+              } catch (updateError: any) {
+                console.warn(`[BRIDGE-SERVICE] Failed to update existing customer with KYC data:`, updateError.message)
+                // Return existing customer anyway - at least we found them
+                return existingCustomer
+              }
             }
           }
         } catch (listError: any) {
@@ -977,6 +992,57 @@ export const bridgeService = {
         error: error.message,
         customerId,
         signedAgreementId,
+      })
+      throw error
+    }
+  },
+
+  /**
+   * Update customer with full KYC data using PUT
+   * IMPORTANT: Bridge requires all fields (even unchanged ones) to be resubmitted in PUT requests
+   * Partial updates are only supported for specific fields via PATCH
+   * This method updates the entire customer record with new KYC data from submissions
+   */
+  async updateCustomerWithFullKyc(customerId: string, customerPayload: any): Promise<BridgeCustomer> {
+    console.log(`[BRIDGE-SERVICE] updateCustomerWithFullKyc: Updating customer ${customerId} with full KYC data`)
+    console.log(`[BRIDGE-SERVICE] updateCustomerWithFullKyc: Payload includes:`, {
+      hasEmail: !!customerPayload.email,
+      hasFirstName: !!customerPayload.first_name,
+      hasLastName: !!customerPayload.last_name,
+      hasAddress: !!customerPayload.residential_address,
+      hasDateOfBirth: !!customerPayload.birth_date,
+      hasSignedAgreementId: !!customerPayload.signed_agreement_id,
+      hasSsn: !!customerPayload.ssn,
+      hasEndorsements: !!customerPayload.endorsements,
+      payloadKeys: Object.keys(customerPayload),
+    })
+    
+    try {
+      // Use PUT method - Bridge requires all fields to be resubmitted
+      // Note: PUT requests do NOT support Idempotency-Key (as noted in bridgeApiRequest)
+      const response = await bridgeApiRequest<BridgeCustomer>(
+        `/v0/customers/${customerId}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(customerPayload),
+        }
+      )
+      
+      console.log(`[BRIDGE-SERVICE] updateCustomerWithFullKyc: Customer updated successfully:`, {
+        customerId: response?.id,
+        kycStatus: response?.kyc_status,
+      })
+      
+      if (!response || !response.id) {
+        throw new Error(`Bridge API returned invalid response when updating customer with full KYC data`)
+      }
+      
+      return response
+    } catch (error: any) {
+      console.error(`[BRIDGE-SERVICE] updateCustomerWithFullKyc: Error updating customer:`, {
+        error: error.message,
+        customerId,
+        errorDetails: error.fullErrorDetails || error,
       })
       throw error
     }
@@ -1612,69 +1678,113 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       console.warn(`[BRIDGE-SERVICE] Unknown or invalid account_purpose value: '${accountPurpose}'. Skipping field to avoid API error. Bridge expects one of: business_transactions, charitable_donations, ecommerce_retail_payments, investment_purposes, operating_a_company, other, payments_to_friends_or_family_abroad, personal_or_living_expenses, protect_wealth, purchase_goods_and_services, receive_payment_for_freelancing, receive_salary`)
     }
   }
-  // Bridge expects source_of_funds to be an occupation code (e.g., "132011" for "Accountant and auditor")
-  // These are numeric codes from the GET /v0/lists/occupation_codes endpoint
-  // We map our UI values to common occupation codes
+  // Bridge expects source_of_funds to be one of these EXACT string values:
+  // company_funds, ecommerce_reseller, gambling_proceeds, gifts, government_benefits,
+  // inheritance, investments_loans, pension_retirement, salary, sale_of_assets_real_estate,
+  // savings, someone_elses_funds
+  // NOTE: business_income is NOT a valid value - use company_funds instead
   if (sourceOfFunds) {
-    const occupationCode = mapToOccupationCode(sourceOfFunds)
+    const validSourceOfFunds = [
+      'company_funds',
+      'ecommerce_reseller',
+      'gambling_proceeds',
+      'gifts',
+      'government_benefits',
+      'inheritance',
+      'investments_loans',
+      'pension_retirement',
+      'salary',
+      'sale_of_assets_real_estate',
+      'savings',
+      'someone_elses_funds'
+    ]
     
-    if (occupationCode) {
-      // Bridge expects source_of_funds to be the occupation code as a string
-      payload.source_of_funds = occupationCode
-      console.log(`[BRIDGE-SERVICE] Mapped source_of_funds from '${sourceOfFunds}' to occupation code '${occupationCode}'`)
+    const normalizedValue = sourceOfFunds.toLowerCase().trim()
+    
+    // Map business_income to company_funds (for backward compatibility with existing data)
+    let bridgeValue = normalizedValue
+    if (normalizedValue === 'business_income') {
+      bridgeValue = 'company_funds'
+      console.log(`[BRIDGE-SERVICE] Mapped 'business_income' to 'company_funds' (business_income is not a valid Bridge value)`)
+    }
+    
+    if (validSourceOfFunds.includes(bridgeValue)) {
+      // Bridge expects the exact string value
+      payload.source_of_funds = bridgeValue
+      console.log(`[BRIDGE-SERVICE] Using source_of_funds: '${bridgeValue}'`)
     } else {
-      // If value is not in our mapping, skip the field to avoid Bridge API errors
-      console.warn(`[BRIDGE-SERVICE] Unknown or invalid source_of_funds value: '${sourceOfFunds}'. Skipping field to avoid API error. Bridge expects an occupation code from GET /v0/lists/occupation_codes`)
+      // If value is not valid, skip the field to avoid Bridge API errors
+      console.warn(`[BRIDGE-SERVICE] Unknown or invalid source_of_funds value: '${sourceOfFunds}'. Skipping field to avoid API error. Bridge expects one of: ${validSourceOfFunds.join(', ')}`)
     }
   }
   
   // Determine customer type for international-specific fields
-  const isUSA = countryCode === 'USA' || countryCode === 'US'
+  // Normalize country code to uppercase for comparison
+  const normalizedCountryCode = countryCode ? countryCode.toUpperCase().trim() : ''
+  const isUSA = normalizedCountryCode === 'USA' || normalizedCountryCode === 'US'
   const isEEA = [
     'AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC',
     'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK',
     'SVN', 'ESP', 'SWE', 'ISL', 'LIE', 'NOR'
-  ].includes(countryCode.toUpperCase())
+  ].includes(normalizedCountryCode)
   const isInternational = !isUSA && !isEEA
   
+  console.log(`[BRIDGE-SERVICE] Country check - countryCode: '${countryCode}', normalized: '${normalizedCountryCode}', isUSA: ${isUSA}, isEEA: ${isEEA}, isInternational: ${isInternational}`)
+  
   // International-specific fields (non-US, non-EEA)
+  // NOTE: We do NOT send most_recent_occupation to Bridge - Bridge uses source_of_funds instead
+  // Explicitly ensure most_recent_occupation is NEVER in payload (for all customers)
+  if (payload.most_recent_occupation !== undefined) {
+    delete payload.most_recent_occupation
+    console.log(`[BRIDGE-SERVICE] Removed most_recent_occupation from payload (Bridge uses source_of_funds instead)`)
+  }
+  
+  // acting_as_intermediary: Only for international customers (non-US, non-EEA)
+  // Bridge expects boolean (true/false)
   if (isInternational) {
-    // most_recent_occupation: Map to occupation code (same logic as source_of_funds)
-    if (mostRecentOccupation) {
-      const occupationCode = mapToOccupationCode(mostRecentOccupation)
-      
-      if (occupationCode) {
-        payload.most_recent_occupation = occupationCode
-        console.log(`[BRIDGE-SERVICE] Mapped most_recent_occupation from '${mostRecentOccupation}' to occupation code '${occupationCode}'`)
-      } else {
-        // If value is not in our mapping, skip the field to avoid Bridge API errors
-        console.warn(`[BRIDGE-SERVICE] Unknown or invalid most_recent_occupation value: '${mostRecentOccupation}'. Skipping field to avoid API error. Bridge expects an occupation code from GET /v0/lists/occupation_codes`)
-      }
-    } else if (sourceOfFunds) {
-      // Note: Can reuse sourceOfFunds value if mostRecentOccupation is not provided
-      // This is mentioned in the requirements
-      const occupationCode = mapToOccupationCode(sourceOfFunds)
-      
-      if (occupationCode) {
-        payload.most_recent_occupation = occupationCode
-        console.log(`[BRIDGE-SERVICE] Reusing sourceOfFunds '${sourceOfFunds}' as most_recent_occupation with occupation code '${occupationCode}'`)
-      }
-    }
+    // Normalize actingAsIntermediary to boolean
+    let actingAsIntermediaryBool: boolean = false
     
-    // acting_as_intermediary: Default to "no" if not provided, Bridge expects "yes" or "no"
-    if (actingAsIntermediary) {
-      const normalizedValue = actingAsIntermediary.toLowerCase().trim()
-      if (normalizedValue === 'yes' || normalizedValue === 'no') {
-        payload.acting_as_intermediary = normalizedValue
-        console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to '${normalizedValue}'`)
-      } else {
-        console.warn(`[BRIDGE-SERVICE] Invalid acting_as_intermediary value: '${actingAsIntermediary}'. Expected 'yes' or 'no'. Defaulting to 'no'`)
-        payload.acting_as_intermediary = 'no'
+    if (actingAsIntermediary !== undefined && actingAsIntermediary !== null) {
+      // Handle boolean values
+      if (typeof actingAsIntermediary === 'boolean') {
+        actingAsIntermediaryBool = actingAsIntermediary
+      }
+      // Handle string values ('yes'/'no')
+      else if (typeof actingAsIntermediary === 'string') {
+        const normalizedValue = actingAsIntermediary.toLowerCase().trim()
+        if (normalizedValue === 'yes' || normalizedValue === 'true' || normalizedValue === '1') {
+          actingAsIntermediaryBool = true
+        } else if (normalizedValue === 'no' || normalizedValue === 'false' || normalizedValue === '0') {
+          actingAsIntermediaryBool = false
+        } else {
+          console.warn(`[BRIDGE-SERVICE] Invalid acting_as_intermediary string value: '${actingAsIntermediary}'. Expected 'yes' or 'no'. Defaulting to false`)
+          actingAsIntermediaryBool = false
+        }
+      }
+      // Handle number values (0/1)
+      else if (typeof actingAsIntermediary === 'number') {
+        actingAsIntermediaryBool = actingAsIntermediary !== 0
+      }
+      // Unknown type, default to false
+      else {
+        console.warn(`[BRIDGE-SERVICE] Invalid acting_as_intermediary type: ${typeof actingAsIntermediary}. Value: ${actingAsIntermediary}. Defaulting to false`)
+        actingAsIntermediaryBool = false
       }
     } else {
-      // Default to "no" if not provided
-      payload.acting_as_intermediary = 'no'
-      console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to default value 'no'`)
+      // Default to false if not provided
+      actingAsIntermediaryBool = false
+      console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to default value false for international customer`)
+    }
+    
+    // Always set as boolean
+    payload.acting_as_intermediary = actingAsIntermediaryBool
+    console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to ${actingAsIntermediaryBool} (boolean) for international customer`)
+  } else {
+    // Explicitly ensure acting_as_intermediary is NOT in payload for US/EEA customers
+    if (payload.acting_as_intermediary !== undefined) {
+      delete payload.acting_as_intermediary
+      console.log(`[BRIDGE-SERVICE] Removed acting_as_intermediary from payload for US/EEA customer (country: '${normalizedCountryCode}')`)
     }
   }
   
