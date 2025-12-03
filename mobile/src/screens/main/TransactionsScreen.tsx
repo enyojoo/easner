@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -7,16 +7,30 @@ import {
   FlatList,
   RefreshControl,
   TextInput,
+  Animated,
+  ScrollView,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { 
+  PieChart,
+  ArrowDownLeft, 
+  ArrowUpRight, 
+  Monitor,
+} from 'lucide-react-native'
+import * as Haptics from 'expo-haptics'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import { ShimmerListItem } from '../../components/premium'
+import FrameContainer from '../../components/FrameContainer'
+import EmptyState from '../../components/EmptyState'
+import ErrorState from '../../components/ErrorState'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
-import { transactionService } from '../../lib/transactionService'
 import { analytics } from '../../lib/analytics'
 import { useAuth } from '../../contexts/AuthContext'
 import { apiGet } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 // Get currencies from useUserData for formatAmount
 function useCurrencies() {
@@ -49,7 +63,6 @@ interface CombinedTransaction {
     crypto_currency: string
   }
   destination_type?: 'bank' | 'card'
-  // Card transaction fields
   amount?: number
   currency?: string
   merchant_name?: string
@@ -57,27 +70,192 @@ interface CombinedTransaction {
   direction?: 'credit' | 'debit'
 }
 
+// Animated Transaction Item Component
+function TransactionItem({ 
+  item, 
+  index, 
+  isLast,
+  onPress,
+  formatAmount,
+  formatDate,
+}: { 
+  item: CombinedTransaction
+  index: number
+  isLast: boolean
+  onPress: () => void
+  formatAmount: (amount: number, currency: string, isReceived?: boolean) => string
+  formatDate: (dateString: string) => string
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current
+  const slideAnim = useRef(new Animated.Value(30)).current
+  const opacityAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        delay: Math.min(index * 50, 300),
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 300,
+        delay: Math.min(index * 50, 300),
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [slideAnim, opacityAnim, index])
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+    }).start()
+  }
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+    }).start()
+  }
+
+  const transactionType = item.type || 'send'
+  const statusColor = colors.status[item.status as keyof typeof colors.status] || colors.neutral[500]
+
+  const getTransactionIcon = () => {
+    const iconColor = colors.primary.main
+    
+    switch (transactionType) {
+      case 'send':
+        return (
+          <View style={styles.transactionIconBox}>
+            <ArrowUpRight size={16} color={iconColor} strokeWidth={2.5} />
+          </View>
+        )
+      case 'receive':
+        return (
+          <View style={styles.transactionIconBox}>
+            <ArrowDownLeft size={16} color={iconColor} strokeWidth={2.5} />
+          </View>
+        )
+      case 'card_funding':
+        return (
+          <View style={styles.transactionIconBox}>
+            <Monitor size={16} color={iconColor} strokeWidth={2.5} />
+          </View>
+        )
+      default:
+        return (
+          <View style={styles.transactionIconBox}>
+            <ArrowUpRight size={16} color={iconColor} strokeWidth={2.5} />
+          </View>
+        )
+    }
+  }
+
+  return (
+    <Animated.View
+      style={{
+        transform: [
+          { translateY: slideAnim },
+          { scale: scaleAnim }
+        ],
+        opacity: opacityAnim,
+      }}
+    >
+      <TouchableOpacity
+        style={[styles.transactionItem, isLast && styles.transactionItemLast]}
+        onPress={async () => {
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onPress()
+        }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.7}
+      >
+        {getTransactionIcon()}
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionName}>
+            {transactionType === 'receive'
+              ? `Received from ${item.recipient?.full_name || item.crypto_wallet?.wallet_address?.slice(0, 8) || 'Unknown'}`
+              : transactionType === 'send'
+              ? item.recipient?.full_name || 'Unknown'
+              : 'Card Top-Up'}
+          </Text>
+          <Text style={styles.transactionDate}>
+            {formatDate(item.created_at)}
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.transactionAmount,
+            transactionType === 'receive' && styles.transactionAmountReceived
+          ]}
+        >
+          {transactionType === 'send'
+            ? formatAmount(item.receive_amount || item.send_amount || 0, 
+                item.receive_currency || item.send_currency || '', false)
+            : transactionType === 'receive'
+            ? formatAmount(item.crypto_amount || item.fiat_amount || 0, 
+                item.crypto_currency || item.fiat_currency || 'USD', true)
+            : formatAmount(item.amount || 0, item.currency || 'USD', false)}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  )
+}
+
+// Loading Skeleton
+function TransactionsSkeleton() {
+  return (
+    <View style={styles.skeletonContainer}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <View key={i} style={styles.transactionItem}>
+          <ShimmerListItem />
+        </View>
+      ))}
+    </View>
+  )
+}
+
 function TransactionsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
   const currencies = useCurrencies()
-  const { transactions: userTransactions, loading: userDataLoading } = useUserData()
+  const { transactions: userTransactions } = useUserData()
   
   const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.timing(headerAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start()
+  }, [headerAnim])
 
   // Track screen view
   useEffect(() => {
     analytics.trackScreenView('Transactions')
   }, [])
 
-  // Fetch combined transactions - only if not in cache
+  // Fetch combined transactions
   useEffect(() => {
     if (!userProfile?.id) return
 
     const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
-    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+    const CACHE_TTL = 5 * 60 * 1000
 
     const getCachedTransactions = async (): Promise<CombinedTransaction[] | null> => {
       try {
@@ -103,72 +281,119 @@ function TransactionsContent({ navigation }: NavigationProps) {
       } catch {}
     }
 
-    // Load from cache first
     const loadFromCache = async () => {
       const cachedTransactions = await getCachedTransactions()
       
-      // Update state if cache exists and state is empty (only on first mount)
       if (cachedTransactions !== null && transactions.length === 0) {
         setTransactions(cachedTransactions)
+        setLoading(false)
       }
 
-      // If cached and valid, no need to fetch immediately
       if (cachedTransactions !== null) {
-        // Fetch in background to update cache
         const fetchInBackground = async () => {
           try {
             const params = new URLSearchParams()
-            params.append('type', 'all')
+             params.append('type', 'send') // Only fetch send transactions
             params.append('limit', '100')
 
             const response = await apiGet(`/api/transactions?${params.toString()}`)
-            if (response.ok) {
+            if (response.ok && !(response as any).isNetworkError) {
               const data = await response.json()
               const transactionsList = data.transactions || []
-              setTransactions(transactionsList)
-              await setCachedTransactions(transactionsList)
+               
+               // Additional client-side filtering to ensure no receive/card transactions
+               const filteredTransactions = transactionsList.filter((tx: any) => {
+                 if (tx.type === 'receive' || tx.type === 'card_funding') return false
+                 if (tx.destination_type === 'card') return false
+                 return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+               })
+               
+               setTransactions(filteredTransactions)
+               await setCachedTransactions(filteredTransactions)
+            } else if ((response as any).isNetworkError) {
+              // Network error - keep cached transactions
+              console.warn("Network error fetching transactions in background, keeping cached data")
             }
-          } catch (error) {
-            console.error("Error fetching transactions in background:", error)
+          } catch (error: any) {
+            // Only log as error if it's not a network error
+            if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
+              console.warn("Network error fetching transactions in background:", error?.message || 'Network unavailable')
+            } else {
+              console.error("Error fetching transactions in background:", error)
+            }
           }
         }
         fetchInBackground()
         return
       }
 
-      // Only fetch missing or expired data
       const fetchCombinedTransactions = async () => {
-        // Only show loading if we don't have any cached data
-        if (transactions.length === 0) {
-          setLoading(true)
-        }
         try {
           const params = new URLSearchParams()
-          params.append('type', 'all')
+        params.append('type', 'send') // Only fetch send transactions, not receive or card
           params.append('limit', '100')
 
           const response = await apiGet(`/api/transactions?${params.toString()}`)
-          if (response.ok) {
+          if (response.ok && !(response as any).isNetworkError) {
             const data = await response.json()
             const transactionsList = data.transactions || []
-            setTransactions(transactionsList)
-            await setCachedTransactions(transactionsList)
-          } else {
-            // If API fails, fall back to userTransactions from useUserData
-            console.warn("API fetch failed, using cached transactions from useUserData")
+            
+            // TEMPORARILY DISABLED: Filter out receive and card_funding transactions
+            const filteredTransactions = transactionsList.filter((tx: any) => {
+              // Exclude receive and card_funding transactions
+              if (tx.type === 'receive' || tx.type === 'card_funding') return false
+              // Exclude transactions with destination_type card
+              if (tx.destination_type === 'card') return false
+              // Only include send transactions
+              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+            })
+            
+            setTransactions(filteredTransactions)
+            await setCachedTransactions(filteredTransactions)
+          } else if ((response as any).isNetworkError) {
+            // Network error - use fallback
+            console.warn("Network error fetching transactions, using fallback data")
             const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
-            setTransactions(fallbackTransactions)
-            if (fallbackTransactions.length > 0) {
-              await setCachedTransactions(fallbackTransactions)
+            // Filter fallback transactions too
+            const filteredFallback = fallbackTransactions.filter((tx: any) => {
+              if (tx.type === 'receive' || tx.type === 'card_funding') return false
+              if (tx.destination_type === 'card') return false
+              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+            })
+            setTransactions(filteredFallback)
+            if (filteredFallback.length > 0) {
+              await setCachedTransactions(filteredFallback)
+            }
+          } else {
+            const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
+            // Filter fallback transactions too
+            const filteredFallback = fallbackTransactions.filter((tx: any) => {
+              if (tx.type === 'receive' || tx.type === 'card_funding') return false
+              if (tx.destination_type === 'card') return false
+              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+            })
+            setTransactions(filteredFallback)
+            if (filteredFallback.length > 0) {
+              await setCachedTransactions(filteredFallback)
             }
           }
-        } catch (error) {
-          console.error("Error fetching transactions:", error)
-          // Fall back to userTransactions from useUserData
+        } catch (error: any) {
+          // Handle network errors gracefully
+          if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
+            console.warn("Network error fetching transactions, using fallback data:", error?.message || 'Network unavailable')
+          } else {
+            console.error("Error fetching transactions:", error)
+          }
           const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
-          setTransactions(fallbackTransactions)
-          if (fallbackTransactions.length > 0) {
-            await setCachedTransactions(fallbackTransactions)
+          // Filter fallback transactions too
+          const filteredFallback = fallbackTransactions.filter((tx: any) => {
+            if (tx.type === 'receive' || tx.type === 'card_funding') return false
+            if (tx.destination_type === 'card') return false
+            return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+          })
+          setTransactions(filteredFallback)
+          if (filteredFallback.length > 0) {
+            await setCachedTransactions(filteredFallback)
           }
         } finally {
           setLoading(false)
@@ -179,9 +404,9 @@ function TransactionsContent({ navigation }: NavigationProps) {
     }
 
     loadFromCache()
-  }, [userProfile?.id]) // Only fetch when user changes, not when userTransactions changes
+  }, [userProfile?.id])
 
-  // Real-time subscription for transaction updates
+  // Real-time subscription
   useEffect(() => {
     if (!userProfile?.id) return
 
@@ -199,82 +424,77 @@ function TransactionsContent({ navigation }: NavigationProps) {
     const fetchCombinedTransactions = async () => {
       try {
         const params = new URLSearchParams()
-        params.append('type', 'all')
+        params.append('type', 'send') // Only fetch send transactions, not receive or card
         params.append('limit', '100')
 
         const response = await apiGet(`/api/transactions?${params.toString()}`)
         if (response.ok) {
           const data = await response.json()
           const transactionsList = data.transactions || []
-          setTransactions(transactionsList)
-          await setCachedTransactions(transactionsList)
+          
+          // Additional client-side filtering to ensure no receive/card transactions slip through
+          const filteredTransactions = transactionsList.filter((tx: any) => {
+            // Exclude receive and card_funding transactions
+            if (tx.type === 'receive' || tx.type === 'card_funding') return false
+            // Exclude transactions with destination_type card
+            if (tx.destination_type === 'card') return false
+            // Only include send transactions
+            return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+          })
+          
+          setTransactions(filteredTransactions)
+          await setCachedTransactions(filteredTransactions)
         }
       } catch (error) {
         console.error("Error fetching transactions:", error)
       }
     }
 
-    // Subscribe to send transactions table changes
     const sendTransactionsChannel = supabase
       .channel(`user-transactions-${userProfile.id}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'transactions',
           filter: `user_id=eq.${userProfile.id}`,
         },
-        async (payload) => {
-          console.log('User transaction change received via Realtime:', payload.eventType)
-          // Refetch transactions to get updated data
+        async () => {
           await fetchCombinedTransactions()
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Subscribed to user send transactions real-time updates')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('User send transactions subscription error')
-        }
-      })
+      .subscribe()
 
-    // Subscribe to receive transactions table changes
-    const receiveTransactionsChannel = supabase
-      .channel(`user-crypto-receive-transactions-${userProfile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'crypto_receive_transactions',
-          filter: `user_id=eq.${userProfile.id}`,
-        },
-        async (payload) => {
-          console.log('User crypto receive transaction change received via Realtime:', payload.eventType)
-          // Refetch transactions to get updated data
-          await fetchCombinedTransactions()
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Subscribed to user crypto receive transactions real-time updates')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('User crypto receive transactions subscription error')
-        }
-      })
+    // TEMPORARILY DISABLED: Receive transactions realtime subscription disabled
+    // const receiveTransactionsChannel = supabase
+    //   .channel(`user-crypto-receive-transactions-${userProfile.id}`)
+    //   .on(
+    //     'postgres_changes',
+    //     {
+    //       event: '*',
+    //       schema: 'public',
+    //       table: 'crypto_receive_transactions',
+    //       filter: `user_id=eq.${userProfile.id}`,
+    //     },
+    //     async () => {
+    //       await fetchCombinedTransactions()
+    //     }
+    //   )
+    //   .subscribe()
 
     return () => {
       supabase.removeChannel(sendTransactionsChannel)
-      supabase.removeChannel(receiveTransactionsChannel)
+      // supabase.removeChannel(receiveTransactionsChannel)
     }
   }, [userProfile?.id])
 
   const onRefresh = async () => {
     setRefreshing(true)
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
       const params = new URLSearchParams()
-      params.append('type', 'all')
+        params.append('type', 'send') // Only fetch send transactions, not receive or card
       params.append('limit', '100')
 
       const response = await apiGet(`/api/transactions?${params.toString()}`)
@@ -282,16 +502,22 @@ function TransactionsContent({ navigation }: NavigationProps) {
         const data = await response.json()
         const transactionsList = data.transactions || []
         
-        // Cache transactions
+        // Filter out receive and card_funding transactions
+        const filteredTransactions = transactionsList.filter((tx: any) => {
+          if (tx.type === 'receive' || tx.type === 'card_funding') return false
+          if (tx.destination_type === 'card') return false
+          return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+        })
+        
         if (userProfile?.id) {
           const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
           await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-            value: transactionsList,
+            value: filteredTransactions,
             timestamp: Date.now()
           }))
         }
         
-        setTransactions(transactionsList)
+        setTransactions(filteredTransactions)
       }
     } catch (error) {
       console.error('Error refreshing transactions:', error)
@@ -300,29 +526,11 @@ function TransactionsContent({ navigation }: NavigationProps) {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'deposited':
-        return '#10b981'
-      case 'pending':
-      case 'confirmed':
-        return '#f59e0b'
-      case 'processing':
-      case 'converting':
-      case 'converted':
-        return '#007ACC'
-      case 'failed':
-        return '#ef4444'
-      default:
-        return '#6b7280'
-    }
-  }
-
-  const formatAmount = (amount: number, currency: string) => {
+  const formatAmount = (amount: number, currency: string, isReceived: boolean = false) => {
+    const sign = isReceived ? '' : '- '
     const currencyData = currencies.find((c) => c && c.code === currency)
     const symbol = currencyData?.symbol || currency
-    return `${symbol}${amount.toLocaleString()}`
+    return `${sign}${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   const formatDate = (dateString: string) => {
@@ -330,14 +538,15 @@ function TransactionsContent({ navigation }: NavigationProps) {
     const month = date.toLocaleString('en-US', { month: 'short' })
     const day = date.getDate().toString().padStart(2, '0')
     const year = date.getFullYear()
-    // Format: "Nov 07, 2025"
-    return `${month} ${day}, ${year}`
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
   const filteredTransactions = transactions.filter(transaction => {
     if (!transaction) return false
-    
-    // If no search term, show all transactions
     if (!searchTerm.trim()) return true
     
     const searchLower = searchTerm.toLowerCase()
@@ -350,337 +559,281 @@ function TransactionsContent({ navigation }: NavigationProps) {
     return matchesSearch
   })
 
-  const renderTransaction = ({ item }: { item: CombinedTransaction }) => {
-    // Determine transaction type: send or receive (match web logic)
-    // Default to send for backward compatibility
-    const transactionType = item.type || 'send'
-    
-    const detailScreen = transactionType === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
-    
-    return (
-      <TouchableOpacity
-        style={styles.transactionItem}
-        onPress={() => {
-          navigation.navigate(detailScreen, { 
-            transactionId: item.transaction_id,
-            fromScreen: 'Transactions'
-          })
-        }}
-      >
-        {/* Header with Type Badge, Transaction ID and Status */}
-        <View style={styles.transactionHeader}>
-          <View style={styles.headerLeft}>
-            <View style={[
-              styles.typeBadge, 
-              transactionType === 'send' ? styles.typeBadgeSend : styles.typeBadgeReceive
-            ]}>
-              <Text style={styles.typeBadgeText}>
-                {transactionType === 'send' ? 'Send' : 'Receive'}
-              </Text>
-            </View>
-            <Text style={styles.transactionId}>{item.transaction_id || item.id}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-              {item.status.toUpperCase()}
-            </Text>
-          </View>
-        </View>
-
-        {transactionType === 'send' ? (
-          <>
-            {/* Recipient Info */}
-            <View style={styles.recipientSection}>
-              <Text style={styles.recipientLabel}>To</Text>
-              <Text style={styles.recipientName}>{item.recipient?.full_name || 'Unknown'}</Text>
-            </View>
-
-            {/* Amount Section */}
-            <View style={styles.amountSection}>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountLabel}>Send Amount</Text>
-                <Text style={styles.sendAmount}>
-                  {formatAmount(item.send_amount || 0, item.send_currency || '')}
-                </Text>
-              </View>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountLabel}>Receive Amount</Text>
-                <Text style={styles.receiveAmount}>
-                  {formatAmount(item.receive_amount || 0, item.receive_currency || '')}
-                </Text>
-              </View>
-            </View>
-          </>
-        ) : (
-          <>
-            {/* Stablecoin Info */}
-            <View style={styles.recipientSection}>
-              <Text style={styles.recipientLabel}>Stablecoin Received</Text>
-              <Text style={styles.recipientName}>
-                {formatAmount(item.crypto_amount || 0, item.crypto_currency || 'USDC')}
-              </Text>
-            </View>
-
-            {/* Amount Section */}
-            <View style={styles.amountSection}>
-              <View style={styles.amountRow}>
-                <Text style={styles.amountLabel}>Converted To</Text>
-                <Text style={styles.receiveAmount}>
-                  {formatAmount(item.fiat_amount || 0, item.fiat_currency || '')}
-                </Text>
-              </View>
-              {item.crypto_wallet?.wallet_address && (
-                <View style={styles.amountRow}>
-                  <Text style={styles.amountLabel}>Wallet</Text>
-                  <Text style={styles.walletAddress}>
-                    {item.crypto_wallet.wallet_address.slice(0, 8)}...{item.crypto_wallet.wallet_address.slice(-6)}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </>
-        )}
-
-        {/* Footer with Date and Arrow */}
-        <View style={styles.transactionFooter}>
-          <Text style={styles.transactionDate}>{formatDate(item.created_at)}</Text>
-          <Text style={styles.arrowIcon}>›</Text>
-        </View>
-      </TouchableOpacity>
-    )
-  }
-
 
   return (
     <ScreenWrapper>
-      <View style={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Transaction History</Text>
-        <Text style={styles.subtitle}>View all your transfers</Text>
-      </View>
+      <View style={styles.container}>
+        {/* Header */}
+        <Animated.View 
+          style={[
+            styles.header,
+            {
+              opacity: headerAnim,
+              transform: [{
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.title}>Transactions</Text>
+              <Text style={styles.subtitle}>Your complete history</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.insightsButton}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.navigate('ExpenseInsights')
+              }}
+              activeOpacity={0.7}
+            >
+              <PieChart size={18} color={colors.primary.main} strokeWidth={2} />
+              <Text style={styles.insightsButtonText}>Expense Insights</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
+          <View style={styles.searchInputWrapper}>
+            <Ionicons name="search" size={20} color={colors.neutral[400]} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           value={searchTerm}
           onChangeText={setSearchTerm}
-          placeholder="Search transactions..."
-          placeholderTextColor="#9ca3af"
+              placeholder="Search by name or ID..."
+              placeholderTextColor={colors.neutral[400]}
         />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')}>
+                <Ionicons name="close-circle" size={20} color={colors.neutral[400]} />
+              </TouchableOpacity>
+            )}
+          </View>
       </View>
 
-
       {/* Transactions List */}
-      <FlatList
-        data={filteredTransactions}
-        renderItem={renderTransaction}
-        keyExtractor={(item) => item.id}
-        style={styles.transactionsList}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor={colors.primary.main}
+          />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No transactions found</Text>
-            <Text style={styles.emptySubtext}>
-              {searchTerm 
-                ? 'Try adjusting your search' 
-                : 'Start by sending your first transfer'
-              }
-            </Text>
-          </View>
-        }
-      />
+      >
+        <View style={styles.transactionsContainer}>
+          {loading ? (
+            <TransactionsSkeleton />
+          ) : filteredTransactions.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="receipt-outline" size={48} color={colors.neutral[400]} />
+              </View>
+              <Text style={styles.emptyTitle}>No transactions found</Text>
+              <Text style={styles.emptyText}>
+                {searchTerm 
+                  ? 'Try adjusting your search' 
+                  : 'Start by sending your first transfer'
+                }
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.listContent}>
+              {filteredTransactions.map((item, index) => {
+                const transactionType = item.type || 'send'
+                const detailScreen = transactionType === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
+                const isLast = index === filteredTransactions.length - 1
+                
+                return (
+                  <TransactionItem
+                    key={item.id || item.transaction_id || `tx-${item.created_at}`}
+                    item={item}
+                    index={index}
+                    isLast={isLast}
+                    onPress={() => {
+                      navigation.navigate(detailScreen, { 
+                        transactionId: item.transaction_id,
+                        fromScreen: 'Transactions'
+                      })
+                    }}
+                    formatAmount={formatAmount}
+                    formatDate={formatDate}
+                  />
+                )
+              })}
+            </View>
+          )}
+        </View>
+      </ScrollView>
       </View>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing[5],
   },
   header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[2],
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
+  insightsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary.background,
+  },
+  insightsButtonText: {
+    ...textStyles.labelMedium,
+    color: colors.primary.main,
+    fontWeight: '600',
+  },
+  
+  // Search
   searchContainer: {
-    padding: 20,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[3],
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.neutral.white,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[3],
+    ...shadows.sm,
+  },
+  searchIcon: {
+    marginRight: spacing[2],
   },
   searchInput: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  transactionsList: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingVertical: spacing[3],
+    fontSize: 16,
+    color: colors.text.primary,
+  },
+  
+  // Transactions List
+  transactionsContainer: {
+    marginHorizontal: spacing[5],
+    marginTop: spacing[3],
+    backgroundColor: colors.frame.background,
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    paddingTop: spacing[5],
+    paddingBottom: spacing[8],
+  },
+  listContent: {
+    paddingHorizontal: spacing[5],
+  },
+  skeletonContainer: {
+    paddingHorizontal: spacing[5],
   },
   transactionItem: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  transactionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  transactionItemLast: {
+    borderBottomWidth: 0,
+  },
+  transactionIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  transactionDetails: {
     flex: 1,
   },
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  typeBadgeSend: {
-    backgroundColor: '#007ACC',
-  },
-  typeBadgeReceive: {
-    backgroundColor: '#8b5cf6',
-  },
-  typeBadgeCard: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  typeBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  typeBadgeCardText: {
-    color: '#1f2937',
-  },
-  transactionId: {
-    fontSize: 12,
-    color: '#9ca3af',
-    fontFamily: 'monospace',
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  recipientSection: {
-    marginBottom: 16,
-  },
-  recipientLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  recipientName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  amountSection: {
-    marginBottom: 16,
-  },
-  amountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  amountLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  sendAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  receiveAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#10b981',
-  },
-  walletAddress: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontFamily: 'monospace',
-  },
-  transactionFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+  transactionName: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
+    marginBottom: spacing[1],
   },
   transactionDate: {
-    fontSize: 12,
-    color: '#9ca3af',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
   },
-  arrowIcon: {
-    fontSize: 18,
-    color: '#d1d5db',
-    fontWeight: '300',
+  transactionAmount: {
+    ...textStyles.bodyLarge,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
   },
+  transactionAmountReceived: {
+    color: colors.primary.main,
+  },
+  
+  // Empty State
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: spacing[10],
+    paddingHorizontal: spacing[5],
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.neutral[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  emptyTitle: {
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9ca3af',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
 })
 
-// Export TransactionsScreen directly (authentication handled at navigator level)
 export default function TransactionsScreen(props: NavigationProps) {
   return <TransactionsContent {...props} />
 }

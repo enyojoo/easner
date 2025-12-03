@@ -150,9 +150,6 @@ function ReceiveTransactionDetailsContent({ navigation, route }: NavigationProps
     <ScreenWrapper>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backIcon}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Transaction Details</Text>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>
@@ -254,6 +251,22 @@ function ReceiveTransactionDetailsContent({ navigation, route }: NavigationProps
             </Text>
           </View>
         </View>
+
+        {/* Bottom Action Buttons */}
+        <View style={styles.bottomActions}>
+          <TouchableOpacity 
+            style={[styles.bottomButton, styles.secondaryButton]} 
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Dashboard' })}
+          >
+            <Text style={styles.secondaryButtonText}>Dashboard</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.bottomButton, styles.primaryButton]} 
+            onPress={() => navigation.navigate('ReceiveMoney')}
+          >
+            <Text style={styles.primaryButtonText}>Receive More</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </ScreenWrapper>
   )
@@ -279,15 +292,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  backIcon: {
-    padding: 4,
-  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
     flex: 1,
-    marginLeft: 8,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -400,6 +409,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   backButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  bottomActions: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+    backgroundColor: '#ffffff',
+    marginTop: 12,
+  },
+  bottomButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    backgroundColor: '#f3f4f6',
+  },
+  secondaryButtonText: {
+    color: '#374151',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    backgroundColor: '#007ACC',
+  },
+  primaryButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',

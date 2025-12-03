@@ -311,7 +311,7 @@ export const transactionService = {
       throw new Error("Access denied: You can only create transactions for yourself")
     }
 
-    const transactionId = `ETID${Date.now()}`
+    const transactionId = generateTransactionId()
 
     try {
       // Add timeout to prevent hanging

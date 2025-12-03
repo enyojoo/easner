@@ -1,1165 +1,871 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Dimensions,
+  Platform,
+  ImageBackground,
+  Animated,
+  Image,
+  Clipboard,
   Alert,
-  ActivityIndicator,
-  RefreshControl,
-  Modal,
-  TextInput,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import ScreenWrapper from '../../components/ScreenWrapper'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Plus, Snowflake, Settings, Monitor, Apple, ArrowRight, Eye, EyeOff, Copy, Check } from 'lucide-react-native'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { apiGet, apiPost, apiPatch } from '../../lib/apiClient'
-// Clipboard functionality - using Alert for now
+import { colors, textStyles, borderRadius, spacing, shadows } from '../../theme'
+import Svg, { Path } from 'react-native-svg'
 
-interface BridgeCard {
-  id: string
-  bridge_card_account_id: string
-  card_number: string
-  currency: string
-  status: string
-  balance: number
-  last4: string
-  expiry: string
-  fundingAddress?: string
-  fundingChain?: string
-  fundingCurrency?: string
-  created_at: string
-}
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const CARD_WIDTH = 323
+const CARD_HEIGHT = 190
+const CARD_WIDTH_SIDE = 275
+const CARD_HEIGHT_SIDE = 163
+const CARD_SPACING = spacing[1] // Reduced spacing between cards
 
-interface CardTransaction {
-  id: string
-  amount: string
-  currency: string
-  status: string
-  type: string
-  merchant_name?: string
-  created_at: string
-  direction: "credit" | "debit"
-  description: string
-}
-
-function CardContent({ navigation }: NavigationProps) {
-  const { userProfile } = useAuth()
-  
-  const [cards, setCards] = useState<BridgeCard[]>([])
-  const [selectedCard, setSelectedCard] = useState<BridgeCard | null>(null)
-  const [transactions, setTransactions] = useState<CardTransaction[]>([])
-  const [loading, setLoading] = useState(false) // Set to false since we're loading from cache
-  const [refreshing, setRefreshing] = useState(false)
-  const [cardDetailsOpen, setCardDetailsOpen] = useState(false)
-  const [cardSettingsOpen, setCardSettingsOpen] = useState(false)
-  const [createCardOpen, setCreateCardOpen] = useState(false)
-  const [transactionDetailsOpen, setTransactionDetailsOpen] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<CardTransaction | null>(null)
-  const [isCreatingCard, setIsCreatingCard] = useState(false)
-  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
-  const [newCardData, setNewCardData] = useState({
-    chain: "stellar",
-    currency: "usdc",
-    firstName: "",
-    lastName: "",
-  })
-
-  useEffect(() => {
-    if (!userProfile?.id) return
-
-    const CACHE_KEY = `easner_cards_${userProfile.id}`
-    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-    const getCachedCards = async (): Promise<BridgeCard[] | null> => {
-      try {
-        const cached = await AsyncStorage.getItem(CACHE_KEY)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        await AsyncStorage.removeItem(CACHE_KEY)
-        return null
-      } catch {
-        return null
-      }
-    }
-
-    const setCachedCards = async (value: BridgeCard[]) => {
-      try {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
-    // Load from cache first
-    const loadFromCache = async () => {
-      const cachedCards = await getCachedCards()
-      
-      // Update state if cache exists
-      if (cachedCards !== null && cachedCards.length > 0) {
-        setCards(cachedCards)
-        if (!selectedCard && cachedCards.length > 0) {
-          setSelectedCard(cachedCards[0])
-        }
-      }
-
-      // If cached and valid, fetch in background to update cache
-      if (cachedCards !== null) {
-        // Fetch in background
-        loadCards(true)
-        return
-      }
-
-      // Only fetch if no cache
-      await loadCards(false)
-    }
-
-    loadFromCache()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfile?.id])
-
-  useEffect(() => {
-    if (selectedCard) {
-      loadTransactions(selectedCard.id)
-    }
-  }, [selectedCard])
-
-  const loadCards = async (background = false) => {
-    try {
-      if (!background) {
-        setLoading(true)
-      }
-      const response = await apiGet('/api/cards')
-
-      if (response.ok) {
-        const data = await response.json()
-        const loadedCards = data.cards || []
-        setCards(loadedCards)
-        
-        // Cache cards
-        if (userProfile?.id) {
-          const CACHE_KEY = `easner_cards_${userProfile.id}`
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-            value: loadedCards,
-            timestamp: Date.now()
-          }))
-        }
-
-        // Select first card if available
-        if (loadedCards.length > 0 && !selectedCard) {
-          setSelectedCard(loadedCards[0])
-        } else if (selectedCard) {
-          // Update selected card if it still exists
-          const updatedCard = loadedCards.find((c: BridgeCard) => c.id === selectedCard.id)
-          if (updatedCard) {
-            setSelectedCard(updatedCard)
-          } else if (loadedCards.length > 0) {
-            setSelectedCard(loadedCards[0])
-          }
-        }
-      } else {
-        if (!background) {
-          const errorData = await response.json().catch(() => ({}))
-          console.error('Error loading cards:', response.status, errorData)
-          Alert.alert('Error', errorData.error || 'Failed to load cards')
-        }
-      }
-    } catch (error) {
-      console.error('Error loading cards:', error)
-      if (!background) {
-        Alert.alert('Error', 'Failed to load cards. Please check your connection.')
-      }
-    } finally {
-      if (!background) {
-        setLoading(false)
-      }
-    }
-  }
-
-  const loadTransactions = async (cardId: string) => {
-    try {
-      const response = await apiGet(`/api/cards/${cardId}/transactions`)
-
-      if (response.ok) {
-        const data = await response.json()
-        setTransactions(data.transactions || [])
-      } else {
-        console.error('Error loading transactions:', response.status)
-      }
-    } catch (error) {
-      console.error('Error loading transactions:', error)
-    }
-  }
-
-  const onRefresh = async () => {
-    setRefreshing(true)
-    await loadCards()
-    if (selectedCard) {
-      await loadTransactions(selectedCard.id)
-    }
-    setRefreshing(false)
-  }
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
-
-  const handleCopy = async (text: string, key: string) => {
-    try {
-      // For React Native, we'll use a simple approach
-      // In a real app, you'd install @react-native-clipboard/clipboard or expo-clipboard
-      // For now, we'll just show visual feedback
-      setCopiedStates((prev) => ({ ...prev, [key]: true }))
-      setTimeout(() => {
-        setCopiedStates((prev) => ({ ...prev, [key]: false }))
-      }, 2000)
-      // Note: Actual clipboard copy would require installing a package
-      // Alert.alert("Copied", "Text copied to clipboard")
-    } catch (err) {
-      console.error("Failed to copy text: ", err)
-    }
-  }
-
-  const handleCreateCard = async () => {
-    if (!newCardData.firstName || !newCardData.lastName) {
-      Alert.alert("Error", "Please enter first and last name")
-      return
-    }
-
-    setIsCreatingCard(true)
-    try {
-      const response = await apiPost('/api/cards', newCardData)
-
-      if (response.ok) {
-        const data = await response.json()
-        // Reload cards and select the newly created card
-        const response2 = await apiGet('/api/cards')
-        if (response2.ok) {
-          const data2 = await response2.json()
-          const loadedCards = data2.cards || []
-          setCards(loadedCards)
-          
-          // Cache cards
-          if (userProfile?.id) {
-            const CACHE_KEY = `easner_cards_${userProfile.id}`
-            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-              value: loadedCards,
-              timestamp: Date.now()
-            }))
-          }
-          
-          // Select the newly created card
-          const newCard = loadedCards.find((c: BridgeCard) => c.id === data.card.id)
-          if (newCard) {
-            setSelectedCard(newCard)
-          } else if (loadedCards.length > 0) {
-            setSelectedCard(loadedCards[0])
-          }
-        }
-        setCreateCardOpen(false)
-        setNewCardData({
-          chain: "stellar",
-          currency: "usdc",
-          firstName: "",
-          lastName: "",
-        })
-      } else {
-        const error = await response.json().catch(() => ({}))
-        Alert.alert("Error", error.error || "Failed to create card")
-      }
-    } catch (error) {
-      console.error("Error creating card:", error)
-      Alert.alert("Error", "Failed to create card")
-    } finally {
-      setIsCreatingCard(false)
-    }
-  }
-
-  const handleFreezeToggle = async () => {
-    if (!selectedCard) return
-
-    const action = selectedCard.status === "frozen" ? "unfreeze" : "freeze"
-    try {
-      const response = await apiPatch(`/api/cards/${selectedCard.id}`, { action })
-
-      if (response.ok) {
-        // Reload cards to get latest data from Bridge
-        const response2 = await apiGet('/api/cards')
-        if (response2.ok) {
-          const data2 = await response2.json()
-          const loadedCards = data2.cards || []
-          setCards(loadedCards)
-          
-          // Update cache
-          if (userProfile?.id) {
-            const CACHE_KEY = `easner_cards_${userProfile.id}`
-            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-              value: loadedCards,
-              timestamp: Date.now()
-            }))
-          }
-          
-          // Update selected card
-          const updatedCard = loadedCards.find((c: BridgeCard) => c.id === selectedCard.id)
-          if (updatedCard) {
-            setSelectedCard(updatedCard)
-          }
-        }
-      } else {
-        const error = await response.json().catch(() => ({}))
-        Alert.alert("Error", error.error || "Failed to update card")
-      }
-    } catch (error) {
-      console.error("Error updating card:", error)
-      Alert.alert("Error", "Failed to update card")
-    }
-  }
-
-  if (loading) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007ACC" />
-        </View>
-      </ScreenWrapper>
-    )
-  }
-
+// Visa Logo Component
+function VisaLogo({ width = 60, height = 20 }: { width?: number; height?: number }) {
   return (
-    <ScreenWrapper>
-      <ScrollView
-        style={styles.scrollContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.headerTitle}>My Cards</Text>
-              <Text style={styles.headerSubtitle}>Manage your virtual debit cards</Text>
-            </View>
-            {cards.length > 0 && (
-              <TouchableOpacity
-                style={styles.addCardButton}
-                onPress={() => setCreateCardOpen(true)}
-              >
-                <Ionicons name="add" size={20} color="#ffffff" />
-                <Text style={styles.addCardButtonText}>Add Card</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Cards List */}
-        {cards.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="card-outline" size={64} color="#9ca3af" />
-            <Text style={styles.emptyText}>No Card Yet</Text>
-            <Text style={styles.emptySubtext}>Create a card to start spending</Text>
-            <TouchableOpacity
-              style={styles.addCardButtonEmpty}
-              onPress={() => setCreateCardOpen(true)}
-            >
-              <Ionicons name="add" size={20} color="#ffffff" />
-              <Text style={styles.addCardButtonText}>Add Card</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.cardsContainer}>
-            {cards.map((card) => (
-              <TouchableOpacity
-                key={card.id}
-                style={[
-                  styles.cardItem,
-                  selectedCard?.id === card.id && styles.cardItemSelected,
-                ]}
-                onPress={() => setSelectedCard(card)}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardTopRow}>
-                    <View style={styles.cardBalanceSection}>
-                      <Text style={styles.balanceLabel}>Balance</Text>
-                      <Text style={styles.balanceAmount}>
-                        {formatCurrency(card.balance, card.currency)}
-                      </Text>
-                    </View>
-                    <Ionicons name="card" size={32} color="#007ACC" />
-                  </View>
-                  <View style={styles.cardBottomRow}>
-                    <View>
-                      <Text style={styles.cardNumberLabel}>Card Number</Text>
-                      <Text style={styles.cardNumber}>**** {card.last4}</Text>
-                    </View>
-                    {card.expiry && (
-                      <View>
-                        <Text style={styles.expiryLabel}>Expires</Text>
-                        <Text style={styles.expiryValue}>{card.expiry}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Card Actions */}
-        {selectedCard && (
-          <View style={styles.cardActionsContainer}>
-            <TouchableOpacity
-              style={styles.cardActionButton}
-              onPress={() => setCardDetailsOpen(true)}
-            >
-              <Ionicons name="eye-outline" size={20} color="#374151" />
-              <Text style={styles.cardActionButtonText}>View Details</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cardActionButton}
-              onPress={() => setCardSettingsOpen(true)}
-            >
-              <Ionicons name="settings-outline" size={20} color="#374151" />
-              <Text style={styles.cardActionButtonText}>Card Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cardActionButton}
-              onPress={handleFreezeToggle}
-            >
-              <Ionicons name="snow-outline" size={20} color="#374151" />
-              <Text style={styles.cardActionButtonText}>
-                {selectedCard.status === "frozen" ? "Unfreeze" : "Freeze"} Card
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Transactions */}
-        {selectedCard && (
-          <View style={styles.transactionsContainer}>
-            <View style={styles.transactionsHeader}>
-              <Text style={styles.sectionTitle}>Transaction history</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CardTransactions')}
-              >
-                <Text style={styles.seeAllLink}>See all</Text>
-              </TouchableOpacity>
-            </View>
-            {transactions.length === 0 ? (
-              <View style={styles.emptyTransactionsContainer}>
-                <Text style={styles.emptyTransactionsText}>No transactions found</Text>
-              </View>
-            ) : (
-              <View style={styles.transactionsList}>
-                {transactions.map((transaction) => {
-                  const statusColor = transaction.status === "success" || transaction.status === "completed" 
-                    ? "#10b981" 
-                    : transaction.status === "pending" 
-                    ? "#f59e0b" 
-                    : "#ef4444"
-                  
-                  return (
-                    <TouchableOpacity
-                      key={transaction.id}
-                      style={styles.transactionItem}
-                      onPress={() => {
-                        setSelectedTransaction(transaction)
-                        setTransactionDetailsOpen(true)
-                      }}
-                    >
-                      <View style={styles.transactionContent}>
-                        <View style={[
-                          styles.transactionIcon,
-                          transaction.direction === 'credit' ? styles.transactionIconCredit : styles.transactionIconDebit
-                        ]}>
-                          <Ionicons
-                            name={transaction.direction === 'credit' ? 'arrow-down' : 'arrow-up'}
-                            size={16}
-                            color={transaction.direction === 'credit' ? '#10b981' : '#ef4444'}
-                          />
-                        </View>
-                        <View style={styles.transactionInfo}>
-                          <Text style={styles.transactionDescription} numberOfLines={1}>
-                            {transaction.description || transaction.merchant_name || 'Transaction'}
-                          </Text>
-                          <View style={styles.transactionMeta}>
-                            <Text style={styles.transactionDate}>{formatDate(transaction.created_at)}</Text>
-                            <Text style={styles.transactionSeparator}>•</Text>
-                            <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-                              <Text style={[styles.statusText, { color: statusColor }]}>
-                                {transaction.status === "success" || transaction.status === "completed" 
-                                  ? "Success" 
-                                  : transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                        <Text
-                          style={[
-                            styles.transactionAmount,
-                            transaction.direction === 'credit' && styles.transactionAmountCredit,
-                          ]}
-                        >
-                          {transaction.direction === 'credit' ? '+' : '-'}
-                          {formatCurrency(Math.abs(parseFloat(transaction.amount)), transaction.currency)}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Card Details Modal */}
-        <Modal
-          visible={cardDetailsOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setCardDetailsOpen(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Card Details</Text>
-                <TouchableOpacity onPress={() => setCardDetailsOpen(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              {selectedCard && (
-                <ScrollView style={styles.modalScrollView}>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Card Number</Text>
-                    <View style={styles.modalFieldRow}>
-                      <Text style={styles.modalValueMono}>**** {selectedCard.last4}</Text>
-                      <TouchableOpacity
-                        onPress={() => handleCopy(`**** ${selectedCard.last4}`, "cardNumber")}
-                      >
-                        <Ionicons
-                          name={copiedStates.cardNumber ? "checkmark" : "copy-outline"}
-                          size={20}
-                          color={copiedStates.cardNumber ? "#10b981" : "#6b7280"}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  {selectedCard.expiry && (
-                    <View style={styles.modalField}>
-                      <Text style={styles.modalLabel}>Expiry Date</Text>
-                      <Text style={styles.modalValue}>{selectedCard.expiry}</Text>
-                    </View>
-                  )}
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Balance</Text>
-                    <Text style={styles.modalValueLarge}>
-                      {formatCurrency(selectedCard.balance, selectedCard.currency)}
-                    </Text>
-                  </View>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Status</Text>
-                    <Text style={styles.modalValue}>{selectedCard.status}</Text>
-                  </View>
-                  {selectedCard.fundingAddress && (
-                    <View style={styles.modalField}>
-                      <Text style={styles.modalLabel}>Funding Address (Top-Up)</Text>
-                      <View style={styles.modalFieldRow}>
-                        <Text style={styles.modalValueMonoSmall} numberOfLines={2}>
-                          {selectedCard.fundingAddress}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => handleCopy(selectedCard.fundingAddress || "", "fundingAddress")}
-                        >
-                          <Ionicons
-                            name={copiedStates.fundingAddress ? "checkmark" : "copy-outline"}
-                            size={20}
-                            color={copiedStates.fundingAddress ? "#10b981" : "#6b7280"}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.modalHint}>
-                        Send {selectedCard.fundingCurrency?.toUpperCase()} on {selectedCard.fundingChain} to fund this card
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              )}
-            </View>
-          </View>
-        </Modal>
-
-        {/* Card Settings Modal */}
-        <Modal
-          visible={cardSettingsOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setCardSettingsOpen(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Card Settings</Text>
-                <TouchableOpacity onPress={() => setCardSettingsOpen(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              {selectedCard && (
-                <View style={styles.modalScrollView}>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Card Number</Text>
-                    <Text style={styles.modalValueMono}>**** {selectedCard.last4}</Text>
-                  </View>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Status</Text>
-                    <Text style={styles.modalValue}>{selectedCard.status}</Text>
-                  </View>
-                  <View style={styles.modalDivider} />
-                  <Text style={styles.modalHint}>
-                    Card settings and preferences will be available here
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
-
-        {/* Create Card Modal */}
-        <Modal
-          visible={createCardOpen}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setCreateCardOpen(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Create New Card</Text>
-                <TouchableOpacity onPress={() => setCreateCardOpen(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={styles.modalScrollView}>
-                <View style={styles.modalField}>
-                  <Text style={styles.modalLabel}>First Name *</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={newCardData.firstName}
-                    onChangeText={(text) => setNewCardData({ ...newCardData, firstName: text })}
-                    placeholder="John"
-                  />
-                </View>
-                <View style={styles.modalField}>
-                  <Text style={styles.modalLabel}>Last Name *</Text>
-                  <TextInput
-                    style={styles.modalInput}
-                    value={newCardData.lastName}
-                    onChangeText={(text) => setNewCardData({ ...newCardData, lastName: text })}
-                    placeholder="Doe"
-                  />
-                </View>
-                <View style={styles.modalField}>
-                  <Text style={styles.modalLabel}>Blockchain *</Text>
-                  <TouchableOpacity style={styles.modalSelect}>
-                    <Text style={styles.modalSelectText}>
-                      {newCardData.chain.charAt(0).toUpperCase() + newCardData.chain.slice(1)}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#6b7280" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.modalField}>
-                  <Text style={styles.modalLabel}>Currency *</Text>
-                  <TouchableOpacity style={styles.modalSelect}>
-                    <Text style={styles.modalSelectText}>
-                      {newCardData.currency.toUpperCase()}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#6b7280" />
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.modalButton,
-                    (isCreatingCard || !newCardData.firstName || !newCardData.lastName) && styles.modalButtonDisabled
-                  ]}
-                  onPress={handleCreateCard}
-                  disabled={isCreatingCard || !newCardData.firstName || !newCardData.lastName}
-                >
-                  {isCreatingCard ? (
-                    <ActivityIndicator color="#ffffff" />
-                  ) : (
-                    <Text style={styles.modalButtonText}>Create Card</Text>
-                  )}
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Transaction Details Modal */}
-        <Modal
-          visible={transactionDetailsOpen}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setTransactionDetailsOpen(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Transaction Details</Text>
-                <TouchableOpacity onPress={() => setTransactionDetailsOpen(false)}>
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              {selectedTransaction && (
-                <View style={styles.modalScrollView}>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Description</Text>
-                    <Text style={styles.modalValue}>{selectedTransaction.description}</Text>
-                  </View>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Amount</Text>
-                    <Text
-                      style={[
-                        styles.modalValueLarge,
-                        selectedTransaction.direction === 'credit' && styles.modalValueCredit
-                      ]}
-                    >
-                      {selectedTransaction.direction === 'credit' ? '+' : '-'}
-                      {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount)), selectedTransaction.currency)}
-                    </Text>
-                  </View>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Date</Text>
-                    <Text style={styles.modalValue}>
-                      {new Date(selectedTransaction.created_at).toLocaleString()}
-                    </Text>
-                  </View>
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Status</Text>
-                    <Text style={styles.modalValue}>{selectedTransaction.status}</Text>
-                  </View>
-                  {selectedTransaction.merchant_name && (
-                    <View style={styles.modalField}>
-                      <Text style={styles.modalLabel}>Merchant</Text>
-                      <Text style={styles.modalValue}>{selectedTransaction.merchant_name}</Text>
-                    </View>
-                  )}
-                  <View style={styles.modalField}>
-                    <Text style={styles.modalLabel}>Type</Text>
-                    <Text style={styles.modalValue}>{selectedTransaction.type}</Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        </Modal>
-      </ScrollView>
-    </ScreenWrapper>
+    <Svg width={width} height={height} viewBox="0 0 780 500" fill="none">
+      <Path
+        d="M489.823 143.111C442.988 143.111 401.134 167.393 401.134 212.256C401.134 263.706 475.364 267.259 475.364 293.106C475.364 303.989 462.895 313.731 441.6 313.731C411.377 313.731 388.789 300.119 388.789 300.119L379.123 345.391C379.123 345.391 405.145 356.889 439.692 356.889C490.898 356.889 531.19 331.415 531.19 285.784C531.19 231.419 456.652 227.971 456.652 203.981C456.652 195.455 466.887 186.114 488.122 186.114C512.081 186.114 531.628 196.014 531.628 196.014L541.087 152.289C541.087 152.289 519.818 143.111 489.823 143.111ZM61.3294 146.411L60.1953 153.011C60.1953 153.011 79.8988 156.618 97.645 163.814C120.495 172.064 122.122 176.868 125.971 191.786L167.905 353.486H224.118L310.719 146.411H254.635L198.989 287.202L176.282 167.861C174.199 154.203 163.651 146.411 150.74 146.411H61.3294ZM333.271 146.411L289.275 353.486H342.756L386.598 146.411H333.271ZM631.554 146.411C618.658 146.411 611.825 153.318 606.811 165.386L528.458 353.486H584.542L595.393 322.136H663.72L670.318 353.486H719.805L676.633 146.411H631.554ZM638.848 202.356L655.473 280.061H610.935L638.848 202.356Z"
+        fill="#FFFFFF"
+      />
+    </Svg>
   )
 }
 
-const CardScreen = ({ navigation }: NavigationProps) => {
-  return <CardContent navigation={navigation} />
+// NFC Icon
+function NfcIcon({ size = 24 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/>
+      <Path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/>
+      <Path d="M12.91 4.1a15.91 15.91 0 0 1 .01 15.8"/>
+      <Path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>
+    </Svg>
+  )
 }
 
-export default CardScreen
+// Mock card data
+const MOCK_CARDS = [
+  {
+    id: '1',
+    name: 'Card 1',
+    last4: '7061',
+    cardNumber: '4144 **** **** 7061',
+    fullCardNumber: '4144 1234 5678 7061',
+    type: 'visa',
+    color: 'blue',
+    expiryDate: '12/25',
+    cvv: '123',
+    ownerName: 'SAMUEL ADEYEMI',
+  },
+  {
+    id: '2',
+    name: 'Card 2',
+    last4: '1234',
+    cardNumber: '4111 **** **** 1234',
+    fullCardNumber: '4111 2222 3333 1234',
+    type: 'visa',
+    color: 'purple',
+    expiryDate: '09/26',
+    cvv: '456',
+    ownerName: 'SAMUEL ADEYEMI',
+  },
+  {
+    id: '3',
+    name: 'Card 3',
+    last4: '5678',
+    cardNumber: '4222 **** **** 5678',
+    fullCardNumber: '4222 3333 4444 5678',
+    type: 'visa',
+    color: 'blue',
+    expiryDate: '03/27',
+    cvv: '789',
+    ownerName: 'SAMUEL ADEYEMI',
+  },
+]
+
+// Mock transactions
+const MOCK_TRANSACTIONS = [
+  {
+    id: '1',
+    merchant: 'Apple',
+    amount: 1250.00,
+        currency: 'USD',
+    date: 'Today, 2:40 PM',
+    icon: 'monitor',
+    status: 'approved',
+  },
+  {
+    id: '2',
+    merchant: 'Lidl',
+    amount: 124.10,
+        currency: 'USD',
+    date: 'Yesterday, 6:51 PM',
+    icon: 'apple',
+    status: 'denied',
+  },
+  {
+    id: '3',
+    merchant: 'Amazon',
+    amount: 89.50,
+        currency: 'USD',
+    date: '2 days ago, 10:15 AM',
+    icon: 'monitor',
+    status: 'reversed',
+  },
+]
+
+export default function CardScreen({ navigation }: NavigationProps) {
+  const insets = useSafeAreaInsets()
+  const [selectedCardIndex, setSelectedCardIndex] = useState(0)
+  const [flippedCards, setFlippedCards] = useState<{ [key: number]: boolean }>({})
+  const scrollViewRef = useRef<Animated.ScrollView>(null)
+  const scrollX = useRef(new Animated.Value(0)).current
+  const flipAnimations = useRef<{ [key: number]: Animated.Value }>({})
+
+  const selectedCard = MOCK_CARDS[selectedCardIndex]
+  const [copiedCardNumber, setCopiedCardNumber] = useState<string | null>(null)
+
+  const handleCopyCardNumber = async (cardNumber: string, cardId: string) => {
+    try {
+      await Clipboard.setString(cardNumber)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      setCopiedCardNumber(cardId)
+      setTimeout(() => {
+        setCopiedCardNumber(null)
+      }, 2000)
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy card number')
+    }
+  }
+
+  // Initialize flip animations for each card
+  MOCK_CARDS.forEach((card, index) => {
+    if (!flipAnimations.current[index]) {
+      flipAnimations.current[index] = new Animated.Value(0)
+    }
+  })
+
+  const handleFlipCard = (cardIndex: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    const isFlipped = flippedCards[cardIndex] || false
+    const toValue = isFlipped ? 0 : 1
+    const flipAnim = flipAnimations.current[cardIndex]
+    
+    Animated.spring(flipAnim, {
+      toValue,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start()
+    
+    setFlippedCards(prev => ({
+      ...prev,
+      [cardIndex]: !isFlipped,
+    }))
+  }
+
+  const getCardFlipStyles = (cardIndex: number) => {
+    const flipAnim = flipAnimations.current[cardIndex]
+    if (!flipAnim) return { front: {}, back: {} }
+
+    const frontInterpolate = flipAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '180deg'],
+    })
+
+    const backInterpolate = flipAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['180deg', '360deg'],
+    })
+
+    const frontOpacity = flipAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [1, 0, 0],
+    })
+
+    const backOpacity = flipAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0, 0, 1],
+    })
+
+    return {
+      front: {
+        transform: [{ rotateY: frontInterpolate }],
+        opacity: frontOpacity,
+      },
+      back: {
+        transform: [{ rotateY: backInterpolate }],
+        opacity: backOpacity,
+      },
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return { bg: '#10B98120', border: '#10B981', text: '#10B981' }
+      case 'denied':
+        return { bg: '#EF444420', border: '#EF4444', text: '#EF4444' }
+      case 'reversed':
+        return { bg: '#F59E0B20', border: '#F59E0B', text: '#F59E0B' }
+      default:
+        return { bg: '#6B728020', border: '#6B7280', text: '#6B7280' }
+    }
+  }
+
+  const maskCardNumber = (cardNumber: string) => {
+    // Extract last 4 digits from the card number
+    // Handle both formats: "4144 **** **** 7061" or "41447061"
+    const digits = cardNumber.replace(/\D/g, '')
+    if (digits.length >= 4) {
+      const last4 = digits.slice(-4)
+      // Return masked format: ** 5398
+      return `** ${last4}`
+    }
+    // Fallback if no digits found
+    return cardNumber
+  }
+
+  const handleCardScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    {
+      useNativeDriver: false,
+      listener: (event: any) => {
+        const offsetX = event.nativeEvent.contentOffset.x
+        const cardOffset = CARD_WIDTH + CARD_SPACING * 2
+        const index = Math.round(offsetX / cardOffset)
+        if (index !== selectedCardIndex && index >= 0 && index < MOCK_CARDS.length) {
+          setSelectedCardIndex(index)
+        }
+      },
+    }
+  )
+
+  const getTransactionIcon = (iconType: string) => {
+    switch (iconType) {
+      case 'monitor':
+        return <Monitor size={16} color={colors.primary.main} strokeWidth={2.5} />
+      case 'apple':
+        return <Apple size={16} color={colors.primary.main} strokeWidth={2.5} />
+      default:
+        return <Monitor size={16} color={colors.primary.main} strokeWidth={2.5} />
+    }
+  }
+
+  const formatAmount = (amount: number, currency: string) => {
+    const currencySymbol = currency === 'USD' ? '$' : '€'
+    return `${currencySymbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+    return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top }]}>
+        <Text style={styles.headerTitle}>My Cards</Text>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            // Handle add card
+          }}
+          activeOpacity={0.7}
+        >
+          <Plus size={20} color={colors.text.primary} strokeWidth={2.5} />
+        </TouchableOpacity>
+        </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Card Carousel */}
+        <View style={styles.carouselContainer}>
+          <Animated.ScrollView
+            ref={scrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleCardScroll}
+            scrollEventThrottle={16}
+            snapToInterval={CARD_WIDTH + CARD_SPACING * 2}
+            decelerationRate="fast"
+            contentContainerStyle={styles.carouselContent}
+            contentInsetAdjustmentBehavior="never"
+          >
+            {MOCK_CARDS.map((card, index) => {
+              const cardOffset = CARD_WIDTH + CARD_SPACING * 2
+              const inputRange = [
+                (index - 1) * cardOffset,
+                index * cardOffset,
+                (index + 1) * cardOffset,
+              ]
+              
+              const scale = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.96, 1, 0.96], // Even closer to main card (96% scale)
+                extrapolate: 'clamp',
+              })
+              
+              const heightScale = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.96, 1, 0.96], // Even closer to main card (96% scale)
+                extrapolate: 'clamp',
+              })
+              
+              const opacity = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.8, 1, 0.8],
+                extrapolate: 'clamp',
+  })
+
+  return (
+        <Animated.View
+                  key={card.id}
+          style={[
+                    styles.cardWrapper,
+            {
+                      transform: [{ scale }],
+                      height: Animated.multiply(CARD_HEIGHT, heightScale),
+                      opacity,
+            },
+          ]}
+        >
+                  {/* Card Front */}
+          <Animated.View
+            style={[
+              styles.cardFace,
+              getCardFlipStyles(index).front,
+            ]}
+          >
+                    <ImageBackground
+                      source={require('../../../assets/backgrounds/gradient-background.png')}
+                      style={styles.card}
+                      imageStyle={styles.cardImage}
+                      resizeMode="cover"
+                    >
+                      {/* Easner Icon - Top Left */}
+                      <View style={styles.easnerIconContainer}>
+                        <Image
+                          source={require('../../../assets/icons/easner icon.png')}
+                          style={styles.easnerIcon}
+                          resizeMode="contain"
+                        />
+                      </View>
+                  
+                      {/* Card Name Badge and NFC Icon - Top Right */}
+                      <View style={styles.cardNameAndNfcContainer}>
+                        <View style={styles.cardNameBadge}>
+                          <Text style={styles.cardNameText}>{card.name}</Text>
+                        </View>
+                        <View style={styles.nfcIconContainer}>
+                          <NfcIcon size={20} />
+                        </View>
+                      </View>
+                  
+                      {/* Visa Logo - Bottom Right */}
+                      <View style={styles.visaLogoContainer}>
+                        <VisaLogo width={70} height={44} />
+                      </View>
+                  
+                      {/* Card Number - Bottom Left */}
+                      <View style={styles.cardNumberContainer}>
+                        <Text style={styles.cardNumber}>{maskCardNumber(card.cardNumber)}</Text>
+                      </View>
+                    </ImageBackground>
+          </Animated.View>
+
+                  {/* Card Back */}
+          <Animated.View
+            style={[
+              styles.cardFace,
+              styles.cardBack,
+              getCardFlipStyles(index).back,
+            ]}
+          >
+                    <ImageBackground
+                      source={require('../../../assets/backgrounds/gradient-background.png')}
+                      style={styles.card}
+                      imageStyle={styles.cardImage}
+                      resizeMode="cover"
+                    >
+                      {/* Card Back Content */}
+                      <View style={styles.cardBackContent}>
+                        {/* Owner Name */}
+                        <View style={styles.cardBackOwnerContainer}>
+                          <Text style={styles.cardBackOwnerName}>{card.ownerName}</Text>
+                        </View>
+
+                        {/* Card Number with Copy */}
+                        <View style={styles.cardBackNumberContainer}>
+                          <Text style={styles.cardBackNumberLabel}>Card Number</Text>
+                          <TouchableOpacity
+                            style={styles.cardBackNumberRow}
+                            onPress={() => handleCopyCardNumber(card.fullCardNumber, card.id)}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.cardBackNumberValue}>{card.fullCardNumber}</Text>
+                            {copiedCardNumber === card.id ? (
+                              <Check size={16} color={colors.text.inverse} strokeWidth={2.5} />
+                            ) : (
+                              <Copy size={16} color={colors.text.inverse} strokeWidth={2.5} />
+                            )}
+                          </TouchableOpacity>
+                        </View>
+
+                        {/* Valid and CVV Row */}
+                        <View style={styles.cardBackDetailsRow}>
+                          <View style={styles.cardBackDetailItem}>
+                            <Text style={styles.cardBackLabel}>Valid</Text>
+                            <Text style={styles.cardBackDetailValue}>{card.expiryDate}</Text>
+                          </View>
+                          <View style={styles.cardBackDetailItem}>
+                            <Text style={styles.cardBackLabel}>CVV</Text>
+                            <Text style={styles.cardBackCvvValue}>{card.cvv}</Text>
+                          </View>
+                        </View>
+
+                        {/* Visa Logo */}
+                        <View style={styles.cardBackLogo}>
+                          <VisaLogo width={70} height={44} />
+                        </View>
+                      </View>
+                    </ImageBackground>
+                  </Animated.View>
+                </Animated.View>
+              )
+            })}
+          </Animated.ScrollView>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+              <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleFlipCard(selectedCardIndex)}
+                activeOpacity={0.7}
+              >
+            <View style={styles.actionIconContainer}>
+              {flippedCards[selectedCardIndex] ? (
+                <EyeOff size={20} color={colors.text.primary} strokeWidth={2.5} />
+              ) : (
+                <Eye size={20} color={colors.text.primary} strokeWidth={2.5} />
+              )}
+                </View>
+            <Text style={styles.actionButtonText}>{flippedCards[selectedCardIndex] ? 'Hide' : 'View'}</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              // Handle freeze
+                }}
+                activeOpacity={0.7}
+              >
+            <View style={styles.actionIconContainer}>
+              <Snowflake size={20} color={colors.text.primary} strokeWidth={2.5} />
+                </View>
+            <Text style={styles.actionButtonText}>Freeze</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              // Handle settings
+                }}
+                activeOpacity={0.7}
+              >
+            <View style={styles.actionIconContainer}>
+              <Settings size={20} color={colors.text.primary} strokeWidth={2.5} />
+                </View>
+            <Text style={styles.actionButtonText}>Settings</Text>
+              </TouchableOpacity>
+            </View>
+
+        {/* Transactions Section */}
+        <View style={styles.transactionsSection}>
+            <View style={styles.transactionsHeader}>
+            <Text style={styles.transactionsTitle}>Transactions</Text>
+              <TouchableOpacity
+              style={styles.viewAllButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.navigate('TransactionCard' as never)
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>All</Text>
+              <ArrowRight size={14} color={colors.primary.main} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+          {/* Transaction List */}
+          {MOCK_TRANSACTIONS.map((transaction) => (
+                    <TouchableOpacity
+                      key={transaction.id}
+                      style={styles.transactionItem}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.navigate('TransactionDetails' as never, { transactionId: transaction.id } as never)
+                      }}
+                      activeOpacity={0.7}
+                    >
+              <View style={styles.transactionIconBox}>
+                {getTransactionIcon(transaction.icon)}
+              </View>
+                        <View style={styles.transactionDetails}>
+                <Text style={styles.transactionName}>{transaction.merchant}</Text>
+                <Text style={styles.transactionDate}>{transaction.date}</Text>
+                          </View>
+              <View style={styles.transactionAmountContainer}>
+                <Text style={styles.transactionAmount}>
+                  - {formatAmount(transaction.amount, transaction.currency)}
+                </Text>
+                <Text style={[styles.transactionStatusText, { color: getStatusColor(transaction.status).text }]}>
+                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                </Text>
+              </View>
+                        </TouchableOpacity>
+          ))}
+                      </View>
+                </ScrollView>
+          </View>
+  )
+}
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
   },
   header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[4],
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Bold',
   },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  addCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#007ACC', // Brand primary color
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  addCardButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  addCardButtonEmpty: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#007ACC', // Brand primary color
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  emptyContainer: {
-    flex: 1,
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background.secondary,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 8,
-  },
-  cardsContainer: {
-    padding: 20,
-    gap: 12,
-  },
-  cardItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-  },
-  cardItemSelected: {
-    borderColor: '#007ACC',
-    shadowColor: '#007ACC',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardContent: {
-    gap: 16,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardBalanceSection: {
+  scrollView: {
     flex: 1,
   },
-  balanceLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
+  scrollContent: {
+    paddingTop: spacing[2],
   },
-  balanceAmount: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
+  carouselContainer: {
+    height: CARD_HEIGHT + spacing[8], // Fixed height to prevent layout shifts during card movement
+    marginTop: spacing[5],
+    marginBottom: spacing[0.5], // Further reduced bottom margin
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  cardBottomRow: {
+  carouselContent: {
+    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2, // Center the first card
+    gap: CARD_SPACING * 2,
+  },
+  cardWrapper: {
+    width: CARD_WIDTH,
+    marginRight: CARD_SPACING,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  cardFace: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    position: 'absolute',
+  },
+  cardBack: {
+    position: 'absolute',
+  },
+  cardImage: {
+    borderRadius: 24,
+  },
+  cardBackContent: {
+    flex: 1,
+    padding: spacing[6],
+    justifyContent: 'flex-start',
+    paddingTop: spacing[8],
+  },
+  cardBackOwnerContainer: {
+    marginBottom: spacing[6],
+  },
+  cardBackNumberContainer: {
+    marginBottom: spacing[6],
+    gap: spacing[1],
+  },
+  cardBackNumberLabel: {
+    fontSize: 10,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-Medium',
+    opacity: 0.8,
+  },
+  cardBackNumberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  cardBackNumberValue: {
+    fontSize: 16,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+    letterSpacing: 1,
+  },
+  cardBackDetailsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    marginBottom: spacing[6],
+    gap: spacing[4],
   },
-  cardNumberLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
+  cardBackDetailItem: {
+    gap: spacing[1],
+  },
+  cardBackLabel: {
+    fontSize: 10,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-Medium',
+    opacity: 0.8,
+  },
+  cardBackDetailValue: {
+    fontSize: 14,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  cardBackCvvValue: {
+    fontSize: 14,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+    letterSpacing: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: 4,
+  },
+  cardBackOwnerName: {
+    fontSize: 14,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  cardBackLogo: {
+    alignSelf: 'flex-start',
+    marginTop: spacing[4],
+  },
+  easnerIconContainer: {
+    position: 'absolute',
+    top: 14,
+    left: 5,
+    width: 60,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  easnerIcon: {
+    width: 60,
+    height: 30,
+  },
+  cardNameAndNfcContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  cardNameBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[0.5],
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'flex-start',
+  },
+  cardNameText: {
+    fontSize: 10,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  nfcIconContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  visaLogoContainer: {
+    position: 'absolute',
+    bottom: 5,
+    right: 20,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+  },
+  cardNumberContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
   },
   cardNumber: {
     fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#1f2937',
+    fontWeight: '600',
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+    letterSpacing: 1,
   },
-  expiryLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing[3],
+    paddingHorizontal: spacing[5],
+    marginTop: spacing[0.5], // Reduced top margin
+    marginBottom: spacing[6],
   },
-  expiryValue: {
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  actionIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.background.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  actionButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1f2937',
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
   },
-  cardActionsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    gap: 8,
-  },
-  cardActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  cardActionButtonText: {
-    fontSize: 16,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  transactionsContainer: {
-    padding: 20,
-    paddingTop: 0,
+  transactionsSection: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[5],
+    paddingBottom: spacing[8],
+    backgroundColor: colors.frame.background,
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    marginHorizontal: spacing[5],
+    marginTop: spacing[4],
   },
   transactionsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing[4],
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
+  transactionsTitle: {
+    ...textStyles.headingSmall,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
   },
-  seeAllLink: {
-    fontSize: 16,
-    color: '#007ACC',
-    fontWeight: '500',
-  },
-  emptyTransactionsContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 32,
+  viewAllButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    gap: spacing[1],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    backgroundColor: '#B9CAFF',
+    borderRadius: borderRadius.full,
   },
-  emptyTransactionsText: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  transactionsList: {
-    gap: 12,
+  viewAllText: {
+    ...textStyles.labelMedium,
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
   },
   transactionItem: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  transactionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
   },
-  transactionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  transactionIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: spacing[3],
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
-  transactionIconCredit: {
-    backgroundColor: '#d1fae5',
-  },
-  transactionIconDebit: {
-    backgroundColor: '#fee2e2',
-  },
-  transactionInfo: {
+  transactionDetails: {
     flex: 1,
-    minWidth: 0,
   },
-  transactionDescription: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  transactionMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  transactionName: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
+    marginBottom: spacing[1],
   },
   transactionDate: {
-    fontSize: 12,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
   },
-  transactionSeparator: {
-    fontSize: 12,
-    color: '#d1d5db',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+    gap: spacing[0.5],
   },
   transactionAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    fontVariant: ['tabular-nums'],
+    ...textStyles.bodyLarge,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
   },
-  transactionAmountCredit: {
-    color: '#10b981',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  modalScrollView: {
-    padding: 20,
-  },
-  modalField: {
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  modalValue: {
-    fontSize: 14,
-    color: '#111827',
-  },
-  modalValueMono: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#111827',
-  },
-  modalValueMonoSmall: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#111827',
-    flex: 1,
-  },
-  modalValueLarge: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  modalValueCredit: {
-    color: '#10b981',
-  },
-  modalFieldRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  modalHint: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  modalDivider: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginVertical: 16,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#111827',
-  },
-  modalSelect: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-  },
-  modalSelectText: {
-    fontSize: 16,
-    color: '#111827',
-  },
-  modalButton: {
-    backgroundColor: '#007ACC',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  modalButtonDisabled: {
-    backgroundColor: '#9ca3af',
-    opacity: 0.6,
-  },
-  modalButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
+  transactionStatusText: {
+    ...textStyles.bodySmall,
+    fontFamily: 'Outfit-Medium',
   },
 })
 

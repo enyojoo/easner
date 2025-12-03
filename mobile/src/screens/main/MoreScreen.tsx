@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -9,43 +9,49 @@ import {
   Modal,
   ActivityIndicator,
   Linking,
+  Animated,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps, KYCSubmission } from '../../types'
 import { kycService } from '../../lib/kycService'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 function MoreContent({ navigation }: NavigationProps) {
   const { userProfile, signOut } = useAuth()
+  const insets = useSafeAreaInsets()
   const [kycSubmissions, setKycSubmissions] = useState<KYCSubmission[]>([])
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
+  // Refresh KYC submissions when screen comes into focus
   useEffect(() => {
     if (!userProfile?.id) return
-
-    const loadKycSubmissions = async () => {
-      try {
-        const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
-        const cached = await AsyncStorage.getItem(CACHE_KEY)
-        
-        if (cached) {
-          const { value, timestamp } = JSON.parse(cached)
-          if (Date.now() - timestamp < 5 * 60 * 1000) {
-            setKycSubmissions(value || [])
-            // Fetch in background
-            fetchSubmissions()
-            return
-          }
-        }
-
-        await fetchSubmissions()
-      } catch (error) {
-        console.error('Error loading KYC submissions:', error)
-      }
-    }
 
     const fetchSubmissions = async () => {
       try {
@@ -62,8 +68,36 @@ function MoreContent({ navigation }: NavigationProps) {
       }
     }
 
+    const loadKycSubmissions = async () => {
+      try {
+        const CACHE_KEY = `easner_kyc_submissions_${userProfile.id}`
+        const cached = await AsyncStorage.getItem(CACHE_KEY)
+        
+        if (cached) {
+          const { value, timestamp } = JSON.parse(cached)
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            setKycSubmissions(value || [])
+            // Always fetch fresh data in background
+            fetchSubmissions()
+            return
+          }
+        }
+
+        await fetchSubmissions()
+      } catch (error) {
+        console.error('Error loading KYC submissions:', error)
+      }
+    }
+
     loadKycSubmissions()
-  }, [userProfile?.id])
+    
+    // Set up focus listener to refresh when screen comes into focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchSubmissions()
+    })
+
+    return unsubscribe
+  }, [userProfile?.id, navigation])
 
   const getVerificationStatus = (): "verified" | "pending" => {
     const identitySubmission = kycSubmissions.find(s => s.type === "identity")
@@ -115,39 +149,78 @@ function MoreContent({ navigation }: NavigationProps) {
     title: string,
     onPress: () => void,
     rightComponent?: React.ReactNode,
-    isDestructive: boolean = false
+    isDestructive: boolean = false,
+    isLast: boolean = false
   ) => (
     <TouchableOpacity
-      style={styles.menuItem}
-      onPress={onPress}
+      style={[styles.menuItem, isLast && styles.menuItemLast]}
+      onPress={async () => {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        onPress()
+      }}
+      activeOpacity={0.7}
     >
       <Text style={[styles.menuItemText, isDestructive && styles.destructiveText]}>
         {title}
       </Text>
       <View style={styles.menuItemRight}>
         {rightComponent}
-        <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+        <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
       </View>
     </TouchableOpacity>
   )
 
   return (
     <ScreenWrapper>
-      <ScrollView style={styles.scrollContainer}>
-        {/* Header */}
-        <View style={styles.header}>
+      <View style={styles.container}>
+        {/* Premium Header - Matching Card/Transaction */}
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: headerAnim,
+              transform: [{
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
           <Text style={styles.title}>More</Text>
           <Text style={styles.subtitle}>Manage your account information</Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={{ paddingBottom: insets.bottom + spacing[5] }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
           {/* Account Section */}
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Account</Text>
             <View style={styles.sectionContent}>
               {renderMenuItem(
                 'Your Profile',
-                () => navigation.navigate('ProfileEdit')
+                () => navigation.navigate('ProfileEdit'),
+                undefined,
+                false,
+                false
               )}
               {renderMenuItem(
                 'Account Verification',
@@ -160,38 +233,58 @@ function MoreContent({ navigation }: NavigationProps) {
                   <View style={styles.badgeYellow}>
                     <Text style={styles.badgeTextYellow}>Take action</Text>
                   </View>
-                )
+                ),
+                false,
+                false
               )}
               {renderMenuItem(
                 'Change Password',
-                () => navigation.navigate('ChangePassword')
+                () => navigation.navigate('ChangePassword'),
+                undefined,
+                false,
+                false
               )}
               {renderMenuItem(
                 'Notifications',
-                () => navigation.navigate('Notifications')
+                () => navigation.navigate('Notifications'),
+                undefined,
+                false,
+                false
+              )}
+              {renderMenuItem(
+                'Recipients',
+                () => navigation.navigate('Recipients'),
+                undefined,
+                false,
+                true
               )}
             </View>
           </View>
 
           {/* App Section */}
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>App</Text>
             <View style={styles.sectionContent}>
               {renderMenuItem(
-                'Recipients',
-                () => navigation.navigate('Recipients')
-              )}
-              {renderMenuItem(
                 'Support',
-                () => navigation.navigate('Support')
+                () => navigation.navigate('Support'),
+                undefined,
+                false,
+                false
               )}
               {renderMenuItem(
                 'Privacy Policy',
-                handlePrivacy
+                handlePrivacy,
+                undefined,
+                false,
+                false
               )}
               {renderMenuItem(
                 'Terms of Service',
-                handleTerms
+                handleTerms,
+                undefined,
+                false,
+                true
               )}
             </View>
           </View>
@@ -200,9 +293,13 @@ function MoreContent({ navigation }: NavigationProps) {
           <View style={styles.signOutContainer}>
             <TouchableOpacity
               style={styles.signOutButton}
-              onPress={() => setShowLogoutDialog(true)}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                setShowLogoutDialog(true)
+              }}
+              activeOpacity={0.7}
             >
-              <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+              <Ionicons name="log-out-outline" size={20} color={colors.error.main} />
               <Text style={styles.signOutText}>Logout</Text>
             </TouchableOpacity>
           </View>
@@ -211,8 +308,9 @@ function MoreContent({ navigation }: NavigationProps) {
           <View style={styles.versionContainer}>
             <Text style={styles.versionText}>Version 1.0.0</Text>
           </View>
-        </View>
-      </ScrollView>
+          </Animated.View>
+        </ScrollView>
+      </View>
 
       {/* Logout Confirmation Dialog */}
       <Modal
@@ -223,9 +321,9 @@ function MoreContent({ navigation }: NavigationProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Sign Out</Text>
+            <Text style={styles.modalTitle}>Logout</Text>
             <Text style={styles.modalDescription}>
-              Are you sure you want to sign out? You'll need to sign in again to access your account.
+              Are you sure you want to logout? You'll need to sign in again to access your account.
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -243,7 +341,7 @@ function MoreContent({ navigation }: NavigationProps) {
                 {isLoggingOut ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.modalButtonTextConfirm}>Sign Out</Text>
+                  <Text style={styles.modalButtonTextConfirm}>Logout</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -255,164 +353,181 @@ function MoreContent({ navigation }: NavigationProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   header: {
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[2],
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[1],
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
   content: {
-    padding: 24,
-    gap: 24,
+    padding: spacing[5],
+    gap: spacing[4],
   },
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    overflow: 'hidden',
+  sectionCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    marginBottom: spacing[4],
+    paddingBottom: spacing[2],
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    padding: 20,
-    paddingBottom: 12,
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[5],
+    paddingBottom: spacing[3],
   },
   sectionContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[2],
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#E2E2E2',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
   },
   menuItemText: {
-    fontSize: 16,
-    color: '#111827',
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
   },
   menuItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing[2],
   },
   destructiveText: {
-    color: '#ef4444',
+    color: colors.error.main,
   },
   badgeGreen: {
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.success.background,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.sm,
   },
   badgeTextGreen: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#166534',
+    ...textStyles.labelSmall,
+    color: colors.success.dark,
+    fontWeight: '600',
   },
   badgeYellow: {
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.warning.background,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.sm,
   },
   badgeTextYellow: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#92400e',
+    ...textStyles.labelSmall,
+    color: colors.warning.dark,
+    fontWeight: '600',
   },
   signOutContainer: {
-    paddingTop: 24,
+    paddingTop: spacing[3],
     alignItems: 'center',
   },
   signOutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.xl,
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
   signOutText: {
-    fontSize: 16,
-    color: '#ef4444',
+    ...textStyles.bodyMedium,
+    color: colors.error.main,
     fontWeight: '500',
   },
   versionContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingTop: spacing[2],
+    paddingBottom: spacing[10],
   },
   versionText: {
-    fontSize: 14,
-    color: '#9ca3af',
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: spacing[5],
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 24,
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius['3xl'],
+    padding: spacing[6],
     width: '100%',
     maxWidth: 400,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 8,
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   modalDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 24,
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    marginBottom: spacing[6],
     lineHeight: 20,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing[3],
   },
   modalButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
   modalButtonConfirm: {
-    backgroundColor: '#ef4444',
+    backgroundColor: colors.error.main,
   },
   modalButtonTextCancel: {
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.text.primary,
   },
   modalButtonTextConfirm: {
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     fontWeight: '500',
-    color: '#ffffff',
+    color: colors.text.inverse,
   },
 })
 

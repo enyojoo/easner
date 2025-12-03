@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -8,21 +8,24 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import ScreenWrapper from '../../components/ScreenWrapper'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { NavigationProps } from '../../types'
-import BrandLogo from '../../components/BrandLogo'
 import { analytics } from '../../lib/analytics'
+import { colors, textStyles, borderRadius, spacing, shadows } from '../../theme'
 
 export default function ResetPasswordScreen({ navigation, route }: NavigationProps) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordVisible, setPasswordVisible] = useState(false)
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false)
   const [isValidSession, setIsValidSession] = useState(false)
+  const insets = useSafeAreaInsets()
 
   // Track screen view
   useEffect(() => {
@@ -30,7 +33,6 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
   }, [])
 
   useEffect(() => {
-    // Check if we have valid reset parameters from OTP verification
     const { email, resetToken } = route.params || {}
     
     if (email && resetToken) {
@@ -38,15 +40,24 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
     } else {
       Alert.alert('Error', 'Invalid or expired reset link', [
         { text: 'OK', onPress: () => {
-          // Use reset to go back to the root of the auth stack
           navigation.reset({
             index: 0,
-            routes: [{ name: 'Login' }],
+            routes: [{ name: 'Auth' }],
           })
         }}
       ])
     }
   }, [route.params])
+
+  const handleBack = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    navigation.navigate('Auth')
+  }
+
+  const handleHelp = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    Alert.alert('Help', 'Need assistance? Contact support at support@easner.com')
+  }
 
   const validateForm = () => {
     if (!password || !confirmPassword) {
@@ -79,7 +90,6 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
         return
       }
 
-      // Use the same API endpoint as the web version
       const response = await fetch('https://easnerapp.vercel.app/api/auth/reset-password', {
         method: 'POST',
         headers: {
@@ -99,10 +109,9 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
           'Password Updated',
           'Your password has been successfully updated',
           [{ text: 'OK', onPress: () => {
-            // Use reset to go back to the root of the auth stack
             navigation.reset({
               index: 0,
-              routes: [{ name: 'Login' }],
+              routes: [{ name: 'Auth' }],
             })
           }}]
         )
@@ -119,222 +128,265 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
 
   if (!isValidSession) {
     return (
-      <ScreenWrapper>
-        <View style={styles.content}>
+      <View style={styles.container}>
+        <View style={[styles.content, { 
+          paddingTop: insets.top + spacing[4],
+          paddingBottom: Math.max(insets.bottom, spacing[5]) 
+        }]}>
           <View style={styles.header}>
-            <BrandLogo size="lg" style={styles.logo} />
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleHelp}
+              activeOpacity={0.7}
+          >
+              <View style={styles.headerButtonCircle}>
+                <Ionicons name="help-circle-outline" size={20} color={colors.text.primary} />
+              </View>
+            </TouchableOpacity>
+          </View>
             <Text style={styles.title}>Validating Reset Link</Text>
             <Text style={styles.subtitle}>
               Please wait while we validate your reset link...
             </Text>
-          </View>
         </View>
-      </ScreenWrapper>
+      </View>
     )
   }
 
   return (
-    <ScreenWrapper>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <BrandLogo size="lg" style={styles.logo} />
-          <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>
-            Enter your new password below.
-          </Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>New Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter new password"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="newPassword"
-                passwordRules="minlength: 6;"
-                importantForAutofill="yes"
-                underlineColorAndroid="transparent"
-                selectionColor="#007ACC"
-                placeholderTextColor="#9ca3af"
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#6b7280"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="Confirm new password"
-                secureTextEntry={!showConfirmPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="newPassword"
-                passwordRules="minlength: 6;"
-                importantForAutofill="yes"
-                underlineColorAndroid="transparent"
-                selectionColor="#007ACC"
-                placeholderTextColor="#9ca3af"
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                <Ionicons
-                  name={showConfirmPassword ? 'eye-off' : 'eye'}
-                  size={20}
-                  color="#6b7280"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleResetPassword}
-            disabled={loading}
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContainer, { 
+            paddingTop: insets.top + spacing[4],
+            paddingBottom: Math.max(insets.bottom, spacing[5]) 
+          }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with back and help buttons */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleHelp}
+              activeOpacity={0.7}
           >
-            <Text style={styles.buttonText}>
-              {loading ? 'Updating...' : 'Update Password'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <View style={styles.headerButtonCircle}>
+                <Ionicons name="help-circle-outline" size={20} color={colors.text.primary} />
+              </View>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Remember your password? </Text>
-          <TouchableOpacity onPress={() => {
-            // Use reset to go back to the root of the auth stack
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            })
-          }}>
-            <Text style={styles.footerLink}>Sign In</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
-    </ScreenWrapper>
+          {/* Title */}
+            <Text style={styles.title}>Reset Password</Text>
+
+          {/* Form */}
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>New Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Enter new password"
+                    placeholderTextColor={colors.text.secondary}
+                  secureTextEntry={!passwordVisible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                  onPress={() => setPasswordVisible(!passwordVisible)}
+                    activeOpacity={0.7}
+                  >
+                  <View style={styles.eyeButtonCircle}>
+                    <Ionicons
+                      name={passwordVisible ? 'eye-off' : 'eye'}
+                      size={18}
+                      color={colors.text.secondary}
+                    />
+                  </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Confirm new password"
+                    placeholderTextColor={colors.text.secondary}
+                  secureTextEntry={!confirmPasswordVisible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                  onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                    activeOpacity={0.7}
+                  >
+                  <View style={styles.eyeButtonCircle}>
+                    <Ionicons
+                      name={confirmPasswordVisible ? 'eye-off' : 'eye'}
+                      size={18}
+                      color={colors.text.secondary}
+                    />
+                  </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                onPress={handleResetPassword}
+                disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitButtonText}>
+                {loading ? 'Updating...' : 'Update Password'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
   keyboardContainer: {
     flex: 1,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: spacing[5],
+  },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: spacing[5],
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing[6],
   },
-  logo: {
-    marginBottom: 20,
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerButton: {
+    padding: spacing[1],
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  headerButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 12,
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
+    fontWeight: '700',
+    marginBottom: spacing[5],
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyLarge,
+    color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 24,
   },
   form: {
-    marginBottom: 30,
+    width: '100%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing[4],
   },
   label: {
-    fontSize: 16,
+    ...textStyles.bodySmall,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#ffffff',
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.background.primary,
   },
   passwordInput: {
     flex: 1,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 0,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-    color: '#1f2937',
-    minHeight: 20,
+    padding: spacing[3],
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
   },
   eyeButton: {
-    padding: 12,
+    padding: spacing[2],
   },
-  button: {
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#9ca3af',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
+  eyeButtonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+  submitButton: {
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[5],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing[2],
+    marginBottom: spacing[5],
   },
-  footerLink: {
-    fontSize: 14,
-    color: '#007ACC',
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitButtonText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.inverse,
     fontWeight: '600',
   },
 })

@@ -1,1946 +1,1258 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  RefreshControl,
+  TouchableOpacity,
+  Clipboard,
   Alert,
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  FlatList,
+  Animated,
+  Image,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { NavigationProps } from '../../types'
-import { useAuth } from '../../contexts/AuthContext'
-import { useUserData } from '../../contexts/UserDataContext'
-import { Ionicons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { apiGet, apiPost } from '../../lib/apiClient'
-import { recipientService, RecipientData } from '../../lib/recipientService'
-import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
-import { getCountryFlag } from '../../utils/flagUtils'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
+import { bridgeService } from '../../lib/bridgeService'
+import { supabase } from '../../lib/supabase'
+import { kycService } from '../../lib/kycService'
+import QRCode from 'react-native-qrcode-svg'
 
-interface CryptoWallet {
-  id: string
-  crypto_currency: string
-  wallet_address: string
-  blockchain_address?: string
-  blockchain_memo?: string
-  fiat_currency: string
-  status: string
-  transaction_count: number
-  recipient?: {
-    full_name: string
-    account_number: string
-    bank_name: string
-    currency: string
-  }
-}
+type TabType = 'bank' | 'stablecoin'
 
-interface SupportedCrypto {
-  code: string
-  name: string
-  blockchain: string
-}
-
-function ReceiveMoneyContent({ navigation }: NavigationProps) {
-  const { userProfile } = useAuth()
-  const { recipients, currencies, refreshRecipients } = useUserData()
-  const [wallets, setWallets] = useState<CryptoWallet[]>([])
-  const [supportedCryptos, setSupportedCryptos] = useState<SupportedCrypto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [showCreateFlow, setShowCreateFlow] = useState(false)
-  const [createStep, setCreateStep] = useState(1)
-  const [selectedCrypto, setSelectedCrypto] = useState("")
-  const [selectedFiat, setSelectedFiat] = useState("")
-  const [selectedRecipient, setSelectedRecipient] = useState("")
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
-  const [showQR, setShowQR] = useState<string | null>(null)
-  const [selectedWallet, setSelectedWallet] = useState<CryptoWallet | null>(null)
-  const [fiatCurrencySearch, setFiatCurrencySearch] = useState("")
-  const [recipientSearch, setRecipientSearch] = useState("")
-  const [showAddRecipientModal, setShowAddRecipientModal] = useState(false)
-  const [newRecipientData, setNewRecipientData] = useState({
-    fullName: "",
-    accountNumber: "",
-    bankName: "",
-    routingNumber: "",
-    sortCode: "",
-    iban: "",
-    swiftBic: "",
-  })
-
-  // Load recipients when create flow opens or when step 3 is reached
+export default function ReceiveMoneyScreen({ navigation, route }: NavigationProps) {
+  const insets = useSafeAreaInsets()
+  const [activeTab, setActiveTab] = useState<TabType>('bank')
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
+  const [virtualAccount, setVirtualAccount] = useState<any>(null)
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [walletMemo, setWalletMemo] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [kycStatus, setKycStatus] = useState<string | null>(null)
+  const [checkingKyc, setCheckingKyc] = useState(true)
+  const [creatingAccounts, setCreatingAccounts] = useState(false)
+  const [accountCreationError, setAccountCreationError] = useState<string | null>(null)
+  
+  // Get currency from route params or default to USD (only USD/EUR supported)
+  const currency = ((route.params as any)?.currency || 'USD') as 'USD' | 'EUR'
+  
+  // Determine if stablecoins are supported for this currency (always true for USD/EUR)
+  const supportsStablecoins = currency === 'USD' || currency === 'EUR'
+  
+  // State to track if accounts exist in database (fallback when API times out)
+  const [hasWalletInDb, setHasWalletInDb] = useState(false)
+  const [hasAccountInDb, setHasAccountInDb] = useState(false)
+  
+  // Check if account is ready (has account and KYC approved)
+  // Use database check as fallback if API call fails
+  const accountReady = (virtualAccount?.hasAccount || hasAccountInDb) && kycStatus === 'approved'
+  
+  // Check if wallet is ready (has wallet address and KYC approved)
+  // Use database check as fallback if API call fails
+  const walletReady = ((walletAddress && 
+    walletAddress !== 'Loading...' && 
+    walletAddress !== 'Wallet address not available') || hasWalletInDb) && 
+    kycStatus === 'approved'
+  
+  // Fetch virtual account and wallet data
   useEffect(() => {
-    if (showCreateFlow && createStep === 3) {
-      refreshRecipients()
-    }
-  }, [showCreateFlow, createStep, refreshRecipients])
-
-  // Fetch wallets and supported cryptos - only if not in cache
-  useEffect(() => {
-    if (!userProfile?.id) return
-
-    const CACHE_KEY_WALLETS = `easner_crypto_wallets_${userProfile.id}`
-    const CACHE_KEY_CRYPTOS = "easner_supported_cryptos"
-    const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-    const getCachedWallets = async (): Promise<CryptoWallet[] | null> => {
+    const fetchAccountData = async () => {
       try {
-        const cached = await AsyncStorage.getItem(CACHE_KEY_WALLETS)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        await AsyncStorage.removeItem(CACHE_KEY_WALLETS)
-        return null
-      } catch {
-        return null
-      }
-    }
-
-    const getCachedCryptos = async (): Promise<SupportedCrypto[] | null> => {
-      try {
-        const cached = await AsyncStorage.getItem(CACHE_KEY_CRYPTOS)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        await AsyncStorage.removeItem(CACHE_KEY_CRYPTOS)
-        return null
-      } catch {
-        return null
-      }
-    }
-
-    const setCachedWallets = async (value: CryptoWallet[]) => {
-      try {
-        await AsyncStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
-    const setCachedCryptos = async (value: SupportedCrypto[]) => {
-      try {
-        await AsyncStorage.setItem(CACHE_KEY_CRYPTOS, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
-    // Load from cache first
-    const loadFromCache = async () => {
-      const cachedWallets = await getCachedWallets()
-      const cachedCryptos = await getCachedCryptos()
-      
-      // Update state if cache exists
-      if (cachedWallets !== null && cachedWallets.length > 0) {
-        setWallets(cachedWallets)
-      }
-      if (cachedCryptos !== null && cachedCryptos.length > 0) {
-        setSupportedCryptos(cachedCryptos)
-      }
-
-      // If both are cached and valid, fetch in background
-      if (cachedWallets !== null && cachedCryptos !== null) {
-        // Fetch in background to update cache
-        fetchData(true)
-        return
-      }
-
-      // Only fetch if no cache
-      await fetchData(false)
-    }
-
-    const fetchData = async (background = false) => {
-      if (!background) {
         setLoading(true)
-      }
-      try {
-        const cachedWallets = await getCachedWallets()
-        const cachedCryptos = await getCachedCryptos()
+        setCheckingKyc(true)
+        const currencyLower = currency.toLowerCase() as 'usd' | 'eur'
         
-        const promises: Promise<any>[] = []
+        // Get user ID
+        const { data: { session } } = await supabase.auth.getSession()
+        const userId = session?.user?.id
+        if (!userId) {
+          setLoading(false)
+          return
+        }
         
-        if (cachedWallets === null) {
-          promises.push(apiGet('/api/crypto/wallets').then(res => res.ok ? res.json() : null).catch(() => null))
-        } else {
-          promises.push(Promise.resolve(null))
+        // First, check KYC submissions from database (most reliable)
+        try {
+          const submissions = await kycService.getByUserId(userId)
+          const identitySubmission = submissions.find(s => s.type === "identity")
+          const addressSubmission = submissions.find(s => s.type === "address")
+          
+          // Check if both are approved
+          if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
+            setKycStatus('approved')
+          } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
+            setKycStatus('rejected')
+          } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+            setKycStatus('in_review')
+          } else if (identitySubmission || addressSubmission) {
+            setKycStatus('pending')
+          } else {
+            setKycStatus(null)
+          }
+        } catch (kycError) {
+          console.error('Error checking KYC submissions:', kycError)
+        }
+        
+        // Check database directly for wallet/account IDs (fast, no API call)
+        try {
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id, bridge_kyc_status')
+            .eq('id', userId)
+            .single()
+          
+          if (userProfile) {
+            // Use Bridge KYC status if available (from webhook), otherwise keep submission status
+            if (userProfile.bridge_kyc_status && userProfile.bridge_kyc_status !== 'pending') {
+              setKycStatus(userProfile.bridge_kyc_status)
+            }
+            
+            // Check if wallet exists in database
+            if (userProfile.bridge_wallet_id) {
+              setHasWalletInDb(true)
+              // Try to get wallet address from database
+              const { data: wallet } = await supabase
+                .from('bridge_wallets')
+                .select('address')
+                .eq('bridge_wallet_id', userProfile.bridge_wallet_id)
+                .single()
+              if (wallet?.address) {
+                setWalletAddress(wallet.address)
+              }
+            }
+            
+            // Check if virtual account exists in database
+            const accountId = currencyLower === 'usd' 
+              ? userProfile.bridge_usd_virtual_account_id 
+              : userProfile.bridge_eur_virtual_account_id
+            if (accountId) {
+              setHasAccountInDb(true)
+              // Try to get account details from database
+              const { data: account } = await supabase
+                .from('bridge_virtual_accounts')
+                .select('account_number, routing_number, iban, bic, bank_name, account_holder_name')
+                .eq('bridge_virtual_account_id', accountId)
+                .single()
+              if (account) {
+            setVirtualAccount({ 
+                  hasAccount: true,
+              currency: currencyLower,
+                  accountNumber: account.account_number,
+                  routingNumber: account.routing_number,
+                  iban: account.iban,
+                  bic: account.bic,
+                  bankName: account.bank_name,
+                  accountHolderName: account.account_holder_name,
+                })
+              }
+            }
+          }
+        } catch (dbError) {
+          console.error('Error checking database:', dbError)
+        }
+        
+        // Try to fetch latest data from API (with timeout) - but don't block on errors
+        // Only fetch if we don't have data from database
+        setCheckingKyc(false)
+        
+        // Fetch virtual account from API only if not in database (with timeout)
+        // Note: This will be called for both USD and EUR, but we only fetch the current currency
+        if (!hasAccountInDb) {
+          try {
+            // Use AbortController for proper timeout handling
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 8000)
+            
+            let account: any
+            try {
+              account = await bridgeService.getVirtualAccount(currencyLower)
+              clearTimeout(timeoutId)
+            } catch (fetchError: any) {
+              clearTimeout(timeoutId)
+              if (fetchError.name === 'AbortError' || fetchError.message?.includes('timeout')) {
+                throw new Error('Timeout')
+              }
+              throw fetchError
+            }
+            
+            console.log('Fetched virtual account:', account)
+            setVirtualAccount(account)
+            if (account?.hasAccount) {
+              setHasAccountInDb(true)
+            }
+          } catch (accountError: any) {
+            console.error('Error fetching virtual account:', accountError)
+            // Silently fail - we already have database state
+            if (!virtualAccount) {
+              setVirtualAccount({ hasAccount: false, currency: currencyLower })
+            }
+          }
         }
 
-        if (cachedCryptos === null) {
-          promises.push(apiGet('/api/crypto/supported').then(res => res.ok ? res.json() : null).catch(() => null))
-        } else {
-          promises.push(Promise.resolve(null))
-        }
-
-        const [walletsData, cryptosData] = await Promise.all(promises)
-
-        if (walletsData) {
-          const walletsList = walletsData.wallets || []
-          setWallets(walletsList)
-          await setCachedWallets(walletsList)
-        }
-
-        if (cryptosData) {
-          const cryptosList = cryptosData.cryptocurrencies || []
-          setSupportedCryptos(cryptosList)
-          await setCachedCryptos(cryptosList)
+        // Fetch wallet address from API only if not in database (with timeout)
+        if (!walletAddress && !hasWalletInDb) {
+        try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 8000)
+            
+            let walletsResponse: Response
+            try {
+              walletsResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/bridge/wallets`, {
+            headers: {
+                  'Authorization': `Bearer ${session?.access_token}`,
+            },
+                signal: controller.signal,
+          })
+              clearTimeout(timeoutId)
+            } catch (fetchError: any) {
+              clearTimeout(timeoutId)
+              if (fetchError.name === 'AbortError') {
+                throw new Error('Timeout')
+              }
+              throw fetchError
+            }
+            
+          if (walletsResponse.ok) {
+            const walletsData = await walletsResponse.json()
+            const solanaWallet = walletsData.wallets?.find((w: any) => w.chain === 'solana')
+            if (solanaWallet?.address) {
+              setWalletAddress(solanaWallet.address)
+                setHasWalletInDb(true)
+              if (solanaWallet.blockchain_memo) {
+                setWalletMemo(solanaWallet.blockchain_memo)
+              } else {
+                setWalletMemo(null)
+              }
+            }
+          }
+        } catch (walletError) {
+          console.error('Error fetching wallet address:', walletError)
+            // Silently fail - we already have database state
+          }
         }
       } catch (error) {
-        console.error("Error fetching data:", error)
+        console.error('Error fetching account data:', error)
       } finally {
-        if (!background) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
     }
 
-    loadFromCache()
-  }, [userProfile?.id])
+    fetchAccountData()
+  }, [currency])
+  
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refetch KYC status and account data when screen is focused
+      const refreshData = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          const userId = session?.user?.id
+          if (!userId) return
+          
+          // Refresh KYC submissions
+          const submissions = await kycService.getByUserId(userId)
+          const identitySubmission = submissions.find(s => s.type === "identity")
+          const addressSubmission = submissions.find(s => s.type === "address")
+          
+          if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
+            setKycStatus('approved')
+          } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
+            setKycStatus('rejected')
+          } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+            setKycStatus('in_review')
+          } else if (identitySubmission || addressSubmission) {
+            setKycStatus('pending')
+          }
+          
+          // Refresh wallet/account IDs from database
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id')
+            .eq('id', userId)
+            .single()
+          
+          if (userProfile) {
+            if (userProfile.bridge_wallet_id) {
+              setHasWalletInDb(true)
+              const { data: wallet } = await supabase
+                .from('bridge_wallets')
+                .select('address')
+                .eq('bridge_wallet_id', userProfile.bridge_wallet_id)
+                .single()
+              if (wallet?.address) {
+                setWalletAddress(wallet.address)
+              }
+            }
+            
+            const currencyLower = currency.toLowerCase() as 'usd' | 'eur'
+            const accountId = currencyLower === 'usd' 
+              ? userProfile.bridge_usd_virtual_account_id 
+              : userProfile.bridge_eur_virtual_account_id
+            if (accountId) {
+              setHasAccountInDb(true)
+              const { data: account } = await supabase
+                .from('bridge_virtual_accounts')
+                .select('account_number, routing_number, iban, bic, bank_name, account_holder_name')
+                .eq('bridge_virtual_account_id', accountId)
+                .single()
+              if (account) {
+                setVirtualAccount({
+                  hasAccount: true,
+                  currency: currencyLower,
+                  accountNumber: account.account_number,
+                  routingNumber: account.routing_number,
+                  iban: account.iban,
+                  bic: account.bic,
+                  bankName: account.bank_name,
+                  accountHolderName: account.account_holder_name,
+                })
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing data on focus:', error)
+        }
+      }
+      
+      refreshData()
+    }, [currency])
+  )
+  
+  // Set default tab based on currency support
+  useEffect(() => {
+    if (!supportsStablecoins) {
+      setActiveTab('bank')
+    }
+  }, [supportsStablecoins])
 
-  const copyToClipboard = async (text: string) => {
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  React.useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
+  const formatCurrency = (amount: number, curr: string): string => {
+    const symbol = curr === 'USD' ? '$' 
+      : curr === 'EUR' ? '€' 
+      : curr === 'NGN' ? '₦' 
+      : ''
+    return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  const getCurrencyName = (curr: string): string => {
+    return curr === 'USD' ? 'US Dollar'
+      : curr === 'EUR' ? 'Euro'
+      : curr
+  }
+
+  const getCurrencyFlag = (curr: string) => {
+    if (curr === 'USD') return require('../../../assets/flags/us.png')
+    if (curr === 'EUR') return require('../../../assets/flags/eu.png')
+    return require('../../../assets/flags/us.png')
+  }
+
+  const handleCopy = async (text: string, key: string) => {
     try {
-      // For React Native, we'll use a simple approach
-      // In a real app, you'd install @react-native-clipboard/clipboard or expo-clipboard
-      setCopiedAddress(text)
-      setTimeout(() => setCopiedAddress(null), 2000)
-      Alert.alert("Copied", "Address copied to clipboard")
+      await Clipboard.setString(text)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      setCopiedStates(prev => ({ ...prev, [key]: true }))
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [key]: false }))
+      }, 2000)
     } catch (error) {
-      console.error("Failed to copy:", error)
+      Alert.alert('Error', 'Failed to copy to clipboard')
     }
   }
 
-  const handleCreateWallet = async () => {
-    if (!selectedCrypto || !selectedFiat || !selectedRecipient) {
-      Alert.alert("Error", "Please select a recipient for bank payout")
-      return
+  // Get bank account details from Bridge virtual account
+  const getBankAccountDetails = () => {
+    // Account exists and is ready, return real data from Bridge
+    if (accountReady) {
+      // Map all fields that Bridge provides
+      if (currency === 'USD') {
+        return {
+          accountName: virtualAccount.accountHolderName,
+          accountNumber: virtualAccount.accountNumber,
+          routingNumber: virtualAccount.routingNumber, // Bridge provides this for USD
+          iban: undefined, // Not for USD
+          swiftBic: undefined, // Not for USD
+          bankName: virtualAccount.bankName,
+        }
+      } else {
+        // EUR account
+        return {
+          accountName: virtualAccount.accountHolderName,
+          accountNumber: undefined, // Not for EUR
+          routingNumber: undefined, // Not for EUR
+          iban: virtualAccount.iban, // Bridge provides this for EUR
+          swiftBic: virtualAccount.bic, // Bridge returns 'bic' for EUR accounts
+          bankName: virtualAccount.bankName,
+        }
+      }
     }
+    
+    // Account not ready - return empty
+    return null
+  }
 
+  const bankAccountDetails = getBankAccountDetails()
+
+  // Get stablecoin address (from Bridge wallet)
+  const getStablecoinAddress = () => {
+    return {
+      address: walletReady ? walletAddress! : '',
+      network: 'Solana',
+      supportedStablecoins: currency === 'USD' 
+        ? ['USDC'] 
+        : ['EURC'],
+      memo: walletMemo || undefined,
+    }
+  }
+
+  const stablecoinData = getStablecoinAddress()
+
+  // Handle manual account creation (fallback if automatic creation didn't trigger)
+  const handleCreateAccounts = async () => {
     try {
-      const requestBody: any = {
-        cryptoCurrency: selectedCrypto,
-        fiatCurrency: selectedFiat,
-        destinationType: "bank",
-        chain: "stellar",
-        recipientId: selectedRecipient,
+      setCreatingAccounts(true)
+      setAccountCreationError(null)
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
       }
 
-      const response = await apiPost('/api/crypto/wallets', requestBody)
+      // Add timeout to create-accounts request
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 seconds for account creation
+      
+      let response: Response
+      try {
+        response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/bridge/create-accounts`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. Please try again.')
+        }
+        throw fetchError
+      }
 
-      if (response.ok) {
-        const data = await response.json()
-        // Update cache
-        if (userProfile?.id) {
-          const CACHE_KEY_WALLETS = `easner_crypto_wallets_${userProfile.id}`
-          try {
-            const cached = await AsyncStorage.getItem(CACHE_KEY_WALLETS)
-            if (cached) {
-              const { value } = JSON.parse(cached)
-              await AsyncStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify({
-                value: [data.wallet, ...value],
-                timestamp: Date.now()
-              }))
-            }
-          } catch {}
+      const result = await response.json()
+
+      if (!response.ok) {
+        const errorMessage = result.error || result.message || 'Failed to create accounts'
+        
+        // If error mentions TOS, provide helpful message
+        if (errorMessage.toLowerCase().includes('tos') || errorMessage.toLowerCase().includes('terms of service')) {
+          throw new Error(
+            `${errorMessage}\n\nIf you just accepted TOS, please wait a few seconds and try again. Bridge may need a moment to process your acceptance.`
+          )
         }
         
-        setWallets([data.wallet, ...wallets])
-        setShowCreateFlow(false)
-        setCreateStep(1)
-        setSelectedCrypto("")
-        setSelectedFiat("")
-        setSelectedRecipient("")
-        Alert.alert("Success", "Address created successfully")
+        throw new Error(errorMessage)
+      }
+
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Account creation completed with some errors:', result.errors)
+      }
+
+      // Show success message
+      Alert.alert(
+        'Accounts Created',
+        `Wallet: ${result.walletCreated ? 'Created ✓' : 'Already exists'}\n` +
+        `USD Account: ${result.usdAccountCreated ? 'Created ✓' : result.usdAccountId ? 'Already exists' : 'Failed'}\n` +
+        `EUR Account: ${result.eurAccountCreated ? 'Created ✓' : result.eurAccountId ? 'Already exists' : 'Failed'}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Refresh account data
+              const fetchAccountData = async () => {
+                try {
+                  setLoading(true)
+                  const currencyLower = currency.toLowerCase() as 'usd' | 'eur'
+                  
+                  // Refresh virtual account
+                  try {
+                    const account = await bridgeService.getVirtualAccount(currencyLower)
+                    setVirtualAccount(account)
+                    if (account?.hasAccount) {
+                      setHasAccountInDb(true)
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing virtual account:', error)
+                  }
+
+                  // Refresh wallet
+                  try {
+                    const walletsResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/bridge/wallets`, {
+                      headers: {
+                        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                      },
+                    })
+                    if (walletsResponse.ok) {
+                      const walletsData = await walletsResponse.json()
+                      const solanaWallet = walletsData.wallets?.find((w: any) => w.chain === 'solana')
+                      if (solanaWallet?.address) {
+                        setWalletAddress(solanaWallet.address)
+                        setHasWalletInDb(true)
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error refreshing wallet:', error)
+                  }
+                } finally {
+                  setLoading(false)
+                }
+              }
+              fetchAccountData()
+            }
+          }
+        ]
+      )
+    } catch (error: any) {
+      console.error('Error creating accounts:', error)
+      const errorMessage = error.message || 'Failed to create accounts'
+      setAccountCreationError(errorMessage)
+      
+      // If error mentions TOS, provide helpful message with retry option
+      if (errorMessage.toLowerCase().includes('tos') || errorMessage.toLowerCase().includes('terms of service')) {
+        Alert.alert(
+          'Terms of Service Required',
+          errorMessage,
+          [
+            {
+              text: 'Go to Verification',
+              onPress: () => {
+                navigation.navigate('AccountVerification' as any)
+              }
+            },
+            {
+              text: 'Retry',
+              onPress: () => {
+                // Wait 5 seconds then retry
+                setTimeout(() => {
+                  handleCreateAccounts()
+                }, 5000)
+              }
+            },
+            { text: 'OK', style: 'cancel' }
+          ]
+        )
       } else {
-        const error = await response.json().catch(() => ({}))
-        Alert.alert("Error", error.error || "Failed to create address")
+        Alert.alert('Error', errorMessage)
       }
-    } catch (error) {
-      console.error("Error creating address:", error)
-      Alert.alert("Error", "Failed to create address")
-    }
-  }
-
-  const handleAddNewRecipient = async () => {
-    if (!userProfile?.id) return
-
-    try {
-      const newRecipient = await recipientService.create(userProfile.id, {
-        fullName: newRecipientData.fullName,
-        accountNumber: newRecipientData.accountNumber,
-        bankName: newRecipientData.bankName,
-        currency: selectedFiat,
-        routingNumber: newRecipientData.routingNumber || undefined,
-        sortCode: newRecipientData.sortCode || undefined,
-        iban: newRecipientData.iban || undefined,
-        swiftBic: newRecipientData.swiftBic || undefined,
-      })
-
-      await refreshRecipients()
-      setSelectedRecipient(newRecipient.id)
-      setNewRecipientData({
-        fullName: "",
-        accountNumber: "",
-        bankName: "",
-        routingNumber: "",
-        sortCode: "",
-        iban: "",
-        swiftBic: "",
-      })
-      setShowAddRecipientModal(false)
-      Alert.alert("Success", "Recipient added successfully")
-    } catch (error) {
-      console.error("Error adding recipient:", error)
-      Alert.alert("Error", "Failed to add recipient. Please try again.")
-    }
-  }
-
-  const filteredRecipients = useMemo(() => {
-    if (!selectedFiat) return []
-    return recipients.filter(
-      (recipient) =>
-        (recipient.full_name.toLowerCase().includes(recipientSearch.toLowerCase()) ||
-          recipient.account_number.includes(recipientSearch)) &&
-        recipient.currency === selectedFiat,
-    )
-  }, [recipients, selectedFiat, recipientSearch])
-
-  const filteredCurrencies = useMemo(() => {
-    if (!fiatCurrencySearch) return currencies
-    return currencies.filter(
-      (currency) =>
-        currency.code.toLowerCase().includes(fiatCurrencySearch.toLowerCase()) ||
-        currency.name.toLowerCase().includes(fiatCurrencySearch.toLowerCase()),
-    )
-  }, [currencies, fiatCurrencySearch])
-
-  const selectedFiatCurrencyData = useMemo(() => 
-    currencies.find((c) => c.code === selectedFiat), 
-    [currencies, selectedFiat]
-  )
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  const onRefresh = async () => {
-    setRefreshing(true)
-    try {
-      const [walletsResponse, cryptosResponse] = await Promise.all([
-        apiGet('/api/crypto/wallets'),
-        apiGet('/api/crypto/supported')
-      ])
-
-      if (walletsResponse.ok) {
-        const walletsData = await walletsResponse.json()
-        const walletsList = walletsData.wallets || []
-        setWallets(walletsList)
-        if (userProfile?.id) {
-          const CACHE_KEY_WALLETS = `easner_crypto_wallets_${userProfile.id}`
-          await AsyncStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify({
-            value: walletsList,
-            timestamp: Date.now()
-          }))
-        }
-      }
-
-      if (cryptosResponse.ok) {
-        const cryptosData = await cryptosResponse.json()
-        const cryptosList = cryptosData.cryptocurrencies || []
-        setSupportedCryptos(cryptosList)
-        await AsyncStorage.setItem("easner_supported_cryptos", JSON.stringify({
-          value: cryptosList,
-          timestamp: Date.now()
-        }))
-      }
-    } catch (error) {
-      console.error("Error refreshing:", error)
     } finally {
-      setRefreshing(false)
+      setCreatingAccounts(false)
     }
   }
 
-  // Show loading only if we have no cached data
-  if (loading && wallets.length === 0 && supportedCryptos.length === 0) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#007ACC" />
+  const renderCopyableField = (label: string, value: string, key: string) => (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TouchableOpacity
+        style={styles.fieldValueContainer}
+        onPress={() => handleCopy(value, key)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.fieldValue}>{value}</Text>
+        <View style={styles.copyButton}>
+          {copiedStates[key] ? (
+            <Ionicons name="checkmark" size={18} color={colors.primary.main} />
+          ) : (
+            <Ionicons name="copy-outline" size={18} color={colors.text.secondary} />
+          )}
         </View>
-      </ScreenWrapper>
-    )
-  }
+      </TouchableOpacity>
+    </View>
+  )
 
   return (
     <ScreenWrapper>
-      <ScrollView
-        style={styles.scrollContainer}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
+      <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Receive Money</Text>
-          <Text style={styles.subtitle}>Receive stablecoins directly to your local currency bank account.</Text>
-        </View>
-
-        {/* Existing Wallets Section */}
-        {wallets.length > 0 && (
-          <View style={styles.walletsSection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Your Addresses</Text>
-              {!showCreateFlow && (
-                <TouchableOpacity
-                  style={styles.addAddressButton}
-                  onPress={() => setShowCreateFlow(true)}
-                >
-                  <Ionicons name="add" size={20} color="#ffffff" />
-                  <Text style={styles.addAddressButtonText}>Add Address</Text>
-                </TouchableOpacity>
-              )}
+        <Animated.View 
+          style={[
+            styles.header,
+            {
+              opacity: headerAnim,
+              transform: [{
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>Receive Money</Text>
+            <View style={styles.currencyDisplay}>
+              <Image 
+                source={getCurrencyFlag(currency)}
+                style={styles.currencyFlag}
+                resizeMode="cover"
+              />
+              <Text style={styles.currencyText}>{currency}</Text>
             </View>
-
-            {wallets.map((wallet) => (
-              <View key={wallet.id} style={styles.walletCard}>
-                <View style={styles.walletCardHeader}>
-                  <View style={styles.walletIconContainer}>
-                    <Ionicons name="wallet" size={24} color="#007ACC" />
-                  </View>
-                  <View style={styles.walletInfo}>
-                    <Text style={styles.walletCurrency}>{wallet.crypto_currency}</Text>
-                    <Text style={styles.walletSubtitle}>Stablecoin Address</Text>
-                  </View>
-                  <View style={[
-                    styles.statusBadge,
-                    wallet.status === "active" && styles.statusBadgeActive
-                  ]}>
-                    <Text style={styles.statusText}>{wallet.status}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.addressSection}>
-                  <View style={styles.addressRow}>
-                    <Text style={styles.addressLabel}>Address</Text>
-                    <TouchableOpacity
-                      onPress={() => copyToClipboard(wallet.blockchain_address || wallet.wallet_address)}
-                    >
-                      <Ionicons
-                        name={copiedAddress === (wallet.blockchain_address || wallet.wallet_address) ? "checkmark" : "copy-outline"}
-                        size={16}
-                        color={copiedAddress === (wallet.blockchain_address || wallet.wallet_address) ? "#10b981" : "#6b7280"}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.addressValue} numberOfLines={2}>
-                    {wallet.blockchain_address || wallet.wallet_address}
-                  </Text>
-                  {wallet.blockchain_memo && (
-                    <>
-                      <View style={styles.memoDivider} />
-                      <View style={styles.addressRow}>
-                        <Text style={styles.addressLabel}>Memo (Required for Stellar)</Text>
-                        <TouchableOpacity
-                          onPress={() => copyToClipboard(wallet.blockchain_memo || "")}
-                        >
-                          <Ionicons
-                            name={copiedAddress === wallet.blockchain_memo ? "checkmark" : "copy-outline"}
-                            size={16}
-                            color={copiedAddress === wallet.blockchain_memo ? "#10b981" : "#6b7280"}
-                          />
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.addressValue}>{wallet.blockchain_memo}</Text>
-                      <Text style={styles.memoWarning}>
-                        ⚠️ Include this memo when sending to this address on Stellar
-                      </Text>
-                    </>
-                  )}
-                </View>
-
-                <View style={styles.walletDetails}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Linked Account</Text>
-                    <Text style={styles.detailValue}>{wallet.recipient?.full_name || "Bank Account"}</Text>
-                    <Text style={styles.detailSubtext}>{wallet.recipient?.bank_name || ""}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>Currency</Text>
-                    <Text style={styles.detailValue}>{wallet.fiat_currency}</Text>
-                    <Text style={styles.detailSubtext}>{wallet.transaction_count || 0} transactions</Text>
-                  </View>
-                </View>
-
-                <View style={styles.walletActions}>
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      setSelectedWallet(wallet)
-                      setShowQR(wallet.id)
-                    }}
-                  >
-                    <Ionicons name="qr-code-outline" size={20} color="#374151" />
-                    <Text style={styles.actionButtonText}>QR Code</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.actionButtonPrimary]}
-                    onPress={() => {
-                      // Navigate to wallet transaction history
-                      navigation.navigate('ReceiveTransactionDetails', {
-                        transactionId: wallet.id,
-                        fromScreen: 'ReceiveMoney'
-                      })
-                    }}
-                  >
-                    <Text style={styles.actionButtonTextPrimary}>View History</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#ffffff" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
           </View>
-        )}
+        </Animated.View>
 
-        {/* Create Flow */}
-        {showCreateFlow && (
-          <View style={styles.createFlowContainer}>
-            <View style={styles.createFlowHeader}>
-              <View style={styles.createFlowHeaderTop}>
-                <Text style={styles.createFlowTitle}>Create New Address</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowCreateFlow(false)
-                    setCreateStep(1)
-                    setSelectedCrypto("")
-                    setSelectedFiat("")
-                    setSelectedRecipient("")
-                    setFiatCurrencySearch("")
-                    setRecipientSearch("")
-                  }}
-                >
-                  <Ionicons name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              {/* Progress Steps */}
-              <View style={styles.progressSteps}>
-                {[1, 2, 3, 4].map((step) => (
-                  <View key={step} style={styles.progressStep}>
-                    {step < 4 && (
-                      <View style={[
-                        styles.progressLine,
-                        createStep >= step && styles.progressLineActive
-                      ]} />
-                    )}
-                    <View style={[
-                      styles.progressCircle,
-                      createStep > step && styles.progressCircleCompleted,
-                      createStep === step && styles.progressCircleActive
-                    ]}>
-                      {createStep > step ? (
-                        <Ionicons name="checkmark" size={16} color="#ffffff" />
-                      ) : (
-                        <Text style={[
-                          styles.progressCircleText,
-                          createStep === step && styles.progressCircleTextActive
-                        ]}>{step}</Text>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Step 1: Choose Stablecoin */}
-            {createStep === 1 && (
-              <View style={styles.createStepContent}>
-                <View style={styles.stepContentWrapper}>
-                  <ScrollView 
-                    style={styles.stepScrollableArea}
-                    showsVerticalScrollIndicator={true}
-                    nestedScrollEnabled={true}
-                  >
-                    <Text style={styles.stepLabel}>Choose Stablecoin</Text>
-                    <View style={styles.cryptoGridContainer}>
-                      {supportedCryptos.map((crypto) => (
-                        <TouchableOpacity
-                          key={crypto.code}
-                          style={[
-                            styles.cryptoCard,
-                            selectedCrypto === crypto.code && styles.cryptoCardSelected
-                          ]}
-                          onPress={() => setSelectedCrypto(crypto.code)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.cryptoEmoji}>💎</Text>
-                          <Text style={styles.cryptoCode}>{crypto.code}</Text>
-                          <Text style={styles.cryptoName}>{crypto.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </ScrollView>
-                  <View style={styles.stepButtons}>
-                    <TouchableOpacity
-                      style={styles.stepButtonCancel}
-                      onPress={() => setShowCreateFlow(false)}
-                    >
-                      <Text style={styles.stepButtonCancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.stepButtonContinue, !selectedCrypto && styles.stepButtonDisabled]}
-                      onPress={() => setCreateStep(2)}
-                      disabled={!selectedCrypto}
-                    >
-                      <Text style={styles.stepButtonContinueText}>Continue</Text>
-                      <Ionicons name="chevron-forward" size={20} color="#ffffff" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Step 2: Select Fiat Currency */}
-            {createStep === 2 && (
-              <View style={styles.createStepContent}>
-                <View style={styles.stepContentWrapper}>
-                  {/* Fixed Header */}
-                  <View style={styles.stepFixedHeader}>
-                    <Text style={styles.stepLabel}>Select Fiat Currency</Text>
-                    <View style={styles.searchContainer}>
-                      <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
-                      <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search currencies"
-                        value={fiatCurrencySearch}
-                        onChangeText={setFiatCurrencySearch}
-                        placeholderTextColor="#9ca3af"
-                      />
-                    </View>
-                  </View>
-                  {/* Scrollable Currency List */}
-                  <View style={styles.stepScrollableArea}>
-                    <ScrollView 
-                      showsVerticalScrollIndicator={true}
-                      nestedScrollEnabled={true}
-                    >
-                      {filteredCurrencies.length === 0 ? (
-                        <View style={styles.emptyListContainer}>
-                          <Text style={styles.emptyListText}>
-                            No currencies found matching "{fiatCurrencySearch}"
-                          </Text>
-                        </View>
-                      ) : (
-                        filteredCurrencies.map((currency) => (
-                          <TouchableOpacity
-                            key={currency.code}
-                            style={[
-                              styles.currencyItem,
-                              selectedFiat === currency.code && styles.currencyItemSelected
-                            ]}
-                            onPress={() => {
-                              setSelectedFiat(currency.code)
-                              setFiatCurrencySearch("")
-                            }}
-                          >
-                            <View style={styles.currencyItemContent}>
-                              <Text style={styles.currencyFlag}>{getCountryFlag(currency.code)}</Text>
-                              <View style={styles.currencyItemInfo}>
-                                <Text style={[
-                                  styles.currencyCode,
-                                  selectedFiat === currency.code && styles.currencyCodeSelected
-                                ]}>
-                                  {currency.code}
-                                </Text>
-                                <Text style={styles.currencyName}>{currency.name}</Text>
-                              </View>
-                            </View>
-                            {selectedFiat === currency.code && (
-                              <View style={styles.currencyCheck}>
-                                <Ionicons name="checkmark" size={16} color="#ffffff" />
-                              </View>
-                            )}
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </ScrollView>
-                  </View>
-                  {/* Fixed Footer Buttons */}
-                  <View style={styles.stepButtons}>
-                    <TouchableOpacity
-                      style={styles.stepButtonBack}
-                      onPress={() => setCreateStep(1)}
-                    >
-                      <Ionicons name="chevron-back" size={16} color="#374151" />
-                      <Text style={styles.stepButtonBackText}>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.stepButtonContinue, !selectedFiat && styles.stepButtonDisabled]}
-                      onPress={() => setCreateStep(3)}
-                      disabled={!selectedFiat}
-                    >
-                      <Text style={styles.stepButtonContinueText}>Continue</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#ffffff" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Step 3: Link Bank Account */}
-            {createStep === 3 && (
-              <View style={styles.createStepContent}>
-                <View style={styles.stepContentWrapper}>
-                  {/* Fixed Header */}
-                  <View style={styles.stepFixedHeader}>
-                    <Text style={styles.stepLabel}>Link Bank Account</Text>
-                    <View style={styles.recipientSearchContainer}>
-                      <View style={[styles.searchContainer, styles.searchContainerFlex]}>
-                        <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
-                        <TextInput
-                          style={styles.searchInput}
-                          placeholder="Search recipients"
-                          value={recipientSearch}
-                          onChangeText={setRecipientSearch}
-                          placeholderTextColor="#9ca3af"
-                        />
-                      </View>
-                      <TouchableOpacity
-                        style={styles.addRecipientButton}
-                        onPress={() => setShowAddRecipientModal(true)}
-                      >
-                        <Ionicons name="add" size={20} color="#007ACC" />
-                        <Text style={styles.addRecipientButtonText}>Add</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  {/* Scrollable Recipient List */}
-                  <View style={styles.stepScrollableArea}>
-                    <ScrollView 
-                      showsVerticalScrollIndicator={true}
-                      nestedScrollEnabled={true}
-                    >
-                      {filteredRecipients.length === 0 ? (
-                        <View style={styles.emptyListContainer}>
-                          <Text style={styles.emptyListText}>
-                            {recipientSearch
-                              ? `No recipients found matching "${recipientSearch}"`
-                              : `No recipients found for ${selectedFiat}`}
-                          </Text>
-                          <Text style={styles.emptyListSubtext}>Add a new recipient to get started</Text>
-                        </View>
-                      ) : (
-                        filteredRecipients.map((recipient) => (
-                          <TouchableOpacity
-                            key={recipient.id}
-                            style={[
-                              styles.recipientItem,
-                              selectedRecipient === recipient.id && styles.recipientItemSelected
-                            ]}
-                            onPress={() => setSelectedRecipient(recipient.id)}
-                          >
-                            <View style={styles.recipientItemContent}>
-                              <View style={styles.recipientAvatar}>
-                                <Text style={styles.recipientAvatarText}>
-                                  {getInitials(recipient.full_name)}
-                                </Text>
-                                <View style={styles.recipientFlag}>
-                                  <Text style={styles.recipientFlagText}>
-                                    {getCountryFlag(recipient.currency)}
-                                  </Text>
-                                </View>
-                              </View>
-                              <View style={styles.recipientItemInfo}>
-                                <Text style={[
-                                  styles.recipientName,
-                                  selectedRecipient === recipient.id && styles.recipientNameSelected
-                                ]}>
-                                  {recipient.full_name}
-                                </Text>
-                                {(() => {
-                                  const accountConfig = getAccountTypeConfigFromCurrency(recipient.currency)
-                                  const accountType = accountConfig.accountType
-                                  const accountIdentifier = accountType === "euro" && recipient.iban
-                                    ? formatFieldValue(accountType, "iban", recipient.iban)
-                                    : recipient.account_number
-
-                                  return (
-                                    <View>
-                                      {accountIdentifier && (
-                                        <Text style={styles.recipientAccount}>{accountIdentifier}</Text>
-                                      )}
-                                      <Text style={styles.recipientBank}>{recipient.bank_name}</Text>
-                                    </View>
-                                  )
-                                })()}
-                              </View>
-                            </View>
-                            {selectedRecipient === recipient.id && (
-                              <View style={styles.recipientCheck}>
-                                <Ionicons name="checkmark" size={16} color="#ffffff" />
-                              </View>
-                            )}
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </ScrollView>
-                  </View>
-                  {/* Fixed Footer Buttons */}
-                  <View style={styles.stepButtons}>
-                    <TouchableOpacity
-                      style={styles.stepButtonBack}
-                      onPress={() => setCreateStep(2)}
-                    >
-                      <Ionicons name="chevron-back" size={16} color="#374151" />
-                      <Text style={styles.stepButtonBackText}>Back</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.stepButtonContinue, !selectedRecipient && styles.stepButtonDisabled]}
-                      onPress={handleCreateWallet}
-                      disabled={!selectedRecipient}
-                    >
-                      <Text style={styles.stepButtonContinueText}>Create Address</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Empty State */}
-        {wallets.length === 0 && !showCreateFlow && (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconContainer}>
-              <Ionicons name="download-outline" size={64} color="#007ACC" />
-            </View>
-            <Text style={styles.emptyTitle}>No Addresses Yet</Text>
-            <Text style={styles.emptySubtext}>
-              Create your first stablecoin address to start receiving stablecoins automatically convert to your local currency bank account.
-            </Text>
+        {/* Tabs - Only show if multiple options available */}
+        {supportsStablecoins && (
+          <View style={styles.tabsContainer}>
             <TouchableOpacity
-              style={styles.createFirstButton}
-              onPress={() => setShowCreateFlow(true)}
+              style={[styles.tab, activeTab === 'bank' && styles.tabActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                setActiveTab('bank')
+              }}
+              activeOpacity={0.7}
             >
-              <Ionicons name="add" size={20} color="#ffffff" />
-              <Text style={styles.createFirstButtonText}>Create Your First Address</Text>
+              <Text style={[styles.tabText, activeTab === 'bank' && styles.tabTextActive]}>
+                Bank Account
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'stablecoin' && styles.tabActive]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                setActiveTab('stablecoin')
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tabText, activeTab === 'stablecoin' && styles.tabTextActive]}>
+                Stablecoins
+              </Text>
             </TouchableOpacity>
           </View>
         )}
-      </ScrollView>
 
-      {/* QR Code Modal */}
-      <Modal
-        visible={showQR !== null}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowQR(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Scan to Receive</Text>
-              <TouchableOpacity onPress={() => setShowQR(null)}>
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </TouchableOpacity>
-            </View>
-            {selectedWallet && (
-              <View style={styles.qrContent}>
-                <View style={styles.qrContainer}>
-                  <Text style={styles.qrPlaceholder}>QR Code</Text>
-                  <Text style={styles.qrHint}>QR code generation coming soon</Text>
-                </View>
-                <Text style={styles.qrAddressLabel}>Send {selectedWallet.crypto_currency} to this address</Text>
-                <Text style={styles.qrAddress} numberOfLines={2}>
-                  {selectedWallet.blockchain_address || selectedWallet.wallet_address}
-                </Text>
-                {selectedWallet.blockchain_memo && (
-                  <View style={styles.qrMemoSection}>
-                    <Text style={styles.qrMemoLabel}>Memo (Required):</Text>
-                    <Text style={styles.qrMemoValue}>{selectedWallet.blockchain_memo}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add Recipient Modal */}
-      <Modal
-        visible={showAddRecipientModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowAddRecipientModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.addRecipientModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Recipient</Text>
-              <TouchableOpacity onPress={() => setShowAddRecipientModal(false)}>
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.addRecipientForm}>
-              <View style={styles.formField}>
-                <Text style={styles.formLabel}>Currency</Text>
-                <View style={styles.currencyDisplay}>
-                  <Text style={styles.currencyDisplayFlag}>
-                    {selectedFiatCurrencyData ? getCountryFlag(selectedFiatCurrencyData.code) : "🌍"}
-                  </Text>
-                  <Text style={styles.currencyDisplayCode}>{selectedFiat}</Text>
-                  <Text style={styles.currencyDisplayAuto}>Auto-selected</Text>
-                </View>
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.formLabel}>Account Name *</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={newRecipientData.fullName}
-                  onChangeText={(text) => setNewRecipientData({ ...newRecipientData, fullName: text })}
-                  placeholder="Enter account name"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-              {(() => {
-                const accountConfig = selectedFiat
-                  ? getAccountTypeConfigFromCurrency(selectedFiat)
-                  : null
-
-                if (!accountConfig) {
-                  return (
-                    <View style={styles.formField}>
-                      <Text style={styles.formHelpText}>
-                        Please select a currency first to see the required fields
-                      </Text>
+        {/* Content */}
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        >
+          <Animated.View 
+            style={[
+              styles.content,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            {activeTab === 'bank' ? (
+              <>
+                {!accountReady ? (
+                  /* Show KYC notice when account is not ready */
+                  <View style={styles.kycNoticeContainer}>
+                    <View style={styles.kycNoticeIconContainer}>
+                      <Ionicons name="shield-checkmark-outline" size={32} color={colors.primary.main} />
                     </View>
-                  )
-                }
-
-                return (
-                  <>
-                    <View style={styles.formField}>
-                      <Text style={styles.formLabel}>
-                        {accountConfig.fieldLabels.bank_name} *
-                      </Text>
-                      <TextInput
-                        style={styles.formInput}
-                        value={newRecipientData.bankName}
-                        onChangeText={(text) => setNewRecipientData({ ...newRecipientData, bankName: text })}
-                        placeholder={accountConfig.fieldPlaceholders.bank_name}
-                        placeholderTextColor="#9ca3af"
-                      />
-                    </View>
-
-                    {accountConfig.accountType === "us" && (
-                      <>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.routing_number} *
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.routingNumber}
-                            onChangeText={(text) => {
-                              const value = text.replace(/\D/g, "").slice(0, 9)
-                              setNewRecipientData({ ...newRecipientData, routingNumber: value })
-                            }}
-                            placeholder={accountConfig.fieldPlaceholders.routing_number}
-                            placeholderTextColor="#9ca3af"
-                            keyboardType="numeric"
-                            maxLength={9}
-                          />
-                        </View>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.account_number} *
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.accountNumber}
-                            onChangeText={(text) => setNewRecipientData({ ...newRecipientData, accountNumber: text })}
-                            placeholder={accountConfig.fieldPlaceholders.account_number}
-                            placeholderTextColor="#9ca3af"
-                          />
-                        </View>
-                      </>
+                    <Text style={styles.kycNoticeTitle}>
+                      {kycStatus === 'approved' 
+                        ? 'Account Setup in Progress' 
+                        : 'Complete Verification to get an account'}
+                    </Text>
+                    <Text style={styles.kycNoticeText}>
+                      {!kycStatus || kycStatus === 'pending' || kycStatus === 'in_review'
+                        ? 'Complete your identity verification to receive your bank account details. Once approved, your account information will appear here automatically.'
+                        : kycStatus === 'rejected'
+                        ? 'Your verification was not approved. Please complete identity verification again to receive your account details.'
+                        : kycStatus === 'approved'
+                        ? 'Your account is being set up. This may take a few moments. Please check back shortly.'
+                        : 'Complete your identity verification to receive your bank account details.'}
+                    </Text>
+                    {kycStatus !== 'approved' && (
+                    <TouchableOpacity
+                      style={styles.kycNoticeButton}
+                      onPress={async () => {
+                        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                        navigation.navigate('AccountVerification' as any)
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.kycNoticeButtonText}>Complete Verification</Text>
+                      <Ionicons name="arrow-forward" size={18} color={colors.text.inverse} />
+                    </TouchableOpacity>
                     )}
-
-                    {accountConfig.accountType === "uk" && (
+                    {kycStatus === 'approved' && !accountReady && (
                       <>
-                        <View style={styles.formRow}>
-                          <View style={[styles.formField, styles.formFieldHalf]}>
-                            <Text style={styles.formLabel}>
-                              {accountConfig.fieldLabels.sort_code} *
-                            </Text>
-                            <TextInput
-                              style={styles.formInput}
-                              value={newRecipientData.sortCode}
-                              onChangeText={(text) => {
-                                const value = text.replace(/\D/g, "").slice(0, 6)
-                                setNewRecipientData({ ...newRecipientData, sortCode: value })
-                              }}
-                              placeholder={accountConfig.fieldPlaceholders.sort_code}
-                              placeholderTextColor="#9ca3af"
-                              keyboardType="numeric"
-                              maxLength={6}
-                            />
-                          </View>
-                          <View style={[styles.formField, styles.formFieldHalf]}>
-                            <Text style={styles.formLabel}>
-                              {accountConfig.fieldLabels.account_number} *
-                            </Text>
-                            <TextInput
-                              style={styles.formInput}
-                              value={newRecipientData.accountNumber}
-                              onChangeText={(text) => setNewRecipientData({ ...newRecipientData, accountNumber: text })}
-                              placeholder={accountConfig.fieldPlaceholders.account_number}
-                              placeholderTextColor="#9ca3af"
-                            />
-                          </View>
-                        </View>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.iban}
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.iban}
-                            onChangeText={(text) => setNewRecipientData({ ...newRecipientData, iban: text.toUpperCase() })}
-                            placeholder={accountConfig.fieldPlaceholders.iban}
-                            placeholderTextColor="#9ca3af"
-                            autoCapitalize="characters"
-                          />
-                        </View>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.swift_bic} (Optional)
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.swiftBic}
-                            onChangeText={(text) => setNewRecipientData({ ...newRecipientData, swiftBic: text.toUpperCase() })}
-                            placeholder={accountConfig.fieldPlaceholders.swift_bic}
-                            placeholderTextColor="#9ca3af"
-                            autoCapitalize="characters"
-                          />
-                        </View>
-                      </>
-                    )}
-
-                    {accountConfig.accountType === "euro" && (
-                      <>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.iban} *
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.iban}
-                            onChangeText={(text) => setNewRecipientData({ ...newRecipientData, iban: text.toUpperCase() })}
-                            placeholder={accountConfig.fieldPlaceholders.iban}
-                            placeholderTextColor="#9ca3af"
-                            autoCapitalize="characters"
-                          />
-                        </View>
-                        <View style={styles.formField}>
-                          <Text style={styles.formLabel}>
-                            {accountConfig.fieldLabels.swift_bic} (Optional)
-                          </Text>
-                          <TextInput
-                            style={styles.formInput}
-                            value={newRecipientData.swiftBic}
-                            onChangeText={(text) => setNewRecipientData({ ...newRecipientData, swiftBic: text.toUpperCase() })}
-                            placeholder={accountConfig.fieldPlaceholders.swift_bic}
-                            placeholderTextColor="#9ca3af"
-                            autoCapitalize="characters"
-                          />
-                        </View>
-                      </>
-                    )}
-
-                    {accountConfig.accountType === "generic" && (
-                      <View style={styles.formField}>
-                        <Text style={styles.formLabel}>
-                          {accountConfig.fieldLabels.account_number} *
+                        <Text style={[styles.kycNoticeText, { marginTop: spacing[2], fontSize: 12 }]}>
+                          Accounts are usually created automatically. If they don't appear within a few minutes, you can manually trigger creation.
                         </Text>
-                        <TextInput
-                          style={styles.formInput}
-                          value={newRecipientData.accountNumber}
-                          onChangeText={(text) => setNewRecipientData({ ...newRecipientData, accountNumber: text })}
-                          placeholder={accountConfig.fieldPlaceholders.account_number}
-                          placeholderTextColor="#9ca3af"
-                        />
-                      </View>
+                      <TouchableOpacity
+                          style={[styles.kycNoticeButton, creatingAccounts && styles.kycNoticeButtonDisabled, { marginTop: spacing[3] }]}
+                        onPress={handleCreateAccounts}
+                        disabled={creatingAccounts}
+                        activeOpacity={0.7}
+                      >
+                        {creatingAccounts ? (
+                          <>
+                            <Text style={styles.kycNoticeButtonText}>Creating Accounts...</Text>
+                            <Ionicons name="hourglass-outline" size={18} color={colors.text.inverse} />
+                          </>
+                        ) : (
+                          <>
+                              <Text style={styles.kycNoticeButtonText}>Create Accounts Manually</Text>
+                              <Ionicons name="refresh-outline" size={18} color={colors.text.inverse} />
+                          </>
+                        )}
+                      </TouchableOpacity>
+                      </>
                     )}
+                    {accountCreationError && (
+                      <Text style={styles.errorText}>{accountCreationError}</Text>
+                    )}
+                  </View>
+                ) : (
+                  /* Show account details when ready */
+                  <>
+                    {/* Bank Account Details */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Bank Account Details</Text>
+                  
+                      {/* Display all fields that Bridge provides */}
+                      {bankAccountDetails && (
+                        <>
+                          {/* Account Holder Name - Bridge provides this */}
+                          {bankAccountDetails.accountName && (
+                            renderCopyableField('Account Name', bankAccountDetails.accountName, 'accountName')
+                          )}
+                          
+                          {/* USD Account Fields - Bridge provides these for USD accounts */}
+                          {currency === 'USD' && (
+                            <>
+                              {bankAccountDetails.accountNumber && (
+                                renderCopyableField('Account Number', bankAccountDetails.accountNumber, 'accountNumber')
+                              )}
+                  {bankAccountDetails.routingNumber && (
+                    renderCopyableField('Routing Number', bankAccountDetails.routingNumber, 'routingNumber')
+                              )}
+                            </>
+                  )}
+                  
+                          {/* EUR Account Fields - Bridge provides these for EUR accounts */}
+                          {currency === 'EUR' && (
+                            <>
+                  {bankAccountDetails.iban && (
+                    renderCopyableField('IBAN', bankAccountDetails.iban, 'iban')
+                  )}
+                  {bankAccountDetails.swiftBic && (
+                    renderCopyableField('SWIFT/BIC', bankAccountDetails.swiftBic, 'swiftBic')
+                  )}
+                            </>
+                          )}
+                          
+                          {/* Bank Name - Bridge provides this */}
+                          {bankAccountDetails.bankName && (
+                            renderCopyableField('Bank Name', bankAccountDetails.bankName, 'bankName')
+                          )}
+                        </>
+                      )}
+                </View>
+
+                    {/* Payment Instructions */}
+                <View style={styles.instructionsContainer}>
+                  <Text style={styles.instructionsTitle}>Payment Instructions</Text>
+                  <Text style={styles.instructionsText}>
+                    1. Share these bank account details with the sender{'\n'}
+                    2. The sender should transfer {currency} to the account above{'\n'}
+                    3. Include your name or reference in the transfer memo/note{'\n'}
+                    4. Funds will be credited to your {getCurrencyName(currency)} wallet once received{'\n'}
+                    5. Processing time: 1-3 business days
+                  </Text>
+                </View>
                   </>
-                )
-              })()}
-              <TouchableOpacity
-                style={[
-                  styles.addRecipientSubmitButton,
-                  (() => {
-                    if (!newRecipientData.fullName || !selectedFiat) return styles.addRecipientSubmitButtonDisabled
-                    const accountConfig = getAccountTypeConfigFromCurrency(selectedFiat)
-                    const requiredFields = accountConfig.requiredFields
-                    const mapFieldName = (fieldName: string): string => {
-                      const fieldMap: Record<string, string> = {
-                        account_name: "fullName",
-                        routing_number: "routingNumber",
-                        account_number: "accountNumber",
-                        bank_name: "bankName",
-                        sort_code: "sortCode",
-                        iban: "iban",
-                        swift_bic: "swiftBic",
-                      }
-                      return fieldMap[fieldName] || fieldName
-                    }
-                    for (const field of requiredFields) {
-                      const formFieldName = mapFieldName(field)
-                      const fieldValue = newRecipientData[formFieldName as keyof typeof newRecipientData]
-                      if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
-                        return styles.addRecipientSubmitButtonDisabled
-                      }
-                    }
-                    return null
-                  })()
-                ]}
-                onPress={handleAddNewRecipient}
-                disabled={(() => {
-                  if (!newRecipientData.fullName || !selectedFiat) return true
-                  const accountConfig = getAccountTypeConfigFromCurrency(selectedFiat)
-                  const requiredFields = accountConfig.requiredFields
-                  const mapFieldName = (fieldName: string): string => {
-                    const fieldMap: Record<string, string> = {
-                      account_name: "fullName",
-                      routing_number: "routingNumber",
-                      account_number: "accountNumber",
-                      bank_name: "bankName",
-                      sort_code: "sortCode",
-                      iban: "iban",
-                      swift_bic: "swiftBic",
-                    }
-                    return fieldMap[fieldName] || fieldName
-                  }
-                  for (const field of requiredFields) {
-                    const formFieldName = mapFieldName(field)
-                    const fieldValue = newRecipientData[formFieldName as keyof typeof newRecipientData]
-                    if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
-                      return true
-                    }
-                  }
-                  return false
-                })()}
-              >
-                <Text style={styles.addRecipientSubmitButtonText}>Add Recipient</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+                )}
+              </>
+            ) : (
+              <>
+                {!walletReady ? (
+                  /* Show KYC notice when wallet is not ready */
+                  <View style={styles.kycNoticeContainer}>
+                    <View style={styles.kycNoticeIconContainer}>
+                      <Ionicons name="shield-checkmark-outline" size={32} color={colors.primary.main} />
+                    </View>
+                    <Text style={styles.kycNoticeTitle}>
+                      {kycStatus === 'approved' 
+                        ? 'Wallet Setup in Progress' 
+                        : 'Complete Verification for wallet address'}
+                    </Text>
+                    <Text style={styles.kycNoticeText}>
+                      {!kycStatus || kycStatus === 'pending' || kycStatus === 'in_review'
+                        ? `Complete your identity verification to receive your wallet address. Once approved, your wallet information will appear here automatically.`
+                        : kycStatus === 'rejected'
+                        ? 'Your verification was not approved. Please complete identity verification again to receive your wallet address.'
+                        : kycStatus === 'approved'
+                        ? 'Your wallet is being set up. This may take a few moments. Please check back shortly.'
+                        : 'Complete your identity verification to receive your wallet address.'}
+                    </Text>
+                    {kycStatus !== 'approved' && (
+                    <TouchableOpacity
+                      style={styles.kycNoticeButton}
+                      onPress={async () => {
+                        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                        navigation.navigate('AccountVerification' as any)
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.kycNoticeButtonText}>Complete Verification</Text>
+                      <Ionicons name="arrow-forward" size={18} color={colors.text.inverse} />
+                    </TouchableOpacity>
+                    )}
+                    {kycStatus === 'approved' && !walletReady && (
+                      <>
+                        <Text style={[styles.kycNoticeText, { marginTop: spacing[2], fontSize: 12 }]}>
+                          Wallets are usually created automatically. If it doesn't appear within a few minutes, you can manually trigger creation.
+                        </Text>
+                      <TouchableOpacity
+                          style={[styles.kycNoticeButton, creatingAccounts && styles.kycNoticeButtonDisabled, { marginTop: spacing[3] }]}
+                        onPress={handleCreateAccounts}
+                        disabled={creatingAccounts}
+                        activeOpacity={0.7}
+                      >
+                        {creatingAccounts ? (
+                          <>
+                            <Text style={styles.kycNoticeButtonText}>Creating Accounts...</Text>
+                            <Ionicons name="hourglass-outline" size={18} color={colors.text.inverse} />
+                          </>
+                        ) : (
+                          <>
+                              <Text style={styles.kycNoticeButtonText}>Create Accounts Manually</Text>
+                              <Ionicons name="refresh-outline" size={18} color={colors.text.inverse} />
+                          </>
+                        )}
+                      </TouchableOpacity>
+                      </>
+                    )}
+                    {accountCreationError && (
+                      <Text style={styles.errorText}>{accountCreationError}</Text>
+                    )}
+                  </View>
+                ) : (
+                  /* Show wallet details when ready */
+              <>
+                {/* Stablecoin Address */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Stablecoin Address</Text>
+                  
+                  <View style={styles.stablecoinInfo}>
+                    <Text style={styles.stablecoinLabel}>Network</Text>
+                    <Text style={styles.stablecoinValue}>{stablecoinData.network}</Text>
+                  </View>
+
+                      {stablecoinData.address && (
+                        renderCopyableField('Wallet Address', stablecoinData.address, 'walletAddress')
+                      )}
+                  
+                  {stablecoinData.memo && (
+                    <>
+                      {renderCopyableField('Memo (Required)', stablecoinData.memo, 'memo')}
+                      <View style={styles.memoWarningContainer}>
+                        <Ionicons name="warning-outline" size={16} color={colors.warning.main} />
+                        <Text style={styles.memoWarning}>
+                          Include this memo when sending to this address on {stablecoinData.network}
+                        </Text>
+                      </View>
+                    </>
+                  )}
+
+                  <View style={styles.supportedStablecoinsContainer}>
+                    <Text style={styles.supportedStablecoinsLabel}>Supported Stablecoins</Text>
+                    <View style={styles.stablecoinChips}>
+                      {stablecoinData.supportedStablecoins.map((coin) => (
+                        <View key={coin} style={styles.stablecoinChip}>
+                          <Text style={styles.stablecoinChipText}>{coin}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+
+                    {/* QR Code */}
+                    {walletAddress && (
+                <View style={styles.qrSection}>
+                  <View style={styles.qrContainer}>
+                          <QRCode
+                            value={walletAddress}
+                            size={200}
+                            color={colors.text.primary}
+                            backgroundColor={colors.background.primary}
+                          />
+                  </View>
+                        <Text style={styles.qrHint}>Scan to send {stablecoinData.supportedStablecoins.join(' or ')}</Text>
+                </View>
+                    )}
+
+                {/* Instructions */}
+                <View style={styles.instructionsContainer}>
+                  <Text style={styles.instructionsTitle}>Payment Instructions</Text>
+                  <Text style={styles.instructionsText}>
+                    1. Share this wallet address with the sender{'\n'}
+                    2. The sender should send one of the supported stablecoins to this address{'\n'}
+                    3. {stablecoinData.memo && 'Include the memo when sending on Stellar\n4. '}Funds will be automatically converted to {currency} and credited to your wallet{'\n'}
+                    {stablecoinData.memo ? '5' : '4'}. Processing time: Usually instant
+                  </Text>
+                </View>
+                  </>
+                )}
+              </>
+            )}
+          </Animated.View>
+        </ScrollView>
+      </View>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
   },
   header: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  walletsSection: {
-    padding: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  addAddressButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#007ACC',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  addAddressButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  walletCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  walletCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  walletIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#007ACC',
-    opacity: 0.1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  walletInfo: {
-    flex: 1,
-  },
-  walletCurrency: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  walletSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-  },
-  statusBadgeActive: {
-    backgroundColor: '#d1fae5',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-    textTransform: 'capitalize',
-  },
-  addressSection: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  addressLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  addressValue: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    color: '#111827',
-    marginTop: 4,
-  },
-  memoDivider: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginVertical: 12,
-  },
-  memoWarning: {
-    fontSize: 12,
-    color: '#d97706',
-    marginTop: 8,
-  },
-  walletDetails: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
-  },
-  detailItem: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  detailSubtext: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  walletActions: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
-  },
-  actionButtonPrimary: {
-    backgroundColor: '#007ACC',
-    borderColor: '#007ACC',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  actionButtonTextPrimary: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#ffffff',
-  },
-  createFlowContainer: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    maxHeight: 500,
-    minHeight: 400,
-  },
-  createFlowHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  createFlowHeaderTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  createFlowTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  progressSteps: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-    gap: 8,
-  },
-  progressStep: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: '#e5e7eb',
-    marginRight: 8,
-  },
-  progressLineActive: {
-    backgroundColor: '#007ACC',
-  },
-  progressCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#e5e7eb',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressCircleActive: {
-    backgroundColor: '#007ACC',
-  },
-  progressCircleCompleted: {
-    backgroundColor: '#007ACC',
-  },
-  progressCircleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  progressCircleTextActive: {
-    color: '#ffffff',
-  },
-  createStepContent: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  stepContentWrapper: {
-    flex: 1,
-    flexDirection: 'column',
-    padding: 24,
-  },
-  stepFixedHeader: {
-    flexShrink: 0,
-    marginBottom: 16,
-  },
-  stepScrollableArea: {
-    flex: 1,
-    minHeight: 200,
-  },
-  stepLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
-  },
-  cryptoGridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  cryptoCard: {
-    width: '47%',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
-    alignItems: 'flex-start',
-    minHeight: 100,
-  },
-  cryptoCardSelected: {
-    borderColor: '#007ACC',
-    backgroundColor: '#007ACC',
-    opacity: 0.05,
-    shadowColor: '#007ACC',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cryptoEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  cryptoCode: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  cryptoName: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchContainerFlex: {
-    flex: 1,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-  },
-  currencyItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    marginBottom: 12,
-  },
-  currencyItemSelected: {
-    borderColor: '#007ACC',
-    backgroundColor: '#007ACC',
-    opacity: 0.05,
-  },
-  currencyItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  currencyFlag: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  currencyItemInfo: {
-    flex: 1,
-  },
-  currencyCode: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  currencyCodeSelected: {
-    color: '#007ACC',
-  },
-  currencyName: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  currencyCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007ACC',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  recipientSearchContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  addRecipientButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    height: 48,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    justifyContent: 'center',
-  },
-  addRecipientButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  recipientItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    marginBottom: 12,
-  },
-  recipientItemSelected: {
-    borderColor: '#007ACC',
-    backgroundColor: '#007ACC',
-    opacity: 0.05,
-  },
-  recipientItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  recipientAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#007ACC',
-    opacity: 0.1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    position: 'relative',
-  },
-  recipientAvatarText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007ACC',
-  },
-  recipientFlag: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 24,
-    height: 16,
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  recipientFlagText: {
-    fontSize: 12,
-  },
-  recipientItemInfo: {
-    flex: 1,
-  },
-  recipientName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  recipientNameSelected: {
-    color: '#007ACC',
-  },
-  recipientAccount: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#6b7280',
+    ...textStyles.headlineMedium,
+    color: colors.text.primary,
     marginBottom: 2,
-  },
-  recipientBank: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  recipientCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#007ACC',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingTop: 24,
-    marginTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    flexShrink: 0,
-  },
-  stepButtonCancel: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepButtonCancelText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  stepButtonBack: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
-  },
-  stepButtonBackText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  stepButtonContinue: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#007ACC',
-  },
-  stepButtonDisabled: {
-    opacity: 0.5,
-  },
-  stepButtonContinueText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#ffffff',
-  },
-  emptyListContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  emptyListText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  emptyListSubtext: {
-    fontSize: 12,
-    color: '#9ca3af',
-    textAlign: 'center',
-  },
-  addRecipientModalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    width: '100%',
-    maxHeight: '90%',
-    padding: 20,
-  },
-  addRecipientForm: {
-    maxHeight: 500,
-  },
-  formField: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  formFieldHalf: {
-    flex: 1,
-  },
-  formLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  formInput: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#111827',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  formHelpText: {
-    fontSize: 14,
-    color: '#6b7280',
-    padding: 16,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
   },
   currencyDisplay: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    gap: spacing[2],
   },
-  currencyDisplayFlag: {
-    fontSize: 24,
+  currencyFlag: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
-  currencyDisplayCode: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
+  currencyText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[2],
+    gap: spacing[2],
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing[3],
+    alignItems: 'center',
+    borderRadius: borderRadius.xl,
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+  },
+  tabActive: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  tabText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Medium',
+  },
+  tabTextActive: {
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  scrollView: {
     flex: 1,
   },
-  currencyDisplayAuto: {
-    fontSize: 12,
-    color: '#6b7280',
+  content: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
   },
-  addRecipientSubmitButton: {
-    paddingVertical: 14,
-    borderRadius: 8,
-    backgroundColor: '#007ACC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
+  section: {
+    marginBottom: spacing[5],
   },
-  addRecipientSubmitButtonDisabled: {
-    opacity: 0.5,
+  sectionTitle: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+    marginBottom: spacing[3],
   },
-  addRecipientSubmitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+  fieldContainer: {
+    marginBottom: spacing[3],
   },
-  emptyContainer: {
-    padding: 20,
-    alignItems: 'center',
-    paddingVertical: 60,
+  fieldLabel: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+    marginBottom: spacing[1],
   },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#007ACC',
-    opacity: 0.1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 32,
-    maxWidth: 400,
-  },
-  createFirstButton: {
+  fieldValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#007ACC',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: '#F9F9F9',
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
-  createFirstButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalOverlay: {
+  fieldValue: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    ...textStyles.bodyLarge,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
+    fontVariant: ['tabular-nums'],
+  },
+  copyButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    marginLeft: spacing[2],
   },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
-    padding: 20,
+  instructionsContainer: {
+    backgroundColor: colors.primary.main + '10',
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[5],
+    borderWidth: 0.5,
+    borderColor: colors.primary.main + '30',
   },
-  modalHeader: {
+  instructionsTitle: {
+    ...textStyles.titleMedium,
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
+    marginBottom: spacing[2],
+  },
+  instructionsText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Regular',
+    lineHeight: 22,
+  },
+  stablecoinInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: '#F9F9F9',
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    marginBottom: spacing[3],
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
+  stablecoinLabel: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
   },
-  qrContent: {
+  stablecoinValue: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  memoWarningContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing[2],
+    marginTop: spacing[2],
+    padding: spacing[2],
+    backgroundColor: colors.warning.background,
+    borderRadius: borderRadius.md,
+  },
+  memoWarning: {
+    ...textStyles.bodySmall,
+    color: colors.warning.dark,
+    fontFamily: 'Outfit-Regular',
+    flex: 1,
+  },
+  supportedStablecoinsContainer: {
+    marginTop: spacing[4],
+    paddingTop: spacing[4],
+    borderTopWidth: 0.5,
+    borderTopColor: '#E2E2E2',
+  },
+  supportedStablecoinsLabel: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+    marginBottom: spacing[2],
+  },
+  stablecoinChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+  },
+  stablecoinChip: {
+    backgroundColor: colors.primary.main + '10',
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
+    borderWidth: 0.5,
+    borderColor: colors.primary.main + '30',
+  },
+  stablecoinChipText: {
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  qrSection: {
+    alignItems: 'center',
+    marginBottom: spacing[5],
   },
   qrContainer: {
     width: 240,
     height: 240,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
+    borderRadius: borderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
+    backgroundColor: colors.background.primary,
+    padding: spacing[3],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    ...shadows.sm,
   },
-  qrPlaceholder: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 8,
+  qrImage: {
+    width: 200,
+    height: 200,
+    borderRadius: borderRadius.lg,
+  },
+  qrGradientBackground: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   qrHint: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  qrAddressLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  qrAddress: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#111827',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
+    marginTop: spacing[2],
     textAlign: 'center',
   },
-  qrMemoSection: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    width: '100%',
+  kycNoticeContainer: {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius.xl,
+    padding: spacing[5],
+    marginBottom: spacing[5],
+    borderWidth: 1.5,
+    borderColor: colors.primary.main + '30',
+    alignItems: 'center',
+    ...shadows.sm,
   },
-  qrMemoLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#d97706',
-    marginBottom: 4,
+  kycNoticeIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing[4],
   },
-  qrMemoValue: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#d97706',
-    backgroundColor: '#fef3c7',
-    padding: 12,
-    borderRadius: 8,
+  kycNoticeTitle: {
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+    textAlign: 'center',
+    marginBottom: spacing[2],
+  },
+  kycNoticeText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing[4],
+  },
+  kycNoticeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    gap: spacing[2],
+    alignSelf: 'center',
+    marginTop: spacing[2],
+  },
+  kycNoticeButtonText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.inverse,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  kycNoticeButtonDisabled: {
+    opacity: 0.6,
+  },
+  errorText: {
+    ...textStyles.bodySmall,
+    color: colors.error?.main || '#FF3B30',
+    fontFamily: 'Outfit-Regular',
+    marginTop: spacing[2],
+    textAlign: 'center',
   },
 })
-
-export default function ReceiveMoneyScreen({ navigation, route }: NavigationProps) {
-  return <ReceiveMoneyContent navigation={navigation} route={route} />
-}

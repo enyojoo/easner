@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -11,8 +11,11 @@ import {
   Linking,
   BackHandler,
   Clipboard,
+  Animated,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
@@ -22,6 +25,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { analytics } from '../../lib/analytics'
 import { TransactionTimeline } from '../../components/TransactionTimeline'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 export default function SendTransactionDetailsScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
@@ -32,31 +36,42 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(Date.now())
-  const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
+  const [timerDuration, setTimerDuration] = useState(3600)
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
+
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
 
   const { transactionId, fromScreen } = route.params || {}
 
-  // Track screen view
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
   useEffect(() => {
     analytics.trackScreenView('SendTransactionDetails')
   }, [])
 
-  // Prevent hardware back button on Android only when this screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      const backAction = () => {
-        // Return true to prevent default back action only for this screen
-        return true
-      }
-
+      const backAction = () => true
       const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
-
       return () => backHandler.remove()
     }, [])
   )
 
-  // Initialize timer duration from payment method when transaction is loaded
   useEffect(() => {
     if (transaction && paymentMethods.length > 0) {
       const getDefaultPaymentMethod = (currency: string) => {
@@ -70,12 +85,10 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }
   }, [transaction, paymentMethods])
 
-  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(Date.now())
     }, 1000)
-
     return () => clearInterval(timer)
   }, [])
 
@@ -85,11 +98,9 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }
   }, [transactionId, userProfile?.id])
 
-  // Real-time subscription for transaction updates
   useEffect(() => {
     if (!transaction || !userProfile?.id || !transactionId) return
 
-    // Set up Supabase Realtime subscription for instant updates
     const channel = supabase
       .channel(`transaction-${transactionId}`)
       .on(
@@ -101,9 +112,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
           filter: `transaction_id=eq.${transactionId.toUpperCase()}`,
         },
         async (payload) => {
-          console.log('Transaction update received via Realtime:', payload)
           try {
-            // Fetch full transaction data with relations
             const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
             if (updatedTransaction) {
               setTransaction(updatedTransaction)
@@ -113,15 +122,8 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
           }
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Subscribed to transaction updates via Realtime')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Realtime subscription error, falling back to polling')
-        }
-      })
+      .subscribe()
 
-    // Fallback: Poll every 5 seconds if Realtime is not available
     const pollInterval = setInterval(async () => {
       try {
         const updatedTransaction = await transactionService.getById(transaction.transaction_id)
@@ -132,7 +134,7 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
       } catch (error) {
         console.error('Error polling transaction status:', error)
       }
-    }, 5000) // Poll every 5 seconds as fallback
+    }, 5000)
 
     return () => {
       supabase.removeChannel(channel)
@@ -147,7 +149,6 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 
       const transactionData = await transactionService.getById(transactionId.toUpperCase())
 
-      // Verify this transaction belongs to the current user
       if (transactionData.user_id !== userProfile?.id) {
         setError('Transaction not found or access denied')
         return
@@ -168,49 +169,27 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     setRefreshing(false)
   }
 
-  const getTimeInfo = () => {
-    if (!transaction) return { timeRemaining: 0, isOverdue: false, elapsedTime: 0 }
-
-    const createdAt = new Date(transaction.created_at).getTime()
-    const estimatedCompletionTime = 30 * 60 * 1000 // 30 minutes in milliseconds
-    const targetCompletionTime = createdAt + estimatedCompletionTime
-    const elapsedTime = currentTime - createdAt
-    const timeRemaining = Math.max(0, targetCompletionTime - currentTime)
-    const isOverdue = currentTime > targetCompletionTime
-
-    return {
-      timeRemaining: Math.floor(timeRemaining / 1000), // in seconds
-      isOverdue,
-      elapsedTime: Math.floor(elapsedTime / 1000), // in seconds
-    }
-  }
-
-  // Calculate elapsed time in seconds
   const getElapsedTime = (): number => {
     if (!transaction) return 0
     
     const createdAt = new Date(transaction.created_at).getTime()
     
     if (transaction.status === 'completed') {
-      // For completed, use completed_at or updated_at
       const completedAt = transaction.completed_at 
         ? new Date(transaction.completed_at).getTime()
         : new Date(transaction.updated_at).getTime()
       return Math.floor((completedAt - createdAt) / 1000)
     } else {
-      // For pending/processing, use current time
       return Math.floor((currentTime - createdAt) / 1000)
     }
   }
 
-  // Calculate remaining time for pending/processing
   const getRemainingTime = (): number => {
     const elapsed = getElapsedTime()
     const remaining = timerDuration - elapsed
     return Math.max(0, remaining)
   }
 
-  // Calculate delay for completed transactions or when timer has finished
   const getDelay = (): number => {
     if (!transaction) return 0
     const elapsed = getElapsedTime()
@@ -218,7 +197,6 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     return Math.max(0, delay)
   }
 
-  // Format time for display
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
@@ -230,11 +208,9 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
-  // Get timer display text
   const getTimerDisplay = (): string | null => {
     if (!transaction) return null
     
-    // Don't show timer for failed/cancelled
     if (transaction.status === 'failed' || transaction.status === 'cancelled') {
       return null
     }
@@ -249,88 +225,29 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
         return `Took ${formatTime(elapsed)}`
       }
     } else {
-      // Pending or processing
       const remaining = getRemainingTime()
       const delay = getDelay()
       
-      // If timer has finished (remaining <= 0), show delayed time
       if (remaining <= 0 && delay > 0) {
         return `Delayed ${formatTime(delay)}`
       }
       
-      // Otherwise show countdown
       return `Time left ${formatTime(remaining)}`
     }
   }
 
-  const getStatusMessage = (status: string) => {
+  const getStatusInfo = (status: string) => {
     switch (status) {
       case 'pending':
-        return {
-          title: 'Transaction Initiated',
-          description: 'Waiting for payment confirmation',
-          isCompleted: false,
-        }
+        return { color: colors.status.pending, icon: 'time-outline' as const, label: 'Pending' }
       case 'processing':
-        return {
-          title: 'Payment Received',
-          description: 'Your payment has been received and is being processed',
-          isCompleted: false,
-        }
-      case 'initiated':
-        return {
-          title: 'Transfer in Progress',
-          description: 'Your transfer has been initiated to the recipient',
-          isCompleted: false,
-        }
+        return { color: colors.status.processing, icon: 'sync-outline' as const, label: 'Processing' }
       case 'completed':
-        return {
-          title: 'Transfer Complete!',
-          description: 'Your money has been successfully transferred',
-          isCompleted: true,
-        }
+        return { color: colors.status.completed, icon: 'checkmark-circle' as const, label: 'Completed' }
       case 'failed':
-        return {
-          title: 'Transaction Failed',
-          description: 'There was an issue with your transaction. Please contact support.',
-          isCompleted: false,
-        }
+        return { color: colors.status.failed, icon: 'close-circle' as const, label: 'Failed' }
       default:
-        return {
-          title: 'Transaction Processing',
-          description: 'Your transaction is being processed',
-          isCompleted: false,
-        }
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#10b981'
-      case 'pending':
-        return '#f59e0b'
-      case 'processing':
-        return '#007ACC'
-      case 'failed':
-        return '#ef4444'
-      default:
-        return '#6b7280'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '✅'
-      case 'pending':
-        return '⏳'
-      case 'processing':
-        return '🔄'
-      case 'failed':
-        return '❌'
-      default:
-        return '❓'
+        return { color: colors.neutral[500], icon: 'help-circle-outline' as const, label: 'Unknown' }
     }
   }
 
@@ -350,7 +267,6 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     const minutes = date.getMinutes().toString().padStart(2, '0')
     const ampm = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours % 12 || 12
-    // Format: "Nov 07, 2025 • 7:29 PM"
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
@@ -364,18 +280,20 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
     }
   }
 
-  const handleSendAgain = () => {
-    navigation.navigate('MainTabs', { screen: 'Send' })
+  const handleSendAgain = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    navigation.navigate('SendAmount')
   }
 
-  const handleContactSupport = () => {
-    // Navigate to support or open support contact
-    Alert.alert('Contact Support', 'Support functionality will be implemented')
+  const handleGoToDashboard = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    navigation.navigate('MainTabs', { screen: 'Dashboard' })
   }
 
   const handleCopy = async (text: string, key: string) => {
     try {
       await Clipboard.setString(text)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setCopiedStates(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopiedStates(prev => ({ ...prev, [key]: false }))
@@ -387,12 +305,10 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.topPadding} />
-        
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007ACC" />
-          <Text style={styles.loadingText}>Loading transaction details...</Text>
+          <ActivityIndicator size="large" color={colors.primary.main} />
+          <Text style={styles.loadingText}>Loading transaction...</Text>
         </View>
       </View>
     )
@@ -400,229 +316,241 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 
   if (error || !transaction) {
     return (
-      <View style={styles.container}>
-        <View style={styles.topPadding} />
-        
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={48} color="#ef4444" />
+          <View style={styles.errorIconContainer}>
+            <Ionicons name="alert-circle" size={48} color={colors.error.main} />
+          </View>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
           <Text style={styles.errorText}>{error || 'Transaction not found'}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchTransactionDetails}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
       </View>
     )
   }
 
-  const statusMessage = getStatusMessage(transaction.status)
-  const { timeRemaining, isOverdue } = getTimeInfo()
+  const statusInfo = getStatusInfo(transaction.status)
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topPadding} />
-
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView 
         style={styles.scrollView} 
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.main} />
         }
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Transaction Status Header with Amount */}
-        {transaction && (
-          <View style={styles.statusHeaderWithTimer}>
-            <Text style={styles.statusTitleSmall}>Transaction Status</Text>
+        {/* Status Header Card */}
+        <Animated.View 
+          style={[
+            styles.statusCard,
+            {
+              opacity: headerAnim,
+              transform: [{
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          <LinearGradient
+            colors={transaction.status === 'completed' ? colors.success.gradient : colors.primary.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statusGradient}
+          >
+            <Text style={styles.statusLabel}>Transaction Status</Text>
             <Text style={styles.amountText}>
               {formatCurrency(transaction.send_amount, transaction.send_currency)}
             </Text>
+            
+            <View style={styles.statusBadge}>
+              <Ionicons name={statusInfo.icon} size={16} color={colors.text.inverse} />
+              <Text style={styles.statusBadgeText}>{statusInfo.label}</Text>
+            </View>
+
             {getTimerDisplay() && (
-              <View style={styles.timerContainer}>
-                <Ionicons name="time-outline" size={16} color="#ea580c" />
+              <View style={styles.timerBadge}>
                 <Text style={styles.timerText}>{getTimerDisplay()}</Text>
               </View>
             )}
-          </View>
-        )}
+          </LinearGradient>
+        </Animated.View>
 
-        {/* Transaction ID for pending, processing, or completed statuses */}
-        {(transaction.status === 'pending' ||
-          transaction.status === 'processing' ||
-          transaction.status === 'completed') && (
-          <View style={styles.transactionIdSection}>
+        <Animated.View
+          style={{
+            opacity: contentAnim,
+            transform: [{
+              translateY: contentAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [30, 0],
+              })
+            }]
+          }}
+        >
+          {/* Transaction ID */}
+          <View style={styles.card}>
             <View style={styles.transactionIdRow}>
               <Text style={styles.transactionIdLabel}>Transaction ID</Text>
-              <View style={styles.transactionIdValueRow}>
+              <TouchableOpacity 
+                style={styles.transactionIdValueRow}
+                onPress={() => handleCopy(transaction.transaction_id, "transactionId")}
+              >
                 <Text style={styles.transactionIdValue}>{transaction.transaction_id}</Text>
-                <TouchableOpacity
-                  onPress={() => handleCopy(transaction.transaction_id, "transactionId")}
-                  style={styles.copyButton}
-                >
-                  {copiedStates.transactionId ? (
-                    <Ionicons name="checkmark" size={12} color="#10b981" />
-                  ) : (
-                    <Ionicons name="copy" size={12} color="#6b7280" />
-                  )}
-                </TouchableOpacity>
-              </View>
+                <View style={[styles.copyIcon, copiedStates.transactionId && styles.copyIconSuccess]}>
+                  <Ionicons 
+                    name={copiedStates.transactionId ? "checkmark" : "copy-outline"} 
+                    size={14} 
+                    color={copiedStates.transactionId ? colors.success.main : colors.primary.main} 
+                  />
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
-        )}
 
-        {/* Show Timeline for pending, processing, or completed statuses */}
-        {(transaction.status === 'pending' ||
-          transaction.status === 'processing' ||
-          transaction.status === 'completed') ? (
-          <View style={styles.timelineWrapper}>
-            <TransactionTimeline transaction={transaction} />
-          </View>
-        ) : (
-          /* Show current UI for failed/cancelled statuses */
-          <>
-            {/* Status Header */}
-            <View style={styles.statusHeader}>
-              <View style={[
-                styles.statusIconContainer,
-                {
-                  backgroundColor: transaction.status === 'failed'
-                    ? '#fef2f2'
-                    : '#f3f4f6'
-                }
-              ]}>
-                <Ionicons
-                  name={transaction.status === 'failed' ? 'close-circle' : 'time'}
-                  size={32}
-                  color={transaction.status === 'failed' ? '#dc2626' : '#6b7280'}
-                />
-              </View>
-              <Text style={styles.statusTitle}>{statusMessage.title}</Text>
-              <Text style={styles.statusDescription}>{statusMessage.description}</Text>
-              
-              {/* Transaction ID and Created for failed/cancelled */}
-              <View style={styles.failedTransactionDetails}>
-                <View style={styles.failedDetailRowInline}>
-                  <Text style={styles.failedDetailLabel}>Transaction ID:</Text>
-                  <Text style={styles.failedDetailValue}>{transaction.transaction_id}</Text>
-                </View>
-                <View style={styles.failedDetailRowInline}>
-                  <Text style={styles.failedDetailLabel}>Created:</Text>
-                  <Text style={styles.failedDetailValue}>
-                    {formatTimestamp(transaction.created_at)}
-                  </Text>
-                </View>
-              </View>
+          {/* Timeline */}
+          {(transaction.status === 'pending' || transaction.status === 'processing' || transaction.status === 'completed') && (
+            <View style={styles.card}>
+              <TransactionTimeline transaction={transaction} />
             </View>
-            
-            {/* Status Information */}
-            <View style={[
-              styles.statusInfo,
-              {
-                backgroundColor: transaction.status === 'failed' ? '#fef2f2' : '#f3f4f6'
-              }
-            ]}>
-              <Text style={styles.statusInfoLabel}>
-                {transaction.status === 'failed' ? 'Failed:' : 'Status:'}
+          )}
+
+          {/* Failed/Cancelled Status */}
+          {(transaction.status === 'failed' || transaction.status === 'cancelled') && (
+            <View style={styles.failedCard}>
+              <View style={styles.failedIconContainer}>
+                <Ionicons name="close-circle" size={32} color={colors.error.main} />
+              </View>
+              <Text style={styles.failedTitle}>
+                {transaction.status === 'failed' ? 'Transaction Failed' : 'Transaction Cancelled'}
               </Text>
-              <Text style={styles.statusInfoValue}>
+              <Text style={styles.failedDescription}>
+                {transaction.status === 'failed' 
+                  ? 'There was an issue with your transaction. Please contact support.'
+                  : 'This transaction has been cancelled.'}
+              </Text>
+              <Text style={styles.failedTimestamp}>
                 {formatTimestamp(transaction.updated_at)}
               </Text>
             </View>
-          </>
-        )}
-        
-        {/* Receipt Section */}
-        {transaction.receipt_url && (
-          <View style={styles.receiptSection}>
-            <View style={styles.receiptHeader}>
-              <View style={styles.receiptIcon}>
-                <Ionicons name="document-text" size={20} color="#16a34a" />
-              </View>
-              <View style={styles.receiptInfo}>
-                <Text style={styles.receiptTitle}>Your Payment Receipt</Text>
-                <Text style={styles.receiptFilename}>{transaction.receipt_filename}</Text>
+          )}
+
+          {/* Receipt */}
+          {transaction.receipt_url && (
+            <View style={styles.card}>
+              <View style={styles.receiptRow}>
+                <View style={styles.receiptIconContainer}>
+                  <Ionicons name="document-text" size={20} color={colors.success.main} />
+                </View>
+                <View style={styles.receiptInfo}>
+                  <Text style={styles.receiptTitle}>Payment Receipt</Text>
+                  <Text style={styles.receiptFilename}>{transaction.receipt_filename}</Text>
+                </View>
+                <TouchableOpacity style={styles.receiptButton} onPress={handleViewReceipt}>
+                  <Ionicons name="open-outline" size={16} color={colors.primary.main} />
+                  <Text style={styles.receiptButtonText}>View</Text>
+                </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity style={styles.receiptButton} onPress={handleViewReceipt}>
-              <Ionicons name="open-outline" size={16} color="#007ACC" />
-              <Text style={styles.receiptButtonText}>View</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          )}
 
-        {/* Transaction Summary */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summaryTitle}>Transaction Summary</Text>
-          
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>You Sent</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(transaction.send_amount, transaction.send_currency)}
-            </Text>
-          </View>
-        
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Fee</Text>
-            <Text style={[
-              styles.summaryValue,
-              transaction.fee_amount === 0 ? styles.freeText : {}
-            ]}>
-              {transaction.fee_amount === 0
-                ? 'FREE'
-                : formatCurrency(transaction.fee_amount, transaction.send_currency)}
-            </Text>
-          </View>
-        
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.summaryLabel}>Total Paid</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(transaction.total_amount, transaction.send_currency)}
-            </Text>
-          </View>
-        
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Recipient Gets</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
-            </Text>
+          {/* Transaction Summary */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardIconContainer}>
+                <Ionicons name="receipt-outline" size={18} color={colors.primary.main} />
+              </View>
+              <Text style={styles.cardTitle}>Transaction Summary</Text>
+            </View>
+            
+            <View style={styles.summaryRows}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>You Sent</Text>
+                <Text style={styles.summaryValue}>
+                  {formatCurrency(transaction.send_amount, transaction.send_currency)}
+                </Text>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Fee</Text>
+                <Text style={[styles.summaryValue, transaction.fee_amount === 0 && styles.freeText]}>
+                  {transaction.fee_amount === 0 ? 'FREE' : formatCurrency(transaction.fee_amount, transaction.send_currency)}
+                </Text>
+              </View>
+              
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total Paid</Text>
+                <Text style={styles.totalValue}>
+                  {formatCurrency(transaction.total_amount, transaction.send_currency)}
+                </Text>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Recipient Gets</Text>
+                <Text style={[styles.summaryValue, { color: colors.success.main }]}>
+                  {formatCurrency(transaction.receive_amount, transaction.receive_currency)}
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Exchange Rate</Text>
+                <Text style={styles.rateText}>
+                  1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(2)} {transaction.receive_currency}
+                </Text>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Exchange Rate</Text>
-            <Text style={styles.exchangeRateText}>
-              1 {transaction.send_currency} = {transaction.exchange_rate.toFixed(4)} {transaction.receive_currency}
-            </Text>
-          </View>
-        </View>
-        
-        {/* Recipient Details */}
-        {transaction.recipient && (
-          <View style={styles.recipientSection}>
-            <Text style={styles.recipientTitle}>Recipient</Text>
-            <Text style={styles.recipientName}>{transaction.recipient.full_name}</Text>
-            <Text style={styles.recipientAccount}>{transaction.recipient.account_number}</Text>
-            <Text style={styles.recipientBank}>{transaction.recipient.bank_name}</Text>
-          </View>
-        )}
+          {/* Recipient Details */}
+          {transaction.recipient && (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIconContainer}>
+                  <Ionicons name="person-outline" size={18} color={colors.primary.main} />
+                </View>
+                <Text style={styles.cardTitle}>Recipient</Text>
+              </View>
+              
+              <View style={styles.recipientRow}>
+                <LinearGradient
+                  colors={colors.primary.gradient}
+                  style={styles.recipientAvatar}
+                >
+                  <Text style={styles.recipientInitials}>
+                    {transaction.recipient.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </Text>
+                </LinearGradient>
+                <View style={styles.recipientInfo}>
+                  <Text style={styles.recipientName}>{transaction.recipient.full_name}</Text>
+                  <Text style={styles.recipientBank}>{transaction.recipient.bank_name}</Text>
+                  <Text style={styles.recipientAccount}>{transaction.recipient.account_number}</Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </Animated.View>
       </ScrollView>
 
-      {/* Bottom Action Buttons */}
-      <View style={[
-        styles.bottomContainer,
-        { 
-          paddingBottom: Math.max(insets.bottom + 8, 16),
-        }
-      ]}>
-        <TouchableOpacity 
-          style={[styles.bottomButton, styles.secondaryBottomButton]} 
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Dashboard' })}
-        >
-          <Text style={styles.secondaryBottomButtonText}>Dashboard</Text>
+      {/* Bottom Actions */}
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom + spacing[4], spacing[6]) }]}>
+        <TouchableOpacity style={styles.secondaryButton} onPress={handleGoToDashboard}>
+          <Text style={styles.secondaryButtonText}>Dashboard</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity 
-          style={[styles.bottomButton, styles.primaryBottomButton]} 
-          onPress={handleSendAgain}
-        >
-          <Text style={styles.primaryBottomButtonText}>Send Again</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSendAgain}>
+          <LinearGradient
+            colors={colors.primary.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.primaryButtonGradient}
+          >
+            <Text style={styles.primaryButtonText}>Send Again</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -630,114 +558,116 @@ export default function SendTransactionDetailsScreen({ navigation, route }: Navi
 }
 
 const styles = StyleSheet.create({
-  topPadding: {
-    height: 50,
-    backgroundColor: '#ffffff',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[8],
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    marginTop: spacing[3],
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    padding: 20,
+    padding: spacing[5],
+  },
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.error.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  errorTitle: {
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   errorText: {
-    fontSize: 18,
-    color: '#ef4444',
-    marginBottom: 20,
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
     textAlign: 'center',
+    marginBottom: spacing[4],
   },
   retryButton: {
-    backgroundColor: '#007ACC',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
   },
   retryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...textStyles.titleSmall,
+    color: colors.text.inverse,
   },
-  backButton: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007ACC',
+  statusCard: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    marginTop: spacing[4],
+    marginBottom: spacing[4],
+    ...shadows.md,
   },
-  backButtonText: {
-    color: '#007ACC',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  statusHeaderWithTimer: {
-    flexDirection: 'column',
+  statusGradient: {
+    padding: spacing[5],
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 8,
-    gap: 0,
   },
-  statusTitleSmall: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-    lineHeight: 14,
+  statusLabel: {
+    ...textStyles.labelMedium,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: spacing[2],
   },
   amountText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
+    ...textStyles.displayMedium,
+    color: colors.text.inverse,
+    fontWeight: '700',
+    marginBottom: spacing[3],
   },
-  timerContainer: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.full,
+    gap: spacing[1],
+  },
+  statusBadgeText: {
+    ...textStyles.labelMedium,
+    color: colors.text.inverse,
+    fontWeight: '600',
+  },
+  timerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing[3],
+    gap: spacing[1],
   },
   timerText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#ea580c',
-    marginLeft: 4,
+    ...textStyles.bodySmall,
+    color: 'rgba(255,255,255,0.8)',
     fontFamily: 'monospace',
   },
-  transactionIdSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+  card: {
+    backgroundColor: colors.neutral.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[3],
+    ...shadows.sm,
   },
   transactionIdRow: {
     flexDirection: 'row',
@@ -745,250 +675,227 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   transactionIdLabel: {
-    fontSize: 12,
-    color: '#6b7280',
+    ...textStyles.labelMedium,
+    color: colors.text.tertiary,
   },
   transactionIdValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing[2],
   },
   transactionIdValue: {
-    fontSize: 14,
+    ...textStyles.titleSmall,
+    color: colors.text.primary,
     fontFamily: 'monospace',
-    color: '#1f2937',
   },
-  copyButton: {
-    padding: 4,
-  },
-  timelineWrapper: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  statusHeader: {
-    backgroundColor: '#ffffff',
-    padding: 24,
+  copyIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  statusIconContainer: {
+  copyIconSuccess: {
+    backgroundColor: colors.success.background,
+  },
+  failedCard: {
+    backgroundColor: colors.error.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[5],
+    marginBottom: spacing[3],
+    alignItems: 'center',
+  },
+  failedIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
+    backgroundColor: colors.neutral.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing[3],
   },
-  statusTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
+  failedTitle: {
+    ...textStyles.titleLarge,
+    color: colors.error.main,
+    marginBottom: spacing[2],
+  },
+  failedDescription: {
+    ...textStyles.bodyMedium,
+    color: colors.error.dark,
     textAlign: 'center',
+    marginBottom: spacing[2],
   },
-  statusDescription: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 16,
+  failedTimestamp: {
+    ...textStyles.bodySmall,
+    color: colors.error.main,
   },
-  failedTransactionDetails: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  failedDetailRowInline: {
+  receiptRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
   },
-  failedDetailLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  failedDetailValue: {
-    fontSize: 14,
-    color: '#1f2937',
-    fontFamily: 'monospace',
-  },
-  statusInfo: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statusInfoLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  statusInfoValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  receiptSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  receiptHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  receiptIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: '#dcfce7',
+  receiptIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.success.background,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing[3],
   },
   receiptInfo: {
     flex: 1,
   },
   receiptTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
+    ...textStyles.titleSmall,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   receiptFilename: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
   },
   receiptButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: '#007ACC',
+    borderColor: colors.primary.main,
+    gap: spacing[1],
   },
   receiptButtonText: {
-    color: '#007ACC',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 4,
+    ...textStyles.labelMedium,
+    color: colors.primary.main,
   },
-  summarySection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 8,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing[4],
+    gap: spacing[2],
   },
-  summaryTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 16,
+  cardIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardTitle: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+  },
+  summaryRows: {
+    gap: spacing[3],
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   summaryLabel: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
   summaryValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
+    ...textStyles.titleSmall,
+    color: colors.text.primary,
+  },
+  freeText: {
+    color: colors.success.main,
+    fontWeight: '600',
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    paddingTop: 12,
-    marginTop: 4,
+    borderTopColor: colors.border.light,
+    paddingTop: spacing[3],
+    marginTop: spacing[1],
   },
-  freeText: {
-    color: '#16a34a',
-    fontWeight: '600',
+  totalLabel: {
+    ...textStyles.titleSmall,
+    color: colors.text.primary,
   },
-  exchangeRateText: {
-    fontSize: 12,
-    color: '#6b7280',
+  totalValue: {
+    ...textStyles.titleMedium,
+    color: colors.primary.main,
+    fontWeight: '700',
   },
-  recipientSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 8,
+  rateText: {
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
   },
-  recipientTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 8,
+  recipientRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  recipientAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  recipientInitials: {
+    ...textStyles.titleMedium,
+    color: colors.text.inverse,
+    fontWeight: '700',
+  },
+  recipientInfo: {
+    flex: 1,
   },
   recipientName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  recipientAccount: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
     marginBottom: 2,
   },
   recipientBank: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+  },
+  recipientAccount: {
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
+    fontFamily: 'monospace',
+    marginTop: 2,
   },
   bottomContainer: {
     flexDirection: 'row',
-    padding: 16,
-    paddingTop: 12,
-    gap: 12,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    gap: spacing[3],
+    backgroundColor: colors.neutral.white,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.border.light,
   },
-  bottomButton: {
+  secondaryButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: spacing[4],
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.neutral[50],
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  primaryBottomButton: {
-    backgroundColor: '#007ACC',
-  },
-  secondaryBottomButton: {
-    backgroundColor: '#f3f4f6',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.border.default,
   },
-  primaryBottomButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '600',
+  secondaryButtonText: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
   },
-  secondaryBottomButtonText: {
-    color: '#374151',
-    fontSize: 15,
+  primaryButton: {
+    flex: 1,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  primaryButtonGradient: {
+    paddingVertical: spacing[4],
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    ...textStyles.titleMedium,
+    color: colors.text.inverse,
     fontWeight: '600',
   },
 })

@@ -72,14 +72,46 @@ export const apiRequest = async (
       ...options.headers,
     }
     
-    // Make the request
+    // Make the request with timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    
+    try {
     const response = await fetch(url, {
       ...options,
       headers,
+        signal: controller.signal,
     })
-    
+      clearTimeout(timeoutId)
     return response
-  } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Network request timed out')
+      }
+      throw error
+    }
+  } catch (error: any) {
+    // Handle network errors gracefully
+    if (error?.message === 'Network request failed' || error?.name === 'TypeError' || error?.message?.includes('fetch')) {
+      console.warn('API request failed (network error):', error?.message || 'Network unavailable')
+      // Create a custom response object that indicates network failure
+      // Use status 503 (Service Unavailable) to indicate network issues
+      const errorResponse = new Response(
+        JSON.stringify({ 
+          error: 'Network request failed', 
+          message: 'Unable to connect to server. Please check your internet connection.' 
+        }),
+        {
+          status: 503,
+          statusText: 'Network Error',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+      // Mark as network error for easy detection
+      ;(errorResponse as any).isNetworkError = true
+      return errorResponse
+    }
     console.error('API request error:', error)
     throw error
   }

@@ -15,8 +15,8 @@ const WithAuth: React.FC<WithAuthProps> = ({ children, requireAuth = true, ...pr
   useEffect(() => {
     // Only redirect if we're not loading and require auth but user is not logged in
     if (!loading && requireAuth && !user) {
-      console.log('WithAuth: Redirecting to login - user not authenticated')
-      navigation.navigate('Login' as never)
+      console.log('WithAuth: Redirecting to auth - user not authenticated')
+      navigation.navigate('Auth' as never)
     }
   }, [user, loading, requireAuth, navigation])
 

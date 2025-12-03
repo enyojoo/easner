@@ -190,8 +190,18 @@ const countriesList: Country[] = [
   { code: "MH", name: "Marshall Islands", flag_emoji: "🇲🇭" },
 ].sort((a, b) => a.name.localeCompare(b.name))
 
+import { filterBridgeSupportedCountries } from './bridgeSupportedCountries'
+
 export const countryService = {
   async getAll(): Promise<Country[]> {
+    // Filter to only include Bridge-supported countries
+    return filterBridgeSupportedCountries(countriesList)
+  },
+  
+  /**
+   * Get all countries (including unsupported ones) - for admin/internal use
+   */
+  async getAllIncludingUnsupported(): Promise<Country[]> {
     return countriesList
   },
 }

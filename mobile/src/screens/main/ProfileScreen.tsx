@@ -48,6 +48,7 @@ function ProfileContent({ navigation }: NavigationProps) {
   // Load user profile data
   useEffect(() => {
     if (userProfile) {
+      // Keep full first_name for profile page (display and edit)
       const data = {
         firstName: userProfile.profile.first_name || '',
         lastName: userProfile.profile.last_name || '',
@@ -285,8 +286,8 @@ function ProfileContent({ navigation }: NavigationProps) {
         <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Profile</Text>
           {!isEditing ? (
-                <TouchableOpacity onPress={handleEditProfile} style={styles.editButtonContainer}>
-                  <Ionicons name="pencil-outline" size={16} color="#007ACC" />
+                <TouchableOpacity onPress={handleEditProfile} style={styles.editButtonContainer} activeOpacity={0.7}>
+                  <Ionicons name="pencil-outline" size={18} color="#ffffff" />
               <Text style={styles.editButton}>Edit</Text>
             </TouchableOpacity>
           ) : (
@@ -469,18 +470,26 @@ const styles = StyleSheet.create({
   editButtonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#dbeafe',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: '#007ACC',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   editButton: {
     fontSize: 14,
-    color: '#2563eb',
+    color: '#ffffff',
     fontWeight: '600',
+    fontFamily: 'Outfit-SemiBold',
   },
   editActions: {
     flexDirection: 'row',

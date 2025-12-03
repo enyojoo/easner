@@ -1,18 +1,45 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Linking,
+  Animated,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import ScreenWrapper from '../../components/ScreenWrapper'
 import { NavigationProps } from '../../types'
 import { analytics } from '../../lib/analytics'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 export default function SupportScreen({ navigation }: NavigationProps) {
+  const insets = useSafeAreaInsets()
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
+
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
   // Track screen view
   useEffect(() => {
     analytics.trackScreenView('Support')
@@ -24,8 +51,13 @@ export default function SupportScreen({ navigation }: NavigationProps) {
     Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`)
   }
 
-  const handleOpenLiveChat = () => {
-    Alert.alert('Live Chat', 'Live chat functionality will be implemented')
+  const handleOpenTelegram = () => {
+    Linking.openURL('https://t.me/enyosam')
+  }
+
+  const toggleFAQ = async (index: number) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setExpandedFAQ(expandedFAQ === index ? null : index)
   }
 
 
@@ -45,175 +77,218 @@ export default function SupportScreen({ navigation }: NavigationProps) {
     }
   ]
 
-  const renderFAQItem = (item: { question: string; answer: string }, index: number) => (
-    <View key={index} style={styles.faqItem}>
-      <Text style={styles.faqQuestion}>{item.question}</Text>
-      <Text style={styles.faqAnswer}>{item.answer}</Text>
-    </View>
-  )
+  const renderFAQItem = (item: { question: string; answer: string }, index: number) => {
+    const isLast = index === faqItems.length - 1
+    return (
+      <View key={index} style={[styles.faqItem, isLast && styles.faqItemLast]}>
+        <TouchableOpacity 
+          style={styles.faqHeader}
+          onPress={() => toggleFAQ(index)}
+        >
+        <Text style={styles.faqQuestion}>{item.question}</Text>
+          <Text style={styles.faqToggle}>{expandedFAQ === index ? '−' : '+'}</Text>
+        </TouchableOpacity>
+        {expandedFAQ === index && (
+        <Text style={styles.faqAnswer}>{item.answer}</Text>
+        )}
+      </View>
+    )
+  }
 
-  const renderContactButton = (title: string, subtitle: string, onPress: () => void, icon: string) => (
-    <TouchableOpacity style={styles.contactButton} onPress={onPress}>
+  const renderContactButton = (title: string, subtitle: string, onPress: () => void, icon: string, isLast: boolean = false) => (
+    <TouchableOpacity
+      style={[styles.contactButton, isLast && styles.contactButtonLast]}
+      onPress={async () => {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        onPress()
+      }}
+      activeOpacity={0.7}
+    >
       <Text style={styles.contactIcon}>{icon}</Text>
       <View style={styles.contactInfo}>
         <Text style={styles.contactTitle}>{title}</Text>
         <Text style={styles.contactSubtitle}>{subtitle}</Text>
       </View>
-      <Text style={styles.contactArrow}>›</Text>
+      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
     </TouchableOpacity>
   )
 
   return (
+    <ScreenWrapper>
     <View style={styles.container}>
-      {/* Custom Header */}
-      <View style={styles.customHeader}>
-        <TouchableOpacity 
-          style={styles.headerBackButton}
-          onPress={() => navigation.goBack()}
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={{ paddingBottom: insets.bottom + spacing[5] }}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="arrow-back" size={24} color="#000" />
-          <Text style={styles.headerBackText}>Back</Text>
+          {/* Premium Header - Matching Send Flow */}
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-20, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <TouchableOpacity
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.goBack()
+              }}
+              style={styles.backButton}
+              activeOpacity={0.7}
+        >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
-      </View>
-      
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.header}>
+            <View style={styles.headerContent}>
         <Text style={styles.title}>Support</Text>
         <Text style={styles.subtitle}>We're here to help you</Text>
       </View>
+          </Animated.View>
 
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
       {/* Contact Options */}
-      <View style={styles.section}>
+            <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Get in Touch</Text>
         {renderContactButton(
           'Email Support',
           'support@easner.com',
           handleEmailSupport,
-          '📧'
+          '📧',
+          false
         )}
         {renderContactButton(
-          'Live Chat',
-          'Chat with us in real-time',
-          handleOpenLiveChat,
-          '💬'
+                'Telegram Chat',
+                'Chat with us on Telegram',
+                handleOpenTelegram,
+          '💬',
+          true
         )}
-      </View>
+            </View>
 
       {/* FAQ Section */}
-      <View style={styles.section}>
+            <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
         {faqItems.map(renderFAQItem)}
-      </View>
+            </View>
 
       {/* Support Hours */}
-      <View style={styles.section}>
+            <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Support Hours</Text>
         <View style={styles.hoursContainer}>
           <Text style={styles.hoursText}>All week from 8 am to 11pm GMT+3</Text>
         </View>
+            </View>
+          </Animated.View>
+        </ScrollView>
       </View>
-
-    </ScrollView>
-    </View>
+    </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  customHeader: {
-    backgroundColor: '#ffffff',
-    paddingTop: 50,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerBackText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000',
+    backgroundColor: colors.background.primary,
   },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  scrollContent: {
-    paddingBottom: 100,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
+    ...textStyles.headlineMedium,
+    color: colors.text.primary,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
-  section: {
-    backgroundColor: '#ffffff',
-    marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  content: {
+    padding: spacing[5],
+    gap: spacing[4],
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+  sectionCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    marginBottom: spacing[4],
+    paddingBottom: spacing[2],
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 16,
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#007ACC',
-    fontWeight: '500',
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[4],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[5],
   },
   contactButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[5],
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: '#E2E2E2',
+  },
+  contactButtonLast: {
+    borderBottomWidth: 0,
   },
   contactIcon: {
     fontSize: 24,
-    marginRight: 16,
+    marginRight: spacing[4],
   },
   contactInfo: {
     flex: 1,
   },
   contactTitle: {
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 2,
+    color: colors.text.primary,
+    marginBottom: spacing[0],
   },
   contactSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  contactArrow: {
-    fontSize: 20,
-    color: '#9ca3af',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
   },
   inputContainer: {
     marginBottom: 16,
@@ -250,26 +325,47 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   faqItem: {
-    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E2E2',
+    paddingHorizontal: spacing[5],
+  },
+  faqItemLast: {
+    borderBottomWidth: 0,
+  },
+  faqHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing[4],
   },
   faqQuestion: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginBottom: 8,
+    ...textStyles.bodyMedium,
+    fontFamily: 'Outfit-Medium',
+    color: colors.text.primary,
+    flex: 1,
+    paddingRight: spacing[4],
+  },
+  faqToggle: {
+    fontSize: 20,
+    color: colors.text.secondary,
+    fontWeight: '300',
   },
   faqAnswer: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
     lineHeight: 20,
+    paddingBottom: spacing[4],
+    paddingLeft: spacing[5],
+    paddingRight: spacing[5],
   },
   hoursContainer: {
-    marginBottom: 8,
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[2],
   },
   hoursText: {
-    fontSize: 14,
-    color: '#374151',
-    marginBottom: 4,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Regular',
   },
   timezoneText: {
     fontSize: 12,

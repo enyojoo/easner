@@ -30,8 +30,8 @@ export default function UserSupportPage() {
     window.open("mailto:support@easner.com?subject=Support Request", "_blank")
   }
 
-  const handleOpenLiveChat = () => {
-    alert('Live chat functionality will be implemented')
+  const handleOpenTelegram = () => {
+    window.open('https://t.me/enyosam', '_blank')
   }
 
 
@@ -79,16 +79,16 @@ export default function UserSupportPage() {
                 <div className="text-gray-400">›</div>
               </div>
 
-              {/* Live Chat */}
+              {/* Telegram Chat */}
               <div 
                 className="flex items-center justify-between py-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={handleOpenLiveChat}
+                onClick={handleOpenTelegram}
               >
                 <div className="flex items-center space-x-4">
                   <div className="text-2xl">💬</div>
                   <div>
-                    <h3 className="font-medium text-gray-900">Live Chat</h3>
-                    <p className="text-sm text-gray-600">Chat with us in real-time</p>
+                    <h3 className="font-medium text-gray-900">Telegram Chat</h3>
+                    <p className="text-sm text-gray-600">Chat with us on Telegram</p>
                   </div>
                 </div>
                 <div className="text-gray-400">›</div>

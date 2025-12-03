@@ -357,7 +357,8 @@ export default function UserSendPage() {
   // Generate transaction ID when moving to step 3
   useEffect(() => {
     if (currentStep === 3 && !transactionId) {
-      const newTransactionId = `ETID${Date.now()}`
+      const { generateTransactionId } = require("@/lib/transaction-id")
+      const newTransactionId = generateTransactionId()
       setTransactionId(newTransactionId)
     }
   }, [currentStep, transactionId])
@@ -370,7 +371,7 @@ export default function UserSendPage() {
         setPaymentDetailsFetchAttempted(true)
         try {
           const response = await fetch(
-            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${transactionId || `ETID${Date.now()}`}`,
+            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()}`,
             {
               credentials: "include",
             }

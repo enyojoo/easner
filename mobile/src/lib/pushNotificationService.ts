@@ -136,7 +136,9 @@ class PushNotificationService {
    * Remove notification listeners
    */
   removeNotificationSubscription(subscription: Notifications.Subscription) {
-    Notifications.removeNotificationSubscription(subscription);
+    if (subscription && typeof subscription.remove === 'function') {
+      subscription.remove();
+    }
   }
 }
 

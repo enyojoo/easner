@@ -1,7 +1,9 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import { TransactionData } from '../lib/transactionService'
+import { colors, textStyles, borderRadius, spacing } from '../theme'
 
 interface TimelineStage {
   id: string
@@ -26,7 +28,6 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
     const minutes = date.getMinutes().toString().padStart(2, '0')
     const ampm = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours % 12 || 12
-    // Format: "Nov 05, 2025 • 2:22 PM"
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
@@ -46,7 +47,7 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
         id: 'processing',
         title: 'Processing',
         description: 'Your money is on its way.',
-        icon: 'arrow-forward',
+        icon: 'sync',
         completed: status === 'processing' || status === 'completed',
         timestamp:
           status === 'processing' || status === 'completed'
@@ -59,7 +60,7 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
         description: transaction.recipient?.bank_name
           ? `${transaction.recipient.bank_name} received your transaction.`
           : 'Transaction completed successfully.',
-        icon: 'checkmark',
+        icon: 'checkmark-circle',
         completed: status === 'completed',
         timestamp:
           status === 'completed'
@@ -75,22 +76,31 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.timelineTitle}>Transaction Timeline</Text>
       {stages.map((stage, index) => (
         <View key={stage.id} style={styles.stageContainer}>
           {/* Icon and connecting line */}
           <View style={styles.iconContainer}>
-            <View
-              style={[
-                styles.iconCircle,
-                stage.completed ? styles.iconCircleCompleted : styles.iconCirclePending,
-              ]}
+            {stage.completed ? (
+              <LinearGradient
+                colors={colors.success.gradient}
+                style={styles.iconCircle}
             >
               <Ionicons
                 name={stage.icon as any}
-                size={20}
-                color={stage.completed ? '#ffffff' : '#9ca3af'}
+                  size={18}
+                  color={colors.text.inverse}
+                />
+              </LinearGradient>
+            ) : (
+              <View style={styles.iconCirclePending}>
+                <Ionicons
+                  name={stage.icon as any}
+                  size={18}
+                  color={colors.neutral[400]}
               />
             </View>
+            )}
             {/* Connecting Line */}
             {index < stages.length - 1 && (
               <View
@@ -107,7 +117,9 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
             <Text style={[styles.title, stage.completed ? styles.titleCompleted : styles.titlePending]}>
               {stage.title}
             </Text>
-            {stage.timestamp && <Text style={styles.timestamp}>{stage.timestamp}</Text>}
+            {stage.timestamp && (
+              <Text style={styles.timestamp}>{stage.timestamp}</Text>
+            )}
             <Text style={[styles.description, stage.completed ? styles.descriptionCompleted : styles.descriptionPending]}>
               {stage.description}
             </Text>
@@ -120,72 +132,76 @@ export function TransactionTimeline({ transaction }: TransactionTimelineProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
+    paddingVertical: spacing[2],
+  },
+  timelineTitle: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+    marginBottom: spacing[4],
   },
   stageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: spacing[5],
   },
   iconContainer: {
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing[4],
   },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconCircleCompleted: {
-    backgroundColor: '#10b981',
-    borderColor: '#10b981',
-  },
   iconCirclePending: {
-    backgroundColor: '#e5e7eb',
-    borderColor: '#d1d5db',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.neutral[100],
+    borderWidth: 2,
+    borderColor: colors.border.default,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   connectingLine: {
     width: 2,
-    height: 48,
-    marginTop: 8,
+    height: 56,
+    marginTop: spacing[2],
   },
   connectingLineCompleted: {
-    backgroundColor: '#10b981',
+    backgroundColor: colors.success.main,
   },
   connectingLinePending: {
-    backgroundColor: '#d1d5db',
+    backgroundColor: colors.border.default,
   },
   contentContainer: {
     flex: 1,
-    paddingTop: 4,
+    paddingTop: spacing[1],
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    ...textStyles.titleSmall,
+    marginBottom: spacing[1],
   },
   titleCompleted: {
-    color: '#1f2937',
+    color: colors.text.primary,
   },
   titlePending: {
-    color: '#6b7280',
+    color: colors.text.tertiary,
   },
   timestamp: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
   },
   description: {
-    fontSize: 14,
+    ...textStyles.bodyMedium,
   },
   descriptionCompleted: {
-    color: '#374151',
+    color: colors.text.secondary,
   },
   descriptionPending: {
-    color: '#6b7280',
+    color: colors.text.tertiary,
   },
 })
-

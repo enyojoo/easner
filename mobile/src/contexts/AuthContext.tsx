@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 import { User, AuthUser } from '../types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { analytics } from '../lib/analytics'
+import { clearPinAuth, updateSessionActivity, markFirstLoginAfterVerification } from '../lib/pinAuth'
 
 interface AuthContextType {
   user: User | null
@@ -173,18 +175,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.error('Background profile fetch error:', error)
           })
         } else {
-          console.log('AuthContext: No user session, clearing state')
+          // No user session - clear state immediately
+          // This happens when user logs out via signOut() or session expires
           setUser(null)
           setUserProfile(null)
+          setLoading(false) // Ensure loading is false so AppNavigator doesn't wait
         }
       } catch (error) {
         console.error('Error handling auth state change:', error)
         // Don't clear state on error, just log it
       } finally {
         if (mounted) {
-          // Only set loading to false if we're not in the middle of a login process
-          if (!session?.user || userProfile) {
-            console.log('AuthContext: Setting loading to false')
+          // Set loading to false when there's no session (user logged out)
+          // This ensures AppNavigator doesn't wait for loading state
+          if (!session?.user) {
+            setLoading(false)
+          } else if (userProfile) {
+            // User is logged in and profile is loaded
             setLoading(false)
           }
         }
@@ -219,6 +226,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         rememberMe,
         userId: data.user?.id
       })
+
+      // Don't mark first login here - only mark after PIN is set up
+      // This way, users with active sessions are treated as existing users
+
+      // Don't update session activity here - it should only be updated after PIN verification
+      // This ensures the flow is: Login → PIN Entry → Main App
+      // If we update here, session becomes valid immediately and skips PIN entry
 
       // If remember me is checked, extend session duration
       if (rememberMe && data.session) {
@@ -265,10 +279,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Track sign out
       analytics.trackSignOut()
       
-      // Clear user state immediately to prevent UI issues
+      // Clear PIN auth data on logout
+      await clearPinAuth()
+      
+      // Clear from onboarding flag so back arrow doesn't show after logout
+      await AsyncStorage.removeItem('@easner_from_onboarding')
+      
+      // Clear onboarding completion flag so user goes to onboarding screen on logout
+      await AsyncStorage.removeItem('@easner_onboarding_completed')
+      
+      // Clear user state IMMEDIATELY and synchronously to trigger navigation
+      // This must happen FIRST before anything else to ensure AppNavigator responds immediately
       setUser(null)
       setUserProfile(null)
+      setLoading(false) // Also set loading to false to ensure AppNavigator doesn't wait
       
+      // Sign out from Supabase (this will trigger onAuthStateChange which also sets user to null)
+      // Do this AFTER setting user to null so navigation happens first
       await supabase.auth.signOut()
       console.log('AuthContext: Sign out successful')
     } catch (error) {

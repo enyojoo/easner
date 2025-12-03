@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -10,13 +10,19 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
 import PasswordInput from '../../components/PasswordInput'
 import { analytics } from '../../lib/analytics'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
+import { GradientCard, HapticButton } from '../../components/premium'
 
 export default function LoginScreen({ navigation }: NavigationProps) {
   const [email, setEmail] = useState('')
@@ -24,6 +30,27 @@ export default function LoginScreen({ navigation }: NavigationProps) {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { signIn } = useAuth()
+  const insets = useSafeAreaInsets()
+
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const formAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(formAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, formAnim])
 
   // Track screen view
   useEffect(() => {
@@ -59,87 +86,122 @@ export default function LoginScreen({ navigation }: NavigationProps) {
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <BrandLogo size="lg" style={styles.logo} />
-          <Text style={styles.title}>Welcome Back!</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
-        </View>
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContainer, { paddingBottom: Math.max(insets.bottom, spacing[5]) }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <BrandLogo size="lg" style={styles.logo} />
+            <Text style={styles.title}>Welcome Back!</Text>
+            <Text style={styles.subtitle}>Sign in to your account</Text>
+          </Animated.View>
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <PasswordInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-            />
-          </View>
-
-          {/* Remember Me Checkbox */}
-          <View style={styles.rememberMeContainer}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-                {rememberMe && (
-                  <Ionicons name="checkmark" size={16} color="#ffffff" />
-                )}
+          <Animated.View
+            style={[
+              styles.formContainer,
+              {
+                opacity: formAnim,
+                transform: [{
+                  translateY: formAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  placeholderTextColor={colors.text.secondary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
               </View>
-              <Text style={styles.rememberMeText}>Remember me</Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Password</Text>
+                <PasswordInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Enter your password"
+                />
+              </View>
+
+              {/* Remember Me Checkbox */}
+              <View style={styles.rememberMeContainer}>
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    setRememberMe(!rememberMe)
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                    {rememberMe && (
+                      <Ionicons name="checkmark" size={16} color={colors.text.inverse} />
+                    )}
+                  </View>
+                  <Text style={styles.rememberMeText}>Remember me</Text>
+                </TouchableOpacity>
+              </View>
+
+              <HapticButton
+                title={isLoading ? "Signing In..." : "Sign In"}
+                onPress={handleLogin}
+                disabled={isLoading}
+                loading={isLoading}
+                style={styles.button}
+                textStyle={styles.buttonText}
+              />
+
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  navigation.navigate('ForgotPassword')
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.linkText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity 
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.navigate('Register')
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.footerLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <View style={styles.buttonContent}>
-                <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={[styles.buttonText, styles.buttonTextWithSpinner]}>
-                  Signing In...
-                </Text>
-              </View>
-            ) : (
-              <Text style={styles.buttonText}>
-                Sign In
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => navigation.navigate('ForgotPassword')}
-          >
-            <Text style={styles.linkText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.footerLink}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   )
 }
@@ -147,7 +209,7 @@ export default function LoginScreen({ navigation }: NavigationProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.primary,
   },
   keyboardContainer: {
     flex: 1,
@@ -155,47 +217,50 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing[5],
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing[10],
   },
   logo: {
-    marginBottom: 20,
+    marginBottom: spacing[5],
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 8,
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyLarge,
+    color: colors.text.secondary,
+  },
+  formContainer: {
+    marginBottom: spacing[8],
   },
   form: {
-    marginBottom: 30,
+    width: '100%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing[5],
   },
   label: {
-    fontSize: 16,
+    ...textStyles.bodySmall,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.xl,
+    padding: spacing[3],
+    ...textStyles.bodyMedium,
+    backgroundColor: colors.background.primary,
+    color: colors.text.primary,
   },
   rememberMeContainer: {
-    marginBottom: 20,
+    marginBottom: spacing[5],
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -205,50 +270,38 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: '#d1d5db',
-    borderRadius: 4,
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.background.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: spacing[3],
   },
   checkboxChecked: {
-    backgroundColor: '#007ACC',
-    borderColor: '#007ACC',
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
   },
   rememberMeText: {
-    fontSize: 16,
-    color: '#374151',
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
     fontWeight: '500',
   },
   button: {
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: spacing[4],
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    ...textStyles.bodyMedium,
+    color: colors.text.inverse,
     fontWeight: '600',
-  },
-  buttonTextWithSpinner: {
-    marginLeft: 8,
   },
   linkButton: {
     alignItems: 'center',
+    paddingVertical: spacing[2],
   },
   linkText: {
-    color: '#007ACC',
-    fontSize: 14,
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
@@ -256,12 +309,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
   },
   footerLink: {
-    fontSize: 14,
-    color: '#007ACC',
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
     fontWeight: '600',
   },
 })

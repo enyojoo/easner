@@ -1,6 +1,7 @@
 // Country codes and their supported ID types (same as web)
 export const countryIdTypes: Record<string, { name: string; idTypes: string[] }> = {
-  US: { name: "United States", idTypes: ["passport", "drivers_license", "state_id"] },
+  // USA doesn't need ID type selection - Bridge only requires SSN for USA
+  // US: { name: "United States", idTypes: [] }, // Not used - USA only needs SSN
   GB: { name: "United Kingdom", idTypes: ["passport", "drivers_license", "national_id"] },
   CA: { name: "Canada", idTypes: ["passport", "drivers_license", "provincial_id"] },
   AU: { name: "Australia", idTypes: ["passport", "drivers_license"] },
@@ -48,8 +49,9 @@ export const countryIdTypes: Record<string, { name: string; idTypes: string[] }>
 
 export const idTypeLabels: Record<string, string> = {
   passport: "Passport",
-  drivers_license: "Driver's License",
   national_id: "National ID",
+  other: "Other",
+  drivers_license: "Driver's License",
   state_id: "State ID",
   provincial_id: "Provincial ID",
   voters_card: "Voter's Card",
@@ -70,10 +72,19 @@ export const idTypeLabels: Record<string, string> = {
 }
 
 export function getIdTypesForCountry(countryCode: string): string[] {
-  return countryIdTypes[countryCode]?.idTypes || ["passport", "national_id", "drivers_license"]
+  // USA doesn't need ID type - Bridge only requires SSN
+  if (countryCode === 'US') {
+    return []
+  }
+  // For all other countries, default to passport, national_id, and other
+  return countryIdTypes[countryCode]?.idTypes || ["passport", "national_id", "other"]
 }
 
 export function getIdTypeLabel(idType: string): string {
+  // Special case for SSN
+  if (idType === 'ssn') {
+    return 'Social Security Number (SSN)'
+  }
   return idTypeLabels[idType] || idType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
 }
 

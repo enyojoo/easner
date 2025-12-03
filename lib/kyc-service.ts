@@ -19,6 +19,7 @@ export interface KYCSubmission {
   reviewed_by?: string
   reviewed_at?: string
   rejection_reason?: string
+  metadata?: any // Bridge-specific KYC fields (SSN, passport, phone, etc.)
   created_at: string
   updated_at: string
 }
@@ -34,7 +35,7 @@ export interface CreateIdentitySubmission {
 export interface CreateAddressSubmission {
   country_code: string
   address: string
-  document_type: "utility_bill" | "bank_statement"
+  document_type: "utility_bill" | "bank_statement" | "lease_agreement"
   address_document_file: File
 }
 
@@ -190,6 +191,7 @@ export const kycService = {
           id_type: data.id_type,
           id_document_url: path, // Store path instead of public URL
           id_document_filename: filename,
+          metadata: data.metadata || null, // Store Bridge-specific KYC fields (SSN, passport, etc.)
           status: "in_review", // Change status to in_review after upload
           updated_at: new Date().toISOString(),
         })
@@ -214,6 +216,7 @@ export const kycService = {
           id_type: data.id_type,
           id_document_url: path, // Store path instead of public URL
           id_document_filename: filename,
+          metadata: data.metadata || null, // Store Bridge-specific KYC fields (SSN, passport, etc.)
         })
         .select()
         .single()

@@ -136,8 +136,16 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       if (error) throw error
       console.log('UserDataContext: Transactions fetched:', data?.length || 0)
       setTransactions(data || [])
-    } catch (error) {
+    } catch (error: any) {
+      // Handle network errors gracefully - don't log as error if it's a network issue
+      if (error?.message?.includes('Network request failed') || error?.message?.includes('fetch')) {
+        console.warn('UserDataContext: Network error fetching transactions (will retry):', error?.message)
+        // Keep existing transactions if network fails
+        return
+      }
       console.error('Error fetching transactions:', error)
+      // On other errors, still set empty array to avoid stale data
+      setTransactions([])
     }
   }
 

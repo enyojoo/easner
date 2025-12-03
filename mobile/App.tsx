@@ -1,22 +1,135 @@
-import React, { useEffect } from 'react'
-import { NavigationContainer } from '@react-navigation/native'
+import React, { useEffect, useRef } from 'react'
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native'
 import { StatusBar } from 'expo-status-bar'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useFonts } from 'expo-font'
+import * as SplashScreen from 'expo-splash-screen'
+import { updateSessionActivity, isSessionValid } from './src/lib/pinAuth'
+import {
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+} from '@expo-google-fonts/outfit'
 import { AuthProvider } from './src/contexts/AuthContext'
 import { UserDataProvider } from './src/contexts/UserDataContext'
+import { NotificationsProvider } from './src/contexts/NotificationsContext'
+import { ToastProvider } from './src/components/ToastProvider'
 import { PostHogProvider } from './src/components/PostHogProvider'
 import { deepLinkService } from './src/services/DeepLinkService'
+import { pushNotificationService } from './src/lib/pushNotificationService'
 import AppNavigator from './src/navigation/AppNavigator'
+import { colors } from './src/theme'
+
+// Keep the splash screen visible while we load fonts
+SplashScreen.preventAutoHideAsync()
 
 export default function App() {
   console.log('App.tsx: App component rendering')
+  
+  const navigationRef = useRef<NavigationContainerRef<any>>(null)
+  
+  // Expose navigation ref globally for logout navigation
+  useEffect(() => {
+    ;(global as any).rootNavigationRef = navigationRef
+    return () => {
+      delete (global as any).rootNavigationRef
+    }
+  }, [])
+  
+  const [fontsLoaded] = useFonts({
+    'Outfit-Regular': Outfit_400Regular,
+    'Outfit-Medium': Outfit_500Medium,
+    'Outfit-SemiBold': Outfit_600SemiBold,
+    'Outfit-Bold': Outfit_700Bold,
+  })
   
   // Initialize deep linking
   useEffect(() => {
     deepLinkService.initialize()
   }, [])
+
+  // Initialize push notifications
+  useEffect(() => {
+    const initializePushNotifications = async () => {
+      try {
+        // Register for push notifications
+        const token = await pushNotificationService.registerForPushNotifications()
+        
+        if (token) {
+          console.log('Push notification token registered:', token)
+          // TODO: Send token to backend API
+          // await apiClient.post('/users/push-token', { token })
+        }
+
+        // Handle notification received while app is in foreground
+        const receivedSubscription = pushNotificationService.addNotificationReceivedListener(
+          async (notification) => {
+            console.log('Notification received:', notification)
+            // Update badge count
+            // The notification will be added to in-app notifications via context
+          }
+        )
+
+        // Handle notification tapped
+        const responseSubscription = pushNotificationService.addNotificationResponseReceivedListener(
+          (response) => {
+            console.log('Notification tapped:', response)
+            const data = response.notification.request.content.data
+            
+            // Navigate based on notification type using global navigation ref
+            // This will be handled by AppNavigator when app is active
+            if (data?.transactionId && (global as any).rootNavigationRef?.current) {
+              (global as any).rootNavigationRef.current.navigate('TransactionDetails', {
+                transactionId: data.transactionId,
+                fromScreen: 'PushNotification'
+              })
+            } else if (data?.type === 'card_transaction' && (global as any).rootNavigationRef?.current) {
+              (global as any).rootNavigationRef.current.navigate('TransactionCard', {})
+            } else if ((global as any).rootNavigationRef?.current) {
+              (global as any).rootNavigationRef.current.navigate('InAppNotifications', {})
+            }
+          }
+        )
+
+        return () => {
+          pushNotificationService.removeNotificationSubscription(receivedSubscription)
+          pushNotificationService.removeNotificationSubscription(responseSubscription)
+        }
+      } catch (error) {
+        console.error('Error initializing push notifications:', error)
+      }
+    }
+
+    initializePushNotifications()
+  }, [])
+
+  // Track app state changes for session management
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // App came to foreground - update session activity
+        await updateSessionActivity()
+        // Check if session is still valid (AppNavigator will handle routing)
+      }
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+    return () => subscription.remove()
+  }, [])
+  
+  // Hide splash screen when fonts are loaded
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync()
+    }
+  }, [fontsLoaded])
+  
+  if (!fontsLoaded) {
+    return null
+  }
   
   try {
     return (
@@ -25,31 +138,34 @@ export default function App() {
           <PostHogProvider>
             <AuthProvider>
               <UserDataProvider>
-                <NavigationContainer
+                <NotificationsProvider>
+                  <ToastProvider>
+                    <NavigationContainer
+                  ref={navigationRef}
                   theme={{
                     colors: {
-                      primary: '#007ACC',
-                      background: '#ffffff',
-                      card: '#ffffff',
-                      text: '#1f2937',
-                      border: '#e5e7eb',
-                      notification: '#ef4444',
+                      primary: colors.primary.main,
+                      background: colors.background.primary,
+                      card: colors.background.primary,
+                      text: colors.text.primary,
+                      border: colors.border.default,
+                      notification: colors.error.main,
                     },
                     fonts: {
                       regular: {
-                        fontFamily: 'System',
+                        fontFamily: 'Outfit-Regular',
                         fontWeight: '400' as const,
                       },
                       medium: {
-                        fontFamily: 'System',
+                        fontFamily: 'Outfit-Medium',
                         fontWeight: '500' as const,
                       },
                       bold: {
-                        fontFamily: 'System',
+                        fontFamily: 'Outfit-Bold',
                         fontWeight: '700' as const,
                       },
                       heavy: {
-                        fontFamily: 'System',
+                        fontFamily: 'Outfit-Bold',
                         fontWeight: '800' as const,
                       },
                     },
@@ -58,6 +174,8 @@ export default function App() {
                   <StatusBar style="dark" />
                   <AppNavigator />
                 </NavigationContainer>
+                  </ToastProvider>
+                </NotificationsProvider>
               </UserDataProvider>
             </AuthProvider>
           </PostHogProvider>

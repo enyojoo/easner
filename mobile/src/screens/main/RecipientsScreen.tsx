@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -9,9 +9,18 @@ import {
   TextInput,
   RefreshControl,
   Modal,
+  Animated,
+  Image,
+  ScrollView,
+  Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Plus, Search } from 'lucide-react-native'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import ConfirmationDialog from '../../components/ConfirmationDialog'
+import { useToast } from '../../components/ToastProvider'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Recipient } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
@@ -19,19 +28,59 @@ import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
 import { analytics } from '../../lib/analytics'
 import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
+import { validateRequired, validateAccountNumber, validateIBAN } from '../../utils/validators'
+import { formatIBAN, formatSortCode, formatRoutingNumber, formatAccountNumber } from '../../utils/formatters'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
+
+// Helper function to get flag image source for currency
+const getFlagImageSource = (currency: string) => {
+  const flagMap: Record<string, any> = {
+    'USD': require('../../../assets/flags/us.png'),
+    'EUR': require('../../../assets/flags/eu.png'),
+    'GBP': require('../../../assets/flags/gb.png'),
+    'NGN': require('../../../assets/flags/ng.png'),
+    'KES': require('../../../assets/flags/ke.png'),
+    'GHS': require('../../../assets/flags/gh.png'),
+    'RUB': require('../../../assets/flags/ru.png'),
+  }
+  return flagMap[currency] || require('../../../assets/flags/us.png') // Default to USD
+}
 
 function RecipientsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
   const { recipients, loading, refreshRecipients, currencies } = useUserData()
+  const insets = useSafeAreaInsets()
   const [searchTerm, setSearchTerm] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const [showAddRecipient, setShowAddRecipient] = useState(false)
   const [showEditRecipient, setShowEditRecipient] = useState(false)
-  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false)
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
+  const [currencySearchTerm, setCurrencySearchTerm] = useState('')
   const [editingRecipient, setEditingRecipient] = useState<Recipient | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
   const [newRecipient, setNewRecipient] = useState({
     fullName: '',
     accountNumber: '',
@@ -51,6 +100,18 @@ function RecipientsContent({ navigation }: NavigationProps) {
   useEffect(() => {
     refreshRecipients()
   }, [])
+  
+  // Reset form after edit modal closes (for smooth animation)
+  useEffect(() => {
+    if (!showEditRecipient && editingRecipient) {
+      // Modal just closed, reset form after animation completes
+      const timer = setTimeout(() => {
+        setEditingRecipient(null)
+        resetForm()
+      }, 300) // Wait for fade animation (typically 200-300ms)
+      return () => clearTimeout(timer)
+    }
+  }, [showEditRecipient, editingRecipient])
 
   const filteredRecipients = recipients.filter(recipient =>
     recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,72 +125,30 @@ function RecipientsContent({ navigation }: NavigationProps) {
   }
 
   const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
+    const names = name.trim().split(' ').filter(name => name.length > 0)
+    if (names.length === 0) return '??'
+    if (names.length === 1) return names[0][0].toUpperCase()
+    return names.slice(0, 2).map(name => name[0]).join('').toUpperCase()
   }
 
-  // Helper function to render flag
-  const renderFlag = (currencyCode: string) => {
-    const flag = getCountryFlag(currencyCode)
-    return (
-      <Text style={styles.flagEmoji}>{flag}</Text>
-    )
-  }
-
-  const renderCurrencyPicker = () => (
-    <Modal
-      visible={showCurrencyPicker}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
-      <View style={styles.currencyModalContainer}>
-        <View style={styles.currencyModalHeader}>
-          <Text style={styles.currencyModalTitle}>Select Currency</Text>
-          <TouchableOpacity
-            onPress={() => setShowCurrencyPicker(false)}
-            style={styles.currencyCloseButton}
-          >
-            <Ionicons name="close" size={24} color="#6b7280" />
-          </TouchableOpacity>
-        </View>
-        
-        <FlatList
-          data={currencies}
-          keyExtractor={(item) => item.code}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.currencyItem}
-              onPress={() => {
-                setNewRecipient(prev => ({ ...prev, currency: item.code }))
-                setShowCurrencyPicker(false)
-              }}
-            >
-              <Text style={styles.currencyFlag}>{getCountryFlag(item.code)}</Text>
-              <View style={styles.currencyInfo}>
-                <Text style={styles.currencyCode}>{item.code}</Text>
-                <Text style={styles.currencyName}>{item.name}</Text>
-              </View>
-              <Text style={styles.currencySymbol}>{item.symbol}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-    </Modal>
-  )
-
+  const filteredCurrencies = currencies.filter(currency => {
+    if (currencySearchTerm) {
+      return (
+        currency.name.toLowerCase().includes(currencySearchTerm.toLowerCase()) ||
+        currency.code.toLowerCase().includes(currencySearchTerm.toLowerCase())
+      )
+    }
+    return true
+  })
 
   const handleAddRecipient = async () => {
     if (!userProfile?.id) {
-      Alert.alert('Error', 'User not authenticated')
+      showError('User not authenticated')
       return
     }
 
     if (!isFormValid()) {
-      Alert.alert('Error', 'Please fill in all required fields')
+      showError('Please fill in all required fields')
       return
     }
 
@@ -159,7 +178,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
     } catch (error) {
       console.error('Error adding recipient:', error)
       setError('Failed to add recipient')
-      Alert.alert('Error', 'Failed to add recipient')
+      showError('Failed to add recipient')
     } finally {
       setIsSubmitting(false)
     }
@@ -184,7 +203,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
     if (!editingRecipient) return
 
     if (!isFormValid()) {
-      Alert.alert('Error', 'Please fill in all required fields')
+      showError('Please fill in all required fields')
       return
     }
 
@@ -206,48 +225,42 @@ function RecipientsContent({ navigation }: NavigationProps) {
       await refreshRecipients()
       setError('')
 
-      // Reset form and close modal
-      setEditingRecipient(null)
-      resetForm()
+      // Close modal first, form reset handled by useEffect after animation
       setShowEditRecipient(false)
-      Alert.alert('Success', 'Recipient updated successfully')
+      showSuccess('Recipient updated successfully')
     } catch (error) {
       console.error('Error updating recipient:', error)
       setError('Failed to update recipient')
-      Alert.alert('Error', 'Failed to update recipient')
+      showError('Failed to update recipient')
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const { showSuccess, showError } = useToast()
+  const [deleteConfirmation, setDeleteConfirmation] = useState<Recipient | null>(null)
+
   const handleDeleteRecipient = (recipient: Recipient) => {
-    Alert.alert(
-      'Delete Recipient',
-      `Are you sure you want to delete ${recipient.full_name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeletingId(recipient.id)
-              await recipientService.delete(recipient.id)
-              await refreshRecipients()
-              Alert.alert('Success', 'Recipient deleted successfully')
-            } catch (error: any) {
-              console.error('Error deleting recipient:', error)
-              const errorMessage = error.message?.includes('linked to a transaction')
-                ? 'Failed to delete - linked to a transaction'
-                : 'Failed to delete recipient'
-              Alert.alert('Error', errorMessage)
-            } finally {
-              setDeletingId(null)
-            }
-          }
-        }
-      ]
-    )
+    setDeleteConfirmation(recipient)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation) return
+    try {
+      setDeletingId(deleteConfirmation.id)
+      await recipientService.delete(deleteConfirmation.id)
+      await refreshRecipients()
+      showSuccess('Recipient deleted successfully')
+    } catch (error: any) {
+      console.error('Error deleting recipient:', error)
+      const errorMessage = error.message?.includes('linked to a transaction')
+        ? 'Failed to delete - linked to a transaction'
+        : 'Failed to delete recipient'
+      showError(errorMessage)
+    } finally {
+      setDeletingId('')
+      setDeleteConfirmation(null)
+    }
   }
 
   // Map snake_case field names from config to camelCase form field names
@@ -293,364 +306,852 @@ function RecipientsContent({ navigation }: NavigationProps) {
       swiftBic: '',
     })
     setError('')
+    setFieldErrors({})
+  }
+
+  // Validate a single field
+  const validateField = (fieldName: string, value: string) => {
+    const accountConfig = newRecipient.currency
+      ? getAccountTypeConfigFromCurrency(newRecipient.currency)
+      : null
+
+    if (!accountConfig) {
+      return { isValid: true }
+    }
+
+    const mapFieldName = (fieldName: string): string => {
+      const fieldMap: Record<string, string> = {
+        account_name: "fullName",
+        routing_number: "routingNumber",
+        account_number: "accountNumber",
+        bank_name: "bankName",
+        sort_code: "sortCode",
+        iban: "iban",
+        swift_bic: "swiftBic",
+      }
+      return fieldMap[fieldName] || fieldName
+    }
+
+    // Check if field is required
+    const configFieldName = Object.entries(accountConfig.fieldLabels).find(
+      ([_, label]) => mapFieldName(_) === fieldName
+    )?.[0]
+
+    if (configFieldName && accountConfig.requiredFields.includes(configFieldName)) {
+      const result = validateRequired(value, accountConfig.fieldLabels[configFieldName])
+      if (!result.isValid) {
+        setFieldErrors(prev => ({ ...prev, [fieldName]: result.error || '' }))
+        return result
+      }
+    }
+
+    // Field-specific validation
+    if (fieldName === 'routingNumber' && value) {
+      const digits = value.replace(/\D/g, "")
+      if (digits.length !== 9) {
+        const error = "Routing number must be 9 digits"
+        setFieldErrors(prev => ({ ...prev, [fieldName]: error }))
+        return { isValid: false, error }
+      }
+    }
+
+    if (fieldName === 'sortCode' && value) {
+      const digits = value.replace(/\D/g, "")
+      if (digits.length !== 6) {
+        const error = "Sort code must be 6 digits"
+        setFieldErrors(prev => ({ ...prev, [fieldName]: error }))
+        return { isValid: false, error }
+      }
+    }
+
+    if (fieldName === 'iban' && value) {
+      const result = validateIBAN(value)
+      if (!result.isValid) {
+        setFieldErrors(prev => ({ ...prev, [fieldName]: result.error || '' }))
+        return result
+      }
+    }
+
+    if (fieldName === 'accountNumber' && value && accountConfig.accountType === 'us') {
+      const result = validateAccountNumber(value, 8)
+      if (!result.isValid) {
+        setFieldErrors(prev => ({ ...prev, [fieldName]: result.error || '' }))
+        return result
+      }
+    }
+
+    // Clear error if validation passes
+    setFieldErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+    return { isValid: true }
   }
 
   const renderRecipient = ({ item }: { item: Recipient }) => (
-    <View style={styles.recipientCard}>
-      <View style={styles.recipientLeft}>
+    <TouchableOpacity
+      style={styles.recipientItem}
+      activeOpacity={0.7}
+    >
+      <View style={styles.recipientRow}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(item.full_name)}</Text>
+          <View style={styles.recipientAvatar}>
+            <Text style={styles.recipientAvatarText}>
+              {getInitials(item.full_name)}
+            </Text>
           </View>
-          <View style={styles.flagContainer}>
-            {renderFlag(item.currency)}
+          {/* Flag badge on bottom edge of avatar */}
+          <View style={styles.avatarFlagBadge}>
+            <View style={styles.flagContainer}>
+              <Image 
+                source={getFlagImageSource(item.currency)}
+                style={styles.flagImage}
+                resizeMode="cover"
+              />
+            </View>
           </View>
         </View>
+        
         <View style={styles.recipientInfo}>
           <Text style={styles.recipientName}>{item.full_name}</Text>
-          {(() => {
-            const accountConfig = getAccountTypeConfigFromCurrency(item.currency)
-            const accountType = accountConfig.accountType
-            const accountIdentifier = accountType === "euro" && item.iban 
-              ? formatFieldValue(accountType, "iban", item.iban)
-              : item.account_number
-
-            return (
-              <View>
-                {accountIdentifier ? (
-                  <Text style={styles.recipientAccount}>{accountIdentifier}</Text>
-                ) : null}
-                <Text style={styles.recipientBank}>{item.bank_name}</Text>
-              </View>
-            )
-          })()}
+          <Text style={styles.recipientBank}>{item.bank_name}</Text>
+          <Text style={styles.recipientAccount}>
+            {item.iban || item.account_number || ''}
+          </Text>
+        </View>
+        
+        <View style={styles.recipientActions}>
+          <TouchableOpacity
+            style={styles.actionIcon}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              handleEditRecipient(item)
+            }}
+            disabled={isSubmitting}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="pencil-outline" size={18} color={colors.text.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionIcon, styles.actionIconDelete]}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+              handleDeleteRecipient(item)
+            }}
+            disabled={deletingId === item.id}
+            activeOpacity={0.7}
+          >
+            {deletingId === item.id ? (
+              <Ionicons name="hourglass-outline" size={18} color={colors.error.main} />
+            ) : (
+              <Ionicons name="trash-outline" size={18} color={colors.error.main} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.recipientActions}>
-        <TouchableOpacity
-          style={styles.actionIcon}
-          onPress={() => handleEditRecipient(item)}
-          disabled={isSubmitting}
-        >
-          <Ionicons name="pencil-outline" size={20} color="#374151" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionIcon}
-          onPress={() => handleDeleteRecipient(item)}
-          disabled={deletingId === item.id}
-        >
-          {deletingId === item.id ? (
-            <Ionicons name="hourglass-outline" size={20} color="#dc2626" />
-          ) : (
-            <Ionicons name="trash-outline" size={20} color="#dc2626" />
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
+    </TouchableOpacity>
   )
 
   return (
     <ScreenWrapper>
-      <View style={styles.content}>
-      <View style={styles.header}>
+      <View style={styles.container}>
+        {/* Premium Header - Matching Send Flow */}
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: headerAnim,
+              transform: [{
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                })
+              }]
+            }
+          ]}
+        >
+          <TouchableOpacity
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              navigation.goBack()
+            }}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
         <Text style={styles.title}>Recipients</Text>
         <Text style={styles.subtitle}>Manage your saved recipients</Text>
       </View>
+        </Animated.View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          placeholder="Search recipients..."
-          placeholderTextColor="#9ca3af"
-        />
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Search Bar */}
+          <Animated.View 
+            style={[
+              styles.searchContainer,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <View style={styles.searchWrapper}>
+              <Search size={18} color={colors.text.secondary} strokeWidth={2} />
+              <TextInput
+                style={styles.searchInput}
+                value={searchTerm}
+                onChangeText={setSearchTerm}
+                placeholder="Search recipients..."
+                placeholderTextColor={colors.text.secondary}
+              />
+              {searchTerm.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchTerm('')}>
+                  <Ionicons name="close-circle" size={18} color={colors.text.secondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </Animated.View>
+
+          {/* Add New Recipient Button */}
+          <Animated.View
+            style={[
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                resetForm()
+                setShowAddRecipient(true)
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.addButtonIcon}>
+                <Plus size={18} color={colors.primary.main} strokeWidth={2.5} />
+              </View>
+              <Text style={styles.addButtonText}>Add new recipient</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Recipients List - No Grouping */}
+          <Animated.View
+            style={[
+              styles.recipientsContainer,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            {filteredRecipients.length > 0 ? (
+              <FlatList
+                data={filteredRecipients}
+                renderItem={renderRecipient}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
+                getItemLayout={(data, index) => ({
+                  length: 100, // Approximate item height
+                  offset: 100 * index,
+                  index,
+                })}
+              />
+            ) : (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIconContainer}>
+                  <Ionicons name="people-outline" size={48} color={colors.text.secondary} />
+                </View>
+                <Text style={styles.emptyTitle}>No recipients found</Text>
+                <Text style={styles.emptyText}>Add a new recipient to get started</Text>
+              </View>
+            )}
+          </Animated.View>
+        </ScrollView>
       </View>
-
-      {/* Add New Recipient Button */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          resetForm()
-          setShowAddRecipient(true)
-        }}
-      >
-        <Text style={styles.addButtonText}>+ Add New Recipient</Text>
-      </TouchableOpacity>
-
-      {/* Recipients List */}
-      <FlatList
-        data={filteredRecipients}
-        renderItem={renderRecipient}
-        keyExtractor={(item) => item.id}
-        style={styles.recipientsList}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No recipients found</Text>
-            <Text style={styles.emptySubtext}>Add a new recipient to get started</Text>
-          </View>
-        }
-      />
 
       {/* Add Recipient Modal */}
-      {showAddRecipient && (
+      <Modal
+        visible={showAddRecipient}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          setShowAddRecipient(false)
+          resetForm()
+        }}
+      >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Recipient</Text>
-            
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            
-            <TouchableOpacity
-              style={styles.currencySelector}
-              onPress={() => setShowCurrencyPicker(true)}
-            >
-              <View style={styles.currencySelectorContent}>
-                <Text style={styles.currencyFlag}>{getCountryFlag(newRecipient.currency)}</Text>
-                <Text style={styles.currencySelectorText}>
-                  {newRecipient.currency} - {currencies.find(c => c.code === newRecipient.currency)?.name || 'Select Currency'}
-                </Text>
-                <Ionicons name="chevron-down" size={16} color="#6b7280" />
-              </View>
-            </TouchableOpacity>
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.fullName}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
-              placeholder="Account Name *"
-              editable={!isSubmitting}
-            />
-
-            {(() => {
-              const accountConfig = newRecipient.currency
-                ? getAccountTypeConfigFromCurrency(newRecipient.currency)
-                : null
-
-              if (!accountConfig) {
-                return (
-                  <View style={styles.infoBox}>
-                    <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
-                  </View>
-                )
-              }
-
-              return (
-                <>
-                  {/* Bank Name - Always required */}
-                  <TextInput
-                    style={styles.modalInput}
-                    value={newRecipient.bankName}
-                    onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
-                    placeholder={`${accountConfig.fieldLabels.bank_name} *`}
-                    editable={!isSubmitting}
-                  />
-
-                  {/* US Account Fields */}
-                  {accountConfig.accountType === "us" && (
-                    <>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.routingNumber}
-                        onChangeText={(text) => {
-                          const value = text.replace(/\D/g, "").slice(0, 9)
-                          setNewRecipient(prev => ({ ...prev, routingNumber: value }))
-                        }}
-                        placeholder={`${accountConfig.fieldLabels.routing_number} *`}
-                        keyboardType="numeric"
-                        maxLength={9}
-                        editable={!isSubmitting}
-                      />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.accountNumber}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-                        placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                        editable={!isSubmitting}
-                      />
-                    </>
-                  )}
-
-                  {/* UK Account Fields */}
-                  {accountConfig.accountType === "uk" && (
-                    <>
-                      <View style={styles.twoColumnRow}>
-                        <TextInput
-                          style={[styles.modalInput, styles.halfInput]}
-                          value={newRecipient.sortCode}
-                          onChangeText={(text) => {
-                            const value = text.replace(/\D/g, "").slice(0, 6)
-                            setNewRecipient(prev => ({ ...prev, sortCode: value }))
-                          }}
-                          placeholder={`${accountConfig.fieldLabels.sort_code} *`}
-                          keyboardType="numeric"
-                          maxLength={6}
-                          editable={!isSubmitting}
-                        />
-                        <TextInput
-                          style={[styles.modalInput, styles.halfInput]}
-                          value={newRecipient.accountNumber}
-                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                          editable={!isSubmitting}
-                        />
-                      </View>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.iban}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.iban}
-                        editable={!isSubmitting}
-                      />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.swiftBic}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.swift_bic}
-                        editable={!isSubmitting}
-                      />
-                    </>
-                  )}
-
-                  {/* EURO Account Fields */}
-                  {accountConfig.accountType === "euro" && (
-                    <>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.iban}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
-                        placeholder={`${accountConfig.fieldLabels.iban} *`}
-                        editable={!isSubmitting}
-                      />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.swiftBic}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.swift_bic}
-                        editable={!isSubmitting}
-                      />
-                    </>
-                  )}
-
-                  {/* Generic Account Fields */}
-                  {accountConfig.accountType === "generic" && (
-                    <TextInput
-                      style={styles.modalInput}
-                      value={newRecipient.accountNumber}
-                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-                      placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                      editable={!isSubmitting}
-                    />
-                  )}
-                </>
-              )
-            })()}
-
-            <View style={styles.modalButtons}>
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => {
+              setShowAddRecipient(false)
+              resetForm()
+            }}
+          />
+          <View style={[styles.modalContainer, { 
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 20),
+          }]} 
+          onStartShouldSetResponder={() => true}
+          onResponderGrant={() => {}}
+        >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Recipient</Text>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => {
                   setShowAddRecipient(false)
-                  setError('')
+                  resetForm()
                 }}
-                disabled={isSubmitting}
+                style={styles.closeButton}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
-                onPress={handleAddRecipient}
-                disabled={isSubmitting || !isFormValid()}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isSubmitting ? 'Adding...' : 'Add'}
-                </Text>
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      )}
 
-      {/* Edit Recipient Modal */}
-      {showEditRecipient && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Recipient</Text>
-            
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-            
-            <TouchableOpacity
-              style={[styles.currencySelector, styles.disabledSelector]}
-              disabled={true}
+            <ScrollView 
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
             >
-              <View style={styles.currencySelectorContent}>
-                <Text style={styles.currencyFlag}>{getCountryFlag(newRecipient.currency)}</Text>
-                <Text style={styles.currencySelectorText}>
-                  {newRecipient.currency} - {currencies.find(c => c.code === newRecipient.currency)?.name || 'Select Currency'}
-                </Text>
-                <Ionicons name="lock-closed" size={16} color="#9ca3af" />
-              </View>
-            </TouchableOpacity>
-            
-            <TextInput
-              style={styles.modalInput}
-              value={newRecipient.fullName}
-              onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
-              placeholder="Account Name *"
-              editable={!isSubmitting}
-            />
-
-            {(() => {
-              const accountConfig = newRecipient.currency
-                ? getAccountTypeConfigFromCurrency(newRecipient.currency)
-                : null
-
-              if (!accountConfig) {
-                return (
-                  <View style={styles.infoBox}>
-                    <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+              <View style={styles.modalContent}>
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+              
+              <View style={styles.currencySelectorWrapper}>
+                <TouchableOpacity
+                  style={styles.currencySelector}
+                  onPress={() => {
+                    setShowCurrencyDropdown(!showCurrencyDropdown)
+                    setCurrencySearchTerm('')
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.currencySelectorContent}>
+                    <Text style={styles.currencyFlag}>{getCountryFlag(newRecipient.currency)}</Text>
+                    <Text style={styles.currencySelectorText}>
+                      {newRecipient.currency} - {currencies.find(c => c.code === newRecipient.currency)?.name || 'Select Currency'}
+                    </Text>
+                    <Ionicons 
+                      name={showCurrencyDropdown ? "chevron-up" : "chevron-down"} 
+                      size={16} 
+                      color="#6b7280" 
+                    />
                   </View>
-                )
-              }
-
-              return (
-                <>
-                  {/* Bank Name - Always required */}
-                  <TextInput
-                    style={styles.modalInput}
-                    value={newRecipient.bankName}
-                    onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
-                    placeholder={`${accountConfig.fieldLabels.bank_name} *`}
-                    editable={!isSubmitting}
-                  />
-
-                  {/* US Account Fields */}
-                  {accountConfig.accountType === "us" && (
-                    <>
+                </TouchableOpacity>
+                
+                {showCurrencyDropdown && (
+                  <View style={styles.currencyDropdown}>
+                    <View style={styles.currencyDropdownSearch}>
+                      <Ionicons name="search" size={18} color={colors.neutral[400]} />
                       <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.routingNumber}
+                        style={styles.currencyDropdownSearchInput}
+                        placeholder="Search currencies..."
+                        placeholderTextColor={colors.neutral[400]}
+                        value={currencySearchTerm}
+                        onChangeText={setCurrencySearchTerm}
+                      />
+                    </View>
+                    <ScrollView 
+                      style={styles.currencyDropdownList}
+                      nestedScrollEnabled={true}
+                      keyboardShouldPersistTaps="handled"
+                    >
+                      {filteredCurrencies.map((item) => (
+                        <TouchableOpacity
+                          key={item.code}
+                          style={[
+                            styles.currencyDropdownItem,
+                            newRecipient.currency === item.code && styles.currencyDropdownItemSelected
+                          ]}
+                          onPress={async () => {
+                            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            setNewRecipient(prev => ({ ...prev, currency: item.code }))
+                            setShowCurrencyDropdown(false)
+                            setCurrencySearchTerm('')
+                          }}
+                        >
+                          <Text style={styles.currencyFlag}>{getCountryFlag(item.code)}</Text>
+                          <View style={styles.currencyInfo}>
+                            <Text style={styles.currencyCode}>{item.code}</Text>
+                            <Text style={styles.currencyName}>{item.name}</Text>
+                          </View>
+                          <Text style={styles.currencySymbol}>{item.symbol}</Text>
+                          {newRecipient.currency === item.code && (
+                            <Ionicons name="checkmark" size={18} color={colors.primary.main} />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+              
+              <View>
+                <TextInput
+                  style={[styles.modalInput, fieldErrors.fullName && styles.modalInputError]}
+                  value={newRecipient.fullName}
+                  onChangeText={(text) => {
+                    setNewRecipient(prev => ({ ...prev, fullName: text }))
+                    validateField('fullName', text)
+                  }}
+                  onBlur={() => validateField('fullName', newRecipient.fullName)}
+                  placeholder="Account Name *"
+                  editable={!isSubmitting}
+                />
+                {fieldErrors.fullName && (
+                  <Text style={styles.errorText}>{fieldErrors.fullName}</Text>
+                )}
+              </View>
+
+              {(() => {
+                const accountConfig = newRecipient.currency
+                  ? getAccountTypeConfigFromCurrency(newRecipient.currency)
+                  : null
+
+                if (!accountConfig) {
+                  return (
+                    <View style={styles.infoBox}>
+                      <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+                    </View>
+                  )
+                }
+
+                return (
+                  <>
+                    {/* Bank Name - Always required */}
+                    <View>
+                      <TextInput
+                        style={[styles.modalInput, fieldErrors.bankName && styles.modalInputError]}
+                        value={newRecipient.bankName}
                         onChangeText={(text) => {
-                          const value = text.replace(/\D/g, "").slice(0, 9)
-                          setNewRecipient(prev => ({ ...prev, routingNumber: value }))
+                          setNewRecipient(prev => ({ ...prev, bankName: text }))
+                          validateField('bankName', text)
                         }}
-                        placeholder={`${accountConfig.fieldLabels.routing_number} *`}
-                        keyboardType="numeric"
-                        maxLength={9}
+                        onBlur={() => validateField('bankName', newRecipient.bankName)}
+                        placeholder={`${accountConfig.fieldLabels.bank_name} *`}
                         editable={!isSubmitting}
                       />
+                      {fieldErrors.bankName && (
+                        <Text style={styles.errorText}>{fieldErrors.bankName}</Text>
+                      )}
+                    </View>
+
+                    {/* US Account Fields */}
+                    {accountConfig.accountType === "us" && (
+                      <>
+                        <View>
+                          <TextInput
+                            style={[styles.modalInput, fieldErrors.routingNumber && styles.modalInputError]}
+                            value={newRecipient.routingNumber}
+                            onChangeText={(text) => {
+                              const formatted = formatRoutingNumber(text)
+                              setNewRecipient(prev => ({ ...prev, routingNumber: formatted }))
+                              validateField('routingNumber', formatted)
+                            }}
+                            onBlur={() => validateField('routingNumber', newRecipient.routingNumber)}
+                            placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                            keyboardType="numeric"
+                            maxLength={9}
+                            editable={!isSubmitting}
+                          />
+                          {fieldErrors.routingNumber && (
+                            <Text style={styles.errorText}>{fieldErrors.routingNumber}</Text>
+                          )}
+                        </View>
+                        <View>
+                          <TextInput
+                            style={[styles.modalInput, fieldErrors.accountNumber && styles.modalInputError]}
+                            value={newRecipient.accountNumber}
+                            onChangeText={(text) => {
+                              const formatted = formatAccountNumber(text)
+                              setNewRecipient(prev => ({ ...prev, accountNumber: formatted }))
+                              validateField('accountNumber', formatted)
+                            }}
+                            onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
+                            placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                            editable={!isSubmitting}
+                          />
+                          {fieldErrors.accountNumber && (
+                            <Text style={styles.errorText}>{fieldErrors.accountNumber}</Text>
+                          )}
+                        </View>
+                      </>
+                    )}
+
+                    {/* UK Account Fields */}
+                    {accountConfig.accountType === "uk" && (
+                      <>
+                        <View style={styles.twoColumnRow}>
+                          <View style={styles.halfInput}>
+                            <TextInput
+                              style={[styles.modalInput, fieldErrors.sortCode && styles.modalInputError]}
+                              value={newRecipient.sortCode}
+                              onChangeText={(text) => {
+                                const formatted = formatSortCode(text)
+                                setNewRecipient(prev => ({ ...prev, sortCode: formatted }))
+                                validateField('sortCode', formatted.replace(/-/g, ''))
+                              }}
+                              onBlur={() => validateField('sortCode', newRecipient.sortCode.replace(/-/g, ''))}
+                              placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                              keyboardType="numeric"
+                              maxLength={8}
+                              editable={!isSubmitting}
+                            />
+                            {fieldErrors.sortCode && (
+                              <Text style={styles.errorText}>{fieldErrors.sortCode}</Text>
+                            )}
+                          </View>
+                          <View style={styles.halfInput}>
+                            <TextInput
+                              style={[styles.modalInput, fieldErrors.accountNumber && styles.modalInputError]}
+                              value={newRecipient.accountNumber}
+                              onChangeText={(text) => {
+                                const formatted = formatAccountNumber(text)
+                                setNewRecipient(prev => ({ ...prev, accountNumber: formatted }))
+                                validateField('accountNumber', formatted)
+                              }}
+                              onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
+                              placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                              editable={!isSubmitting}
+                            />
+                            {fieldErrors.accountNumber && (
+                              <Text style={styles.errorText}>{fieldErrors.accountNumber}</Text>
+                            )}
+                          </View>
+                        </View>
+                        <View>
+                          <TextInput
+                            style={[styles.modalInput, fieldErrors.iban && styles.modalInputError]}
+                            value={newRecipient.iban}
+                            onChangeText={(text) => {
+                              const formatted = formatIBAN(text)
+                              setNewRecipient(prev => ({ ...prev, iban: formatted }))
+                              validateField('iban', formatted)
+                            }}
+                            onBlur={() => validateField('iban', newRecipient.iban)}
+                            placeholder={accountConfig.fieldLabels.iban}
+                            editable={!isSubmitting}
+                          />
+                          {fieldErrors.iban && (
+                            <Text style={styles.errorText}>{fieldErrors.iban}</Text>
+                          )}
+                        </View>
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.swiftBic}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                          placeholder={accountConfig.fieldLabels.swift_bic}
+                          editable={!isSubmitting}
+                        />
+                      </>
+                    )}
+
+                    {/* EURO Account Fields */}
+                    {accountConfig.accountType === "euro" && (
+                      <>
+                        <View>
+                          <TextInput
+                            style={[styles.modalInput, fieldErrors.iban && styles.modalInputError]}
+                            value={newRecipient.iban}
+                            onChangeText={(text) => {
+                              const formatted = formatIBAN(text)
+                              setNewRecipient(prev => ({ ...prev, iban: formatted }))
+                              validateField('iban', formatted)
+                            }}
+                            onBlur={() => validateField('iban', newRecipient.iban)}
+                            placeholder={`${accountConfig.fieldLabels.iban} *`}
+                            editable={!isSubmitting}
+                          />
+                          {fieldErrors.iban && (
+                            <Text style={styles.errorText}>{fieldErrors.iban}</Text>
+                          )}
+                        </View>
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.swiftBic}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                          placeholder={accountConfig.fieldLabels.swift_bic}
+                          editable={!isSubmitting}
+                        />
+                      </>
+                    )}
+
+                    {/* Generic Account Fields */}
+                    {accountConfig.accountType === "generic" && (
+                      <View>
+                        <TextInput
+                          style={[styles.modalInput, fieldErrors.accountNumber && styles.modalInputError]}
+                          value={newRecipient.accountNumber}
+                          onChangeText={(text) => {
+                            const formatted = formatAccountNumber(text)
+                            setNewRecipient(prev => ({ ...prev, accountNumber: formatted }))
+                            validateField('accountNumber', formatted)
+                          }}
+                          onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
+                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          editable={!isSubmitting}
+                        />
+                        {fieldErrors.accountNumber && (
+                          <Text style={styles.errorText}>{fieldErrors.accountNumber}</Text>
+                        )}
+                      </View>
+                    )}
+                  </>
+                )
+              })()}
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => {
+                    setShowAddRecipient(false)
+                    setError('')
+                    resetForm()
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
+                  onPress={handleAddRecipient}
+                  disabled={isSubmitting || !isFormValid()}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {isSubmitting ? 'Adding...' : 'Add'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Recipient Modal */}
+      <Modal
+        visible={showEditRecipient}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          setShowEditRecipient(false)
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => {
+              setShowEditRecipient(false)
+            }}
+          />
+          <View style={[styles.modalContainer, { 
+            maxHeight: '90%',
+            paddingBottom: Math.max(insets.bottom, 20),
+          }]} 
+          onStartShouldSetResponder={() => true}
+          onResponderGrant={() => {}}
+        >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Recipient</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowEditRecipient(false)
+                }}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+              style={styles.modalScrollView}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.modalContent}>
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
+              
+              <View style={styles.currencySelectorWrapper}>
+                <TouchableOpacity
+                  style={[styles.currencySelector, styles.disabledSelector]}
+                  disabled={true}
+                >
+                  <View style={styles.currencySelectorContent}>
+                    <Text style={styles.currencyFlag}>{getCountryFlag(newRecipient.currency)}</Text>
+                    <Text style={styles.currencySelectorText}>
+                      {newRecipient.currency} - {currencies.find(c => c.code === newRecipient.currency)?.name || 'Select Currency'}
+                    </Text>
+                    <Ionicons name="lock-closed" size={16} color="#9ca3af" />
+                  </View>
+                </TouchableOpacity>
+              </View>
+              
+              <TextInput
+                style={styles.modalInput}
+                value={newRecipient.fullName}
+                onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
+                placeholder="Account Name *"
+                editable={!isSubmitting}
+              />
+
+              {(() => {
+                const accountConfig = newRecipient.currency
+                  ? getAccountTypeConfigFromCurrency(newRecipient.currency)
+                  : null
+
+                if (!accountConfig) {
+                  return (
+                    <View style={styles.infoBox}>
+                      <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
+                    </View>
+                  )
+                }
+
+                return (
+                  <>
+                    {/* Bank Name - Always required */}
+                    <TextInput
+                      style={styles.modalInput}
+                      value={newRecipient.bankName}
+                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
+                      placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                      editable={!isSubmitting}
+                    />
+
+                    {/* US Account Fields */}
+                    {accountConfig.accountType === "us" && (
+                      <>
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.routingNumber}
+                          onChangeText={(text) => {
+                            const value = text.replace(/\D/g, "").slice(0, 9)
+                            setNewRecipient(prev => ({ ...prev, routingNumber: value }))
+                          }}
+                          placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                          keyboardType="numeric"
+                          maxLength={9}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.accountNumber}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          editable={!isSubmitting}
+                        />
+                      </>
+                    )}
+
+                    {/* UK Account Fields */}
+                    {accountConfig.accountType === "uk" && (
+                      <>
+                        <View style={styles.twoColumnRow}>
+                          <TextInput
+                            style={[styles.modalInput, styles.halfInput]}
+                            value={newRecipient.sortCode}
+                            onChangeText={(text) => {
+                              const value = text.replace(/\D/g, "").slice(0, 6)
+                              setNewRecipient(prev => ({ ...prev, sortCode: value }))
+                            }}
+                            placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                            keyboardType="numeric"
+                            maxLength={6}
+                            editable={!isSubmitting}
+                          />
+                          <TextInput
+                            style={[styles.modalInput, styles.halfInput]}
+                            value={newRecipient.accountNumber}
+                            onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
+                            placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                            editable={!isSubmitting}
+                          />
+                        </View>
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.iban}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                          placeholder={accountConfig.fieldLabels.iban}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.swiftBic}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                          placeholder={accountConfig.fieldLabels.swift_bic}
+                          editable={!isSubmitting}
+                        />
+                      </>
+                    )}
+
+                    {/* EURO Account Fields */}
+                    {accountConfig.accountType === "euro" && (
+                      <>
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.iban}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
+                          placeholder={`${accountConfig.fieldLabels.iban} *`}
+                          editable={!isSubmitting}
+                        />
+                        <TextInput
+                          style={styles.modalInput}
+                          value={newRecipient.swiftBic}
+                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
+                          placeholder={accountConfig.fieldLabels.swift_bic}
+                          editable={!isSubmitting}
+                        />
+                      </>
+                    )}
+
+                    {/* Generic Account Fields */}
+                    {accountConfig.accountType === "generic" && (
                       <TextInput
                         style={styles.modalInput}
                         value={newRecipient.accountNumber}
@@ -658,330 +1159,371 @@ function RecipientsContent({ navigation }: NavigationProps) {
                         placeholder={`${accountConfig.fieldLabels.account_number} *`}
                         editable={!isSubmitting}
                       />
-                    </>
-                  )}
+                    )}
+                  </>
+                )
+              })()}
 
-                  {/* UK Account Fields */}
-                  {accountConfig.accountType === "uk" && (
-                    <>
-                      <View style={styles.twoColumnRow}>
-                        <TextInput
-                          style={[styles.modalInput, styles.halfInput]}
-                          value={newRecipient.sortCode}
-                          onChangeText={(text) => {
-                            const value = text.replace(/\D/g, "").slice(0, 6)
-                            setNewRecipient(prev => ({ ...prev, sortCode: value }))
-                          }}
-                          placeholder={`${accountConfig.fieldLabels.sort_code} *`}
-                          keyboardType="numeric"
-                          maxLength={6}
-                          editable={!isSubmitting}
-                        />
-                        <TextInput
-                          style={[styles.modalInput, styles.halfInput]}
-                          value={newRecipient.accountNumber}
-                          onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-                          placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                          editable={!isSubmitting}
-                        />
-                      </View>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.iban}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.iban}
-                        editable={!isSubmitting}
-                      />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.swiftBic}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.swift_bic}
-                        editable={!isSubmitting}
-                      />
-                    </>
-                  )}
-
-                  {/* EURO Account Fields */}
-                  {accountConfig.accountType === "euro" && (
-                    <>
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.iban}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
-                        placeholder={`${accountConfig.fieldLabels.iban} *`}
-                        editable={!isSubmitting}
-                      />
-                      <TextInput
-                        style={styles.modalInput}
-                        value={newRecipient.swiftBic}
-                        onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
-                        placeholder={accountConfig.fieldLabels.swift_bic}
-                        editable={!isSubmitting}
-                      />
-                    </>
-                  )}
-
-                  {/* Generic Account Fields */}
-                  {accountConfig.accountType === "generic" && (
-                    <TextInput
-                      style={styles.modalInput}
-                      value={newRecipient.accountNumber}
-                      onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
-                      placeholder={`${accountConfig.fieldLabels.account_number} *`}
-                      editable={!isSubmitting}
-                    />
-                  )}
-                </>
-              )
-            })()}
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowEditRecipient(false)
-                  setEditingRecipient(null)
-                  resetForm()
-                }}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
-                onPress={handleUpdateRecipient}
-                disabled={isSubmitting || !isFormValid()}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isSubmitting ? 'Updating...' : 'Update'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => {
+                    setShowEditRecipient(false)
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.saveButton, (isSubmitting || !isFormValid()) && styles.disabledButton]}
+                  onPress={handleUpdateRecipient}
+                  disabled={isSubmitting || !isFormValid()}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {isSubmitting ? 'Updating...' : 'Update'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              </View>
+            </ScrollView>
           </View>
         </View>
-      )}
+      </Modal>
 
-      {/* Currency Picker Modal */}
-      {renderCurrencyPicker()}
-      </View>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        visible={deleteConfirmation !== null}
+        title="Delete Recipient"
+        message={`Are you sure you want to delete ${deleteConfirmation?.full_name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirmation(null)}
+      />
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
+    ...textStyles.headlineMedium,
+    color: colors.text.primary,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+  },
+  content: {
+    flex: 1,
+    padding: spacing[5],
   },
   searchContainer: {
-    padding: 20,
-    paddingBottom: 10,
+    paddingHorizontal: spacing[5],
+    marginBottom: spacing[4],
+  },
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[2],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
   searchInput: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Regular',
   },
   addButton: {
-    marginHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
-    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginHorizontal: spacing[5],
+    marginBottom: spacing[5],
+    gap: spacing[2],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  addButtonIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
   },
-  recipientsList: {
+  recipientsContainer: {
+    paddingHorizontal: spacing[5],
+  },
+  scrollView: {
     flex: 1,
-    paddingHorizontal: 20,
   },
-  recipientCard: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+  recipientItem: {
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[3],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  recipientRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e0f2fe',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  recipientLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   avatarContainer: {
     position: 'relative',
-    marginRight: 12,
+    marginRight: spacing[3],
   },
-  avatar: {
+  recipientAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e0f2fe',
+    backgroundColor: colors.primary.main + '15',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#bae6fd',
   },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0369a1',
+  recipientAvatarText: {
+    ...textStyles.titleMedium,
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
+    fontWeight: '700',
+  },
+  avatarFlagBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.background.primary,
   },
   flagContainer: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 18,
-    height: 14,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: colors.frame.background,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
-  flagEmoji: {
-    fontSize: 14,
+  flagImage: {
+    width: 20,
+    height: 20,
   },
   recipientInfo: {
     flex: 1,
+    marginRight: spacing[2],
   },
   recipientName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+    marginBottom: 2,
   },
   recipientBank: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
   },
   recipientAccount: {
-    fontSize: 12,
-    fontFamily: 'monospace',
-    color: '#6b7280',
-    marginBottom: 2,
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
+    fontFamily: 'Outfit-Regular',
+    marginTop: 2,
   },
   recipientActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing[2],
   },
   actionIcon: {
-    padding: 8,
-    borderRadius: 6,
-    backgroundColor: '#f9fafb',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.neutral[50],
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    margin: 20,
-    borderRadius: 12,
-    padding: 20,
-    width: '90%',
+  actionIconDelete: {
+    backgroundColor: colors.error.background,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing[10],
+    gap: spacing[2],
+  },
+  emptyText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+  },
+  emptySubtext: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: colors.background.primary,
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    paddingTop: spacing[2],
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 20,
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.background.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalScrollView: {
+    maxHeight: 500,
+  },
+  modalScrollContent: {
+    paddingBottom: spacing[4],
+    flexGrow: 1,
+  },
+  modalContent: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
+    borderColor: colors.frame.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing[3],
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
+    backgroundColor: colors.frame.background,
+    fontFamily: 'Outfit-Regular',
+  },
+  modalInputError: {
+    borderColor: colors.error.main,
+    borderWidth: 1.5,
+  },
+  errorText: {
+    ...textStyles.bodySmall,
+    color: colors.error.main,
+    marginTop: -spacing[2],
+    marginBottom: spacing[2],
+    marginLeft: spacing[1],
+    fontFamily: 'Outfit-Regular',
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing[3],
+    marginTop: spacing[2],
   },
   modalButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    padding: spacing[3],
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
   saveButton: {
-    backgroundColor: '#007ACC',
+    backgroundColor: colors.primary.main,
   },
   cancelButtonText: {
-    color: '#374151',
-    fontSize: 16,
-    fontWeight: '600',
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
   },
   saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...textStyles.bodyMedium,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
   },
   // Currency Selector Styles
+  currencySelectorWrapper: {
+    marginBottom: spacing[4],
+    zIndex: 1000,
+  },
   currencySelector: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    backgroundColor: '#ffffff',
+    borderColor: colors.frame.border,
+    borderRadius: borderRadius.lg,
+    padding: spacing[3],
+    backgroundColor: colors.frame.background,
   },
   currencySelectorContent: {
     flexDirection: 'row',
@@ -989,70 +1531,125 @@ const styles = StyleSheet.create({
   },
   currencySelectorText: {
     flex: 1,
-    fontSize: 16,
-    color: '#1f2937',
-    marginLeft: 8,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    marginLeft: spacing[2],
+  },
+  currencyDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: spacing[1],
+    borderWidth: 1,
+    borderColor: colors.frame.border,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.background.primary,
+    maxHeight: 220,
+    zIndex: 1001,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  currencyDropdownSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    gap: spacing[2],
+  },
+  currencyDropdownSearchInput: {
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    paddingVertical: spacing[1],
+  },
+  currencyDropdownList: {
+    maxHeight: 180,
+  },
+  currencyDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    gap: spacing[2],
+  },
+  currencyDropdownItemSelected: {
+    backgroundColor: colors.primary.main + '10',
   },
   currencyFlag: {
     fontSize: 16,
   },
   // Currency Picker Modal Styles
-  currencyModalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  currencyModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
+  currencyModalSearchContainer: {
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.border.light,
   },
-  currencyModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
+  currencyModalSearchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.neutral[100],
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[3],
+    gap: spacing[2],
   },
-  currencyCloseButton: {
-    padding: 4,
+  currencyModalSearchInput: {
+    flex: 1,
+    paddingVertical: spacing[3],
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
   },
   currencyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.border.light,
   },
   currencyInfo: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: spacing[3],
   },
   currencyCode: {
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     fontWeight: '600',
-    color: '#1f2937',
+    color: colors.text.primary,
   },
   currencyName: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    marginTop: spacing[0],
   },
   currencySymbol: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: colors.error.background,
+    borderColor: colors.error.light,
     borderWidth: 1,
-    borderRadius: 6,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: borderRadius.md,
+    padding: spacing[3],
+    marginBottom: spacing[4],
   },
   errorText: {
-    color: '#dc2626',
-    fontSize: 14,
+    ...textStyles.bodySmall,
+    color: colors.error.main,
     textAlign: 'center',
   },
   disabledButton: {
@@ -1062,20 +1659,20 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   infoBox: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: colors.neutral[50],
+    borderRadius: borderRadius.md,
+    padding: spacing[3],
+    marginBottom: spacing[4],
   },
   infoText: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   twoColumnRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: spacing[3],
+    marginBottom: spacing[4],
   },
   halfInput: {
     flex: 1,

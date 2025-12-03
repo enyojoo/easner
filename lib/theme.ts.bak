@@ -1,0 +1,482 @@
+/**
+ * Easner Premium Design System - Web Theme
+ * 
+ * Ported from mobile theme for consistent premium experience across platforms
+ */
+
+// Colors - matching mobile theme
+export const colors = {
+  // Primary Brand Colors
+  primary: {
+    main: '#007ACC',
+    light: '#3399DD',
+    dark: '#005A99',
+    gradient: ['#007ACC', '#00A3FF'],
+    gradientDark: ['#005A99', '#007ACC'],
+  },
+
+  // Success Colors
+  success: {
+    main: '#10B981',
+    light: '#34D399',
+    dark: '#059669',
+    gradient: ['#10B981', '#34D399'],
+    background: '#ECFDF5',
+  },
+
+  // Warning Colors  
+  warning: {
+    main: '#F59E0B',
+    light: '#FBBF24',
+    dark: '#D97706',
+    gradient: ['#F59E0B', '#FBBF24'],
+    background: '#FFFBEB',
+  },
+
+  // Error Colors
+  error: {
+    main: '#EF4444',
+    light: '#F87171',
+    dark: '#DC2626',
+    gradient: ['#EF4444', '#F87171'],
+    background: '#FEF2F2',
+  },
+
+  // Neutral Colors
+  neutral: {
+    white: '#FFFFFF',
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A',
+    black: '#000000',
+  },
+
+  // Background Colors
+  background: {
+    primary: '#FFFFFF',
+    secondary: '#F8FAFC',
+    tertiary: '#F1F5F9',
+    dark: '#0F172A',
+  },
+
+  // Text Colors
+  text: {
+    primary: '#111827',
+    secondary: '#6B7280',
+    tertiary: '#9CA3AF',
+    inverse: '#FFFFFF',
+    link: '#007ACC',
+  },
+
+  // Card Gradients
+  cardGradients: {
+    premium: ['#1E293B', '#334155'],
+    blue: ['#007ACC', '#00A3FF'],
+    purple: ['#7C3AED', '#A78BFA'],
+    green: ['#059669', '#10B981'],
+    gold: ['#D97706', '#F59E0B'],
+  },
+
+  // Glassmorphism
+  glass: {
+    background: 'rgba(255, 255, 255, 0.7)',
+    border: 'rgba(255, 255, 255, 0.2)',
+    backgroundDark: 'rgba(15, 23, 42, 0.8)',
+  },
+
+  // Status Colors (for transactions)
+  status: {
+    pending: '#F59E0B',
+    processing: '#007ACC',
+    completed: '#10B981',
+    failed: '#EF4444',
+    cancelled: '#6B7280',
+  },
+
+  // Border Colors
+  border: {
+    light: '#F1F5F9',
+    default: '#E2E8F0',
+    dark: '#CBD5E1',
+  },
+}
+
+// Spacing scale (4px base unit)
+export const spacing = {
+  0: '0px',
+  1: '4px',
+  2: '8px',
+  3: '12px',
+  4: '16px',
+  5: '20px',
+  6: '24px',
+  7: '28px',
+  8: '32px',
+  10: '40px',
+  12: '48px',
+  16: '64px',
+  20: '80px',
+  24: '96px',
+}
+
+// Shadow definitions
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    // CSS box-shadow equivalent
+    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+  },
+}
+
+// Typography - matching mobile but adapted for web
+export const typography = {
+  // Font families
+  fontFamily: {
+    sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+    display: ['var(--font-unbounded)', 'system-ui', 'sans-serif'],
+  },
+
+  // Font sizes
+  fontSize: {
+    xs: '11px',
+    sm: '13px',
+    base: '15px',
+    md: '17px',
+    lg: '20px',
+    xl: '24px',
+    '2xl': '28px',
+    '3xl': '34px',
+    '4xl': '40px',
+    '5xl': '48px',
+  },
+
+  // Font weights
+  fontWeight: {
+    regular: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+    extrabold: '800',
+  },
+
+  // Line heights
+  lineHeight: {
+    tight: '1.1',
+    snug: '1.25',
+    normal: '1.4',
+    relaxed: '1.5',
+    loose: '1.75',
+  },
+
+  // Letter spacing
+  letterSpacing: {
+    tighter: '-0.5px',
+    tight: '-0.25px',
+    normal: '0px',
+    wide: '0.25px',
+    wider: '0.5px',
+    widest: '1px',
+  },
+}
+
+// Animation durations
+export const duration = {
+  instant: '0ms',
+  fast: '150ms',
+  normal: '250ms',
+  slow: '400ms',
+  slower: '600ms',
+}
+
+// Easing curves
+export const easing = {
+  linear: 'linear',
+  easeIn: 'ease-in',
+  easeOut: 'ease-out',
+  easeInOut: 'ease-in-out',
+}
+
+// Z-index scale
+export const zIndex = {
+  base: 0,
+  dropdown: 10,
+  sticky: 20,
+  fixed: 30,
+  modal: 40,
+  popover: 50,
+  toast: 60,
+}
+
+// Breakpoints for responsive design
+export const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+}
+export const colors = {
+  // Primary Brand Colors
+  primary: {
+    main: '#007ACC',
+    light: '#3399DD',
+    dark: '#005A99',
+    gradient: ['#007ACC', '#00A3FF'],
+    gradientDark: ['#005A99', '#007ACC'],
+  },
+
+  // Success Colors
+  success: {
+    main: '#10B981',
+    light: '#34D399',
+    dark: '#059669',
+    gradient: ['#10B981', '#34D399'],
+    background: '#ECFDF5',
+  },
+
+  // Warning Colors  
+  warning: {
+    main: '#F59E0B',
+    light: '#FBBF24',
+    dark: '#D97706',
+    gradient: ['#F59E0B', '#FBBF24'],
+    background: '#FFFBEB',
+  },
+
+  // Error Colors
+  error: {
+    main: '#EF4444',
+    light: '#F87171',
+    dark: '#DC2626',
+    gradient: ['#EF4444', '#F87171'],
+    background: '#FEF2F2',
+  },
+
+  // Neutral Colors
+  neutral: {
+    white: '#FFFFFF',
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A',
+    black: '#000000',
+  },
+
+  // Background Colors
+  background: {
+    primary: '#FFFFFF',
+    secondary: '#F8FAFC',
+    tertiary: '#F1F5F9',
+    dark: '#0F172A',
+  },
+
+  // Text Colors
+  text: {
+    primary: '#111827',
+    secondary: '#6B7280',
+    tertiary: '#9CA3AF',
+    inverse: '#FFFFFF',
+    link: '#007ACC',
+  },
+
+  // Card Gradients
+  cardGradients: {
+    premium: ['#1E293B', '#334155'],
+    blue: ['#007ACC', '#00A3FF'],
+    purple: ['#7C3AED', '#A78BFA'],
+    green: ['#059669', '#10B981'],
+    gold: ['#D97706', '#F59E0B'],
+  },
+
+  // Glassmorphism
+  glass: {
+    background: 'rgba(255, 255, 255, 0.7)',
+    border: 'rgba(255, 255, 255, 0.2)',
+    backgroundDark: 'rgba(15, 23, 42, 0.8)',
+  },
+
+  // Status Colors (for transactions)
+  status: {
+    pending: '#F59E0B',
+    processing: '#007ACC',
+    completed: '#10B981',
+    failed: '#EF4444',
+    cancelled: '#6B7280',
+  },
+
+  // Border Colors
+  border: {
+    light: '#F1F5F9',
+    default: '#E2E8F0',
+    dark: '#CBD5E1',
+  },
+}
+
+// Spacing scale (4px base unit)
+export const spacing = {
+  0: '0px',
+  1: '4px',
+  2: '8px',
+  3: '12px',
+  4: '16px',
+  5: '20px',
+  6: '24px',
+  7: '28px',
+  8: '32px',
+  10: '40px',
+  12: '48px',
+  16: '64px',
+  20: '80px',
+  24: '96px',
+}
+
+// Shadow definitions
+export const shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    // CSS box-shadow equivalent
+    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+  },
+}
+
+// Typography - matching mobile but adapted for web
+export const typography = {
+  // Font families
+  fontFamily: {
+    sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
+    display: ['var(--font-unbounded)', 'system-ui', 'sans-serif'],
+  },
+
+  // Font sizes
+  fontSize: {
+    xs: '11px',
+    sm: '13px',
+    base: '15px',
+    md: '17px',
+    lg: '20px',
+    xl: '24px',
+    '2xl': '28px',
+    '3xl': '34px',
+    '4xl': '40px',
+    '5xl': '48px',
+  },
+
+  // Font weights
+  fontWeight: {
+    regular: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+    extrabold: '800',
+  },
+
+  // Line heights
+  lineHeight: {
+    tight: '1.1',
+    snug: '1.25',
+    normal: '1.4',
+    relaxed: '1.5',
+    loose: '1.75',
+  },
+
+  // Letter spacing
+  letterSpacing: {
+    tighter: '-0.5px',
+    tight: '-0.25px',
+    normal: '0px',
+    wide: '0.25px',
+    wider: '0.5px',
+    widest: '1px',
+  },
+}
+
+// Animation durations
+export const duration = {
+  instant: '0ms',
+  fast: '150ms',
+  normal: '250ms',
+  slow: '400ms',
+  slower: '600ms',
+}
+
+// Easing curves
+export const easing = {
+  linear: 'linear',
+  easeIn: 'ease-in',
+  easeOut: 'ease-out',
+  easeInOut: 'ease-in-out',
+}
+
+// Z-index scale
+export const zIndex = {
+  base: 0,
+  dropdown: 10,
+  sticky: 20,
+  fixed: 30,
+  modal: 40,
+  popover: 50,
+  toast: 60,
+}
+
+// Breakpoints for responsive design
+export const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+}
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -6,18 +6,66 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Modal,
+  Alert,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { WebView } from 'react-native-webview'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps, KYCSubmission } from '../../types'
 import { kycService } from '../../lib/kycService'
+import { bridgeService } from '../../lib/bridgeService'
+import { supabase } from '../../lib/supabase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 function AccountVerificationContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
+  const insets = useSafeAreaInsets()
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // TOS state
+  const [tosLink, setTosLink] = useState<string | null>(null)
+  const [tosLinkId, setTosLinkId] = useState<string | null>(null)
+  const [tosSigned, setTosSigned] = useState(false)
+  const [tosSignedAgreementId, setTosSignedAgreementId] = useState<string | null>(null)
+  const [showTosModal, setShowTosModal] = useState(false)
+  const [loadingTos, setLoadingTos] = useState(false)
+  const [checkingTosStatus, setCheckingTosStatus] = useState(false)
+  const [creatingCustomer, setCreatingCustomer] = useState(false)
+  const [customerError, setCustomerError] = useState<string | null>(null)
+  
+  // Ref to track if we've already processed TOS acceptance via postMessage
+  const tosProcessedRef = useRef(false)
+  // Ref to prevent duplicate loadTOSStatus calls
+  const loadingTosStatusRef = useRef(false)
+
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    if (!loading) {
+      Animated.stagger(100, [
+        Animated.timing(headerAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+  }, [loading, headerAnim, contentAnim])
 
   useEffect(() => {
     if (!userProfile?.id) return
@@ -73,9 +121,635 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const bothCompleted = 
     identitySubmission?.status === "approved" && 
     addressSubmission?.status === "approved"
+  
+  // TOS should appear when both are submitted (status: pending, in_review, or approved)
+  const bothSubmitted = 
+    identitySubmission && 
+    addressSubmission &&
+    identitySubmission.status && 
+    addressSubmission.status &&
+    identitySubmission.status !== 'rejected' &&
+    addressSubmission.status !== 'rejected'
 
-  const getStatusBadge = (status: string | undefined) => {
-    if (!status) {
+  // Load TOS status when both are submitted or when screen comes into focus
+  useEffect(() => {
+    if (!bothSubmitted || !userProfile?.email) return
+
+    // Prevent duplicate calls
+    if (loadingTosStatusRef.current) {
+      console.log('[TOS-LOAD] Already loading TOS status, skipping duplicate call')
+      return
+    }
+
+    loadTOSStatus()
+  }, [bothSubmitted, userProfile?.email])
+
+  // Reload TOS status when screen comes into focus (e.g., after accepting TOS in browser)
+  // Also clear cache on focus to ensure fresh data
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (bothSubmitted && userProfile?.email) {
+        // Clear cache to force fresh fetch from database
+        const CACHE_KEY = `easner_tos_status_${userProfile.id}`
+        AsyncStorage.removeItem(CACHE_KEY).catch(() => {
+          // Ignore errors
+        })
+        
+        // Prevent duplicate calls
+        if (loadingTosStatusRef.current) {
+          console.log('[TOS-LOAD] Already loading TOS status on focus, skipping duplicate call')
+          return
+        }
+        console.log('Screen focused - reloading TOS status (cache cleared)')
+        loadTOSStatus()
+      }
+    })
+
+    return unsubscribe
+  }, [navigation, bothSubmitted, userProfile?.email, userProfile?.id])
+
+  const updateTosStatusInCache = async (signed: boolean, agreementId: string | null = null, linkId: string | null = null) => {
+    if (!userProfile?.id) return
+    
+    try {
+      const CACHE_KEY = `easner_tos_status_${userProfile.id}`
+      await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+        tosSigned: signed,
+        tosSignedAgreementId: agreementId,
+        tosLinkId: linkId || tosLinkId,
+        timestamp: Date.now()
+      }))
+    } catch (error) {
+      console.error('Error updating TOS cache:', error)
+    }
+  }
+
+  const loadTOSStatus = async () => {
+    if (!userProfile?.email || !userProfile?.id) return
+    
+    // Prevent duplicate calls
+    if (loadingTosStatusRef.current) {
+      console.log('[TOS-LOAD] Already loading, skipping duplicate call')
+      return
+    }
+    
+    loadingTosStatusRef.current = true
+    
+    try {
+      // First, check cache for immediate UI update (prevents flickering)
+      // But always fetch fresh data from database (source of truth)
+      const CACHE_KEY = `easner_tos_status_${userProfile.id}`
+      const cached = await AsyncStorage.getItem(CACHE_KEY)
+      let cachedData: any = null
+      
+      if (cached) {
+        try {
+          cachedData = JSON.parse(cached)
+          const { tosSigned: cachedTosSigned, tosSignedAgreementId: cachedAgreementId, tosLinkId: cachedTosLinkId, timestamp } = cachedData
+          if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+            console.log('[TOS-LOAD] ✅ TOS status from cache (showing immediately, fetching fresh data from database...)')
+            // Show cached value immediately for instant UI
+            setTosSigned(cachedTosSigned)
+            if (cachedAgreementId) {
+              setTosSignedAgreementId(cachedAgreementId)
+            }
+            if (cachedTosLinkId) {
+              setTosLinkId(cachedTosLinkId)
+            }
+            // Continue to fetch fresh data from database (source of truth) - will override cache
+          } else {
+            // Cache expired, clear it
+            console.log('[TOS-LOAD] Cache expired, clearing...')
+            await AsyncStorage.removeItem(CACHE_KEY)
+          }
+        } catch (e) {
+          console.warn('[TOS-LOAD] Error parsing cache, clearing...', e)
+          await AsyncStorage.removeItem(CACHE_KEY)
+        }
+      }
+      
+      // Always check database for persistent TOS status (source of truth)
+      // This ensures we get the latest status even if cache is stale
+      const { data: userData, error: dbError } = await supabase
+        .from('users')
+        .select('bridge_customer_id, bridge_signed_agreement_id')
+        .eq('id', userProfile?.id)
+        .single()
+      
+      if (dbError) {
+        console.error('[TOS-LOAD] Error fetching from database:', dbError)
+        // Continue with cache/Bridge API check if database fails
+      }
+      
+      // If we have signed_agreement_id in database, TOS is signed
+      // ALWAYS update state from database (source of truth) - this overrides any cache
+      if (userData?.bridge_signed_agreement_id) {
+        console.log('[TOS-LOAD] ✅ TOS signed (from database) - updating state')
+        setTosSigned(true)
+        setTosSignedAgreementId(userData.bridge_signed_agreement_id)
+        
+        // Set tosLinkId for consistency
+        const linkId = userData.bridge_customer_id ? `customer-${userData.bridge_customer_id}` : null
+        if (linkId) {
+          setTosLinkId(linkId)
+        }
+        
+        // Update cache with database value (ensures cache matches database)
+        await updateTosStatusInCache(true, userData.bridge_signed_agreement_id, linkId)
+        
+        // Get TOS link for display (non-blocking, in background)
+        bridgeService.getTOSLink(userProfile.email, 'individual')
+          .then(response => {
+            if (response.tosLink) {
+              setTosLink(response.tosLink)
+            }
+          })
+          .catch(() => {
+            // Ignore errors - we already have the status from database
+          })
+        
+        loadingTosStatusRef.current = false
+        return // Exit early - database is source of truth
+      }
+      
+      // If database says TOS is NOT signed, update state to false (override cache)
+      if (userData && !userData.bridge_signed_agreement_id) {
+        console.log('[TOS-LOAD] ❌ TOS not signed (from database) - updating state')
+        setTosSigned(false)
+        setTosSignedAgreementId(null)
+        // Update cache to match database
+        await updateTosStatusInCache(false, null, null)
+      }
+      
+      // If no signed_agreement_id in database, check Bridge API (but only if we have a customer)
+      if (userData?.bridge_customer_id) {
+        try {
+          const tosLinkId = `customer-${userData.bridge_customer_id}`
+          const status = await bridgeService.checkTOSStatus(tosLinkId)
+          
+          if (status.signed) {
+            setTosSigned(true)
+            setTosSignedAgreementId(status.signedAgreementId || null)
+            setTosLinkId(tosLinkId)
+            
+            // Update cache
+            await updateTosStatusInCache(true, status.signedAgreementId || null, tosLinkId)
+            
+            // Store in database for persistence
+            if (status.signedAgreementId) {
+              await storeSignedAgreementId(status.signedAgreementId)
+            }
+            
+            // Get TOS link for display
+            const response = await bridgeService.getTOSLink(userProfile.email, 'individual')
+            if (response.tosLink) {
+              setTosLink(response.tosLink)
+            }
+            
+            return
+          } else {
+            setTosSigned(false)
+            // Update cache with false status
+            await updateTosStatusInCache(false, null, tosLinkId)
+          }
+        } catch (customerError: any) {
+          console.warn('[TOS-LOAD] Could not check customer TOS status:', customerError.message)
+          setTosSigned(false)
+        }
+      }
+      
+      // Fallback: Get TOS link (for cases where customer doesn't exist yet)
+      // Only try this if TOS is not already signed (to avoid unnecessary API calls)
+      if (!userData?.bridge_signed_agreement_id) {
+        try {
+      const response = await bridgeService.getTOSLink(userProfile.email, 'individual')
+      const link = response.tosLink
+      const linkId = response.tosLinkId
+      
+      if (link && link.trim() !== '') {
+        setTosLink(link)
+        setTosLinkId(linkId)
+        
+        // Check if already signed via TOS link
+        if (linkId) {
+          const status = await bridgeService.checkTOSStatus(linkId)
+          if (status.signed) {
+            setTosSigned(true)
+            setTosSignedAgreementId(status.signedAgreementId || null)
+                
+                // Update cache
+                await updateTosStatusInCache(true, status.signedAgreementId || null, linkId)
+            
+            // Store in database for persistence
+            if (status.signedAgreementId) {
+              await storeSignedAgreementId(status.signedAgreementId)
+            }
+          } else {
+            setTosSigned(false)
+                // Update cache with false status
+                await updateTosStatusInCache(false, null, linkId)
+          }
+        }
+      } else if ((response as any).alreadyAccepted) {
+        setTosSigned(true)
+        setTosLinkId(linkId)
+            // Update cache
+            await updateTosStatusInCache(true, null, linkId)
+      } else {
+        setTosSigned(false)
+            // Update cache with false status
+            if (linkId) {
+              await updateTosStatusInCache(false, null, linkId)
+            }
+          }
+        } catch (tosLinkError: any) {
+          // If TOS link creation fails (e.g., 401), log but don't fail completely
+          // TOS might already be accepted, so this is not critical
+          console.warn('[TOS-LOAD] Could not get TOS link (this is OK if TOS is already accepted):', tosLinkError.message)
+          // Don't set tosSigned to false here - database is source of truth
+        }
+      } else {
+        // TOS is already signed according to database - no need to get TOS link
+        console.log('[TOS-LOAD] TOS already signed, skipping TOS link generation')
+      }
+    } catch (error: any) {
+      console.error('[TOS-LOAD] Error loading TOS status:', error)
+      setTosSigned(false)
+    } finally {
+      loadingTosStatusRef.current = false
+    }
+  }
+  
+  const storeSignedAgreementId = async (signedAgreementId: string) => {
+    if (!userProfile?.id) return
+    
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ bridge_signed_agreement_id: signedAgreementId })
+        .eq('id', userProfile?.id)
+      
+      if (error) {
+        console.error('Error storing signed_agreement_id:', error)
+      } else {
+        console.log('Stored signed_agreement_id in database:', signedAgreementId)
+        
+        // Immediately update UI state (don't wait for cache)
+        setTosSigned(true)
+        setTosSignedAgreementId(signedAgreementId)
+        
+        // Update cache to keep it in sync
+        await updateTosStatusInCache(true, signedAgreementId, tosLinkId)
+        
+        // Force refresh TOS status to ensure everything is in sync
+        // Use a small delay to ensure database write is complete
+        setTimeout(() => {
+          if (bothSubmitted && userProfile?.email) {
+            loadingTosStatusRef.current = false // Reset ref to allow refresh
+            loadTOSStatus()
+          }
+        }, 500)
+      }
+    } catch (error) {
+      console.error('Error storing signed_agreement_id:', error)
+    }
+  }
+
+  const handleOpenTOS = async () => {
+    if (!userProfile?.email) return
+    
+    // FIRST: Check if TOS is already signed - if so, don't try to create a new link
+    if (tosSigned || userProfile.bridge_signed_agreement_id) {
+      console.log('[TOS-OPEN] TOS already signed, skipping link generation')
+      Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+      return
+    }
+    
+    // Reset the processed flag when opening TOS modal
+    tosProcessedRef.current = false
+    console.log('[TOS-OPEN] Opening TOS modal, reset processed flag')
+    
+    setLoadingTos(true)
+    try {
+      if (!tosLink || !tosLinkId) {
+        // Before trying to create TOS link, check database one more time
+        const { data: userData } = await supabase
+          .from('users')
+          .select('bridge_signed_agreement_id, bridge_customer_id')
+          .eq('id', userProfile.id)
+          .single()
+        
+        // If TOS is already signed, don't try to create a link
+        if (userData?.bridge_signed_agreement_id) {
+          console.log('[TOS-OPEN] TOS already signed in database, skipping link generation')
+          setTosSigned(true)
+          setTosSignedAgreementId(userData.bridge_signed_agreement_id)
+          setLoadingTos(false)
+          Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+          return
+        }
+        
+        // If customer exists, try to get TOS link from customer object first (avoids 401)
+        if (userData?.bridge_customer_id) {
+          try {
+            const customer = await bridgeService.getCustomer(userData.bridge_customer_id)
+            const customerTosLink = (customer as any).tos_link
+            const hasAcceptedTOS = (customer as any).has_accepted_terms_of_service === true
+            
+            if (hasAcceptedTOS) {
+              console.log('[TOS-OPEN] Customer already accepted TOS')
+              setTosSigned(true)
+              setLoadingTos(false)
+              Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+              return
+            }
+            
+            if (customerTosLink) {
+              console.log('[TOS-OPEN] Using TOS link from customer object')
+              setTosLink(customerTosLink)
+              setTosLinkId(`customer-${userData.bridge_customer_id}`)
+              setShowTosModal(true)
+              setLoadingTos(false)
+              return
+            }
+          } catch (customerError: any) {
+            console.warn('[TOS-OPEN] Could not get customer TOS link:', customerError.message)
+            // Fall through to try creating new TOS link
+          }
+        }
+        
+        // Last resort: Try to create new TOS link (this is where 401 happens)
+        console.log('[TOS-OPEN] Attempting to create new TOS link...')
+        try {
+        const response = await bridgeService.getTOSLink(userProfile.email, 'individual')
+        const link = response.tosLink
+        const linkId = response.tosLinkId
+        
+        setTosLink(link)
+        setTosLinkId(linkId)
+        
+        if (!link) {
+          Alert.alert(
+            'TOS Link Not Available',
+            'Unable to load Terms of Service. Please try again or contact support.'
+          )
+          setLoadingTos(false)
+          return
+        }
+        
+        setShowTosModal(true)
+        } catch (tosLinkError: any) {
+          // If TOS link creation fails (especially 401), check if TOS is already accepted
+          console.warn('[TOS-OPEN] TOS link creation failed:', tosLinkError.message)
+          
+          // If it's a 401 error, it might mean TOS is already accepted or API key doesn't have permission
+          // Check customer status one more time
+          if (userData?.bridge_customer_id) {
+            try {
+              const customer = await bridgeService.getCustomer(userData.bridge_customer_id)
+              const hasAcceptedTOS = (customer as any).has_accepted_terms_of_service === true
+              
+              if (hasAcceptedTOS) {
+                console.log('[TOS-OPEN] Customer already has TOS accepted (checked after 401 error)')
+                setTosSigned(true)
+                setLoadingTos(false)
+                Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+                return
+              }
+            } catch (customerCheckError: any) {
+              console.warn('[TOS-OPEN] Could not verify customer TOS status:', customerCheckError.message)
+            }
+          }
+          
+          // If we can't verify TOS status, show a helpful error
+          // But first, check database one more time to be absolutely sure
+          try {
+            const { data: finalCheck } = await supabase
+            .from('users')
+            .select('bridge_signed_agreement_id')
+              .eq('id', userProfile.id)
+            .single()
+          
+            if (finalCheck?.bridge_signed_agreement_id) {
+              console.log('[TOS-OPEN] TOS confirmed signed in database after 401 error')
+            setTosSigned(true)
+              setTosSignedAgreementId(finalCheck.bridge_signed_agreement_id)
+            setLoadingTos(false)
+              Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+            return
+          }
+          } catch (dbError: any) {
+            console.warn('[TOS-OPEN] Could not verify TOS in database:', dbError.message)
+          }
+          
+          // If we still can't confirm TOS is accepted, show error
+          const errorMessage = tosLinkError.message || 'Failed to load terms of service'
+          if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+            Alert.alert(
+              'TOS Link Unavailable',
+              'Unable to create Terms of Service link. This may be because:\n\n• TOS is already accepted\n• Bridge API key permission issue\n\nIf TOS is already accepted, you can ignore this error.'
+            )
+          } else {
+            Alert.alert(
+              'Error Loading TOS',
+              `Unable to load Terms of Service: ${errorMessage}\n\nIf TOS is already accepted, you can ignore this error.`
+            )
+          }
+          setLoadingTos(false)
+          return
+        }
+      } else {
+        // We have tosLink and tosLinkId - just open the modal
+        // Don't check database here - state is managed by loadTOSStatus
+        if (!tosLink) {
+          Alert.alert(
+            'TOS Link Not Available',
+            'Terms of Service link is not available. Please try again or contact support.'
+          )
+          setLoadingTos(false)
+          return
+        }
+        setShowTosModal(true)
+      }
+    } catch (error: any) {
+      console.error('Error opening TOS:', error)
+      const errorMessage = error.message || 'Failed to load terms of service'
+      Alert.alert(
+        'Error Loading TOS',
+        `${errorMessage}\n\nPlease try again or contact support if the issue persists.`
+      )
+      // Don't update state on error - let loadTOSStatus handle state management
+    } finally {
+      setLoadingTos(false)
+    }
+  }
+
+  const handleTOSModalClose = () => {
+    setShowTosModal(false)
+    
+    // If we already processed TOS via postMessage, don't start polling
+    if (tosProcessedRef.current) {
+      console.log('[TOS-MODAL] Modal closed but TOS already processed via postMessage, skipping polling')
+      return
+    }
+    
+    // Always start polling when modal closes - user may have accepted TOS
+    // Give Bridge a moment to process the acceptance (Bridge may take a few seconds to update)
+    setTimeout(() => {
+      if (tosLinkId && !tosProcessedRef.current) {
+        console.log('[TOS-MODAL] Modal closed - starting polling with tosLinkId:', tosLinkId)
+        pollTOSStatus()
+      } else {
+        console.warn('[TOS-MODAL] Modal closed but no tosLinkId available or already processed, reloading TOS status')
+        // Try to reload TOS status in case it was accepted
+        if (bothSubmitted && userProfile?.email) {
+          loadTOSStatus()
+        }
+      }
+    }, 3000) // Wait 3 seconds for Bridge to process TOS acceptance
+  }
+
+  const pollTOSStatus = async () => {
+    if (!tosLinkId || checkingTosStatus || tosProcessedRef.current) {
+      console.log(`[TOS-POLL] Skipping poll - tosLinkId: ${!!tosLinkId}, checkingTosStatus: ${checkingTosStatus}, alreadyProcessed: ${tosProcessedRef.current}`)
+      return
+    }
+    
+    setCheckingTosStatus(true)
+    const maxAttempts = 60 // 60 attempts = 2 minutes (2 seconds per attempt)
+    let attempts = 0
+    
+    const checkStatus = async () => {
+      try {
+        console.log(`[TOS-POLL] Checking TOS status (attempt ${attempts + 1}/${maxAttempts}) with tosLinkId: ${tosLinkId}`)
+        const status = await bridgeService.checkTOSStatus(tosLinkId!)
+        console.log(`[TOS-POLL] TOS status response:`, { signed: status.signed, hasAgreementId: !!status.signedAgreementId })
+        
+        if (status.signed && status.signedAgreementId) {
+          console.log(`[TOS-POLL] TOS accepted! signed_agreement_id: ${status.signedAgreementId.substring(0, 8)}...`)
+          
+          // Store signed_agreement_id first
+          await storeSignedAgreementId(status.signedAgreementId)
+          
+          // Update UI
+          setTosSigned(true)
+          setTosSignedAgreementId(status.signedAgreementId)
+          setCheckingTosStatus(false)
+          
+          // Update cache immediately
+          await updateTosStatusInCache(true, status.signedAgreementId, tosLinkId)
+          
+          console.log(`[TOS-POLL] ✅ TOS signed_agreement_id stored in database`)
+          
+          // Check if Bridge customer exists before trying to update
+          const { data: userData } = await supabase
+            .from('users')
+            .select('bridge_customer_id')
+            .eq('id', userProfile?.id)
+            .single()
+          
+          if (userData?.bridge_customer_id) {
+            // Customer exists - update it with signed_agreement_id
+            // Accepting TOS via hosted link doesn't automatically update the customer
+            // We must call PUT /v0/customers/{customerID} with the signed_agreement_id
+            try {
+              console.log(`[TOS-POLL] Customer exists, updating with signed_agreement_id...`)
+              const updateResult = await bridgeService.updateCustomerTOS(status.signedAgreementId)
+              console.log(`[TOS-POLL] Customer updated successfully. hasAcceptedTOS: ${updateResult.hasAcceptedTOS}`)
+            } catch (updateError: any) {
+              console.error(`[TOS-POLL] ⚠️ Error updating customer TOS (customer exists):`, updateError.message)
+              // Non-critical error - TOS is already stored
+            }
+          } else {
+            // Customer doesn't exist yet - this is expected if KYC is still in_review
+            // The admin will create the customer via "Send to Bridge" button
+            console.log(`[TOS-POLL] ℹ️ Customer doesn't exist yet. TOS signed_agreement_id stored. Admin will create customer via "Send to Bridge".`)
+            
+            // Don't try to create customer here - admin must approve KYC first
+            // The old code tried to create customer automatically, but that's not correct
+            // because KYC might still be in_review
+          }
+          
+          return
+        }
+        
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 2000) // Check every 2 seconds
+        } else {
+          setCheckingTosStatus(false)
+          console.log(`[TOS-POLL] Polling stopped after ${maxAttempts} attempts. TOS may still be processing.`)
+          // Show alert to user that they may need to wait or refresh
+          Alert.alert(
+            'TOS Status',
+            'Terms of Service acceptance is still being processed. Please wait a moment and refresh the screen, or try again later.',
+            [
+              {
+                text: 'Refresh Now',
+                onPress: () => {
+                  if (bothSubmitted && userProfile?.email) {
+                    loadTOSStatus()
+                  }
+                }
+              },
+              { text: 'OK', style: 'cancel' }
+            ]
+          )
+        }
+      } catch (error: any) {
+        console.error('[TOS-POLL] Error checking TOS status:', error)
+        setCheckingTosStatus(false)
+        // Don't stop polling on error - might be temporary network issue
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 2000)
+        }
+      }
+    }
+    
+    checkStatus()
+  }
+
+  const createBridgeCustomer = async (signedAgreementId: string) => {
+    if (creatingCustomer) return // Prevent duplicate calls
+    
+    setCreatingCustomer(true)
+    setCustomerError(null)
+    
+    try {
+      await bridgeService.createCustomerWithKyc({
+        signedAgreementId,
+        needsUSD: true,
+        needsEUR: true,
+      })
+      
+      Alert.alert(
+        'Success',
+        'Your Bridge account is being set up. You will receive USD and EUR account details once your verification is approved.'
+      )
+      
+      // Refresh submissions to show updated status
+      if (userProfile?.id) {
+        const data = await kycService.getByUserId(userProfile.id)
+        setSubmissions(data || [])
+      }
+    } catch (error: any) {
+      console.error('Error creating Bridge customer:', error)
+      setCustomerError(error.message || 'Failed to create Bridge account')
+      Alert.alert(
+        'Account Setup Error',
+        error.message || 'Failed to create your Bridge account. Please try again later.'
+      )
+    } finally {
+      setCreatingCustomer(false)
+    }
+  }
+
+  const getStatusBadge = (status: string | undefined, bridgeStatus?: string | undefined) => {
+    // Use Bridge status if available, otherwise use local status
+    const displayStatus = bridgeStatus || status
+    
+    if (!displayStatus) {
       return (
         <View style={styles.badgeGray}>
           <Text style={styles.badgeTextGray}>Not started</Text>
@@ -83,7 +757,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       )
     }
 
-    switch (status) {
+    switch (displayStatus) {
       case "approved":
         return (
           <View style={styles.badgeGreen}>
@@ -91,6 +765,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
           </View>
         )
       case "in_review":
+      case "under_review":
         return (
           <View style={styles.badgeYellow}>
             <Text style={styles.badgeTextYellow}>In review</Text>
@@ -100,6 +775,18 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         return (
           <View style={styles.badgeRed}>
             <Text style={styles.badgeTextRed}>Rejected</Text>
+          </View>
+        )
+      case "incomplete":
+        return (
+          <View style={styles.badgeGray}>
+            <Text style={styles.badgeTextGray}>Incomplete</Text>
+          </View>
+        )
+      case "not_started":
+        return (
+          <View style={styles.badgeGray}>
+            <Text style={styles.badgeTextGray}>Not started</Text>
           </View>
         )
       default:
@@ -123,213 +810,593 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
 
   return (
     <ScreenWrapper>
-      <ScrollView style={styles.scrollContainer}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={{ paddingBottom: insets.bottom + spacing[5] }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Premium Header - Matching Send Flow */}
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-20, 0],
+                  })
+                }]
+              }
+            ]}
           >
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Account Verification</Text>
-        </View>
-
-        {/* Info Message */}
-        {!bothCompleted && (
-          <View style={styles.infoContainer}>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
-                Please complete KYC Identity and Address information for compliance.
-              </Text>
+            <TouchableOpacity
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.goBack()
+              }}
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>Account Verification</Text>
+              <Text style={styles.subtitle}>Complete your KYC verification</Text>
             </View>
-          </View>
-        )}
+          </Animated.View>
 
-        {/* Cards Container */}
-        <View style={styles.cardsContainer}>
-          {/* Identity Verification Card */}
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('IdentityVerification')}
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
           >
-            <View style={styles.cardContent}>
-              <View style={styles.cardLeft}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="person-outline" size={24} color="#007ACC" />
+            {/* Info Message */}
+            {!bothCompleted && (
+              <View style={styles.infoCard}>
+                <View style={styles.infoBox}>
+                  <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />
+                  <Text style={styles.infoText}>
+                    Please complete KYC Identity and Address information for compliance.
+                  </Text>
                 </View>
-                <Text style={styles.cardTitle}>Identity verification</Text>
-                <Text style={styles.cardDescription}>
-                  Your ID document and ID verification information.
-                </Text>
               </View>
-              <View style={styles.cardRight}>
-                {getStatusBadge(identitySubmission?.status)}
-                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-              </View>
-            </View>
-          </TouchableOpacity>
+            )}
 
-          {/* Address Information Card */}
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate('AddressVerification')}
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.cardLeft}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="location-outline" size={24} color="#007ACC" />
+            {/* Cards Container */}
+            <View style={styles.cardsContainer}>
+              {/* Identity Verification Card */}
+              <TouchableOpacity
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  navigation.navigate('IdentityVerification')
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.card}>
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardLeft}>
+                      <View style={styles.iconContainer}>
+                        <Ionicons name="person-outline" size={24} color={colors.primary.main} />
+                      </View>
+                      <Text style={styles.cardTitle}>Identity verification</Text>
+                      <Text style={styles.cardDescription}>
+                        Your ID verification information.
+                      </Text>
+                    </View>
+                    <View style={styles.cardRight}>
+                      {getStatusBadge(identitySubmission?.status, userProfile?.bridge_kyc_status)}
+                      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                    </View>
+                  </View>
+                  {/* Status Notices */}
+                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
+                    <View style={styles.infoCard}>
+                      <View style={styles.infoBox}>
+                        <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
+                        <Text style={styles.infoText}>
+                          Your verification is under review. We will provide an update soonest. Please check your email for updates.
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'rejected' && userProfile?.bridge_kyc_rejection_reasons && (
+                    <View style={styles.infoCard}>
+                      <View style={styles.infoBox}>
+                        <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
+                        <Text style={styles.infoText}>
+                          Your verification was not approved. {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
+                            : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
+                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons}. `
+                            : ''}Please complete identity verification again to receive your account details.
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
-                <Text style={styles.cardTitle}>Address information</Text>
-                <Text style={styles.cardDescription}>
-                  Your home address and utility bill document.
-                </Text>
-              </View>
-              <View style={styles.cardRight}>
-                {getStatusBadge(addressSubmission?.status)}
-                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-              </View>
+              </TouchableOpacity>
+
+              {/* Address Information Card */}
+              <TouchableOpacity
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  navigation.navigate('AddressVerification')
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.card}>
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardLeft}>
+                      <View style={styles.iconContainer}>
+                        <Ionicons name="location-outline" size={24} color={colors.primary.main} />
+                      </View>
+                      <Text style={styles.cardTitle}>Address information</Text>
+                      <Text style={styles.cardDescription}>
+                        Your home address and document.
+                      </Text>
+                    </View>
+                    <View style={styles.cardRight}>
+                      {getStatusBadge(addressSubmission?.status, userProfile?.bridge_kyc_status)}
+                      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                    </View>
+                  </View>
+                  {/* Status Notices */}
+                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
+                    <View style={styles.infoCard}>
+                      <View style={styles.infoBox}>
+                        <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
+                        <Text style={styles.infoText}>
+                          Your verification is under review. We will provide an update soonest. Please check your email for updates.
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'rejected' && userProfile?.bridge_kyc_rejection_reasons && (
+                    <View style={styles.infoCard}>
+                      <View style={styles.infoBox}>
+                        <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
+                        <Text style={styles.infoText}>
+                          Your verification was not approved. {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
+                            : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
+                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons}. `
+                            : ''}Please complete identity verification again to receive your account details.
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+
+              {/* Bridge TOS Acceptance Card - Show when both identity and address are submitted */}
+              {bothSubmitted && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    if (tosSigned) {
+                      Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
+                    } else if (!tosLink) {
+                      // TOS link not loaded yet - try to generate it
+                      console.log('TOS link not available, attempting to generate...')
+                      try {
+                        await handleOpenTOS() // This will try to generate TOS link
+                      } catch (error: any) {
+                        Alert.alert(
+                          'TOS Link Error',
+                          `Unable to generate Terms of Service link: ${error.message || 'Unknown error'}. Please try again or contact support.`
+                        )
+                      }
+                    } else {
+                      await handleOpenTOS()
+                    }
+                  }}
+                  activeOpacity={0.7}
+                  disabled={loadingTos || checkingTosStatus || creatingCustomer}
+                >
+                  <View style={styles.card}>
+                    <View style={styles.cardContent}>
+                      <View style={styles.cardLeft}>
+                        <View style={styles.iconContainer}>
+                          <Ionicons name="document-text-outline" size={24} color={colors.primary.main} />
+                        </View>
+                        <Text style={styles.cardTitle}>Partner Terms of Service</Text>
+                        <Text style={styles.cardDescription}>
+                          Accept terms to complete account setup.
+                        </Text>
+                      </View>
+                      <View style={styles.cardRight}>
+                        {loadingTos || checkingTosStatus || creatingCustomer ? (
+                          <ActivityIndicator size="small" color={colors.primary.main} />
+                        ) : (
+                          <>
+                            {getStatusBadge(tosSigned ? 'approved' : 'pending')}
+                            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+
             </View>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+
+            {/* TOS WebView Modal */}
+            <Modal
+              visible={showTosModal}
+              animationType="slide"
+              presentationStyle="pageSheet"
+              onRequestClose={handleTOSModalClose}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Partner Terms of Service</Text>
+                  <TouchableOpacity
+                    onPress={handleTOSModalClose}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
+                {tosLink && (
+                  <WebView
+                    source={{ uri: tosLink }}
+                    style={styles.webView}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    onNavigationStateChange={(navState) => {
+                      // Check if user navigated away (might indicate acceptance)
+                      // Bridge TOS pages typically redirect after acceptance
+                      console.log('[TOS-WEBVIEW] Navigation changed:', {
+                        url: navState.url,
+                        originalUrl: tosLink,
+                        loading: navState.loading,
+                        canGoBack: navState.canGoBack
+                      })
+                      
+                      // If URL changed and page finished loading, user might have accepted TOS
+                      if (navState.url !== tosLink && !navState.loading) {
+                        console.log('[TOS-WEBVIEW] URL changed - user may have accepted TOS, will start polling when modal closes')
+                        // Don't start polling here - wait for modal to close
+                        // The handleTOSModalClose will start polling
+                      }
+                    }}
+                    onShouldStartLoadWithRequest={(request) => {
+                      // Allow navigation to proceed
+                      console.log('[TOS-WEBVIEW] Should start load:', request.url)
+                      return true
+                    }}
+                    onMessage={async (event) => {
+                      // Handle messages from WebView if Bridge sends any
+                      console.log('[TOS-WEBVIEW] 📨 Message received from WebView:', {
+                        data: event.nativeEvent.data,
+                        type: typeof event.nativeEvent.data,
+                        alreadyProcessed: tosProcessedRef.current
+                      })
+                      
+                      // Prevent duplicate processing
+                      if (tosProcessedRef.current) {
+                        console.log('[TOS-WEBVIEW] ⚠️ Message already processed, ignoring')
+                        return
+                      }
+                      
+                      try {
+                        const messageData = event.nativeEvent.data
+                        let data: any
+                        
+                        // Try to parse as JSON
+                        if (typeof messageData === 'string') {
+                          data = JSON.parse(messageData)
+                        } else {
+                          data = messageData
+                        }
+                        
+                        console.log('[TOS-WEBVIEW] 📋 Parsed message data:', data)
+                        
+                        if (data && data.signedAgreementId) {
+                          const signedAgreementId = data.signedAgreementId
+                          console.log(`[TOS-WEBVIEW] ✅ Received signedAgreementId from WebView: ${signedAgreementId.substring(0, 8)}...`)
+                          
+                          // Mark as processed to prevent duplicate handling
+                          tosProcessedRef.current = true
+                          
+                          // Stop any ongoing polling
+                          setCheckingTosStatus(false)
+                          
+                          // Store signed_agreement_id first
+                          await storeSignedAgreementId(signedAgreementId)
+                          
+                          // Update UI immediately
+                          setTosSigned(true)
+                          setTosSignedAgreementId(signedAgreementId)
+                          
+                          // Update cache immediately
+                          await updateTosStatusInCache(true, signedAgreementId, tosLinkId)
+                          
+                          console.log(`[TOS-WEBVIEW] ✅ TOS signed_agreement_id stored in database`)
+                          
+                          // Check if Bridge customer exists before trying to update
+                          const { data: userData } = await supabase
+                            .from('users')
+                            .select('bridge_customer_id')
+                            .eq('id', userProfile?.id)
+                            .single()
+                          
+                          if (userData?.bridge_customer_id) {
+                            // Customer exists - update it with signed_agreement_id
+                            try {
+                              console.log(`[TOS-WEBVIEW] 🔄 Customer exists, updating with signed_agreement_id: ${signedAgreementId.substring(0, 8)}...`)
+                              const updateResult = await bridgeService.updateCustomerTOS(signedAgreementId)
+                              console.log(`[TOS-WEBVIEW] ✅ Customer updated successfully. Response:`, {
+                                success: updateResult.success,
+                                hasAcceptedTOS: updateResult.hasAcceptedTOS,
+                                customerId: updateResult.customerId
+                              })
+                              
+                              // Show success message
+                              Alert.alert(
+                                'Terms Accepted',
+                                'Your Terms of Service have been accepted successfully. You can now create your accounts.',
+                                [{ 
+                                  text: 'OK',
+                                  onPress: () => {
+                                    setShowTosModal(false)
+                                  }
+                                }]
+                              )
+                              return
+                            } catch (updateError: any) {
+                              console.error(`[TOS-WEBVIEW] ⚠️ Error updating customer TOS (customer exists):`, updateError.message)
+                              // Non-critical error - TOS is already stored, just show warning
+                              Alert.alert(
+                                'Terms Accepted',
+                                'Your Terms of Service have been accepted. There was an issue updating your Bridge account, but this will be resolved when your account is set up.',
+                                [{ 
+                                  text: 'OK',
+                                  onPress: () => {
+                                    setShowTosModal(false)
+                                  }
+                                }]
+                              )
+                              return
+                            }
+                          } else {
+                            // Customer doesn't exist yet - this is expected if KYC is still in_review
+                            // The admin will create the customer via "Send to Bridge" button
+                            console.log(`[TOS-WEBVIEW] ℹ️ Customer doesn't exist yet. TOS signed_agreement_id stored. Admin will create customer via "Send to Bridge".`)
+                            
+                            // Show success message
+                            Alert.alert(
+                              'Terms Accepted',
+                              'Your Terms of Service have been accepted successfully. Your account will be set up after your identity verification is approved.',
+                              [{ 
+                                text: 'OK',
+                                onPress: () => {
+                                  setShowTosModal(false)
+                                }
+                              }]
+                            )
+                            return
+                          }
+                        } else {
+                          console.log('[TOS-WEBVIEW] ⚠️ Message received but no signedAgreementId found:', data)
+                        }
+                      } catch (parseError: any) {
+                        // Not JSON or parsing failed - that's OK, might be a different message
+                        console.log('[TOS-WEBVIEW] ⚠️ Could not parse message as JSON:', {
+                          error: parseError.message,
+                          data: event.nativeEvent.data
+                        })
+                      }
+                    }}
+                  />
+                )}
+              </View>
+            </Modal>
+          </Animated.View>
+        </ScrollView>
+      </View>
     </ScreenWrapper>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background.secondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
   },
   backButton: {
-    marginRight: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
+    ...textStyles.headlineMedium,
+    color: colors.text.primary,
+    marginBottom: 2,
   },
-  infoContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 16,
+  subtitle: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+  },
+  content: {
+    padding: spacing[5],
+  },
+  infoCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    marginBottom: spacing[4],
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[4],
   },
   infoBox: {
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    borderRadius: 8,
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
   },
   infoText: {
-    fontSize: 14,
-    color: '#1e40af',
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
+    flex: 1,
   },
   cardsContainer: {
-    padding: 20,
-    gap: 24,
+    gap: spacing[4],
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    marginBottom: spacing[3],
   },
   cardContent: {
-    padding: 20,
+    padding: spacing[5],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   cardLeft: {
     flex: 1,
-    marginRight: 16,
+    marginRight: spacing[4],
   },
   iconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#e6f2ff',
+    backgroundColor: colors.primary.main + '10',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing[3],
   },
   cardTitle: {
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
+    color: colors.text.primary,
+    marginBottom: spacing[1],
   },
   cardDescription: {
-    fontSize: 14,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   cardRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing[3],
   },
   badgeGreen: {
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.success.background,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
   },
   badgeTextGreen: {
-    fontSize: 12,
+    ...textStyles.labelSmall,
     fontWeight: '500',
-    color: '#166534',
+    color: colors.success.dark,
   },
   badgeYellow: {
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.warning.background,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
   },
   badgeTextYellow: {
-    fontSize: 12,
+    ...textStyles.labelSmall,
     fontWeight: '500',
-    color: '#92400e',
+    color: colors.warning.dark,
   },
   badgeRed: {
-    backgroundColor: '#fee2e2',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.error.background,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
   },
   badgeTextRed: {
-    fontSize: 12,
+    ...textStyles.labelSmall,
     fontWeight: '500',
-    color: '#991b1b',
+    color: colors.error.dark,
   },
   badgeGray: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.neutral[100],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
   },
   badgeTextGray: {
-    fontSize: 12,
+    ...textStyles.labelSmall,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.neutral[600],
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  modalTitle: {
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  webView: {
+    flex: 1,
   },
 })
 

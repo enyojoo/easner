@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Search, Download, Check, X, Eye } from "lucide-react"
+import { Search, Download, Check, X, Eye, Send, Loader2 } from "lucide-react"
 import { KYCSubmission } from "@/lib/kyc-service"
 import { getIdTypeLabel } from "@/lib/country-id-types"
 import {
@@ -19,8 +19,21 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
+interface UserKYCData {
+  userId: string
+  email?: string
+  identitySubmission: KYCSubmission | null
+  addressSubmission: KYCSubmission | null
+  hasTOS: boolean
+  hasBridgeCustomer: boolean
+  bridgeCustomerId?: string
+  bridgeKycStatus?: string
+  bridgeKycRejectionReasons?: any
+}
+
 export default function AdminKYCPage() {
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([])
+  const [userKycData, setUserKycData] = useState<Map<string, UserKYCData>>(new Map())
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -29,9 +42,17 @@ export default function AdminKYCPage() {
   const [reviewStatus, setReviewStatus] = useState<"approved" | "rejected">("approved")
   const [rejectionReason, setRejectionReason] = useState("")
   const [updating, setUpdating] = useState(false)
+  const [sendingToBridge, setSendingToBridge] = useState<string | null>(null) // userId being sent
 
   useEffect(() => {
     loadSubmissions()
+    
+    // Auto-refresh every 30 seconds to get Bridge status updates
+    const interval = setInterval(() => {
+      loadSubmissions()
+    }, 30000)
+    
+    return () => clearInterval(interval)
   }, [statusFilter])
 
   const loadSubmissions = async () => {
@@ -45,7 +66,56 @@ export default function AdminKYCPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        setSubmissions(data.submissions || [])
+        const allSubmissions = data.submissions || []
+        setSubmissions(allSubmissions)
+        
+        // Group submissions by user and fetch user data
+        const userMap = new Map<string, UserKYCData>()
+        const userIds = new Set(allSubmissions.map((s: KYCSubmission) => s.user_id))
+        
+        // Fetch user data for each user
+        await Promise.all(
+          Array.from(userIds).map(async (userId) => {
+            try {
+              const userResponse = await fetch(`/api/admin/users/${userId}`, {
+                credentials: "include",
+              })
+              let userData: any = null
+              if (userResponse.ok) {
+                userData = await userResponse.json()
+              }
+              
+              const userSubmissions = allSubmissions.filter((s: KYCSubmission) => s.user_id === userId)
+              const identitySubmission = userSubmissions.find((s: KYCSubmission) => s.type === "identity") || null
+              const addressSubmission = userSubmissions.find((s: KYCSubmission) => s.type === "address") || null
+              
+              userMap.set(userId, {
+                userId,
+                email: userData?.email,
+                identitySubmission,
+                addressSubmission,
+                hasTOS: !!userData?.bridge_signed_agreement_id,
+                hasBridgeCustomer: !!userData?.bridge_customer_id,
+                bridgeCustomerId: userData?.bridge_customer_id,
+                bridgeKycStatus: userData?.bridge_kyc_status,
+                bridgeKycRejectionReasons: userData?.bridge_kyc_rejection_reasons,
+              })
+            } catch (error) {
+              console.error(`Error fetching user data for ${userId}:`, error)
+              // Still add entry with available data
+              const userSubmissions = allSubmissions.filter((s: KYCSubmission) => s.user_id === userId)
+              userMap.set(userId, {
+                userId,
+                identitySubmission: userSubmissions.find((s: KYCSubmission) => s.type === "identity") || null,
+                addressSubmission: userSubmissions.find((s: KYCSubmission) => s.type === "address") || null,
+                hasTOS: false,
+                hasBridgeCustomer: false,
+              })
+            }
+          })
+        )
+        
+        setUserKycData(userMap)
       }
     } catch (error) {
       console.error("Error loading submissions:", error)
@@ -87,6 +157,36 @@ export default function AdminKYCPage() {
     }
   }
 
+  const handleSendToBridge = async (userId: string) => {
+    if (!confirm("Send this user's KYC data to Bridge? This will create a Bridge customer account.")) {
+      return
+    }
+
+    setSendingToBridge(userId)
+    try {
+      const response = await fetch("/api/admin/kyc/send-to-bridge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ userId }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert(`Successfully sent KYC to Bridge!\n\nCustomer ID: ${data.customerId}\nKYC Status: ${data.kycStatus}`)
+        await loadSubmissions() // Reload to update user data
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to send KYC to Bridge")
+      }
+    } catch (error: any) {
+      console.error("Error sending KYC to Bridge:", error)
+      alert("Failed to send KYC to Bridge: " + (error.message || "Unknown error"))
+    } finally {
+      setSendingToBridge(null)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
@@ -100,16 +200,48 @@ export default function AdminKYCPage() {
     }
   }
 
-  const filteredSubmissions = submissions.filter((submission) => {
+  const getBridgeKycStatusBadge = (status?: string) => {
+    if (!status) return null
+    
+    const statusLabels: Record<string, string> = {
+      "not_started": "Not Started",
+      "incomplete": "Incomplete",
+      "under_review": "Under Review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+    
+    const label = statusLabels[status] || status
+    
+    return (
+      <Badge className={getStatusColor(status)}>
+        Bridge: {label}
+      </Badge>
+    )
+  }
+
+  // Group submissions by user for display
+  const groupedByUser = Array.from(userKycData.values()).filter((userData) => {
     if (!searchTerm) return true
     const searchLower = searchTerm.toLowerCase()
     return (
-      submission.user_id.toLowerCase().includes(searchLower) ||
-      submission.country_code?.toLowerCase().includes(searchLower) ||
-      submission.id_type?.toLowerCase().includes(searchLower) ||
-      submission.document_type?.toLowerCase().includes(searchLower)
+      userData.userId.toLowerCase().includes(searchLower) ||
+      userData.email?.toLowerCase().includes(searchLower) ||
+      userData.identitySubmission?.country_code?.toLowerCase().includes(searchLower) ||
+      userData.identitySubmission?.id_type?.toLowerCase().includes(searchLower) ||
+      userData.addressSubmission?.document_type?.toLowerCase().includes(searchLower)
     )
   })
+
+  // Check if user is ready to send to Bridge
+  const canSendToBridge = (userData: UserKYCData): boolean => {
+    return !!(
+      userData.identitySubmission &&
+      userData.addressSubmission &&
+      userData.hasTOS &&
+      !userData.hasBridgeCustomer
+    )
+  }
 
   return (
     <AdminDashboardLayout>
@@ -156,57 +288,172 @@ export default function AdminKYCPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredSubmissions.map((submission) => (
-            <Card key={submission.id}>
+          {groupedByUser.map((userData) => (
+            <Card key={userData.userId}>
               <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* User Header */}
+                  <div className="flex items-start justify-between border-b pb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {userData.email || userData.userId}
+                      </h3>
+                      <p className="text-sm text-gray-600">User ID: {userData.userId}</p>
+                      {userData.hasBridgeCustomer && (
+                        <div className="mt-1 space-y-1">
+                          <p className="text-sm text-green-600">
+                            ✓ Bridge Customer: {userData.bridgeCustomerId?.slice(0, 8)}...
+                          </p>
+                          {userData.bridgeKycStatus && getBridgeKycStatusBadge(userData.bridgeKycStatus)}
+                          {userData.bridgeKycStatus === "rejected" && userData.bridgeKycRejectionReasons && (
+                            <p className="text-sm text-red-600 mt-1">
+                              Rejection: {Array.isArray(userData.bridgeKycRejectionReasons) 
+                                ? userData.bridgeKycRejectionReasons.join(", ")
+                                : JSON.stringify(userData.bridgeKycRejectionReasons)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {canSendToBridge(userData) && (
+                      <Button
+                        onClick={() => handleSendToBridge(userData.userId)}
+                        disabled={sendingToBridge === userData.userId}
+                        className="bg-easner-primary hover:bg-easner-primary-600"
+                      >
+                        {sendingToBridge === userData.userId ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send to Bridge
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {!userData.hasTOS && canSendToBridge(userData) && (
+                      <p className="text-sm text-yellow-600">⚠ User must accept TOS first</p>
+                    )}
+                    {userData.hasBridgeCustomer && (
+                      <Badge className="bg-green-100 text-green-800">Already in Bridge</Badge>
+                    )}
+                  </div>
+
+                  {/* Identity Submission */}
+                  {userData.identitySubmission ? (
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <Badge className={getStatusColor(submission.status)}>
-                        {submission.status.replace("_", " ").toUpperCase()}
+                          <Badge className={getStatusColor(userData.identitySubmission.status)}>
+                            {userData.identitySubmission.status.replace("_", " ").toUpperCase()}
                       </Badge>
-                      <span className="text-sm font-medium text-gray-900">
-                        {submission.type === "identity" ? "Identity Verification" : "Address Verification"}
-                      </span>
+                          <span className="text-sm font-medium text-gray-900">Identity Verification</span>
                     </div>
                     <div className="space-y-1 text-sm text-gray-600">
-                      <p>User ID: {submission.user_id}</p>
-                      {submission.type === "identity" && (
-                        <>
-                          {submission.country_code && (
-                            <p>Country: {submission.country_code}</p>
+                          {userData.identitySubmission.country_code && (
+                            <p>Country: {userData.identitySubmission.country_code}</p>
                           )}
-                          {submission.id_type && (
-                            <p>ID Type: {getIdTypeLabel(submission.id_type)}</p>
+                          {userData.identitySubmission.id_type && (
+                            <p>ID Type: {getIdTypeLabel(userData.identitySubmission.id_type)}</p>
                           )}
-                        </>
+                          <p>Submitted: {new Date(userData.identitySubmission.created_at).toLocaleString()}</p>
+                          {userData.identitySubmission.reviewed_at && (
+                            <p>Reviewed: {new Date(userData.identitySubmission.reviewed_at).toLocaleString()}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {userData.identitySubmission.id_document_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              const filePathOrUrl = userData.identitySubmission!.id_document_url
+                              if (!filePathOrUrl) return
+                              
+                              const isPath = filePathOrUrl.startsWith("identity/") || filePathOrUrl.startsWith("address/")
+                              
+                              if (isPath) {
+                                try {
+                                  const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(filePathOrUrl)}`, {
+                                    credentials: "include",
+                                  })
+                                  
+                                  if (response.ok) {
+                                    const { url } = await response.json()
+                                    window.open(url, "_blank")
+                                  } else {
+                                    alert("Failed to access document. Please try again.")
+                                  }
+                                } catch (error) {
+                                  console.error("Error fetching signed URL:", error)
+                                  alert("Failed to access document. Please try again.")
+                                }
+                              } else {
+                                window.open(filePathOrUrl, "_blank")
+                              }
+                            }}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            View Document
+                          </Button>
+                          )}
+                        {userData.identitySubmission.status !== "approved" && userData.identitySubmission.status !== "rejected" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedSubmission(userData.identitySubmission!)
+                              setReviewStatus("approved")
+                              setRejectionReason("")
+                              setReviewDialogOpen(true)
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Review
+                          </Button>
+                          )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No identity verification submitted</div>
                       )}
-                      {submission.type === "address" && submission.document_type && (
-                        <p>Document Type: {submission.document_type.replace("_", " ").toUpperCase()}</p>
+
+                  {/* Address Submission */}
+                  {userData.addressSubmission ? (
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge className={getStatusColor(userData.addressSubmission.status)}>
+                            {userData.addressSubmission.status.replace("_", " ").toUpperCase()}
+                          </Badge>
+                          <span className="text-sm font-medium text-gray-900">Address Verification</span>
+                        </div>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          {userData.addressSubmission.document_type && (
+                            <p>Document Type: {userData.addressSubmission.document_type.replace("_", " ").toUpperCase()}</p>
                       )}
-                      <p>Submitted: {new Date(submission.created_at).toLocaleString()}</p>
-                      {submission.reviewed_at && (
-                        <p>Reviewed: {new Date(submission.reviewed_at).toLocaleString()}</p>
-                      )}
-                      {submission.rejection_reason && (
-                        <p className="text-red-600">Reason: {submission.rejection_reason}</p>
+                          <p>Submitted: {new Date(userData.addressSubmission.created_at).toLocaleString()}</p>
+                          {userData.addressSubmission.reviewed_at && (
+                            <p>Reviewed: {new Date(userData.addressSubmission.reviewed_at).toLocaleString()}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {(submission.id_document_url || submission.address_document_url) && (
+                        {userData.addressSubmission.address_document_url && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={async () => {
-                          const filePathOrUrl = submission.id_document_url || submission.address_document_url
+                              const filePathOrUrl = userData.addressSubmission!.address_document_url
                           if (!filePathOrUrl) return
                           
-                          // Check if it's a file path (starts with "identity/" or "address/") or an old public URL
                           const isPath = filePathOrUrl.startsWith("identity/") || filePathOrUrl.startsWith("address/")
                           
                           if (isPath) {
-                            // New format: file path - get signed URL from API
                             try {
                               const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(filePathOrUrl)}`, {
                                 credentials: "include",
@@ -223,7 +470,6 @@ export default function AdminKYCPage() {
                               alert("Failed to access document. Please try again.")
                             }
                           } else {
-                            // Old format: public URL (for backward compatibility)
                             window.open(filePathOrUrl, "_blank")
                           }
                         }}
@@ -232,12 +478,12 @@ export default function AdminKYCPage() {
                         View Document
                       </Button>
                     )}
-                    {submission.status !== "approved" && submission.status !== "rejected" && (
+                        {userData.addressSubmission.status !== "approved" && userData.addressSubmission.status !== "rejected" && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setSelectedSubmission(submission)
+                              setSelectedSubmission(userData.addressSubmission!)
                           setReviewStatus("approved")
                           setRejectionReason("")
                           setReviewDialogOpen(true)
@@ -247,6 +493,17 @@ export default function AdminKYCPage() {
                         Review
                       </Button>
                     )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">No address verification submitted</div>
+                  )}
+
+                  {/* TOS Status */}
+                  <div className="text-sm">
+                    <span className={userData.hasTOS ? "text-green-600" : "text-yellow-600"}>
+                      {userData.hasTOS ? "✓ TOS Accepted" : "⚠ TOS Not Accepted"}
+                    </span>
                   </div>
                 </div>
               </CardContent>

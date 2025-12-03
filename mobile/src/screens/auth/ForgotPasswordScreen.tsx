@@ -10,11 +10,13 @@ import {
   Platform,
   ScrollView,
 } from 'react-native'
-import ScreenWrapper from '../../components/ScreenWrapper'
+import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { NavigationProps } from '../../types'
-import BrandLogo from '../../components/BrandLogo'
 import { analytics } from '../../lib/analytics'
+import { colors, textStyles, borderRadius, spacing, shadows } from '../../theme'
 
 export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   const [step, setStep] = useState<'email' | 'otp'>('email')
@@ -25,11 +27,30 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   const [error, setError] = useState('')
   const [resendCooldown, setResendCooldown] = useState(0)
   const otpRefs = useRef<(TextInput | null)[]>([])
+  const insets = useSafeAreaInsets()
 
   // Track screen view
   useEffect(() => {
     analytics.trackScreenView('ForgotPassword')
   }, [])
+
+  const handleBack = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    if (step === 'otp') {
+      setStep('email')
+      setOtp(['', '', '', '', '', ''])
+      setError('')
+      setMessage('')
+      setResendCooldown(0)
+    } else {
+      navigation.navigate('Auth')
+    }
+  }
+
+  const handleHelp = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    Alert.alert('Help', 'Need assistance? Contact support at support@easner.com')
+  }
 
   const handleEmailSubmit = async () => {
     if (!email) {
@@ -67,30 +88,22 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   }
 
   const handleOtpChange = (index: number, value: string) => {
-    // Handle paste - if value is longer than 1 character, it's likely a paste
     if (value.length > 1) {
-      // Extract only digits from the pasted value
       const digits = value.replace(/\D/g, '').slice(0, 6)
       
       if (digits.length === 6) {
-        // Fill all boxes with the pasted digits
         const newOtp = digits.split('')
         setOtp(newOtp)
-        
-        // Focus the last box
         setTimeout(() => {
           otpRefs.current[5]?.focus()
         }, 0)
         return
       } else if (digits.length > 0) {
-        // Partial paste - fill available boxes
         const newOtp = [...otp]
         for (let i = 0; i < Math.min(digits.length, 6); i++) {
           newOtp[i] = digits[i]
         }
         setOtp(newOtp)
-        
-        // Focus the next empty box or the last filled box
         const nextIndex = Math.min(digits.length, 5)
         setTimeout(() => {
           otpRefs.current[nextIndex]?.focus()
@@ -99,16 +112,13 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
       }
     }
 
-    // Handle single character input
     if (value.length > 1) return
 
     const newOtp = [...otp]
     newOtp[index] = value
     setOtp(newOtp)
 
-    // Auto-focus next input if value is entered
     if (value && index < 5) {
-      // Use setTimeout to ensure the state update has completed
       setTimeout(() => {
         otpRefs.current[index + 1]?.focus()
       }, 0)
@@ -116,7 +126,6 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   }
 
   const handleOtpKeyPress = (index: number, e: any) => {
-    // Handle backspace to move to previous input
     if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus()
     }
@@ -134,9 +143,6 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
     setError('')
 
     try {
-      console.log('Sending OTP verification request for email:', email, 'OTP:', otpCode)
-      
-      // Use the same API endpoint as the web version
       const response = await fetch('https://easnerapp.vercel.app/api/auth/verify-reset-otp', {
         method: 'POST',
         headers: {
@@ -148,31 +154,21 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         }),
       })
 
-      console.log('Response status:', response.status)
-      console.log('Response headers:', response.headers)
-
-      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error response:', errorText)
         setError('Invalid or expired verification code')
         return
       }
 
-      // Try to parse JSON response
       let data
       try {
         const responseText = await response.text()
-        console.log('Response text:', responseText)
         data = JSON.parse(responseText)
       } catch (parseError) {
-        console.error('JSON parse error:', parseError)
         setError('Invalid response from server. Please try again.')
         return
       }
 
       if (data.resetToken) {
-        // Store reset token and navigate to reset password screen
         navigation.navigate('ResetPassword', { 
           email: email,
           resetToken: data.resetToken 
@@ -181,7 +177,6 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
         setError(data.error || 'Invalid verification code')
       }
     } catch (error) {
-      console.error('OTP verification error:', error)
       setError('Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)
@@ -226,295 +221,289 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
   }
 
   return (
-    <ScreenWrapper>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-              <BrandLogo size="lg" style={styles.logo} />
-              <Text style={styles.title}>
-                {step === 'email' ? 'Forgot Password?' : 'Enter Verification Code'}
-              </Text>
-          <Text style={styles.subtitle}>
-                {step === 'email'
-                  ? 'Enter your email for verification code'
-                  : `We've sent a 6-digit code to ${email}`}
-          </Text>
-        </View>
-
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContainer, { 
+            paddingTop: insets.top + spacing[4],
+            paddingBottom: Math.max(insets.bottom, spacing[5]) 
+          }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with back and help buttons */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={handleBack}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleHelp}
+              activeOpacity={0.7}
+            >
+              <View style={styles.headerButtonCircle}>
+                <Ionicons name="help-circle-outline" size={20} color={colors.text.primary} />
               </View>
-            ) : null}
-
-            {message ? (
-              <View style={styles.messageContainer}>
-                <Text style={styles.messageText}>{message}</Text>
-              </View>
-            ) : null}
-
-        <View style={styles.form}>
-              {step === 'email' ? (
-                <>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-                      editable={!loading}
-            />
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-                    onPress={handleEmailSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-                      {loading ? 'Sending...' : 'Send Verification Code'}
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Enter 6-digit code</Text>
-                    <View style={styles.otpContainer}>
-                      {otp.map((digit, index) => (
-                        <TextInput
-                          key={index}
-                          ref={(ref) => (otpRefs.current[index] = ref)}
-                          style={styles.otpInput}
-                          value={digit}
-                          onChangeText={(value) => handleOtpChange(index, value)}
-                          onKeyPress={(e) => handleOtpKeyPress(index, e)}
-                          keyboardType="numeric"
-                            maxLength={6}
-                          editable={!loading}
-                          selectTextOnFocus
-                          contextMenuHidden={false}
-                        />
-                      ))}
-                    </View>
+          {/* Title */}
+          <Text style={styles.title}>
+            {step === 'email' ? 'Forgot Password?' : 'Enter Verification Code'}
+          </Text>
+
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          {message ? (
+            <View style={styles.messageContainer}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          ) : null}
+
+          {/* Form */}
+          <View style={styles.form}>
+            {step === 'email' ? (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Enter your email"
+                    placeholderTextColor={colors.text.secondary}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!loading}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+                  onPress={handleEmailSubmit}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.submitButtonText}>
+                    {loading ? 'Sending...' : 'Send Verification Code'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Enter 6-digit code</Text>
+                  <Text style={styles.subtitle}>
+                    We've sent a 6-digit code to {email}
+                  </Text>
+                  <View style={styles.otpContainer}>
+                    {otp.map((digit, index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => (otpRefs.current[index] = ref)}
+                        style={styles.otpInput}
+                        value={digit}
+                        onChangeText={(value) => handleOtpChange(index, value)}
+                        onKeyPress={(e) => handleOtpKeyPress(index, e)}
+                        keyboardType="numeric"
+                        maxLength={6}
+                        editable={!loading}
+                        selectTextOnFocus
+                      />
+                    ))}
                   </View>
+                </View>
 
-                  <TouchableOpacity
-                    style={[styles.button, loading && styles.buttonDisabled]}
-                    onPress={handleOtpSubmit}
-                    disabled={loading || otp.join('').length !== 6}
-                  >
-                    <Text style={styles.buttonText}>
-                      {loading ? 'Verifying...' : 'Verify Code'}
-                    </Text>
-                  </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.submitButton, (loading || otp.join('').length !== 6) && styles.submitButtonDisabled]}
+                  onPress={handleOtpSubmit}
+                  disabled={loading || otp.join('').length !== 6}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.submitButtonText}>
+                    {loading ? 'Verifying...' : 'Verify Code'}
+                  </Text>
+                </TouchableOpacity>
 
-                  <View style={styles.resendContainer}>
-                    <TouchableOpacity
-                      onPress={handleResendOtp}
-                      disabled={resendCooldown > 0 || loading}
-                      style={styles.resendButton}
-                    >
-                      <Text style={[styles.resendText, (resendCooldown > 0 || loading) && styles.resendTextDisabled]}>
-                        {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
-            </Text>
-          </TouchableOpacity>
-                  </View>
-                </>
-              )}
-        </View>
-
-        <View style={styles.footer}>
-              <TouchableOpacity
-                onPress={() => {
-                  if (step === 'otp') {
-                    setStep('email')
-                    setOtp(['', '', '', '', '', ''])
-                    setError('')
-                    setMessage('')
-                    // Clear any existing intervals
-                    setResendCooldown(0)
-                  } else {
-                    // Use reset to go back to the root of the auth stack
-                    navigation.reset({
-                      index: 0,
-                      routes: [{ name: 'Login' }],
-                    })
-                  }
-                }}
-                style={styles.backButton}
-              >
-                <Text style={styles.backButtonText}>
-                  {step === 'otp' ? 'Change Email' : 'Back to Sign In'}
-                </Text>
-              </TouchableOpacity>
-              
-              <View style={styles.signUpContainer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                  <Text style={styles.footerLink}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+                <TouchableOpacity
+                  onPress={handleResendOtp}
+                  disabled={resendCooldown > 0 || loading}
+                  style={styles.resendButton}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.resendText, (resendCooldown > 0 || loading) && styles.resendTextDisabled]}>
+                    {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </ScrollView>
-    </KeyboardAvoidingView>
-    </ScreenWrapper>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
   keyboardContainer: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+    paddingHorizontal: spacing[5],
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: spacing[6],
   },
-  logo: {
-    marginBottom: 20,
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
+  },
+  headerButton: {
+    padding: spacing[1],
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  headerButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 12,
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
+    fontWeight: '700',
+    marginBottom: spacing[5],
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 24,
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    marginBottom: spacing[4],
   },
   errorContainer: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    marginBottom: spacing[4],
+    padding: spacing[3],
+    backgroundColor: colors.error.background,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderColor: colors.error.light,
   },
   errorText: {
-    color: '#dc2626',
-    fontSize: 14,
+    ...textStyles.bodySmall,
+    color: colors.error.main,
     textAlign: 'center',
   },
   messageContainer: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    marginBottom: spacing[4],
+    padding: spacing[3],
+    backgroundColor: colors.success.background,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderColor: colors.success.light,
   },
   messageText: {
-    color: '#166534',
-    fontSize: 14,
+    ...textStyles.bodySmall,
+    color: colors.success.main,
     textAlign: 'center',
   },
   form: {
-    marginBottom: 30,
+    width: '100%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: spacing[5],
   },
   label: {
-    fontSize: 16,
+    ...textStyles.bodySmall,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
   },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#ffffff',
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.xl,
+    padding: spacing[3],
+    ...textStyles.bodyMedium,
+    backgroundColor: colors.background.primary,
+    color: colors.text.primary,
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    gap: spacing[2],
+    marginTop: spacing[2],
   },
   otpInput: {
-    width: 45,
+    flex: 1,
     height: 55,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderColor: colors.border.light,
+    borderRadius: borderRadius.xl,
     textAlign: 'center',
-    fontSize: 18,
+    ...textStyles.titleMedium,
     fontWeight: '600',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.primary,
+    color: colors.text.primary,
   },
-  button: {
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
-    padding: 16,
+  submitButton: {
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[5],
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing[2],
+    marginBottom: spacing[5],
   },
-  buttonDisabled: {
-    backgroundColor: '#9ca3af',
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
+  submitButtonText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.inverse,
     fontWeight: '600',
-  },
-  resendContainer: {
-    alignItems: 'center',
-    marginTop: 16,
   },
   resendButton: {
-    padding: 8,
+    alignItems: 'center',
+    padding: spacing[2],
   },
   resendText: {
-    fontSize: 14,
-    color: '#007ACC',
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
+    fontWeight: '500',
   },
   resendTextDisabled: {
-    color: '#9ca3af',
-  },
-  footer: {
-    alignItems: 'center',
-  },
-  backButton: {
-    marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 14,
-    color: '#007ACC',
-    fontWeight: '600',
-  },
-  signUpContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  footerLink: {
-    fontSize: 14,
-    color: '#007ACC',
-    fontWeight: '600',
+    color: colors.text.secondary,
   },
 })

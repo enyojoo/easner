@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -9,45 +9,71 @@ import {
   Alert,
   Modal,
   FlatList,
+  Animated,
+  ActivityIndicator,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
 import { userService, UserProfileData, UserStats } from '../../lib/userService'
-import { getCountryFlag } from '../../utils/flagUtils'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 function ProfileEditContent({ navigation }: NavigationProps) {
   const { user, userProfile, refreshUserProfile } = useAuth()
-  const { transactions, currencies, exchangeRates } = useUserData()
+  const { transactions } = useUserData()
+  const insets = useSafeAreaInsets()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    baseCurrency: 'NGN',
   })
   const [editProfileData, setEditProfileData] = useState(profileData)
 
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  // Run entrance animations
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
   useEffect(() => {
     if (userProfile) {
+      // Keep full first_name for profile page (display and edit)
       const data = {
         firstName: userProfile.profile.first_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
-        baseCurrency: userProfile.profile.base_currency || 'NGN',
       }
       setProfileData(data)
       setEditProfileData(data)
     }
   }, [userProfile])
 
-  const handleEditProfile = () => {
+  const handleEditProfile = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setEditProfileData(profileData)
     setIsEditing(true)
   }
@@ -62,11 +88,11 @@ function ProfileEditContent({ navigation }: NavigationProps) {
 
     setLoading(true)
     try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
         lastName: editProfileData.lastName,
         phone: editProfileData.phone,
-        baseCurrency: editProfileData.baseCurrency,
       })
 
       setProfileData(editProfileData)
@@ -85,9 +111,17 @@ function ProfileEditContent({ navigation }: NavigationProps) {
     }
   }
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setEditProfileData(profileData)
     setIsEditing(false)
+  }
+
+  const handleDeleteAccount = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    // TODO: Implement delete account API call
+    Alert.alert('Info', 'Delete account functionality will be implemented')
+    setShowDeleteDialog(false)
   }
 
   const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, editable: boolean = true) => (
@@ -99,6 +133,7 @@ function ProfileEditContent({ navigation }: NavigationProps) {
           value={value}
           onChangeText={onChangeText}
           placeholder={`Enter ${label.toLowerCase()}`}
+          placeholderTextColor={colors.text.tertiary}
           editable={editable}
         />
       ) : (
@@ -107,176 +142,195 @@ function ProfileEditContent({ navigation }: NavigationProps) {
     </View>
   )
 
-  const renderCurrencyField = () => (
-    <View style={styles.fieldContainer}>
-      <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>Base Currency</Text>
-      {isEditing ? (
-        <TouchableOpacity
-          style={styles.currencySelector}
-          onPress={() => setShowCurrencyPicker(true)}
-        >
-          <View style={styles.currencySelectorContent}>
-            <Text style={styles.currencyFlag}>{getCountryFlag(editProfileData.baseCurrency)}</Text>
-            <Text style={styles.currencySelectorText}>
-              {editProfileData.baseCurrency} - {currencies.find(c => c.code === editProfileData.baseCurrency)?.name || 'Select Currency'}
-            </Text>
-            <Ionicons name="chevron-down" size={16} color="#6b7280" />
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.currencyDisplay}>
-          <Text style={styles.currencyFlag}>{getCountryFlag(profileData.baseCurrency)}</Text>
-          <Text style={styles.currencyText}>{profileData.baseCurrency}</Text>
-        </View>
-      )}
-      <Text style={styles.currencyDescription}>
-        Used for reporting your total sent amount
-      </Text>
-    </View>
-  )
 
   return (
     <ScreenWrapper>
-      <ScrollView style={styles.scrollContainer}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={{ paddingBottom: insets.bottom + spacing[5] }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Premium Header - Matching Send Flow */}
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-20, 0],
+                  })
+                }]
+              }
+            ]}
           >
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Your Profile</Text>
-            <Text style={styles.subtitle}>Manage your personal information</Text>
-          </View>
-        </View>
+            <TouchableOpacity
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                navigation.goBack()
+              }}
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>Your Profile</Text>
+              <Text style={styles.subtitle}>Manage your personal information</Text>
+            </View>
+          </Animated.View>
 
-        <View style={styles.content}>
-          {/* Profile Information */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Profile Information</Text>
-              {!isEditing ? (
-                <TouchableOpacity onPress={handleEditProfile} style={styles.editButtonContainer}>
-                  <Ionicons name="pencil-outline" size={16} color="#007ACC" />
-                  <Text style={styles.editButton}>Edit</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.editActions}>
-                  <TouchableOpacity onPress={handleCancelEdit} disabled={loading}>
-                    <Text style={styles.cancelButton}>Discard</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleSaveProfile} disabled={loading}>
-                    <Text style={[styles.saveButton, loading && styles.disabledButton]}>
-                      {loading ? 'Saving...' : 'Save'}
-                    </Text>
-                  </TouchableOpacity>
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                opacity: contentAnim,
+                transform: [{
+                  translateY: contentAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            {/* Profile Information */}
+            <View style={styles.profileCard}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Profile Information</Text>
+                <View style={styles.buttonContainer}>
+                  {!isEditing ? (
+                    <TouchableOpacity 
+                      onPress={handleEditProfile} 
+                      style={styles.actionButton}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.actionButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      <TouchableOpacity 
+                        onPress={handleCancelEdit} 
+                        disabled={loading}
+                        activeOpacity={0.7}
+                        style={styles.actionButtonSecondary}
+                      >
+                        <Text style={styles.actionButtonTextSecondary}>Discard</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        onPress={handleSaveProfile} 
+                        disabled={loading}
+                        activeOpacity={0.7}
+                        style={[styles.actionButton, loading && styles.actionButtonDisabled]}
+                      >
+                        {loading ? (
+                          <ActivityIndicator size={11} color={colors.text.inverse} />
+                        ) : (
+                          <Text style={styles.actionButtonText}>Save</Text>
+                        )}
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
-              )}
-            </View>
+              </View>
 
-            <View style={styles.profileContent}>
-              {isEditing ? (
-                <>
-                  {renderProfileField(
-                    'First Name',
-                    editProfileData.firstName,
-                    (text) => setEditProfileData(prev => ({ ...prev, firstName: text }))
-                  )}
-                  {renderProfileField(
-                    'Last Name',
-                    editProfileData.lastName,
-                    (text) => setEditProfileData(prev => ({ ...prev, lastName: text }))
-                  )}
-                  {renderProfileField(
-                    'Email',
-                    editProfileData.email,
-                    (text) => setEditProfileData(prev => ({ ...prev, email: text })),
-                    false
-                  )}
-                  {renderProfileField(
-                    'Phone Number',
-                    editProfileData.phone,
-                    (text) => setEditProfileData(prev => ({ ...prev, phone: text }))
-                  )}
-                  {renderCurrencyField()}
-                </>
-              ) : (
-                <>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>First Name</Text>
-                    <Text style={styles.fieldValue}>{profileData.firstName || 'Not set'}</Text>
-                  </View>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>Last Name</Text>
-                    <Text style={styles.fieldValue}>{profileData.lastName || 'Not set'}</Text>
-                  </View>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>Email Address</Text>
-                    <Text style={styles.fieldValue}>{profileData.email}</Text>
-                  </View>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>Phone Number</Text>
-                    <Text style={styles.fieldValue}>{profileData.phone || 'Not set'}</Text>
-                  </View>
-                  <View style={styles.fieldContainer}>
-                    <Text style={styles.fieldLabel}>Base Currency</Text>
-                    <View style={styles.currencyDisplay}>
-                      <Text style={styles.currencyFlag}>{getCountryFlag(profileData.baseCurrency)}</Text>
-                      <Text style={styles.currencyText}>{profileData.baseCurrency}</Text>
+              <View style={styles.profileContent}>
+                {isEditing ? (
+                  <>
+                    {renderProfileField(
+                      'First Name',
+                      editProfileData.firstName,
+                      (text) => setEditProfileData(prev => ({ ...prev, firstName: text }))
+                    )}
+                    {renderProfileField(
+                      'Last Name',
+                      editProfileData.lastName,
+                      (text) => setEditProfileData(prev => ({ ...prev, lastName: text }))
+                    )}
+                    {renderProfileField(
+                      'Email',
+                      editProfileData.email,
+                      (text) => setEditProfileData(prev => ({ ...prev, email: text })),
+                      false
+                    )}
+                    {renderProfileField(
+                      'Phone Number',
+                      editProfileData.phone,
+                      (text) => setEditProfileData(prev => ({ ...prev, phone: text }))
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.fieldContainer}>
+                      <Text style={styles.fieldLabel}>First Name</Text>
+                      <Text style={styles.fieldValue}>{profileData.firstName || 'Not set'}</Text>
                     </View>
-                    <Text style={styles.currencyDescription}>
-                      Used for reporting your total sent amount
-                    </Text>
-                  </View>
-                </>
-              )}
+                    <View style={styles.fieldContainer}>
+                      <Text style={styles.fieldLabel}>Last Name</Text>
+                      <Text style={styles.fieldValue}>{profileData.lastName || 'Not set'}</Text>
+                    </View>
+                    <View style={styles.fieldContainer}>
+                      <Text style={styles.fieldLabel}>Email Address</Text>
+                      <Text style={styles.fieldValue}>{profileData.email}</Text>
+                    </View>
+                    <View style={styles.fieldContainer}>
+                      <Text style={styles.fieldLabel}>Phone Number</Text>
+                      <Text style={styles.fieldValue}>{profileData.phone || 'Not set'}</Text>
+                    </View>
+                  </>
+                )}
+              </View>
             </View>
-          </View>
-        </View>
-      </ScrollView>
 
-      {/* Currency Picker Modal */}
-      <Modal
-        visible={showCurrencyPicker}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowCurrencyPicker(false)}
-      >
-        <View style={styles.currencyModalOverlay}>
-          <View style={styles.currencyModalContent}>
-            <View style={styles.currencyModalHeader}>
-              <Text style={styles.currencyModalTitle}>Select Base Currency</Text>
+            {/* Delete Account Section */}
+            <View style={styles.deleteSection}>
               <TouchableOpacity
-                style={styles.currencyCloseButton}
-                onPress={() => setShowCurrencyPicker(false)}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  setShowDeleteDialog(true)
+                }}
+                style={styles.deleteButton}
+                activeOpacity={0.7}
               >
-                <Ionicons name="close" size={24} color="#6b7280" />
+                <Text style={styles.deleteButtonText}>Delete Account</Text>
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={currencies}
-              keyExtractor={(item) => item.code}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.currencyItem}
-                  onPress={() => {
-                    setEditProfileData(prev => ({ ...prev, baseCurrency: item.code }))
-                    setShowCurrencyPicker(false)
-                  }}
-                >
-                  <View style={styles.currencyInfo}>
-                    <Text style={styles.currencyFlag}>{getCountryFlag(item.code)}</Text>
-                    <View style={styles.currencyDetails}>
-                      <Text style={styles.currencyCode}>{item.code}</Text>
-                      <Text style={styles.currencyName}>{item.name}</Text>
-                    </View>
-                    <Text style={styles.currencySymbol}>{item.symbol}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
+          </Animated.View>
+        </ScrollView>
+      </View>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        visible={showDeleteDialog}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteDialog(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Account</Text>
+            <Text style={styles.modalDescription}>
+              Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  setShowDeleteDialog(false)
+                }}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleDeleteAccount}
+              >
+                <Text style={styles.modalButtonTextConfirm}>Delete Account</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -285,225 +339,217 @@ function ProfileEditContent({ navigation }: NavigationProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
   scrollContainer: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
   },
   backButton: {
-    marginRight: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing[3],
   },
   headerContent: {
     flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
+    ...textStyles.headlineLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[1],
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
   content: {
-    padding: 24,
-  },
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 20,
+    padding: spacing[5],
+    gap: spacing[4],
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing[4],
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
   },
-  editButtonContainer: {
+  buttonContainer: {
     flexDirection: 'row',
+    gap: spacing[2],
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#dbeafe',
+    justifyContent: 'flex-end',
   },
-  editButton: {
-    fontSize: 14,
-    color: '#2563eb',
+  actionButton: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary.main,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 75,
+    height: 32,
+  },
+  actionButtonSecondary: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: borderRadius.md,
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 75,
+    height: 32,
+  },
+  actionButtonDisabled: {
+    opacity: 0.7,
+  },
+  actionButtonText: {
+    ...textStyles.labelMedium,
+    color: colors.text.inverse,
     fontWeight: '600',
   },
-  editActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    fontSize: 14,
-    color: '#6b7280',
+  actionButtonTextSecondary: {
+    ...textStyles.labelMedium,
+    color: colors.text.secondary,
     fontWeight: '500',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
-  saveButton: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '600',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#007ACC',
-    borderRadius: 8,
-  },
-  disabledButton: {
-    opacity: 0.6,
+  profileCard: {
+    backgroundColor: '#F9F9F9',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    padding: spacing[5],
+    marginBottom: spacing[4],
   },
   profileContent: {
-    gap: 16,
+    gap: spacing[4],
   },
   fieldContainer: {
-    marginBottom: 16,
+    marginBottom: spacing[4],
   },
   fieldLabel: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: '#6b7280',
-    marginBottom: 4,
+    ...textStyles.labelSmall,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   fieldLabelEdit: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: '#6b7280',
-    marginBottom: 8,
+    ...textStyles.labelSmall,
+    color: colors.text.secondary,
+    marginBottom: spacing[2],
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   fieldInput: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#ffffff',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+    borderRadius: borderRadius.xl,
+    padding: spacing[3],
+    ...textStyles.bodyLarge,
+    color: colors.text.primary,
+    backgroundColor: colors.background.primary,
+    fontFamily: 'Outfit-Regular',
   },
   fieldValue: {
-    fontSize: 16,
-    color: '#111827',
-    paddingVertical: 8,
+    ...textStyles.bodyLarge,
+    color: colors.text.primary,
+    paddingVertical: spacing[2],
     fontWeight: '500',
   },
-  currencySelector: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    padding: 12,
-    backgroundColor: '#ffffff',
-  },
-  currencySelectorContent: {
-    flexDirection: 'row',
+  deleteSection: {
+    marginTop: spacing[2],
     alignItems: 'center',
-    gap: 8,
   },
-  currencyFlag: {
-    fontSize: 16,
+  deleteButton: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.xl,
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
-  currencySelectorText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-  },
-  currencyDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-  },
-  currencyText: {
-    fontSize: 16,
-    color: '#111827',
-    fontWeight: '600',
-  },
-  currencyDescription: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  currencyModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  currencyModalContent: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '70%',
-  },
-  currencyModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  currencyModalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  currencyCloseButton: {
-    padding: 4,
-  },
-  currencyItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  currencyInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  currencyDetails: {
-    flex: 1,
-  },
-  currencyCode: {
-    fontSize: 16,
+  deleteButtonText: {
+    ...textStyles.labelMedium,
+    color: colors.error.main,
     fontWeight: '500',
-    color: '#111827',
   },
-  currencyName: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing[5],
   },
-  currencySymbol: {
-    fontSize: 16,
-    color: '#6b7280',
+  modalContent: {
+    backgroundColor: colors.background.primary,
+    borderRadius: borderRadius['3xl'],
+    padding: spacing[6],
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+  },
+  modalTitle: {
+    ...textStyles.titleLarge,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
+  },
+  modalDescription: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    marginBottom: spacing[5],
+    lineHeight: 22,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: spacing[3],
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#F9F9F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
+  },
+  modalButtonConfirm: {
+    backgroundColor: colors.error.main,
+  },
+  modalButtonTextCancel: {
+    ...textStyles.labelMedium,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  modalButtonTextConfirm: {
+    ...textStyles.labelMedium,
+    color: colors.text.inverse,
+    fontWeight: '600',
   },
 })
 
 export default function ProfileEditScreen(props: NavigationProps) {
   return <ProfileEditContent {...props} />
 }
-
-
-
-
-

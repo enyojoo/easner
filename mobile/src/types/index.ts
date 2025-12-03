@@ -140,6 +140,7 @@ export interface KYCSubmission {
   reviewed_by?: string
   reviewed_at?: string
   rejection_reason?: string
+  metadata?: any // Bridge-specific KYC fields
   created_at: string
   updated_at: string
 }

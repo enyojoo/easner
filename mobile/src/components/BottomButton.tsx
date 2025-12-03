@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   primaryButton: {
-    backgroundColor: '#007ACC',
+    backgroundColor: '#1D4FF3',
   },
   secondaryButton: {
     backgroundColor: '#f3f4f6',

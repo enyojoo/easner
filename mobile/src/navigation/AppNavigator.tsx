@@ -1,25 +1,51 @@
-import React, { useState, useEffect } from 'react'
-import { View, Platform, TouchableOpacity, Text } from 'react-native'
+import React, { useState, useEffect, useCallback } from 'react'
+import { View, Platform, TouchableOpacity, Text, AppState, AppStateStatus, StyleSheet } from 'react-native'
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { useNavigation } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
+import { House, CreditCard, ChartSpline, Grip } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../contexts/AuthContext'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../theme'
+import { 
+  isPinSetup, 
+  isSessionValid, 
+  shouldUsePin, 
+  updateSessionActivity,
+  isFirstLoginAfterVerification,
+  isPinPromptDismissed,
+  dismissPinPrompt,
+  clearSessionActivity,
+} from '../lib/pinAuth'
+
+// Onboarding Screen
+import OnboardingScreen from '../screens/onboarding/OnboardingScreen'
 
 // Auth Screens
-import LoginScreen from '../screens/auth/LoginScreen'
-import RegisterScreen from '../screens/auth/RegisterScreen'
+import AuthScreen from '../screens/auth/AuthScreen'
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen'
 import ResetPasswordScreen from '../screens/auth/ResetPasswordScreen'
+import PinSetupScreen from '../screens/auth/PinSetupScreen'
+import PinEntryScreen from '../screens/auth/PinEntryScreen'
+
+// Components
+import PinSetupPrompt from '../components/PinSetupPrompt'
 
 // Main Screens
 import DashboardScreen from '../screens/main/DashboardScreen'
 import RecipientsScreen from '../screens/main/RecipientsScreen'
 import TransactionsScreen from '../screens/main/TransactionsScreen'
+import ExpenseInsightsScreen from '../screens/main/ExpenseInsightsScreen'
 import MoreScreen from '../screens/main/MoreScreen'
 import ProfileEditScreen from '../screens/main/ProfileEditScreen'
 import SupportScreen from '../screens/main/SupportScreen'
 import CardScreen from '../screens/main/CardScreen'
+import TransactionCardScreen from '../screens/main/TransactionCardScreen'
+import ChangePasswordScreen from '../screens/main/ChangePasswordScreen'
+import NotificationsScreen from '../screens/main/NotificationsScreen'
+import InAppNotificationsScreen from '../screens/main/InAppNotificationsScreen'
 
 // Transaction Screens
 import TransactionDetailsScreen from '../screens/transactions/TransactionDetailsScreen'
@@ -30,6 +56,9 @@ import SelectRecipientScreen from '../screens/send/SelectRecipientScreen'
 import PaymentMethodScreen from '../screens/send/PaymentMethodScreen'
 import ConfirmationScreen from '../screens/send/ConfirmationScreen'
 import SendTransactionDetailsScreen from '../screens/send/SendTransactionDetailsScreen'
+import OpenBankingScreen from '../screens/send/OpenBankingScreen'
+import VirtualBankAccountScreen from '../screens/send/VirtualBankAccountScreen'
+import MobileMoneyScreen from '../screens/send/MobileMoneyScreen'
 
 // Receive Money Flow Screens
 import ReceiveMoneyScreen from '../screens/receive/ReceiveMoneyScreen'
@@ -212,6 +241,22 @@ const getSendFlowTransitionConfig = () => {
   }
 }
 
+function OnboardingStack() {
+  return (
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        gestureEnabled: false,
+      }}
+    >
+      <Stack.Screen 
+        name="Onboarding" 
+        component={OnboardingScreen}
+      />
+    </Stack.Navigator>
+  )
+}
+
 function AuthStack() {
   return (
     <Stack.Navigator 
@@ -221,17 +266,10 @@ function AuthStack() {
       }}
     >
       <Stack.Screen 
-        name="Login" 
-        component={LoginScreen}
+        name="Auth" 
+        component={AuthScreen}
         options={{
-          gestureEnabled: false, // Login is the root screen
-        }}
-      />
-      <Stack.Screen 
-        name="Register" 
-        component={RegisterScreen}
-        options={{
-          ...getTransitionConfig(),
+          gestureEnabled: true, // Allow swipe back when coming from onboarding
         }}
       />
       <Stack.Screen 
@@ -248,9 +286,36 @@ function AuthStack() {
           ...getTransitionConfig(),
         }}
       />
+      <Stack.Screen 
+        name="PinSetup" 
+        component={PinSetupScreen}
+        options={{
+          ...getTransitionConfig(),
+        }}
+        initialParams={{ mandatory: false }}
+      />
+      <Stack.Screen 
+        name="PinEntry" 
+        component={PinEntryScreen}
+        options={{
+          ...getTransitionConfig(),
+        }}
+      />
     </Stack.Navigator>
   )
 }
+
+// Styles for active icon container (circular background highlight)
+const tabBarStyles = StyleSheet.create({
+  activeIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+})
 
 function MainTabs() {
   const insets = useSafeAreaInsets()
@@ -260,22 +325,48 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
-          elevation: 0,
-          shadowOpacity: 0,
-          height: Platform.OS === 'android' ? 70 : 65 + insets.bottom,
+          backgroundColor: colors.primary.main, // Solid blue background for navigation bar
+          borderTopWidth: 0,
+          borderBottomWidth: 0,
+          borderLeftWidth: 0,
+          borderRightWidth: 0,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          height: 60,
           paddingBottom: Platform.OS === 'android' ? 10 : Math.max(insets.bottom, 8),
-          paddingTop: 8,
+          paddingTop: spacing[2],
+          paddingHorizontal: 20,
+          borderRadius: 100,
+          borderTopLeftRadius: 100,
+          borderTopRightRadius: 100,
+          borderBottomLeftRadius: 100,
+          borderBottomRightRadius: 100,
+          marginHorizontal: spacing[8],
+          marginBottom: spacing[2] + (Platform.OS === 'ios' ? insets.bottom : 0),
+          position: 'absolute',
+          overflow: 'hidden', // Ensure rounded corners are clipped
         },
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: '#007ACC',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarShowLabel: false, // Hide labels to match design
+        tabBarActiveTintColor: colors.text.inverse, // Pure white for active
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)', // Lighter for inactive
         tabBarLabelPosition: 'below-icon',
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: 'normal' as const,
+          fontSize: textStyles.labelSmall.fontSize,
+          fontWeight: '500' as const,
+          marginTop: spacing[1],
+          letterSpacing: textStyles.labelSmall.letterSpacing,
+        },
+        tabBarItemStyle: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 10,
+        },
+        tabBarIconStyle: {
+          marginTop: spacing[1],
         },
       }}
     >
@@ -285,25 +376,13 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons 
-              name="grid-outline" 
-              size={20} 
-              color={color} 
-            />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Transactions" 
-        component={TransactionsScreen}
-        options={{
-          tabBarLabel: 'Transactions',
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons 
-              name="time-outline" 
-              size={20} 
-              color={color} 
-            />
+            <View style={focused ? tabBarStyles.activeIconContainer : null}>
+              <House 
+                size={24} 
+                color={focused ? colors.text.inverse : 'rgba(255, 255, 255, 0.6)'}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
@@ -313,31 +392,31 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Card',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons 
-              name="card-outline" 
-              size={20} 
-              color={color} 
-            />
+            <View style={focused ? tabBarStyles.activeIconContainer : null}>
+              <CreditCard 
+                size={24} 
+                color={focused ? colors.text.inverse : 'rgba(255, 255, 255, 0.6)'}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
       <Tab.Screen 
-        name="ReceiveMoney" 
-        component={ReceiveMoneyScreen}
-        options={({ route }) => ({
-          tabBarButton: () => null, // Hide from tab bar but keep in tabs for navigation
-          tabBarStyle: {
-            backgroundColor: '#ffffff',
-            borderTopWidth: 1,
-            borderTopColor: '#e5e7eb',
-            elevation: 0,
-            shadowOpacity: 0,
-            height: Platform.OS === 'android' ? 70 : 65 + insets.bottom,
-            paddingBottom: Platform.OS === 'android' ? 10 : Math.max(insets.bottom, 8),
-            paddingTop: 8,
-            display: 'flex', // Ensure tab bar is always visible
-          },
-        })}
+        name="Analytics" 
+        component={TransactionsScreen}
+        options={{
+          tabBarLabel: 'Transactions',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={focused ? tabBarStyles.activeIconContainer : null}>
+              <ChartSpline 
+                size={24} 
+                color={focused ? colors.text.inverse : 'rgba(255, 255, 255, 0.6)'}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
+          ),
+        }}
       />
       <Tab.Screen 
         name="More" 
@@ -345,15 +424,57 @@ function MainTabs() {
         options={{
           tabBarLabel: 'More',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons 
-              name="ellipsis-horizontal-outline" 
-              size={20} 
-              color={color} 
-            />
+            <View style={focused ? tabBarStyles.activeIconContainer : null}>
+              <Grip 
+                size={24} 
+                color={focused ? colors.text.inverse : 'rgba(255, 255, 255, 0.6)'}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
     </Tab.Navigator>
+  )
+}
+
+function MainStackWithPinPrompt({ showPinPrompt }: { showPinPrompt: boolean }) {
+  const [pinPromptVisible, setPinPromptVisible] = React.useState(false)
+  const navigation = useNavigation()
+
+  React.useEffect(() => {
+    if (showPinPrompt) {
+      // Small delay to ensure main app is loaded
+      const timer = setTimeout(() => {
+        setPinPromptVisible(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    } else {
+      // Hide prompt if showPinPrompt becomes false
+      setPinPromptVisible(false)
+    }
+  }, [showPinPrompt])
+
+  const handlePinSetup = () => {
+    setPinPromptVisible(false)
+    // Navigate to PIN setup screen (in AuthStack)
+    navigation.navigate('PinSetup' as never)
+  }
+
+  const handleDismissPinPrompt = async () => {
+    await dismissPinPrompt()
+    setPinPromptVisible(false)
+  }
+
+  return (
+    <>
+      <MainStack />
+      <PinSetupPrompt
+        visible={pinPromptVisible}
+        onSetup={handlePinSetup}
+        onDismiss={handleDismissPinPrompt}
+      />
+    </>
   )
 }
 
@@ -371,6 +492,13 @@ function MainStack() {
         options={{ 
           headerShown: false,
           gestureEnabled: false // Disable gesture for main tabs
+        }}
+      />
+      <Stack.Screen 
+        name="PinSetup" 
+        component={PinSetupScreen}
+        options={{
+          ...getTransitionConfig(),
         }}
       />
       <Stack.Screen 
@@ -415,6 +543,38 @@ function MainStack() {
         }}
       />
       <Stack.Screen 
+        name="OpenBanking" 
+        component={OpenBankingScreen}
+        options={{ 
+          headerShown: false,
+          ...getSendFlowTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="VirtualBankAccount" 
+        component={VirtualBankAccountScreen}
+        options={{ 
+          headerShown: false,
+          ...getSendFlowTransitionConfig(),
+        }}
+      />
+      <Stack.Screen
+        name="MobileMoney" 
+        component={MobileMoneyScreen}
+        options={{ 
+          headerShown: false,
+          ...getSendFlowTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ReceiveMoney" 
+        component={ReceiveMoneyScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
         name="TransactionDetails" 
         component={TransactionDetailsScreen}
         options={{ 
@@ -433,6 +593,22 @@ function MainStack() {
       <Stack.Screen 
         name="Card" 
         component={CardScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="TransactionCard" 
+        component={TransactionCardScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="ExpenseInsights" 
+        component={ExpenseInsightsScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
@@ -488,7 +664,7 @@ function MainStack() {
       />
       <Stack.Screen 
         name="ChangePassword" 
-        component={SupportScreen}
+        component={ChangePasswordScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
@@ -496,7 +672,15 @@ function MainStack() {
       />
       <Stack.Screen 
         name="Notifications" 
-        component={SupportScreen}
+        component={NotificationsScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="InAppNotifications" 
+        component={InAppNotificationsScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),
@@ -506,22 +690,231 @@ function MainStack() {
   )
 }
 
+const ONBOARDING_COMPLETED_KEY = '@easner_onboarding_completed'
+
 export default function AppNavigator() {
   const { user, userProfile, loading } = useAuth()
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean | null>(null)
+  // PIN TEMPORARILY DISABLED - keeping state variables for easy re-enable
+  // const [pinSetup, setPinSetup] = useState<boolean | null>(null)
+  // const [sessionValid, setSessionValid] = useState<boolean | null>(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+  // const [isNewUser, setIsNewUser] = useState<boolean | null>(null)
+  // const [showPinPrompt, setShowPinPrompt] = useState(false)
+  // const [justLoggedIn, setJustLoggedIn] = useState(false)
+  // const [hasActiveSession, setHasActiveSession] = useState(false)
+  // const [forceCheck, setForceCheck] = useState(0) // Trigger to force immediate check
 
-  console.log('AppNavigator: user:', !!user, 'userProfile:', !!userProfile, 'loading:', loading)
+  // PIN TEMPORARILY DISABLED
+  // Watch for user logout - immediately reset state when user becomes null
+  // useEffect(() => {
+  //   if (!user) {
+  //     setPinSetup(null)
+  //     setSessionValid(null)
+  //     setIsNewUser(null)
+  //     setShowPinPrompt(false)
+  //     setJustLoggedIn(false)
+  //     setCheckingAuth(false)
+  //   }
+  // }, [user])
 
-  // Show loading screen while checking initial authentication
-  // This prevents the flash of Login screen when user has an active session
-  if (loading) {
+  // PIN TEMPORARILY DISABLED
+  // Handle app state changes - clear session when app goes to background
+  // useEffect(() => {
+  //   const handleAppStateChange = (nextAppState: AppStateStatus) => {
+  //     if (nextAppState === 'background' || nextAppState === 'inactive') {
+  //       clearSessionActivity()
+  //       setSessionValid(false)
+  //     }
+  //   }
+  //   const subscription = AppState.addEventListener('change', handleAppStateChange)
+  //   return () => {
+  //     subscription?.remove()
+  //   }
+  // }, [])
+
+  // PIN TEMPORARILY DISABLED - Simplified auth check
+  // Check onboarding status on mount - this should happen regardless of user state
+  const checkOnboardingState = useCallback(async () => {
+    try {
+      // Check onboarding status from AsyncStorage
+      const onboardingValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY)
+      setOnboardingCompleted(onboardingValue === 'true')
+      setCheckingAuth(false)
+    } catch (error) {
+      console.error('Error checking onboarding state:', error)
+      setCheckingAuth(false)
+      // Default to false if there's an error, so onboarding shows
+      setOnboardingCompleted(false)
+    }
+  }, []) // No dependencies - only uses stable state setters
+
+  useEffect(() => {
+    // Check onboarding status on mount
+    checkOnboardingState()
+  }, [checkOnboardingState]) // Run on mount and when function changes
+  
+  // Re-check onboarding when app comes to foreground (in case it was changed)
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // Re-check onboarding status when app comes to foreground
+        // This ensures we detect if onboarding was completed
+        const onboardingValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY)
+        const isCompleted = onboardingValue === 'true'
+        // Only update if it changed to avoid unnecessary re-renders
+        if (isCompleted !== onboardingCompleted) {
+          setOnboardingCompleted(isCompleted)
+        }
+      }
+    }
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange)
+    return () => {
+      subscription?.remove()
+    }
+  }, [onboardingCompleted])
+  
+  // Poll for onboarding completion when showing onboarding screen
+  // This ensures we detect when user completes onboarding
+  useEffect(() => {
+    if (onboardingCompleted === false) {
+      // While onboarding is not completed, poll AsyncStorage to detect when it's completed
+      const interval = setInterval(async () => {
+        try {
+          const onboardingValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY)
+          if (onboardingValue === 'true') {
+            setOnboardingCompleted(true)
+          }
+        } catch (error) {
+          console.error('Error polling onboarding status:', error)
+        }
+      }, 500) // Check every 500ms
+      
+      return () => clearInterval(interval)
+    }
+  }, [onboardingCompleted])
+  
+  // Poll for onboarding reset when showing auth screen (user clicked back button)
+  // This ensures we detect when user resets onboarding from auth screen
+  useEffect(() => {
+    if (onboardingCompleted === true && !user) {
+      // While showing auth screen and onboarding is completed, poll to detect if it was reset
+      const interval = setInterval(async () => {
+        try {
+          const onboardingValue = await AsyncStorage.getItem(ONBOARDING_COMPLETED_KEY)
+          if (onboardingValue !== 'true') {
+            // Onboarding was reset, update state to show onboarding again
+            setOnboardingCompleted(false)
+          }
+        } catch (error) {
+          console.error('Error polling onboarding status from auth:', error)
+        }
+      }, 500) // Check every 500ms
+      
+      return () => clearInterval(interval)
+    }
+  }, [onboardingCompleted, user])
+  
+  // Expose function to trigger onboarding re-check (for AuthScreen back button)
+  useEffect(() => {
+    ;(global as any).triggerOnboardingCheck = () => {
+      checkOnboardingState()
+    }
+    return () => {
+      delete (global as any).triggerOnboardingCheck
+    }
+  }, [checkOnboardingState]) // Update when checkOnboardingState changes
+  
+  // Re-check onboarding when user logs out (to allow seeing onboarding again if needed)
+  useEffect(() => {
+    if (!user && onboardingCompleted !== null) {
+      // When user logs out, re-check onboarding status
+      checkOnboardingState()
+    }
+  }, [user, checkOnboardingState])
+  
+  // PIN TEMPORARILY DISABLED - All PIN-related useEffects commented out
+  // Fast polling specifically for session validity check after PIN entry
+  // useEffect(() => {
+  //   if (!pinSetup || sessionValid === true) {
+  //     return
+  //   }
+  //   if (sessionValid !== false) {
+  //     return
+  //   }
+  //   const fastCheckInterval = setInterval(async () => {
+  //     const isValid = await isSessionValid()
+  //     if (isValid && sessionValid !== true) {
+  //       setSessionValid(true)
+  //     }
+  //   }, 100)
+  //   return () => clearInterval(fastCheckInterval)
+  // }, [pinSetup, sessionValid])
+  
+  // Listen for PIN verification to trigger immediate check
+  // React.useEffect(() => {
+  //   const checkPinVerification = async () => {
+  //     if (pinSetup && user && sessionValid === false) {
+  //       await new Promise(resolve => setTimeout(resolve, 10))
+  //       const isValid = await isSessionValid()
+  //       if (isValid) {
+  //         setSessionValid(true)
+  //       }
+  //     }
+  //   }
+  //   if (forceCheck > 0) {
+  //     checkPinVerification()
+  //   }
+  // }, [forceCheck, pinSetup, user, sessionValid])
+  
+  // Expose trigger function globally for PIN entry/setup screens
+  // React.useEffect(() => {
+  //   ;(global as any).triggerPinCheck = () => {
+  //     setForceCheck(prev => prev + 1)
+  //     if (pinSetup) {
+  //       setSessionValid(true)
+  //     }
+  //     if (!pinSetup) {
+  //       setPinSetup(true)
+  //       setSessionValid(false)
+  //     }
+  //   }
+  //   return () => {
+  //     delete (global as any).triggerPinCheck
+  //   }
+  // }, [pinSetup])
+
+  // Show loading screen while checking initial onboarding status
+  if (onboardingCompleted === null || checkingAuth) {
     return null // Return null instead of loading spinner for faster transition
   }
 
-  // If user is logged in, show main app (Dashboard)
+  // If onboarding not completed, show onboarding screen FIRST (before checking user)
+  // This ensures new users see onboarding even if they're not logged in
+  if (!onboardingCompleted) {
+    return <OnboardingStack />
+  }
+
+  // After onboarding is completed, check user authentication
+  // If user is logged out, show auth stack
+  if (!user) {
+    return <AuthStack key="auth-stack-logged-out" />
+  }
+
+  // Show loading while auth context is loading
+  if (loading) {
+    return null
+  }
+
+  // PIN TEMPORARILY DISABLED - Go directly to main app after login
+  // If user is logged in, show main app (no PIN checks)
   if (user) {
     return <MainStack />
   }
 
-  // If no user, show auth stack (Login)
-  return <AuthStack />
+  // Fallback: If no user, show auth stack (Login)
+  // Use key to force remount
+  return <AuthStack key="auth-stack-no-user" />
 }
+

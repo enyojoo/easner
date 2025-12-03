@@ -252,7 +252,7 @@ export default function VerificationPage() {
                     <h3 className="text-base font-semibold text-gray-900 mb-1">Identity verification</h3>
                     {/* Description below title */}
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Your ID document and ID verification information.
+                      Your ID verification information.
                     </p>
                   </div>
                   {/* Status Badge and Arrow on the right */}
@@ -283,7 +283,7 @@ export default function VerificationPage() {
                     <h3 className="text-base font-semibold text-gray-900 mb-1">Address information</h3>
                     {/* Description below title */}
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Your home address and utility bill document.
+                      Your home address and document.
                     </p>
                   </div>
                   {/* Status Badge and Arrow on the right */}

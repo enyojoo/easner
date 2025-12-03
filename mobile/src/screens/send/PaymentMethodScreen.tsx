@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -6,25 +6,29 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  FlatList,
   Clipboard,
   Image,
   ActivityIndicator,
+  Animated,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import * as DocumentPicker from 'expo-document-picker'
-import BottomButton from '../../components/BottomButton'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
-import { NavigationProps, PaymentMethod, Currency } from '../../types'
+import { NavigationProps, PaymentMethod } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { analytics } from '../../lib/analytics'
 import { transactionService } from '../../lib/transactionService'
 import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
+import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
   const { paymentMethods, refreshPaymentMethods, currencies, refreshTransactions } = useUserData()
+  const insets = useSafeAreaInsets()
   const [transactionId, setTransactionId] = useState('')
   const [uploadedFile, setUploadedFile] = useState<any>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -32,19 +36,35 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
   const [isCreatingTransaction, setIsCreatingTransaction] = useState(false)
 
+  // Animation refs
+  const headerAnim = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
   const { sendAmount, sendCurrency, receiveAmount, receiveCurrency, exchangeRate, fee, feeType, recipient } = route.params || {}
 
-  // Track screen view
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [headerAnim, contentAnim])
+
   useEffect(() => {
     analytics.trackScreenView('PaymentMethod')
   }, [])
 
   useEffect(() => {
     refreshPaymentMethods()
-    // Generate transaction ID using new ETID prefix
-    setTransactionId(`ETID${Date.now()}`)
+    setTransactionId(generateTransactionId())
   }, [])
-
 
   const getPaymentMethodsForCurrency = (currency: string) => {
     return paymentMethods.filter(method => 
@@ -60,6 +80,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
   const handleCopy = async (text: string, key: string) => {
     try {
       await Clipboard.setString(text)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setCopiedStates(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopiedStates(prev => ({ ...prev, [key]: false }))
@@ -81,7 +102,7 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
 
       if (!result.canceled && result.assets[0]) {
         setUploadedFile(result.assets[0])
-        Alert.alert('Success', 'Receipt uploaded successfully')
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }
     } catch (error) {
       setUploadError('Failed to upload receipt. Please try again.')
@@ -102,24 +123,10 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
       return
     }
 
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setIsCreatingTransaction(true)
+    
     try {
-      // Debug logging
-      console.log('Transaction data:', {
-        userId: userProfile.id,
-        recipientId: recipient.id,
-        sendAmount: Number.parseFloat(sendAmount),
-        sendCurrency,
-        receiveAmount: Number.parseFloat(receiveAmount),
-        receiveCurrency,
-        exchangeRate: Number.parseFloat(exchangeRate?.rate || '0'),
-        feeAmount: Number.parseFloat(fee || '0'),
-        feeType,
-        totalAmount: Number.parseFloat(sendAmount) + Number.parseFloat(fee),
-        transactionId: transactionId,
-      })
-      
-      // Create transaction in database
       const transaction = await transactionService.create({
         userId: userProfile.id,
         recipientId: recipient.id,
@@ -134,26 +141,19 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
         transactionId: transactionId,
       })
 
-      // Upload receipt if file was selected
       if (uploadedFile && !isUploading) {
-        try {
-          // Note: Receipt upload would need to be implemented in transactionService
           console.log('Receipt upload would happen here:', uploadedFile)
-        } catch (uploadError) {
-          console.error('Error uploading receipt:', uploadError)
-          // Don't block transaction creation if receipt upload fails
-        }
       }
 
-      // Refresh transactions list
       await refreshTransactions()
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
-      // Navigate to send transaction details page
       navigation.navigate('SendTransactionDetails', { 
         transactionId: transaction.transaction_id 
       })
     } catch (error: any) {
       console.error('Error creating transaction:', error)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       Alert.alert('Error', error.message || 'Failed to create transaction. Please try again.')
     } finally {
       setIsCreatingTransaction(false)
@@ -165,62 +165,140 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
     return `${curr?.symbol || ""}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const FlagComponent = ({ currencyCode, size = 20 }: { currencyCode: string, size?: number }) => {
-    const flag = getCountryFlag(currencyCode)
-    return <Text style={{ fontSize: size }}>{flag}</Text>
-  }
-
-  const sendCurrencyData = currencies.find((c) => c.code === sendCurrency)
   const defaultMethod = getDefaultPaymentMethod(sendCurrency)
   const paymentMethodsForCurrency = getPaymentMethodsForCurrency(sendCurrency)
 
-  return (
-      <View style={styles.container}>
-      {/* Custom Header */}
-      <View style={styles.customHeader}>
-        <TouchableOpacity 
-          style={styles.headerBackButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#000" />
-          <Text style={styles.headerBackText}>Back</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.content}>
-        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-            <Text style={styles.title}>Make Payment</Text>
+  const renderCopyableField = (label: string, value: string, key: string) => (
+    <View style={styles.fieldRow}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TouchableOpacity 
+        style={styles.fieldValueContainer}
+        onPress={() => handleCopy(value, key)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.fieldValue}>{value}</Text>
+        <View style={[styles.copyIcon, copiedStates[key] && styles.copyIconSuccess]}>
+          <Ionicons 
+            name={copiedStates[key] ? "checkmark" : "copy-outline"} 
+            size={14} 
+            color={copiedStates[key] ? colors.success.main : colors.primary.main} 
+          />
         </View>
+      </TouchableOpacity>
+    </View>
+  )
 
-        {/* Payment Method - Dynamic based on admin settings */}
-        <View style={styles.paymentContainer}>
-          <View style={styles.paymentHeader}>
-            <View style={styles.currencyIcon}>
-              <FlagComponent currencyCode={sendCurrency} size={24} />
-            </View>
-            <View style={styles.paymentInfo}>
-              <Text style={styles.paymentTitle}>
-                Transfer {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <Animated.View 
+        style={[
+          styles.header,
+          {
+            opacity: headerAnim,
+            transform: [{
+              translateY: headerAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              })
+            }]
+          }
+        ]}
+      >
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+            <Text style={styles.title}>Make Payment</Text>
+          <Text style={styles.subtitle}>Transfer funds to complete</Text>
+        </View>
+      </Animated.View>
+      
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View
+          style={{
+            opacity: contentAnim,
+            transform: [{
+              translateY: contentAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [30, 0],
+              })
+            }]
+          }}
+        >
+          {/* Amount Summary Card */}
+          <View style={styles.summaryCard}>
+            <LinearGradient
+              colors={colors.primary.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.summaryGradient}
+            >
+              <View style={styles.summaryHeader}>
+                <Text style={{ fontSize: 28 }}>{getCountryFlag(sendCurrency)}</Text>
+                <View style={styles.summaryInfo}>
+                  <Text style={styles.summaryLabel}>Total to Transfer</Text>
+                  <Text style={styles.summaryAmount}>
+                    {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
               </Text>
-              <Text style={styles.paymentSubtitle}>
-                {fee > 0
-                  ? `Send amount: ${formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: ${formatCurrency(fee, sendCurrency)}`
-                  : "Send money to complete your transfer"}
+                  {fee > 0 && (
+                    <Text style={styles.summaryBreakdown}>
+                      {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + {formatCurrency(fee, sendCurrency)} fee
               </Text>
+                  )}
+                </View>
             </View>
+            </LinearGradient>
           </View>
 
-          {/* Render payment methods based on admin configuration */}
+          {/* Transaction ID in Payment Summary */}
+          {transactionId && (
+            <View style={styles.summaryCard}>
+              <LinearGradient
+                colors={colors.primary.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.summaryGradient}
+              >
+                <View style={styles.summaryHeader}>
+                  <View style={styles.summaryInfo}>
+                    <Text style={styles.summaryLabel}>Transaction ID</Text>
+                    <TouchableOpacity
+                      style={styles.transactionIdRow}
+                      onPress={() => handleCopy(transactionId, "transactionIdSummary")}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.summaryAmount}>{transactionId}</Text>
+                      <Ionicons 
+                        name={copiedStates.transactionIdSummary ? "checkmark" : "copy-outline"} 
+                        size={18} 
+                        color={copiedStates.transactionIdSummary ? colors.success.main : 'rgba(255,255,255,0.7)'} 
+                        style={{ marginLeft: 8 }}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+
+          {/* Payment Method Details */}
           {paymentMethodsForCurrency.length === 0 ? (
-            <View style={styles.errorContainer}>
+            <View style={styles.errorCard}>
+              <Ionicons name="alert-circle" size={48} color={colors.error.main} />
+              <Text style={styles.errorTitle}>No Payment Methods</Text>
               <Text style={styles.errorText}>No payment methods configured for {sendCurrency}</Text>
-              <Text style={styles.errorSubtext}>Please contact support</Text>
             </View>
           ) : (
-            <View style={styles.paymentDetails}>
-              {/* Payment Method Details */}
-              <View style={styles.methodDetails}>
+            <>
+              {/* Bank Account Details */}
                 {defaultMethod?.type === "bank_account" && (() => {
                   const accountConfig = sendCurrency
                     ? getAccountTypeConfigFromCurrency(sendCurrency)
@@ -228,175 +306,91 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                   const accountType = accountConfig?.accountType
 
                   return (
-                  <View style={styles.bankAccountCard}>
-                    <View style={styles.methodHeader}>
-                      <Ionicons name="business" size={16} color="#6b7280" />
-                      <Text style={styles.methodName}>{defaultMethod.name}</Text>
+                  <View style={styles.detailsCard}>
+                    <View style={styles.cardHeader}>
+                      <View style={styles.cardIconContainer}>
+                        <Ionicons name="business" size={18} color={colors.primary.main} />
+                      </View>
+                      <Text style={styles.cardTitle}>{defaultMethod.name}</Text>
                     </View>
-                    <View style={styles.accountDetails}>
-                        {/* Account Name - Always shown */}
-                        <View style={styles.detailRowTwoLine}>
-                          <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_name || "Account Name"}</Text>
-                          <View style={styles.detailValueRow}>
-                          <Text style={styles.detailText}>{defaultMethod.account_name}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.account_name || "", "accountName")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.accountName ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
 
-                        {/* US Account Fields */}
+                    <View style={styles.fieldsContainer}>
+                      {renderCopyableField(
+                        accountConfig?.fieldLabels.account_name || "Account Name",
+                        defaultMethod.account_name || "",
+                        "accountName"
+                      )}
+
                         {accountType === "us" && defaultMethod.routing_number && (
-                          <View style={styles.detailRowTwoLine}>
-                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.routing_number || "Routing Number"}</Text>
-                            <View style={styles.detailValueRow}>
-                              <Text style={styles.detailText}>
-                                {formatFieldValue(accountType, "routing_number", defaultMethod.routing_number)}
-                              </Text>
-                              <TouchableOpacity
-                                onPress={() => handleCopy(defaultMethod.routing_number || "", "routingNumber")}
-                                style={styles.copyButton}
-                              >
-                                {copiedStates.routingNumber ? (
-                                  <Ionicons name="checkmark" size={12} color="#10b981" />
-                                ) : (
-                                  <Ionicons name="copy" size={12} color="#6b7280" />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        )}
+                        renderCopyableField(
+                          accountConfig?.fieldLabels.routing_number || "Routing Number",
+                          formatFieldValue(accountType, "routing_number", defaultMethod.routing_number),
+                          "routingNumber"
+                        )
+                      )}
 
-                        {/* UK Account Fields */}
                         {accountType === "uk" && defaultMethod.sort_code && (
-                          <View style={styles.detailRowTwoLine}>
-                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.sort_code || "Sort Code"}</Text>
-                            <View style={styles.detailValueRow}>
-                              <Text style={styles.detailText}>
-                                {formatFieldValue(accountType, "sort_code", defaultMethod.sort_code)}
-                              </Text>
-                              <TouchableOpacity
-                                onPress={() => handleCopy(defaultMethod.sort_code || "", "sortCode")}
-                                style={styles.copyButton}
-                              >
-                                {copiedStates.sortCode ? (
-                                  <Ionicons name="checkmark" size={12} color="#10b981" />
-                                ) : (
-                                  <Ionicons name="copy" size={12} color="#6b7280" />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        )}
+                        renderCopyableField(
+                          accountConfig?.fieldLabels.sort_code || "Sort Code",
+                          formatFieldValue(accountType, "sort_code", defaultMethod.sort_code),
+                          "sortCode"
+                        )
+                      )}
 
-                        {/* Account Number - US/UK/Generic accounts */}
                         {(accountType === "us" || accountType === "uk" || accountType === "generic") && defaultMethod.account_number && (
-                          <View style={styles.detailRowTwoLine}>
-                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.account_number || "Account Number"}</Text>
-                            <View style={styles.detailValueRow}>
-                          <Text style={styles.detailText}>{defaultMethod.account_number}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.account_number || "", "accountNumber")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.accountNumber ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                        )}
+                        renderCopyableField(
+                          accountConfig?.fieldLabels.account_number || "Account Number",
+                          defaultMethod.account_number,
+                          "accountNumber"
+                        )
+                      )}
 
-                        {/* IBAN - UK/EURO accounts */}
                         {(accountType === "uk" || accountType === "euro") && defaultMethod.iban && (
-                          <View style={styles.detailRowTwoLine}>
-                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.iban || "IBAN"}</Text>
-                            <View style={styles.detailValueRow}>
-                              <Text style={styles.detailText}>
-                                {formatFieldValue(accountType, "iban", defaultMethod.iban)}
-                              </Text>
-                              <TouchableOpacity
-                                onPress={() => handleCopy(defaultMethod.iban || "", "iban")}
-                                style={styles.copyButton}
-                              >
-                                {copiedStates.iban ? (
-                                  <Ionicons name="checkmark" size={12} color="#10b981" />
-                                ) : (
-                                  <Ionicons name="copy" size={12} color="#6b7280" />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        )}
+                        renderCopyableField(
+                          accountConfig?.fieldLabels.iban || "IBAN",
+                          formatFieldValue(accountType, "iban", defaultMethod.iban),
+                          "iban"
+                        )
+                      )}
 
-                        {/* SWIFT/BIC - UK/EURO accounts */}
                         {(accountType === "uk" || accountType === "euro") && defaultMethod.swift_bic && (
-                          <View style={styles.detailRowTwoLine}>
-                            <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.swift_bic || "SWIFT/BIC"}</Text>
-                            <View style={styles.detailValueRow}>
-                              <Text style={styles.detailText}>{defaultMethod.swift_bic}</Text>
-                              <TouchableOpacity
-                                onPress={() => handleCopy(defaultMethod.swift_bic || "", "swiftBic")}
-                                style={styles.copyButton}
-                              >
-                                {copiedStates.swiftBic ? (
-                                  <Ionicons name="checkmark" size={12} color="#10b981" />
-                                ) : (
-                                  <Ionicons name="copy" size={12} color="#6b7280" />
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        )}
+                        renderCopyableField(
+                          accountConfig?.fieldLabels.swift_bic || "SWIFT/BIC",
+                          defaultMethod.swift_bic,
+                          "swiftBic"
+                        )
+                      )}
 
-                        {/* Bank Name - Always shown */}
-                        <View style={styles.detailRowTwoLine}>
-                          <Text style={styles.detailLabel}>{accountConfig?.fieldLabels.bank_name || "Bank Name"}</Text>
-                          <View style={styles.detailValueRow}>
-                          <Text style={styles.detailText}>{defaultMethod.bank_name}</Text>
-                          <TouchableOpacity
-                            onPress={() => handleCopy(defaultMethod.bank_name || "", "bankName")}
-                            style={styles.copyButton}
-                          >
-                            {copiedStates.bankName ? (
-                              <Ionicons name="checkmark" size={12} color="#10b981" />
-                            ) : (
-                              <Ionicons name="copy" size={12} color="#6b7280" />
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
+                      {renderCopyableField(
+                        accountConfig?.fieldLabels.bank_name || "Bank Name",
+                        defaultMethod.bank_name || "",
+                        "bankName"
+                      )}
                     </View>
                   </View>
                   )
                 })()}
 
-
+              {/* QR Code */}
                 {defaultMethod?.type === "qr_code" && (
-                  <View style={styles.qrCodeCard}>
-                    <View style={styles.methodHeader}>
-                      <Ionicons name="qr-code" size={16} color="#6b7280" />
-                      <Text style={styles.methodName}>{defaultMethod.name}</Text>
+                <View style={styles.detailsCard}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardIconContainer}>
+                      <Ionicons name="qr-code" size={18} color={colors.primary.main} />
                     </View>
-                    <View style={styles.qrCodeContainer}>
+                    <Text style={styles.cardTitle}>{defaultMethod.name}</Text>
+                  </View>
+                  
+                  <View style={styles.qrContainer}>
                       {defaultMethod.qr_code_data ? (
                         <Image
                           source={{ uri: defaultMethod.qr_code_data }}
-                          style={styles.qrCodeImage}
+                        style={styles.qrImage}
                           resizeMode="contain"
                         />
                       ) : (
-                        <View style={styles.qrCodePlaceholder}>
-                          <Ionicons name="qr-code" size={48} color="#9ca3af" />
+                      <View style={styles.qrPlaceholder}>
+                        <Ionicons name="qr-code" size={64} color={colors.neutral[400]} />
                         </View>
                       )}
                     </View>
@@ -405,51 +399,61 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                     )}
                   </View>
                 )}
-              </View>
 
               {/* Important Instructions */}
-              <View style={styles.instructionsContainer}>
-                <Text style={styles.instructionsTitle}>Important Instructions</Text>
                 <View style={styles.instructionsCard}>
+                <View style={styles.instructionsHeader}>
+                  <Ionicons name="warning" size={20} color={colors.warning.dark} />
+                  <Text style={styles.instructionsTitle}>Important</Text>
+                </View>
+                
+                <View style={styles.instructionsList}>
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
+                    <View style={styles.instructionContent}>
                     <Text style={styles.instructionText}>
-                      Transfer exactly{' '}
-                      <Text style={styles.instructionBold}>
+                        Transfer exactly <Text style={styles.instructionBold}>
                         {formatCurrency((Number.parseFloat(sendAmount) || 0) + fee, sendCurrency)}
+                        </Text>
                       </Text>
                       {fee > 0 && (
                         <Text style={styles.instructionSubtext}>
-                          {'\n'}(Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: {formatCurrency(fee, sendCurrency)})
+                          (Amount: {formatCurrency(Number.parseFloat(sendAmount) || 0, sendCurrency)} + Fee: {formatCurrency(fee, sendCurrency)})
                         </Text>
                       )}
-                    </Text>
+                    </View>
                   </View>
+                  
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <Text style={[styles.instructionText, { flex: 0 }]}>Note Transaction ID: </Text>
-                      <Text style={styles.instructionBold}>{transactionId}</Text>
+                    <View style={styles.instructionRow}>
+                      <Text style={styles.instructionText}>Note Transaction ID </Text>
                       <TouchableOpacity
-                        onPress={() => handleCopy(transactionId, "transactionIdInstructions")}
-                        style={{ marginLeft: 4, padding: 2 }}
+                        style={styles.transactionIdBadge}
+                        onPress={() => handleCopy(transactionId, "transactionId")}
                       >
-                        {copiedStates.transactionIdInstructions ? (
-                          <Ionicons name="checkmark" size={12} color="#10b981" />
-                        ) : (
-                          <Ionicons name="copy" size={12} color="#92400e" />
-                        )}
+                        <Text style={styles.transactionIdText}>{transactionId}</Text>
+                        <Ionicons 
+                          name={copiedStates.transactionId ? "checkmark" : "copy-outline"} 
+                          size={12} 
+                          color={colors.primary.main} 
+                        />
                       </TouchableOpacity>
                     </View>
                   </View>
+                  
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
-                    <Text style={styles.instructionText}>Complete within <Text style={styles.instructionBold}>a few minutes</Text></Text>
+                    <Text style={styles.instructionText}>
+                      Complete within <Text style={styles.instructionBold}>a few minutes</Text>
+                    </Text>
                   </View>
+                  
                   <View style={styles.instructionItem}>
                     <Text style={styles.instructionBullet}>•</Text>
                     <Text style={styles.instructionText}>Upload receipt for quick verification</Text>
                   </View>
+
                   {defaultMethod?.type === "qr_code" && (
                     <View style={styles.instructionItem}>
                       <Text style={styles.instructionBullet}>•</Text>
@@ -457,379 +461,403 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
                     </View>
                   )}
                 </View>
-              </View>
-            </View>
-          )}
         </View>
 
-        {/* Upload Receipt Section */}
-        <View style={styles.uploadSection}>
+              {/* Upload Receipt */}
+              <View style={styles.uploadCard}>
           <Text style={styles.uploadTitle}>Upload Receipt (Optional)</Text>
+                <Text style={styles.uploadSubtitle}>Speeds up verification</Text>
           
           {uploadError && (
-            <View style={styles.errorAlert}>
-              <Ionicons name="alert-circle" size={16} color="#ef4444" />
-              <View style={styles.errorAlertContent}>
-                <Text style={styles.errorAlertTitle}>Upload Error</Text>
-                <Text style={styles.errorAlertText}>{uploadError}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setUploadError(null)}
-                style={styles.dismissButton}
-              >
-                <Ionicons name="close" size={12} color="#ef4444" />
+                  <View style={styles.uploadError}>
+                    <Ionicons name="alert-circle" size={16} color={colors.error.main} />
+                    <Text style={styles.uploadErrorText}>{uploadError}</Text>
+                    <TouchableOpacity onPress={() => setUploadError(null)}>
+                      <Ionicons name="close" size={16} color={colors.error.main} />
               </TouchableOpacity>
             </View>
           )}
 
           <TouchableOpacity
-            style={[
-              styles.uploadButton,
-              uploadedFile && styles.uploadButtonSuccess,
-              uploadError && styles.uploadButtonError
-            ]}
+                  style={[styles.uploadButton, uploadedFile && styles.uploadButtonSuccess]}
             onPress={handleUploadReceipt}
             disabled={isUploading}
+                  activeOpacity={0.7}
           >
-            <View style={styles.uploadContent}>
               <Ionicons 
-                name={uploadedFile ? "checkmark-circle" : "cloud-upload"} 
-                size={24} 
-                color={uploadedFile ? "#10b981" : uploadError ? "#ef4444" : "#6b7280"} 
+                    name={uploadedFile ? "checkmark-circle" : "cloud-upload-outline"} 
+                    size={28} 
+                    color={uploadedFile ? colors.success.main : colors.neutral[500]} 
               />
-              <Text style={[
-                styles.uploadText,
-                uploadedFile && styles.uploadTextSuccess,
-                uploadError && styles.uploadTextError
-              ]}>
-                {uploadedFile ? 'Receipt Uploaded' : isUploading ? 'Uploading...' : 'Upload Receipt'}
+                  <Text style={[styles.uploadButtonText, uploadedFile && styles.uploadButtonTextSuccess]}>
+                    {uploadedFile ? 'Receipt Uploaded' : isUploading ? 'Uploading...' : 'Tap to upload'}
               </Text>
               {uploadedFile && (
                 <Text style={styles.uploadFileName}>{uploadedFile.name}</Text>
               )}
-            </View>
           </TouchableOpacity>
         </View>
-
+            </>
+          )}
+        </Animated.View>
         </ScrollView>
         
         {/* Bottom Button */}
-        <BottomButton
-          title={isCreatingTransaction ? "Creating Transaction..." : "I've paid"}
+      <View style={[styles.bottomContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <TouchableOpacity
+          style={[styles.confirmButton, isCreatingTransaction && styles.confirmButtonDisabled]}
           onPress={handleContinue}
           disabled={isCreatingTransaction}
-        />
+        >
+          <LinearGradient
+            colors={isCreatingTransaction ? [colors.neutral[400], colors.neutral[400]] : colors.success.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.confirmButtonGradient}
+          >
+            {isCreatingTransaction ? (
+              <ActivityIndicator color={colors.text.inverse} size="small" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={20} color={colors.text.inverse} />
+                <Text style={styles.confirmButtonText}>I've Made the Payment</Text>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  customHeader: {
-    backgroundColor: '#ffffff',
-    paddingTop: 50,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerBackText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background.primary,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  paymentContainer: {
-    margin: 20,
-    backgroundColor: '#f0f9ff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#007ACC',
-  },
-  paymentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[4],
   },
-  currencyIcon: {
-    width: 40,
-    height: 40,
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#007ACC',
-    borderRadius: 8,
+    marginRight: spacing[3],
   },
-  currencyFlag: {
-    fontSize: 16,
-  },
-  paymentInfo: {
+  headerContent: {
     flex: 1,
   },
-  paymentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#007ACC',
-    marginBottom: 4,
+  title: {
+    ...textStyles.headlineMedium,
+    color: colors.text.primary,
+    marginBottom: 2,
   },
-  paymentSubtitle: {
-    fontSize: 12,
-    color: '#6b7280',
+  subtitle: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
-  errorContainer: {
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
+  scrollView: {
+    flex: 1,
   },
-  errorText: {
-    fontSize: 14,
-    color: '#dc2626',
-    fontWeight: '600',
-    marginBottom: 4,
+  scrollContent: {
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[5],
   },
-  errorSubtext: {
-    fontSize: 12,
-    color: '#dc2626',
+  summaryCard: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing[4],
+    ...shadows.md,
   },
-  paymentDetails: {
-    gap: 16,
+  summaryGradient: {
+    padding: spacing[5],
   },
-  methodDetails: {
-    gap: 16,
-  },
-  bankAccountCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  qrCodeCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  methodHeader: {
+  summaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  methodName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginLeft: 8,
+  summaryInfo: {
+    flex: 1,
+    marginLeft: spacing[4],
   },
-  accountDetails: {
-    gap: 12,
+  summaryLabel: {
+    ...textStyles.labelMedium,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: spacing[1],
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  summaryAmount: {
+    ...textStyles.displaySmall,
+    color: colors.text.inverse,
+    fontWeight: '700',
   },
-  detailRowTwoLine: {
-    marginBottom: 12,
+  summaryBreakdown: {
+    ...textStyles.bodySmall,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: spacing[1],
   },
   transactionIdRow: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-    marginTop: 8,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  detailValue: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 2,
-    justifyContent: 'flex-end',
+    marginTop: spacing[1],
   },
-  detailValueRow: {
+  errorCard: {
+    backgroundColor: colors.error.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[6],
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  errorTitle: {
+    ...textStyles.titleLarge,
+    color: colors.error.main,
+    marginTop: spacing[3],
+    marginBottom: spacing[2],
+  },
+  errorText: {
+    ...textStyles.bodyMedium,
+    color: colors.error.main,
+    textAlign: 'center',
+  },
+  detailsCard: {
+    backgroundColor: colors.neutral.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[4],
+    ...shadows.sm,
+  },
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: spacing[4],
+    gap: spacing[2],
   },
-  detailText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginRight: 8,
-  },
-  copyButton: {
-    padding: 4,
-  },
-  qrCodeContainer: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
+  cardIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary.main + '15',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  qrCodeImage: {
-    width: 120,
-    height: 120,
+  cardTitle: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
   },
-  qrCodePlaceholder: {
+  fieldsContainer: {
+    gap: spacing[3],
+  },
+  fieldRow: {
+    gap: spacing[1],
+  },
+  fieldLabel: {
+    ...textStyles.labelMedium,
+    color: colors.text.tertiary,
+  },
+  fieldValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.neutral[50],
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+  },
+  fieldValue: {
+    ...textStyles.titleSmall,
+    color: colors.text.primary,
+    flex: 1,
+  },
+  copyIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  copyIconSuccess: {
+    backgroundColor: colors.success.background,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    marginBottom: spacing[4],
+  },
+  qrImage: {
+    width: 180,
+    height: 180,
+    borderRadius: borderRadius.lg,
+  },
+  qrPlaceholder: {
+    width: 180,
+    height: 180,
+    backgroundColor: colors.neutral[100],
+    borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
   },
   qrInstructions: {
-    fontSize: 12,
-    color: '#6b7280',
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
     textAlign: 'center',
-    marginBottom: 12,
-  },
-  instructionsContainer: {
-    gap: 12,
-  },
-  instructionsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   instructionsCard: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.warning.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[4],
     borderWidth: 1,
-    borderColor: '#f59e0b',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: colors.warning.main + '30',
+  },
+  instructionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[3],
+  },
+  instructionsTitle: {
+    ...textStyles.titleMedium,
+    color: colors.warning.dark,
+  },
+  instructionsList: {
+    gap: spacing[3],
   },
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: spacing[2],
   },
   instructionBullet: {
-    fontSize: 12,
-    color: '#f59e0b',
-    marginRight: 8,
-    marginTop: 2,
+    ...textStyles.bodyMedium,
+    color: colors.warning.main,
+    marginRight: spacing[2],
+    marginTop: 1,
+  },
+  instructionContent: {
+    flex: 1,
+  },
+  instructionRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   instructionText: {
-    fontSize: 12,
-    color: '#92400e',
+    ...textStyles.bodySmall,
+    color: colors.warning.dark,
     flex: 1,
-    lineHeight: 16,
-  },
-  instructionBold: {
-    fontWeight: '600',
+    lineHeight: 18,
   },
   instructionSubtext: {
-    fontSize: 10,
-    color: '#a16207',
+    ...textStyles.bodySmall,
+    color: colors.warning.dark,
+    opacity: 0.8,
+    marginTop: 2,
   },
-  uploadSection: {
-    margin: 20,
-    gap: 12,
+  instructionBold: {
+    fontWeight: '700',
+  },
+  transactionIdBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary.main + '15',
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.sm,
+    gap: spacing[1],
+  },
+  transactionIdText: {
+    ...textStyles.labelSmall,
+    color: colors.primary.main,
+    fontWeight: '600',
+  },
+  uploadCard: {
+    backgroundColor: colors.neutral.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    marginBottom: spacing[4],
+    ...shadows.sm,
   },
   uploadTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+    marginBottom: spacing[1],
   },
-  errorAlert: {
+  uploadSubtitle: {
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
+    marginBottom: spacing[3],
+  },
+  uploadError: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 12,
+    alignItems: 'center',
+    backgroundColor: colors.error.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing[3],
+    marginBottom: spacing[3],
+    gap: spacing[2],
   },
-  errorAlertContent: {
+  uploadErrorText: {
+    ...textStyles.bodySmall,
+    color: colors.error.main,
     flex: 1,
-    marginLeft: 8,
-  },
-  errorAlertTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#dc2626',
-    marginBottom: 2,
-  },
-  errorAlertText: {
-    fontSize: 12,
-    color: '#dc2626',
-  },
-  dismissButton: {
-    padding: 4,
   },
   uploadButton: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 20,
+    borderColor: colors.border.default,
+    borderRadius: borderRadius.lg,
+    padding: spacing[5],
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.neutral[50],
   },
   uploadButtonSuccess: {
-    borderColor: '#10b981',
-    backgroundColor: '#f0fdf4',
+    borderColor: colors.success.main,
+    backgroundColor: colors.success.background,
   },
-  uploadButtonError: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
+  uploadButtonText: {
+    ...textStyles.titleSmall,
+    color: colors.text.secondary,
+    marginTop: spacing[2],
   },
-  uploadContent: {
-    alignItems: 'center',
-  },
-  uploadText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginTop: 8,
-    fontWeight: '500',
-  },
-  uploadTextSuccess: {
-    color: '#10b981',
-  },
-  uploadTextError: {
-    color: '#ef4444',
+  uploadButtonTextSuccess: {
+    color: colors.success.main,
   },
   uploadFileName: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
+    ...textStyles.bodySmall,
+    color: colors.text.tertiary,
+    marginTop: spacing[1],
+  },
+  bottomContainer: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    backgroundColor: colors.background.secondary,
+  },
+  confirmButton: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+  },
+  confirmButtonDisabled: {
+    opacity: 0.6,
+  },
+  confirmButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[4],
+    gap: spacing[2],
+  },
+  confirmButtonText: {
+    ...textStyles.titleMedium,
+    color: colors.text.inverse,
+    fontWeight: '600',
   },
 })
