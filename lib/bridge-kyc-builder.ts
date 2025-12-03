@@ -308,12 +308,39 @@ export async function buildBridgeCustomerPayloadFromKyc(
   
   // Step 6: Convert documents to base64
   let passportFrontBase64: string | undefined
+  let passportBackBase64: string | undefined
+  let dlFrontBase64: string | undefined
+  let dlBackBase64: string | undefined
   let proofOfAddressBase64: string | undefined
   
   try {
-    // For non-USA: Get passport or ID document
-    if (!isUSA && identitySubmission.id_document_url) {
-      passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+    // For USA: Check for driver's license in metadata (optional)
+    if (isUSA) {
+      if (parsedIdentityMetadata.dlFrontBase64) {
+        dlFrontBase64 = parsedIdentityMetadata.dlFrontBase64
+      } else if (identitySubmission.id_document_url) {
+        // Fallback to uploaded file if not in metadata
+        dlFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+      }
+      
+      if (parsedIdentityMetadata.dlBackBase64) {
+        dlBackBase64 = parsedIdentityMetadata.dlBackBase64
+      }
+    } else {
+      // For non-USA: Get passport from metadata first (already base64), then fallback to file
+      if (parsedIdentityMetadata.passportFrontBase64) {
+        passportFrontBase64 = parsedIdentityMetadata.passportFrontBase64
+        console.log(`[BRIDGE-KYC-BUILDER] Using passport front from metadata`)
+      } else if (identitySubmission.id_document_url) {
+        // Fallback to uploaded file if not in metadata
+        passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+        console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file`)
+      }
+      
+      // Passport back is optional (only front is required)
+      if (parsedIdentityMetadata.passportBackBase64) {
+        passportBackBase64 = parsedIdentityMetadata.passportBackBase64
+      }
     }
     
     // Get proof of address document
@@ -346,8 +373,12 @@ export async function buildBridgeCustomerPayloadFromKyc(
     sourceOfFunds: parsedIdentityMetadata.sourceOfFunds,
     
     // ID documents
+    dlNumber: parsedIdentityMetadata.dlNumber,
+    dlFrontBase64: dlFrontBase64,
+    dlBackBase64: dlBackBase64,
     passportNumber: parsedIdentityMetadata.passportNumber || parsedIdentityMetadata.nationalIdNumber,
     passportFrontBase64: passportFrontBase64,
+    passportBackBase64: passportBackBase64,
     
     // Proof of address (for EEA and international)
     proofOfAddressBase64: proofOfAddressBase64,

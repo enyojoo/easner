@@ -1236,24 +1236,47 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     email,
     first_name: firstName,
     last_name: lastName,
-    date_of_birth: birthDate,
-    address: {
-      line1: address.line1,
-      line2: address.line2 || undefined, // Optional field
-      city: address.city,
-      state: address.state || undefined, // Optional field (not all countries have states)
-      postal_code: address.postalCode,
-      country: address.country,
-    },
+    birth_date: birthDate, // Bridge expects birth_date (not date_of_birth)
     type: 'individual', // Always individual for now
   }
   
-  // Remove undefined fields from address to avoid sending null/undefined
-  Object.keys(payload.address).forEach(key => {
-    if (payload.address[key] === undefined) {
-      delete payload.address[key]
+  // Build residential_address (Bridge expects this structure)
+  // Country should be ISO 3166-1 alpha-3 (e.g., "USA", "GBR")
+  // If we receive alpha-2, we need to convert it
+  let countryCode = address.country
+  if (countryCode && countryCode.length === 2) {
+    // Convert alpha-2 to alpha-3
+    const alpha2ToAlpha3: Record<string, string> = {
+      'US': 'USA', 'GB': 'GBR', 'CA': 'CAN', 'AU': 'AUS', 'NG': 'NGA',
+      'KE': 'KEN', 'GH': 'GHA', 'ZA': 'ZAF', 'IN': 'IND', 'PK': 'PAK',
+      // Add more as needed
     }
-  })
+    countryCode = alpha2ToAlpha3[countryCode.toUpperCase()] || countryCode.toUpperCase()
+  }
+  
+  const residentialAddress: any = {
+    street_line_1: address.line1,
+    city: address.city,
+    postal_code: address.postalCode,
+    country: countryCode, // ISO 3166-1 alpha-3 code
+  }
+  
+  // Add optional fields
+  if (address.line2) {
+    residentialAddress.street_line_2 = address.line2
+  }
+  if (address.state) {
+    // Bridge expects subdivision as ISO 3166-2 code without country prefix
+    // e.g., "CA" for California, not "US-CA"
+    // Remove country prefix if present
+    let subdivision = address.state
+    if (subdivision.includes('-')) {
+      subdivision = subdivision.split('-').pop() || subdivision
+    }
+    residentialAddress.subdivision = subdivision
+  }
+  
+  payload.residential_address = residentialAddress
   
   // Add signed_agreement_id if provided
   // This must be a real signed_agreement_id from Bridge's TOS flow
@@ -1269,12 +1292,8 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     console.warn(`[BRIDGE-SERVICE] WARNING: No signed_agreement_id provided. Customer creation may fail if TOS is required.`)
   }
 
-  // US-specific fields - tax_identification_number (SSN)
-  if (ssn) {
-    payload.tax_identification_number = ssn
-    // Also include ssn for backward compatibility
-    payload.ssn = ssn
-  }
+  // Note: SSN is now included in identifying_information array (see below)
+  // tax_identification_number may still be needed for some cases, but SSN goes in identifying_information
   
   // Phone number (standard customer field)
   if (phone) {
@@ -1292,46 +1311,102 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     payload.account_purpose = accountPurpose
   }
   if (sourceOfFunds) {
-    payload.source_of_funds = sourceOfFunds
+    // Map source_of_funds values to Bridge's expected format
+    // Bridge API may have specific valid values - if value is not recognized, skip the field
+    const sourceOfFundsMapping: Record<string, string> = {
+      'salary': 'salary',
+      'business_income': 'business', // Bridge expects 'business' not 'business_income'
+      'investments': 'investment', // Bridge expects 'investment' (singular) not 'investments'
+      'inheritance': 'inheritance',
+      'gift': 'gift',
+      'savings': 'savings',
+      'other': 'other',
+    }
+    const normalizedValue = sourceOfFunds.toLowerCase().trim()
+    const mappedValue = sourceOfFundsMapping[normalizedValue]
+    if (mappedValue) {
+      payload.source_of_funds = mappedValue
+      console.log(`[BRIDGE-SERVICE] Mapped source_of_funds from '${sourceOfFunds}' to '${mappedValue}'`)
+    } else {
+      // If value is not in our mapping, skip the field to avoid Bridge API errors
+      console.warn(`[BRIDGE-SERVICE] Unknown or invalid source_of_funds value: '${sourceOfFunds}'. Skipping field to avoid API error.`)
+    }
   }
   
-  // KYC Documents - Bridge requires drivers_license and passport objects directly
-  console.log(`[BRIDGE-SERVICE] Including KYC documents in payload`)
+  // Identifying Information Array - Bridge requires this format
+  console.log(`[BRIDGE-SERVICE] Building identifying_information array`)
   
-  // Driver's license (US) - add as drivers_license object
-  if (dlNumber && dlFrontBase64) {
-    payload.drivers_license = {
-      number: dlNumber,
-      front: dlFrontBase64,
+  const identifyingInformation: any[] = []
+  
+  // For US residents: SSN and optional driver's license
+  const isUSA = countryCode === 'USA' || countryCode === 'US'
+  
+  if (isUSA) {
+    // SSN (required for US)
+    if (ssn) {
+      // Remove dashes and format
+      const ssnNumber = ssn.replace(/-/g, '')
+      identifyingInformation.push({
+        type: 'ssn',
+        issuing_country: 'usa', // Bridge expects lowercase for issuing_country
+        number: ssnNumber,
+      })
+      console.log(`[BRIDGE-SERVICE] Added SSN to identifying_information`)
     }
-    if (dlBackBase64) {
-      payload.drivers_license.back = dlBackBase64
+    
+    // Driver's License (optional for US)
+    if (dlNumber && dlFrontBase64 && dlBackBase64) {
+      // Ensure base64 strings have the data URI prefix
+      const frontImage = dlFrontBase64.startsWith('data:') ? dlFrontBase64 : `data:image/jpg;base64,${dlFrontBase64}`
+      const backImage = dlBackBase64.startsWith('data:') ? dlBackBase64 : `data:image/jpg;base64,${dlBackBase64}`
+      
+      identifyingInformation.push({
+        type: 'drivers_license',
+        issuing_country: 'usa', // Bridge expects lowercase for issuing_country
+        number: dlNumber,
+        image_front: frontImage,
+        image_back: backImage,
+      })
+      console.log(`[BRIDGE-SERVICE] Added driver's license to identifying_information`)
     }
-    console.log(`[BRIDGE-SERVICE] Added driver's license to payload`)
+  } else {
+    // For non-US residents: Passport or National ID
+    if (passportNumber && passportFrontBase64) {
+      // Bridge expects issuing_country as alpha-3 code in lowercase (e.g., "gbr", "can")
+      const issuingCountry = countryCode.toLowerCase()
+      
+      // Ensure base64 string has the data URI prefix
+      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
+      
+      identifyingInformation.push({
+        type: 'passport',
+        issuing_country: issuingCountry, // Bridge expects lowercase alpha-3 for issuing_country
+        number: passportNumber,
+        image_front: frontImage, // Passport only needs front
+      })
+      console.log(`[BRIDGE-SERVICE] Added passport to identifying_information`)
+    }
+    // Note: National ID can be added here if needed in the future
   }
   
-  // Passport (non-US) - add as passport object
-  if (passportNumber && passportFrontBase64) {
-    payload.passport = {
-      number: passportNumber,
-      front: passportFrontBase64,
-    }
-    if (passportBackBase64) {
-      payload.passport.back = passportBackBase64
-    }
-    console.log(`[BRIDGE-SERVICE] Added passport to payload`)
-  }
-  
-  if (!payload.drivers_license && !payload.passport) {
-    console.warn(`[BRIDGE-SERVICE] WARNING: No ID documents provided. Customer creation may fail if ID documents are required.`)
+  // Add identifying_information array to payload
+  if (identifyingInformation.length > 0) {
+    payload.identifying_information = identifyingInformation
+    console.log(`[BRIDGE-SERVICE] Added ${identifyingInformation.length} items to identifying_information array`)
+  } else {
+    console.warn(`[BRIDGE-SERVICE] WARNING: No identifying_information provided. Customer creation may fail if ID documents are required.`)
   }
 
-  // Proof of address (separate field, not in identifying_information)
+  // Documents - Proof of address (Bridge expects this format)
   if (proofOfAddressBase64) {
-    payload.proof_of_address = {
-      image: proofOfAddressBase64,
-    }
-    console.log(`[BRIDGE-SERVICE] Added proof_of_address to payload`)
+    // Ensure base64 string has the data URI prefix
+    const addressImage = proofOfAddressBase64.startsWith('data:') ? proofOfAddressBase64 : `data:image/jpg;base64,${proofOfAddressBase64}`
+    
+    payload.documents = [{
+      purposes: ['proof_of_address'],
+      file: addressImage,
+    }]
+    console.log(`[BRIDGE-SERVICE] Added proof_of_address document to payload`)
   }
 
   // Request endorsements (for USD/EUR virtual accounts)
@@ -1348,25 +1423,18 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
 
   // Log final payload structure (without base64 images to avoid log spam)
   const payloadForLogging = { ...payload }
-  if (payloadForLogging.drivers_license) {
-    payloadForLogging.drivers_license = {
-      ...payloadForLogging.drivers_license,
-      front: payloadForLogging.drivers_license.front ? '[BASE64_IMAGE]' : undefined,
-      back: payloadForLogging.drivers_license.back ? '[BASE64_IMAGE]' : undefined,
-    }
+  if (payloadForLogging.identifying_information) {
+    payloadForLogging.identifying_information = payloadForLogging.identifying_information.map((item: any) => ({
+      ...item,
+      image_front: item.image_front ? '[BASE64_IMAGE]' : undefined,
+      image_back: item.image_back ? '[BASE64_IMAGE]' : undefined,
+    }))
   }
-  if (payloadForLogging.passport) {
-    payloadForLogging.passport = {
-      ...payloadForLogging.passport,
-      front: payloadForLogging.passport.front ? '[BASE64_IMAGE]' : undefined,
-      back: payloadForLogging.passport.back ? '[BASE64_IMAGE]' : undefined,
-    }
-  }
-  if (payloadForLogging.proof_of_address) {
-    payloadForLogging.proof_of_address = {
-      ...payloadForLogging.proof_of_address,
-      image: payloadForLogging.proof_of_address.image ? '[BASE64_IMAGE]' : undefined,
-    }
+  if (payloadForLogging.documents) {
+    payloadForLogging.documents = payloadForLogging.documents.map((doc: any) => ({
+      ...doc,
+      file: doc.file ? '[BASE64_IMAGE]' : undefined,
+    }))
   }
   
   console.log(`[BRIDGE-SERVICE] Final payload:`, JSON.stringify(payloadForLogging, null, 2))
