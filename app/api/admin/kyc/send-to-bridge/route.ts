@@ -12,13 +12,22 @@ import { createServerClient } from "@/lib/supabase"
  */
 export async function POST(request: NextRequest) {
   try {
+    // Log request details for debugging
+    const authHeader = request.headers.get("authorization")
+    const cookies = request.cookies.getAll()
+    console.log("[SEND-TO-BRIDGE] Request received")
+    console.log("[SEND-TO-BRIDGE] Auth header present:", !!authHeader)
+    console.log("[SEND-TO-BRIDGE] Cookies count:", cookies.length)
+    console.log("[SEND-TO-BRIDGE] Cookie names:", cookies.map(c => c.name))
+    
     // Check admin authentication
     let adminUser
     try {
       adminUser = await requireAdmin(request)
-      console.log("Admin authenticated:", adminUser.email)
+      console.log("[SEND-TO-BRIDGE] Admin authenticated:", adminUser.email)
     } catch (authError: any) {
-      console.error("Admin authentication failed:", authError?.message)
+      console.error("[SEND-TO-BRIDGE] Admin authentication failed:", authError?.message)
+      console.error("[SEND-TO-BRIDGE] Auth error stack:", authError?.stack)
       return NextResponse.json({ 
         error: "Authentication failed",
         message: authError?.message || "Admin access required"

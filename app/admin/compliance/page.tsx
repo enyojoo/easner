@@ -360,11 +360,18 @@ export default function AdminCompliancePage() {
     try {
       setSendingToBridge(userId)
       
+      // Get access token from Supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
       const response = await fetch("/api/admin/kyc/send-to-bridge", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ userId }),
         credentials: "include",
       })
