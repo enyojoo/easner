@@ -863,10 +863,9 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             ]}
           >
             {/* Info Message */}
-            {/* Only show if both are not completed AND neither is in review */}
+            {/* Only show if both are not completed AND both are not in review */}
             {!bothCompleted && 
-             identitySubmission?.status !== 'in_review' && 
-             addressSubmission?.status !== 'in_review' && (
+             !(identitySubmission?.status === 'in_review' && addressSubmission?.status === 'in_review') && (
               <View style={styles.infoCard}>
                 <View style={styles.infoBox}>
                   <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />
@@ -983,14 +982,12 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                 </View>
               </TouchableOpacity>
 
-              {/* Bridge TOS Acceptance Card - Show when both identity and address are submitted */}
-              {bothSubmitted && (
+              {/* Bridge TOS Acceptance Card - Show only when TOS needs to be accepted */}
+              {bothSubmitted && !tosSigned && (
                 <TouchableOpacity
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                    if (tosSigned) {
-                      Alert.alert('Terms Accepted', 'You have already accepted the partner terms of service.')
-                    } else if (!tosLink) {
+                    if (!tosLink) {
                       // TOS link not loaded yet - try to generate it
                       console.log('TOS link not available, attempting to generate...')
                       try {
@@ -1024,7 +1021,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                           <ActivityIndicator size="small" color={colors.primary.main} />
                         ) : (
                           <>
-                            {getStatusBadge(tosSigned ? 'approved' : 'pending')}
+                            {getStatusBadge('pending')}
                             <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                           </>
                         )}
