@@ -1202,13 +1202,15 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
     code = code.split('-').pop() || code
   }
   
-  // If already looks like a code (2-3 uppercase letters), return as-is
-  if (/^[A-Z]{2,3}$/.test(code)) {
+  // First, normalize to lowercase for comparison
+  const normalized = code.toLowerCase().trim()
+  
+  // CRITICAL: Always uppercase 2-3 letter codes immediately
+  // Bridge requires uppercase ISO 3166-2 codes (e.g., "LA" not "La", "CA" not "ca")
+  // This handles cases like "La" -> "LA", "ca" -> "CA", etc. for ALL countries
+  if (code.length >= 2 && code.length <= 3 && /^[A-Za-z]+$/.test(code)) {
     return code.toUpperCase()
   }
-  
-  // Country-specific normalization
-  const normalized = code.toLowerCase().trim()
   
   // For USA, convert state names to codes
   if (countryCode === 'USA' || countryCode === 'US') {
@@ -1335,6 +1337,7 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
   
   // For other countries, try to normalize if it looks like a code
   // If it's 2-3 characters and all letters, uppercase it
+  // This handles cases like "La" -> "LA", "ca" -> "CA", etc.
   if (code.length >= 2 && code.length <= 3 && /^[A-Za-z]+$/.test(code)) {
     return code.toUpperCase()
   }
