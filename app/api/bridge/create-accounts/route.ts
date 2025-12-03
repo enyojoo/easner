@@ -479,7 +479,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           })
           results.errors.push(`Wallet creation failed: ${error.message}`)
         }
-      }
     } else {
       console.log(`[CREATE-ACCOUNTS] Wallet already exists: ${userProfile.bridge_wallet_id}`)
       results.walletId = userProfile.bridge_wallet_id
@@ -636,50 +635,57 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
                 // In production, Bridge should process the customer automatically
                 if (customer.status === "not_started" && (baseEndorsement?.status === "incomplete" || sepaEndorsement?.status === "incomplete")) {
                   console.warn(`[CREATE-ACCOUNTS] Customer status still "not_started" after update. Bridge may need more time to process the customer.`)
-                      userProfile.bridge_signed_agreement_id!,
-                      true, // needsUSD
-                      true, // needsEUR
-                      supabase
-                    )
-                    
-                    const { initializeBridgeAccount } = await import("@/lib/bridge-onboarding-service")
-                    const result = await initializeBridgeAccount({
-                      userId: user.id,
-                      email: userProfile.email || user.email || '',
-                      customerPayload,
-                      needsUSD: true,
-                      needsEUR: true,
-                    })
-                    
-                    bridgeCustomerId = result.customerId
-                    console.log(`[CREATE-ACCOUNTS] Recreated customer with all fields: ${bridgeCustomerId}`)
-                    
-                    // Refresh customer data
-                    customer = await bridgeService.getCustomer(bridgeCustomerId)
-                    baseEndorsement = customer.endorsements?.find((e: any) => e.name === "base")
-                    sepaEndorsement = customer.endorsements?.find((e: any) => e.name === "sepa")
-                    
-                    console.log(`[CREATE-ACCOUNTS] After recreation - Status: ${customer.status}, Base endorsement: ${baseEndorsement?.status}, SEPA endorsement: ${sepaEndorsement?.status}`)
-                    
-                    // Update userProfile with new customer ID
-                    userProfile.bridge_customer_id = bridgeCustomerId
-                  } catch (recreateError: any) {
-                    console.error(`[CREATE-ACCOUNTS] Error recreating customer:`, recreateError.message)
-                    console.error(`[CREATE-ACCOUNTS] Recreation error stack:`, recreateError.stack)
-                    // Continue with existing customer - may still work
-                  }
-                } else {
-                  console.log(`[CREATE-ACCOUNTS] Customer status is not "not_started" or endorsements are approved - no recreation needed`)
+                }
+              }
+              
+              // Continue with account creation if customer is ready
+              if (customer.status !== "not_started" || baseEndorsement?.status === "approved" || sepaEndorsement?.status === "approved") {
+                try {
+                  const { buildBridgeCustomerPayloadFromKyc } = await import("@/lib/bridge-kyc-builder")
+                  const customerPayload = await buildBridgeCustomerPayloadFromKyc(
+                    user.id,
+                    userProfile.bridge_signed_agreement_id!,
+                    true, // needsUSD
+                    true, // needsEUR
+                    supabase
+                  )
+                      
+                  const { initializeBridgeAccount } = await import("@/lib/bridge-onboarding-service")
+                  const result = await initializeBridgeAccount({
+                    userId: user.id,
+                    email: userProfile.email || user.email || '',
+                    customerPayload,
+                    needsUSD: true,
+                    needsEUR: true,
+                  })
+                      
+                  bridgeCustomerId = result.customerId
+                  console.log(`[CREATE-ACCOUNTS] Recreated customer with all fields: ${bridgeCustomerId}`)
+                  
+                  // Refresh customer data
+                  customer = await bridgeService.getCustomer(bridgeCustomerId)
+                  baseEndorsement = customer.endorsements?.find((e: any) => e.name === "base")
+                  sepaEndorsement = customer.endorsements?.find((e: any) => e.name === "sepa")
+                  
+                  console.log(`[CREATE-ACCOUNTS] After recreation - Status: ${customer.status}, Base endorsement: ${baseEndorsement?.status}, SEPA endorsement: ${sepaEndorsement?.status}`)
+                  
+                  // Update userProfile with new customer ID
+                  userProfile.bridge_customer_id = bridgeCustomerId
+                } catch (recreateError: any) {
+                  console.error(`[CREATE-ACCOUNTS] Error recreating customer:`, recreateError.message)
+                  console.error(`[CREATE-ACCOUNTS] Recreation error stack:`, recreateError.stack)
+                  // Continue with existing customer - may still work
                 }
               } else {
-                console.log(`[CREATE-ACCOUNTS] No missing fields to update - customer already has all required fields`)
+                console.log(`[CREATE-ACCOUNTS] Customer status is not "not_started" or endorsements are approved - no recreation needed`)
               }
+            } else {
+              console.log(`[CREATE-ACCOUNTS] No missing fields to update - customer already has all required fields`)
             }
           } catch (updateError: any) {
             console.warn(`[CREATE-ACCOUNTS] Failed to update customer with missing fields (non-critical):`, updateError.message)
             // Continue with virtual account creation attempt
           }
-        }
         
         // Poll for endorsement approval if not already approved
         const shouldCreateUSD = !userProfile.bridge_usd_virtual_account_id
@@ -724,51 +730,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
               // Log missing requirements - Bridge needs these to approve endorsements
               console.warn(`[CREATE-ACCOUNTS] Base endorsement not approved. Missing requirements: ${missingRequirements.join(', ')}`)
               console.warn(`[CREATE-ACCOUNTS] Customer may need to wait for Bridge to process KYC approval before endorsements can be approved.`)
-                      email: userProfile.email || user.email || '',
-                      customerPayload,
-                      needsUSD: true,
-                      needsEUR: false,
-                    })
-                    
-                    bridgeCustomerId = result.customerId
-                    console.log(`[CREATE-ACCOUNTS] Recreated customer with signed_agreement_id: ${bridgeCustomerId}`)
-                    
-                    // Refresh customer data
-                    customer = await bridgeService.getCustomer(bridgeCustomerId)
-                    baseEndorsement = customer.endorsements?.find((e: any) => e.name === "base")
-                    
-                    if (baseEndorsement?.status === "approved") {
-                      console.log(`[CREATE-ACCOUNTS] ✅ Base endorsement approved after recreating customer!`)
-                      endorsementApproved = true
-                    } else {
-                      console.warn(`[CREATE-ACCOUNTS] Base endorsement still not approved after recreation: ${baseEndorsement?.status}`)
-                      results.errors.push(
-                        `USD account creation failed: Base endorsement not approved even after recreating customer (status: ${baseEndorsement?.status || 'not found'}). ` +
-                        `Please check Bridge dashboard or contact support.`
-                      )
-                    }
-                  } else {
-                    results.errors.push(
-                      `USD account creation failed: Cannot recreate customer - KYC verification must be approved.`
-                    )
-                  }
-                } catch (recreateError: any) {
-                console.error(`[CREATE-ACCOUNTS] Error recreating customer:`, recreateError.message)
-                results.errors.push(
-                  `USD account creation failed: Base endorsement not approved (status: ${baseEndorsement?.status || 'not found'}). ` +
-                  `Attempted to recreate customer but failed: ${recreateError.message}. ` +
-                  `Please try again or contact support.`
-                )
-              }
-            } else {
+              
+              // Skip USD account creation - endorsement not approved
               results.errors.push(
                 `USD account creation failed: Base endorsement not approved (status: ${baseEndorsement?.status || 'not found'}). ` +
                 `Missing requirements: ${missingRequirements.join(', ')}. ` +
                 `Please wait a moment and try again, or check Bridge dashboard.`
               )
             }
-          }
-          }
         }
         
         if (shouldCreateEUR && sepaEndorsement?.status !== "approved") {

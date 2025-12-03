@@ -35,11 +35,6 @@ function TransactionStatusPage() {
     payments: any[]
     latestPayment: any | null
   } | null>(null)
-  const [paymentInfo, setPaymentInfo] = useState<{
-    hasPayment: boolean
-    payments: any[]
-    latestPayment: any | null
-  } | null>(null)
   const [loadingPayment, setLoadingPayment] = useState(false)
 
   // Load payment methods
