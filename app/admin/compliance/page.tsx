@@ -793,16 +793,22 @@ export default function AdminCompliancePage() {
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-semibold mb-4">Bridge Integration</h3>
                     <div className="space-y-3">
-                      {selectedUser.bridge_customer_id && (
+                      {selectedUser.bridge_customer_id ? (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-green-600 font-medium">
-                              ✓ Bridge Customer ID: {selectedUser.bridge_customer_id.slice(0, 8)}...
+                            <Badge className="bg-green-100 text-green-700">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Sent to Bridge
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-gray-600">
+                              Bridge Customer ID: {selectedUser.bridge_customer_id.slice(0, 8)}...
                             </p>
                           </div>
                           {selectedUser.bridge_kyc_status && (
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600">Status:</span>
+                              <span className="text-sm text-gray-600">KYC Status:</span>
                               {getBridgeKycStatusBadge(selectedUser.bridge_kyc_status)}
                             </div>
                           )}
@@ -819,9 +825,20 @@ export default function AdminCompliancePage() {
                             </div>
                           )}
                         </div>
-                      )}
-                      {!selectedUser.bridge_customer_id && !canSendToBridge(selectedUser) && (
+                      ) : canSendToBridge(selectedUser) ? (
                         <div className="space-y-2">
+                          <Badge className="bg-gray-100 text-gray-700">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Ready to Send
+                          </Badge>
+                          <p className="text-sm text-gray-600">All requirements met. Click "Send to Bridge" button above.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Badge className="bg-gray-100 text-gray-700">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Not Sent
+                          </Badge>
                           {!selectedUser.identitySubmission && (
                             <p className="text-sm text-gray-600">⚠ Identity verification required</p>
                           )}
