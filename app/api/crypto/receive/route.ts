@@ -19,23 +19,6 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   return NextResponse.json({ transactions })
 })
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
-  const user = await requireUser(request)
-  const { walletId } = await request.json()
-
-  if (!walletId) {
-    return createErrorResponse("walletId is required", 400)
-  }
-
-  // Manually trigger transaction check (for admin/testing)
-  // This would typically be done by a background job
-  try {
-    const { stellarMonitorService } = await import("@/lib/stellar-monitor-service")
-    await stellarMonitorService.checkWalletForTransactions(walletId)
-    return NextResponse.json({ success: true, message: "Transaction check triggered" })
-  } catch (error: any) {
-    console.error("Error checking transactions:", error)
-    return createErrorResponse(`Failed to check transactions: ${error.message}`, 500)
-  }
-})
+// POST endpoint removed - Stellar monitoring is no longer used
+// Bridge handles transaction monitoring via webhooks
 

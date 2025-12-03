@@ -2,6 +2,7 @@
 // Matches incoming Bridge payments to transactions and updates transaction status
 
 import { supabase } from "./supabase"
+import { createServerClient } from "./supabase"
 
 export interface BridgePayment {
   id: string
@@ -41,7 +42,10 @@ export async function storeBridgePayment(
     currency,
   })
 
-  const { data, error } = await supabase
+  // Use server client to bypass RLS for webhook operations
+  const serverClient = createServerClient()
+  
+  const { data, error } = await serverClient
     .from("bridge_payments")
     .insert({
       user_id: userId,
@@ -102,7 +106,10 @@ export async function matchPaymentToTransaction(
 
       if (amountMatch && currencyMatch) {
         // Match found! Update payment and transaction
-        await supabase
+        // Use server client to bypass RLS for payment matching operations
+        const serverClient = createServerClient()
+        
+        await serverClient
           .from("bridge_payments")
           .update({
             transaction_id: transaction.id,
@@ -113,7 +120,7 @@ export async function matchPaymentToTransaction(
           .eq("id", paymentId)
 
         // Update transaction status to processing (payment received, now processing)
-        await supabase
+        await serverClient
           .from("transactions")
           .update({
             status: "processing",
@@ -147,7 +154,10 @@ export async function matchPaymentToTransaction(
       const amountMatch = Math.abs(parseFloat(transaction.total_amount.toString()) - amount) < 0.01
       if (amountMatch) {
         // Potential match - update payment and transaction
-        await supabase
+        // Use server client to bypass RLS for payment matching operations
+        const serverClient = createServerClient()
+        
+        await serverClient
           .from("bridge_payments")
           .update({
             transaction_id: transaction.id,
@@ -157,7 +167,7 @@ export async function matchPaymentToTransaction(
           })
           .eq("id", paymentId)
 
-        await supabase
+        await serverClient
           .from("transactions")
           .update({
             status: "processing",

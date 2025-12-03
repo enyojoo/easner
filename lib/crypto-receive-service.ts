@@ -11,7 +11,7 @@ interface CreateReceiveAddressParams {
   userFirstName?: string
   userLastName?: string
   destinationType: "bank" | "card"
-  chain: string // e.g., "ethereum", "stellar"
+  chain: string // e.g., "ethereum"
   currency: string // e.g., "usdc", "eurc"
   // For bank payouts
   recipientId?: string
@@ -31,7 +31,7 @@ interface CreateReceiveAddressParams {
 interface ReceiveAddressResult {
   addressId: string
   blockchainAddress: string
-  blockchainMemo?: string // For Stellar
+  blockchainMemo?: string // For memo-based blockchains
   bridgeCustomerId: string
   destinationType: "bank" | "card"
   // Bank-specific
@@ -101,7 +101,7 @@ export const cryptoReceiveService = {
       return {
         addressId: liquidationAddress.id,
         blockchainAddress: liquidationAddress.address,
-        blockchainMemo: liquidationAddress.blockchain_memo, // For Stellar
+        blockchainMemo: liquidationAddress.blockchain_memo,
         bridgeCustomerId: bridgeCustomer.id,
         destinationType: "bank",
         liquidationAddressId: liquidationAddress.id,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser } from "@/lib/auth-utils"
 import { kycService } from "@/lib/kyc-service"
-import { supabase } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 
 // GET - Get all KYC submissions (admin only)
 export async function GET(request: NextRequest) {
@@ -11,14 +11,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
+    // Check if user is admin using admin_users table
+    const serverClient = createServerClient()
+    const { data: adminUser } = await serverClient
+      .from("admin_users")
+      .select("id")
       .eq("id", user.id)
       .single()
 
-    if (profile?.role !== "admin") {
+    if (!adminUser) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
@@ -42,14 +43,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
+    // Check if user is admin using admin_users table
+    const serverClient = createServerClient()
+    const { data: adminUser } = await serverClient
+      .from("admin_users")
+      .select("id")
       .eq("id", user.id)
       .single()
 
-    if (profile?.role !== "admin") {
+    if (!adminUser) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 

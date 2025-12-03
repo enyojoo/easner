@@ -17,14 +17,15 @@ export async function GET(
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
+    // Check if user is admin using admin_users table
+    const serverClient = createServerClient()
+    const { data: adminUser } = await serverClient
+      .from("admin_users")
+      .select("id")
       .eq("id", user.id)
       .single()
 
-    if (profile?.role !== "admin") {
+    if (!adminUser) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
 
@@ -36,8 +37,7 @@ export async function GET(
       )
     }
 
-    // Use server client to bypass RLS
-    const serverClient = createServerClient()
+    // Server client already created above
 
     // Get user data
     const { data: userData, error: userError } = await serverClient

@@ -195,11 +195,6 @@ interface CryptoWallet {
   }
 }
 
-interface SupportedCrypto {
-  code: string
-  name: string
-  blockchain: string
-}
 
 export default function ReceiveMoneyPage() {
   const router = useRouter()
@@ -221,22 +216,7 @@ export default function ReceiveMoneyPage() {
     }
   }
 
-  const getInitialCryptos = (): SupportedCrypto[] | null => {
-    try {
-      const cached = localStorage.getItem("easner_supported_cryptos")
-      if (!cached) return null
-      const { value, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp < 5 * 60 * 1000) {
-        return value
-      }
-      return null
-    } catch {
-      return null
-    }
-  }
-
   const [wallets, setWallets] = useState<CryptoWallet[]>(() => getInitialWallets() || [])
-  const [supportedCryptos, setSupportedCryptos] = useState<SupportedCrypto[]>(() => getInitialCryptos() || [])
   const [loading, setLoading] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState<CryptoWallet | null>(null)
   const [showQR, setShowQR] = useState<string | null>(null)
@@ -276,7 +256,6 @@ export default function ReceiveMoneyPage() {
     if (!userProfile?.id) return
 
     const CACHE_KEY_WALLETS = `easner_crypto_wallets_${userProfile.id}`
-    const CACHE_KEY_CRYPTOS = "easner_supported_cryptos"
     const CACHE_TTL = 5 * 60 * 1000
 
     const getCachedWallets = (): CryptoWallet[] | null => {
@@ -294,21 +273,6 @@ export default function ReceiveMoneyPage() {
       }
     }
 
-    const getCachedCryptos = (): SupportedCrypto[] | null => {
-      try {
-        const cached = localStorage.getItem(CACHE_KEY_CRYPTOS)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        localStorage.removeItem(CACHE_KEY_CRYPTOS)
-        return null
-      } catch {
-        return null
-      }
-    }
-
     const setCachedWallets = (value: CryptoWallet[]) => {
       try {
         localStorage.setItem(CACHE_KEY_WALLETS, JSON.stringify({
@@ -318,66 +282,33 @@ export default function ReceiveMoneyPage() {
       } catch {}
     }
 
-    const setCachedCryptos = (value: SupportedCrypto[]) => {
-      try {
-        localStorage.setItem(CACHE_KEY_CRYPTOS, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
     // Data is already loaded from cache in initial state
     // Only fetch if cache is missing or expired
     const cachedWallets = getCachedWallets()
-    const cachedCryptos = getCachedCryptos()
 
     // Update state if cache exists and state is empty (only on first mount)
     if (cachedWallets !== null && wallets.length === 0) {
       setWallets(cachedWallets)
     }
-    if (cachedCryptos !== null && supportedCryptos.length === 0) {
-      setSupportedCryptos(cachedCryptos)
-    }
 
-    // If both are cached and valid, no need to fetch
-    if (cachedWallets !== null && cachedCryptos !== null) {
+    // If cached and valid, no need to fetch
+    if (cachedWallets !== null) {
       return
     }
 
     // Only fetch missing or expired data
     const fetchData = async () => {
-      // Only show loading if we don't have any cached data
-      if (cachedWallets === null && cachedCryptos === null) {
+      // Only show loading if we don't have cached data
+      if (cachedWallets === null) {
         setLoading(true)
       }
       try {
-        const promises: Promise<any>[] = []
-        
-        if (cachedWallets === null) {
-          promises.push(fetch("/api/crypto/wallets").then(res => res.ok ? res.json() : null))
-        } else {
-          promises.push(Promise.resolve(null))
-        }
-
-        if (cachedCryptos === null) {
-          promises.push(fetch("/api/crypto/supported").then(res => res.ok ? res.json() : null))
-        } else {
-          promises.push(Promise.resolve(null))
-        }
-
-        const [walletsData, cryptosData] = await Promise.all(promises)
+        const walletsData = await fetch("/api/crypto/wallets").then(res => res.ok ? res.json() : null)
 
         if (walletsData) {
           const walletsList = walletsData.wallets || []
           setWallets(walletsList)
           setCachedWallets(walletsList)
-        }
-
-        if (cryptosData) {
-          const cryptosList = cryptosData.cryptocurrencies || []
-          setSupportedCryptos(cryptosList)
-          setCachedCryptos(cryptosList)
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -528,7 +459,7 @@ export default function ReceiveMoneyPage() {
   )
 
   // Show loading only if we have no cached data
-  if (wallets.length === 0 && supportedCryptos.length === 0 && !loading) {
+  if (wallets.length === 0 && !loading) {
     return (
       <UserDashboardLayout>
         <div className="p-5 sm:p-6">
@@ -762,22 +693,8 @@ export default function ReceiveMoneyPage() {
                           <label className="text-sm font-semibold text-gray-700 mb-3 block">
                             Choose Stablecoin
                           </label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {supportedCryptos.map((crypto) => (
-                              <button
-                                key={crypto.code}
-                                onClick={() => setSelectedCrypto(crypto.code)}
-                                className={`p-4 rounded-xl border-2 transition-all text-left ${
-                                  selectedCrypto === crypto.code
-                                    ? 'border-easner-primary bg-easner-primary/5 shadow-md'
-                                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                                }`}
-                              >
-                                <div className="text-2xl mb-2">💎</div>
-                                <div className="font-semibold text-gray-900">{crypto.code}</div>
-                                <div className="text-xs text-gray-600">{crypto.name}</div>
-                              </button>
-                            ))}
+                          <div className="text-center py-8 text-gray-500">
+                            <p>Cryptocurrency selection is not available</p>
                           </div>
                         </div>
                       </div>

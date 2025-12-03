@@ -1011,40 +1011,9 @@ export const settingsService = {
 }
 
 // Crypto Wallet operations
+// Note: The Stellar-specific create() method has been removed
+// Only createBridgeAddress() is used for Bridge addresses
 export const cryptoWalletService = {
-  async create(
-    userId: string,
-    cryptoCurrency: string,
-    fiatCurrency: string,
-    recipientId: string,
-    stellarAccountId: string,
-    encryptedSecretKey: string,
-    xlmReserve: number = 0,
-    usdcTrustlineEstablished: boolean = false,
-  ) {
-    const serverClient = createServerClient()
-
-    const { data, error } = await serverClient
-      .from("crypto_wallets")
-      .insert({
-        user_id: userId,
-        crypto_currency: cryptoCurrency,
-        blockchain: "stellar",
-        stellar_account_id: stellarAccountId,
-        stellar_secret_key_encrypted: encryptedSecretKey,
-        wallet_address: stellarAccountId,
-        fiat_currency: fiatCurrency,
-        recipient_id: recipientId,
-        xlm_reserve: xlmReserve,
-        usdc_trustline_established: usdcTrustlineEstablished,
-        status: "active",
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
 
   async getByUserAndCurrency(
     userId: string,
@@ -1236,7 +1205,7 @@ export const cryptoReceiveTransactionService = {
     const insertData: any = {
       transaction_id: transactionId,
       blockchain_tx_hash: blockchainTxHash,
-      stellar_transaction_hash: blockchainTxHash, // Keep for backward compatibility
+      // Removed stellar_transaction_hash - using blockchain_tx_hash for all chains
       user_id: userId,
       crypto_wallet_id: walletId || null, // Make nullable for Bridge
       crypto_amount: cryptoAmount,
@@ -1369,7 +1338,7 @@ export const cryptoReceiveTransactionService = {
 
     if (filters.search) {
       query = query.or(
-        `transaction_id.ilike.%${filters.search}%,stellar_transaction_hash.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`,
+        `transaction_id.ilike.%${filters.search}%,blockchain_tx_hash.ilike.%${filters.search}%,user.email.ilike.%${filters.search}%`,
       )
     }
 
@@ -1382,73 +1351,3 @@ export const cryptoReceiveTransactionService = {
   },
 }
 
-// Supported Cryptocurrencies operations
-export const supportedCryptocurrencyService = {
-  async getAll() {
-    const { data, error } = await supabase
-      .from("supported_cryptocurrencies")
-      .select("*")
-      .eq("status", "active")
-      .order("code")
-
-    if (error) throw error
-    return data || []
-  },
-
-  async getByCode(code: string) {
-    const { data, error } = await supabase
-      .from("supported_cryptocurrencies")
-      .select("*")
-      .eq("code", code)
-      .eq("status", "active")
-      .single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  },
-
-  async create(cryptoData: {
-    code: string
-    name: string
-    blockchain: string
-    is_stablecoin: boolean
-    stellar_asset_code: string
-    stellar_asset_issuer: string
-    icon_url?: string
-  }) {
-    const serverClient = createServerClient()
-
-    const { data, error } = await serverClient
-      .from("supported_cryptocurrencies")
-      .insert({
-        ...cryptoData,
-        status: "active",
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  async update(id: string, updates: {
-    name?: string
-    status?: string
-    icon_url?: string
-  }) {
-    const serverClient = createServerClient()
-
-    const { data, error } = await serverClient
-      .from("supported_cryptocurrencies")
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-}
