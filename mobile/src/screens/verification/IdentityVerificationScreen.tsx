@@ -65,7 +65,8 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
   const [sourceOfFunds, setSourceOfFunds] = useState('')
   const [passportNumber, setPassportNumber] = useState('')
   const [passportFrontFile, setPassportFrontFile] = useState<any>(null)
-  const [passportBackFile, setPassportBackFile] = useState<any>(null)
+  const [nationalIdFrontFile, setNationalIdFrontFile] = useState<any>(null)
+  const [nationalIdBackFile, setNationalIdBackFile] = useState<any>(null)
   
   // Dropdown pickers for Bridge fields
   const [showEmploymentPicker, setShowEmploymentPicker] = useState(false)
@@ -628,115 +629,6 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
     }
   }
 
-  const handlePassportBackSelect = async () => {
-    try {
-      // Request permissions for iOS
-      if (Platform.OS === 'ios') {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (status !== 'granted') {
-          Alert.alert('Permission Required', 'Please grant photo library access to select images')
-          return
-        }
-      }
-
-      // Show action sheet to choose between camera, photos, or files
-      if (Platform.OS === 'ios') {
-        Alert.alert(
-          'Select Passport (Back)',
-          'Choose how you want to select your passport',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Take Photo', 
-              onPress: async () => {
-                const result = await ImagePicker.launchCameraAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 0.8,
-                })
-                if (!result.canceled && result.assets[0]) {
-                  const asset = result.assets[0]
-                  const file = {
-                    uri: asset.uri,
-                    name: `passport_back_${Date.now()}.jpg`,
-                    mimeType: 'image/jpeg',
-                    size: asset.fileSize || 0,
-                  }
-                  if (file.size > 10 * 1024 * 1024) {
-                    setUploadError('File size must be less than 10MB')
-                    return
-                  }
-                  setPassportBackFile(file)
-                  setUploadError(null)
-                }
-              }
-            },
-            { 
-              text: 'Choose from Photos', 
-              onPress: async () => {
-                const result = await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 0.8,
-                })
-                if (!result.canceled && result.assets[0]) {
-                  const asset = result.assets[0]
-                  const file = {
-                    uri: asset.uri,
-                    name: `passport_back_${Date.now()}.jpg`,
-                    mimeType: 'image/jpeg',
-                    size: asset.fileSize || 0,
-                  }
-                  if (file.size > 10 * 1024 * 1024) {
-                    setUploadError('File size must be less than 10MB')
-                    return
-                  }
-                  setPassportBackFile(file)
-                  setUploadError(null)
-                }
-              }
-            },
-            { 
-              text: 'Browse Files', 
-              onPress: async () => {
-      const result = await DocumentPicker.getDocumentAsync({
-                  type: ['image/*', 'application/pdf'],
-        copyToCacheDirectory: true,
-      })
-      if (!result.canceled && result.assets[0]) {
-        const file = result.assets[0]
-        if (file.size && file.size > 10 * 1024 * 1024) {
-          setUploadError('File size must be less than 10MB')
-          return
-        }
-        setPassportBackFile(file)
-        setUploadError(null)
-                }
-              }
-            },
-          ]
-        )
-      } else {
-        // Android: Use document picker with image types
-        const result = await DocumentPicker.getDocumentAsync({
-          type: ['image/*', 'application/pdf'],
-          copyToCacheDirectory: true,
-        })
-        if (!result.canceled && result.assets[0]) {
-          const file = result.assets[0]
-          if (file.size && file.size > 10 * 1024 * 1024) {
-            setUploadError('File size must be less than 10MB')
-            return
-          }
-          setPassportBackFile(file)
-          setUploadError(null)
-        }
-      }
-    } catch (error) {
-      console.error('Error selecting file:', error)
-      setUploadError('Failed to select file')
-    }
-  }
 
   // Validation: Check if all required fields are filled
   const isFormValid = useMemo(() => {
@@ -758,10 +650,13 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
     // Check for document upload based on ID type
     if (selectedIdType === 'passport') {
       return !!passportFrontFile
+    } else if (selectedIdType === 'national_id') {
+      // National ID requires both front and back
+      return !!nationalIdFrontFile && !!nationalIdBackFile
     } else {
       return !!identityFile
     }
-  }, [fullName, dateOfBirth, selectedCountry, ssn, selectedIdType, passportNumber, passportFrontFile, identityFile])
+  }, [fullName, dateOfBirth, selectedCountry, ssn, selectedIdType, passportNumber, passportFrontFile, nationalIdFrontFile, nationalIdBackFile, identityFile])
 
   const handleSubmit = async () => {
     if (!fullName || !dateOfBirth || !selectedCountry || !userProfile?.id) {
@@ -812,6 +707,14 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
           return
         }
         documentFileToUpload = passportFrontFile
+      } else if (selectedIdType === 'national_id') {
+        // National ID requires both front and back
+        if (!nationalIdFrontFile || !nationalIdBackFile) {
+          setUploadError('Please upload both National ID Front and Back')
+          return
+        }
+        // Use front file as the main document for storage
+        documentFileToUpload = nationalIdFrontFile
       } else {
         if (!identityFile) {
           setUploadError(`Please upload ${getIdTypeLabel(selectedIdType)} Document`)
@@ -843,8 +746,18 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
           if (passportFrontFile) {
             metadata.passportFrontBase64 = await fileToBase64(passportFrontFile.uri)
           }
+          // Passport only needs front (Bridge requirement)
+        } else if (selectedIdType === 'national_id') {
+          // National ID requires both front and back
+          metadata.nationalIdNumber = passportNumber // Reusing passportNumber state
+          if (nationalIdFrontFile) {
+            metadata.nationalIdFrontBase64 = await fileToBase64(nationalIdFrontFile.uri)
+          }
+          if (nationalIdBackFile) {
+            metadata.nationalIdBackBase64 = await fileToBase64(nationalIdBackFile.uri)
+          }
         } else {
-          // For non-passport ID types, store as national ID number
+          // For other ID types, store as national ID number
           metadata.nationalIdNumber = passportNumber // Reusing passportNumber state
         }
         
@@ -1305,6 +1218,44 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                       </TouchableOpacity>
                     </View>
                   )}
+                  
+                  {/* Document upload for National ID - requires both front and back */}
+                  {selectedIdType === 'national_id' && (
+                    <>
+                      <View style={styles.formField}>
+                        <Text style={styles.label}>National ID (Front) *</Text>
+                        <TouchableOpacity
+                          style={[styles.uploadButton, nationalIdFrontFile && styles.uploadButtonSuccess]}
+                          onPress={handleNationalIdFrontSelect}
+                        >
+                          <Ionicons
+                            name={nationalIdFrontFile ? "checkmark-circle" : "cloud-upload"}
+                            size={24}
+                            color={nationalIdFrontFile ? "#10b981" : "#6b7280"}
+                          />
+                          <Text style={[styles.uploadText, nationalIdFrontFile && styles.uploadTextSuccess]}>
+                            {nationalIdFrontFile ? nationalIdFrontFile.name : 'Upload National ID Front'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.formField}>
+                        <Text style={styles.label}>National ID (Back) *</Text>
+                        <TouchableOpacity
+                          style={[styles.uploadButton, nationalIdBackFile && styles.uploadButtonSuccess]}
+                          onPress={handleNationalIdBackSelect}
+                        >
+                          <Ionicons
+                            name={nationalIdBackFile ? "checkmark-circle" : "cloud-upload"}
+                            size={24}
+                            color={nationalIdBackFile ? "#10b981" : "#6b7280"}
+                          />
+                          <Text style={[styles.uploadText, nationalIdBackFile && styles.uploadTextSuccess]}>
+                            {nationalIdBackFile ? nationalIdBackFile.name : 'Upload National ID Back'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
                 </>
               )}
               
@@ -1373,9 +1324,10 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               )}
 
 
-              {/* Main ID Document Upload - Only for non-US, non-passport ID types (for our KYC system) */}
+              {/* Main ID Document Upload - Only for non-US, non-passport, non-national_id ID types (for our KYC system) */}
               {/* For passport, we use passport front upload above */}
-              {selectedIdType && !isUSACountry(selectedCountry) && selectedIdType !== 'passport' && (
+              {/* For national_id, we use national_id front/back uploads above */}
+              {selectedIdType && !isUSACountry(selectedCountry) && selectedIdType !== 'passport' && selectedIdType !== 'national_id' && (
                 <View style={styles.formField}>
                   <Text style={styles.label}>{getIdTypeLabel(selectedIdType)} Document *</Text>
                 <TouchableOpacity

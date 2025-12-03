@@ -308,10 +308,14 @@ export async function buildBridgeCustomerPayloadFromKyc(
   
   // Step 6: Convert documents to base64
   let passportFrontBase64: string | undefined
-  let passportBackBase64: string | undefined
+  let nationalIdFrontBase64: string | undefined
+  let nationalIdBackBase64: string | undefined
   let dlFrontBase64: string | undefined
   let dlBackBase64: string | undefined
   let proofOfAddressBase64: string | undefined
+  
+  // Get ID type from submission
+  const idType = identitySubmission.id_type || parsedIdentityMetadata.idType
   
   try {
     // For USA: Check for driver's license in metadata (optional)
@@ -327,19 +331,35 @@ export async function buildBridgeCustomerPayloadFromKyc(
         dlBackBase64 = parsedIdentityMetadata.dlBackBase64
       }
     } else {
-      // For non-USA: Get passport from metadata first (already base64), then fallback to file
-      if (parsedIdentityMetadata.passportFrontBase64) {
-        passportFrontBase64 = parsedIdentityMetadata.passportFrontBase64
-        console.log(`[BRIDGE-KYC-BUILDER] Using passport front from metadata`)
-      } else if (identitySubmission.id_document_url) {
-        // Fallback to uploaded file if not in metadata
-        passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
-        console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file`)
-      }
-      
-      // Passport back is optional (only front is required)
-      if (parsedIdentityMetadata.passportBackBase64) {
-        passportBackBase64 = parsedIdentityMetadata.passportBackBase64
+      // For non-USA: Check ID type to determine passport vs national_id
+      if (idType === 'passport') {
+        // Passport: Get from metadata first (already base64), then fallback to file
+        // Passport only needs front (Bridge requirement)
+        if (parsedIdentityMetadata.passportFrontBase64) {
+          passportFrontBase64 = parsedIdentityMetadata.passportFrontBase64
+          console.log(`[BRIDGE-KYC-BUILDER] Using passport front from metadata`)
+        } else if (identitySubmission.id_document_url) {
+          // Fallback to uploaded file if not in metadata
+          passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+          console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file`)
+        }
+      } else {
+        // National ID or other ID types: Get from uploaded file
+        // National ID needs both front and back
+        if (identitySubmission.id_document_url) {
+          // For now, we use the uploaded file as front
+          // TODO: If mobile app starts storing front/back separately, update this
+          nationalIdFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+          console.log(`[BRIDGE-KYC-BUILDER] Converted national ID front from uploaded file`)
+        }
+        
+        // Check metadata for National ID images if stored separately
+        if (parsedIdentityMetadata.nationalIdFrontBase64) {
+          nationalIdFrontBase64 = parsedIdentityMetadata.nationalIdFrontBase64
+        }
+        if (parsedIdentityMetadata.nationalIdBackBase64) {
+          nationalIdBackBase64 = parsedIdentityMetadata.nationalIdBackBase64
+        }
       }
     }
     
@@ -376,9 +396,12 @@ export async function buildBridgeCustomerPayloadFromKyc(
     dlNumber: parsedIdentityMetadata.dlNumber,
     dlFrontBase64: dlFrontBase64,
     dlBackBase64: dlBackBase64,
-    passportNumber: parsedIdentityMetadata.passportNumber || parsedIdentityMetadata.nationalIdNumber,
+    passportNumber: parsedIdentityMetadata.passportNumber,
     passportFrontBase64: passportFrontBase64,
-    passportBackBase64: passportBackBase64,
+    nationalIdNumber: parsedIdentityMetadata.nationalIdNumber,
+    nationalIdFrontBase64: nationalIdFrontBase64,
+    nationalIdBackBase64: nationalIdBackBase64,
+    idType: idType, // Pass ID type to determine passport vs national_id
     
     // Proof of address (for EEA and international)
     proofOfAddressBase64: proofOfAddressBase64,

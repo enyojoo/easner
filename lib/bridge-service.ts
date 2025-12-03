@@ -338,7 +338,10 @@ interface BuildCustomerPayloadParams {
   sourceOfFunds?: string
   passportNumber?: string
   passportFrontBase64?: string
-  passportBackBase64?: string
+  nationalIdNumber?: string
+  nationalIdFrontBase64?: string
+  nationalIdBackBase64?: string
+  idType?: string // 'passport', 'national_id', 'drivers_license', etc.
   proofOfAddressBase64?: string
   needsUSD?: boolean
   needsEUR?: boolean
@@ -1208,7 +1211,10 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     sourceOfFunds,
     passportNumber,
     passportFrontBase64,
-    passportBackBase64,
+    nationalIdNumber,
+    nationalIdFrontBase64,
+    nationalIdBackBase64,
+    idType,
     proofOfAddressBase64,
     needsUSD = true,
     needsEUR = false,
@@ -1371,22 +1377,52 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     }
   } else {
     // For non-US residents: Passport or National ID
-    if (passportNumber && passportFrontBase64) {
-      // Bridge expects issuing_country as alpha-3 code in lowercase (e.g., "gbr", "can")
-      const issuingCountry = countryCode.toLowerCase()
-      
-      // Ensure base64 string has the data URI prefix
+    // Bridge expects issuing_country as alpha-3 code in lowercase (e.g., "gbr", "can")
+    const issuingCountry = countryCode.toLowerCase()
+    
+    // Check ID type to determine which document to add
+    if (idType === 'passport' && passportNumber && passportFrontBase64) {
+      // Passport only needs front image
       const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
       
       identifyingInformation.push({
         type: 'passport',
-        issuing_country: issuingCountry, // Bridge expects lowercase alpha-3 for issuing_country
+        issuing_country: issuingCountry,
         number: passportNumber,
         image_front: frontImage, // Passport only needs front
       })
       console.log(`[BRIDGE-SERVICE] Added passport to identifying_information`)
+    } else if ((idType === 'national_id' || !idType) && nationalIdNumber && nationalIdFrontBase64) {
+      // National ID needs both front and back images
+      const frontImage = nationalIdFrontBase64.startsWith('data:') ? nationalIdFrontBase64 : `data:image/jpg;base64,${nationalIdFrontBase64}`
+      
+      const nationalIdEntry: any = {
+        type: 'national_id',
+        issuing_country: issuingCountry,
+        number: nationalIdNumber,
+        image_front: frontImage,
+      }
+      
+      // Add back image if available
+      if (nationalIdBackBase64) {
+        const backImage = nationalIdBackBase64.startsWith('data:') ? nationalIdBackBase64 : `data:image/jpg;base64,${nationalIdBackBase64}`
+        nationalIdEntry.image_back = backImage
+      }
+      
+      identifyingInformation.push(nationalIdEntry)
+      console.log(`[BRIDGE-SERVICE] Added national ID to identifying_information`)
+    } else if (passportNumber && passportFrontBase64) {
+      // Fallback: if no idType specified but we have passport data, use it
+      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
+      
+      identifyingInformation.push({
+        type: 'passport',
+        issuing_country: issuingCountry,
+        number: passportNumber,
+        image_front: frontImage,
+      })
+      console.log(`[BRIDGE-SERVICE] Added passport to identifying_information (fallback)`)
     }
-    // Note: National ID can be added here if needed in the future
   }
   
   // Add identifying_information array to payload
