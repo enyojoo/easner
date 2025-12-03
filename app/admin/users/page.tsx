@@ -588,7 +588,7 @@ export default function AdminUsersPage() {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="text-center">Name</TableHead>
+                  <TableHead className="text-left">Name</TableHead>
                   <TableHead className="w-[120px] text-center">Status</TableHead>
                   <TableHead className="w-[140px] text-center">Verification</TableHead>
                   <TableHead className="w-[120px] text-center">Transactions</TableHead>
@@ -605,7 +605,7 @@ export default function AdminUsersPage() {
                         onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
                       />
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-left">
                       <div className="font-medium">
                         {user.first_name} {user.last_name}
                       </div>

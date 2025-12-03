@@ -1,18 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// Next.js 16: Middleware is still supported but consider using route handlers for specific use cases
+// This middleware sets cache headers for dynamic routes
 export function middleware(request: NextRequest) {
   const response = NextResponse.next()
-
-  // Set cache headers for static assets
-  if (request.nextUrl.pathname.startsWith('/_next/static/')) {
-    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
-  }
-
-  // Set cache headers for images
-  if (request.nextUrl.pathname.match(/\.(jpg|jpeg|png|gif|ico|svg)$/)) {
-    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
-  }
 
   // Set cache headers for API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
@@ -34,6 +26,10 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    // Match all routes except static assets and images (handled by next.config.mjs)
+    '/api/:path*',
+    '/auth/:path*',
+    '/user/:path*',
+    '/admin/:path*',
   ],
 }
