@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthenticatedUser } from "@/lib/auth-utils"
-import { supabase } from "@/lib/supabase"
+import { requireAdmin } from "@/lib/admin-auth-utils"
 import { bridgeService } from "@/lib/bridge-service"
 import { buildBridgeCustomerPayloadFromKyc } from "@/lib/bridge-kyc-builder"
 import { initializeBridgeAccount } from "@/lib/bridge-onboarding-service"
@@ -13,14 +12,17 @@ import { createServerClient } from "@/lib/supabase"
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(request)
-    if (!user) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
-    }
-
-    // Check if user is admin (getAuthenticatedUser already checks admin_users table)
-    if (!user.isAdmin) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    // Check admin authentication
+    let adminUser
+    try {
+      adminUser = await requireAdmin(request)
+      console.log("Admin authenticated:", adminUser.email)
+    } catch (authError: any) {
+      console.error("Admin authentication failed:", authError?.message)
+      return NextResponse.json({ 
+        error: "Authentication failed",
+        message: authError?.message || "Admin access required"
+      }, { status: 401 })
     }
 
     const body = await request.json()
