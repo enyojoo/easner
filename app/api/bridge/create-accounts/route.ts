@@ -357,16 +357,16 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
                     console.log(`[CREATE-ACCOUNTS] Verified customer exists in Bridge: ${verifiedCustomer.id}`)
                   } catch (verifyError: any) {
                     console.warn(`[CREATE-ACCOUNTS] Customer ID from database not found in Bridge, clearing and searching by email...`)
-                    await supabase
-                      .from("users")
-                      .update({
-                        bridge_customer_id: null,
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq("id", user.id)
-                    existingCustomerId = null
+                      await supabase
+                        .from("users")
+                        .update({
+                          bridge_customer_id: null,
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq("id", user.id)
+                      existingCustomerId = null
+                    }
                   }
-                }
                 
                 // If not in database, search Bridge by email
                 if (!existingCustomerId) {
@@ -377,17 +377,17 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
                     const foundCustomer = existingCustomers[0]
                     existingCustomerId = foundCustomer.id
                     console.log(`[CREATE-ACCOUNTS] Found existing customer in Bridge by email: ${existingCustomerId}`)
-                    
+                      
                     // Store customer ID in database
-                    await supabase
-                      .from("users")
-                      .update({
-                        bridge_customer_id: existingCustomerId,
+                      await supabase
+                        .from("users")
+                        .update({
+                          bridge_customer_id: existingCustomerId,
                         bridge_kyc_status: foundCustomer.kyc_status || 'pending',
-                        bridge_endorsements: foundCustomer.endorsements || [],
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq("id", user.id)
+                          bridge_endorsements: foundCustomer.endorsements || [],
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq("id", user.id)
                   }
                 }
               } catch (listError: any) {
@@ -400,22 +400,22 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
                 userProfile.bridge_customer_id = existingCustomerId
                 
                 // Ensure it's stored in database
-                await supabase
-                  .from("users")
-                  .update({
-                    bridge_customer_id: existingCustomerId,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", user.id)
-                
+                    await supabase
+                      .from("users")
+                      .update({
+                        bridge_customer_id: existingCustomerId,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq("id", user.id)
+                    
                 console.log(`[CREATE-ACCOUNTS] Stored customer ID in database. Continuing with account creation...`)
-                // Continue with wallet and virtual account creation below (don't return error)
-              } else {
+                    // Continue with wallet and virtual account creation below (don't return error)
+                  } else {
                 // Could not find existing customer - return error
-                return createErrorResponse(
+                    return createErrorResponse(
                   `Customer creation failed: ${createError.message}. Could not find existing customer by email.`,
                   400
-                )
+                  )
               }
             } else {
               // Re-throw other errors
@@ -478,7 +478,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
             customerId: bridgeCustomerId,
           })
           results.errors.push(`Wallet creation failed: ${error.message}`)
-        }
+      }
     } else {
       console.log(`[CREATE-ACCOUNTS] Wallet already exists: ${userProfile.bridge_wallet_id}`)
       results.walletId = userProfile.bridge_wallet_id

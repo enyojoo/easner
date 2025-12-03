@@ -340,7 +340,7 @@ export async function buildBridgeCustomerPayloadFromKyc(
           console.log(`[BRIDGE-KYC-BUILDER] Using passport front from metadata`)
         } else if (identitySubmission.id_document_url) {
           // Fallback to uploaded file if not in metadata
-          passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+      passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
           console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file`)
         }
       } else {
@@ -391,6 +391,8 @@ export async function buildBridgeCustomerPayloadFromKyc(
     expectedMonthly: parsedIdentityMetadata.expectedMonthly,
     accountPurpose: parsedIdentityMetadata.accountPurpose,
     sourceOfFunds: parsedIdentityMetadata.sourceOfFunds,
+    mostRecentOccupation: parsedIdentityMetadata.mostRecentOccupation,
+    actingAsIntermediary: parsedIdentityMetadata.actingAsIntermediary,
     
     // ID documents
     dlNumber: parsedIdentityMetadata.dlNumber,

@@ -68,11 +68,17 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
   const [nationalIdFrontFile, setNationalIdFrontFile] = useState<any>(null)
   const [nationalIdBackFile, setNationalIdBackFile] = useState<any>(null)
   
+  // Bridge-specific fields - International only (non-US, non-EEA)
+  const [mostRecentOccupation, setMostRecentOccupation] = useState('')
+  const [actingAsIntermediary, setActingAsIntermediary] = useState('')
+  
   // Dropdown pickers for Bridge fields
   const [showEmploymentPicker, setShowEmploymentPicker] = useState(false)
   const [showExpectedMonthlyPicker, setShowExpectedMonthlyPicker] = useState(false)
   const [showAccountPurposePicker, setShowAccountPurposePicker] = useState(false)
   const [showSourceOfFundsPicker, setShowSourceOfFundsPicker] = useState(false)
+  const [showMostRecentOccupationPicker, setShowMostRecentOccupationPicker] = useState(false)
+  const [showActingAsIntermediaryPicker, setShowActingAsIntermediaryPicker] = useState(false)
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -602,25 +608,25 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
         }
         setPassportFrontFile(file)
         setUploadError(null)
-                }
+      }
               }
             },
           ]
         )
       } else {
         // Android: Use document picker with image types
-        const result = await DocumentPicker.getDocumentAsync({
+      const result = await DocumentPicker.getDocumentAsync({
           type: ['image/*', 'application/pdf'],
-          copyToCacheDirectory: true,
-        })
-        if (!result.canceled && result.assets[0]) {
-          const file = result.assets[0]
-          if (file.size && file.size > 10 * 1024 * 1024) {
-            setUploadError('File size must be less than 10MB')
-            return
-          }
+        copyToCacheDirectory: true,
+      })
+      if (!result.canceled && result.assets[0]) {
+        const file = result.assets[0]
+        if (file.size && file.size > 10 * 1024 * 1024) {
+          setUploadError('File size must be less than 10MB')
+          return
+        }
           setPassportFrontFile(file)
-          setUploadError(null)
+        setUploadError(null)
         }
       }
     } catch (error) {
@@ -767,6 +773,13 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
         if (expectedMonthly) metadata.expectedMonthly = expectedMonthly
         if (accountPurpose) metadata.accountPurpose = accountPurpose
         if (sourceOfFunds) metadata.sourceOfFunds = sourceOfFunds
+        
+        // International-only fields (non-US, non-EEA)
+        if (!isEEACountry(selectedCountry)) {
+          if (mostRecentOccupation) metadata.mostRecentOccupation = mostRecentOccupation
+          // actingAsIntermediary defaults to "no" if not provided (handled in backend)
+          if (actingAsIntermediary) metadata.actingAsIntermediary = actingAsIntermediary
+        }
       }
 
       const newSubmission = await kycService.createIdentitySubmission(userProfile.id, {
@@ -1323,6 +1336,37 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                 </>
               )}
 
+              {/* International-only fields (non-US, non-EEA) */}
+              {selectedCountry && !isUSACountry(selectedCountry) && !isEEACountry(selectedCountry) && (
+                <>
+                  <View style={styles.formField}>
+                    <Text style={styles.label}>Most Recent Occupation</Text>
+                    <Text style={styles.helperText}>Optional - will use Source of Funds if not provided</Text>
+                    <TouchableOpacity
+                      style={styles.selectButton}
+                      onPress={() => setShowMostRecentOccupationPicker(true)}
+                    >
+                      <Text style={[styles.selectText, !mostRecentOccupation && styles.selectPlaceholder]}>
+                        {mostRecentOccupation ? SOURCE_OF_FUNDS_OPTIONS.find(o => o.value === mostRecentOccupation)?.label : 'Select most recent occupation (optional)'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.formField}>
+                    <Text style={styles.label}>Acting as Intermediary</Text>
+                    <TouchableOpacity
+                      style={styles.selectButton}
+                      onPress={() => setShowActingAsIntermediaryPicker(true)}
+                    >
+                      <Text style={[styles.selectText, !actingAsIntermediary && styles.selectPlaceholder]}>
+                        {actingAsIntermediary ? (actingAsIntermediary === 'yes' ? 'Yes' : 'No') : 'Select (defaults to No)'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
 
               {/* Main ID Document Upload - Only for non-US, non-passport, non-national_id ID types (for our KYC system) */}
               {/* For passport, we use passport front upload above */}
@@ -1625,6 +1669,93 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Most Recent Occupation Picker Modal */}
+      <Modal
+        visible={showMostRecentOccupationPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMostRecentOccupationPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowMostRecentOccupationPicker(false)}
+          />
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Most Recent Occupation</Text>
+              <TouchableOpacity 
+                onPress={() => setShowMostRecentOccupationPicker(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={SOURCE_OF_FUNDS_OPTIONS}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.countryItem}
+                  onPress={() => {
+                    setMostRecentOccupation(item.value)
+                    setShowMostRecentOccupationPicker(false)
+                  }}
+                >
+                  <Text style={styles.countryName}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Acting as Intermediary Picker Modal */}
+      <Modal
+        visible={showActingAsIntermediaryPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowActingAsIntermediaryPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setShowActingAsIntermediaryPicker(false)}
+          />
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Acting as Intermediary</Text>
+              <TouchableOpacity 
+                onPress={() => setShowActingAsIntermediaryPicker(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={[
+                { label: 'Yes', value: 'yes' },
+                { label: 'No', value: 'no' },
+              ]}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.countryItem}
+                  onPress={() => {
+                    setActingAsIntermediary(item.value)
+                    setShowActingAsIntermediaryPicker(false)
+                  }}
+                >
+                  <Text style={styles.countryName}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </ScreenWrapper>
   )
 }
@@ -1737,6 +1868,12 @@ const styles = StyleSheet.create({
     ...textStyles.bodySmall,
     fontWeight: '500',
     color: colors.text.primary,
+  },
+  helperText: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+    fontSize: 12,
   },
   input: {
     borderWidth: 1,

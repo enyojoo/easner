@@ -118,25 +118,42 @@ export const EXPECTED_MONTHLY_OPTIONS = [
 /**
  * Account purpose options for dropdown
  */
+/**
+ * Account purpose options for dropdown
+ * Must match Bridge's allowed values exactly:
+ * business_transactions, charitable_donations, ecommerce_retail_payments,
+ * investment_purposes, operating_a_company, other,
+ * payments_to_friends_or_family_abroad, personal_or_living_expenses,
+ * protect_wealth, purchase_goods_and_services,
+ * receive_payment_for_freelancing, receive_salary
+ */
 export const ACCOUNT_PURPOSE_OPTIONS = [
+  { label: 'Personal or Living Expenses', value: 'personal_or_living_expenses' },
   { label: 'Purchase Goods and Services', value: 'purchase_goods_and_services' },
-  { label: 'Receive Payments', value: 'receive_payments' },
-  { label: 'Send Payments', value: 'send_payments' },
-  { label: 'Savings', value: 'savings' },
-  { label: 'Investment', value: 'investment' },
+  { label: 'Receive Payment for Freelancing', value: 'receive_payment_for_freelancing' },
+  { label: 'Receive Salary', value: 'receive_salary' },
+  { label: 'Payments to Friends or Family Abroad', value: 'payments_to_friends_or_family_abroad' },
+  { label: 'Business Transactions', value: 'business_transactions' },
+  { label: 'Operating a Company', value: 'operating_a_company' },
+  { label: 'Investment Purposes', value: 'investment_purposes' },
+  { label: 'Protect Wealth', value: 'protect_wealth' },
+  { label: 'Ecommerce/Retail Payments', value: 'ecommerce_retail_payments' },
+  { label: 'Charitable Donations', value: 'charitable_donations' },
   { label: 'Other', value: 'other' },
 ]
 
 /**
  * Source of funds options for dropdown
+ * Must match Bridge's allowed values: business_income, company_funds, investments_loans,
+ * pension_retirement, salary, savings, someone_elses_funds
  */
 export const SOURCE_OF_FUNDS_OPTIONS = [
   { label: 'Salary', value: 'salary' },
   { label: 'Business Income', value: 'business_income' },
-  { label: 'Investments', value: 'investments' },
-  { label: 'Inheritance', value: 'inheritance' },
-  { label: 'Gift', value: 'gift' },
+  { label: 'Company Funds', value: 'company_funds' },
+  { label: 'Investments/Loans', value: 'investments_loans' },
+  { label: 'Pension/Retirement', value: 'pension_retirement' },
   { label: 'Savings', value: 'savings' },
-  { label: 'Other', value: 'other' },
+  { label: 'Someone Else\'s Funds', value: 'someone_elses_funds' },
 ]
 

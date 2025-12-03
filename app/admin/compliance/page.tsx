@@ -628,18 +628,23 @@ export default function AdminCompliancePage() {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <div className="flex items-center justify-between">
-                <DialogTitle>
-                  Compliance Details - {selectedUser?.first_name} {selectedUser?.last_name}
-                </DialogTitle>
-                {selectedUser && canSendToBridge(selectedUser) && (
+              <DialogTitle>
+                Compliance Details - {selectedUser?.first_name} {selectedUser?.last_name}
+              </DialogTitle>
+                {selectedUser && (canSendToBridge(selectedUser) || selectedUser.bridge_customer_id) && (
                   <Button
                     onClick={() => handleSendToBridge(selectedUser.id)}
-                    disabled={sendingToBridge === selectedUser.id}
+                    disabled={sendingToBridge === selectedUser.id || !!selectedUser.bridge_customer_id}
                     size="sm"
                     variant="outline"
                     className="h-8 px-3 text-xs"
                   >
-                    {sendingToBridge === selectedUser.id ? (
+                    {selectedUser.bridge_customer_id ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 mr-1.5 text-green-600" />
+                        Sent
+                      </>
+                    ) : sendingToBridge === selectedUser.id ? (
                       <>
                         <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
                         Sending...

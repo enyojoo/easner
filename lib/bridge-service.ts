@@ -336,6 +336,8 @@ interface BuildCustomerPayloadParams {
   expectedMonthly?: string
   accountPurpose?: string
   sourceOfFunds?: string
+  mostRecentOccupation?: string
+  actingAsIntermediary?: string
   passportNumber?: string
   passportFrontBase64?: string
   nationalIdNumber?: string
@@ -1183,6 +1185,39 @@ export const bridgeService = {
     })
     return response.data
   },
+
+  /**
+   * Get list of occupation codes for source_of_funds field
+   * Uses GET /v0/lists/occupation_codes (Bridge API endpoint)
+   * Returns the list of occupation codes to use as possible answers to the Source of Funds section
+   */
+  async getOccupationCodes(): Promise<Array<{ occupation: string; code: string }>> {
+    try {
+      console.log(`[BRIDGE-SERVICE] getOccupationCodes: Fetching occupation codes from Bridge API`)
+      const response = await bridgeApiRequest<any>(`/v0/lists/occupation_codes`, {
+        method: 'GET',
+      })
+      
+      // Bridge API returns an array of occupation codes
+      // Format: [{ occupation: "Accountant and auditor", code: "132011" }, ...]
+      if (Array.isArray(response)) {
+        console.log(`[BRIDGE-SERVICE] getOccupationCodes: Received ${response.length} occupation codes`)
+        return response
+      } else if (response && Array.isArray(response.data)) {
+        console.log(`[BRIDGE-SERVICE] getOccupationCodes: Received ${response.data.length} occupation codes from data field`)
+        return response.data
+      } else {
+        console.warn(`[BRIDGE-SERVICE] getOccupationCodes: Unexpected response format:`, response)
+        return []
+      }
+    } catch (error: any) {
+      console.error(`[BRIDGE-SERVICE] getOccupationCodes: Error fetching occupation codes:`, {
+        error: error.message,
+        stack: error.stack,
+      })
+      throw error
+    }
+  },
 }
 
 // ============================================================================
@@ -1202,12 +1237,93 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
     code = code.split('-').pop() || code
   }
   
+  // Normalize country code to handle both alpha-2 and alpha-3 formats
+  // Convert alpha-2 to alpha-3 for consistent checking
+  let normalizedCountryCode = countryCode.toUpperCase()
+  if (normalizedCountryCode.length === 2) {
+    const alpha2ToAlpha3: Record<string, string> = {
+      'US': 'USA', 'GB': 'GBR', 'CA': 'CAN', 'AU': 'AUS', 'NG': 'NGA',
+      'KE': 'KEN', 'GH': 'GHA', 'ZA': 'ZAF', 'IN': 'IND', 'PK': 'PAK',
+      'BD': 'BGD', 'PH': 'PHL', 'ID': 'IDN', 'MY': 'MYS', 'SG': 'SGP',
+      'TH': 'THA', 'VN': 'VNM', 'JP': 'JPN', 'KR': 'KOR', 'BR': 'BRA',
+      'MX': 'MEX', 'DE': 'DEU', 'FR': 'FRA', 'IT': 'ITA', 'ES': 'ESP',
+      'NL': 'NLD', 'BE': 'BEL', 'CH': 'CHE', 'AT': 'AUT', 'SE': 'SWE',
+      'NO': 'NOR', 'DK': 'DNK', 'FI': 'FIN', 'PL': 'POL', 'PT': 'PRT',
+      'GR': 'GRC', 'IE': 'IRL', 'CZ': 'CZE', 'HU': 'HUN', 'RO': 'ROU',
+      'BG': 'BGR', 'HR': 'HRV', 'SK': 'SVK', 'SI': 'SVN', 'EE': 'EST',
+      'LV': 'LVA', 'LT': 'LTU', 'LU': 'LUX', 'MT': 'MLT', 'CY': 'CYP',
+    }
+    normalizedCountryCode = alpha2ToAlpha3[normalizedCountryCode] || normalizedCountryCode
+  }
+  
+  // CRITICAL: Check if country doesn't use subdivisions FIRST
+  // This MUST happen before any uppercasing to prevent codes like "qc" for India
+  // from being incorrectly returned as "QC" instead of null
+  const countriesWithoutSubdivision = [
+    'GBR', 'GB', // United Kingdom
+    'DEU', 'DE', // Germany
+    'FRA', 'FR', // France
+    'ITA', 'IT', // Italy
+    'ESP', 'ES', // Spain
+    'NLD', 'NL', // Netherlands
+    'BEL', 'BE', // Belgium
+    'CHE', 'CH', // Switzerland
+    'AUT', 'AT', // Austria
+    'SWE', 'SE', // Sweden
+    'NOR', 'NO', // Norway
+    'DNK', 'DK', // Denmark
+    'FIN', 'FI', // Finland
+    'POL', 'PL', // Poland
+    'PRT', 'PT', // Portugal
+    'GRC', 'GR', // Greece
+    'IRL', 'IE', // Ireland
+    'CZE', 'CZ', // Czech Republic
+    'HUN', 'HU', // Hungary
+    'ROU', 'RO', // Romania
+    'BGR', 'BG', // Bulgaria
+    'HRV', 'HR', // Croatia
+    'SVK', 'SK', // Slovakia
+    'SVN', 'SI', // Slovenia
+    'EST', 'EE', // Estonia
+    'LVA', 'LV', // Latvia
+    'LTU', 'LT', // Lithuania
+    'LUX', 'LU', // Luxembourg
+    'MLT', 'MT', // Malta
+    'CYP', 'CY', // Cyprus
+    // African countries - Bridge may not accept subdivision codes
+    'NGA', 'NG', // Nigeria
+    'KEN', 'KE', // Kenya
+    'GHA', 'GH', // Ghana
+    'ZAF', 'ZA', // South Africa
+    // Asian countries - Bridge may not accept subdivision codes
+    'IND', 'IN', // India
+    'PAK', 'PK', // Pakistan
+    'BGD', 'BD', // Bangladesh
+    'PHL', 'PH', // Philippines
+    'IDN', 'ID', // Indonesia
+    'MYS', 'MY', // Malaysia
+    'SGP', 'SG', // Singapore
+    'THA', 'TH', // Thailand
+    'VNM', 'VN', // Vietnam
+    'JPN', 'JP', // Japan
+    'KOR', 'KR', // South Korea
+    // Latin American countries
+    'BRA', 'BR', // Brazil
+    'MEX', 'MX', // Mexico
+  ]
+  
+  if (countriesWithoutSubdivision.includes(normalizedCountryCode)) {
+    // These countries don't use subdivision - return null to skip
+    console.log(`[BRIDGE-SERVICE] Skipping subdivision for country ${normalizedCountryCode} (original: ${countryCode})`)
+    return null
+  }
+  
   // First, normalize to lowercase for comparison
   const normalized = code.toLowerCase().trim()
   
   // CRITICAL: Always uppercase 2-3 letter codes immediately
   // Bridge requires uppercase ISO 3166-2 codes (e.g., "LA" not "La", "CA" not "ca")
-  // This handles cases like "La" -> "LA", "ca" -> "CA", etc. for ALL countries
+  // This handles cases like "La" -> "LA", "ca" -> "CA", etc. for countries that DO use subdivisions
   if (code.length >= 2 && code.length <= 3 && /^[A-Za-z]+$/.test(code)) {
     return code.toUpperCase()
   }
@@ -1275,67 +1391,7 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
     }
   }
   
-  // Countries that don't use states/provinces OR Bridge doesn't accept subdivision codes
-  // Bridge may reject subdivision codes for countries where it's not required or not supported
-  const countriesWithoutSubdivision = [
-    'GBR', 'GB', // United Kingdom
-    'DEU', 'DE', // Germany
-    'FRA', 'FR', // France
-    'ITA', 'IT', // Italy
-    'ESP', 'ES', // Spain
-    'NLD', 'NL', // Netherlands
-    'BEL', 'BE', // Belgium
-    'CHE', 'CH', // Switzerland
-    'AUT', 'AT', // Austria
-    'SWE', 'SE', // Sweden
-    'NOR', 'NO', // Norway
-    'DNK', 'DK', // Denmark
-    'FIN', 'FI', // Finland
-    'POL', 'PL', // Poland
-    'PRT', 'PT', // Portugal
-    'GRC', 'GR', // Greece
-    'IRL', 'IE', // Ireland
-    'CZE', 'CZ', // Czech Republic
-    'HUN', 'HU', // Hungary
-    'ROU', 'RO', // Romania
-    'BGR', 'BG', // Bulgaria
-    'HRV', 'HR', // Croatia
-    'SVK', 'SK', // Slovakia
-    'SVN', 'SI', // Slovenia
-    'EST', 'EE', // Estonia
-    'LVA', 'LV', // Latvia
-    'LTU', 'LT', // Lithuania
-    'LUX', 'LU', // Luxembourg
-    'MLT', 'MT', // Malta
-    'CYP', 'CY', // Cyprus
-    // African countries - Bridge may not accept subdivision codes
-    'NGA', 'NG', // Nigeria
-    'KEN', 'KE', // Kenya
-    'GHA', 'GH', // Ghana
-    'ZAF', 'ZA', // South Africa
-    // Asian countries - Bridge may not accept subdivision codes
-    'IND', 'IN', // India
-    'PAK', 'PK', // Pakistan
-    'BGD', 'BD', // Bangladesh
-    'PHL', 'PH', // Philippines
-    'IDN', 'ID', // Indonesia
-    'MYS', 'MY', // Malaysia
-    'SGP', 'SG', // Singapore
-    'THA', 'TH', // Thailand
-    'VNM', 'VN', // Vietnam
-    'JPN', 'JP', // Japan
-    'KOR', 'KR', // South Korea
-    // Latin American countries
-    'BRA', 'BR', // Brazil
-    'MEX', 'MX', // Mexico
-  ]
-  
-  if (countriesWithoutSubdivision.includes(countryCode)) {
-    // These countries don't use subdivision - return null to skip
-    return null
-  }
-  
-  // For other countries, try to normalize if it looks like a code
+  // For other countries that use subdivisions, try to normalize if it looks like a code
   // If it's 2-3 characters and all letters, uppercase it
   // This handles cases like "La" -> "LA", "ca" -> "CA", etc.
   if (code.length >= 2 && code.length <= 3 && /^[A-Za-z]+$/.test(code)) {
@@ -1345,6 +1401,45 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
   // If it's longer or doesn't match code pattern, we can't reliably convert it
   // Return null to skip subdivision - Bridge may accept addresses without subdivision for some countries
   return null
+}
+
+/**
+ * Map UI values to Bridge occupation codes
+ * These are numeric codes from the GET /v0/lists/occupation_codes endpoint
+ */
+function mapToOccupationCode(value: string): string | null {
+  const sourceOfFundsToOccupationCode: Record<string, string> = {
+    // Salary - General Manager (common for salaried employees)
+    'salary': '111021', // General and operations manager
+    // Business Income - Business Operations Specialist
+    'business_income': '131199', // Business operations specialist, other
+    // Company Funds - Financial Manager
+    'company_funds': '113031', // Financial manager
+    // Investments/Loans - Financial and Investment Analyst
+    'investments_loans': '132051', // Financial and investment analyst
+    // Pension/Retirement - Personal Financial Advisor
+    'pension_retirement': '132052', // Personal financial advisor
+    // Savings - Accountant (common for savings management)
+    'savings': '132011', // Accountant and auditor
+    // Someone Else's Funds - Unemployed (for funds from others)
+    'someone_elses_funds': '999999', // Unemployed, with no work experience in the last 5 years or earlier or never worked
+    // Common variations
+    'business': '131199', // Business operations specialist
+    'investment': '132051', // Financial and investment analyst
+    'investments': '132051', // Financial and investment analyst
+    'pension': '132052', // Personal financial advisor
+    'retirement': '132052', // Personal financial advisor
+    'someone_else': '999999', // Unemployed
+    'other_funds': '999999', // Unemployed
+    'other': '999999', // Unemployed
+    // Legacy values
+    'inheritance': '999999', // Unemployed
+    'gift': '999999', // Unemployed
+    'gifts': '999999', // Unemployed
+  }
+  
+  const normalizedValue = value.toLowerCase().trim()
+  return sourceOfFundsToOccupationCode[normalizedValue] || null
 }
 
 /**
@@ -1367,6 +1462,8 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     expectedMonthly,
     accountPurpose,
     sourceOfFunds,
+    mostRecentOccupation,
+    actingAsIntermediary,
     passportNumber,
     passportFrontBase64,
     nationalIdNumber,
@@ -1436,8 +1533,9 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     const subdivision = normalizeSubdivisionCode(address.state, countryCode)
     if (subdivision) {
       residentialAddress.subdivision = subdivision
+      console.log(`[BRIDGE-SERVICE] Using subdivision code: ${subdivision} for country ${countryCode}`)
     } else {
-      console.warn(`[BRIDGE-SERVICE] Could not normalize subdivision code: ${address.state} for country ${countryCode}. Skipping subdivision.`)
+      console.log(`[BRIDGE-SERVICE] Skipping subdivision for country ${countryCode} (state: ${address.state})`)
       // Don't include subdivision if we can't normalize it - Bridge may accept addresses without subdivision for some countries
     }
   }
@@ -1474,28 +1572,109 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     payload.expected_monthly_payments = expectedMonthly
   }
   if (accountPurpose) {
-    payload.account_purpose = accountPurpose
-  }
-  if (sourceOfFunds) {
-    // Map source_of_funds values to Bridge's expected format
-    // Bridge API may have specific valid values - if value is not recognized, skip the field
-    const sourceOfFundsMapping: Record<string, string> = {
-      'salary': 'salary',
-      'business_income': 'business', // Bridge expects 'business' not 'business_income'
-      'investments': 'investment', // Bridge expects 'investment' (singular) not 'investments'
-      'inheritance': 'inheritance',
-      'gift': 'gift',
-      'savings': 'savings',
+    // Map account_purpose values to Bridge's EXACT expected format
+    // Bridge API expects exactly: business_transactions, charitable_donations,
+    // ecommerce_retail_payments, investment_purposes, operating_a_company, other,
+    // payments_to_friends_or_family_abroad, personal_or_living_expenses, protect_wealth,
+    // purchase_goods_and_services, receive_payment_for_freelancing, receive_salary
+    const accountPurposeMapping: Record<string, string> = {
+      // Direct matches (Bridge's exact expected values - no transformation needed)
+      'business_transactions': 'business_transactions',
+      'charitable_donations': 'charitable_donations',
+      'ecommerce_retail_payments': 'ecommerce_retail_payments',
+      'investment_purposes': 'investment_purposes',
+      'operating_a_company': 'operating_a_company',
       'other': 'other',
+      'payments_to_friends_or_family_abroad': 'payments_to_friends_or_family_abroad',
+      'personal_or_living_expenses': 'personal_or_living_expenses',
+      'protect_wealth': 'protect_wealth',
+      'purchase_goods_and_services': 'purchase_goods_and_services',
+      'receive_payment_for_freelancing': 'receive_payment_for_freelancing',
+      'receive_salary': 'receive_salary',
+      // Map legacy/UI values to Bridge's expected values
+      'receive_payments': 'receive_payment_for_freelancing', // Map receive_payments to receive_payment_for_freelancing
+      'send_payments': 'payments_to_friends_or_family_abroad', // Map send_payments to payments_to_friends_or_family_abroad
+      'savings': 'protect_wealth', // Map savings to protect_wealth
+      'investment': 'investment_purposes', // Map investment to investment_purposes
+      'personal': 'personal_or_living_expenses', // Map personal to personal_or_living_expenses
+      'living_expenses': 'personal_or_living_expenses', // Map living_expenses to personal_or_living_expenses
+      'business': 'business_transactions', // Map business to business_transactions
+      'freelancing': 'receive_payment_for_freelancing', // Map freelancing to receive_payment_for_freelancing
+      'salary': 'receive_salary', // Map salary to receive_salary
     }
-    const normalizedValue = sourceOfFunds.toLowerCase().trim()
-    const mappedValue = sourceOfFundsMapping[normalizedValue]
+    const normalizedValue = accountPurpose.toLowerCase().trim()
+    const mappedValue = accountPurposeMapping[normalizedValue]
     if (mappedValue) {
-      payload.source_of_funds = mappedValue
-      console.log(`[BRIDGE-SERVICE] Mapped source_of_funds from '${sourceOfFunds}' to '${mappedValue}'`)
+      payload.account_purpose = mappedValue
+      console.log(`[BRIDGE-SERVICE] Mapped account_purpose from '${accountPurpose}' to '${mappedValue}'`)
     } else {
       // If value is not in our mapping, skip the field to avoid Bridge API errors
-      console.warn(`[BRIDGE-SERVICE] Unknown or invalid source_of_funds value: '${sourceOfFunds}'. Skipping field to avoid API error.`)
+      console.warn(`[BRIDGE-SERVICE] Unknown or invalid account_purpose value: '${accountPurpose}'. Skipping field to avoid API error. Bridge expects one of: business_transactions, charitable_donations, ecommerce_retail_payments, investment_purposes, operating_a_company, other, payments_to_friends_or_family_abroad, personal_or_living_expenses, protect_wealth, purchase_goods_and_services, receive_payment_for_freelancing, receive_salary`)
+    }
+  }
+  // Bridge expects source_of_funds to be an occupation code (e.g., "132011" for "Accountant and auditor")
+  // These are numeric codes from the GET /v0/lists/occupation_codes endpoint
+  // We map our UI values to common occupation codes
+  if (sourceOfFunds) {
+    const occupationCode = mapToOccupationCode(sourceOfFunds)
+    
+    if (occupationCode) {
+      // Bridge expects source_of_funds to be the occupation code as a string
+      payload.source_of_funds = occupationCode
+      console.log(`[BRIDGE-SERVICE] Mapped source_of_funds from '${sourceOfFunds}' to occupation code '${occupationCode}'`)
+    } else {
+      // If value is not in our mapping, skip the field to avoid Bridge API errors
+      console.warn(`[BRIDGE-SERVICE] Unknown or invalid source_of_funds value: '${sourceOfFunds}'. Skipping field to avoid API error. Bridge expects an occupation code from GET /v0/lists/occupation_codes`)
+    }
+  }
+  
+  // Determine customer type for international-specific fields
+  const isUSA = countryCode === 'USA' || countryCode === 'US'
+  const isEEA = [
+    'AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC',
+    'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK',
+    'SVN', 'ESP', 'SWE', 'ISL', 'LIE', 'NOR'
+  ].includes(countryCode.toUpperCase())
+  const isInternational = !isUSA && !isEEA
+  
+  // International-specific fields (non-US, non-EEA)
+  if (isInternational) {
+    // most_recent_occupation: Map to occupation code (same logic as source_of_funds)
+    if (mostRecentOccupation) {
+      const occupationCode = mapToOccupationCode(mostRecentOccupation)
+      
+      if (occupationCode) {
+        payload.most_recent_occupation = occupationCode
+        console.log(`[BRIDGE-SERVICE] Mapped most_recent_occupation from '${mostRecentOccupation}' to occupation code '${occupationCode}'`)
+      } else {
+        // If value is not in our mapping, skip the field to avoid Bridge API errors
+        console.warn(`[BRIDGE-SERVICE] Unknown or invalid most_recent_occupation value: '${mostRecentOccupation}'. Skipping field to avoid API error. Bridge expects an occupation code from GET /v0/lists/occupation_codes`)
+      }
+    } else if (sourceOfFunds) {
+      // Note: Can reuse sourceOfFunds value if mostRecentOccupation is not provided
+      // This is mentioned in the requirements
+      const occupationCode = mapToOccupationCode(sourceOfFunds)
+      
+      if (occupationCode) {
+        payload.most_recent_occupation = occupationCode
+        console.log(`[BRIDGE-SERVICE] Reusing sourceOfFunds '${sourceOfFunds}' as most_recent_occupation with occupation code '${occupationCode}'`)
+      }
+    }
+    
+    // acting_as_intermediary: Default to "no" if not provided, Bridge expects "yes" or "no"
+    if (actingAsIntermediary) {
+      const normalizedValue = actingAsIntermediary.toLowerCase().trim()
+      if (normalizedValue === 'yes' || normalizedValue === 'no') {
+        payload.acting_as_intermediary = normalizedValue
+        console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to '${normalizedValue}'`)
+      } else {
+        console.warn(`[BRIDGE-SERVICE] Invalid acting_as_intermediary value: '${actingAsIntermediary}'. Expected 'yes' or 'no'. Defaulting to 'no'`)
+        payload.acting_as_intermediary = 'no'
+      }
+    } else {
+      // Default to "no" if not provided
+      payload.acting_as_intermediary = 'no'
+      console.log(`[BRIDGE-SERVICE] Set acting_as_intermediary to default value 'no'`)
     }
   }
   
@@ -1503,9 +1682,6 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
   console.log(`[BRIDGE-SERVICE] Building identifying_information array`)
   
   const identifyingInformation: any[] = []
-  
-  // For US residents: SSN and optional driver's license
-  const isUSA = countryCode === 'USA' || countryCode === 'US'
   
   if (isUSA) {
     // SSN (required for US)
