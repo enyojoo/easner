@@ -1273,7 +1273,8 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
     }
   }
   
-  // Countries that don't use states/provinces - skip subdivision
+  // Countries that don't use states/provinces OR Bridge doesn't accept subdivision codes
+  // Bridge may reject subdivision codes for countries where it's not required or not supported
   const countriesWithoutSubdivision = [
     'GBR', 'GB', // United Kingdom
     'DEU', 'DE', // Germany
@@ -1305,6 +1306,26 @@ function normalizeSubdivisionCode(state: string, countryCode: string): string | 
     'LUX', 'LU', // Luxembourg
     'MLT', 'MT', // Malta
     'CYP', 'CY', // Cyprus
+    // African countries - Bridge may not accept subdivision codes
+    'NGA', 'NG', // Nigeria
+    'KEN', 'KE', // Kenya
+    'GHA', 'GH', // Ghana
+    'ZAF', 'ZA', // South Africa
+    // Asian countries - Bridge may not accept subdivision codes
+    'IND', 'IN', // India
+    'PAK', 'PK', // Pakistan
+    'BGD', 'BD', // Bangladesh
+    'PHL', 'PH', // Philippines
+    'IDN', 'ID', // Indonesia
+    'MYS', 'MY', // Malaysia
+    'SGP', 'SG', // Singapore
+    'THA', 'TH', // Thailand
+    'VNM', 'VN', // Vietnam
+    'JPN', 'JP', // Japan
+    'KOR', 'KR', // South Korea
+    // Latin American countries
+    'BRA', 'BR', // Brazil
+    'MEX', 'MX', // Mexico
   ]
   
   if (countriesWithoutSubdivision.includes(countryCode)) {
