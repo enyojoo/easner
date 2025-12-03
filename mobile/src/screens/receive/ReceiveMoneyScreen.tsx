@@ -22,6 +22,7 @@ import { bridgeService } from '../../lib/bridgeService'
 import { supabase } from '../../lib/supabase'
 import { kycService } from '../../lib/kycService'
 import QRCode from 'react-native-qrcode-svg'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type TabType = 'bank' | 'stablecoin'
 
@@ -72,14 +73,53 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
         const userId = session?.user?.id
         if (!userId) {
           setLoading(false)
+          setCheckingKyc(false)
           return
         }
         
-        // First, check KYC submissions from database (most reliable)
+        // First, try to load KYC status from cache to prevent flickering
+        try {
+          const CACHE_KEY = `easner_kyc_submissions_${userId}`
+          const cached = await AsyncStorage.getItem(CACHE_KEY)
+          
+          if (cached) {
+            const { value, timestamp } = JSON.parse(cached)
+            if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
+              const submissions = value as any[]
+              const identitySubmission = submissions.find(s => s.type === "identity")
+              const addressSubmission = submissions.find(s => s.type === "address")
+              
+              // Set KYC status from cache immediately to prevent flickering
+              if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
+                setKycStatus('approved')
+              } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
+                setKycStatus('rejected')
+              } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+                setKycStatus('in_review')
+              } else if (identitySubmission || addressSubmission) {
+                setKycStatus('pending')
+              } else {
+                setKycStatus(null)
+              }
+              setCheckingKyc(false) // We have cached status, can show UI
+            }
+          }
+        } catch (cacheError) {
+          console.error('Error loading KYC cache:', cacheError)
+        }
+        
+        // Then, check KYC submissions from database (most reliable) - fetch in background
         try {
           const submissions = await kycService.getByUserId(userId)
           const identitySubmission = submissions.find(s => s.type === "identity")
           const addressSubmission = submissions.find(s => s.type === "address")
+          
+          // Update cache
+          const CACHE_KEY = `easner_kyc_submissions_${userId}`
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+            value: submissions,
+            timestamp: Date.now()
+          }))
           
           // Check if both are approved
           if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
@@ -95,6 +135,8 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
           }
         } catch (kycError) {
           console.error('Error checking KYC submissions:', kycError)
+        } finally {
+          setCheckingKyc(false)
         }
         
         // Check database directly for wallet/account IDs (fast, no API call)
@@ -254,10 +296,45 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
           const userId = session?.user?.id
           if (!userId) return
           
-          // Refresh KYC submissions
+          // First check cache to prevent flickering
+          try {
+            const CACHE_KEY = `easner_kyc_submissions_${userId}`
+            const cached = await AsyncStorage.getItem(CACHE_KEY)
+            
+            if (cached) {
+              const { value, timestamp } = JSON.parse(cached)
+              if (Date.now() - timestamp < 5 * 60 * 1000) {
+                const submissions = value as any[]
+                const identitySubmission = submissions.find(s => s.type === "identity")
+                const addressSubmission = submissions.find(s => s.type === "address")
+                
+                // Update status from cache first
+                if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
+                  setKycStatus('approved')
+                } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
+                  setKycStatus('rejected')
+                } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+                  setKycStatus('in_review')
+                } else if (identitySubmission || addressSubmission) {
+                  setKycStatus('pending')
+                }
+              }
+            }
+          } catch (cacheError) {
+            console.error('Error loading KYC cache on focus:', cacheError)
+          }
+          
+          // Then refresh KYC submissions from database
           const submissions = await kycService.getByUserId(userId)
           const identitySubmission = submissions.find(s => s.type === "identity")
           const addressSubmission = submissions.find(s => s.type === "address")
+          
+          // Update cache
+          const CACHE_KEY = `easner_kyc_submissions_${userId}`
+          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
+            value: submissions,
+            timestamp: Date.now()
+          }))
           
           if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
             setKycStatus('approved')
@@ -683,7 +760,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
           >
             {activeTab === 'bank' ? (
               <>
-                {!accountReady ? (
+                {!accountReady && !checkingKyc ? (
                   /* Show KYC notice when account is not ready */
                   <View style={styles.kycNoticeContainer}>
                     <View style={styles.kycNoticeIconContainer}>
@@ -692,10 +769,14 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                     <Text style={styles.kycNoticeTitle}>
                       {kycStatus === 'approved' 
                         ? 'Account Setup in Progress' 
+                        : kycStatus === 'in_review'
+                        ? 'Verification in Review'
                         : 'Complete Verification to get an account'}
                     </Text>
                     <Text style={styles.kycNoticeText}>
-                      {!kycStatus || kycStatus === 'pending' || kycStatus === 'in_review'
+                      {kycStatus === 'in_review'
+                        ? 'Your verification is currently being reviewed. Once approved, your account information will appear here automatically.'
+                        : !kycStatus || kycStatus === 'pending'
                         ? 'Complete your identity verification to receive your bank account details. Once approved, your account information will appear here automatically.'
                         : kycStatus === 'rejected'
                         ? 'Your verification was not approved. Please complete identity verification again to receive your account details.'
@@ -703,7 +784,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                         ? 'Your account is being set up. This may take a few moments. Please check back shortly.'
                         : 'Complete your identity verification to receive your bank account details.'}
                     </Text>
-                    {kycStatus !== 'approved' && (
+                    {kycStatus !== 'approved' && kycStatus !== 'in_review' && (
                     <TouchableOpacity
                       style={styles.kycNoticeButton}
                       onPress={async () => {
@@ -808,7 +889,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
               </>
             ) : (
               <>
-                {!walletReady ? (
+                {!walletReady && !checkingKyc ? (
                   /* Show KYC notice when wallet is not ready */
                   <View style={styles.kycNoticeContainer}>
                     <View style={styles.kycNoticeIconContainer}>
@@ -817,10 +898,14 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                     <Text style={styles.kycNoticeTitle}>
                       {kycStatus === 'approved' 
                         ? 'Wallet Setup in Progress' 
+                        : kycStatus === 'in_review'
+                        ? 'Verification in Review'
                         : 'Complete Verification for wallet address'}
                     </Text>
                     <Text style={styles.kycNoticeText}>
-                      {!kycStatus || kycStatus === 'pending' || kycStatus === 'in_review'
+                      {kycStatus === 'in_review'
+                        ? 'Your verification is currently being reviewed. Once approved, your wallet information will appear here automatically.'
+                        : !kycStatus || kycStatus === 'pending'
                         ? `Complete your identity verification to receive your wallet address. Once approved, your wallet information will appear here automatically.`
                         : kycStatus === 'rejected'
                         ? 'Your verification was not approved. Please complete identity verification again to receive your wallet address.'
@@ -828,7 +913,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                         ? 'Your wallet is being set up. This may take a few moments. Please check back shortly.'
                         : 'Complete your identity verification to receive your wallet address.'}
                     </Text>
-                    {kycStatus !== 'approved' && (
+                    {kycStatus !== 'approved' && kycStatus !== 'in_review' && (
                     <TouchableOpacity
                       style={styles.kycNoticeButton}
                       onPress={async () => {

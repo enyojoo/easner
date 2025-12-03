@@ -5,8 +5,30 @@ import { BrandLogo } from "@/components/brand/brand-logo"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 export default function KYCPolicyPage() {
+  const searchParams = useSearchParams()
+  const [showBackButton, setShowBackButton] = useState(false)
+
+  useEffect(() => {
+    // Check if user came from an internal page
+    const referrer = document.referrer
+    const fromInternal = searchParams.get('from') === 'internal'
+    
+    // Show back button if:
+    // 1. There's a 'from=internal' query parameter (set when linking from other internal pages)
+    // 2. Referrer is from the same domain (easner.com)
+    const isInternalReferrer = referrer && (
+      referrer.includes('easner.com') || 
+      referrer.includes('localhost') ||
+      referrer.includes('127.0.0.1')
+    )
+    
+    setShowBackButton(fromInternal || isInternalReferrer)
+  }, [searchParams])
+
   const handleBack = () => {
     if (window.history.length > 1) {
       window.history.back()
@@ -20,14 +42,18 @@ export default function KYCPolicyPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors p-0 h-auto"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            Back
-          </Button>
+          {showBackButton ? (
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors p-0 h-auto"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back
+            </Button>
+          ) : (
+            <div className="w-16" /> // Spacer to keep logo centered
+          )}
           <BrandLogo size="md" />
         </div>
       </header>
@@ -52,7 +78,7 @@ export default function KYCPolicyPage() {
                   This policy outlines our KYC/KYB procedures, the information we collect, how we use it, and your
                   rights regarding the verification process. For more information about how we handle your personal
                   data, please review our{" "}
-                  <Link href="/privacy" className="text-easner-primary hover:underline">
+                  <Link href="/privacy?from=internal" className="text-easner-primary hover:underline">
                     Privacy Policy
                   </Link>
                   .
@@ -224,7 +250,7 @@ export default function KYCPolicyPage() {
                 </ul>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   For detailed information about how we handle your personal data, please review our{" "}
-                  <Link href="/privacy" className="text-easner-primary hover:underline">
+                  <Link href="/privacy?from=internal" className="text-easner-primary hover:underline">
                     Privacy Policy
                   </Link>
                   .
@@ -316,7 +342,7 @@ export default function KYCPolicyPage() {
                 </ul>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   All sharing is conducted in accordance with applicable data protection laws and our{" "}
-                  <Link href="/privacy" className="text-easner-primary hover:underline">
+                  <Link href="/privacy?from=internal" className="text-easner-primary hover:underline">
                     Privacy Policy
                   </Link>
                   .

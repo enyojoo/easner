@@ -131,42 +131,18 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     identitySubmission.status !== 'rejected' &&
     addressSubmission.status !== 'rejected'
 
-  // Load TOS status when both are submitted or when screen comes into focus
+  // Load TOS status when both are submitted (only once, like identity/address verification)
   useEffect(() => {
-    if (!bothSubmitted || !userProfile?.email) return
+    if (!bothSubmitted || !userProfile?.email || !userProfile?.id) return
 
     // Prevent duplicate calls
     if (loadingTosStatusRef.current) {
-      console.log('[TOS-LOAD] Already loading TOS status, skipping duplicate call')
       return
     }
 
+    // Load TOS status (will check cache first, then fetch if needed)
     loadTOSStatus()
-  }, [bothSubmitted, userProfile?.email])
-
-  // Reload TOS status when screen comes into focus (e.g., after accepting TOS in browser)
-  // Also clear cache on focus to ensure fresh data
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      if (bothSubmitted && userProfile?.email) {
-        // Clear cache to force fresh fetch from database
-        const CACHE_KEY = `easner_tos_status_${userProfile.id}`
-        AsyncStorage.removeItem(CACHE_KEY).catch(() => {
-          // Ignore errors
-        })
-        
-        // Prevent duplicate calls
-        if (loadingTosStatusRef.current) {
-          console.log('[TOS-LOAD] Already loading TOS status on focus, skipping duplicate call')
-          return
-        }
-        console.log('Screen focused - reloading TOS status (cache cleared)')
-        loadTOSStatus()
-      }
-    })
-
-    return unsubscribe
-  }, [navigation, bothSubmitted, userProfile?.email, userProfile?.id])
+  }, [bothSubmitted, userProfile?.email, userProfile?.id])
 
   const updateTosStatusInCache = async (signed: boolean, agreementId: string | null = null, linkId: string | null = null) => {
     if (!userProfile?.id) return
@@ -189,25 +165,25 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     
     // Prevent duplicate calls
     if (loadingTosStatusRef.current) {
-      console.log('[TOS-LOAD] Already loading, skipping duplicate call')
       return
     }
     
     loadingTosStatusRef.current = true
     
     try {
-      // First, check cache for immediate UI update (prevents flickering)
-      // But always fetch fresh data from database (source of truth)
+      // First, check cache for immediate UI update (like identity/address verification)
       const CACHE_KEY = `easner_tos_status_${userProfile.id}`
       const cached = await AsyncStorage.getItem(CACHE_KEY)
       let cachedData: any = null
+      let useCache = false
       
       if (cached) {
         try {
           cachedData = JSON.parse(cached)
           const { tosSigned: cachedTosSigned, tosSignedAgreementId: cachedAgreementId, tosLinkId: cachedTosLinkId, timestamp } = cachedData
-          if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-            console.log('[TOS-LOAD] ✅ TOS status from cache (showing immediately, fetching fresh data from database...)')
+          const cacheAge = Date.now() - timestamp
+          
+          if (cacheAge < 5 * 60 * 1000) { // 5 minute cache
             // Show cached value immediately for instant UI
             setTosSigned(cachedTosSigned)
             if (cachedAgreementId) {
@@ -216,10 +192,18 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             if (cachedTosLinkId) {
               setTosLinkId(cachedTosLinkId)
             }
-            // Continue to fetch fresh data from database (source of truth) - will override cache
+            
+            // If cache is fresh and TOS is signed, use cache and fetch in background silently
+            if (cachedTosSigned) {
+              useCache = true
+              // Fetch fresh data in background (silently, no logs)
+              fetchTOSStatusFromDatabase(true)
+              loadingTosStatusRef.current = false
+              return
+            }
+            // If TOS is not signed, continue to check database for updates
           } else {
             // Cache expired, clear it
-            console.log('[TOS-LOAD] Cache expired, clearing...')
             await AsyncStorage.removeItem(CACHE_KEY)
           }
         } catch (e) {
@@ -228,23 +212,39 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         }
       }
       
-      // Always check database for persistent TOS status (source of truth)
-      // This ensures we get the latest status even if cache is stale
+      // Cache is expired or TOS is not signed - fetch from database
+      await fetchTOSStatusFromDatabase(false)
+    } catch (error: any) {
+      console.error('[TOS-LOAD] Error loading TOS status:', error)
+      setTosSigned(false)
+    } finally {
+      loadingTosStatusRef.current = false
+    }
+  }
+
+  const fetchTOSStatusFromDatabase = async (silent: boolean = false) => {
+    if (!userProfile?.id) return
+    
+    try {
+      // Check database for persistent TOS status (source of truth)
       const { data: userData, error: dbError } = await supabase
         .from('users')
         .select('bridge_customer_id, bridge_signed_agreement_id')
-        .eq('id', userProfile?.id)
+        .eq('id', userProfile.id)
         .single()
       
       if (dbError) {
+        if (!silent) {
         console.error('[TOS-LOAD] Error fetching from database:', dbError)
-        // Continue with cache/Bridge API check if database fails
+        }
+        return
       }
       
       // If we have signed_agreement_id in database, TOS is signed
-      // ALWAYS update state from database (source of truth) - this overrides any cache
       if (userData?.bridge_signed_agreement_id) {
+        if (!silent) {
         console.log('[TOS-LOAD] ✅ TOS signed (from database) - updating state')
+        }
         setTosSigned(true)
         setTosSignedAgreementId(userData.bridge_signed_agreement_id)
         
@@ -258,7 +258,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         await updateTosStatusInCache(true, userData.bridge_signed_agreement_id, linkId)
         
         // Get TOS link for display (non-blocking, in background)
-        bridgeService.getTOSLink(userProfile.email, 'individual')
+        bridgeService.getTOSLink(userProfile.email!, 'individual')
           .then(response => {
             if (response.tosLink) {
               setTosLink(response.tosLink)
@@ -268,13 +268,14 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             // Ignore errors - we already have the status from database
           })
         
-        loadingTosStatusRef.current = false
-        return // Exit early - database is source of truth
+        return
       }
       
-      // If database says TOS is NOT signed, update state to false (override cache)
+      // If database says TOS is NOT signed, update state to false
       if (userData && !userData.bridge_signed_agreement_id) {
+        if (!silent) {
         console.log('[TOS-LOAD] ❌ TOS not signed (from database) - updating state')
+        }
         setTosSigned(false)
         setTosSignedAgreementId(null)
         // Update cache to match database
@@ -301,7 +302,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             }
             
             // Get TOS link for display
-            const response = await bridgeService.getTOSLink(userProfile.email, 'individual')
+            const response = await bridgeService.getTOSLink(userProfile.email!, 'individual')
             if (response.tosLink) {
               setTosLink(response.tosLink)
             }
@@ -313,7 +314,9 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             await updateTosStatusInCache(false, null, tosLinkId)
           }
         } catch (customerError: any) {
+          if (!silent) {
           console.warn('[TOS-LOAD] Could not check customer TOS status:', customerError.message)
+          }
           setTosSigned(false)
         }
       }
@@ -322,7 +325,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       // Only try this if TOS is not already signed (to avoid unnecessary API calls)
       if (!userData?.bridge_signed_agreement_id) {
         try {
-      const response = await bridgeService.getTOSLink(userProfile.email, 'individual')
+          const response = await bridgeService.getTOSLink(userProfile.email!, 'individual')
       const link = response.tosLink
       const linkId = response.tosLinkId
       
@@ -365,18 +368,16 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         } catch (tosLinkError: any) {
           // If TOS link creation fails (e.g., 401), log but don't fail completely
           // TOS might already be accepted, so this is not critical
+          if (!silent) {
           console.warn('[TOS-LOAD] Could not get TOS link (this is OK if TOS is already accepted):', tosLinkError.message)
+          }
           // Don't set tosSigned to false here - database is source of truth
         }
-      } else {
-        // TOS is already signed according to database - no need to get TOS link
-        console.log('[TOS-LOAD] TOS already signed, skipping TOS link generation')
       }
     } catch (error: any) {
-      console.error('[TOS-LOAD] Error loading TOS status:', error)
-      setTosSigned(false)
-    } finally {
-      loadingTosStatusRef.current = false
+      if (!silent) {
+        console.error('[TOS-LOAD] Error fetching TOS status from database:', error)
+      }
     }
   }
   
@@ -862,7 +863,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             ]}
           >
             {/* Info Message */}
-            {!bothCompleted && (
+            {/* Only show if both are not completed AND neither is in review */}
+            {!bothCompleted && 
+             identitySubmission?.status !== 'in_review' && 
+             addressSubmission?.status !== 'in_review' && (
               <View style={styles.infoCard}>
                 <View style={styles.infoBox}>
                   <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />

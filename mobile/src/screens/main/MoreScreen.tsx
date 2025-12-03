@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { WebView } from 'react-native-webview'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps, KYCSubmission } from '../../types'
@@ -28,6 +29,10 @@ function MoreContent({ navigation }: NavigationProps) {
   const [kycSubmissions, setKycSubmissions] = useState<KYCSubmission[]>([])
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [loadingPrivacy, setLoadingPrivacy] = useState(true)
+  const [loadingTerms, setLoadingTerms] = useState(true)
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -126,23 +131,13 @@ function MoreContent({ navigation }: NavigationProps) {
   }
 
   const handlePrivacy = async () => {
-    const url = 'https://www.easner.com/privacy'
-    const supported = await Linking.canOpenURL(url)
-    if (supported) {
-      await Linking.openURL(url)
-    } else {
-      Alert.alert('Error', 'Cannot open privacy policy URL')
-    }
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setShowPrivacyModal(true)
   }
 
   const handleTerms = async () => {
-    const url = 'https://www.easner.com/terms'
-    const supported = await Linking.canOpenURL(url)
-    if (supported) {
-      await Linking.openURL(url)
-    } else {
-      Alert.alert('Error', 'Cannot open terms URL')
-    }
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setShowTermsModal(true)
   }
 
   const renderMenuItem = (
@@ -348,6 +343,86 @@ function MoreContent({ navigation }: NavigationProps) {
           </View>
         </View>
       </Modal>
+
+      {/* Privacy Policy WebView Modal */}
+      <Modal
+        visible={showPrivacyModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowPrivacyModal(false)
+          setLoadingPrivacy(true) // Reset loading state when modal closes
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Privacy Policy</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowPrivacyModal(false)
+                setLoadingPrivacy(true) // Reset loading state when modal closes
+              }}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          {loadingPrivacy && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary.main} />
+            </View>
+          )}
+          <WebView
+            source={{ uri: 'https://www.easner.com/privacy' }}
+            style={styles.webView}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            onLoadStart={() => setLoadingPrivacy(true)}
+            onLoadEnd={() => setLoadingPrivacy(false)}
+            onError={() => setLoadingPrivacy(false)}
+          />
+        </View>
+      </Modal>
+
+      {/* Terms of Service WebView Modal */}
+      <Modal
+        visible={showTermsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowTermsModal(false)
+          setLoadingTerms(true) // Reset loading state when modal closes
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Terms of Service</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowTermsModal(false)
+                setLoadingTerms(true) // Reset loading state when modal closes
+              }}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          {loadingTerms && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary.main} />
+            </View>
+          )}
+          <WebView
+            source={{ uri: 'https://www.easner.com/terms' }}
+            style={styles.webView}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            onLoadStart={() => setLoadingTerms(true)}
+            onLoadEnd={() => setLoadingTerms(false)}
+            onError={() => setLoadingTerms(false)}
+          />
+        </View>
+      </Modal>
     </ScreenWrapper>
   )
 }
@@ -528,6 +603,44 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     fontWeight: '500',
     color: colors.text.inverse,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  modalCloseButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.frame.background,
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  webView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background.primary,
+    zIndex: 1,
   },
 })
 

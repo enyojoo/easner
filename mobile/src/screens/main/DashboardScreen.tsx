@@ -320,9 +320,16 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
           <View style={styles.headerContent}>
             {/* User Greeting with Avatar */}
             <View style={styles.greetingContainer}>
-              <View style={styles.avatar}>
+              <TouchableOpacity
+                style={styles.avatar}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  navigation.navigate('ProfileEdit' as any)
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.avatarText}>{getInitials()}</Text>
-            </View>
+              </TouchableOpacity>
               <View style={styles.greetingTextContainer}>
                 <Text style={styles.greetingText}>
                   Hi {displayName} 👋
