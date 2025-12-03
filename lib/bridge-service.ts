@@ -1638,4 +1638,3 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
 
   return payload
 }
-
