@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Search, Eye, CheckCircle, Clock, XCircle, User, Mail, Phone, Trash2, Check, FileText, ExternalLink, RotateCcw } from "lucide-react"
+import { Search, Eye, CheckCircle, Clock, XCircle, User, Mail, Phone, Trash2, Check, FileText, ExternalLink, RotateCcw, Send, Loader2 } from "lucide-react"
 import { kycService, KYCSubmission } from "@/lib/kyc-service"
 import { getIdTypeLabel } from "@/lib/country-id-types"
 import { countryService, getCountryFlag } from "@/lib/country-service"
@@ -24,6 +24,10 @@ interface ComplianceUser {
   phone?: string
   identitySubmission?: KYCSubmission
   addressSubmission?: KYCSubmission
+  bridge_customer_id?: string
+  bridge_signed_agreement_id?: string
+  bridge_kyc_status?: string
+  bridge_kyc_rejection_reasons?: any
 }
 
 export default function AdminCompliancePage() {
@@ -68,6 +72,7 @@ export default function AdminCompliancePage() {
   const [countries, setCountries] = useState<any[]>([])
   const [deleting, setDeleting] = useState<string | null>(null)
   const [approving, setApproving] = useState<string | null>(null)
+  const [sendingToBridge, setSendingToBridge] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
   const channelRef = useRef<any>(null)
 
@@ -85,7 +90,7 @@ export default function AdminCompliancePage() {
       // Get all users
       const { data: usersData, error: usersError } = await supabase
         .from("users")
-        .select("id, email, first_name, last_name, phone")
+        .select("id, email, first_name, last_name, phone, bridge_customer_id, bridge_signed_agreement_id, bridge_kyc_status, bridge_kyc_rejection_reasons")
         .order("created_at", { ascending: false })
 
       if (usersError) throw usersError
@@ -109,6 +114,10 @@ export default function AdminCompliancePage() {
           phone: user.phone,
           identitySubmission: userSubmissions.find((s: KYCSubmission) => s.type === "identity"),
           addressSubmission: userSubmissions.find((s: KYCSubmission) => s.type === "address"),
+          bridge_customer_id: user.bridge_customer_id,
+          bridge_signed_agreement_id: user.bridge_signed_agreement_id,
+          bridge_kyc_status: user.bridge_kyc_status,
+          bridge_kyc_rejection_reasons: user.bridge_kyc_rejection_reasons,
         }
       })
 
@@ -158,13 +167,13 @@ export default function AdminCompliancePage() {
     }
   }, [initialized, initialUsers.length, isCacheFresh])
 
-  // Real-time subscription for KYC submission updates
+  // Real-time subscription for KYC submission and user updates
   useEffect(() => {
     if (!initialized) return
 
     // Set up Supabase Realtime subscription for instant updates
     const channel = supabase
-      .channel('admin-compliance-kyc-updates')
+      .channel('admin-compliance-updates')
       .on(
         'postgres_changes',
         {
@@ -194,11 +203,47 @@ export default function AdminCompliancePage() {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+        },
+        async (payload) => {
+          // Only process if Bridge-related fields changed
+          const oldData = payload.old as any
+          const newData = payload.new as any
+          
+          const bridgeStatusChanged = 
+            oldData?.bridge_kyc_status !== newData?.bridge_kyc_status ||
+            oldData?.bridge_customer_id !== newData?.bridge_customer_id ||
+            JSON.stringify(oldData?.bridge_kyc_rejection_reasons) !== JSON.stringify(newData?.bridge_kyc_rejection_reasons)
+          
+          if (bridgeStatusChanged) {
+            console.log('Admin compliance: User Bridge status update received via Realtime')
+            try {
+              // Reload data to get updated Bridge status (silent refresh, no loading state)
+              const updatedUsers = await loadData(false)
+              
+              // Update selected user if dialog is open and this update affects them
+              if (selectedUser && newData && newData.id === selectedUser.id) {
+                const updatedUser = updatedUsers.find(u => u.id === selectedUser.id)
+                if (updatedUser) {
+                  setSelectedUser(updatedUser)
+                }
+              }
+            } catch (error) {
+              console.error("Error handling real-time Bridge status update:", error)
+            }
+          }
+        }
+      )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Admin compliance: Subscribed to KYC submissions real-time updates')
+          console.log('Admin compliance: Subscribed to KYC submissions and user updates')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('Admin compliance: Realtime subscription error for KYC submissions')
+          console.error('Admin compliance: Realtime subscription error')
         }
       })
 
@@ -298,6 +343,54 @@ export default function AdminCompliancePage() {
     }
   }
 
+  const canSendToBridge = (user: ComplianceUser): boolean => {
+    return !!(
+      user.identitySubmission &&
+      user.addressSubmission &&
+      user.bridge_signed_agreement_id &&
+      !user.bridge_customer_id
+    )
+  }
+
+  const handleSendToBridge = async (userId: string) => {
+    if (!confirm("Send this user's KYC data to Bridge? This will create their Bridge customer account.")) {
+      return
+    }
+
+    try {
+      setSendingToBridge(userId)
+      
+      const response = await fetch("/api/admin/kyc/send-to-bridge", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+        credentials: "include",
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send to Bridge")
+      }
+
+      alert("Successfully sent to Bridge! Customer ID: " + data.customerId)
+      
+      // Reload data to get updated Bridge customer ID
+      const updatedUsers = await loadData()
+      const updatedUser = updatedUsers.find(u => u.id === userId)
+      if (updatedUser && selectedUser?.id === userId) {
+        setSelectedUser(updatedUser)
+      }
+    } catch (error: any) {
+      console.error("Error sending to Bridge:", error)
+      alert(error.message || "Failed to send to Bridge")
+    } finally {
+      setSendingToBridge(null)
+    }
+  }
+
   const handleViewFile = async (filePathOrUrl: string) => {
     if (!filePathOrUrl) return
     
@@ -365,6 +458,43 @@ export default function AdminCompliancePage() {
       return <Badge className="bg-gray-100 text-gray-700">Pending</Badge>
     }
     return <Badge className="bg-gray-100 text-gray-700">Not started</Badge>
+  }
+
+  const getBridgeStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800"
+      case "under_review":
+      case "in_review":
+        return "bg-yellow-100 text-yellow-800"
+      case "rejected":
+        return "bg-red-100 text-red-800"
+      case "incomplete":
+      case "not_started":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getBridgeKycStatusBadge = (status?: string) => {
+    if (!status) return null
+    
+    const statusLabels: Record<string, string> = {
+      "not_started": "Not Started",
+      "incomplete": "Incomplete",
+      "under_review": "Under Review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+    
+    const label = statusLabels[status] || status
+    
+    return (
+      <Badge className={getBridgeStatusColor(status)}>
+        {label}
+      </Badge>
+    )
   }
 
   const handleUserSelect = (user: ComplianceUser) => {
@@ -622,6 +752,73 @@ export default function AdminCompliancePage() {
                     </div>
                   )}
                 </div>
+
+                {/* Bridge Integration */}
+                {selectedUser && (
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Bridge Integration</h3>
+                    <div className="space-y-3">
+                      {selectedUser.bridge_customer_id && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-green-600 font-medium">
+                              ✓ Bridge Customer ID: {selectedUser.bridge_customer_id.slice(0, 8)}...
+                            </p>
+                          </div>
+                          {selectedUser.bridge_kyc_status && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600">Status:</span>
+                              {getBridgeKycStatusBadge(selectedUser.bridge_kyc_status)}
+                            </div>
+                          )}
+                          {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                              <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                              <p className="text-sm text-red-700">
+                                {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
+                                  ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
+                                  : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
+                                  ? selectedUser.bridge_kyc_rejection_reasons
+                                  : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {canSendToBridge(selectedUser) ? (
+                        <Button
+                          onClick={() => handleSendToBridge(selectedUser.id)}
+                          disabled={sendingToBridge === selectedUser.id}
+                          className="bg-easner-primary hover:bg-easner-primary-600"
+                        >
+                          {sendingToBridge === selectedUser.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Send to Bridge
+                            </>
+                          )}
+                        </Button>
+                      ) : !selectedUser.bridge_customer_id && (
+                        <div className="space-y-2">
+                          {!selectedUser.identitySubmission && (
+                            <p className="text-sm text-gray-600">⚠ Identity verification required</p>
+                          )}
+                          {!selectedUser.addressSubmission && (
+                            <p className="text-sm text-gray-600">⚠ Address verification required</p>
+                          )}
+                          {!selectedUser.bridge_signed_agreement_id && (
+                            <p className="text-sm text-gray-600">⚠ Terms of Service must be accepted</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Address Verification */}
                 <div className="border-t pt-6">
