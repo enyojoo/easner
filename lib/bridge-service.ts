@@ -1190,6 +1190,140 @@ export const bridgeService = {
 // ============================================================================
 
 /**
+ * Normalize state/province name to ISO 3166-2 subdivision code
+ * Handles US states (most common case) and attempts to normalize other countries
+ */
+function normalizeSubdivisionCode(state: string, countryCode: string): string | null {
+  if (!state) return null
+  
+  // Remove country prefix if present (e.g., "US-CA" -> "CA")
+  let code = state.trim()
+  if (code.includes('-')) {
+    code = code.split('-').pop() || code
+  }
+  
+  // If already looks like a code (2-3 uppercase letters), return as-is
+  if (/^[A-Z]{2,3}$/.test(code)) {
+    return code.toUpperCase()
+  }
+  
+  // Country-specific normalization
+  const normalized = code.toLowerCase().trim()
+  
+  // For USA, convert state names to codes
+  if (countryCode === 'USA' || countryCode === 'US') {
+    const usStateMap: Record<string, string> = {
+      'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA',
+      'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE', 'florida': 'FL', 'georgia': 'GA',
+      'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA',
+      'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+      'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS', 'missouri': 'MO',
+      'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+      'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH',
+      'oklahoma': 'OK', 'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+      'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT', 'vermont': 'VT',
+      'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY',
+      'district of columbia': 'DC', 'washington dc': 'DC', 'dc': 'DC'
+    }
+    
+    if (usStateMap[normalized]) {
+      return usStateMap[normalized]
+    }
+    
+    // If it's already a valid 2-letter code, return uppercase
+    if (/^[A-Z]{2}$/i.test(code)) {
+      return code.toUpperCase()
+    }
+  }
+  
+  // For Canada, convert province names to codes
+  if (countryCode === 'CAN' || countryCode === 'CA') {
+    const canadaProvinceMap: Record<string, string> = {
+      'alberta': 'AB', 'british columbia': 'BC', 'manitoba': 'MB', 'new brunswick': 'NB',
+      'newfoundland and labrador': 'NL', 'northwest territories': 'NT', 'nova scotia': 'NS',
+      'nunavut': 'NU', 'ontario': 'ON', 'prince edward island': 'PE', 'quebec': 'QC',
+      'saskatchewan': 'SK', 'yukon': 'YT'
+    }
+    
+    if (canadaProvinceMap[normalized]) {
+      return canadaProvinceMap[normalized]
+    }
+    
+    // If it's already a valid 2-letter code, return uppercase
+    if (/^[A-Z]{2}$/i.test(code)) {
+      return code.toUpperCase()
+    }
+  }
+  
+  // For Australia, convert state names to codes
+  if (countryCode === 'AUS' || countryCode === 'AU') {
+    const australiaStateMap: Record<string, string> = {
+      'new south wales': 'NSW', 'victoria': 'VIC', 'queensland': 'QLD', 'western australia': 'WA',
+      'south australia': 'SA', 'tasmania': 'TAS', 'australian capital territory': 'ACT',
+      'northern territory': 'NT'
+    }
+    
+    if (australiaStateMap[normalized]) {
+      return australiaStateMap[normalized]
+    }
+    
+    // If it's already a valid 2-3 letter code, return uppercase
+    if (/^[A-Z]{2,3}$/i.test(code)) {
+      return code.toUpperCase()
+    }
+  }
+  
+  // Countries that don't use states/provinces - skip subdivision
+  const countriesWithoutSubdivision = [
+    'GBR', 'GB', // United Kingdom
+    'DEU', 'DE', // Germany
+    'FRA', 'FR', // France
+    'ITA', 'IT', // Italy
+    'ESP', 'ES', // Spain
+    'NLD', 'NL', // Netherlands
+    'BEL', 'BE', // Belgium
+    'CHE', 'CH', // Switzerland
+    'AUT', 'AT', // Austria
+    'SWE', 'SE', // Sweden
+    'NOR', 'NO', // Norway
+    'DNK', 'DK', // Denmark
+    'FIN', 'FI', // Finland
+    'POL', 'PL', // Poland
+    'PRT', 'PT', // Portugal
+    'GRC', 'GR', // Greece
+    'IRL', 'IE', // Ireland
+    'CZE', 'CZ', // Czech Republic
+    'HUN', 'HU', // Hungary
+    'ROU', 'RO', // Romania
+    'BGR', 'BG', // Bulgaria
+    'HRV', 'HR', // Croatia
+    'SVK', 'SK', // Slovakia
+    'SVN', 'SI', // Slovenia
+    'EST', 'EE', // Estonia
+    'LVA', 'LV', // Latvia
+    'LTU', 'LT', // Lithuania
+    'LUX', 'LU', // Luxembourg
+    'MLT', 'MT', // Malta
+    'CYP', 'CY', // Cyprus
+  ]
+  
+  if (countriesWithoutSubdivision.includes(countryCode)) {
+    // These countries don't use subdivision - return null to skip
+    return null
+  }
+  
+  // For other countries, try to normalize if it looks like a code
+  // If it's 2-3 characters and all letters, uppercase it
+  if (code.length >= 2 && code.length <= 3 && /^[A-Za-z]+$/.test(code)) {
+    return code.toUpperCase()
+  }
+  
+  // If it's longer or doesn't match code pattern, we can't reliably convert it
+  // Return null to skip subdivision - Bridge may accept addresses without subdivision for some countries
+  return null
+}
+
+/**
  * Build customer payload for Bridge API based on country-specific requirements
  */
 export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
@@ -1274,12 +1408,14 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
   if (address.state) {
     // Bridge expects subdivision as ISO 3166-2 code without country prefix
     // e.g., "CA" for California, not "US-CA"
-    // Remove country prefix if present
-    let subdivision = address.state
-    if (subdivision.includes('-')) {
-      subdivision = subdivision.split('-').pop() || subdivision
+    // Normalize state name to ISO 3166-2 code
+    const subdivision = normalizeSubdivisionCode(address.state, countryCode)
+    if (subdivision) {
+      residentialAddress.subdivision = subdivision
+    } else {
+      console.warn(`[BRIDGE-SERVICE] Could not normalize subdivision code: ${address.state} for country ${countryCode}. Skipping subdivision.`)
+      // Don't include subdivision if we can't normalize it - Bridge may accept addresses without subdivision for some countries
     }
-    residentialAddress.subdivision = subdivision
   }
   
   payload.residential_address = residentialAddress
