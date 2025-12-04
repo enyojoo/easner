@@ -9,7 +9,8 @@
 
 -- Policy 1: Users can view their own files
 -- Files are stored with path format: identity/userId_filename.ext or address/userId_filename.ext
-CREATE POLICY IF NOT EXISTS "Users can view their own KYC documents"
+DROP POLICY IF EXISTS "Users can view their own KYC documents" ON storage.objects;
+CREATE POLICY "Users can view their own KYC documents"
 ON storage.objects
 FOR SELECT
 USING (
@@ -25,7 +26,8 @@ USING (
 );
 
 -- Policy 2: Users can upload their own files
-CREATE POLICY IF NOT EXISTS "Users can upload their own KYC documents"
+DROP POLICY IF EXISTS "Users can upload their own KYC documents" ON storage.objects;
+CREATE POLICY "Users can upload their own KYC documents"
 ON storage.objects
 FOR INSERT
 WITH CHECK (
@@ -41,7 +43,8 @@ WITH CHECK (
 );
 
 -- Policy 3: Users can update their own files
-CREATE POLICY IF NOT EXISTS "Users can update their own KYC documents"
+DROP POLICY IF EXISTS "Users can update their own KYC documents" ON storage.objects;
+CREATE POLICY "Users can update their own KYC documents"
 ON storage.objects
 FOR UPDATE
 USING (
@@ -56,7 +59,8 @@ USING (
 );
 
 -- Policy 4: Users can delete their own files
-CREATE POLICY IF NOT EXISTS "Users can delete their own KYC documents"
+DROP POLICY IF EXISTS "Users can delete their own KYC documents" ON storage.objects;
+CREATE POLICY "Users can delete their own KYC documents"
 ON storage.objects
 FOR DELETE
 USING (
@@ -72,7 +76,8 @@ USING (
 
 -- Policy 5: Admins can view all files
 -- This checks if the user is an admin by looking in the admin_users table
-CREATE POLICY IF NOT EXISTS "Admins can view all KYC documents"
+DROP POLICY IF EXISTS "Admins can view all KYC documents" ON storage.objects;
+CREATE POLICY "Admins can view all KYC documents"
 ON storage.objects
 FOR SELECT
 USING (
@@ -85,7 +90,8 @@ USING (
 );
 
 -- Policy 6: Admins can delete any files (for cleanup)
-CREATE POLICY IF NOT EXISTS "Admins can delete any KYC documents"
+DROP POLICY IF EXISTS "Admins can delete any KYC documents" ON storage.objects;
+CREATE POLICY "Admins can delete any KYC documents"
 ON storage.objects
 FOR DELETE
 USING (
