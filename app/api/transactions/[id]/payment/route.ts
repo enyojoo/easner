@@ -3,7 +3,7 @@
 
 import { type NextRequest, NextResponse } from "next/server"
 import { requireUser, createErrorResponse, withErrorHandling } from "@/lib/auth-utils"
-import { supabase } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 
 export const GET = withErrorHandling(async (
   request: NextRequest,
@@ -18,6 +18,9 @@ export const GET = withErrorHandling(async (
   const transactionId = context.params.id
 
   try {
+    // Use server client for database queries
+    const supabase = createServerClient()
+    
     // First verify the transaction belongs to the user
     const { data: transaction, error: txError } = await supabase
       .from("transactions")
