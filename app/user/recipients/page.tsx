@@ -498,45 +498,6 @@ export default function UserRecipientsPage() {
 
         {/* Recipients List */}
         <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-              <DialogTrigger asChild>
-                <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Recipient
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md mx-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Recipient</DialogTitle>
-                </DialogHeader>
-                <RecipientForm
-                  formData={formData}
-                  setFormData={setFormData}
-                  error={error}
-                  isSubmitting={isSubmitting}
-                  currencies={currencies}
-                  onSubmit={handleAddRecipient}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
-
-        <Card>
-          <CardHeader>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search recipients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-12 border-gray-300"
-              />
-            </div>
-          </div>
-
-          {/* Recipients List */}
-          <div className="space-y-4 sm:space-y-5">
           {filteredRecipients.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-base text-gray-600 mb-2">
