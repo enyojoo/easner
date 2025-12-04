@@ -2,14 +2,54 @@
 // GET /api/admin/webhooks/check?userId=<userId>&customerId=<customerId>&eventType=<eventType>
 
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/admin-auth-utils"
+import { requireAdmin, getAdminUser } from "@/lib/admin-auth-utils"
 import { createServerClient } from "@/lib/supabase"
 import { bridgeService } from "@/lib/bridge-service"
+import { createClient } from "@supabase/supabase-js"
 
 export async function GET(request: NextRequest) {
   try {
-    const adminUser = await requireAdmin(request)
-    console.log(`[WEBHOOK-CHECK] Admin ${adminUser.email} checking webhooks`)
+    // Log request details for debugging
+    const cookies = request.cookies.getAll()
+    const authHeader = request.headers.get("authorization")
+    console.log(`[WEBHOOK-CHECK] Request received`)
+    console.log(`[WEBHOOK-CHECK] Auth header present:`, !!authHeader)
+    console.log(`[WEBHOOK-CHECK] Cookies count:`, cookies.length)
+    console.log(`[WEBHOOK-CHECK] Cookie names:`, cookies.map(c => c.name))
+    
+    // Try requireAdmin first (uses token from cookies)
+    let adminUser
+    try {
+      adminUser = await requireAdmin(request)
+      console.log(`[WEBHOOK-CHECK] Admin ${adminUser.email} checking webhooks`)
+    } catch (authError: any) {
+      console.warn(`[WEBHOOK-CHECK] requireAdmin failed, trying session-based auth:`, authError?.message)
+      
+      // Fallback: Try getAdminUser directly (might work even if requireAdmin failed)
+      try {
+        adminUser = await getAdminUser(request)
+        if (!adminUser) {
+          console.error(`[WEBHOOK-CHECK] getAdminUser returned null`)
+          return NextResponse.json(
+            { 
+              error: "Authentication failed",
+              message: "Admin access required"
+            },
+            { status: 401 }
+          )
+        }
+        console.log(`[WEBHOOK-CHECK] Admin authenticated via getAdminUser: ${adminUser.email}`)
+      } catch (fallbackError: any) {
+        console.error(`[WEBHOOK-CHECK] Fallback auth also failed:`, fallbackError?.message)
+        return NextResponse.json(
+          { 
+            error: "Authentication failed",
+            message: "Unable to verify admin access. Please ensure you are logged in as an admin."
+          },
+          { status: 401 }
+        )
+      }
+    }
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get("userId")
@@ -101,11 +141,11 @@ export async function GET(request: NextRequest) {
       name: error.name,
     })
     
-    // If it's an admin auth error, return 403
-    if (error.message === "Admin access required" || error.message?.includes("Unauthorized")) {
+    // If it's an admin auth error, return 401 (not 403)
+    if (error.message === "Admin access required" || error.message?.includes("Unauthorized") || error.message?.includes("Authentication failed")) {
       return NextResponse.json(
         { error: "Unauthorized - Admin access required" },
-        { status: 403 }
+        { status: 401 }
       )
     }
     
