@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Search, Eye, CheckCircle, Clock, XCircle, User, Mail, Phone, Trash2, Check, FileText, ExternalLink, RotateCcw, Send, Loader2 } from "lucide-react"
 import { kycService, KYCSubmission } from "@/lib/kyc-service"
 import { getIdTypeLabel } from "@/lib/country-id-types"
@@ -75,6 +76,9 @@ export default function AdminCompliancePage() {
   const [sendingToBridge, setSendingToBridge] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
   const channelRef = useRef<any>(null)
+  const [noticeDialog, setNoticeDialog] = useState<{ open: boolean; title: string; message: string; type: 'success' | 'error' }>({ open: false, title: '', message: '', type: 'success' })
+  const [checkingWebhooks, setCheckingWebhooks] = useState(false)
+  const [webhookData, setWebhookData] = useState<any>(null)
 
   useEffect(() => {
     loadCountries()
@@ -291,7 +295,12 @@ export default function AdminCompliancePage() {
       }
     } catch (error: any) {
       console.error("Error deleting submission:", error)
-      alert(error.message || "Failed to delete submission")
+      setNoticeDialog({
+        open: true,
+        title: "Failed to Delete Submission",
+        message: error.message || "An unknown error occurred",
+        type: 'error'
+      })
     } finally {
       setDeleting(null)
     }
@@ -314,7 +323,12 @@ export default function AdminCompliancePage() {
       }
     } catch (error: any) {
       console.error("Error approving submission:", error)
-      alert(error.message || "Failed to approve submission")
+      setNoticeDialog({
+        open: true,
+        title: "Failed to Approve Submission",
+        message: error.message || "An unknown error occurred",
+        type: 'error'
+      })
     } finally {
       setApproving(null)
     }
@@ -337,7 +351,12 @@ export default function AdminCompliancePage() {
       }
     } catch (error: any) {
       console.error("Error setting submission to in review:", error)
-      alert(error.message || "Failed to update submission")
+      setNoticeDialog({
+        open: true,
+        title: "Failed to Update Submission",
+        message: error.message || "An unknown error occurred",
+        type: 'error'
+      })
     } finally {
       setApproving(null)
     }
@@ -382,17 +401,66 @@ export default function AdminCompliancePage() {
         throw new Error(data.error || "Failed to send to Bridge")
       }
 
-      alert("Successfully sent to Bridge! Customer ID: " + data.customerId)
+      // Show success dialog with full customer ID
+      setNoticeDialog({
+        open: true,
+        title: "Successfully sent to Bridge!",
+        message: `Customer ID: ${data.customerId || 'N/A'}`,
+        type: 'success'
+      })
       
-      // Reload data to get updated Bridge customer ID
-      const updatedUsers = await loadData()
-      const updatedUser = updatedUsers.find(u => u.id === userId)
-      if (updatedUser && selectedUser?.id === userId) {
-        setSelectedUser(updatedUser)
+      // Immediately update selectedUser with the new bridge_customer_id from response
+      // This ensures the UI updates instantly without waiting for database reload
+      if (data.customerId) {
+        setSelectedUser(prev => {
+          if (prev?.id === userId) {
+            return {
+              ...prev,
+              bridge_customer_id: data.customerId,
+              bridge_kyc_status: data.kycStatus,
+              bridge_kyc_rejection_reasons: data.rejectionReasons,
+            }
+          }
+          return prev
+        })
+        
+        // Also update the users list immediately
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId 
+              ? {
+                  ...user,
+                  bridge_customer_id: data.customerId,
+                  bridge_kyc_status: data.kycStatus,
+                  bridge_kyc_rejection_reasons: data.rejectionReasons,
+                }
+              : user
+          )
+        )
       }
+      
+      // Reload data in background to ensure everything is in sync
+      // This will update the users list and refresh any other data
+      setTimeout(async () => {
+        const updatedUsers = await loadData(false)
+        setUsers(updatedUsers)
+        // Update selected user again with fresh data from database
+        setSelectedUser(prev => {
+          if (prev?.id === userId) {
+            const updatedUser = updatedUsers.find(u => u.id === userId)
+            return updatedUser || prev
+          }
+          return prev
+        })
+      }, 500)
     } catch (error: any) {
       console.error("Error sending to Bridge:", error)
-      alert(error.message || "Failed to send to Bridge")
+      setNoticeDialog({
+        open: true,
+        title: "Failed to Send to Bridge",
+        message: error.message || "An unknown error occurred",
+        type: 'error'
+      })
     } finally {
       setSendingToBridge(null)
     }
@@ -507,6 +575,7 @@ export default function AdminCompliancePage() {
   const handleUserSelect = (user: ComplianceUser) => {
     setSelectedUser(user)
     setUserDetailsDialogOpen(true)
+    setWebhookData(null) // Clear previous webhook data when selecting a new user
   }
 
   const filteredUsers = users.filter((user) => {
@@ -625,7 +694,7 @@ export default function AdminCompliancePage() {
 
         {/* User Details Dialog */}
         <Dialog open={userDetailsDialogOpen} onOpenChange={setUserDetailsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" key={selectedUser?.bridge_customer_id || selectedUser?.id}>
             <DialogHeader>
               <div className="flex items-center justify-between">
               <DialogTitle>
@@ -800,10 +869,49 @@ export default function AdminCompliancePage() {
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Sent to Bridge
                             </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                setCheckingWebhooks(true)
+                                try {
+                                  const response = await fetch(
+                                    `/api/admin/webhooks/check?userId=${selectedUser.id}&customerId=${selectedUser.bridge_customer_id}&eventType=kyc`,
+                                    { credentials: "include" }
+                                  )
+                                  const data = await response.json()
+                                  setWebhookData(data)
+                                } catch (error) {
+                                  console.error("Error checking webhooks:", error)
+                                  setNoticeDialog({
+                                    open: true,
+                                    title: "Error",
+                                    message: "Failed to check webhook events",
+                                    type: "error",
+                                  })
+                                } finally {
+                                  setCheckingWebhooks(false)
+                                }
+                              }}
+                              disabled={checkingWebhooks}
+                              className="h-7 text-xs"
+                            >
+                              {checkingWebhooks ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Checking...
+                                </>
+                              ) : (
+                                <>
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  Check Webhooks
+                                </>
+                              )}
+                            </Button>
                           </div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-gray-600">
-                              Bridge Customer ID: {selectedUser.bridge_customer_id.slice(0, 8)}...
+                              Bridge Customer ID: {selectedUser.bridge_customer_id}
                             </p>
                           </div>
                           {selectedUser.bridge_kyc_status && (
@@ -822,6 +930,42 @@ export default function AdminCompliancePage() {
                                   ? selectedUser.bridge_kyc_rejection_reasons
                                   : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
                               </p>
+                            </div>
+                          )}
+                          {webhookData && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                              <p className="text-sm font-medium text-blue-800 mb-2">Webhook Events:</p>
+                              <div className="space-y-1 text-xs">
+                                <p className="text-blue-700">
+                                  Total Events: {webhookData.summary?.totalEvents || 0}
+                                </p>
+                                <p className="text-blue-700">
+                                  KYC Events: {webhookData.summary?.kycEvents || 0}
+                                </p>
+                                {webhookData.bridgeStatus && (
+                                  <div className="mt-2 pt-2 border-t border-blue-300">
+                                    <p className="text-blue-800 font-medium">Bridge API Status:</p>
+                                    <p className="text-blue-700">
+                                      KYC Status: {webhookData.bridgeStatus.kyc_status || "N/A"}
+                                    </p>
+                                  </div>
+                                )}
+                                {webhookData.webhookEvents && webhookData.webhookEvents.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-blue-300">
+                                    <p className="text-blue-800 font-medium mb-1">Recent Events:</p>
+                                    {webhookData.webhookEvents.slice(0, 5).map((event: any, idx: number) => (
+                                      <p key={idx} className="text-blue-700 text-xs">
+                                        • {event.event_type} ({new Date(event.created_at).toLocaleString()})
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                                {webhookData.summary?.kycEvents === 0 && (
+                                  <p className="text-orange-700 mt-2">
+                                    ⚠️ No KYC webhook events found. The webhook may have been missed.
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -949,6 +1093,25 @@ export default function AdminCompliancePage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Notice Dialog */}
+        <AlertDialog open={noticeDialog.open} onOpenChange={(open) => setNoticeDialog({ ...noticeDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className={noticeDialog.type === 'success' ? 'text-green-600' : 'text-red-600'}>
+                {noticeDialog.title}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {noticeDialog.message}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setNoticeDialog({ ...noticeDialog, open: false })}>
+                OK
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminDashboardLayout>
   )

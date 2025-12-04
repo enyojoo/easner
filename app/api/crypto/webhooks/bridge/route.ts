@@ -13,7 +13,14 @@ const BRIDGE_WEBHOOK_PUBLIC_KEY = process.env.BRIDGE_WEBHOOK_SECRET || process.e
 /**
  * Verify webhook signature from Bridge using RSA public key
  * Bridge uses RSA-SHA256 signature verification with format: t=<timestamp>,v0=<base64-signature>
- * The signed payload is: timestamp.raw_body
+ * 
+ * Verification process per Bridge documentation:
+ * 1. Parse signature header to extract timestamp and signature
+ * 2. Check timestamp (reject if > 10 minutes old to prevent replay attacks)
+ * 3. Create signed payload: timestamp.payload
+ * 4. Create SHA256 digest: SHA256(signed_payload)
+ * 5. Decode base64 signature
+ * 6. Verify RSA signature: RSA.verify(public_key, digest, decoded_signature)
  */
 function verifyWebhookSignature(
   payload: string,
@@ -32,42 +39,42 @@ function verifyWebhookSignature(
 
   try {
     // Parse signature header: t=<timestamp>,v0=<base64-signature>
-    const timestampMatch = signatureHeader.match(/t=([^,]+)/)
-    const signatureMatch = signatureHeader.match(/v0=([^,]+)/)
+    const signatureParts = signatureHeader.split(',')
+    const timestampPart = signatureParts.find(part => part.startsWith('t='))
+    const signaturePart = signatureParts.find(part => part.startsWith('v0='))
     
-    if (!timestampMatch || !signatureMatch) {
+    if (!timestampPart || !signaturePart) {
       console.warn("Invalid signature header format. Expected: t=<timestamp>,v0=<signature>")
       return false
     }
 
-    const timestamp = timestampMatch[1]
-    const base64Signature = signatureMatch[1]
+    const timestamp = timestampPart.split('=')[1]
+    const base64Signature = signaturePart.split('=')[1]
     
-    // Validate base64 signature format
-    if (!base64Signature || base64Signature.trim().length === 0) {
-      console.warn("Base64 signature is empty")
+    if (!timestamp || !base64Signature) {
+      console.warn("Missing timestamp or signature in header")
       return false
     }
     
-    // Create signed payload: timestamp.raw_body
-    // IMPORTANT: Use the exact raw payload string as received (no modifications)
-    // Bridge signs: SHA256(timestamp + "." + raw_body) with RSA private key
+    // Check timestamp (reject events older than 10 minutes to prevent replay attacks)
+    const currentTime = Date.now()
+    const eventTime = parseInt(timestamp, 10)
+    
+    if (isNaN(eventTime)) {
+      console.warn("[WEBHOOK-VERIFY] Invalid timestamp format")
+      return false
+    }
+    
+    const timeDiff = currentTime - eventTime
+    const tenMinutes = 10 * 60 * 1000 // 10 minutes in milliseconds
+    
+    if (timeDiff > tenMinutes) {
+      console.warn(`[WEBHOOK-VERIFY] Event timestamp too old: ${timeDiff}ms ago (max: ${tenMinutes}ms)`)
+      return false
+    }
+    
+    // Create signed payload: timestamp.payload
     const signedPayload = `${timestamp}.${payload}`
-    
-    // Create hash of the signed payload for debugging
-    const payloadHash = crypto.createHash("sha256").update(signedPayload, "utf8").digest("hex")
-    
-    // Log for debugging (truncated)
-    console.log("[WEBHOOK-VERIFY] Verifying signature:", {
-      timestamp,
-      payloadLength: payload.length,
-      payloadFirstChars: payload.substring(0, 50),
-      payloadLastChars: payload.substring(Math.max(0, payload.length - 50)),
-      signedPayloadLength: signedPayload.length,
-      signedPayloadHash: payloadHash,
-      signatureLength: base64Signature.length,
-      signatureFirstChars: base64Signature.substring(0, 20),
-    })
     
     // Normalize and format the public key
     let pemKey = publicKey.trim()
@@ -83,7 +90,7 @@ function verifyWebhookSignature(
     // Try PKCS#8 format first (standard format)
     let formattedKey = `-----BEGIN PUBLIC KEY-----\n${pemKey.match(/.{1,64}/g)?.join("\n") || pemKey}\n-----END PUBLIC KEY-----`
     
-    // Decode the base64 signature with validation
+    // Decode the base64 signature
     let signatureBuffer: Buffer
     try {
       signatureBuffer = Buffer.from(base64Signature, "base64")
@@ -91,24 +98,23 @@ function verifyWebhookSignature(
         console.warn("[WEBHOOK-VERIFY] Decoded signature buffer is empty")
         return false
       }
-      console.log("[WEBHOOK-VERIFY] Signature buffer decoded:", {
-        bufferLength: signatureBuffer.length,
-        keyLength: pemKey.length,
-      })
     } catch (decodeError: any) {
       console.error("[WEBHOOK-VERIFY] Error decoding base64 signature:", decodeError.message)
       return false
     }
     
-    // Verify the signature using RSA public key
-    // Bridge signs: SHA256(timestamp.raw_body) with RSA
+    // Verify the RSA signature
+    // Bridge signs: SHA256(timestamp.payload) with RSA private key
+    // createVerify will hash the data and verify against the signature
     const verify = crypto.createVerify("RSA-SHA256")
     verify.update(signedPayload, "utf8")
     
     let isValid = false
     try {
       isValid = verify.verify(formattedKey, signatureBuffer)
-      console.log("[WEBHOOK-VERIFY] PKCS#8 verification result:", isValid)
+      if (isValid) {
+        console.log("[WEBHOOK-VERIFY] ✅ Signature verification successful")
+      }
     } catch (verifyError: any) {
       // If PKCS#8 fails, try PKCS#1 format (RSA public key)
       if (verifyError.message?.includes("DECODER") || verifyError.message?.includes("unsupported")) {
@@ -118,11 +124,11 @@ function verifyWebhookSignature(
           const verify2 = crypto.createVerify("RSA-SHA256")
           verify2.update(signedPayload, "utf8")
           isValid = verify2.verify(formattedKey, signatureBuffer)
-          console.log("[WEBHOOK-VERIFY] PKCS#1 verification result:", isValid)
+          if (isValid) {
+            console.log("[WEBHOOK-VERIFY] ✅ Signature verification successful (PKCS#1)")
+          }
         } catch (pkcs1Error: any) {
           console.error("[WEBHOOK-VERIFY] Error verifying with PKCS#1 format:", pkcs1Error.message)
-          console.error("[WEBHOOK-VERIFY] Public key format issue. Key length:", pemKey.length)
-          console.error("[WEBHOOK-VERIFY] Signature buffer length:", signatureBuffer.length)
           return false
         }
       } else {
@@ -133,39 +139,6 @@ function verifyWebhookSignature(
     
     if (!isValid) {
       console.warn("[WEBHOOK-VERIFY] Signature verification failed - signature does not match")
-      console.warn("[WEBHOOK-VERIFY] Debug info:", {
-        timestamp,
-        payloadHash,
-        publicKeyLength: pemKey.length,
-        publicKeyFirstChars: pemKey.substring(0, 50),
-        signatureBufferLength: signatureBuffer.length,
-        formattedKeyLength: formattedKey.length,
-      })
-      console.warn("[WEBHOOK-VERIFY] This could be due to:")
-      console.warn("  1. Incorrect public key in BRIDGE_WEBHOOK_PUBLIC_KEY")
-      console.warn("  2. Payload encoding mismatch (ensure raw body is used)")
-      console.warn("  3. Timestamp mismatch")
-      console.warn("  4. Signature format issue")
-      console.warn("  5. Public key format mismatch (PKCS#1 vs PKCS#8)")
-      
-      // Try alternative: maybe Bridge uses URL-safe base64 or different encoding
-      // Also try without trimming the signature
-      const trimmedSignature = base64Signature.trim()
-      if (trimmedSignature !== base64Signature) {
-        console.log("[WEBHOOK-VERIFY] Trying with trimmed signature")
-        try {
-          const trimmedBuffer = Buffer.from(trimmedSignature, "base64")
-          const verify3 = crypto.createVerify("RSA-SHA256")
-          verify3.update(signedPayload, "utf8")
-          const trimmedValid = verify3.verify(formattedKey, trimmedBuffer)
-          if (trimmedValid) {
-            console.log("[WEBHOOK-VERIFY] ✅ Verification successful with trimmed signature")
-            return true
-          }
-        } catch (e) {
-          // Ignore
-        }
-      }
     }
     
     return isValid
@@ -174,7 +147,6 @@ function verifyWebhookSignature(
     console.error("Error details:", {
       message: error.message,
       code: error.code,
-      opensslErrorStack: error.opensslErrorStack,
     })
     return false
   }
@@ -229,65 +201,150 @@ async function storeProcessedEvent(
 /**
  * Process webhook event asynchronously
  */
-async function processWebhookEvent(eventType: string, eventData: any, eventId?: string) {
+async function processWebhookEvent(
+  eventType: string,
+  eventObject: any,
+  eventId?: string,
+  metadata?: {
+    eventCategory?: string
+    eventObjectChanges?: any
+    eventCreatedAt?: string
+  }
+) {
   try {
     // Handle different webhook event types
+    // Support both new format (event_type) and legacy format
     switch (eventType) {
+      case "liquidation_address.drain.created":
+      case "liquidation_address.drain.updated":
+      case "liquidation_address.drain.updated.status_transitioned":
       case "liquidation.completed":
       case "liquidation.processing":
       case "liquidation.failed": {
         // Liquidation address deposit (bank payouts)
-        await receiveTransactionTracker.processLiquidationWebhook({
-          id: eventData.id,
-          customer_id: eventData.customer_id,
-          liquidation_address_id: eventData.liquidation_address_id,
-          liquidation_id: eventData.liquidation_id || eventData.id,
-          blockchain_tx_hash: eventData.blockchain_tx_hash,
-          blockchain_memo: eventData.blockchain_memo,
-          amount: eventData.amount,
-          currency: eventData.currency,
-          destination_currency: eventData.destination_currency,
-          status: eventData.status,
-          created_at: eventData.created_at,
-          completed_at: eventData.completed_at,
-        })
+        // Map new event structure to legacy format for compatibility
+        const liquidationData = {
+          id: eventObject.id,
+          customer_id: eventObject.customer_id || eventObject.on_behalf_of,
+          liquidation_address_id: eventObject.liquidation_address_id || eventObject.id,
+          liquidation_id: eventObject.liquidation_id || eventObject.id,
+          blockchain_tx_hash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
+          blockchain_memo: eventObject.blockchain_memo,
+          amount: eventObject.amount,
+          currency: eventObject.currency,
+          destination_currency: eventObject.destination_currency || eventObject.currency,
+          status: eventObject.status || eventObject.state,
+          created_at: eventObject.created_at,
+          completed_at: eventObject.completed_at,
+        }
+        
+        await receiveTransactionTracker.processLiquidationWebhook(liquidationData)
+        
         // Store processed event
         const { data: liquidationUser } = await supabase
           .from("users")
           .select("id")
-          .eq("bridge_customer_id", eventData.customer_id)
+          .eq("bridge_customer_id", liquidationData.customer_id)
           .single()
-        await storeProcessedEvent(eventId, eventType, eventData, liquidationUser?.id)
+        await storeProcessedEvent(eventId, eventType, eventObject, liquidationUser?.id)
         break
       }
 
+      case "card_account.created":
+      case "card_account.updated":
+      case "card_account.updated.status_transitioned":
       case "card_account.balance_changed":
       case "card_account.funded": {
-        // Card top-up deposit (card payouts)
-        await receiveTransactionTracker.processCardTopUpWebhook({
-          id: eventData.id,
-          card_account_id: eventData.card_account_id,
-          customer_id: eventData.customer_id,
-          blockchain_tx_hash: eventData.blockchain_tx_hash,
-          amount: eventData.amount,
-          currency: eventData.currency,
-          status: eventData.status,
-          created_at: eventData.created_at,
-        })
-        // Store processed event
+        // Card account events - handle balance changes and funding
+        if (eventType.includes("balance_changed") || eventType.includes("funded")) {
+          // Card top-up deposit (card payouts)
+          await receiveTransactionTracker.processCardTopUpWebhook({
+            id: eventObject.id,
+            card_account_id: eventObject.card_account_id || eventObject.id,
+            customer_id: eventObject.customer_id || eventObject.on_behalf_of,
+            blockchain_tx_hash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
+            amount: eventObject.amount,
+            currency: eventObject.currency,
+            status: eventObject.status || eventObject.state,
+            created_at: eventObject.created_at,
+          })
+          
+          // Store processed event
+          const { data: cardUser } = await supabase
+            .from("users")
+            .select("id")
+            .eq("bridge_customer_id", eventObject.customer_id || eventObject.on_behalf_of)
+            .single()
+          await storeProcessedEvent(eventId, eventType, eventObject, cardUser?.id)
+        } else {
+          // Other card account events - just log for now
+          console.log(`[WEBHOOK] Card account event: ${eventType}`, eventObject.id)
+          await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+        }
+        break
+      }
+
+      case "card_transaction.created":
+      case "card_transaction.updated":
+      case "card_transaction.updated.status_transitioned": {
+        // Card transaction events
+        console.log(`[WEBHOOK] Card transaction event: ${eventType}`, eventObject.id)
+        const customerId = eventObject.customer_id || eventObject.on_behalf_of
         const { data: cardUser } = await supabase
           .from("users")
           .select("id")
-          .eq("bridge_customer_id", eventData.customer_id)
+          .eq("bridge_customer_id", customerId)
           .single()
-        await storeProcessedEvent(eventId, eventType, eventData, cardUser?.id)
+        await storeProcessedEvent(eventId, eventType, eventObject, cardUser?.id)
         break
       }
 
+      case "card_withdrawal.created":
+      case "card_withdrawal.updated":
+      case "card_withdrawal.updated.status_transitioned": {
+        // Card withdrawal events
+        console.log(`[WEBHOOK] Card withdrawal event: ${eventType}`, eventObject.id)
+        const customerId = eventObject.customer_id || eventObject.on_behalf_of
+        const { data: cardUser } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+        await storeProcessedEvent(eventId, eventType, eventObject, cardUser?.id)
+        break
+      }
+
+      case "posted_card_account_transaction.created": {
+        // Posted card account transaction
+        console.log(`[WEBHOOK] Posted card account transaction: ${eventType}`, eventObject.id)
+        const customerId = eventObject.customer_id || eventObject.on_behalf_of
+        const { data: cardUser } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+        await storeProcessedEvent(eventId, eventType, eventObject, cardUser?.id)
+        break
+      }
+
+      case "customer.created": {
+        // New customer created
+        console.log(`[WEBHOOK] Customer created: ${eventObject.id}`)
+        const customerId = eventObject.id
+        const { data: user } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+        await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
+        break
+      }
+
+      case "customer.updated":
       case "customer.updated.status_transitioned": {
-        // Customer KYC status changed
-        const customerId = eventData.customer_id || eventData.id
-        const newStatus = eventData.status || eventData.kyc_status
+        // Customer updated or KYC status changed
+        const customerId = eventObject.id || eventObject.customer_id
+        const newStatus = eventObject.kyc_status || eventObject.status
 
         // Find user by Bridge customer ID
         const { data: user } = await supabase
@@ -298,19 +355,27 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
 
         if (user) {
           // Get full customer object to check endorsements and requirements
-          let customerData: any = null
+          let customerData: any = eventObject // Use event object if it has all data
           try {
             const { bridgeService } = await import("@/lib/bridge-service")
             customerData = await bridgeService.getCustomer(customerId)
           } catch (error) {
-            console.error("Error fetching customer for status update:", error)
+            console.error("[WEBHOOK] Error fetching customer for status update:", error)
+            // Use event object as fallback
+            customerData = eventObject
           }
 
           // Update KYC status in database
           const updateData: any = {
-            bridge_kyc_status: newStatus,
-            bridge_kyc_rejection_reasons: eventData.rejection_reasons || null,
             updated_at: new Date().toISOString(),
+          }
+
+          if (newStatus) {
+            updateData.bridge_kyc_status = newStatus
+          }
+
+          if (eventObject.rejection_reasons) {
+            updateData.bridge_kyc_rejection_reasons = eventObject.rejection_reasons
           }
 
           // Update endorsements if available
@@ -338,21 +403,34 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
             try {
               await completeAccountSetupAfterKYC(user.id)
             } catch (error) {
-              console.error("Error completing account setup after KYC approval:", error)
+              console.error("[WEBHOOK] Error completing account setup after KYC approval:", error)
             }
           }
 
           // Store processed event
-          await storeProcessedEvent(eventId, eventType, eventData, user.id)
+          await storeProcessedEvent(eventId, eventType, eventObject, user.id)
         }
+        break
+      }
+
+      case "customer.deleted": {
+        // Customer deleted
+        console.log(`[WEBHOOK] Customer deleted: ${eventObject.id}`)
+        const customerId = eventObject.id
+        const { data: user } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+        await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
         break
       }
 
       case "customer.endorsement.updated":
       case "endorsement.updated": {
         // Endorsement status changed
-        const customerId = eventData.customer_id || eventData.customer?.id
-        const endorsement = eventData.endorsement || eventData
+        const customerId = eventObject.customer_id || eventObject.customer?.id || eventObject.id
+        const endorsement = eventObject.endorsement || eventObject
 
         // Find user by Bridge customer ID
         const { data: user } = await supabase
@@ -382,21 +460,54 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
             try {
               await completeAccountSetupAfterKYC(user.id)
             } catch (error) {
-              console.error("Error completing account setup after endorsement approval:", error)
+              console.error("[WEBHOOK] Error completing account setup after endorsement approval:", error)
             }
           }
 
           // Store processed event
-          await storeProcessedEvent(eventId, eventType, eventData, user.id)
+          await storeProcessedEvent(eventId, eventType, eventObject, user.id)
         }
         break
       }
 
-      case "virtual_account.activity.created": {
+      case "kyc_link.created":
+      case "kyc_link.updated":
+      case "kyc_link.updated.status_transitioned": {
+        // KYC link events
+        console.log(`[WEBHOOK] KYC link event: ${eventType}`, eventObject.id)
+        const customerId = eventObject.customer_id
+        if (customerId) {
+          const { data: user } = await supabase
+            .from("users")
+            .select("id")
+            .eq("bridge_customer_id", customerId)
+            .single()
+          
+          // Update KYC status if available
+          if (eventObject.kyc_status) {
+            await supabase
+              .from("users")
+              .update({
+                bridge_kyc_status: eventObject.kyc_status,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", user?.id)
+          }
+          
+          await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
+        } else {
+          await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+        }
+        break
+      }
+
+      case "virtual_account.activity.created":
+      case "virtual_account.activity.updated": {
         // Deposit to virtual account - Payment received!
-        const virtualAccountId = eventData.virtual_account_id || eventData.id
-        const activity = eventData.activity || eventData
-        const activityId = activity.id || eventData.id
+        // eventObject is the activity object in new format
+        const activity = eventObject
+        const virtualAccountId = activity.virtual_account_id || eventObject.virtual_account_id
+        const activityId = activity.id
 
         // Find virtual account and user
         const { data: virtualAccount } = await supabase
@@ -420,12 +531,12 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
               activityId,
               parseFloat(activity.amount),
               activity.currency || virtualAccount.currency,
-              eventData, // Store full event data in metadata
+              eventObject, // Store full event data in metadata
             )
 
             // Attempt to match payment to transaction
             // Bridge payments may include a reference field that matches transaction ID
-            const reference = activity.reference || activity.memo || eventData.reference
+            const reference = activity.reference || activity.memo || activity.source?.description
             const matchResult = await matchPaymentToTransaction(
               paymentId,
               virtualAccount.user_id,
@@ -447,17 +558,32 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
           }
 
           // Store processed event
-          await storeProcessedEvent(eventId, eventType, eventData, virtualAccount.user_id)
+          await storeProcessedEvent(eventId, eventType, eventObject, virtualAccount.user_id)
         } else {
           console.warn(`[BRIDGE-WEBHOOK] Virtual account not found: ${virtualAccountId}`)
         }
         break
       }
 
+      case "transfer.created": {
+        // New transfer created
+        console.log(`[WEBHOOK] Transfer created: ${eventObject.id}`)
+        const transferId = eventObject.id
+        const customerId = eventObject.on_behalf_of
+        const { data: user } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+        await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
+        break
+      }
+
+      case "transfer.updated":
       case "transfer.updated.status_transitioned": {
         // Transfer status changed
-        const transferId = eventData.transfer_id || eventData.id
-        const newStatus = eventData.status
+        const transferId = eventObject.id
+        const newStatus = eventObject.state || eventObject.status
 
         // Update transfer status in database
         const { data: transfer } = await supabase
@@ -466,32 +592,44 @@ async function processWebhookEvent(eventType: string, eventData: any, eventId?: 
           .eq("bridge_transfer_id", transferId)
           .single()
 
-        await supabase
-          .from("bridge_transfers")
-          .update({
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("bridge_transfer_id", transferId)
+        if (transfer) {
+          await supabase
+            .from("bridge_transfers")
+            .update({
+              status: newStatus,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("bridge_transfer_id", transferId)
+        }
 
         // TODO: Send notification to user about transfer status change
         // Store processed event
-        await storeProcessedEvent(eventId, eventType, eventData, transfer?.user_id)
+        await storeProcessedEvent(eventId, eventType, eventObject, transfer?.user_id)
         break
       }
 
       case "wallet.balance_updated": {
         // Wallet balance changed
-        const walletId = eventData.wallet_id || eventData.id
+        const walletId = eventObject.wallet_id || eventObject.id
         // Balance updates are typically handled by polling, but we can log this
-        console.log(`Wallet balance updated: ${walletId}`)
+        console.log(`[WEBHOOK] Wallet balance updated: ${walletId}`)
         // Store processed event (no user_id needed for balance updates)
-        await storeProcessedEvent(eventId, eventType, eventData, undefined)
+        await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+        break
+      }
+
+      case "static_memo.activity.created":
+      case "static_memo.activity.updated": {
+        // Static memo activity events
+        console.log(`[WEBHOOK] Static memo activity: ${eventType}`, eventObject.id)
+        await storeProcessedEvent(eventId, eventType, eventObject, undefined)
         break
       }
 
       default:
-        console.log(`Unhandled Bridge webhook event type: ${eventType}`)
+        console.log(`[WEBHOOK] Unhandled Bridge webhook event type: ${eventType}`)
+        // Store unhandled events for debugging
+        await storeProcessedEvent(eventId, eventType, eventObject, undefined)
     }
 
   } catch (error) {
@@ -533,49 +671,71 @@ export async function POST(request: NextRequest) {
         const isValid = verifyWebhookSignature(payload, signatureHeader, BRIDGE_WEBHOOK_PUBLIC_KEY)
         if (!isValid) {
           console.error("[WEBHOOK] ⚠️ Signature verification failed")
-          // TEMPORARY: Allow webhooks even if signature verification fails, but log heavily
-          // This allows us to debug the issue while still processing webhooks
-          // TODO: Once signature verification is fixed, reject invalid signatures in production
-          console.error("[WEBHOOK] ⚠️ ALLOWING WEBHOOK DESPITE SIGNATURE FAILURE - THIS IS TEMPORARY FOR DEBUGGING")
-          console.error("[WEBHOOK] Please check logs above for signature verification details")
-          
-          // Uncomment this once signature verification is working:
-          // if (process.env.NODE_ENV === "production") {
-          //   return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
-          // }
+          // Reject invalid signatures in production
+          if (process.env.NODE_ENV === "production") {
+            return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+          }
+          // Allow in development for debugging
+          console.error("[WEBHOOK] ⚠️ ALLOWING WEBHOOK IN DEVELOPMENT - Signature verification failed")
         } else {
           console.log("[WEBHOOK] ✅ Signature verification successful")
         }
       } catch (verifyError: any) {
-        // Log the error but allow webhook to proceed for now
         console.error("[WEBHOOK] Error during signature verification:", verifyError.message)
-        console.error("[WEBHOOK] ⚠️ ALLOWING WEBHOOK DESPITE VERIFICATION ERROR - THIS IS TEMPORARY FOR DEBUGGING")
-        
-        // Uncomment this once signature verification is working:
-        // if (process.env.NODE_ENV === "production") {
-        //   return NextResponse.json({ error: "Signature verification error" }, { status: 401 })
-        // }
+        // Reject in production
+        if (process.env.NODE_ENV === "production") {
+          return NextResponse.json({ error: "Signature verification error" }, { status: 401 })
+        }
+        // Allow in development for debugging
+        console.error("[WEBHOOK] ⚠️ ALLOWING WEBHOOK IN DEVELOPMENT - Verification error")
       }
     } else {
       console.warn("[WEBHOOK] BRIDGE_WEBHOOK_PUBLIC_KEY not set - skipping signature verification")
+      // In production, require signature verification
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json({ error: "Webhook verification not configured" }, { status: 500 })
+      }
     }
 
-    const eventType = body.type || body.event_type
-    const eventData = body.data || body
-    const eventId = body.id || eventData.id
+    // Parse event structure - support both new Bridge format and legacy format
+    // New Bridge format: event_type, event_category, event_object, event_id, event_created_at
+    // Legacy format: type, data, id
+    const eventType = body.event_type || body.type
+    const eventCategory = body.event_category
+    const eventObject = body.event_object || body.data || body
+    const eventId = body.event_id || body.id || eventObject?.id
+    const eventObjectChanges = body.event_object_changes
+    const eventCreatedAt = body.event_created_at
+
+    if (!eventType) {
+      console.error("[WEBHOOK] Missing event_type in webhook payload")
+      return NextResponse.json({ error: "Missing event_type" }, { status: 400 })
+    }
+
+    console.log("[WEBHOOK] Processing event:", {
+      eventType,
+      eventCategory,
+      eventId,
+      hasEventObject: !!eventObject,
+      hasChanges: !!eventObjectChanges,
+    })
 
     // Check idempotency - prevent duplicate processing
-    const eventHash = crypto.createHash("sha256").update(JSON.stringify(eventData)).digest("hex")
+    const eventHash = crypto.createHash("sha256").update(JSON.stringify(eventObject)).digest("hex")
     const alreadyProcessed = await isEventProcessed(eventId, eventHash)
     
     if (alreadyProcessed) {
-      console.log(`Webhook event already processed: ${eventType} (${eventId || eventHash})`)
+      console.log(`[WEBHOOK] Event already processed: ${eventType} (${eventId || eventHash})`)
       return NextResponse.json({ received: true, message: "Event already processed" })
     }
 
     // Return 200 immediately and process async
-    processWebhookEvent(eventType, eventData, eventId).catch((error) => {
-      console.error("Error in async webhook processing:", error)
+    processWebhookEvent(eventType, eventObject, eventId, {
+      eventCategory,
+      eventObjectChanges,
+      eventCreatedAt,
+    }).catch((error) => {
+      console.error("[WEBHOOK] Error in async webhook processing:", error)
     })
 
     return NextResponse.json({ received: true })
