@@ -15,20 +15,52 @@ export const userService = {
     userId: string,
     updates: {
       firstName?: string
+      middleName?: string
       lastName?: string
       phone?: string
       baseCurrency?: string
     },
   ) {
+    // Check if user has approved KYC - if so, prevent name updates
+    const { data: user } = await supabase
+      .from("users")
+      .select("bridge_kyc_status")
+      .eq("id", userId)
+      .single()
+
+    if (user?.bridge_kyc_status === "approved") {
+      // Remove firstName, middleName, and lastName from updates if KYC is approved
+      const { firstName, middleName, lastName, ...allowedUpdates } = updates
+      if (firstName || middleName || lastName) {
+        console.warn(`[USER-SERVICE] Attempted to update name for user ${userId} with approved KYC - name update blocked`)
+      }
+      updates = allowedUpdates
+    }
+
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    }
+
+    // Only include fields that are being updated and are allowed
+    if (updates.firstName && user?.bridge_kyc_status !== "approved") {
+      updateData.first_name = updates.firstName
+    }
+    if (updates.middleName !== undefined && user?.bridge_kyc_status !== "approved") {
+      updateData.middle_name = updates.middleName
+    }
+    if (updates.lastName && user?.bridge_kyc_status !== "approved") {
+      updateData.last_name = updates.lastName
+    }
+    if (updates.phone !== undefined) {
+      updateData.phone = updates.phone
+    }
+    if (updates.baseCurrency !== undefined) {
+      updateData.base_currency = updates.baseCurrency
+    }
+
     const { data, error } = await supabase
       .from("users")
-      .update({
-        first_name: updates.firstName,
-        last_name: updates.lastName,
-        phone: updates.phone,
-        base_currency: updates.baseCurrency,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", userId)
       .select()
       .single()
@@ -549,7 +581,7 @@ export const transactionService = {
       // Store file path instead of public URL for secure access via signed URLs
       // This allows the bucket to be private and use RLS policies
       // Format: receipts/transactionId.ext
-      
+
       // Update transaction with receipt file path (not public URL)
       const updateTimeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Database update timeout")), 10000),

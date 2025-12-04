@@ -33,6 +33,7 @@ function ProfileEditContent({ navigation }: NavigationProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [profileData, setProfileData] = useState({
     firstName: '',
+    middleName: '',
     lastName: '',
     email: '',
     phone: '',
@@ -61,9 +62,9 @@ function ProfileEditContent({ navigation }: NavigationProps) {
 
   useEffect(() => {
     if (userProfile) {
-      // Keep full first_name for profile page (display and edit)
       const data = {
         firstName: userProfile.profile.first_name || '',
+        middleName: userProfile.profile.middle_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
@@ -92,6 +93,7 @@ function ProfileEditContent({ navigation }: NavigationProps) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
+        middleName: editProfileData.middleName,
         lastName: editProfileData.lastName,
         phone: editProfileData.phone,
       })
@@ -125,25 +127,37 @@ function ProfileEditContent({ navigation }: NavigationProps) {
     setShowDeleteDialog(false)
   }
 
-  const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, editable: boolean = true) => (
-    <View style={styles.fieldContainer}>
-      <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>{label}</Text>
-      {editable && isEditing ? (
-        <TextInput
-          style={styles.fieldInput}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={`Enter ${label.toLowerCase()}`}
-          placeholderTextColor={colors.text.tertiary}
-          returnKeyType="done"
-          onSubmitEditing={() => Keyboard.dismiss()}
-          editable={editable}
-        />
-      ) : (
-        <Text style={styles.fieldValue}>{value || 'Not set'}</Text>
-      )}
-    </View>
-  )
+  const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, disabled: boolean = false) => {
+    const isKycApproved = userProfile?.bridge_kyc_status === 'approved'
+    const isEditable = isEditing && !disabled && !isKycApproved
+    
+    return (
+      <View style={styles.fieldContainer}>
+        <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>
+          {label}
+          {isKycApproved && (label === 'First Name' || label === 'Middle Name' || label === 'Last Name') && (
+            <Text style={{ fontSize: 12, color: colors.text.tertiary }}> (Verified - cannot edit)</Text>
+          )}
+        </Text>
+        {isEditable ? (
+          <TextInput
+            style={styles.fieldInput}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={`Enter ${label.toLowerCase()}`}
+            placeholderTextColor={colors.text.tertiary}
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            editable={true}
+          />
+        ) : (
+          <Text style={[styles.fieldValue, (disabled || isKycApproved) && { color: colors.text.tertiary }]}>
+            {value || 'Not set'}
+          </Text>
+        )}
+      </View>
+    )
+  }
 
 
   return (
@@ -245,12 +259,20 @@ function ProfileEditContent({ navigation }: NavigationProps) {
                     {renderProfileField(
                       'First Name',
                       editProfileData.firstName,
-                      (text) => setEditProfileData(prev => ({ ...prev, firstName: text }))
+                      (text) => setEditProfileData(prev => ({ ...prev, firstName: text })),
+                      userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
+                    )}
+                    {renderProfileField(
+                      'Middle Name',
+                      editProfileData.middleName,
+                      (text) => setEditProfileData(prev => ({ ...prev, middleName: text })),
+                      userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
                     )}
                     {renderProfileField(
                       'Last Name',
                       editProfileData.lastName,
-                      (text) => setEditProfileData(prev => ({ ...prev, lastName: text }))
+                      (text) => setEditProfileData(prev => ({ ...prev, lastName: text })),
+                      userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
                     )}
                     {renderProfileField(
                       'Email',

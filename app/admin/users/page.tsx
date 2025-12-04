@@ -44,10 +44,18 @@ interface UserData {
   id: string
   email: string
   first_name: string
+  middle_name?: string
   last_name: string
   phone?: string
+  date_of_birth?: string
+  address?: string
+  country_code?: string
+  bridge_kyc_metadata?: any
   status: string
   // verification_status removed - use bridge_kyc_status for KYC status
+  bridge_kyc_status?: string
+  bridge_customer_id?: string
+  bridge_kyc_rejection_reasons?: any
   email_confirmed_at?: string
   base_currency: string
   created_at: string
@@ -162,23 +170,9 @@ export default function AdminUsersPage() {
     const fetchAllKyc = async () => {
       if (!data?.users) return
       
-      const kycMap = new Map<string, KYCSubmission[]>()
-      // Fetch KYC for all users in parallel (limit to avoid overwhelming)
-      const userIds = data.users.map((u: any) => u.id).slice(0, 100) // Limit to first 100 users
-      
-      await Promise.all(
-        userIds.map(async (userId: string) => {
-          try {
-            const submissions = await kycService.getByUserId(userId)
-            kycMap.set(userId, submissions)
-          } catch (error) {
-            console.error(`Error fetching KYC for user ${userId}:`, error)
-            kycMap.set(userId, [])
-          }
-        })
-      )
-      
-      setUserKycMap(kycMap)
+      // KYC data is now in users table, no need to fetch from kyc_submissions
+      // Set empty map since we're using user data directly
+      setUserKycMap(new Map())
     }
     
     fetchAllKyc()
@@ -381,26 +375,9 @@ export default function AdminUsersPage() {
 
   const handleKycOpen = async (user: UserData) => {
     setSelectedUser(user)
-    setLoadingKyc(true)
-    setKycSubmissions([]) // Clear previous submissions
-    try {
-      const submissions = await kycService.getByUserId(user.id)
-      setKycSubmissions(submissions)
-      setKycReviewDialogOpen(true)
-    } catch (error: any) {
-      console.error("Error loading KYC submissions:", error)
-      // If table doesn't exist, show empty state instead of error
-      if (error?.code === 'PGRST205' || error?.message?.includes('kyc_submissions')) {
-        console.warn("KYC submissions table not found. Please run the migration.")
-        setKycSubmissions([])
-        setKycReviewDialogOpen(true) // Still open dialog to show empty state
-      } else {
-        setKycSubmissions([])
-        setKycReviewDialogOpen(true)
-      }
-    } finally {
-      setLoadingKyc(false)
-    }
+    // KYC data is now in users table, no need to fetch from kyc_submissions
+    setKycSubmissions([])
+    setKycReviewDialogOpen(true)
   }
 
   const handleKycReview = async () => {
@@ -841,222 +818,174 @@ export default function AdminUsersPage() {
                             </DialogHeader>
                             {selectedUser && (
                               <div className="space-y-6">
-                                {loadingKyc ? (
-                                  <div className="text-center py-8 text-gray-500">Loading KYC submissions...</div>
-                                ) : kycSubmissions.length === 0 ? (
-                                  <div className="text-center py-8">
-                                    <p className="text-gray-500 mb-2">No KYC submissions found</p>
-                                    <p className="text-sm text-gray-400">
-                                      {selectedUser.first_name} {selectedUser.last_name} has not submitted any KYC documents yet.
-                                    </p>
-                                  </div>
-                                ) : (
+                                {/* Bridge KYC Status */}
+                                <div className="border-t pt-6">
+                                  <h3 className="text-lg font-semibold mb-4">Bridge KYC Status</h3>
+                                  {selectedUser.bridge_kyc_status ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600">Status:</span>
+                                        {getVerificationBadge(selectedUser.bridge_kyc_status)}
+                                      </div>
+                                      {selectedUser.bridge_customer_id && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-gray-600">Bridge Customer ID:</span>
+                                          <span className="text-sm font-mono">{selectedUser.bridge_customer_id}</span>
+                                        </div>
+                                      )}
+                                      {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                          <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                                          <p className="text-sm text-red-700">
+                                            {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
+                                              ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
+                                              : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
+                                              ? selectedUser.bridge_kyc_rejection_reasons
+                                              : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                      <p className="text-gray-500 text-xs">KYC verification not started</p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Identity Verification - Show only if Bridge KYC is approved */}
+                                {selectedUser.bridge_kyc_status === "approved" && (
                                   <>
                                     {/* Identity Verification */}
-                                    {(() => {
-                                      const identitySubmission = kycSubmissions.find((s) => s.type === "identity")
-                                      return identitySubmission ? (
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-600">Identity Verification</label>
-                                          <div className="mt-2 space-y-4">
-                                            <div className="grid grid-cols-2 gap-6">
-                                              <div className="space-y-4">
-                                                <div>
-                                                  <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-sm text-gray-600">Status:</span>
-                                                    <Badge className={getKycStatusColor(identitySubmission.status)}>
-                                                      {identitySubmission.status.replace("_", " ").toUpperCase()}
-                                                    </Badge>
-                                                  </div>
-                                                  {identitySubmission.country_code && (
-                                                    <div className="flex justify-between">
-                                                      <span className="text-sm text-gray-600">Country:</span>
-                                                      <span className="text-sm">{identitySubmission.country_code}</span>
-                                                    </div>
-                                                  )}
-                                                  {identitySubmission.id_type && (
-                                                    <div className="flex justify-between">
-                                                      <span className="text-sm text-gray-600">ID Type:</span>
-                                                      <span className="text-sm">{getIdTypeLabel(identitySubmission.id_type)}</span>
-                                                    </div>
-                                                  )}
+                                    {selectedUser.first_name || selectedUser.date_of_birth ? (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Identity Verification</label>
+                                        <div className="mt-2 space-y-4">
+                                          <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                              <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                  <span className="text-sm text-gray-600">Status:</span>
+                                                  <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
                                                 </div>
-                                              </div>
-                                              <div className="space-y-4">
-                                                {identitySubmission.id_document_url && (
-                                                  <div>
-                                                    <span className="text-sm text-gray-600">Document:</span>
-                                                    <div className="mt-2">
-                                                      <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={async () => {
-                                                          const filePathOrUrl = identitySubmission.id_document_url
-                                                          if (!filePathOrUrl) return
-                                                          
-                                                          // Check if it's a file path (starts with "identity/" or "address/") or an old public URL
-                                                          const isPath = filePathOrUrl.startsWith("identity/") || filePathOrUrl.startsWith("address/")
-                                                          
-                                                          if (isPath) {
-                                                            // New format: file path - get signed URL from API
-                                                            try {
-                                                              const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(filePathOrUrl)}`, {
-                                                                credentials: "include",
-                                                              })
-                                                              
-                                                              if (response.ok) {
-                                                                const { url } = await response.json()
-                                                                window.open(url, "_blank")
-                                                              } else {
-                                                                alert("Failed to access document. Please try again.")
-                                                              }
-                                                            } catch (error) {
-                                                              console.error("Error fetching signed URL:", error)
-                                                              alert("Failed to access document. Please try again.")
-                                                            }
-                                                          } else {
-                                                            // Old format: public URL (for backward compatibility)
-                                                            window.open(filePathOrUrl, "_blank")
-                                                          }
-                                                        }}
-                                                      >
-                                                        <Eye className="h-4 w-4 mr-2" />
-                                                        View Document
-                                                      </Button>
-                                                    </div>
+                                                {selectedUser.first_name && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">First Name:</span>
+                                                    <span className="text-sm">{selectedUser.first_name}</span>
                                                   </div>
                                                 )}
-                                                <div className="space-y-1">
+                                                {selectedUser.middle_name && (
                                                   <div className="flex justify-between">
-                                                    <span className="text-sm text-gray-600">Submitted:</span>
-                                                    <span className="text-sm">
-                                                      {new Date(identitySubmission.created_at).toLocaleDateString()}
-                                                    </span>
+                                                    <span className="text-sm text-gray-600">Middle Name:</span>
+                                                    <span className="text-sm">{selectedUser.middle_name}</span>
                                                   </div>
-                                                  {identitySubmission.reviewed_at && (
-                                                    <div className="flex justify-between">
-                                                      <span className="text-sm text-gray-600">Reviewed:</span>
-                                                      <span className="text-sm">
-                                                        {new Date(identitySubmission.reviewed_at).toLocaleDateString()}
-                                                      </span>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                {identitySubmission.rejection_reason && (
-                                                  <div className="pt-2 border-t">
-                                                    <span className="text-sm text-gray-600">Rejection Reason:</span>
-                                                    <p className="text-sm text-red-600 mt-1">{identitySubmission.rejection_reason}</p>
+                                                )}
+                                                {selectedUser.last_name && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Last Name:</span>
+                                                    <span className="text-sm">{selectedUser.last_name}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.date_of_birth && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Date of Birth:</span>
+                                                    <span className="text-sm">{new Date(selectedUser.date_of_birth).toLocaleDateString()}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.country_code && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Country:</span>
+                                                    <span className="text-sm">{selectedUser.country_code.toUpperCase()}</span>
                                                   </div>
                                                 )}
                                               </div>
                                             </div>
-                                            {identitySubmission.status !== "approved" && identitySubmission.status !== "rejected" && (
-                                              <div className="pt-2 border-t">
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => {
-                                                    setSelectedKycSubmission(identitySubmission)
-                                                    setReviewStatus("approved")
-                                                    setRejectionReason("")
-                                                    setKycReviewSubDialogOpen(true)
-                                                  }}
-                                                >
-                                                  Review Submission
-                                                </Button>
-                                              </div>
-                                            )}
+                                            <div className="space-y-4">
+                                              {selectedUser.bridge_kyc_metadata && (
+                                                <>
+                                                  {selectedUser.bridge_kyc_metadata.ssn && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">SSN:</span>
+                                                      <span className="text-sm">***-**-{selectedUser.bridge_kyc_metadata.ssn.slice(-4)}</span>
+                                                    </div>
+                                                  )}
+                                                  {selectedUser.bridge_kyc_metadata.passportNumber && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">Passport:</span>
+                                                      <span className="text-sm">{selectedUser.bridge_kyc_metadata.passportNumber}</span>
+                                                    </div>
+                                                  )}
+                                                  {selectedUser.bridge_kyc_metadata.nationalIdNumber && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">National ID:</span>
+                                                      <span className="text-sm">{selectedUser.bridge_kyc_metadata.nationalIdNumber}</span>
+                                                    </div>
+                                                  )}
+                                                </>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
-                                      ) : null
-                                    })()}
+                                      </div>
+                                    ) : (
+                                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                        <p className="text-gray-500 text-xs">No identity verification data available</p>
+                                      </div>
+                                    )}
 
                                     {/* Address Verification */}
-                                    {(() => {
-                                      const addressSubmission = kycSubmissions.find((s) => s.type === "address")
-                                      return addressSubmission ? (
-                                        <div>
-                                          <label className="text-sm font-medium text-gray-600">Address Verification</label>
-                                          <div className="mt-2 space-y-4">
-                                            <div className="grid grid-cols-2 gap-6">
-                                              <div className="space-y-4">
-                                                <div>
-                                                  <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-sm text-gray-600">Status:</span>
-                                                    <Badge className={getKycStatusColor(addressSubmission.status)}>
-                                                      {addressSubmission.status.replace("_", " ").toUpperCase()}
-                                                    </Badge>
-                                                  </div>
-                                                  {addressSubmission.document_type && (
-                                                    <div className="flex justify-between">
-                                                      <span className="text-sm text-gray-600">Document Type:</span>
-                                                      <span className="text-sm">
-                                                        {addressSubmission.document_type.replace("_", " ").toUpperCase()}
-                                                      </span>
-                                                    </div>
-                                                  )}
+                                    {selectedUser.address ? (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Address Verification</label>
+                                        <div className="mt-2 space-y-4">
+                                          <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                              <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                  <span className="text-sm text-gray-600">Status:</span>
+                                                  <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
                                                 </div>
-                                              </div>
-                                              <div className="space-y-4">
-                                                {addressSubmission.address_document_url && (
-                                                  <div>
-                                                    <span className="text-sm text-gray-600">Document:</span>
-                                                    <div className="mt-2">
-                                                      <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => window.open(addressSubmission.address_document_url, "_blank")}
-                                                      >
-                                                        <Eye className="h-4 w-4 mr-2" />
-                                                        View Document
-                                                      </Button>
-                                                    </div>
-                                                  </div>
-                                                )}
-                                                <div className="space-y-1">
+                                                {selectedUser.country_code && (
                                                   <div className="flex justify-between">
-                                                    <span className="text-sm text-gray-600">Submitted:</span>
-                                                    <span className="text-sm">
-                                                      {new Date(addressSubmission.created_at).toLocaleDateString()}
-                                                    </span>
-                                                  </div>
-                                                  {addressSubmission.reviewed_at && (
-                                                    <div className="flex justify-between">
-                                                      <span className="text-sm text-gray-600">Reviewed:</span>
-                                                      <span className="text-sm">
-                                                        {new Date(addressSubmission.reviewed_at).toLocaleDateString()}
-                                                      </span>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                {addressSubmission.rejection_reason && (
-                                                  <div className="pt-2 border-t">
-                                                    <span className="text-sm text-gray-600">Rejection Reason:</span>
-                                                    <p className="text-sm text-red-600 mt-1">{addressSubmission.rejection_reason}</p>
+                                                    <span className="text-sm text-gray-600">Country:</span>
+                                                    <span className="text-sm">{selectedUser.country_code.toUpperCase()}</span>
                                                   </div>
                                                 )}
                                               </div>
                                             </div>
-                                            {addressSubmission.status !== "approved" && addressSubmission.status !== "rejected" && (
-                                              <div className="pt-2 border-t">
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => {
-                                                    setSelectedKycSubmission(addressSubmission)
-                                                    setReviewStatus("approved")
-                                                    setRejectionReason("")
-                                                    setKycReviewSubDialogOpen(true)
-                                                  }}
-                                                >
-                                                  Review Submission
-                                                </Button>
+                                            <div className="space-y-4">
+                                              <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Address:</span>
+                                                <span className="text-sm text-right">{selectedUser.address}</span>
                                               </div>
-                                            )}
+                                              {selectedUser.bridge_kyc_metadata?.address && (
+                                                <div className="pt-2 border-t">
+                                                  <p className="text-xs text-gray-500 mb-1">Structured Address:</p>
+                                                  <div className="text-xs text-gray-700 space-y-0.5">
+                                                    <div>{selectedUser.bridge_kyc_metadata.address.line1}</div>
+                                                    {selectedUser.bridge_kyc_metadata.address.line2 && (
+                                                      <div>{selectedUser.bridge_kyc_metadata.address.line2}</div>
+                                                    )}
+                                                    <div>
+                                                      {selectedUser.bridge_kyc_metadata.address.city}
+                                                      {selectedUser.bridge_kyc_metadata.address.state && `, ${selectedUser.bridge_kyc_metadata.address.state}`}
+                                                      {selectedUser.bridge_kyc_metadata.address.postal_code && ` ${selectedUser.bridge_kyc_metadata.address.postal_code}`}
+                                                    </div>
+                                                    <div>{selectedUser.bridge_kyc_metadata.address.country}</div>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
-                                      ) : null
-                                    })()}
+                                      </div>
+                                    ) : (
+                                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                        <p className="text-gray-500 text-xs">No address verification data available</p>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
                                   </>
                                 )}
                               </div>

@@ -33,6 +33,7 @@ function ProfileContent({ navigation }: NavigationProps) {
   })
   const [profileData, setProfileData] = useState({
     firstName: '',
+    middleName: '',
     lastName: '',
     email: '',
     phone: '',
@@ -48,9 +49,9 @@ function ProfileContent({ navigation }: NavigationProps) {
   // Load user profile data
   useEffect(() => {
     if (userProfile) {
-      // Keep full first_name for profile page (display and edit)
       const data = {
         firstName: userProfile.profile.first_name || '',
+        middleName: userProfile.profile.middle_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
@@ -92,6 +93,7 @@ function ProfileContent({ navigation }: NavigationProps) {
       // Update profile in database
       await userService.updateProfile(user.id, {
         firstName: editProfileData.firstName,
+        middleName: editProfileData.middleName,
         lastName: editProfileData.lastName,
         phone: editProfileData.phone,
         baseCurrency: editProfileData.baseCurrency,
@@ -217,24 +219,36 @@ function ProfileContent({ navigation }: NavigationProps) {
     </Modal>
   )
 
-  const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, editable: boolean = true) => (
-    <View style={styles.fieldContainer}>
-      <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>{label}</Text>
-      {editable && isEditing ? (
-        <TextInput
-          style={styles.fieldInput}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={`Enter ${label.toLowerCase()}`}
-          returnKeyType="done"
-          onSubmitEditing={() => Keyboard.dismiss()}
-          editable={editable}
-        />
-      ) : (
-        <Text style={styles.fieldValue}>{value || 'Not set'}</Text>
-      )}
-    </View>
-  )
+  const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, disabled: boolean = false) => {
+    const isKycApproved = userProfile?.bridge_kyc_status === 'approved'
+    const isEditable = isEditing && !disabled && !isKycApproved
+    
+    return (
+      <View style={styles.fieldContainer}>
+        <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>
+          {label}
+          {isKycApproved && (label === 'First Name' || label === 'Last Name') && (
+            <Text style={styles.disabledHint}> (Verified - cannot edit)</Text>
+          )}
+        </Text>
+        {isEditable ? (
+          <TextInput
+            style={styles.fieldInput}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={`Enter ${label.toLowerCase()}`}
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            editable={true}
+          />
+        ) : (
+          <Text style={[styles.fieldValue, (disabled || isKycApproved) && styles.fieldValueDisabled]}>
+            {value || 'Not set'}
+          </Text>
+        )}
+      </View>
+    )
+  }
 
   const renderCurrencyField = () => (
     <View style={styles.fieldContainer}>
@@ -312,12 +326,20 @@ function ProfileContent({ navigation }: NavigationProps) {
         {renderProfileField(
           'First Name',
                     editProfileData.firstName,
-                    (text) => setEditProfileData(prev => ({ ...prev, firstName: text }))
+                    (text) => setEditProfileData(prev => ({ ...prev, firstName: text })),
+          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
+        )}
+        {renderProfileField(
+          'Middle Name',
+                    editProfileData.middleName,
+                    (text) => setEditProfileData(prev => ({ ...prev, middleName: text })),
+          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
         )}
         {renderProfileField(
           'Last Name',
                     editProfileData.lastName,
-                    (text) => setEditProfileData(prev => ({ ...prev, lastName: text }))
+                    (text) => setEditProfileData(prev => ({ ...prev, lastName: text })),
+          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
         )}
         {renderProfileField(
           'Email',
@@ -741,6 +763,14 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 16,
     color: '#6b7280',
+  },
+  disabledHint: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
+  },
+  fieldValueDisabled: {
+    color: '#9ca3af',
   },
 })
 

@@ -45,6 +45,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const tosProcessedRef = useRef(false)
   // Ref to prevent duplicate loadTOSStatus calls
   const loadingTosStatusRef = useRef(false)
+  // Ref to prevent multiple simultaneous Bridge status fetches
+  const fetchingBridgeStatusRef = useRef(false)
+  // Ref to track the last bridge_signed_agreement_id we processed
+  const lastProcessedTosAgreementIdRef = useRef<string | null>(null)
 
   // KYC Link state
   const [kycLink, setKycLink] = useState<string | null>(null)
@@ -83,27 +87,32 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
 
   // Refresh user profile when screen comes into focus
   // This ensures we get the latest status from database (updated by webhooks)
+  // Only refresh on focus if userProfile is not yet loaded to avoid unnecessary refreshes
   useFocusEffect(
     React.useCallback(() => {
-      console.log('[ACCOUNT-VERIFICATION] Screen focused, refreshing user profile')
-      if (refreshUserProfile && userProfile?.id) {
+      if (refreshUserProfile && userProfile?.id && !userProfile?.bridge_kyc_status) {
+        // Only refresh if we don't have bridge_kyc_status yet
         refreshUserProfile()
       }
-    }, [userProfile?.id]) // Only depend on userProfile.id, not refreshUserProfile function
+    }, [userProfile?.id, userProfile?.bridge_kyc_status]) // Only refresh if status is missing
   )
 
   // Fetch Bridge customer status on mount and when userProfile changes
   // This ensures we always have the latest status from Bridge
+  // Note: We rely on webhooks to update bridge_kyc_status in the database
+  // This effect only syncs if there's a mismatch (should be rare)
   useEffect(() => {
     const fetchBridgeStatus = async () => {
-      if (!userProfile?.id) return
+      if (!userProfile?.id || !userProfile?.bridge_customer_id) return
       
-      // If we have a customer_id, fetch latest status from Bridge
-      // Note: We rely on webhooks to update bridge_kyc_status in the database
-      // This effect only syncs if there's a mismatch (should be rare)
-      if (userProfile?.bridge_customer_id) {
+      // Prevent multiple simultaneous fetches
+      if (fetchingBridgeStatusRef.current) return
+      
+      // Only fetch if we don't have a status yet, or if status is stale (not recently updated)
+      // Webhooks should handle most updates, so we only need to fetch on initial load
+      if (!userProfile?.bridge_kyc_status || userProfile?.bridge_kyc_status === 'not_started') {
+        fetchingBridgeStatusRef.current = true
         try {
-          console.log('[BRIDGE-STATUS] Fetching latest Bridge customer status for:', userProfile.bridge_customer_id)
           const customerStatus = await bridgeService.getCustomerStatus()
           
           if (customerStatus && customerStatus.kycStatus) {
@@ -120,30 +129,22 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                 })
                 .eq('id', userProfile.id)
               
-              if (updateError) {
-                console.error('[BRIDGE-STATUS] Error updating status:', updateError)
-              } else {
-                console.log('[BRIDGE-STATUS] Updated Bridge KYC status from Bridge API:', customerStatus.kycStatus)
-                
-                // Refresh user profile to get updated status
-                if (refreshUserProfile) {
-                  await refreshUserProfile()
-                }
+              if (!updateError && refreshUserProfile) {
+                await refreshUserProfile()
               }
-            } else {
-              console.log('[BRIDGE-STATUS] Status unchanged, no update needed')
             }
           }
         } catch (error: any) {
-          console.warn('[BRIDGE-STATUS] Could not fetch Bridge customer status:', error.message)
-          // Don't block the UI, just log the warning
+          // Silently fail - webhooks will handle updates
           // Status from database will be used instead
+        } finally {
+          fetchingBridgeStatusRef.current = false
         }
       }
     }
     
     fetchBridgeStatus()
-  }, [userProfile?.bridge_customer_id, userProfile?.id]) // Removed refreshUserProfile from deps to prevent loops
+  }, [userProfile?.bridge_customer_id, userProfile?.id, userProfile?.bridge_kyc_status]) // Only fetch if status is missing
 
   useEffect(() => {
     if (!userProfile?.id) return
@@ -236,18 +237,28 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     const bridgeSignedAgreementId = userProfile?.bridge_signed_agreement_id || userProfile?.profile?.bridge_signed_agreement_id
     
     if (bridgeSignedAgreementId) {
-      // TOS is already signed - set state and don't fetch
-      console.log('[TOS-LOAD] TOS already signed (from userProfile), skipping fetch')
-      setTosSigned(true)
-      setTosSignedAgreementId(bridgeSignedAgreementId)
-      // Update cache to match
-      const linkId = userProfile?.bridge_customer_id ? `customer-${userProfile.bridge_customer_id}` : null
-      updateTosStatusInCache(true, bridgeSignedAgreementId, linkId)
+      // Only update state if the agreement ID has changed (avoid unnecessary re-renders)
+      if (lastProcessedTosAgreementIdRef.current !== bridgeSignedAgreementId) {
+        lastProcessedTosAgreementIdRef.current = bridgeSignedAgreementId
+        setTosSigned(true)
+        setTosSignedAgreementId(bridgeSignedAgreementId)
+        // Update cache to match
+        const linkId = userProfile?.bridge_customer_id ? `customer-${userProfile.bridge_customer_id}` : null
+        updateTosStatusInCache(true, bridgeSignedAgreementId, linkId)
+      }
       return
     }
 
+    // Reset the ref if TOS is not signed
+    if (lastProcessedTosAgreementIdRef.current !== null) {
+      lastProcessedTosAgreementIdRef.current = null
+    }
+
     // Only load TOS status if bridge_signed_agreement_id is empty
-    loadTOSStatus()
+    // Only load if we haven't already set tosSigned to true (avoid unnecessary fetches)
+    if (!tosSigned) {
+      loadTOSStatus()
+    }
   }, [bothSubmitted, userProfile?.email, userProfile?.id, userProfile?.bridge_signed_agreement_id])
 
   const updateTosStatusInCache = async (signed: boolean, agreementId: string | null = null, linkId: string | null = null) => {
@@ -1236,17 +1247,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                           </View>
                         ) : (
                           <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing[3] }}>
-                            {(() => {
-                              // Debug: Log the bridge_kyc_status value
-                              const bridgeKycStatus = userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started'
-                              console.log('[KYC-CARD] Bridge KYC Status:', {
-                                topLevel: userProfile?.bridge_kyc_status,
-                                profile: userProfile?.profile?.bridge_kyc_status,
-                                final: bridgeKycStatus,
-                                userProfileId: userProfile?.id
-                              })
-                              return getStatusBadge(bridgeKycStatus, bridgeKycStatus)
-                            })()}
+                            {getStatusBadge(
+                              userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started',
+                              userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started'
+                            )}
                             <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                           </View>
                         )}
@@ -1475,6 +1479,26 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                     style={styles.webView}
                     javaScriptEnabled={true}
                     domStorageEnabled={true}
+                    onShouldStartLoadWithRequest={(request) => {
+                      // Suppress warnings for about:srcdoc (used by iframes with inline HTML)
+                      if (request.url === 'about:srcdoc') {
+                        return false
+                      }
+                      // Allow navigation to proceed
+                      return true
+                    }}
+                    onError={(syntheticEvent) => {
+                      const { nativeEvent } = syntheticEvent
+                      // Suppress harmless about:srcdoc warnings
+                      if (nativeEvent.url === 'about:srcdoc') {
+                        return
+                      }
+                      console.warn('[TOS-WEBVIEW] WebView error:', nativeEvent)
+                    }}
+                    onHttpError={(syntheticEvent) => {
+                      const { nativeEvent } = syntheticEvent
+                      console.warn('[TOS-WEBVIEW] HTTP error:', nativeEvent.statusCode, nativeEvent.url)
+                    }}
                     onNavigationStateChange={(navState) => {
                       // Check if user navigated away (might indicate acceptance)
                       // Bridge TOS pages typically redirect after acceptance
@@ -1491,11 +1515,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                         // Don't start polling here - wait for modal to close
                         // The handleTOSModalClose will start polling
                       }
-                    }}
-                    onShouldStartLoadWithRequest={(request) => {
-                      // Allow navigation to proceed
-                      console.log('[TOS-WEBVIEW] Should start load:', request.url)
-                      return true
                     }}
                     onMessage={async (event) => {
                       // Handle messages from WebView if Bridge sends any
@@ -1650,6 +1669,25 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                     style={styles.webView}
                     javaScriptEnabled={true}
                     domStorageEnabled={true}
+                    onShouldStartLoadWithRequest={(request) => {
+                      // Suppress warnings for about:srcdoc (used by iframes with inline HTML)
+                      if (request.url === 'about:srcdoc') {
+                        return false
+                      }
+                      return true
+                    }}
+                    onError={(syntheticEvent) => {
+                      const { nativeEvent } = syntheticEvent
+                      // Suppress harmless about:srcdoc warnings
+                      if (nativeEvent.url === 'about:srcdoc') {
+                        return
+                      }
+                      console.warn('[KYC-WEBVIEW] WebView error:', nativeEvent)
+                    }}
+                    onHttpError={(syntheticEvent) => {
+                      const { nativeEvent } = syntheticEvent
+                      console.warn('[KYC-WEBVIEW] HTTP error:', nativeEvent.statusCode, nativeEvent.url)
+                    }}
                     onMessage={async (event) => {
                       console.log('[KYC-WEBVIEW] 📨 Message received from WebView:', {
                         data: event.nativeEvent.data,

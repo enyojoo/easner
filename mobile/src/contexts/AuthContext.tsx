@@ -62,6 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             id: regularUser.id,
             email: regularUser.email,
             first_name: regularUser.first_name,
+            middle_name: regularUser.middle_name,
             last_name: regularUser.last_name,
             phone: regularUser.phone,
             base_currency: regularUser.base_currency,

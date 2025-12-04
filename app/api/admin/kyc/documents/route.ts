@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const isAdmin = !!adminUser
     
     if (isAdmin) {
-      console.log(`Admin ${adminUser.email} requesting document: ${filePath}`)
+    console.log(`Admin ${adminUser.email} requesting document: ${filePath}`)
     } else {
       console.log(`[ADMIN-DOCS] Admin check failed, using service role for: ${filePath}`)
       // Log available cookies for debugging

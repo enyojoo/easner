@@ -21,14 +21,18 @@ interface ComplianceUser {
   id: string
   email: string
   first_name: string
+  middle_name?: string
   last_name: string
   phone?: string
-  identitySubmission?: KYCSubmission
-  addressSubmission?: KYCSubmission
+  date_of_birth?: string
+  address?: string
+  country_code?: string
+  bridge_kyc_metadata?: any
   bridge_customer_id?: string
   bridge_signed_agreement_id?: string
   bridge_kyc_status?: string
   bridge_kyc_rejection_reasons?: any
+  bridge_endorsements?: any
 }
 
 export default function AdminCompliancePage() {
@@ -89,37 +93,32 @@ export default function AdminCompliancePage() {
         setLoading(true)
       }
       
-      // Get all users
+      // Get all users with KYC data from users table
       const { data: usersData, error: usersError } = await supabase
         .from("users")
-        .select("id, email, first_name, last_name, phone, bridge_customer_id, bridge_signed_agreement_id, bridge_kyc_status, bridge_kyc_rejection_reasons")
+        .select("id, email, first_name, middle_name, last_name, phone, date_of_birth, address, country_code, bridge_kyc_metadata, bridge_customer_id, bridge_signed_agreement_id, bridge_kyc_status, bridge_kyc_rejection_reasons, bridge_endorsements")
         .order("created_at", { ascending: false })
 
       if (usersError) throw usersError
 
-      // Get all KYC submissions
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from("kyc_submissions")
-        .select("*")
-        .order("created_at", { ascending: false })
-
-      if (submissionsError) throw submissionsError
-
-      // Map submissions to users
+      // Map users to ComplianceUser format (all data now comes from users table)
       const usersWithKyc: ComplianceUser[] = (usersData || []).map((user: any) => {
-        const userSubmissions = (submissionsData || []).filter((s: KYCSubmission) => s.user_id === user.id)
         return {
           id: user.id,
           email: user.email,
           first_name: user.first_name || "",
+          middle_name: user.middle_name,
           last_name: user.last_name || "",
           phone: user.phone,
-          identitySubmission: userSubmissions.find((s: KYCSubmission) => s.type === "identity"),
-          addressSubmission: userSubmissions.find((s: KYCSubmission) => s.type === "address"),
+          date_of_birth: user.date_of_birth,
+          address: user.address,
+          country_code: user.country_code,
+          bridge_kyc_metadata: user.bridge_kyc_metadata,
           bridge_customer_id: user.bridge_customer_id,
           bridge_signed_agreement_id: user.bridge_signed_agreement_id,
           bridge_kyc_status: user.bridge_kyc_status,
           bridge_kyc_rejection_reasons: user.bridge_kyc_rejection_reasons,
+          bridge_endorsements: user.bridge_endorsements,
         }
       })
 
@@ -176,35 +175,7 @@ export default function AdminCompliancePage() {
     // Set up Supabase Realtime subscription for instant updates
     const channel = supabase
       .channel('admin-compliance-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'kyc_submissions',
-        },
-        async (payload) => {
-          console.log('Admin compliance: KYC submission update received via Realtime:', payload.eventType)
-          try {
-            // Reload data to get updated submissions (silent refresh, no loading state)
-            const updatedUsers = await loadData(false)
-            
-            // Update selected user if dialog is open and this update affects them
-            if (selectedUser) {
-              const updatedUser = updatedUsers.find(u => u.id === selectedUser.id)
-              if (updatedUser) {
-                // Check if the submission that changed belongs to this user
-                const changedSubmission = payload.new || payload.old
-                if (changedSubmission && changedSubmission.user_id === selectedUser.id) {
-                  setSelectedUser(updatedUser)
-                }
-              }
-            }
-          } catch (error) {
-            console.error("Error handling real-time update:", error)
-          }
-        }
-      )
+      // Removed kyc_submissions subscription - KYC data is now in users table
       .on(
         'postgres_changes',
         {
@@ -220,7 +191,11 @@ export default function AdminCompliancePage() {
           const bridgeStatusChanged = 
             oldData?.bridge_kyc_status !== newData?.bridge_kyc_status ||
             oldData?.bridge_customer_id !== newData?.bridge_customer_id ||
-            JSON.stringify(oldData?.bridge_kyc_rejection_reasons) !== JSON.stringify(newData?.bridge_kyc_rejection_reasons)
+            JSON.stringify(oldData?.bridge_kyc_rejection_reasons) !== JSON.stringify(newData?.bridge_kyc_rejection_reasons) ||
+            oldData?.full_name !== newData?.full_name ||
+            oldData?.date_of_birth !== newData?.date_of_birth ||
+            oldData?.address !== newData?.address ||
+            JSON.stringify(oldData?.bridge_kyc_metadata) !== JSON.stringify(newData?.bridge_kyc_metadata)
           
           if (bridgeStatusChanged) {
             console.log('Admin compliance: User Bridge status update received via Realtime')
@@ -243,7 +218,7 @@ export default function AdminCompliancePage() {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Admin compliance: Subscribed to KYC submissions and user updates')
+          console.log('Admin compliance: Subscribed to user updates')
         } else if (status === 'CHANNEL_ERROR') {
           console.error('Admin compliance: Realtime subscription error')
         }
@@ -365,12 +340,7 @@ export default function AdminCompliancePage() {
 
   // Removed canSendToBridge - users now do KYC directly through Bridge
   const _canSendToBridge = (user: ComplianceUser): boolean => {
-    return !!(
-      user.identitySubmission &&
-      user.addressSubmission &&
-      user.bridge_signed_agreement_id &&
-      !user.bridge_customer_id
-    )
+    return false // Always false - users do KYC directly through Bridge
   }
 
   // Removed handleSendToBridge - users now do KYC directly through Bridge
@@ -755,109 +725,69 @@ export default function AdminCompliancePage() {
                 {selectedUser.bridge_kyc_status === "approved" && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Identity Verification</h3>
-                  {selectedUser.identitySubmission ? (
+                  {selectedUser.first_name || selectedUser.date_of_birth ? (
                     <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 shadow-sm">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2.5">
-                            {getStatusBadge(selectedUser.identitySubmission.status)}
-                            <span className="text-sm font-medium text-gray-700">
-                              {selectedUser.identitySubmission.id_type
-                                ? getIdTypeLabel(selectedUser.identitySubmission.id_type)
-                                : "ID Document"}
-                            </span>
+                            <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
+                            <span className="text-sm font-medium text-gray-700">Identity Verified</span>
                           </div>
                           <div className="space-y-1.5 text-sm">
-                            {selectedUser.identitySubmission.full_name && (
+                            {selectedUser.first_name && (
                               <div className="flex items-start gap-2">
-                                <span className="text-gray-500 min-w-[90px] text-xs">Name:</span>
-                                <span className="text-gray-900 font-medium text-xs">{selectedUser.identitySubmission.full_name}</span>
+                                <span className="text-gray-500 min-w-[90px] text-xs">First Name:</span>
+                                <span className="text-gray-900 font-medium text-xs">{selectedUser.first_name}</span>
                               </div>
                             )}
-                            {selectedUser.identitySubmission.date_of_birth && (
+                            {selectedUser.middle_name && (
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 min-w-[90px] text-xs">Middle Name:</span>
+                                <span className="text-gray-900 font-medium text-xs">{selectedUser.middle_name}</span>
+                              </div>
+                            )}
+                            {selectedUser.last_name && (
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 min-w-[90px] text-xs">Last Name:</span>
+                                <span className="text-gray-900 font-medium text-xs">{selectedUser.last_name}</span>
+                              </div>
+                            )}
+                            {selectedUser.date_of_birth && (
                               <div className="flex items-start gap-2">
                                 <span className="text-gray-500 min-w-[90px] text-xs">DOB:</span>
-                                <span className="text-gray-900 text-xs">{new Date(selectedUser.identitySubmission.date_of_birth).toLocaleDateString()}</span>
+                                <span className="text-gray-900 text-xs">{new Date(selectedUser.date_of_birth).toLocaleDateString()}</span>
                               </div>
                             )}
-                            <div className="flex items-start gap-2">
-                              <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
-                              <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.identitySubmission.country_code)}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-gray-500 min-w-[90px] text-xs">Submitted:</span>
-                              <span className="text-gray-900 text-xs">{new Date(selectedUser.identitySubmission.created_at).toLocaleDateString()}</span>
-                            </div>
-                            {selectedUser.identitySubmission.id_document_filename && selectedUser.identitySubmission.id_document_url && (
-                              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg mt-1.5 border-t border-gray-200 pt-2">
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <FileText className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {selectedUser.identitySubmission.id_document_filename}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {selectedUser.identitySubmission.id_document_url.startsWith("identity/") || selectedUser.identitySubmission.id_document_url.startsWith("address/")
-                                      ? "Click View to access document"
-                                      : selectedUser.identitySubmission.id_document_url}
-                                  </p>
-                                </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                  onClick={async () => {
-                                    const url = selectedUser.identitySubmission!.id_document_url!
-                                    const isPath = url.startsWith("identity/") || url.startsWith("address/")
-                                    
-                                    if (isPath) {
-                                      // Get signed URL from API
-                                      try {
-                                        // Get access token from Supabase session
-                                        const { data: { session } } = await supabase.auth.getSession()
-                                        const headers: HeadersInit = {
-                                          'Content-Type': 'application/json',
-                                        }
-                                        
-                                        if (session?.access_token) {
-                                          headers['Authorization'] = `Bearer ${session.access_token}`
-                                        }
-                                        
-                                        const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
-                                          credentials: "include",
-                                          headers,
-                                        })
-                                        
-                                        if (response.ok) {
-                                          const data = await response.json()
-                                          if (data.url) {
-                                            window.open(data.url, "_blank")
-                                          } else {
-                                            alert("Failed to access document: No URL returned from server.")
-                                          }
-                                        } else {
-                                          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-                                          alert(`Failed to access document: ${errorData.error || response.statusText || "Please try again."}`)
-                                        }
-                                      } catch (error: any) {
-                                        console.error("Error fetching signed URL:", error)
-                                        alert(`Failed to access document: ${error.message || "Please try again."}`)
-                                      }
-                                    } else {
-                                      // Public URL - open directly
-                                      window.open(url, "_blank")
-                                    }
-                                  }}
-                                  className="h-7 px-2 text-xs flex-shrink-0"
-                                  >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
+                            {selectedUser.country_code && (
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
+                                <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.country_code)}</span>
                               </div>
+                            )}
+                            {selectedUser.bridge_kyc_metadata && (
+                              <>
+                                {selectedUser.bridge_kyc_metadata.ssn && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-gray-500 min-w-[90px] text-xs">SSN:</span>
+                                    <span className="text-gray-900 text-xs">***-**-{selectedUser.bridge_kyc_metadata.ssn.slice(-4)}</span>
+                                  </div>
+                                )}
+                                {selectedUser.bridge_kyc_metadata.passportNumber && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-gray-500 min-w-[90px] text-xs">Passport:</span>
+                                    <span className="text-gray-900 text-xs">{selectedUser.bridge_kyc_metadata.passportNumber}</span>
+                                  </div>
+                                )}
+                                {selectedUser.bridge_kyc_metadata.nationalIdNumber && (
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-gray-500 min-w-[90px] text-xs">National ID:</span>
+                                    <span className="text-gray-900 text-xs">{selectedUser.bridge_kyc_metadata.nationalIdNumber}</span>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
-                        {/* Removed manual approval buttons - KYC is now handled by Bridge */}
                       </div>
                     </div>
                   ) : (
@@ -1013,106 +943,48 @@ export default function AdminCompliancePage() {
                   </div>
                 )}
 
-                {/* Address Verification */}
+                {/* Address Verification - Show only if Bridge KYC is approved */}
+                {selectedUser.bridge_kyc_status === "approved" && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Address Verification</h3>
-                  {selectedUser.addressSubmission ? (
+                  {selectedUser.address ? (
                     <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 shadow-sm">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2.5">
-                            {getStatusBadge(selectedUser.addressSubmission.status)}
-                            <span className="text-sm font-medium text-gray-700">
-                              {selectedUser.addressSubmission.document_type === "utility_bill"
-                                ? "Utility Bill"
-                                : selectedUser.addressSubmission.document_type === "bank_statement"
-                                ? "Bank Statement"
-                                : "Address Document"}
-                            </span>
+                            <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
+                            <span className="text-sm font-medium text-gray-700">Address Verified</span>
                           </div>
                           <div className="space-y-1.5 text-sm">
-                            <div className="flex items-start gap-2">
-                              <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
-                              <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.addressSubmission.country_code)}</span>
-                            </div>
+                            {selectedUser.country_code && (
+                              <div className="flex items-start gap-2">
+                                <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
+                                <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.country_code)}</span>
+                              </div>
+                            )}
                             <div className="flex items-start gap-2">
                               <span className="text-gray-500 min-w-[90px] text-xs pt-0.5">Address:</span>
-                              <span className="text-gray-900 text-xs flex-1">{selectedUser.addressSubmission.address || "-"}</span>
+                              <span className="text-gray-900 text-xs flex-1">{selectedUser.address}</span>
                             </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-gray-500 min-w-[90px] text-xs">Submitted:</span>
-                              <span className="text-gray-900 text-xs">{new Date(selectedUser.addressSubmission.created_at).toLocaleDateString()}</span>
-                            </div>
-                            {selectedUser.addressSubmission.address_document_filename && selectedUser.addressSubmission.address_document_url && (
-                              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg mt-1.5 border-t border-gray-200 pt-2">
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <FileText className="h-4 w-4 text-blue-600" />
+                            {selectedUser.bridge_kyc_metadata?.address && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <p className="text-xs text-gray-500 mb-1">Structured Address:</p>
+                                <div className="text-xs text-gray-700 space-y-0.5">
+                                  <div>{selectedUser.bridge_kyc_metadata.address.line1}</div>
+                                  {selectedUser.bridge_kyc_metadata.address.line2 && (
+                                    <div>{selectedUser.bridge_kyc_metadata.address.line2}</div>
+                                  )}
+                                  <div>
+                                    {selectedUser.bridge_kyc_metadata.address.city}
+                                    {selectedUser.bridge_kyc_metadata.address.state && `, ${selectedUser.bridge_kyc_metadata.address.state}`}
+                                    {selectedUser.bridge_kyc_metadata.address.postal_code && ` ${selectedUser.bridge_kyc_metadata.address.postal_code}`}
+                                  </div>
+                                  <div>{selectedUser.bridge_kyc_metadata.address.country}</div>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {selectedUser.addressSubmission.address_document_filename}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {selectedUser.addressSubmission.address_document_url.startsWith("identity/") || selectedUser.addressSubmission.address_document_url.startsWith("address/")
-                                      ? "Click View to access document"
-                                      : selectedUser.addressSubmission.address_document_url}
-                                  </p>
-                                </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                  onClick={async () => {
-                                    const url = selectedUser.addressSubmission!.address_document_url!
-                                    const isPath = url.startsWith("identity/") || url.startsWith("address/")
-                                    
-                                    if (isPath) {
-                                      // Get signed URL from API
-                                      try {
-                                        // Get access token from Supabase session
-                                        const { data: { session } } = await supabase.auth.getSession()
-                                        const headers: HeadersInit = {
-                                          'Content-Type': 'application/json',
-                                        }
-                                        
-                                        if (session?.access_token) {
-                                          headers['Authorization'] = `Bearer ${session.access_token}`
-                                        }
-                                        
-                                        const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
-                                          credentials: "include",
-                                          headers,
-                                        })
-                                        
-                                        if (response.ok) {
-                                          const data = await response.json()
-                                          if (data.url) {
-                                            window.open(data.url, "_blank")
-                                          } else {
-                                            alert("Failed to access document: No URL returned from server.")
-                                          }
-                                        } else {
-                                          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-                                          alert(`Failed to access document: ${errorData.error || response.statusText || "Please try again."}`)
-                                        }
-                                      } catch (error: any) {
-                                        console.error("Error fetching signed URL:", error)
-                                        alert(`Failed to access document: ${error.message || "Please try again."}`)
-                                      }
-                                    } else {
-                                      // Public URL - open directly
-                                      window.open(url, "_blank")
-                                    }
-                                  }}
-                                  className="h-7 px-2 text-xs flex-shrink-0"
-                                  >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
                               </div>
                             )}
                           </div>
                         </div>
-                        {/* Removed manual approval buttons - KYC is now handled by Bridge */}
                       </div>
                     </div>
                   ) : (
