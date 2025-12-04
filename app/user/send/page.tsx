@@ -370,47 +370,45 @@ export default function UserSendPage() {
       return
     }
 
-    const fetchPaymentDetails = async () => {
-      setLoadingPaymentDetails(true)
-      setPaymentDetailsFetchAttempted(true)
-      
-      // Add timeout to prevent hanging
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
-      try {
-        const ref = transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()
+      const fetchPaymentDetails = async () => {
+        setLoadingPaymentDetails(true)
+        setPaymentDetailsFetchAttempted(true)
         
-        const response = await fetch(
-          `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${ref}`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          }
-        )
+        // Add timeout to prevent hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
         
-        clearTimeout(timeoutId)
-        if (response.ok) {
-          const data = await response.json()
-          setVirtualAccountDetails(data.virtualAccount)
-        } else {
-          // API call failed - silently fall back to static payment methods
-          // Don't log errors for 401/403 as these are expected when API keys aren't configured
-          if (response.status !== 401 && response.status !== 403) {
-            console.warn("Payment collection API unavailable, using static methods:", response.status)
+        try {
+          const ref = transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()
+          
+          const response = await fetch(
+            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${ref}`,
+            {
+              credentials: "include",
+              signal: controller.signal,
+            }
+          )
+          
+          clearTimeout(timeoutId)
+          
+          if (response.ok) {
+            const data = await response.json()
+            setVirtualAccountDetails(data.virtualAccount)
+          } else {
+            // API call failed - silently fall back to static payment methods
+            // Don't log errors for 401/403 as these are expected when API keys aren't configured
+            if (response.status !== 401 && response.status !== 403) {
+              console.warn("Payment collection API unavailable, using static methods:", response.status)
+            }
+            // Fallback to static payment methods - don't set virtualAccountDetails
           }
-          // Fallback to static payment methods - don't set virtualAccountDetails
-        }
         } catch (error: any) {
           // Network or other errors - silently fall back to static payment methods
           if (error.name !== 'AbortError') {
             console.warn("Payment collection unavailable, using static methods")
           }
-          // Clear timeout if it wasn't already cleared
-          if (timeoutId) {
-            clearTimeout(timeoutId)
-          }
         } finally {
+          clearTimeout(timeoutId)
           setLoadingPaymentDetails(false)
         }
     }
