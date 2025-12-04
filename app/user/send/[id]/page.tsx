@@ -122,8 +122,11 @@ function TransactionStatusPage() {
   useEffect(() => {
     if (!transaction || !user?.id || !transactionId) return
 
+    let pollInterval: NodeJS.Timeout | null = null
+    let channel: any = null
+
     // Set up Supabase Realtime subscription for instant updates
-    const channel = supabase
+    channel = supabase
       .channel(`transaction-${transactionId}`)
       .on(
         'postgres_changes',
@@ -133,46 +136,94 @@ function TransactionStatusPage() {
           table: 'transactions',
           filter: `transaction_id=eq.${transactionId.toUpperCase()}`,
         },
-        async (payload) => {
+        async (payload: any) => {
           console.log('Transaction update received via Realtime:', payload)
           try {
             // Fetch full transaction data with relations
             const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
             if (updatedTransaction) {
-              setTransaction(updatedTransaction)
+              // Use functional update to ensure state change is detected
+              setTransaction((prev) => {
+                // Only update if something actually changed
+                if (prev && (
+                  prev.status !== updatedTransaction.status ||
+                  prev.updated_at !== updatedTransaction.updated_at ||
+                  prev.receipt_url !== updatedTransaction.receipt_url
+                )) {
+                  return updatedTransaction
+                }
+                return prev
+              })
             }
           } catch (error) {
             console.error("Error fetching updated transaction:", error)
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           console.log('Subscribed to transaction updates via Realtime')
         } else if (status === 'CHANNEL_ERROR') {
-          // Realtime subscription failed - this is expected if Realtime is not enabled
-          // Polling fallback will handle updates instead (silent fallback)
+          console.warn('Realtime subscription error, falling back to polling')
+          // Realtime subscription failed - start polling immediately
+          if (!pollInterval) {
+            pollInterval = setInterval(async () => {
+              try {
+                const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
+                if (updatedTransaction) {
+                  setTransaction((prev) => {
+                    if (prev && (
+                      prev.status !== updatedTransaction.status ||
+                      prev.updated_at !== updatedTransaction.updated_at ||
+                      prev.receipt_url !== updatedTransaction.receipt_url
+                    )) {
+                      return updatedTransaction
+                    }
+                    return prev
+                  })
+                }
+              } catch (error) {
+                console.error("Error polling transaction status:", error)
+              }
+            }, 5000) // Poll every 5 seconds as fallback
+          }
         }
       })
 
     // Fallback: Poll every 5 seconds if Realtime is not available
-    const pollInterval = setInterval(async () => {
-      try {
-        const updatedTransaction = await transactionService.getById(transaction.transaction_id)
-        if (updatedTransaction.status !== transaction.status || 
-            updatedTransaction.updated_at !== transaction.updated_at) {
-          setTransaction(updatedTransaction)
+    // Start polling after a delay to give Realtime a chance
+    const pollTimeout = setTimeout(() => {
+      pollInterval = setInterval(async () => {
+        try {
+          const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
+          if (updatedTransaction) {
+            setTransaction((prev) => {
+              if (prev && (
+                prev.status !== updatedTransaction.status ||
+                prev.updated_at !== updatedTransaction.updated_at ||
+                prev.receipt_url !== updatedTransaction.receipt_url
+              )) {
+                return updatedTransaction
+              }
+              return prev
+            })
+          }
+        } catch (error) {
+          console.error("Error polling transaction status:", error)
         }
-      } catch (error) {
-        console.error("Error polling transaction status:", error)
-      }
-    }, 5000) // Poll every 5 seconds as fallback
+      }, 5000) // Poll every 5 seconds as fallback
+    }, 10000) // Wait 10 seconds before starting polling (give Realtime time to connect)
 
     return () => {
-      supabase.removeChannel(channel)
-      clearInterval(pollInterval)
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
+      clearTimeout(pollTimeout)
     }
-  }, [transaction, user?.id, transactionId])
+  }, [transactionId, user?.id]) // Remove transaction from deps to prevent re-subscription
 
   // Load payment information for this transaction
   useEffect(() => {

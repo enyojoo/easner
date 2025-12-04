@@ -209,7 +209,7 @@ export default function UserTransactionsPage() {
         if (status === 'SUBSCRIBED') {
           console.log('Subscribed to user send transactions real-time updates')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('User send transactions subscription error')
+          console.warn('User send transactions subscription error, will refetch on next interaction')
         }
       })
 

@@ -363,42 +363,59 @@ export default function UserSendPage() {
     }
   }, [currentStep, transactionId])
 
-  // Fetch payment collection details when reaching step 3
+  // Fetch payment collection details when reaching step 3 (optimized to prevent re-fetching)
   useEffect(() => {
-    if (currentStep === 3 && sendCurrency && sendAmount && !virtualAccountDetails && !loadingPaymentDetails && !paymentDetailsFetchAttempted) {
+    // Only fetch if we're on step 3, have required data, and haven't fetched yet
+    if (currentStep !== 3 || !sendCurrency || !sendAmount || virtualAccountDetails || loadingPaymentDetails || paymentDetailsFetchAttempted) {
+      return
+    }
+
       const fetchPaymentDetails = async () => {
         setLoadingPaymentDetails(true)
         setPaymentDetailsFetchAttempted(true)
         try {
+          const ref = transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()
+          
+          // Add timeout to prevent hanging
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+          
           const response = await fetch(
-            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()}`,
+            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${ref}`,
             {
               credentials: "include",
+              signal: controller.signal,
             }
           )
-          if (response.ok) {
-            const data = await response.json()
-            setVirtualAccountDetails(data.virtualAccount)
-          } else {
-            // API call failed - silently fall back to static payment methods
-            // Don't log errors for 401/403 as these are expected when API keys aren't configured
-            if (response.status !== 401 && response.status !== 403) {
-              const errorData = await response.json().catch(() => ({}))
-              console.warn("Payment collection API unavailable, using static methods:", response.status)
-            }
-            // Fallback to static payment methods - don't set virtualAccountDetails
+          
+          clearTimeout(timeoutId)
+        if (response.ok) {
+          const data = await response.json()
+          setVirtualAccountDetails(data.virtualAccount)
+        } else {
+          // API call failed - silently fall back to static payment methods
+          // Don't log errors for 401/403 as these are expected when API keys aren't configured
+          if (response.status !== 401 && response.status !== 403) {
+            console.warn("Payment collection API unavailable, using static methods:", response.status)
           }
-        } catch (error) {
+          // Fallback to static payment methods - don't set virtualAccountDetails
+        }
+        } catch (error: any) {
           // Network or other errors - silently fall back to static payment methods
-          console.warn("Payment collection unavailable, using static methods")
+          if (error.name !== 'AbortError') {
+            console.warn("Payment collection unavailable, using static methods")
+          }
+          // Clear timeout if it wasn't already cleared
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
         } finally {
           setLoadingPaymentDetails(false)
         }
-      }
-
-      fetchPaymentDetails()
     }
-  }, [currentStep, sendCurrency, sendAmount, transactionId, virtualAccountDetails, loadingPaymentDetails, paymentDetailsFetchAttempted])
+
+    fetchPaymentDetails()
+  }, [currentStep, sendCurrency, sendAmount, transactionId])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -796,19 +813,22 @@ export default function UserSendPage() {
           totalAmount: Number.parseFloat(sendAmount) + fee,
         })
 
-        // Upload receipt if file was selected and upload completed successfully
-        if (uploadedFile && uploadProgress === 100 && !isUploading) {
-          try {
-            await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
-          } catch (uploadError) {
-            console.error("Error uploading receipt:", uploadError)
-            // Don't block transaction creation if receipt upload fails
-            setUploadError("Receipt upload failed, but transaction was created successfully")
-          }
-        }
-
-        // Redirect to transaction status page
+        // Redirect to transaction status page immediately (don't wait for receipt upload)
         router.push(`/user/send/${transaction.transaction_id.toLowerCase()}`)
+
+        // Upload receipt in the background after redirect (non-blocking)
+        if (uploadedFile && uploadProgress === 100 && !isUploading) {
+          // Use setTimeout to ensure redirect happens first
+          setTimeout(async () => {
+            try {
+              await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
+              console.log("Receipt uploaded successfully")
+            } catch (uploadError) {
+              console.error("Error uploading receipt:", uploadError)
+              // Don't show error to user - upload happens in background
+            }
+          }, 100)
+        }
       } catch (error) {
         console.error("Error creating transaction:", error)
         setError("Failed to create transaction. Please try again.")
