@@ -119,7 +119,7 @@ export default function UserTransactionsPage() {
       try {
         // Fetch all transactions (both send and receive) from API
         const txResponse = await fetch(
-          `/api/transactions?type=all&limit=100`,
+          `/api/transactions?type=send&limit=100`,
           {
             credentials: 'include',
           }
@@ -172,7 +172,7 @@ export default function UserTransactionsPage() {
     const fetchCombinedTransactions = async () => {
       try {
         const txResponse = await fetch(
-          `/api/transactions?type=all&limit=100`,
+          `/api/transactions?type=send&limit=100`,
           {
             credentials: 'include',
           }
@@ -180,7 +180,14 @@ export default function UserTransactionsPage() {
         if (txResponse.ok) {
           const txData = await txResponse.json()
           const transactionsList = txData.transactions || []
-          setTransactions(transactionsList)
+          // Update state immediately to trigger re-render
+          setTransactions((prev) => {
+            // Only update if data actually changed
+            if (JSON.stringify(prev) !== JSON.stringify(transactionsList)) {
+              return transactionsList
+            }
+            return prev
+          })
           setCachedTransactions(transactionsList)
         }
       } catch (error) {
@@ -201,7 +208,7 @@ export default function UserTransactionsPage() {
         },
         async (payload) => {
           console.log('User transaction change received via Realtime:', payload.eventType)
-          // Refetch transactions to get updated data
+          // Refetch transactions to get updated data immediately
           await fetchCombinedTransactions()
         }
       )
@@ -213,34 +220,8 @@ export default function UserTransactionsPage() {
         }
       })
 
-    // Subscribe to receive transactions table changes
-    const receiveTransactionsChannel = supabase
-      .channel(`user-crypto-receive-transactions-${userProfile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'crypto_receive_transactions',
-          filter: `user_id=eq.${userProfile.id}`,
-        },
-        async (payload) => {
-          console.log('User crypto receive transaction change received via Realtime:', payload.eventType)
-          // Refetch transactions to get updated data
-          await fetchCombinedTransactions()
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Subscribed to user crypto receive transactions real-time updates')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('User crypto receive transactions subscription error')
-        }
-      })
-
     return () => {
       supabase.removeChannel(sendTransactionsChannel)
-      supabase.removeChannel(receiveTransactionsChannel)
     }
   }, [userProfile?.id])
 
@@ -256,16 +237,18 @@ export default function UserTransactionsPage() {
   const filteredTransactions = transactions.filter((transaction) => {
     if (!transaction) return false
     
-    // If no search term, show all transactions
+    // Only show send transactions (filter out receive, card, etc.)
+    if (transaction.type && transaction.type !== "send") {
+      return false
+    }
+    
+    // If no search term, show all send transactions
     if (!searchTerm.trim()) return true
     
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch =
       transaction.transaction_id?.toLowerCase().includes(searchLower) ||
-      (transaction.type === "send" &&
-        transaction.recipient?.full_name?.toLowerCase().includes(searchLower)) ||
-      (transaction.type === "receive" &&
-        transaction.crypto_wallet?.wallet_address?.toLowerCase().includes(searchLower))
+      transaction.recipient?.full_name?.toLowerCase().includes(searchLower)
     return matchesSearch
   })
 
@@ -347,11 +330,7 @@ export default function UserTransactionsPage() {
             filteredTransactions.map((transaction) => {
               if (!transaction) return null
               const statusColor = getStatusColor(transaction.status)
-              const transactionType = transaction.type || "send" // Default to send for backward compatibility
-              const detailUrl =
-                transactionType === "send"
-                  ? `/user/send/${transaction.transaction_id.toLowerCase()}`
-                  : `/user/receive/${transaction.transaction_id.toLowerCase()}`
+              const detailUrl = `/user/send/${transaction.transaction_id.toLowerCase()}`
 
               return (
                 <Link href={detailUrl} key={transaction.id} className="block">
@@ -360,12 +339,6 @@ export default function UserTransactionsPage() {
                       {/* Transaction Header */}
                       <div className="flex items-center justify-between mb-3 sm:mb-4">
                         <div className="flex items-center gap-2">
-                          <Badge
-                            variant={transactionType === "send" ? "default" : "secondary"}
-                            className="text-xs"
-                          >
-                            {transactionType === "send" ? "Send" : "Receive"}
-                          </Badge>
                           <span className="text-xs sm:text-sm text-gray-500 font-mono">
                             {transaction.transaction_id}
                           </span>
@@ -381,74 +354,35 @@ export default function UserTransactionsPage() {
                         </span>
                       </div>
 
-                      {transactionType === "send" ? (
-                        <>
-                          {/* Recipient Info */}
-                          <div className="mb-4 sm:mb-5">
-                            <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                              To
-                            </div>
-                            <div className="text-base sm:text-lg font-semibold text-gray-900">
-                              {transaction.recipient?.full_name || "Unknown"}
-                            </div>
-                          </div>
+                      {/* Recipient Info */}
+                      <div className="mb-4 sm:mb-5">
+                        <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                          To
+                        </div>
+                        <div className="text-base sm:text-lg font-semibold text-gray-900">
+                          {transaction.recipient?.full_name || "Unknown"}
+                        </div>
+                      </div>
 
-                          {/* Amount Section */}
-                          <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                Send Amount
-                              </span>
-                              <span className="text-base sm:text-lg font-semibold text-gray-900">
-                                {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                Receive Amount
-                              </span>
-                              <span className="text-base sm:text-lg font-semibold text-green-600">
-                                {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
-                              </span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* Receive Transaction Info */}
-                          <div className="mb-4 sm:mb-5">
-                            <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                              Stablecoin Received
-                            </div>
-                            <div className="text-base sm:text-lg font-semibold text-gray-900">
-                              {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || "USDC")}
-                            </div>
-                          </div>
-
-                          {/* Amount Section */}
-                          <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                Converted To
-                              </span>
-                              <span className="text-base sm:text-lg font-semibold text-green-600">
-                                {formatAmount(transaction.fiat_amount || 0, transaction.fiat_currency || "")}
-                              </span>
-                            </div>
-                            {transaction.crypto_wallet?.wallet_address && (
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                  Wallet
-                                </span>
-                                <span className="text-xs font-mono text-gray-500">
-                                  {transaction.crypto_wallet.wallet_address.slice(0, 8)}...
-                                  {transaction.crypto_wallet.wallet_address.slice(-6)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
+                      {/* Amount Section */}
+                      <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                            Send Amount
+                          </span>
+                          <span className="text-base sm:text-lg font-semibold text-gray-900">
+                            {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                            Receive Amount
+                          </span>
+                          <span className="text-base sm:text-lg font-semibold text-green-600">
+                            {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
+                          </span>
+                        </div>
+                      </div>
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">

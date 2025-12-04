@@ -1518,15 +1518,6 @@ export default function UserSendPage() {
                         const accountConfig = getAccountTypeConfigFromCurrency(sendCurrency)
                         const accountType = accountConfig.accountType
 
-                        // Show loading only if we're actively fetching
-                        if (loadingPaymentDetails) {
-                          return (
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                              <p className="text-gray-600">Loading payment details...</p>
-                            </div>
-                          )
-                        }
-
                         // If we have dynamic details, use them
                         if (useDynamic && virtualAccountDetails) {
                           // Render dynamic virtual account details from Yellow Card or Bridge
