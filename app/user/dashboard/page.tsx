@@ -275,17 +275,13 @@ export default function UserDashboardPage() {
     }
   }
 
-  const formatTimestamp = (dateString: string) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const month = date.toLocaleString("en-US", { month: "short" })
     const day = date.getDate().toString().padStart(2, "0")
     const year = date.getFullYear()
-    const hours = date.getHours()
-    const minutes = date.getMinutes().toString().padStart(2, "0")
-    const ampm = hours >= 12 ? "PM" : "AM"
-    const displayHours = hours % 12 || 12
-    // Format: "Nov 07, 2025 • 7:29 PM"
-    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
   }
 
   const recentTransactions = transactions?.slice(0, 2) || []
@@ -419,22 +415,20 @@ export default function UserDashboardPage() {
                         {/* Transaction Header */}
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <div className="flex items-center gap-2">
-                            <Badge
-                              variant={
-                                transactionType === "send"
-                                  ? "default"
-                                  : transactionType === "card_funding"
-                                  ? "outline"
-                                  : "secondary"
-                              }
-                              className="text-xs"
-                            >
-                              {transactionType === "send"
-                                ? "Send"
-                                : transactionType === "card_funding"
-                                ? "Card Funding"
-                                : "Receive"}
-                            </Badge>
+                            {transactionType !== "send" && (
+                              <Badge
+                                variant={
+                                  transactionType === "card_funding"
+                                    ? "outline"
+                                    : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                {transactionType === "card_funding"
+                                  ? "Card Funding"
+                                  : "Receive"}
+                              </Badge>
+                            )}
                             <span className="text-xs sm:text-sm text-gray-500 font-mono">
                               {transaction.transaction_id}
                             </span>
@@ -472,16 +466,14 @@ export default function UserDashboardPage() {
                                   {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
                                 </span>
                               </div>
-                              {transaction.receive_amount && transaction.receive_currency && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                    Receive Amount
-                                  </span>
-                                  <span className="text-base sm:text-lg font-semibold text-green-600">
-                                    {formatAmount(transaction.receive_amount, transaction.receive_currency)}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                  Receive Amount
+                                </span>
+                                <span className="text-base sm:text-lg font-semibold text-green-600">
+                                  {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
+                                </span>
+                              </div>
                             </div>
                           </>
                         ) : transactionType === "card_funding" ? (
@@ -541,7 +533,7 @@ export default function UserDashboardPage() {
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
                           <span className="text-xs sm:text-sm text-gray-500">
-                            {formatTimestamp(transaction.created_at)}
+                            {formatDate(transaction.created_at)}
                           </span>
                           <span className="text-lg sm:text-xl text-gray-300 font-light">›</span>
                         </div>

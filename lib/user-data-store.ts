@@ -1,4 +1,5 @@
 import { transactionService, recipientService, currencyService } from "./database"
+import { supabase } from "./supabase"
 
 interface UserData {
   transactions: any[]
@@ -24,6 +25,7 @@ class UserDataStore {
   private loadingPromise: Promise<UserData> | null = null
   private lastActivity = Date.now()
   private activityCheckInterval: NodeJS.Timeout | null = null
+  private transactionsChannel: any = null
 
   subscribe(callback: () => void) {
     this.listeners.add(callback)
@@ -69,6 +71,7 @@ class UserDataStore {
     const result = await this.loadingPromise
     this.startBackgroundRefresh(userId)
     this.startActivityMonitoring()
+    this.setupRealtimeSubscriptions(userId)
     return result
   }
 
@@ -272,6 +275,43 @@ class UserDataStore {
     return await this.loadData(userId)
   }
 
+  private setupRealtimeSubscriptions(userId: string) {
+    // Clean up any existing channels
+    this.cleanupRealtimeSubscriptions()
+
+    // Subscribe to transactions table changes
+    this.transactionsChannel = supabase
+      .channel(`user-transactions-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          console.log('UserDataStore: Transaction change received via Realtime:', payload.eventType)
+          // Refresh transactions to get updated data
+          await this.refreshTransactions(userId)
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('UserDataStore: Subscribed to transactions real-time updates')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('UserDataStore: Transaction subscription error, will use background refresh')
+        }
+      })
+  }
+
+  private cleanupRealtimeSubscriptions() {
+    if (this.transactionsChannel) {
+      supabase.removeChannel(this.transactionsChannel)
+      this.transactionsChannel = null
+    }
+  }
+
   cleanup() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
@@ -281,6 +321,7 @@ class UserDataStore {
       clearInterval(this.activityCheckInterval)
       this.activityCheckInterval = null
     }
+    this.cleanupRealtimeSubscriptions()
     this.listeners.clear()
     this.currentUserId = null
     this.loadingPromise = null

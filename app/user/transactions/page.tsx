@@ -43,7 +43,7 @@ interface CombinedTransaction {
 
 export default function UserTransactionsPage() {
   const { userProfile } = useAuth()
-  const { transactions: userTransactions, currencies, loading: userDataLoading } = useUserData()
+  const { transactions: userTransactions, currencies, loading: userDataLoading, refreshTransactions } = useUserData()
   const [searchTerm, setSearchTerm] = useState("")
 
   // Initialize from cache synchronously to prevent reload flicker
@@ -208,7 +208,11 @@ export default function UserTransactionsPage() {
         },
         async (payload) => {
           console.log('User transaction change received via Realtime:', payload.eventType)
-          // Refetch transactions to get updated data immediately
+          // Refresh both local state and userDataStore
+          if (userProfile?.id) {
+            await refreshTransactions(userProfile.id)
+          }
+          // Also update local state
           await fetchCombinedTransactions()
         }
       )
