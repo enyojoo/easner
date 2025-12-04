@@ -344,8 +344,8 @@ export default function UserDashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions - Minimal Modern Banking Style (Mobile & Tablet Only) */}
-        <div className="px-5 sm:px-6 grid grid-cols-2 gap-3 sm:gap-4 lg:hidden">
+        {/* Quick Actions - Minimal Modern Banking Style (All Screen Sizes) */}
+        <div className="px-5 sm:px-6 grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
           {/* Send Button */}
           <Link href="/user/send" className="flex-1 group">
             <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
