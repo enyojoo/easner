@@ -1,5 +1,6 @@
 import { supabase, createServerClient } from "./supabase"
 import { dataCache, CACHE_KEYS } from "./cache"
+import { generateTransactionId } from "./transaction-id"
 
 // User operations
 export const userService = {

@@ -150,7 +150,8 @@ function TransactionStatusPage() {
         if (status === 'SUBSCRIBED') {
           console.log('Subscribed to transaction updates via Realtime')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('Realtime subscription error, falling back to polling')
+          // Realtime subscription failed - this is expected if Realtime is not enabled
+          // Polling fallback will handle updates instead (silent fallback)
         }
       })
 
