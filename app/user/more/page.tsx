@@ -180,7 +180,7 @@ export default function MorePage() {
         </div>
 
         {/* Content */}
-        <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
           {/* Account Section */}
           <Card>
             <CardHeader>
