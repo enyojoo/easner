@@ -5,7 +5,7 @@ import { useState, useEffect, memo } from "react"
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Check, Clock, ExternalLink, XCircle, AlertTriangle, Copy } from "lucide-react"
+import { Check, Clock, XCircle, AlertTriangle, Copy } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import { transactionService, paymentMethodService } from "@/lib/database"
 import { useAuth } from "@/lib/auth-context"
@@ -456,40 +456,6 @@ function TransactionStatusPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
-  const handleViewReceipt = async () => {
-    if (!transaction?.receipt_url) return
-    
-    const receiptUrl = transaction.receipt_url
-    // Check if it's a file path (starts with "receipts/") or a public URL
-    const isPath = receiptUrl.startsWith("receipts/")
-    
-    if (isPath) {
-      // Get signed URL from API
-      try {
-        const response = await fetch(`/api/receipts/documents?path=${encodeURIComponent(receiptUrl)}`, {
-          credentials: "include",
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          if (data.url) {
-            window.open(data.url, "_blank")
-          } else {
-            alert("Failed to access receipt: No URL returned from server.")
-          }
-        } else {
-          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-          alert(`Failed to access receipt: ${errorData.error || response.statusText || "Please try again."}`)
-        }
-      } catch (error: any) {
-        console.error("Error fetching signed URL:", error)
-        alert(`Failed to access receipt: ${error.message || "Please try again."}`)
-      }
-    } else {
-      // Public URL - open directly (backward compatibility)
-      window.open(receiptUrl, "_blank")
-    }
-  }
 
   const getStatusMessage = (status: string) => {
     switch (status) {
@@ -728,25 +694,14 @@ function TransactionStatusPage() {
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Check className="h-5 w-5 text-green-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">Your Payment Receipt</p>
-                            <p className="text-sm text-gray-600">{transaction.receipt_filename}</p>
-                          </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Check className="h-5 w-5 text-green-600" />
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleViewReceipt}
-                          className="flex items-center gap-2 bg-transparent w-full sm:w-auto"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          View
-                        </Button>
+                        <div>
+                          <p className="font-medium text-gray-900">Payment Receipt Uploaded</p>
+                          <p className="text-sm text-gray-600">{transaction.receipt_filename || "Receipt file"}</p>
+                        </div>
                       </div>
                     </div>
                   )}

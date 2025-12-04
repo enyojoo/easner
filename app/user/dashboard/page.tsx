@@ -3,7 +3,7 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, Users, MessageCircle, Download, CreditCard } from "lucide-react"
+import { Send, Users, MessageCircle, UserPlus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
@@ -344,7 +344,7 @@ export default function UserDashboardPage() {
         </div>
 
         {/* Quick Actions - Minimal Modern Banking Style (Mobile & Tablet Only) */}
-        <div className="px-5 sm:px-6 grid grid-cols-3 gap-3 sm:gap-4 lg:hidden">
+        <div className="px-5 sm:px-6 grid grid-cols-2 gap-3 sm:gap-4 lg:hidden">
           {/* Send Button */}
           <Link href="/user/send" className="flex-1 group">
             <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
@@ -355,23 +355,13 @@ export default function UserDashboardPage() {
             </div>
           </Link>
           
-          {/* Receive Button */}
-          <Link href="/user/receive" className="flex-1 group">
+          {/* Recipient Button */}
+          <Link href="/user/recipients" className="flex-1 group">
             <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
               <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
-                <Download className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+                <UserPlus className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
               </div>
-              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Receive</span>
-            </div>
-          </Link>
-          
-          {/* Card Button */}
-          <Link href="/user/card" className="flex-1 group">
-            <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
-              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
-                <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
-              </div>
-              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Card</span>
+              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Recipient</span>
             </div>
           </Link>
         </div>

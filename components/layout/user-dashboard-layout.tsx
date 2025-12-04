@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, Download, CreditCard } from "lucide-react"
+import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -16,16 +16,15 @@ interface UserDashboardLayoutProps {
 const baseNavigation = [
   { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
   { name: "Send Money", href: "/user/send", icon: Send },
-  { name: "Receive Money", href: "/user/receive", icon: Download },
+  { name: "Recipients", href: "/user/recipients", icon: UserPlus },
   { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Cards", href: "/user/card", icon: CreditCard },
   { name: "More", href: "/user/more", icon: MoreHorizontal },
 ]
 
 const bottomNavItems = [
   { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
   { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Card", href: "/user/card", icon: CreditCard },
+  { name: "Recipients", href: "/user/recipients", icon: UserPlus },
 ]
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
