@@ -496,6 +496,19 @@ export default function UserRecipientsPage() {
           </Dialog>
         </div>
 
+        {/* Search Bar */}
+        <div className="p-5 sm:p-6 pb-3 sm:pb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search recipients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12 border-gray-300"
+            />
+          </div>
+        </div>
+
         {/* Recipients List */}
         <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
           {filteredRecipients.length === 0 ? (
