@@ -233,7 +233,8 @@ export default function UserDashboardPage() {
     }
   }, [transactions, exchangeRates, userProfile, cardTransactions])
 
-  const userName = userProfile?.first_name || "User"
+  // Extract first name only (in case first_name contains full name)
+  const userName = userProfile?.first_name?.split(' ')[0] || "User"
   const baseCurrency = userProfile?.base_currency || "NGN"
   const completedTransactions = transactions?.filter((t) => t && t.status === "completed").length || 0
   const totalSentValue = totalSent > 0 ? totalSent : 0
