@@ -820,7 +820,8 @@ class AdminDataStore {
         if (status === 'SUBSCRIBED') {
           console.log('AdminDataStore: Subscribed to transactions real-time updates')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('AdminDataStore: Transactions subscription error')
+          // Realtime subscription failed - this is expected if Realtime is not enabled
+          // Auto-refresh will handle updates instead (silent fallback)
         }
       })
 
@@ -844,7 +845,8 @@ class AdminDataStore {
         if (status === 'SUBSCRIBED') {
           console.log('AdminDataStore: Subscribed to crypto_receive_transactions real-time updates')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('AdminDataStore: Crypto receive transactions subscription error')
+          // Realtime subscription failed - this is expected if Realtime is not enabled
+          // Auto-refresh will handle updates instead (silent fallback)
         }
       })
 
@@ -965,13 +967,15 @@ class AdminDataStore {
       const recentActivity = this.processRecentActivity(transactionsResult.slice(0, 10))
       const currencyPairs = this.processCurrencyPairs(transactionsResult.filter((t) => t.status === "completed"))
 
-      // Always update when called from realtime subscription (data may have changed)
-      // Update lastUpdated timestamp to trigger UI updates
-      this.data.transactions = transactionsResult
-      this.data.stats = stats
-      this.data.recentActivity = recentActivity
-      this.data.currencyPairs = currencyPairs
-      this.data.lastUpdated = Date.now()
+      // Create a new object reference to ensure React detects the change
+      this.data = {
+        ...this.data,
+        transactions: transactionsResult,
+        stats: stats,
+        recentActivity: recentActivity,
+        currencyPairs: currencyPairs,
+        lastUpdated: Date.now(),
+      }
       this.saveToCache()
       this.notify()
     } catch (error) {
@@ -993,9 +997,13 @@ class AdminDataStore {
       const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
 
       if (usersChanged || statsChanged) {
-        this.data.users = usersResult
-        this.data.stats = stats
-        this.data.lastUpdated = Date.now()
+        // Create a new object reference to ensure React detects the change
+        this.data = {
+          ...this.data,
+          users: usersResult,
+          stats: stats,
+          lastUpdated: Date.now(),
+        }
         this.saveToCache()
         this.notify()
       }
@@ -1014,8 +1022,12 @@ class AdminDataStore {
       const currenciesChanged = JSON.stringify(currenciesResult) !== JSON.stringify(this.data.currencies)
       
       if (currenciesChanged) {
-        this.data.currencies = currenciesResult
-        this.data.lastUpdated = Date.now()
+        // Create a new object reference to ensure React detects the change
+        this.data = {
+          ...this.data,
+          currencies: currenciesResult,
+          lastUpdated: Date.now(),
+        }
         this.saveToCache()
         this.notify()
       }
@@ -1037,9 +1049,13 @@ class AdminDataStore {
       const statsChanged = JSON.stringify(stats) !== JSON.stringify(this.data.stats)
       
       if (exchangeRatesChanged || statsChanged) {
-        this.data.exchangeRates = exchangeRatesResult
-        this.data.stats = stats
-        this.data.lastUpdated = Date.now()
+        // Create a new object reference to ensure React detects the change
+        this.data = {
+          ...this.data,
+          exchangeRates: exchangeRatesResult,
+          stats: stats,
+          lastUpdated: Date.now(),
+        }
         this.saveToCache()
         this.notify()
       }
@@ -1060,9 +1076,13 @@ class AdminDataStore {
       const statsChanged = JSON.stringify(earlyAccessStats) !== JSON.stringify(this.data.earlyAccessStats)
 
       if (earlyAccessChanged || statsChanged) {
-        this.data.earlyAccessRequests = earlyAccessResult
-        this.data.earlyAccessStats = earlyAccessStats
-        this.data.lastUpdated = Date.now()
+        // Create a new object reference to ensure React detects the change
+        this.data = {
+          ...this.data,
+          earlyAccessRequests: earlyAccessResult,
+          earlyAccessStats: earlyAccessStats,
+          lastUpdated: Date.now(),
+        }
         this.saveToCache()
         this.notify()
       }
