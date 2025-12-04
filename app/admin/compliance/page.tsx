@@ -820,8 +820,19 @@ export default function AdminCompliancePage() {
                                     if (isPath) {
                                       // Get signed URL from API
                                       try {
+                                        // Get access token from Supabase session
+                                        const { data: { session } } = await supabase.auth.getSession()
+                                        const headers: HeadersInit = {
+                                          'Content-Type': 'application/json',
+                                        }
+                                        
+                                        if (session?.access_token) {
+                                          headers['Authorization'] = `Bearer ${session.access_token}`
+                                        }
+                                        
                                         const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
                                           credentials: "include",
+                                          headers,
                                         })
                                         
                                         if (response.ok) {
@@ -1109,8 +1120,19 @@ export default function AdminCompliancePage() {
                                     if (isPath) {
                                       // Get signed URL from API
                                       try {
+                                        // Get access token from Supabase session
+                                        const { data: { session } } = await supabase.auth.getSession()
+                                        const headers: HeadersInit = {
+                                          'Content-Type': 'application/json',
+                                        }
+                                        
+                                        if (session?.access_token) {
+                                          headers['Authorization'] = `Bearer ${session.access_token}`
+                                        }
+                                        
                                         const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
                                           credentials: "include",
+                                          headers,
                                         })
                                         
                                         if (response.ok) {
