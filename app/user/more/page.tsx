@@ -172,16 +172,15 @@ export default function MorePage() {
 
   return (
     <UserDashboardLayout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">More</h1>
-            <p className="text-base text-gray-500">Manage your account information</p>
-          </div>
+      <div className="space-y-0">
+        {/* Header - Mobile Style */}
+        <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">More</h1>
+          <p className="text-base text-gray-600">Manage your account information</p>
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
+        {/* Content */}
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
           {/* Account Section */}
           <Card>
             <CardHeader>

@@ -464,23 +464,40 @@ export default function UserRecipientsPage() {
 
   return (
     <UserDashboardLayout>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-1">
-              <Link href="/user/more">
-                <Button variant="ghost" size="sm" className="p-2">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Recipients</h1>
-            </div>
-            <p className="text-base text-gray-500 ml-12">Manage your payment recipients</p>
-          </div>
+      <div className="space-y-0">
+        {/* Header - Mobile Style */}
+        <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Recipients</h1>
+          <p className="text-base text-gray-600">Manage your payment recipients</p>
         </div>
 
-        <div className="max-w-4xl mx-auto px-6 py-6 lg:px-8 space-y-6">
+        {/* Add Recipient Button */}
+        <div className="p-5 sm:p-6 pb-3 sm:pb-4">
+          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+            <DialogTrigger asChild>
+              <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Recipient
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-[95vw] max-w-md mx-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Recipient</DialogTitle>
+              </DialogHeader>
+              <RecipientForm
+                formData={formData}
+                setFormData={setFormData}
+                error={error}
+                isSubmitting={isSubmitting}
+                currencies={currencies}
+                onSubmit={handleAddRecipient}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Recipients List */}
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4 sm:space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
               <DialogTrigger asChild>
@@ -513,17 +530,27 @@ export default function UserRecipientsPage() {
                 placeholder="Search recipients..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-12 border-gray-300"
               />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {filteredRecipients.map((recipient) => (
-                <div
-                  key={recipient.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-easner-primary-200 transition-colors gap-4 sm:gap-0"
-                >
+          </div>
+
+          {/* Recipients List */}
+          <div className="space-y-4 sm:space-y-5">
+          {filteredRecipients.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-base text-gray-600 mb-2">
+                {searchTerm ? "No recipients match your search" : "No recipients found"}
+              </p>
+              <p className="text-sm text-gray-500">
+                {searchTerm ? "Try adjusting your search terms" : "Add your first recipient to get started"}
+              </p>
+            </div>
+          ) : (
+            filteredRecipients.map((recipient) => (
+              <Card key={recipient.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                   <div className="flex items-center space-x-3 flex-1">
                     <div className="w-12 h-12 bg-easner-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
                       <span className="text-easner-primary font-semibold text-sm">
@@ -615,21 +642,11 @@ export default function UserRecipientsPage() {
                     {deleteErrors[recipient.id] && <p className="text-xs text-red-600">{deleteErrors[recipient.id]}</p>}
                   </div>
                 </div>
-              ))}
-            </div>
-            {filteredRecipients.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm px-4">
-                  {searchTerm
-                    ? "No recipients found matching your criteria."
-                    : "No recipients added yet."}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
-      </div>
     </UserDashboardLayout>
   )
 }
