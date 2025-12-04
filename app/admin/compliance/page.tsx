@@ -800,10 +800,9 @@ export default function AdminCompliancePage() {
 
                 {/* Address Verification - Show only if Bridge KYC is approved */}
                 {selectedUser.bridge_kyc_status === "approved" && (
-
-                {/* Bridge Integration Details */}
-                {selectedUser && (
-                  <div className="border-t pt-6">
+                  <>
+                    {/* Bridge Integration Details */}
+                    <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold">Bridge Integration Details</h3>
                       <Button
@@ -941,11 +940,9 @@ export default function AdminCompliancePage() {
                       )}
                     </div>
                   </div>
-                )}
 
-                {/* Address Verification - Show only if Bridge KYC is approved */}
-                {selectedUser.bridge_kyc_status === "approved" && (
-                <div className="border-t pt-6">
+                  {/* Address Verification */}
+                  <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Address Verification</h3>
                   {selectedUser.address ? (
                     <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -993,6 +990,7 @@ export default function AdminCompliancePage() {
                     </div>
                   )}
                 </div>
+                  </>
                 )}
               </div>
             )}

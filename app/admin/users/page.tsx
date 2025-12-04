@@ -986,8 +986,6 @@ export default function AdminUsersPage() {
                                     )}
                                   </>
                                 )}
-                                  </>
-                                )}
                               </div>
                             )}
                           </DialogContent>
