@@ -105,12 +105,16 @@ function verifyWebhookSignature(
     
     // Verify the RSA signature
     // Bridge signs: SHA256(timestamp.payload) with RSA private key
-    // createVerify will hash the data and verify against the signature
-    const verify = crypto.createVerify("RSA-SHA256")
-    verify.update(signedPayload, "utf8")
+    // Per Bridge TypeScript example: Create SHA256 digest, then verify
+    // Note: createVerify will hash the input, so we pass the digest directly
+    const digest = crypto.createHash("sha256").update(signedPayload, "utf8").digest()
     
     let isValid = false
     try {
+      // Try PKCS#8 format first (standard format)
+      const verify = crypto.createVerify("RSA-SHA256")
+      // Update with the digest (Bridge signs the hash, not the raw data)
+      verify.update(digest)
       isValid = verify.verify(formattedKey, signatureBuffer)
       if (isValid) {
         console.log("[WEBHOOK-VERIFY] ✅ Signature verification successful")
@@ -122,14 +126,25 @@ function verifyWebhookSignature(
         try {
           formattedKey = `-----BEGIN RSA PUBLIC KEY-----\n${pemKey.match(/.{1,64}/g)?.join("\n") || pemKey}\n-----END RSA PUBLIC KEY-----`
           const verify2 = crypto.createVerify("RSA-SHA256")
-          verify2.update(signedPayload, "utf8")
+          verify2.update(digest)
           isValid = verify2.verify(formattedKey, signatureBuffer)
           if (isValid) {
             console.log("[WEBHOOK-VERIFY] ✅ Signature verification successful (PKCS#1)")
           }
         } catch (pkcs1Error: any) {
           console.error("[WEBHOOK-VERIFY] Error verifying with PKCS#1 format:", pkcs1Error.message)
-          return false
+          // Try alternative: pass raw signedPayload (standard approach)
+          try {
+            const verify3 = crypto.createVerify("RSA-SHA256")
+            verify3.update(signedPayload, "utf8")
+            isValid = verify3.verify(formattedKey, signatureBuffer)
+            if (isValid) {
+              console.log("[WEBHOOK-VERIFY] ✅ Signature verification successful (standard approach)")
+            }
+          } catch (altError: any) {
+            console.error("[WEBHOOK-VERIFY] Alternative verification also failed:", altError.message)
+            return false
+          }
         }
       } else {
         console.error("[WEBHOOK-VERIFY] Error verifying webhook signature:", verifyError.message)
