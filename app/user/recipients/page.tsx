@@ -621,6 +621,7 @@ export default function UserRecipientsPage() {
             ))
           )}
         </div>
+      </div>
     </UserDashboardLayout>
   )
 }
