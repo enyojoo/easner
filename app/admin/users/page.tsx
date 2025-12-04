@@ -47,7 +47,7 @@ interface UserData {
   last_name: string
   phone?: string
   status: string
-  verification_status: string
+  // verification_status removed - use bridge_kyc_status for KYC status
   email_confirmed_at?: string
   base_currency: string
   created_at: string
@@ -216,18 +216,17 @@ export default function AdminUsersPage() {
     const totalVolume = calculateUserVolume(userTransactions, baseCurrency, userExchangeRates)
     const completedTransactions = userTransactions.filter((t: any) => t.status === "completed")
 
-    // Get KYC submissions for this user
-    const kycSubmissions = userKycMap.get(user.id) || []
-    const identitySubmission = kycSubmissions.find((s: KYCSubmission) => s.type === "identity")
-    const addressSubmission = kycSubmissions.find((s: KYCSubmission) => s.type === "address")
-    const isVerified = identitySubmission?.status === "approved" && addressSubmission?.status === "approved"
-    const verificationStatus = isVerified ? "verified" : "pending"
+    // Use bridge_kyc_status for KYC verification status
+    // Map bridge_kyc_status to display values: approved -> verified, others -> pending
+    const bridgeKycStatus = user.bridge_kyc_status || "not_started"
+    const verificationStatus = bridgeKycStatus === "approved" ? "verified" : "pending"
 
     return {
       ...user,
       totalTransactions: completedTransactions.length,
       totalVolume,
       verificationStatus,
+      bridgeKycStatus, // Include for filtering
     }
   })
 
@@ -237,8 +236,20 @@ export default function AdminUsersPage() {
       fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || user.status === statusFilter
-    const verificationStatus = user.verificationStatus || "pending"
-    const matchesVerification = verificationFilter === "all" || verificationStatus === verificationFilter
+    // Filter by bridge_kyc_status: map filter values to bridge status
+    const bridgeKycStatus = user.bridgeKycStatus || user.bridge_kyc_status || "not_started"
+    let matchesVerification = true
+    if (verificationFilter !== "all") {
+      if (verificationFilter === "verified") {
+        matchesVerification = bridgeKycStatus === "approved"
+      } else if (verificationFilter === "pending") {
+        matchesVerification = bridgeKycStatus !== "approved" && bridgeKycStatus !== "rejected"
+      } else if (verificationFilter === "rejected") {
+        matchesVerification = bridgeKycStatus === "rejected"
+      } else if (verificationFilter === "in_review") {
+        matchesVerification = bridgeKycStatus === "under_review" || bridgeKycStatus === "in_review"
+      }
+    }
 
     return matchesSearch && matchesStatus && matchesVerification
   })
@@ -261,12 +272,16 @@ export default function AdminUsersPage() {
   }
 
 
-  const getVerificationBadge = (user: UserData & { verificationStatus?: string }) => {
-    const status = user.verificationStatus || "pending"
+  const getVerificationBadge = (user: UserData & { bridge_kyc_status?: string }) => {
+    // Use bridge_kyc_status for KYC verification
+    const bridgeKycStatus = user.bridge_kyc_status || "not_started"
+    const status = bridgeKycStatus === "approved" ? "verified" : bridgeKycStatus === "rejected" ? "rejected" : bridgeKycStatus === "under_review" ? "in_review" : "pending"
     
     const statusConfig = {
       verified: { color: "bg-green-100 text-green-700", text: "Verified" },
       pending: { color: "bg-amber-100 text-amber-700", text: "Pending" },
+      rejected: { color: "bg-red-100 text-red-700", text: "Rejected" },
+      in_review: { color: "bg-yellow-100 text-yellow-700", text: "In Review" },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
@@ -309,7 +324,17 @@ export default function AdminUsersPage() {
     try {
       await adminDataStore.updateUserVerification(userId, newStatus)
       if (selectedUser?.id === userId) {
-        setSelectedUser((prev) => (prev ? { ...prev, verification_status: newStatus } : null))
+        setSelectedUser((prev) => {
+          // Map old verification_status to bridge_kyc_status
+          const statusMap: Record<string, string> = {
+            "verified": "approved",
+            "pending": "not_started",
+            "rejected": "rejected",
+            "unverified": "not_started",
+          }
+          const bridgeKycStatus = statusMap[newStatus] || newStatus
+          return prev ? { ...prev, bridge_kyc_status: bridgeKycStatus } : null
+        })
       }
     } catch (err) {
       console.error("Error updating user verification:", err)

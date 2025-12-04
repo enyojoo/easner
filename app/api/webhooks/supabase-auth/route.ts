@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       const { error } = await serverClient
         .from("users")
         .update({
-          verification_status: "verified",
+          // verification_status removed - email verification is handled by email_confirmed_at in auth.users
           updated_at: new Date().toISOString()
         })
         .eq("id", record.id)

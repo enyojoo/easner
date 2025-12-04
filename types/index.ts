@@ -104,7 +104,7 @@ export interface User {
   phone?: string
   base_currency: string
   status: "active" | "inactive"
-  verification_status: "pending" | "verified" | "rejected"
+  // verification_status removed - use bridge_kyc_status for KYC status
   created_at: string
   updated_at: string
 }

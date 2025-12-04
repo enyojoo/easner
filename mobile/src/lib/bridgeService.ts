@@ -44,6 +44,15 @@ interface BridgeTransfer {
   status: string
 }
 
+interface BridgeKycLink {
+  kyc_link: string
+  tos_link?: string
+  kyc_status?: string
+  tos_status?: string
+  customer_id?: string
+  kyc_link_id?: string
+}
+
 export const bridgeService = {
   /**
    * Get TOS link for user
@@ -86,6 +95,30 @@ export const bridgeService = {
     if (!response.ok) {
       const error = await response.json()
       throw new Error(error.error || 'Failed to check TOS status')
+    }
+
+    return await response.json()
+  },
+
+  /**
+   * Get KYC link for user
+   */
+  async getKycLink(full_name: string, email: string, type: 'individual' | 'business' = 'individual'): Promise<BridgeKycLink> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    const response = await fetch(`${API_BASE_URL}/api/bridge/kyc-links`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ full_name, email, type }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to create KYC link')
     }
 
     return await response.json()

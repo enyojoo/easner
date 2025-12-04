@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         lastName: userProfile.last_name,
         baseCurrency: userProfile.base_currency,
         status: userProfile.status,
-        verificationStatus: userProfile.verification_status,
+        // verification_status removed - use bridge_kyc_status for KYC status
         isAdmin,
       },
     })

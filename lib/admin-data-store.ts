@@ -364,10 +364,10 @@ class AdminDataStore {
           ...user,
           totalTransactions,
           totalVolume,
-          // Use email_confirmed_at from auth system for verification status
+          // Use email_confirmed_at from auth system for email verification status
           email_confirmed_at: authUser?.email_confirmed_at,
-          // Keep verification_status for backward compatibility but use email_confirmed_at as source of truth
-          verification_status: authUser?.email_confirmed_at ? "verified" : (user.verification_status || "unverified"),
+          // Email verification status (derived from email_confirmed_at)
+          email_verified: !!authUser?.email_confirmed_at,
         }
       })
 
@@ -488,7 +488,10 @@ class AdminDataStore {
   private async calculateStats(users: any[], transactions: any[], baseCurrency: string, exchangeRates: any[] = []) {
     const totalUsers = users.length
     const activeUsers = users.filter((u) => u.status === "active").length
-    const verifiedUsers = users.filter((u) => u.verification_status === "verified").length
+    // Count users with approved Bridge KYC or email verified
+    const verifiedUsers = users.filter((u) => 
+      u.bridge_kyc_status === "approved" || u.email_confirmed_at
+    ).length
 
     const totalTransactions = transactions.length
     const pendingTransactions = transactions.filter((t) => t.status === "pending" || t.status === "processing").length
@@ -1161,12 +1164,21 @@ class AdminDataStore {
 
   async updateUserVerification(userId: string, newStatus: string) {
     try {
-      console.log(`AdminDataStore: Updating user ${userId} verification to ${newStatus}`)
+      console.log(`AdminDataStore: Updating user ${userId} Bridge KYC status to ${newStatus}`)
+      
+      // Map old verification_status values to bridge_kyc_status
+      const statusMap: Record<string, string> = {
+        "verified": "approved",
+        "pending": "not_started",
+        "rejected": "rejected",
+        "unverified": "not_started",
+      }
+      const bridgeKycStatus = statusMap[newStatus] || newStatus
       
       const { error } = await supabase
         .from("users")
         .update({
-          verification_status: newStatus,
+          bridge_kyc_status: bridgeKycStatus,
           updated_at: new Date().toISOString(),
         })
         .eq("id", userId)
@@ -1179,7 +1191,7 @@ class AdminDataStore {
       // Update local data
       if (this.data) {
         this.data.users = this.data.users.map((user) => 
-          user.id === userId ? { ...user, verification_status: newStatus, updated_at: new Date().toISOString() } : user
+          user.id === userId ? { ...user, bridge_kyc_status: bridgeKycStatus, updated_at: new Date().toISOString() } : user
         )
         this.data.stats = await this.calculateStats(this.data.users, this.data.transactions, this.data.baseCurrency)
         this.notify()

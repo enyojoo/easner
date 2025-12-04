@@ -175,7 +175,7 @@ export default function MorePage() {
       <div className="space-y-0">
         {/* Header - Mobile Style */}
         <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">More</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">More</h1>
           <p className="text-base text-gray-600">Manage your account information</p>
         </div>
 

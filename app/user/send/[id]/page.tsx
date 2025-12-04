@@ -194,7 +194,7 @@ function TransactionStatusPage() {
     // Start polling after a delay to give Realtime a chance
     const pollTimeout = setTimeout(() => {
       pollInterval = setInterval(async () => {
-        try {
+      try {
           const updatedTransaction = await transactionService.getById(transactionId.toUpperCase())
           if (updatedTransaction) {
             setTransaction((prev) => {
@@ -207,19 +207,19 @@ function TransactionStatusPage() {
               }
               return prev
             })
-          }
-        } catch (error) {
-          console.error("Error polling transaction status:", error)
         }
-      }, 5000) // Poll every 5 seconds as fallback
+      } catch (error) {
+        console.error("Error polling transaction status:", error)
+      }
+    }, 5000) // Poll every 5 seconds as fallback
     }, 10000) // Wait 10 seconds before starting polling (give Realtime time to connect)
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel)
+      supabase.removeChannel(channel)
       }
       if (pollInterval) {
-        clearInterval(pollInterval)
+      clearInterval(pollInterval)
       }
       clearTimeout(pollTimeout)
     }
@@ -694,11 +694,11 @@ function TransactionStatusPage() {
                   {/* Receipt Section */}
                   {transaction.receipt_url && (
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Check className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Check className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
                           <p className="font-medium text-gray-900">Payment Receipt Uploaded</p>
                           <p className="text-sm text-gray-600">{transaction.receipt_filename || "Receipt file"}</p>
                         </div>

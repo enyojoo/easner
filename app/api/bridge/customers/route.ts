@@ -3,7 +3,7 @@ import { bridgeService } from "@/lib/bridge-service"
 import { initializeBridgeAccount } from "@/lib/bridge-onboarding-service"
 import { buildBridgeCustomerPayloadFromKyc } from "@/lib/bridge-kyc-builder"
 import { requireUser, createErrorResponse, withErrorHandling } from "@/lib/auth-utils"
-import { createServerClient } from "@/lib/supabase"
+import { createServerClient, supabase } from "@/lib/supabase"
 import { validateKYCForBridge } from "@/lib/bridge-kyc-validator"
 import { kycService } from "@/lib/kyc-service"
 

@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
+import { useFocusEffect } from '@react-navigation/native'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps, KYCSubmission } from '../../types'
@@ -24,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 
 function AccountVerificationContent({ navigation }: NavigationProps) {
-  const { userProfile } = useAuth()
+  const { userProfile, refreshUserProfile } = useAuth()
   const insets = useSafeAreaInsets()
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,6 +45,19 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const tosProcessedRef = useRef(false)
   // Ref to prevent duplicate loadTOSStatus calls
   const loadingTosStatusRef = useRef(false)
+
+  // KYC Link state
+  const [kycLink, setKycLink] = useState<string | null>(null)
+  const [kycTosLink, setKycTosLink] = useState<string | null>(null)
+  const [kycLinkId, setKycLinkId] = useState<string | null>(null)
+  const [kycStatus, setKycStatus] = useState<string | null>(null)
+  const [tosStatus, setTosStatus] = useState<string | null>(null)
+  const [showKycModal, setShowKycModal] = useState(false)
+  const [loadingKyc, setLoadingKyc] = useState(false)
+  const [currentKycFlow, setCurrentKycFlow] = useState<'kyc' | 'tos'>('kyc')
+  const [kycCompleted, setKycCompleted] = useState(false)
+  const [tosCompleted, setTosCompleted] = useState(false)
+  const kycProcessedRef = useRef(false)
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -66,6 +80,70 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       ]).start()
     }
   }, [loading, headerAnim, contentAnim])
+
+  // Refresh user profile when screen comes into focus
+  // This ensures we get the latest status from database (updated by webhooks)
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('[ACCOUNT-VERIFICATION] Screen focused, refreshing user profile')
+      if (refreshUserProfile && userProfile?.id) {
+        refreshUserProfile()
+      }
+    }, [userProfile?.id]) // Only depend on userProfile.id, not refreshUserProfile function
+  )
+
+  // Fetch Bridge customer status on mount and when userProfile changes
+  // This ensures we always have the latest status from Bridge
+  useEffect(() => {
+    const fetchBridgeStatus = async () => {
+      if (!userProfile?.id) return
+      
+      // If we have a customer_id, fetch latest status from Bridge
+      // Note: We rely on webhooks to update bridge_kyc_status in the database
+      // This effect only syncs if there's a mismatch (should be rare)
+      if (userProfile?.bridge_customer_id) {
+        try {
+          console.log('[BRIDGE-STATUS] Fetching latest Bridge customer status for:', userProfile.bridge_customer_id)
+          const customerStatus = await bridgeService.getCustomerStatus()
+          
+          if (customerStatus && customerStatus.kycStatus) {
+            // Only update if status is different (to avoid unnecessary updates)
+            if (customerStatus.kycStatus !== userProfile?.bridge_kyc_status) {
+              // Update user profile with latest status from Bridge
+              const { error: updateError } = await supabase
+                .from('users')
+                .update({
+                  bridge_kyc_status: customerStatus.kycStatus,
+                  bridge_kyc_rejection_reasons: customerStatus.rejectionReasons,
+                  bridge_endorsements: customerStatus.endorsements,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', userProfile.id)
+              
+              if (updateError) {
+                console.error('[BRIDGE-STATUS] Error updating status:', updateError)
+              } else {
+                console.log('[BRIDGE-STATUS] Updated Bridge KYC status from Bridge API:', customerStatus.kycStatus)
+                
+                // Refresh user profile to get updated status
+                if (refreshUserProfile) {
+                  await refreshUserProfile()
+                }
+              }
+            } else {
+              console.log('[BRIDGE-STATUS] Status unchanged, no update needed')
+            }
+          }
+        } catch (error: any) {
+          console.warn('[BRIDGE-STATUS] Could not fetch Bridge customer status:', error.message)
+          // Don't block the UI, just log the warning
+          // Status from database will be used instead
+        }
+      }
+    }
+    
+    fetchBridgeStatus()
+  }, [userProfile?.bridge_customer_id, userProfile?.id]) // Removed refreshUserProfile from deps to prevent loops
 
   useEffect(() => {
     if (!userProfile?.id) return
@@ -118,20 +196,34 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const identitySubmission = submissions.find(s => s.type === "identity")
   const addressSubmission = submissions.find(s => s.type === "address")
 
-  const bothCompleted = 
+  // Check if Bridge KYC is approved
+  const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
+  const bridgeKycInReview = userProfile?.bridge_kyc_status === 'under_review'
+  const bridgeKycRejected = userProfile?.bridge_kyc_status === 'rejected'
+  
+  // If Bridge KYC is approved, use Bridge data (submissions synced from Bridge)
+  // Otherwise, use traditional submissions
+  const bothCompleted = bridgeKycApproved || (
     identitySubmission?.status === "approved" && 
     addressSubmission?.status === "approved"
+  )
   
-  // TOS should appear when both are submitted (status: pending, in_review, or approved)
-  const bothSubmitted = 
+  // TOS should appear when Bridge KYC is approved OR both traditional submissions are submitted
+  const bothSubmitted = bridgeKycApproved || (
     identitySubmission && 
     addressSubmission &&
     identitySubmission.status && 
     addressSubmission.status &&
     identitySubmission.status !== 'rejected' &&
     addressSubmission.status !== 'rejected'
+  )
+  
+  // Check if submissions are from Bridge (have metadata.source === 'bridge_kyc_widget')
+  const identityFromBridge = identitySubmission?.metadata?.source === 'bridge_kyc_widget'
+  const addressFromBridge = addressSubmission?.metadata?.source === 'bridge_kyc_widget'
 
-  // Load TOS status when both are submitted (only once, like identity/address verification)
+  // Load TOS status only if bridge_signed_agreement_id is empty
+  // Database is source of truth - if bridge_signed_agreement_id exists, TOS is signed
   useEffect(() => {
     if (!bothSubmitted || !userProfile?.email || !userProfile?.id) return
 
@@ -140,9 +232,23 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       return
     }
 
-    // Load TOS status (will check cache first, then fetch if needed)
+    // Check if TOS is already signed in database (source of truth)
+    const bridgeSignedAgreementId = userProfile?.bridge_signed_agreement_id || userProfile?.profile?.bridge_signed_agreement_id
+    
+    if (bridgeSignedAgreementId) {
+      // TOS is already signed - set state and don't fetch
+      console.log('[TOS-LOAD] TOS already signed (from userProfile), skipping fetch')
+      setTosSigned(true)
+      setTosSignedAgreementId(bridgeSignedAgreementId)
+      // Update cache to match
+      const linkId = userProfile?.bridge_customer_id ? `customer-${userProfile.bridge_customer_id}` : null
+      updateTosStatusInCache(true, bridgeSignedAgreementId, linkId)
+      return
+    }
+
+    // Only load TOS status if bridge_signed_agreement_id is empty
     loadTOSStatus()
-  }, [bothSubmitted, userProfile?.email, userProfile?.id])
+  }, [bothSubmitted, userProfile?.email, userProfile?.id, userProfile?.bridge_signed_agreement_id])
 
   const updateTosStatusInCache = async (signed: boolean, agreementId: string | null = null, linkId: string | null = null) => {
     if (!userProfile?.id) return
@@ -235,15 +341,15 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       
       if (dbError) {
         if (!silent) {
-        console.error('[TOS-LOAD] Error fetching from database:', dbError)
+          console.error('[TOS-LOAD] Error fetching from database:', dbError)
         }
         return
       }
       
-      // If we have signed_agreement_id in database, TOS is signed
+      // If we have signed_agreement_id in database, TOS is signed - stop here
       if (userData?.bridge_signed_agreement_id) {
         if (!silent) {
-        console.log('[TOS-LOAD] ✅ TOS signed (from database) - updating state')
+          console.log('[TOS-LOAD] ✅ TOS signed (from database) - updating state')
         }
         setTosSigned(true)
         setTosSignedAgreementId(userData.bridge_signed_agreement_id)
@@ -257,24 +363,14 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         // Update cache with database value (ensures cache matches database)
         await updateTosStatusInCache(true, userData.bridge_signed_agreement_id, linkId)
         
-        // Get TOS link for display (non-blocking, in background)
-        bridgeService.getTOSLink(userProfile.email!, 'individual')
-          .then(response => {
-            if (response.tosLink) {
-              setTosLink(response.tosLink)
-            }
-          })
-          .catch(() => {
-            // Ignore errors - we already have the status from database
-          })
-        
+        // Don't fetch TOS link from Bridge API - not needed if already signed
         return
       }
       
       // If database says TOS is NOT signed, update state to false
       if (userData && !userData.bridge_signed_agreement_id) {
         if (!silent) {
-        console.log('[TOS-LOAD] ❌ TOS not signed (from database) - updating state')
+          console.log('[TOS-LOAD] ❌ TOS not signed (from database) - updating state')
         }
         setTosSigned(false)
         setTosSignedAgreementId(null)
@@ -282,97 +378,64 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         await updateTosStatusInCache(false, null, null)
       }
       
-      // If no signed_agreement_id in database, check Bridge API (but only if we have a customer)
-      if (userData?.bridge_customer_id) {
-        try {
-          const tosLinkId = `customer-${userData.bridge_customer_id}`
-          const status = await bridgeService.checkTOSStatus(tosLinkId)
-          
-          if (status.signed) {
-            setTosSigned(true)
-            setTosSignedAgreementId(status.signedAgreementId || null)
-            setTosLinkId(tosLinkId)
-            
-            // Update cache
-            await updateTosStatusInCache(true, status.signedAgreementId || null, tosLinkId)
-            
-            // Store in database for persistence
-            if (status.signedAgreementId) {
-              await storeSignedAgreementId(status.signedAgreementId)
-            }
-            
-            // Get TOS link for display
-            const response = await bridgeService.getTOSLink(userProfile.email!, 'individual')
-            if (response.tosLink) {
-              setTosLink(response.tosLink)
-            }
-            
-            return
-          } else {
-            setTosSigned(false)
-            // Update cache with false status
-            await updateTosStatusInCache(false, null, tosLinkId)
-          }
-        } catch (customerError: any) {
-          if (!silent) {
-          console.warn('[TOS-LOAD] Could not check customer TOS status:', customerError.message)
-          }
-          setTosSigned(false)
-        }
-      }
-      
-      // Fallback: Get TOS link (for cases where customer doesn't exist yet)
-      // Only try this if TOS is not already signed (to avoid unnecessary API calls)
-      if (!userData?.bridge_signed_agreement_id) {
-        try {
-          const response = await bridgeService.getTOSLink(userProfile.email!, 'individual')
-      const link = response.tosLink
-      const linkId = response.tosLinkId
-      
-      if (link && link.trim() !== '') {
-        setTosLink(link)
-        setTosLinkId(linkId)
+      // Only fetch from Bridge API if bridge_signed_agreement_id is empty
+      // This should be rare - only if Bridge requires TOS again
+      // First try to get TOS link (for cases where customer doesn't exist yet or needs new TOS)
+      try {
+        const response = await bridgeService.getTOSLink(userProfile.email!, 'individual')
+        const link = response.tosLink
+        const linkId = response.tosLinkId
         
-        // Check if already signed via TOS link
-        if (linkId) {
-          const status = await bridgeService.checkTOSStatus(linkId)
-          if (status.signed) {
-            setTosSigned(true)
-            setTosSignedAgreementId(status.signedAgreementId || null)
+        if (link && link.trim() !== '') {
+          setTosLink(link)
+          setTosLinkId(linkId)
+          
+          // Only check Bridge API status if we have a customer_id (to avoid unnecessary calls)
+          if (userData?.bridge_customer_id && linkId) {
+            try {
+              const status = await bridgeService.checkTOSStatus(linkId)
+              if (status.signed) {
+                setTosSigned(true)
+                setTosSignedAgreementId(status.signedAgreementId || null)
                 
                 // Update cache
                 await updateTosStatusInCache(true, status.signedAgreementId || null, linkId)
-            
-            // Store in database for persistence
-            if (status.signedAgreementId) {
-              await storeSignedAgreementId(status.signedAgreementId)
-            }
-          } else {
-            setTosSigned(false)
-                // Update cache with false status
+                
+                // Store in database for persistence
+                if (status.signedAgreementId) {
+                  await storeSignedAgreementId(status.signedAgreementId)
+                }
+              } else {
+                setTosSigned(false)
                 await updateTosStatusInCache(false, null, linkId)
-          }
-        }
-      } else if ((response as any).alreadyAccepted) {
-        setTosSigned(true)
-        setTosLinkId(linkId)
-            // Update cache
-            await updateTosStatusInCache(true, null, linkId)
-      } else {
-        setTosSigned(false)
-            // Update cache with false status
-            if (linkId) {
-              await updateTosStatusInCache(false, null, linkId)
+              }
+            } catch (statusError: any) {
+              // If status check fails, just set TOS as not signed
+              // The link is available for the user to sign
+              setTosSigned(false)
+              if (!silent) {
+                console.warn('[TOS-LOAD] Could not check TOS status from Bridge:', statusError.message)
+              }
             }
           }
-        } catch (tosLinkError: any) {
-          // If TOS link creation fails (e.g., 401), log but don't fail completely
-          // TOS might already be accepted, so this is not critical
-          if (!silent) {
-          console.warn('[TOS-LOAD] Could not get TOS link (this is OK if TOS is already accepted):', tosLinkError.message)
+        } else if ((response as any).alreadyAccepted) {
+          // Bridge says TOS is already accepted but we don't have it in database
+          // This shouldn't happen, but handle it gracefully
+          setTosSigned(true)
+          setTosLinkId(linkId)
+          await updateTosStatusInCache(true, null, linkId)
+        } else {
+          setTosSigned(false)
+          if (linkId) {
+            await updateTosStatusInCache(false, null, linkId)
           }
-          // Don't set tosSigned to false here - database is source of truth
         }
+      } catch (tosLinkError: any) {
+        // If TOS link creation fails, log but don't fail completely
+        if (!silent) {
+          console.warn('[TOS-LOAD] Could not get TOS link:', tosLinkError.message)
+        }
+        // Don't set tosSigned to false here - database is source of truth
       }
     } catch (error: any) {
       if (!silent) {
@@ -610,6 +673,261 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     }, 3000) // Wait 3 seconds for Bridge to process TOS acceptance
   }
 
+  const handleOpenKYC = async () => {
+    if (!userProfile?.email) {
+      Alert.alert('Missing Information', 'Please complete your profile information before starting KYC verification.')
+      return
+    }
+    
+    setLoadingKyc(true)
+    kycProcessedRef.current = false
+    setCurrentKycFlow('kyc')
+    setKycCompleted(false)
+    setTosCompleted(false)
+    
+    try {
+      // Always fetch and store latest Bridge customer status before opening KYC
+      // This ensures we have the current status even if database is outdated
+      if (userProfile?.bridge_customer_id) {
+        try {
+          console.log('[KYC-OPEN] Fetching latest Bridge customer status for:', userProfile.bridge_customer_id)
+          const customerStatus = await bridgeService.getCustomerStatus()
+          if (customerStatus && customerStatus.kycStatus) {
+            // Always update database with latest status from Bridge
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({
+                bridge_kyc_status: customerStatus.kycStatus,
+                bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
+                bridge_endorsements: customerStatus.endorsements || [],
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', userProfile.id)
+            
+            if (updateError) {
+              console.error('[KYC-OPEN] Error updating status:', updateError)
+            } else {
+              console.log('[KYC-OPEN] Updated Bridge KYC status from Bridge API:', customerStatus.kycStatus)
+              
+              // Refresh user profile to get updated status immediately
+              if (refreshUserProfile) {
+                await refreshUserProfile()
+              }
+            }
+          }
+        } catch (statusError: any) {
+          console.warn('[KYC-OPEN] Could not fetch Bridge customer status:', statusError.message)
+          // Continue with KYC link creation even if status fetch fails
+        }
+      } else {
+        // No customer_id yet, but try to check if Bridge has a customer for this email
+        // This handles the case where customer_id wasn't stored properly
+        try {
+          console.log('[KYC-OPEN] No bridge_customer_id, checking Bridge API for existing customer...')
+          const customerStatus = await bridgeService.getCustomerStatus()
+          if (customerStatus && customerStatus.customerId) {
+            // Found a customer! Store it in the database
+            console.log('[KYC-OPEN] Found customer in Bridge:', customerStatus.customerId)
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({
+                bridge_customer_id: customerStatus.customerId,
+                bridge_kyc_status: customerStatus.kycStatus || 'not_started',
+                bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
+                bridge_endorsements: customerStatus.endorsements || [],
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', userProfile.id)
+            
+            if (updateError) {
+              console.error('[KYC-OPEN] Error storing customer_id:', updateError)
+            } else {
+              console.log('[KYC-OPEN] Stored bridge_customer_id and status:', customerStatus.kycStatus)
+              
+              // Refresh user profile to get updated status
+              if (refreshUserProfile) {
+                await refreshUserProfile()
+              }
+            }
+          }
+        } catch (checkError: any) {
+          console.log('[KYC-OPEN] No existing customer found in Bridge (this is expected for new users)')
+          // This is expected for new users, continue with KYC link creation
+        }
+      }
+      
+      // Construct full name from available fields, with fallback to email
+      // Note: first_name and last_name are set in Profile Screen (More → Profile → Edit)
+      // They are NOT set in Identity Verification screen
+      const firstName = userProfile?.profile?.first_name || userProfile?.first_name || ''
+      const lastName = userProfile?.profile?.last_name || userProfile?.last_name || ''
+      const fullName = firstName && lastName 
+        ? `${firstName} ${lastName}` 
+        : userProfile.email.split('@')[0] // Use email username as fallback
+      
+      let response
+      try {
+        response = await bridgeService.getKycLink(fullName, userProfile.email, 'individual')
+      } catch (error: any) {
+        // Handle case where Bridge returns existing KYC link in error
+        if (error.message && error.message.includes('kyc link has already been created')) {
+          console.log('[KYC-OPEN] KYC link already exists, Bridge should include it in response')
+          // The error might contain the existing link - check if we can extract it
+          // If not, try to get it via customer lookup
+          if (userProfile?.bridge_customer_id) {
+            try {
+              const kycLinkData = await bridgeService.getKycLink(userProfile.bridge_customer_id)
+              response = {
+                kyc_link: kycLinkData.kyc_link,
+                tos_link: null,
+                kyc_link_id: `customer-${userProfile.bridge_customer_id}`,
+                kyc_status: userProfile.bridge_kyc_status || 'not_started',
+                tos_status: 'pending',
+                customer_id: userProfile.bridge_customer_id,
+              }
+            } catch (linkError: any) {
+              throw new Error(`KYC link already exists. Please check your email or contact support.`)
+            }
+          } else {
+            throw new Error(`KYC link already exists for this email. Please check your email or contact support.`)
+          }
+        } else {
+          throw error
+        }
+      }
+      
+      setKycLink(response.kyc_link)
+      setKycTosLink(response.tos_link || null)
+      setKycLinkId(response.kyc_link_id || null)
+      setKycStatus(response.kyc_status || 'not_started')
+      setTosStatus(response.tos_status || 'pending')
+      
+      // If customer_id is returned, store it in database and fetch current status from Bridge
+      if (response.customer_id && userProfile?.id) {
+        try {
+          // First, store customer_id immediately
+          const { error: storeError } = await supabase
+            .from('users')
+            .update({ 
+              bridge_customer_id: response.customer_id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', userProfile.id)
+          
+          if (storeError) {
+            console.error('[KYC-OPEN] Error storing customer_id:', storeError)
+          } else {
+            console.log('[KYC-OPEN] Stored bridge_customer_id:', response.customer_id)
+          }
+          
+          // Now fetch the latest status from Bridge to ensure we have current data
+          // This handles cases where database has old/missing status
+          try {
+            console.log('[KYC-OPEN] Fetching latest customer status from Bridge...')
+            const customerStatus = await bridgeService.getCustomerStatus()
+            
+            if (customerStatus && customerStatus.kycStatus) {
+              // Update with latest status from Bridge
+              const { error: statusError } = await supabase
+                .from('users')
+                .update({
+                  bridge_kyc_status: customerStatus.kycStatus,
+                  bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
+                  bridge_endorsements: customerStatus.endorsements || [],
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', userProfile.id)
+              
+              if (statusError) {
+                console.error('[KYC-OPEN] Error updating status:', statusError)
+              } else {
+                console.log('[KYC-OPEN] Updated status from Bridge:', customerStatus.kycStatus)
+              }
+            } else {
+              // Fallback: use status from response if Bridge fetch failed
+              if (response.kyc_status) {
+                const { error: fallbackError } = await supabase
+                  .from('users')
+                  .update({
+                    bridge_kyc_status: response.kyc_status,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq('id', userProfile.id)
+                
+                if (fallbackError) {
+                  console.error('[KYC-OPEN] Error storing fallback status:', fallbackError)
+                }
+              }
+            }
+          } catch (statusError: any) {
+            console.warn('[KYC-OPEN] Could not fetch status from Bridge:', statusError.message)
+            // Fallback: use status from response
+            if (response.kyc_status) {
+              await supabase
+                .from('users')
+                .update({
+                  bridge_kyc_status: response.kyc_status,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', userProfile.id)
+            }
+          }
+          
+          // Refresh user profile to get updated status immediately
+          if (refreshUserProfile) {
+            await refreshUserProfile()
+          }
+        } catch (error: any) {
+          console.error('[KYC-OPEN] Error storing customer data:', error)
+          // Don't block the flow
+        }
+      }
+      
+      if (!response.kyc_link) {
+        Alert.alert(
+          'KYC Link Not Available',
+          'Unable to load KYC verification. Please try again or contact support.'
+        )
+        setLoadingKyc(false)
+        return
+      }
+      
+      setShowKycModal(true)
+    } catch (error: any) {
+      console.error('Error opening KYC:', error)
+      Alert.alert(
+        'Error Loading KYC',
+        `${error.message || 'Failed to load KYC verification'}\n\nPlease try again or contact support if the issue persists.`
+      )
+    } finally {
+      setLoadingKyc(false)
+    }
+  }
+
+  const handleKycModalClose = () => {
+    setShowKycModal(false)
+    
+    // If both flows are completed, refresh user profile
+    if (kycCompleted && tosCompleted) {
+      console.log('[KYC-MODAL] Both KYC and TOS completed, refreshing user profile')
+      // Refresh user profile to get updated KYC status
+      setTimeout(() => {
+        // Trigger a refresh of the user profile
+        // This will be handled by the parent component or context
+      }, 2000)
+    }
+  }
+
+  const buildKycIframeUrl = (link: string): string => {
+    // Replace /verify with /widget and add iframe-origin parameter
+    const widgetUrl = link.replace('/verify', '/widget')
+    // Use the API base URL as the origin (for React Native, we use the API URL)
+    const origin = process.env.EXPO_PUBLIC_API_URL || 'https://www.easner.com'
+    // Check if URL already has query parameters
+    const separator = widgetUrl.includes('?') ? '&' : '?'
+    return `${widgetUrl}${separator}iframe-origin=${encodeURIComponent(origin)}`
+  }
+
   const pollTOSStatus = async () => {
     if (!tosLinkId || checkingTosStatus || tosProcessedRef.current) {
       console.log(`[TOS-POLL] Skipping poll - tosLinkId: ${!!tosLinkId}, checkingTosStatus: ${checkingTosStatus}, alreadyProcessed: ${tosProcessedRef.current}`)
@@ -726,7 +1044,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
       
       Alert.alert(
         'Success',
-        'Your Bridge account is being set up. You will receive USD and EUR account details once your verification is approved.'
+        'Account setup in progress. You will receive USD and EUR account details once your verification is approved.'
       )
       
       // Refresh submissions to show updated status
@@ -747,8 +1065,9 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   }
 
   const getStatusBadge = (status: string | undefined, bridgeStatus?: string | undefined) => {
-    // Use Bridge status if available, otherwise use local status
-    const displayStatus = bridgeStatus || status
+    // Always use bridge_kyc_status from Supabase (updated via webhooks)
+    // The status parameter should be userProfile?.bridge_kyc_status
+    const displayStatus = status
     
     if (!displayStatus) {
       return (
@@ -863,14 +1182,22 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             ]}
           >
             {/* Info Message */}
-            {/* Only show if both are not completed AND both are not in review */}
-            {!bothCompleted && 
-             !(identitySubmission?.status === 'in_review' && addressSubmission?.status === 'in_review') && (
+            {!bridgeKycApproved && (
               <View style={styles.infoCard}>
                 <View style={styles.infoBox}>
                   <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />
                   <Text style={styles.infoText}>
-                    Please complete KYC Identity and Address information for compliance.
+                    {bridgeKycRejected 
+                      ? (userProfile?.bridge_kyc_rejection_reasons 
+                          ? (Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                              ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. Please complete account verification again to receive your account details.`
+                              : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
+                              ? `${userProfile.bridge_kyc_rejection_reasons}. Please complete account verification again to receive your account details.`
+                              : 'Please complete account verification again to receive your account details.')
+                          : 'Please complete account verification again to receive your account details.')
+                      : bridgeKycInReview
+                      ? 'Your KYC verification is under review. Please check your email for updates.'
+                      : 'Please complete account verification and accept Terms of Service to proceed.'}
                   </Text>
                 </View>
               </View>
@@ -878,14 +1205,97 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
 
             {/* Cards Container */}
             <View style={styles.cardsContainer}>
-              {/* Identity Verification Card */}
-              <TouchableOpacity
-                onPress={async () => {
-                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  navigation.navigate('IdentityVerification')
-                }}
-                activeOpacity={0.7}
-              >
+              {/* Bridge KYC Link Card - Show only if KYC is NOT approved */}
+              {!bridgeKycApproved && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    await handleOpenKYC()
+                  }}
+                  activeOpacity={0.7}
+                  disabled={loadingKyc}
+                >
+                  <View style={styles.card}>
+                    <View style={styles.cardContent}>
+                      <View style={styles.cardLeft}>
+                        <View style={styles.iconContainer}>
+                          <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary.main} />
+                        </View>
+                        <Text style={styles.cardTitle}>Identity Verification</Text>
+                        <Text style={styles.cardDescription}>
+                          Verify your identity to activate your account.
+                        </Text>
+                      </View>
+                      <View style={styles.cardRight}>
+                        {loadingKyc ? (
+                          <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing[3] }}>
+                            <View style={{ width: 70, alignItems: 'center' }}>
+                              <ActivityIndicator size="small" color={colors.primary.main} />
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} style={{ opacity: 0 }} />
+                          </View>
+                        ) : (
+                          <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing[3] }}>
+                            {(() => {
+                              // Debug: Log the bridge_kyc_status value
+                              const bridgeKycStatus = userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started'
+                              console.log('[KYC-CARD] Bridge KYC Status:', {
+                                topLevel: userProfile?.bridge_kyc_status,
+                                profile: userProfile?.profile?.bridge_kyc_status,
+                                final: bridgeKycStatus,
+                                userProfileId: userProfile?.id
+                              })
+                              return getStatusBadge(bridgeKycStatus, bridgeKycStatus)
+                            })()}
+                            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    {/* Status Notices */}
+                    {bridgeKycInReview && (
+                      <View style={styles.infoCard}>
+                        <View style={styles.infoBox}>
+                          <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
+                          <Text style={styles.infoText}>
+                            Your verification is under review. We will provide an update soonest. Please check your email for updates.
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                    {bridgeKycRejected && userProfile?.bridge_kyc_rejection_reasons && (
+                      <View style={styles.infoCard}>
+                        <View style={styles.infoBox}>
+                          <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
+                          <Text style={styles.infoText}>
+                            {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                              ? userProfile.bridge_kyc_rejection_reasons.join(", ")
+                              : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
+                              ? userProfile.bridge_kyc_rejection_reasons
+                              : 'Your verification was not approved.'} Please complete account verification again to receive your account details.
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {/* Identity Verification Card - Show only if Bridge KYC is approved */}
+              {bridgeKycApproved && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    // Navigate to read-only view if data is from Bridge
+                    if (identityFromBridge) {
+                      // Show read-only view with Bridge data
+                      navigation.navigate('IdentityVerification', { readOnly: true, fromBridge: true })
+                    } else {
+                      navigation.navigate('IdentityVerification')
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
                 <View style={styles.card}>
                   <View style={styles.cardContent}>
                     <View style={styles.cardLeft}>
@@ -898,7 +1308,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       </Text>
                     </View>
                     <View style={styles.cardRight}>
-                      {getStatusBadge(identitySubmission?.status, userProfile?.bridge_kyc_status)}
+                      {getStatusBadge('approved', userProfile?.bridge_kyc_status)}
                       <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                     </View>
                   </View>
@@ -918,26 +1328,34 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       <View style={styles.infoBox}>
                         <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
                         <Text style={styles.infoText}>
-                          Your verification was not approved. {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
+                          {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                            ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
                             : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons}. `
-                            : ''}Please complete identity verification again to receive your account details.
+                            ? `${userProfile.bridge_kyc_rejection_reasons}. `
+                            : ''}Please complete account verification again to receive your account details.
                         </Text>
                       </View>
                     </View>
                   )}
                 </View>
               </TouchableOpacity>
+              )}
 
-              {/* Address Information Card */}
-              <TouchableOpacity
-                onPress={async () => {
-                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  navigation.navigate('AddressVerification')
-                }}
-                activeOpacity={0.7}
-              >
+              {/* Address Information Card - Show only if Bridge KYC is approved */}
+              {bridgeKycApproved && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    // Navigate to read-only view if data is from Bridge
+                    if (addressFromBridge) {
+                      // Show read-only view with Bridge data
+                      navigation.navigate('AddressVerification', { readOnly: true, fromBridge: true })
+                    } else {
+                      navigation.navigate('AddressVerification')
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
                 <View style={styles.card}>
                   <View style={styles.cardContent}>
                     <View style={styles.cardLeft}>
@@ -950,7 +1368,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       </Text>
                     </View>
                     <View style={styles.cardRight}>
-                      {getStatusBadge(addressSubmission?.status, userProfile?.bridge_kyc_status)}
+                      {getStatusBadge('approved', userProfile?.bridge_kyc_status)}
                       <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                     </View>
                   </View>
@@ -970,20 +1388,21 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       <View style={styles.infoBox}>
                         <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
                         <Text style={styles.infoText}>
-                          Your verification was not approved. {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
+                          {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
+                            ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
                             : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                            ? `Reason: ${userProfile.bridge_kyc_rejection_reasons}. `
-                            : ''}Please complete identity verification again to receive your account details.
+                            ? `${userProfile.bridge_kyc_rejection_reasons}. `
+                            : ''}Please complete account verification again to receive your account details.
                         </Text>
                       </View>
                     </View>
                   )}
                 </View>
               </TouchableOpacity>
+              )}
 
-              {/* Bridge TOS Acceptance Card - Show only when TOS needs to be accepted */}
-              {bothSubmitted && !tosSigned && (
+              {/* Bridge TOS Acceptance Card - Show only if bridge_signed_agreement_id is empty */}
+              {!tosSigned && !userProfile?.bridge_signed_agreement_id && !userProfile?.profile?.bridge_signed_agreement_id && (
                 <TouchableOpacity
                   onPress={async () => {
                     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -1042,13 +1461,13 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             >
               <View style={styles.modalContainer}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Partner Terms of Service</Text>
                   <TouchableOpacity
                     onPress={handleTOSModalClose}
-                    style={styles.modalCloseButton}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="close" size={24} color={colors.text.primary} />
+                    <Text style={[styles.modalTitle, { color: colors.primary.main }]}>Back</Text>
                   </TouchableOpacity>
+                  <Text style={styles.modalTitle}>Partner Terms of Service</Text>
                 </View>
                 {tosLink && (
                   <WebView
@@ -1205,6 +1624,210 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                 )}
               </View>
             </Modal>
+
+            {/* KYC WebView Modal */}
+            <Modal
+              visible={showKycModal}
+              animationType="slide"
+              presentationStyle="pageSheet"
+              onRequestClose={handleKycModalClose}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity
+                    onPress={handleKycModalClose}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.modalTitle, { color: colors.primary.main }]}>Back</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.modalTitle}>
+                    {currentKycFlow === 'kyc' ? 'Account Verification' : 'Partner Terms of Service'}
+                  </Text>
+                </View>
+                {currentKycFlow === 'kyc' && kycLink && (
+                  <WebView
+                    source={{ uri: buildKycIframeUrl(kycLink) }}
+                    style={styles.webView}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    onMessage={async (event) => {
+                      console.log('[KYC-WEBVIEW] 📨 Message received from WebView:', {
+                        data: event.nativeEvent.data,
+                        type: typeof event.nativeEvent.data,
+                        alreadyProcessed: kycProcessedRef.current
+                      })
+                      
+                      if (kycProcessedRef.current) {
+                        console.log('[KYC-WEBVIEW] ⚠️ Message already processed, ignoring')
+                        return
+                      }
+                      
+                      try {
+                        const messageData = event.nativeEvent.data
+                        let data: any
+                        
+                        if (typeof messageData === 'string') {
+                          data = JSON.parse(messageData)
+                        } else {
+                          data = messageData
+                        }
+                        
+                        console.log('[KYC-WEBVIEW] 📋 Parsed message data:', data)
+                        
+                        // Handle KYC completion
+                        if (data && (data.kycCompleted || data.status === 'completed' || data.kyc_status === 'approved' || data.kyc_status === 'under_review')) {
+                          console.log('[KYC-WEBVIEW] ✅ KYC completed')
+                          kycProcessedRef.current = true
+                          setKycCompleted(true)
+                          setKycStatus(data.kyc_status || 'approved')
+                          
+                          // Sync KYC data from Bridge to our database
+                          if (data.customer_id && userProfile?.id) {
+                            try {
+                              console.log('[KYC-WEBVIEW] Syncing KYC data from Bridge to database...')
+                              const { data: { session } } = await supabase.auth.getSession()
+                              if (session) {
+                                await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001'}/api/bridge/sync-kyc`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${session.access_token}`,
+                                  },
+                                  body: JSON.stringify({
+                                    customer_id: data.customer_id,
+                                    user_id: userProfile.id,
+                                  }),
+                                })
+                                console.log('[KYC-WEBVIEW] ✅ KYC data synced to database')
+                              }
+                            } catch (syncError: any) {
+                              console.error('[KYC-WEBVIEW] Error syncing KYC data:', syncError)
+                              // Don't block the flow - data will be synced via webhook
+                            }
+                          }
+                          
+                          // If TOS link is available, switch to TOS flow
+                          if (kycTosLink && !tosCompleted) {
+                            console.log('[KYC-WEBVIEW] 🔄 Switching to TOS flow')
+                            setCurrentKycFlow('tos')
+                            kycProcessedRef.current = false // Reset for TOS flow
+                          } else {
+                            // Both flows completed
+                            Alert.alert(
+                              'Verification Complete',
+                              'Your KYC verification has been completed successfully.',
+                              [{ 
+                                text: 'OK',
+                                onPress: () => {
+                                  handleKycModalClose()
+                                }
+                              }]
+                            )
+                          }
+                        }
+                        
+                        // Handle TOS completion
+                        if (data && (data.tosCompleted || data.signedAgreementId)) {
+                          console.log('[KYC-WEBVIEW] ✅ TOS completed')
+                          kycProcessedRef.current = true
+                          setTosCompleted(true)
+                          setTosStatus('approved')
+                          
+                          if (data.signedAgreementId && userProfile?.id) {
+                            // Store signed_agreement_id
+                            await supabase
+                              .from('users')
+                              .update({ bridge_signed_agreement_id: data.signedAgreementId })
+                              .eq('id', userProfile.id)
+                          }
+                          
+                          // Both flows completed
+                          Alert.alert(
+                            'Verification Complete',
+                            'Your KYC and Terms of Service have been completed successfully.',
+                            [{ 
+                              text: 'OK',
+                              onPress: () => {
+                                handleKycModalClose()
+                              }
+                            }]
+                          )
+                        }
+                      } catch (error: any) {
+                        console.error('[KYC-WEBVIEW] Error processing message:', error)
+                      }
+                    }}
+                    onNavigationStateChange={(navState) => {
+                      console.log('[KYC-WEBVIEW] Navigation changed:', {
+                        url: navState.url,
+                        loading: navState.loading,
+                      })
+                    }}
+                  />
+                )}
+                {currentKycFlow === 'tos' && kycTosLink && (
+                  <WebView
+                    source={{ uri: kycTosLink }}
+                    style={styles.webView}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    onMessage={async (event) => {
+                      console.log('[KYC-TOS-WEBVIEW] 📨 Message received from WebView:', {
+                        data: event.nativeEvent.data,
+                      })
+                      
+                      if (kycProcessedRef.current && tosCompleted) {
+                        return
+                      }
+                      
+                      try {
+                        const messageData = event.nativeEvent.data
+                        let data: any
+                        
+                        if (typeof messageData === 'string') {
+                          data = JSON.parse(messageData)
+                        } else {
+                          data = messageData
+                        }
+                        
+                        if (data && data.signedAgreementId) {
+                          console.log('[KYC-TOS-WEBVIEW] ✅ TOS completed')
+                          kycProcessedRef.current = true
+                          setTosCompleted(true)
+                          setTosStatus('approved')
+                          
+                          if (userProfile?.id) {
+                            await supabase
+                              .from('users')
+                              .update({ bridge_signed_agreement_id: data.signedAgreementId })
+                              .eq('id', userProfile.id)
+                          }
+                          
+                          Alert.alert(
+                            'Verification Complete',
+                            'Your KYC and Terms of Service have been completed successfully.',
+                            [{ 
+                              text: 'OK',
+                              onPress: () => {
+                                handleKycModalClose()
+                              }
+                            }]
+                          )
+                        }
+                      } catch (error: any) {
+                        console.error('[KYC-TOS-WEBVIEW] Error processing message:', error)
+                      }
+                    }}
+                    onNavigationStateChange={(navState) => {
+                      console.log('[KYC-TOS-WEBVIEW] Navigation changed:', {
+                        url: navState.url,
+                        loading: navState.loading,
+                      })
+                    }}
+                  />
+                )}
+              </View>
+            </Modal>
           </Animated.View>
         </ScrollView>
       </View>
@@ -1297,6 +1920,7 @@ const styles = StyleSheet.create({
   cardLeft: {
     flex: 1,
     marginRight: spacing[4],
+    minWidth: 0, // Prevent flex from causing layout shifts
   },
   iconContainer: {
     width: 48,
@@ -1322,12 +1946,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
+    width: 100, // Fixed width to prevent layout shift between spinner and badge+chevron
+    justifyContent: 'flex-end',
+    flexShrink: 0, // Prevent shrinking
   },
   badgeGreen: {
     backgroundColor: colors.success.background,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
     borderRadius: borderRadius.full,
+    minWidth: 70, // Fixed minimum width to prevent layout shifts
+    alignItems: 'center',
   },
   badgeTextGreen: {
     ...textStyles.labelSmall,
@@ -1339,6 +1968,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
     borderRadius: borderRadius.full,
+    minWidth: 70, // Fixed minimum width to prevent layout shifts
+    alignItems: 'center',
   },
   badgeTextYellow: {
     ...textStyles.labelSmall,
@@ -1350,6 +1981,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
     borderRadius: borderRadius.full,
+    minWidth: 70, // Fixed minimum width to prevent layout shifts
+    alignItems: 'center',
   },
   badgeTextRed: {
     ...textStyles.labelSmall,
@@ -1361,6 +1994,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1],
     borderRadius: borderRadius.full,
+    minWidth: 70, // Fixed minimum width to prevent layout shifts
+    alignItems: 'center',
   },
   badgeTextGray: {
     ...textStyles.labelSmall,

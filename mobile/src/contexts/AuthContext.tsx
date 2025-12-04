@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '../lib/supabase'
 import { User, AuthUser } from '../types'
@@ -52,6 +52,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: regularUser.id,
           email: regularUser.email,
           isAdmin: false,
+          // Bridge KYC fields at top level for easier access
+          bridge_kyc_status: regularUser.bridge_kyc_status,
+          bridge_customer_id: regularUser.bridge_customer_id,
+          bridge_kyc_rejection_reasons: regularUser.bridge_kyc_rejection_reasons,
+          bridge_endorsements: regularUser.bridge_endorsements,
+          bridge_signed_agreement_id: regularUser.bridge_signed_agreement_id,
           profile: {
             id: regularUser.id,
             email: regularUser.email,
@@ -60,7 +66,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             phone: regularUser.phone,
             base_currency: regularUser.base_currency,
             status: regularUser.status,
-            verification_status: regularUser.verification_status,
+            // verification_status removed - use bridge_kyc_status for KYC, email_confirmed_at for email verification
+            bridge_kyc_status: regularUser.bridge_kyc_status,
+            bridge_customer_id: regularUser.bridge_customer_id,
+            bridge_kyc_rejection_reasons: regularUser.bridge_kyc_rejection_reasons,
+            bridge_endorsements: regularUser.bridge_endorsements,
+            bridge_signed_agreement_id: regularUser.bridge_signed_agreement_id,
             created_at: regularUser.created_at,
             updated_at: regularUser.updated_at,
           } as User,
@@ -98,11 +109,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (user) {
       await fetchUserProfile(user.id)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     let mounted = true
@@ -124,7 +135,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             phone: session.user.phone || undefined,
             base_currency: session.user.user_metadata?.base_currency || 'NGN',
             status: 'active',
-            verification_status: session.user.email_confirmed_at ? 'verified' : 'pending',
+            // verification_status removed - use bridge_kyc_status for KYC, email_confirmed_at for email verification
             created_at: session.user.created_at,
             updated_at: session.user.updated_at || session.user.created_at
           }
@@ -165,7 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             phone: session.user.phone || undefined,
             base_currency: session.user.user_metadata?.base_currency || 'NGN',
             status: 'active',
-            verification_status: session.user.email_confirmed_at ? 'verified' : 'pending',
+            // verification_status removed - use bridge_kyc_status for KYC, email_confirmed_at for email verification
             created_at: session.user.created_at,
             updated_at: session.user.updated_at || session.user.created_at
           }

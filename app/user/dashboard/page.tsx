@@ -416,18 +416,18 @@ export default function UserDashboardPage() {
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <div className="flex items-center gap-2">
                             {transactionType !== "send" && (
-                              <Badge
-                                variant={
+                            <Badge
+                              variant={
                                   transactionType === "card_funding"
-                                    ? "outline"
-                                    : "secondary"
-                                }
-                                className="text-xs"
-                              >
+                                  ? "outline"
+                                  : "secondary"
+                              }
+                              className="text-xs"
+                            >
                                 {transactionType === "card_funding"
-                                  ? "Card Funding"
-                                  : "Receive"}
-                              </Badge>
+                                ? "Card Funding"
+                                : "Receive"}
+                            </Badge>
                             )}
                             <span className="text-xs sm:text-sm text-gray-500 font-mono">
                               {transaction.transaction_id}
@@ -466,14 +466,14 @@ export default function UserDashboardPage() {
                                   {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                  Receive Amount
-                                </span>
-                                <span className="text-base sm:text-lg font-semibold text-green-600">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                    Receive Amount
+                                  </span>
+                                  <span className="text-base sm:text-lg font-semibold text-green-600">
                                   {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
-                                </span>
-                              </div>
+                                  </span>
+                                </div>
                             </div>
                           </>
                         ) : transactionType === "card_funding" ? (

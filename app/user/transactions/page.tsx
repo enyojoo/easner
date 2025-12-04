@@ -358,35 +358,35 @@ export default function UserTransactionsPage() {
                         </span>
                       </div>
 
-                      {/* Recipient Info */}
-                      <div className="mb-4 sm:mb-5">
-                        <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                          To
-                        </div>
-                        <div className="text-base sm:text-lg font-semibold text-gray-900">
-                          {transaction.recipient?.full_name || "Unknown"}
-                        </div>
-                      </div>
+                          {/* Recipient Info */}
+                          <div className="mb-4 sm:mb-5">
+                            <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                              To
+                            </div>
+                            <div className="text-base sm:text-lg font-semibold text-gray-900">
+                              {transaction.recipient?.full_name || "Unknown"}
+                            </div>
+                          </div>
 
-                      {/* Amount Section */}
-                      <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                            Send Amount
-                          </span>
-                          <span className="text-base sm:text-lg font-semibold text-gray-900">
-                            {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                            Receive Amount
-                          </span>
-                          <span className="text-base sm:text-lg font-semibold text-green-600">
-                            {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
-                          </span>
-                        </div>
-                      </div>
+                          {/* Amount Section */}
+                          <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                Send Amount
+                              </span>
+                              <span className="text-base sm:text-lg font-semibold text-gray-900">
+                                {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                                Receive Amount
+                              </span>
+                              <span className="text-base sm:text-lg font-semibold text-green-600">
+                                {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
+                              </span>
+                            </div>
+                          </div>
 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">

@@ -7,7 +7,6 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { kycService, KYCSubmission } from "@/lib/kyc-service"
 import { supabase } from "@/lib/supabase"
-import { KycOnboardingCard } from "@/components/kyc-onboarding-card"
 
 export default function VerificationPage() {
   const { userProfile } = useAuth()
@@ -239,9 +238,6 @@ export default function VerificationPage() {
 
         {/* Cards Container */}
         <div className="px-5 pb-6 space-y-6">
-          {/* Bridge KYC Onboarding Card */}
-          <KycOnboardingCard />
-
           {/* Identity Verification Card */}
           <Link href="/user/more/verification/identity" className="block">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow">

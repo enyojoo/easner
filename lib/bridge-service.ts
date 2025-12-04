@@ -186,10 +186,15 @@ async function bridgeApiRequest<T>(
         `Current API key: ${BRIDGE_API_KEY ? `Present (${BRIDGE_API_KEY.substring(0, 10)}...)` : 'NOT SET'}. ` +
         `If you just updated the API key, make sure to restart your Next.js server. ` +
         `If the API key is correct, it may be invalid, expired, or lack permissions for this endpoint.`
-      throw new Error(helpfulMessage)
+      const error = new Error(helpfulMessage) as any
+      error.details = errorDetails
+      throw error
     }
     
-    throw new Error(errorMessage)
+    // Attach error details to error object so they can be accessed in catch blocks
+    const error = new Error(errorMessage) as any
+    error.details = errorDetails
+    throw error
   }
 
   // Get response text first to see what we're actually getting
@@ -535,30 +540,32 @@ export const bridgeService = {
   },
 
   /**
-   * Create a new KYC link
+   * Create KYC link for a NEW customer (before customer exists)
    * Uses POST /v0/kyc_links (Bridge production endpoint)
    */
-  async createKycLink(
-    fullName: string,
-    email: string,
-    type: string = "individual"
-  ): Promise<{ kyc_link: string; tos_link: string; kyc_status: string; tos_status: string; customer_id?: string }> {
-    console.log(`[BRIDGE-SERVICE] createKycLink: Creating KYC link for ${email}`)
+  async createKycLink(params: {
+    full_name: string
+    email: string
+    type?: 'individual' | 'business'
+  }): Promise<{
+    id: string
+    kyc_link: string
+    tos_link?: string
+    kyc_status?: string
+    tos_status?: string
+    customer_id?: string
+  }> {
+    console.log(`[BRIDGE-SERVICE] createKycLink: Creating KYC link (email: ${params.email}, type: ${params.type || 'individual'})`)
     
     try {
-      const endpoint = `/v0/kyc_links`
-      
       const payload = {
-        full_name: fullName,
-        email,
-        type,
+        full_name: params.full_name,
+        email: params.email,
+        type: params.type || 'individual',
       }
       
-      console.log(`[BRIDGE-SERVICE] createKycLink: Using endpoint: ${endpoint}`, {
-        email,
-        type,
-        hasFullName: !!fullName,
-      })
+      const endpoint = '/v0/kyc_links'
+      console.log(`[BRIDGE-SERVICE] createKycLink: Using endpoint: ${endpoint}`)
       
       const response = await bridgeApiRequest<any>(endpoint, {
         method: 'POST',
@@ -568,28 +575,134 @@ export const bridgeService = {
       console.log(`[BRIDGE-SERVICE] createKycLink: Response received:`, {
         hasResponse: !!response,
         responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
-        hasKycLink: !!(response?.kyc_link),
-        hasTosLink: !!(response?.tos_link),
+        hasKycLink: !!(response && (response.kyc_link || response.url || (response.data && (response.data.kyc_link || response.data.url)))),
+        hasTosLink: !!(response && (response.tos_link || (response.data && response.data.tos_link))),
+        fullResponse: JSON.stringify(response, null, 2).substring(0, 500),
       })
       
-      if (!response?.kyc_link) {
-        throw new Error('Bridge API returned invalid response: missing kyc_link field')
+      // Bridge API returns kyc_link and tos_link in response
+      let kycLink: string | null = null
+      let tosLink: string | null = null
+      let kycLinkId: string | null = null
+      let customerId: string | null = null
+      let kycStatus: string | null = null
+      let tosStatus: string | null = null
+      
+      if (response) {
+        // Handle response.data wrapper
+        const data = response.data || response
+        
+        if (data.kyc_link) {
+          kycLink = data.kyc_link
+        } else if (data.url) {
+          kycLink = data.url
+        }
+        
+        if (data.tos_link) {
+          tosLink = data.tos_link
+        }
+        
+        if (data.id) {
+          kycLinkId = data.id
+        } else if (response.id) {
+          kycLinkId = response.id
+        }
+        
+        if (data.customer_id) {
+          customerId = data.customer_id
+        } else if (response.customer_id) {
+          customerId = response.customer_id
+        }
+        
+        if (data.kyc_status) {
+          kycStatus = data.kyc_status
+        } else if (response.kyc_status) {
+          kycStatus = response.kyc_status
+        }
+        
+        if (data.tos_status) {
+          tosStatus = data.tos_status
+        } else if (response.tos_status) {
+          tosStatus = response.tos_status
+        }
       }
       
-      if (!response?.tos_link) {
-        throw new Error('Bridge API returned invalid response: missing tos_link field')
+      if (!kycLink) {
+        console.error(`[BRIDGE-SERVICE] createKycLink: Invalid response format:`, JSON.stringify(response, null, 2))
+        throw new Error('Bridge API returned invalid response: missing kyc_link or url field')
       }
       
       console.log(`[BRIDGE-SERVICE] createKycLink: Successfully created KYC link`)
       return {
-        kyc_link: response.kyc_link,
-        tos_link: response.tos_link,
-        kyc_status: response.kyc_status || "not_started",
-        tos_status: response.tos_status || "pending",
-        customer_id: response.customer_id,
+        id: kycLinkId || 'new-kyc-link',
+        kyc_link: kycLink,
+        tos_link: tosLink || undefined,
+        kyc_status: kycStatus || undefined,
+        tos_status: tosStatus || undefined,
+        customer_id: customerId || undefined,
       }
     } catch (error: any) {
-      console.error(`[BRIDGE-SERVICE] createKycLink: Error creating KYC link:`, error.message)
+      // Handle case where Bridge returns existing KYC link in error message
+      if (error.message && error.message.includes('kyc link has already been created')) {
+        console.log(`[BRIDGE-SERVICE] createKycLink: KYC link already exists, checking error response for existing link`)
+        
+        // Bridge may include the existing KYC link in the error response
+        // Check if error has existing_kyc_link in the details
+        const errorDetails = (error as any).details || (error as any).errorDetails || {}
+        if (errorDetails.existing_kyc_link) {
+          const existingLink = errorDetails.existing_kyc_link
+          console.log(`[BRIDGE-SERVICE] createKycLink: Found existing KYC link in error response:`, {
+            id: existingLink.id,
+            customer_id: existingLink.customer_id,
+            kyc_status: existingLink.kyc_status,
+          })
+          
+          return {
+            id: existingLink.id || `customer-${existingLink.customer_id}`,
+            kyc_link: existingLink.kyc_link || existingLink.url,
+            tos_link: existingLink.tos_link || undefined,
+            kyc_status: existingLink.kyc_status || undefined,
+            tos_status: existingLink.tos_status || undefined,
+            customer_id: existingLink.customer_id || undefined,
+          }
+        }
+        
+        // If not in error response, try to get it via customer lookup by email
+        try {
+          const customers = await this.listCustomersByEmail(params.email)
+          if (customers && customers.length > 0) {
+            const customer = customers[0]
+            if (customer.id) {
+              console.log(`[BRIDGE-SERVICE] createKycLink: Found existing customer ${customer.id}, getting KYC link`)
+              // Try to get KYC link for existing customer
+              const kycLinkData = await this.getKycLink(customer.id)
+              
+              // Get full customer details to get status
+              const fullCustomer = await this.getCustomer(customer.id)
+              
+              return {
+                id: `customer-${customer.id}`,
+                kyc_link: kycLinkData.kyc_link,
+                tos_link: undefined, // TOS link might not be available for existing customers
+                kyc_status: fullCustomer.kyc_status || customer.kyc_status || customer.status || undefined,
+                tos_status: undefined,
+                customer_id: customer.id,
+              }
+            }
+          }
+        } catch (lookupError: any) {
+          console.error(`[BRIDGE-SERVICE] createKycLink: Error looking up existing customer:`, lookupError)
+          // Re-throw with a more helpful message
+          throw new Error(`KYC link already exists for this email. Please check your email for the verification link or contact support.`)
+        }
+      }
+      
+      console.error(`[BRIDGE-SERVICE] createKycLink: Error creating KYC link:`, {
+        error: error.message,
+        stack: error.stack,
+        email: params.email,
+        type: params.type,
+      })
       throw error
     }
   },

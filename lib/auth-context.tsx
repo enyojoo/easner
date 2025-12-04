@@ -14,7 +14,7 @@ interface UserProfile {
   phone?: string
   base_currency?: string
   status?: string
-  verification_status?: string
+  // verification_status removed - use bridge_kyc_status for KYC status
   created_at?: string
   updated_at?: string
 }
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           phone: user.phone || '',
           base_currency: user.user_metadata?.base_currency || 'NGN',
           status: 'active',
-          verification_status: 'verified',
+          // verification_status removed - use bridge_kyc_status for KYC status
           created_at: user.created_at,
           updated_at: user.updated_at || user.created_at,
           role: 'super_admin'

@@ -405,15 +405,15 @@ export default function UserSendPage() {
         } catch (error: any) {
           // Network or other errors - silently fall back to static payment methods
           if (error.name !== 'AbortError') {
-            console.warn("Payment collection unavailable, using static methods")
+          console.warn("Payment collection unavailable, using static methods")
           }
         } finally {
           clearTimeout(timeoutId)
           setLoadingPaymentDetails(false)
         }
-    }
+      }
 
-    fetchPaymentDetails()
+      fetchPaymentDetails()
   }, [currentStep, sendCurrency, sendAmount, transactionId])
 
   // Close dropdown when clicking outside
@@ -819,13 +819,13 @@ export default function UserSendPage() {
         if (uploadedFile && uploadProgress === 100 && !isUploading) {
           // Use setTimeout to ensure redirect happens first
           setTimeout(async () => {
-            try {
-              await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
+          try {
+            await transactionService.uploadReceipt(transaction.transaction_id, uploadedFile)
               console.log("Receipt uploaded successfully")
-            } catch (uploadError) {
-              console.error("Error uploading receipt:", uploadError)
+          } catch (uploadError) {
+            console.error("Error uploading receipt:", uploadError)
               // Don't show error to user - upload happens in background
-            }
+          }
           }, 100)
         }
       } catch (error) {

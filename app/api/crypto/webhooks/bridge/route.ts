@@ -143,7 +143,7 @@ function verifyWebhookSignature(
             }
           } catch (altError: any) {
             console.error("[WEBHOOK-VERIFY] Alternative verification also failed:", altError.message)
-            return false
+          return false
           }
         }
       } else {
@@ -272,8 +272,8 @@ async function processWebhookEvent(
       case "card_account.funded": {
         // Card account events - handle balance changes and funding
         if (eventType.includes("balance_changed") || eventType.includes("funded")) {
-          // Card top-up deposit (card payouts)
-          await receiveTransactionTracker.processCardTopUpWebhook({
+        // Card top-up deposit (card payouts)
+        await receiveTransactionTracker.processCardTopUpWebhook({
             id: eventObject.id,
             card_account_id: eventObject.card_account_id || eventObject.id,
             customer_id: eventObject.customer_id || eventObject.on_behalf_of,
@@ -282,9 +282,9 @@ async function processWebhookEvent(
             currency: eventObject.currency,
             status: eventObject.status || eventObject.state,
             created_at: eventObject.created_at,
-          })
+        })
           
-          // Store processed event
+        // Store processed event
           const { data: cardUser } = await supabase
             .from("users")
             .select("id")
@@ -491,26 +491,89 @@ async function processWebhookEvent(
         // KYC link events
         console.log(`[WEBHOOK] KYC link event: ${eventType}`, eventObject.id)
         const customerId = eventObject.customer_id
+        
         if (customerId) {
-          const { data: user } = await supabase
+          // First, try to find user by bridge_customer_id
+          let user = await supabase
             .from("users")
-            .select("id")
+            .select("id, bridge_customer_id")
             .eq("bridge_customer_id", customerId)
-            .single()
+            .maybeSingle()
           
-          // Update KYC status if available
-          if (eventObject.kyc_status) {
-            await supabase
+          // If not found by customer_id, try to find by email (in case customer_id wasn't stored yet)
+          if (!user?.data?.id && eventObject.email) {
+            console.log(`[WEBHOOK] User not found by customer_id, trying email: ${eventObject.email}`)
+            const { data: userByEmail } = await supabase
               .from("users")
-              .update({
-                bridge_kyc_status: eventObject.kyc_status,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", user?.id)
+              .select("id, bridge_customer_id, email")
+              .eq("email", eventObject.email)
+              .maybeSingle()
+            
+            if (userByEmail?.id) {
+              // Update customer_id if not set
+              if (!userByEmail.bridge_customer_id) {
+                await supabase
+                  .from("users")
+                  .update({ bridge_customer_id: customerId })
+                  .eq("id", userByEmail.id)
+                console.log(`[WEBHOOK] Stored bridge_customer_id for user ${userByEmail.id}`)
+              }
+              user = { data: userByEmail }
+            }
           }
           
-          await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
+          if (user?.data?.id) {
+            const userId = user.data.id
+            
+            // Update KYC status if available
+            const updateData: any = {
+              updated_at: new Date().toISOString(),
+            }
+            
+            if (eventObject.kyc_status) {
+              updateData.bridge_kyc_status = eventObject.kyc_status
+              console.log(`[WEBHOOK] Updating KYC status to: ${eventObject.kyc_status}`)
+            }
+            
+            // Update rejection reasons if available
+            if (eventObject.rejection_reasons) {
+              updateData.bridge_kyc_rejection_reasons = eventObject.rejection_reasons
+            }
+            
+            // Update customer_id if not set
+            if (!user.data.bridge_customer_id) {
+              updateData.bridge_customer_id = customerId
+            }
+            
+            await supabase
+              .from("users")
+              .update(updateData)
+              .eq("id", userId)
+            
+            console.log(`[WEBHOOK] Updated user ${userId} with KYC status: ${eventObject.kyc_status || 'N/A'}`)
+            
+            // If KYC is completed (approved, under_review, or rejected), sync full data from Bridge
+            if (eventObject.kyc_status && 
+                (eventObject.kyc_status === "approved" || 
+                 eventObject.kyc_status === "under_review" || 
+                 eventObject.kyc_status === "rejected")) {
+              try {
+                const { syncBridgeKycDataToDatabase } = await import("@/lib/bridge-kyc-sync")
+                await syncBridgeKycDataToDatabase(customerId, userId)
+                console.log(`[WEBHOOK] Synced Bridge KYC data to database for user ${userId}`)
+              } catch (syncError: any) {
+                console.error(`[WEBHOOK] Error syncing Bridge KYC data:`, syncError)
+                // Don't fail the webhook - logging is sufficient
+              }
+            }
+            
+            await storeProcessedEvent(eventId, eventType, eventObject, userId)
+          } else {
+            console.warn(`[WEBHOOK] User not found for customer_id ${customerId}, email: ${eventObject.email || 'N/A'}`)
+            await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+          }
         } else {
+          console.warn(`[WEBHOOK] KYC link event missing customer_id`)
           await storeProcessedEvent(eventId, eventType, eventObject, undefined)
         }
         break
@@ -608,13 +671,13 @@ async function processWebhookEvent(
           .single()
 
         if (transfer) {
-          await supabase
-            .from("bridge_transfers")
-            .update({
-              status: newStatus,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("bridge_transfer_id", transferId)
+        await supabase
+          .from("bridge_transfers")
+          .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("bridge_transfer_id", transferId)
         }
 
         // TODO: Send notification to user about transfer status change

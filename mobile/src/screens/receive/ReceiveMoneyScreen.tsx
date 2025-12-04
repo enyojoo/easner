@@ -20,22 +20,20 @@ import { NavigationProps } from '../../types'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 import { bridgeService } from '../../lib/bridgeService'
 import { supabase } from '../../lib/supabase'
-import { kycService } from '../../lib/kycService'
+import { useAuth } from '../../contexts/AuthContext'
 import QRCode from 'react-native-qrcode-svg'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 type TabType = 'bank' | 'stablecoin'
 
 export default function ReceiveMoneyScreen({ navigation, route }: NavigationProps) {
   const insets = useSafeAreaInsets()
+  const { userProfile } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('bank')
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
   const [virtualAccount, setVirtualAccount] = useState<any>(null)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [walletMemo, setWalletMemo] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [kycStatus, setKycStatus] = useState<string | null>(null)
-  const [checkingKyc, setCheckingKyc] = useState(true)
   const [creatingAccounts, setCreatingAccounts] = useState(false)
   const [accountCreationError, setAccountCreationError] = useState<string | null>(null)
   
@@ -48,6 +46,30 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
   // State to track if accounts exist in database (fallback when API times out)
   const [hasWalletInDb, setHasWalletInDb] = useState(false)
   const [hasAccountInDb, setHasAccountInDb] = useState(false)
+  
+  // Get KYC status from userProfile (Bridge KYC status)
+  // Map Bridge status values to our display logic
+  const getKycStatus = (): string | null => {
+    const bridgeStatus = userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status
+    if (!bridgeStatus) return null
+    
+    // Map Bridge status to our display status
+    switch (bridgeStatus) {
+      case 'approved':
+        return 'approved'
+      case 'rejected':
+        return 'rejected'
+      case 'under_review':
+      case 'in_review':
+        return 'in_review'
+      case 'not_started':
+      case 'incomplete':
+      default:
+        return null // Treat as pending/not started
+    }
+  }
+  
+  const kycStatus = getKycStatus()
   
   // Check if account is ready (has account and KYC approved)
   // Use database check as fallback if API call fails
@@ -65,7 +87,6 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
     const fetchAccountData = async () => {
       try {
         setLoading(true)
-        setCheckingKyc(true)
         const currencyLower = currency.toLowerCase() as 'usd' | 'eur'
         
         // Get user ID
@@ -73,94 +94,27 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
         const userId = session?.user?.id
         if (!userId) {
           setLoading(false)
-          setCheckingKyc(false)
           return
         }
         
-        // First, try to load KYC status from cache to prevent flickering
+        // Check database directly for wallet/account IDs and Bridge KYC status (fast, no API call)
         try {
-          const CACHE_KEY = `easner_kyc_submissions_${userId}`
-          const cached = await AsyncStorage.getItem(CACHE_KEY)
-          
-          if (cached) {
-            const { value, timestamp } = JSON.parse(cached)
-            if (Date.now() - timestamp < 5 * 60 * 1000) { // 5 minute cache
-              const submissions = value as any[]
-              const identitySubmission = submissions.find(s => s.type === "identity")
-              const addressSubmission = submissions.find(s => s.type === "address")
-              
-              // Set KYC status from cache immediately to prevent flickering
-              if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-                setKycStatus('approved')
-              } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
-                setKycStatus('rejected')
-              } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
-                setKycStatus('in_review')
-              } else if (identitySubmission || addressSubmission) {
-                setKycStatus('pending')
-              } else {
-                setKycStatus(null)
-              }
-              setCheckingKyc(false) // We have cached status, can show UI
-            }
-          }
-        } catch (cacheError) {
-          console.error('Error loading KYC cache:', cacheError)
-        }
-        
-        // Then, check KYC submissions from database (most reliable) - fetch in background
-        try {
-          const submissions = await kycService.getByUserId(userId)
-          const identitySubmission = submissions.find(s => s.type === "identity")
-          const addressSubmission = submissions.find(s => s.type === "address")
-          
-          // Update cache
-          const CACHE_KEY = `easner_kyc_submissions_${userId}`
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-            value: submissions,
-            timestamp: Date.now()
-          }))
-          
-          // Check if both are approved
-          if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-            setKycStatus('approved')
-          } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
-            setKycStatus('rejected')
-          } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
-            setKycStatus('in_review')
-          } else if (identitySubmission || addressSubmission) {
-            setKycStatus('pending')
-          } else {
-            setKycStatus(null)
-          }
-        } catch (kycError) {
-          console.error('Error checking KYC submissions:', kycError)
-        } finally {
-          setCheckingKyc(false)
-        }
-        
-        // Check database directly for wallet/account IDs (fast, no API call)
-        try {
-          const { data: userProfile } = await supabase
+          const { data: userProfileData } = await supabase
             .from('users')
             .select('bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id, bridge_kyc_status')
             .eq('id', userId)
             .single()
           
-          if (userProfile) {
-            // Use Bridge KYC status if available (from webhook), otherwise keep submission status
-            if (userProfile.bridge_kyc_status && userProfile.bridge_kyc_status !== 'pending') {
-              setKycStatus(userProfile.bridge_kyc_status)
-            }
+          if (userProfileData) {
             
             // Check if wallet exists in database
-            if (userProfile.bridge_wallet_id) {
+            if (userProfileData.bridge_wallet_id) {
               setHasWalletInDb(true)
               // Try to get wallet address from database
               const { data: wallet } = await supabase
                 .from('bridge_wallets')
                 .select('address')
-                .eq('bridge_wallet_id', userProfile.bridge_wallet_id)
+                .eq('bridge_wallet_id', userProfileData.bridge_wallet_id)
                 .single()
               if (wallet?.address) {
                 setWalletAddress(wallet.address)
@@ -169,8 +123,8 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             
             // Check if virtual account exists in database
             const accountId = currencyLower === 'usd' 
-              ? userProfile.bridge_usd_virtual_account_id 
-              : userProfile.bridge_eur_virtual_account_id
+              ? userProfileData.bridge_usd_virtual_account_id 
+              : userProfileData.bridge_eur_virtual_account_id
             if (accountId) {
               setHasAccountInDb(true)
               // Try to get account details from database
@@ -199,7 +153,6 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
         
         // Try to fetch latest data from API (with timeout) - but don't block on errors
         // Only fetch if we don't have data from database
-        setCheckingKyc(false)
         
         // Fetch virtual account from API only if not in database (with timeout)
         // Note: This will be called for both USD and EUR, but we only fetch the current currency
@@ -289,77 +242,28 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
   // Refresh data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      // Refetch KYC status and account data when screen is focused
+      // Refetch account data when screen is focused
+      // KYC status is now derived from userProfile via getKycStatus()
       const refreshData = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession()
           const userId = session?.user?.id
           if (!userId) return
           
-          // First check cache to prevent flickering
-          try {
-            const CACHE_KEY = `easner_kyc_submissions_${userId}`
-            const cached = await AsyncStorage.getItem(CACHE_KEY)
-            
-            if (cached) {
-              const { value, timestamp } = JSON.parse(cached)
-              if (Date.now() - timestamp < 5 * 60 * 1000) {
-                const submissions = value as any[]
-                const identitySubmission = submissions.find(s => s.type === "identity")
-                const addressSubmission = submissions.find(s => s.type === "address")
-                
-                // Update status from cache first
-                if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-                  setKycStatus('approved')
-                } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
-                  setKycStatus('rejected')
-                } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
-                  setKycStatus('in_review')
-                } else if (identitySubmission || addressSubmission) {
-                  setKycStatus('pending')
-                }
-              }
-            }
-          } catch (cacheError) {
-            console.error('Error loading KYC cache on focus:', cacheError)
-          }
-          
-          // Then refresh KYC submissions from database
-          const submissions = await kycService.getByUserId(userId)
-          const identitySubmission = submissions.find(s => s.type === "identity")
-          const addressSubmission = submissions.find(s => s.type === "address")
-          
-          // Update cache
-          const CACHE_KEY = `easner_kyc_submissions_${userId}`
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-            value: submissions,
-            timestamp: Date.now()
-          }))
-          
-          if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-            setKycStatus('approved')
-          } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
-            setKycStatus('rejected')
-          } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
-            setKycStatus('in_review')
-          } else if (identitySubmission || addressSubmission) {
-            setKycStatus('pending')
-          }
-          
           // Refresh wallet/account IDs from database
-          const { data: userProfile } = await supabase
+          const { data: userProfileData } = await supabase
             .from('users')
-            .select('bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id')
+            .select('bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id, bridge_kyc_status')
             .eq('id', userId)
             .single()
           
-          if (userProfile) {
-            if (userProfile.bridge_wallet_id) {
+          if (userProfileData) {
+            if (userProfileData.bridge_wallet_id) {
               setHasWalletInDb(true)
               const { data: wallet } = await supabase
                 .from('bridge_wallets')
                 .select('address')
-                .eq('bridge_wallet_id', userProfile.bridge_wallet_id)
+                .eq('bridge_wallet_id', userProfileData.bridge_wallet_id)
                 .single()
               if (wallet?.address) {
                 setWalletAddress(wallet.address)
@@ -368,8 +272,8 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             
             const currencyLower = currency.toLowerCase() as 'usd' | 'eur'
             const accountId = currencyLower === 'usd' 
-              ? userProfile.bridge_usd_virtual_account_id 
-              : userProfile.bridge_eur_virtual_account_id
+              ? userProfileData.bridge_usd_virtual_account_id 
+              : userProfileData.bridge_eur_virtual_account_id
             if (accountId) {
               setHasAccountInDb(true)
               const { data: account } = await supabase
@@ -760,7 +664,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
           >
             {activeTab === 'bank' ? (
               <>
-                {!accountReady && !checkingKyc ? (
+                {!accountReady ? (
                   /* Show KYC notice when account is not ready */
                   <View style={styles.kycNoticeContainer}>
                     <View style={styles.kycNoticeIconContainer}>
@@ -776,7 +680,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                     <Text style={styles.kycNoticeText}>
                       {kycStatus === 'in_review'
                         ? 'Your verification is currently being reviewed. Once approved, your account information will appear here automatically.'
-                        : !kycStatus || kycStatus === 'pending'
+                        : !kycStatus
                         ? 'Complete your identity verification to receive your bank account details. Once approved, your account information will appear here automatically.'
                         : kycStatus === 'rejected'
                         ? 'Your verification was not approved. Please complete identity verification again to receive your account details.'
@@ -889,7 +793,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
               </>
             ) : (
               <>
-                {!walletReady && !checkingKyc ? (
+                {!walletReady ? (
                   /* Show KYC notice when wallet is not ready */
                   <View style={styles.kycNoticeContainer}>
                     <View style={styles.kycNoticeIconContainer}>
@@ -905,7 +809,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                     <Text style={styles.kycNoticeText}>
                       {kycStatus === 'in_review'
                         ? 'Your verification is currently being reviewed. Once approved, your wallet information will appear here automatically.'
-                        : !kycStatus || kycStatus === 'pending'
+                        : !kycStatus
                         ? `Complete your identity verification to receive your wallet address. Once approved, your wallet information will appear here automatically.`
                         : kycStatus === 'rejected'
                         ? 'Your verification was not approved. Please complete identity verification again to receive your wallet address.'

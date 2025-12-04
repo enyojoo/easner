@@ -104,7 +104,12 @@ export interface User {
   phone?: string
   base_currency: string
   status: "active" | "inactive"
-  verification_status: "pending" | "verified" | "rejected"
+  // verification_status removed - use bridge_kyc_status for KYC status
+  bridge_kyc_status?: string
+  bridge_customer_id?: string
+  bridge_kyc_rejection_reasons?: any
+  bridge_endorsements?: any
+  bridge_signed_agreement_id?: string
   created_at: string
   updated_at: string
 }
@@ -115,6 +120,12 @@ export interface AuthUser {
   email: string
   isAdmin: boolean
   profile: User
+  // Bridge KYC fields - also available at top level for easier access
+  bridge_kyc_status?: string
+  bridge_customer_id?: string
+  bridge_kyc_rejection_reasons?: any
+  bridge_endorsements?: any
+  bridge_signed_agreement_id?: string
 }
 
 export interface NavigationProps {

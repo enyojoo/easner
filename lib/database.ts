@@ -46,10 +46,11 @@ export const userService = {
 
     const { data: activeUsers } = await supabase.from("users").select("id", { count: "exact" }).eq("status", "active")
 
+    // Count users with approved Bridge KYC status
     const { data: verifiedUsers } = await supabase
       .from("users")
       .select("id", { count: "exact" })
-      .eq("verification_status", "verified")
+      .eq("bridge_kyc_status", "approved")
 
     return {
       total: totalUsers?.length || 0,
@@ -891,7 +892,15 @@ export const adminService = {
     }
 
     if (filters.verification && filters.verification !== "all") {
-      query = query.eq("verification_status", filters.verification)
+      // Map old verification_status values to bridge_kyc_status
+      const statusMap: Record<string, string> = {
+        "verified": "approved",
+        "pending": "not_started",
+        "rejected": "rejected",
+        "unverified": "not_started",
+      }
+      const bridgeKycStatus = statusMap[filters.verification] || filters.verification
+      query = query.eq("bridge_kyc_status", bridgeKycStatus)
     }
 
     if (filters.search) {

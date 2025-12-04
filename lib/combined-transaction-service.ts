@@ -142,17 +142,17 @@ export const combinedTransactionService = {
 
       // Fetch send transactions only (crypto_receive_transactions table removed)
       const sendTransactions = await adminService.getAllTransactions({
-        status: filters.status,
-        search: filters.search,
-        limit,
-      }).catch((error) => {
-        console.error("Error fetching send transactions in getAdminAllTransactions:", error)
-        console.error("Error message:", error?.message)
-        console.error("Error code:", error?.code)
-        console.error("Error details:", error?.details)
-        console.error("Error stack:", error?.stack)
-        return []
-      })
+          status: filters.status,
+          search: filters.search,
+          limit,
+        }).catch((error) => {
+          console.error("Error fetching send transactions in getAdminAllTransactions:", error)
+          console.error("Error message:", error?.message)
+          console.error("Error code:", error?.code)
+          console.error("Error details:", error?.details)
+          console.error("Error stack:", error?.stack)
+              return []
+            })
 
       const receiveTransactions: any[] = [] // No longer fetching receive transactions
 

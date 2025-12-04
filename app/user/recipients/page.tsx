@@ -473,39 +473,39 @@ export default function UserRecipientsPage() {
 
         {/* Add Recipient Button */}
         <div className="p-5 sm:p-6 pb-3 sm:pb-4">
-          <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Recipient
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-md mx-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Recipient</DialogTitle>
-              </DialogHeader>
-              <RecipientForm
-                formData={formData}
-                setFormData={setFormData}
-                error={error}
-                isSubmitting={isSubmitting}
-                currencies={currencies}
-                onSubmit={handleAddRecipient}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Recipient
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[95vw] max-w-md mx-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Recipient</DialogTitle>
+                </DialogHeader>
+                <RecipientForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  error={error}
+                  isSubmitting={isSubmitting}
+                  currencies={currencies}
+                  onSubmit={handleAddRecipient}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
 
         {/* Search Bar */}
         <div className="p-5 sm:p-6 pb-3 sm:pb-4">
-          <div className="relative">
+            <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              placeholder="Search recipients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              <Input
+                placeholder="Search recipients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 h-12 border-gray-300"
-            />
+              />
           </div>
         </div>
 
@@ -616,8 +616,8 @@ export default function UserRecipientsPage() {
                     {deleteErrors[recipient.id] && <p className="text-xs text-red-600">{deleteErrors[recipient.id]}</p>}
                   </div>
                 </div>
-                </CardContent>
-              </Card>
+          </CardContent>
+        </Card>
             ))
           )}
         </div>

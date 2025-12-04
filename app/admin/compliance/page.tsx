@@ -71,9 +71,7 @@ export default function AdminCompliancePage() {
   const [selectedUser, setSelectedUser] = useState<ComplianceUser | null>(null)
   const [userDetailsDialogOpen, setUserDetailsDialogOpen] = useState(false)
   const [countries, setCountries] = useState<any[]>([])
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const [approving, setApproving] = useState<string | null>(null)
-  const [sendingToBridge, setSendingToBridge] = useState<string | null>(null)
+  // Removed deleting, approving, sendingToBridge states - no longer needed for manual KYC approval
   const [initialized, setInitialized] = useState(false)
   const channelRef = useRef<any>(null)
   const [noticeDialog, setNoticeDialog] = useState<{ open: boolean; title: string; message: string; type: 'success' | 'error' }>({ open: false, title: '', message: '', type: 'success' })
@@ -270,7 +268,8 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const handleDeleteSubmission = async (submissionId: string, type: "identity" | "address") => {
+  // Removed handleDeleteSubmission - manual KYC approval no longer needed
+  const _handleDeleteSubmission = async (submissionId: string, type: "identity" | "address") => {
     if (!confirm(`Are you sure you want to delete this ${type} submission? The user will need to submit again.`)) {
       return
     }
@@ -306,7 +305,8 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const handleApproveSubmission = async (submissionId: string, type: "identity" | "address") => {
+  // Removed handleApproveSubmission - manual KYC approval no longer needed
+  const _handleApproveSubmission = async (submissionId: string, type: "identity" | "address") => {
     if (!selectedUser) return
 
     try {
@@ -334,7 +334,8 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const handleSetInReview = async (submissionId: string, type: "identity" | "address") => {
+  // Removed handleSetInReview - manual KYC approval no longer needed
+  const _handleSetInReview = async (submissionId: string, type: "identity" | "address") => {
     if (!selectedUser) return
 
     try {
@@ -362,7 +363,8 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const canSendToBridge = (user: ComplianceUser): boolean => {
+  // Removed canSendToBridge - users now do KYC directly through Bridge
+  const _canSendToBridge = (user: ComplianceUser): boolean => {
     return !!(
       user.identitySubmission &&
       user.addressSubmission &&
@@ -371,7 +373,8 @@ export default function AdminCompliancePage() {
     )
   }
 
-  const handleSendToBridge = async (userId: string) => {
+  // Removed handleSendToBridge - users now do KYC directly through Bridge
+  const _handleSendToBridge = async (userId: string) => {
     if (!confirm("Send this user's KYC data to Bridge? This will create their Bridge customer account.")) {
       return
     }
@@ -519,21 +522,7 @@ export default function AdminCompliancePage() {
     }
   }
 
-  const getVerificationStatus = (user: ComplianceUser) => {
-    const identity = user.identitySubmission
-    const address = user.addressSubmission
-
-    if (identity?.status === "approved" && address?.status === "approved") {
-      return <Badge className="bg-green-100 text-green-700">Verified</Badge>
-    }
-    if (identity?.status === "in_review" || address?.status === "in_review") {
-      return <Badge className="bg-yellow-100 text-yellow-700">In review</Badge>
-    }
-    if (identity || address) {
-      return <Badge className="bg-gray-100 text-gray-700">Pending</Badge>
-    }
-    return <Badge className="bg-gray-100 text-gray-700">Not started</Badge>
-  }
+  // Removed getVerificationStatus - now using bridge_kyc_status directly
 
   const getBridgeStatusColor = (status: string) => {
     switch (status) {
@@ -585,15 +574,19 @@ export default function AdminCompliancePage() {
     
     if (statusFilter === "all") return matchesSearch
     
-    const verificationStatus = getVerificationStatus(user)
+    // Filter by bridge_kyc_status
+    const bridgeKycStatus = user.bridge_kyc_status || "not_started"
     if (statusFilter === "verified") {
-      return matchesSearch && user.identitySubmission?.status === "approved" && user.addressSubmission?.status === "approved"
+      return matchesSearch && bridgeKycStatus === "approved"
     }
     if (statusFilter === "pending") {
-      return matchesSearch && (user.identitySubmission?.status === "pending" || user.addressSubmission?.status === "pending")
+      return matchesSearch && (bridgeKycStatus === "not_started" || bridgeKycStatus === "incomplete")
     }
     if (statusFilter === "in_review") {
-      return matchesSearch && (user.identitySubmission?.status === "in_review" || user.addressSubmission?.status === "in_review")
+      return matchesSearch && (bridgeKycStatus === "under_review" || bridgeKycStatus === "in_review")
+    }
+    if (statusFilter === "rejected") {
+      return matchesSearch && bridgeKycStatus === "rejected"
     }
     
     return matchesSearch
@@ -640,9 +633,10 @@ export default function AdminCompliancePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="in_review">In Review</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="verified">Approved</SelectItem>
+                  <SelectItem value="in_review">Under Review</SelectItem>
+                  <SelectItem value="pending">Pending/Not Started</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -652,9 +646,7 @@ export default function AdminCompliancePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Identity</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Verification Status</TableHead>
+                    <TableHead>Bridge KYC Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -665,16 +657,8 @@ export default function AdminCompliancePage() {
                         {user.first_name} {user.last_name}
                       </TableCell>
                       <TableCell>
-                        {user.identitySubmission
-                          ? getStatusBadge(user.identitySubmission.status)
-                          : <Badge className="bg-gray-100 text-gray-700">Not submitted</Badge>}
+                        {user.bridge_kyc_status ? getBridgeKycStatusBadge(user.bridge_kyc_status) : <Badge className="bg-gray-100 text-gray-700">Not Started</Badge>}
                       </TableCell>
-                      <TableCell>
-                        {user.addressSubmission
-                          ? getStatusBadge(user.addressSubmission.status)
-                          : <Badge className="bg-gray-100 text-gray-700">Not submitted</Badge>}
-                      </TableCell>
-                      <TableCell>{getVerificationStatus(user)}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
@@ -700,32 +684,7 @@ export default function AdminCompliancePage() {
               <DialogTitle>
                 Compliance Details - {selectedUser?.first_name} {selectedUser?.last_name}
               </DialogTitle>
-                {selectedUser && (canSendToBridge(selectedUser) || selectedUser.bridge_customer_id) && (
-                  <Button
-                    onClick={() => handleSendToBridge(selectedUser.id)}
-                    disabled={sendingToBridge === selectedUser.id || !!selectedUser.bridge_customer_id}
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-3 text-xs"
-                  >
-                    {selectedUser.bridge_customer_id ? (
-                      <>
-                        <CheckCircle className="h-3 w-3 mr-1.5 text-green-600" />
-                        Sent
-                      </>
-                    ) : sendingToBridge === selectedUser.id ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-3 w-3 mr-1.5" />
-                        Send to Bridge
-                      </>
-                    )}
-                  </Button>
-                )}
+                {/* Removed "Send to Bridge" button - users now do KYC directly through Bridge */}
               </div>
             </DialogHeader>
             {selectedUser && (
@@ -759,7 +718,41 @@ export default function AdminCompliancePage() {
                   )}
                 </div>
 
-                {/* Identity Verification */}
+                {/* Bridge KYC Status - Show prominently */}
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">Bridge KYC Status</h3>
+                  <div className="space-y-3">
+                    {selectedUser.bridge_kyc_status ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Status:</span>
+                        {getBridgeKycStatusBadge(selectedUser.bridge_kyc_status)}
+                      </div>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-700">Not Started</Badge>
+                    )}
+                    {selectedUser.bridge_customer_id && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Bridge Customer ID:</span>
+                        <span className="text-sm font-mono">{selectedUser.bridge_customer_id}</span>
+                      </div>
+                    )}
+                    {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                        <p className="text-sm text-red-700">
+                          {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
+                            ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
+                            : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
+                            ? selectedUser.bridge_kyc_rejection_reasons
+                            : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Identity Verification - Show only if Bridge KYC is approved */}
+                {selectedUser.bridge_kyc_status === "approved" && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Identity Verification</h3>
                   {selectedUser.identitySubmission ? (
@@ -810,9 +803,9 @@ export default function AdminCompliancePage() {
                                       : selectedUser.identitySubmission.id_document_url}
                                   </p>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                   onClick={async () => {
                                     const url = selectedUser.identitySubmission!.id_document_url!
                                     const isPath = url.startsWith("identity/") || url.startsWith("address/")
@@ -856,62 +849,33 @@ export default function AdminCompliancePage() {
                                     }
                                   }}
                                   className="h-7 px-2 text-xs flex-shrink-0"
-                                >
+                                  >
                                   <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
+                                    View
+                                  </Button>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                          {selectedUser.identitySubmission.status === "approved" ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSetInReview(selectedUser.identitySubmission!.id, "identity")}
-                              disabled={approving === selectedUser.identitySubmission.id || deleting === selectedUser.identitySubmission.id}
-                              className="text-xs h-7"
-                            >
-                              <RotateCcw className="h-3 w-3 mr-1" />
-                              In Review
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveSubmission(selectedUser.identitySubmission!.id, "identity")}
-                              disabled={approving === selectedUser.identitySubmission.id || deleting === selectedUser.identitySubmission.id}
-                              className="bg-green-600 hover:bg-green-700 text-white text-xs h-7"
-                            >
-                              <Check className="h-3 w-3 mr-1" />
-                              {approving === selectedUser.identitySubmission.id ? "..." : "Approve"}
-                            </Button>
-                          )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteSubmission(selectedUser.identitySubmission!.id, "identity")}
-                            disabled={deleting === selectedUser.identitySubmission.id || approving === selectedUser.identitySubmission.id}
-                            className="text-xs h-7"
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            {deleting === selectedUser.identitySubmission.id ? "..." : "Delete"}
-                          </Button>
-                        </div>
+                        {/* Removed manual approval buttons - KYC is now handled by Bridge */}
                       </div>
                     </div>
                   ) : (
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-                      <p className="text-gray-500 text-xs">No identity verification submitted</p>
+                      <p className="text-gray-500 text-xs">No identity verification data available</p>
                     </div>
                   )}
                 </div>
+                )}
 
-                {/* Bridge Integration */}
+                {/* Address Verification - Show only if Bridge KYC is approved */}
+                {selectedUser.bridge_kyc_status === "approved" && (
+
+                {/* Bridge Integration Details */}
                 {selectedUser && (
                   <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">Bridge Integration</h3>
+                      <h3 className="text-lg font-semibold">Bridge Integration Details</h3>
                       <Button
                         variant="outline"
                         size="sm"
@@ -985,29 +949,13 @@ export default function AdminCompliancePage() {
                             </div>
                           )}
                         </div>
-                      ) : canSendToBridge(selectedUser) ? (
-                        <div className="space-y-2">
-                          <Badge className="bg-gray-100 text-gray-700">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Ready to Send
-                          </Badge>
-                          <p className="text-sm text-gray-600">All requirements met. Click "Send to Bridge" button above.</p>
-                        </div>
                       ) : (
                         <div className="space-y-2">
                           <Badge className="bg-gray-100 text-gray-700">
                             <Clock className="h-3 w-3 mr-1" />
-                            Not Sent
+                            Not Started
                           </Badge>
-                          {!selectedUser.identitySubmission && (
-                            <p className="text-sm text-gray-600">⚠ Identity verification required</p>
-                          )}
-                          {!selectedUser.addressSubmission && (
-                            <p className="text-sm text-gray-600">⚠ Address verification required</p>
-                          )}
-                          {!selectedUser.bridge_signed_agreement_id && (
-                            <p className="text-sm text-gray-600">⚠ Terms of Service must be accepted</p>
-                          )}
+                          <p className="text-sm text-gray-600">User needs to complete Bridge KYC verification through the mobile app.</p>
                         </div>
                       )}
                       {webhookData && (
@@ -1040,9 +988,9 @@ export default function AdminCompliancePage() {
                                       ? webhookData.userStatus.bridge_kyc_rejection_reasons.join(", ")
                                       : webhookData.userStatus.bridge_kyc_rejection_reasons}
                                   </p>
-                                )}
-                              </div>
-                            )}
+                          )}
+                        </div>
+                      )}
                             {webhookData.webhookEvents && webhookData.webhookEvents.length > 0 && (
                               <div className="mt-2 pt-2 border-t border-blue-300">
                                 <p className="text-blue-800 font-medium mb-1">Recent Events:</p>
@@ -1110,9 +1058,9 @@ export default function AdminCompliancePage() {
                                       : selectedUser.addressSubmission.address_document_url}
                                   </p>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                   onClick={async () => {
                                     const url = selectedUser.addressSubmission!.address_document_url!
                                     const isPath = url.startsWith("identity/") || url.startsWith("address/")
@@ -1156,56 +1104,24 @@ export default function AdminCompliancePage() {
                                     }
                                   }}
                                   className="h-7 px-2 text-xs flex-shrink-0"
-                                >
+                                  >
                                   <Eye className="h-3 w-3 mr-1" />
-                                  View
-                                </Button>
+                                    View
+                                  </Button>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                          {selectedUser.addressSubmission.status === "approved" ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSetInReview(selectedUser.addressSubmission!.id, "address")}
-                              disabled={approving === selectedUser.addressSubmission.id || deleting === selectedUser.addressSubmission.id}
-                              className="text-xs h-7"
-                            >
-                              <RotateCcw className="h-3 w-3 mr-1" />
-                              In Review
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveSubmission(selectedUser.addressSubmission!.id, "address")}
-                              disabled={approving === selectedUser.addressSubmission.id || deleting === selectedUser.addressSubmission.id}
-                              className="bg-green-600 hover:bg-green-700 text-white text-xs h-7"
-                            >
-                              <Check className="h-3 w-3 mr-1" />
-                              {approving === selectedUser.addressSubmission.id ? "..." : "Approve"}
-                            </Button>
-                          )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteSubmission(selectedUser.addressSubmission!.id, "address")}
-                            disabled={deleting === selectedUser.addressSubmission.id || approving === selectedUser.addressSubmission.id}
-                            className="text-xs h-7"
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            {deleting === selectedUser.addressSubmission.id ? "..." : "Delete"}
-                          </Button>
-                        </div>
+                        {/* Removed manual approval buttons - KYC is now handled by Bridge */}
                       </div>
                     </div>
                   ) : (
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-                      <p className="text-gray-500 text-xs">No address verification submitted</p>
+                      <p className="text-gray-500 text-xs">No address verification data available</p>
                     </div>
                   )}
                 </div>
+                )}
               </div>
             )}
           </DialogContent>
