@@ -712,7 +712,6 @@ export default function AdminTransactionsPage() {
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
-                  <TableHead>Type</TableHead>
                   <TableHead>Transaction ID</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>User</TableHead>
@@ -731,11 +730,6 @@ export default function AdminTransactionsPage() {
                           handleSelectTransaction(transaction.transaction_id, checked as boolean)
                         }
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={transaction.type === "send" ? "default" : transaction.type === "card_funding" ? "outline" : "secondary"}>
-                        {transaction.type === "send" ? "Send" : transaction.type === "card_funding" ? "Card" : "Receive"}
-                      </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-sm">{transaction.transaction_id}</TableCell>
                     <TableCell>{formatDate(transaction.created_at)}</TableCell>
