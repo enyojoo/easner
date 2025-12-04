@@ -67,6 +67,7 @@ function countryCodeAlpha2ToAlpha3(alpha2: string): string {
  * Download file from Supabase storage and convert to base64
  */
 async function fileToBase64(filePath: string): Promise<string> {
+  console.log(`[BRIDGE-KYC-BUILDER] Converting file to base64: ${filePath}`)
   const serverClient = createServerClient()
   
   // Download file from storage
@@ -75,17 +76,26 @@ async function fileToBase64(filePath: string): Promise<string> {
     .download(filePath)
   
   if (error) {
-    throw new Error(`Failed to download file: ${error.message}`)
+    console.error(`[BRIDGE-KYC-BUILDER] ❌ Failed to download file from storage:`, {
+      filePath,
+      error: error.message,
+      statusCode: error.statusCode,
+    })
+    throw new Error(`Failed to download file from storage: ${error.message} (path: ${filePath})`)
   }
   
   if (!data) {
-    throw new Error("File data is empty")
+    console.error(`[BRIDGE-KYC-BUILDER] ❌ File data is empty for path: ${filePath}`)
+    throw new Error(`File data is empty for path: ${filePath}`)
   }
   
   // Convert blob to base64
   const arrayBuffer = await data.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
-  return buffer.toString('base64')
+  const base64 = buffer.toString('base64')
+  
+  console.log(`[BRIDGE-KYC-BUILDER] ✅ File converted to base64: ${filePath} (${base64.length} chars)`)
+  return base64
 }
 
 /**
@@ -365,13 +375,32 @@ export async function buildBridgeCustomerPayloadFromKyc(
     
     // Get proof of address document
     if (addressSubmission.address_document_url) {
+      console.log(`[BRIDGE-KYC-BUILDER] Converting address document to base64: ${addressSubmission.address_document_url}`)
       proofOfAddressBase64 = await fileToBase64(addressSubmission.address_document_url)
+      console.log(`[BRIDGE-KYC-BUILDER] ✅ Address document converted successfully (${proofOfAddressBase64.length} chars)`)
+    } else {
+      console.warn(`[BRIDGE-KYC-BUILDER] ⚠️ No address document URL found for address submission`)
     }
   } catch (error: any) {
-    console.error("Error converting documents to base64:", error)
-    // Continue without documents - Bridge may still accept the submission
-    // but this should be logged and potentially fail
+    console.error("[BRIDGE-KYC-BUILDER] ❌ Error converting documents to base64:", {
+      error: error.message,
+      stack: error.stack,
+      filePath: error.filePath || "unknown",
+    })
+    // Don't silently continue - throw error so it's visible
+    throw new Error(`Failed to convert document to base64: ${error.message}`)
   }
+  
+  // Log what documents we're sending
+  console.log(`[BRIDGE-KYC-BUILDER] Documents prepared for Bridge:`, {
+    hasPassport: !!passportFrontBase64,
+    hasNationalIdFront: !!nationalIdFrontBase64,
+    hasNationalIdBack: !!nationalIdBackBase64,
+    hasDlFront: !!dlFrontBase64,
+    hasDlBack: !!dlBackBase64,
+    hasProofOfAddress: !!proofOfAddressBase64,
+    idType,
+  })
   
   // Step 7: Build payload parameters
   const payloadParams: BuildCustomerPayloadParams = {

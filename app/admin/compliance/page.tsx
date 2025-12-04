@@ -795,21 +795,60 @@ export default function AdminCompliancePage() {
                               <span className="text-gray-500 min-w-[90px] text-xs">Submitted:</span>
                               <span className="text-gray-900 text-xs">{new Date(selectedUser.identitySubmission.created_at).toLocaleDateString()}</span>
                             </div>
-                            {selectedUser.identitySubmission.id_document_filename && (
-                              <div className="flex items-center gap-2 pt-1.5 border-t border-gray-200 mt-1.5">
-                                <FileText className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                                <span className="text-gray-700 text-xs truncate flex-1">{selectedUser.identitySubmission.id_document_filename}</span>
-                                {selectedUser.identitySubmission.id_document_url && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewFile(selectedUser.identitySubmission!.id_document_url!)}
-                                    className="h-6 px-2 text-xs flex-shrink-0"
-                                  >
-                                    <ExternalLink className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
-                                )}
+                            {selectedUser.identitySubmission.id_document_filename && selectedUser.identitySubmission.id_document_url && (
+                              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg mt-1.5 border-t border-gray-200 pt-2">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <FileText className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {selectedUser.identitySubmission.id_document_filename}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {selectedUser.identitySubmission.id_document_url.startsWith("identity/") || selectedUser.identitySubmission.id_document_url.startsWith("address/")
+                                      ? "Click View to access document"
+                                      : selectedUser.identitySubmission.id_document_url}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async () => {
+                                    const url = selectedUser.identitySubmission!.id_document_url!
+                                    const isPath = url.startsWith("identity/") || url.startsWith("address/")
+                                    
+                                    if (isPath) {
+                                      // Get signed URL from API
+                                      try {
+                                        const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
+                                          credentials: "include",
+                                        })
+                                        
+                                        if (response.ok) {
+                                          const data = await response.json()
+                                          if (data.url) {
+                                            window.open(data.url, "_blank")
+                                          } else {
+                                            alert("Failed to access document: No URL returned from server.")
+                                          }
+                                        } else {
+                                          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+                                          alert(`Failed to access document: ${errorData.error || response.statusText || "Please try again."}`)
+                                        }
+                                      } catch (error: any) {
+                                        console.error("Error fetching signed URL:", error)
+                                        alert(`Failed to access document: ${error.message || "Please try again."}`)
+                                      }
+                                    } else {
+                                      // Public URL - open directly
+                                      window.open(url, "_blank")
+                                    }
+                                  }}
+                                  className="h-7 px-2 text-xs flex-shrink-0"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -1045,21 +1084,60 @@ export default function AdminCompliancePage() {
                               <span className="text-gray-500 min-w-[90px] text-xs">Submitted:</span>
                               <span className="text-gray-900 text-xs">{new Date(selectedUser.addressSubmission.created_at).toLocaleDateString()}</span>
                             </div>
-                            {selectedUser.addressSubmission.address_document_filename && (
-                              <div className="flex items-center gap-2 pt-1.5 border-t border-gray-200 mt-1.5">
-                                <FileText className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                                <span className="text-gray-700 text-xs truncate flex-1">{selectedUser.addressSubmission.address_document_filename}</span>
-                                {selectedUser.addressSubmission.address_document_url && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleViewFile(selectedUser.addressSubmission!.address_document_url!)}
-                                    className="h-6 px-2 text-xs flex-shrink-0"
-                                  >
-                                    <ExternalLink className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
-                                )}
+                            {selectedUser.addressSubmission.address_document_filename && selectedUser.addressSubmission.address_document_url && (
+                              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg mt-1.5 border-t border-gray-200 pt-2">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <FileText className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {selectedUser.addressSubmission.address_document_filename}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {selectedUser.addressSubmission.address_document_url.startsWith("identity/") || selectedUser.addressSubmission.address_document_url.startsWith("address/")
+                                      ? "Click View to access document"
+                                      : selectedUser.addressSubmission.address_document_url}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async () => {
+                                    const url = selectedUser.addressSubmission!.address_document_url!
+                                    const isPath = url.startsWith("identity/") || url.startsWith("address/")
+                                    
+                                    if (isPath) {
+                                      // Get signed URL from API
+                                      try {
+                                        const response = await fetch(`/api/admin/kyc/documents?path=${encodeURIComponent(url)}`, {
+                                          credentials: "include",
+                                        })
+                                        
+                                        if (response.ok) {
+                                          const data = await response.json()
+                                          if (data.url) {
+                                            window.open(data.url, "_blank")
+                                          } else {
+                                            alert("Failed to access document: No URL returned from server.")
+                                          }
+                                        } else {
+                                          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+                                          alert(`Failed to access document: ${errorData.error || response.statusText || "Please try again."}`)
+                                        }
+                                      } catch (error: any) {
+                                        console.error("Error fetching signed URL:", error)
+                                        alert(`Failed to access document: ${error.message || "Please try again."}`)
+                                      }
+                                    } else {
+                                      // Public URL - open directly
+                                      window.open(url, "_blank")
+                                    }
+                                  }}
+                                  className="h-7 px-2 text-xs flex-shrink-0"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
                               </div>
                             )}
                           </div>

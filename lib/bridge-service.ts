@@ -1812,6 +1812,7 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       const frontImage = dlFrontBase64.startsWith('data:') ? dlFrontBase64 : `data:image/jpg;base64,${dlFrontBase64}`
       const backImage = dlBackBase64.startsWith('data:') ? dlBackBase64 : `data:image/jpg;base64,${dlBackBase64}`
       
+      console.log(`[BRIDGE-SERVICE] ✅ Adding driver's license to payload (front: ${frontImage.length} chars, back: ${backImage.length} chars)`)
       identifyingInformation.push({
         type: 'drivers_license',
         issuing_country: 'usa', // Bridge expects lowercase for issuing_country
@@ -1831,6 +1832,7 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       // Passport only needs front image
       const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
       
+      console.log(`[BRIDGE-SERVICE] ✅ Adding passport to payload (front: ${frontImage.length} chars)`)
       identifyingInformation.push({
         type: 'passport',
         issuing_country: issuingCountry,
@@ -1842,6 +1844,7 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       // National ID needs both front and back images
       const frontImage = nationalIdFrontBase64.startsWith('data:') ? nationalIdFrontBase64 : `data:image/jpg;base64,${nationalIdFrontBase64}`
       
+      console.log(`[BRIDGE-SERVICE] ✅ Adding national ID to payload (front: ${frontImage.length} chars${nationalIdBackBase64 ? `, back: ${nationalIdBackBase64.length} chars` : ', no back image'})`)
       const nationalIdEntry: any = {
         type: 'national_id',
         issuing_country: issuingCountry,
@@ -1888,7 +1891,9 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       purposes: ['proof_of_address'],
       file: addressImage,
     }]
-    console.log(`[BRIDGE-SERVICE] Added proof_of_address document to payload`)
+    console.log(`[BRIDGE-SERVICE] ✅ Added proof_of_address document to payload (${addressImage.length} chars)`)
+  } else {
+    console.warn(`[BRIDGE-SERVICE] ⚠️ No proof_of_address document provided`)
   }
 
   // Request endorsements (for USD/EUR virtual accounts)
