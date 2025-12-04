@@ -16,8 +16,10 @@ export function getAccessTokenFromRequest(request: NextRequest): string | null {
   // Get all cookies
   const allCookies = request.cookies.getAll()
   
-  // Log all cookie names for debugging
-  console.log("Checking cookies for auth token:", allCookies.map(c => c.name))
+  // Only log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Checking cookies for auth token:", allCookies.map(c => c.name))
+  }
   
   // Supabase stores session in cookies like: sb-<project-ref>-auth-token
   // The value is a JSON string containing: { access_token, refresh_token, expires_at, etc }

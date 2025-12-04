@@ -23,9 +23,11 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<Authen
     const token = getAccessTokenFromRequest(request)
     
     if (!token) {
-      console.log("No authentication token found")
-      const allCookies = request.cookies.getAll()
-      console.log("Available cookies:", allCookies.map(c => c.name))
+      if (process.env.NODE_ENV === 'development') {
+        console.log("No authentication token found")
+        const allCookies = request.cookies.getAll()
+        console.log("Available cookies:", allCookies.map(c => c.name))
+      }
       return null
     }
 
@@ -188,11 +190,28 @@ export function createSuccessResponse(data: any, status: number = 200) {
 
 /**
  * Wrap API handler with error handling
+ * Supports both handlers with and without params
+ * In Next.js 15, params can be a Promise, so we handle that
  */
-export function withErrorHandling(handler: (request: NextRequest) => Promise<Response>) {
-  return async (request: NextRequest): Promise<Response> => {
+export function withErrorHandling<T extends { params?: any } = {}>(
+  handler: (request: NextRequest, context?: T | Promise<T>) => Promise<Response>
+) {
+  return async (
+    request: NextRequest, 
+    context?: T | Promise<T>
+  ): Promise<Response> => {
     try {
-      return await handler(request)
+      // Handle async params in Next.js 15
+      let resolvedContext = context
+      if (context && typeof context === 'object' && 'then' in context) {
+        resolvedContext = await context as T
+      } else if (context && 'params' in context && context.params && typeof context.params === 'object' && 'then' in context.params) {
+        resolvedContext = {
+          ...context,
+          params: await context.params
+        } as T
+      }
+      return await handler(request, resolvedContext)
     } catch (error) {
       console.error("API Error:", error)
       

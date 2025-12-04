@@ -7,10 +7,15 @@ import { supabase } from "@/lib/supabase"
 
 export const GET = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context?: { params?: { id: string } }
 ) => {
   const user = await requireUser(request)
-  const transactionId = params.id
+  
+  if (!context?.params?.id) {
+    return createErrorResponse("Transaction ID is required", 400)
+  }
+  
+  const transactionId = context.params.id
 
   try {
     // First verify the transaction belongs to the user
