@@ -64,11 +64,30 @@ function countryCodeAlpha2ToAlpha3(alpha2: string): string {
 }
 
 /**
- * Download file from Supabase storage and convert to base64
+ * Get MIME type from file extension
  */
-async function fileToBase64(filePath: string): Promise<string> {
+function getMimeTypeFromPath(filePath: string): string {
+  const extension = filePath.toLowerCase().split('.').pop()
+  const mimeTypes: Record<string, string> = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'pdf': 'application/pdf',
+  }
+  return mimeTypes[extension || ''] || 'image/jpeg' // Default to JPEG if unknown
+}
+
+/**
+ * Download file from Supabase storage and convert to base64 with MIME type
+ * Returns object with base64 string and mimeType
+ */
+async function fileToBase64(filePath: string): Promise<{ base64: string; mimeType: string }> {
   console.log(`[BRIDGE-KYC-BUILDER] Converting file to base64: ${filePath}`)
   const serverClient = createServerClient()
+  
+  // Detect MIME type from file extension
+  const mimeType = getMimeTypeFromPath(filePath)
+  console.log(`[BRIDGE-KYC-BUILDER] Detected MIME type: ${mimeType} for file: ${filePath}`)
   
   // Download file from storage
   const { data, error } = await serverClient.storage
@@ -94,8 +113,8 @@ async function fileToBase64(filePath: string): Promise<string> {
   const buffer = Buffer.from(arrayBuffer)
   const base64 = buffer.toString('base64')
   
-  console.log(`[BRIDGE-KYC-BUILDER] ✅ File converted to base64: ${filePath} (${base64.length} chars)`)
-  return base64
+  console.log(`[BRIDGE-KYC-BUILDER] ✅ File converted to base64: ${filePath} (${base64.length} chars, type: ${mimeType})`)
+  return { base64, mimeType }
 }
 
 /**
@@ -316,13 +335,19 @@ export async function buildBridgeCustomerPayloadFromKyc(
   // Step 5: Extract identity fields
   const isUSA = addressCountryCode.toUpperCase() === 'US'
   
-  // Step 6: Convert documents to base64
+  // Step 6: Convert documents to base64 (with MIME types)
   let passportFrontBase64: string | undefined
+  let passportFrontMimeType: string | undefined
   let nationalIdFrontBase64: string | undefined
+  let nationalIdFrontMimeType: string | undefined
   let nationalIdBackBase64: string | undefined
+  let nationalIdBackMimeType: string | undefined
   let dlFrontBase64: string | undefined
+  let dlFrontMimeType: string | undefined
   let dlBackBase64: string | undefined
+  let dlBackMimeType: string | undefined
   let proofOfAddressBase64: string | undefined
+  let proofOfAddressMimeType: string | undefined
   
   // Get ID type from submission
   const idType = identitySubmission.id_type || parsedIdentityMetadata.idType
@@ -332,9 +357,12 @@ export async function buildBridgeCustomerPayloadFromKyc(
     if (isUSA) {
       if (parsedIdentityMetadata.dlFrontBase64) {
         dlFrontBase64 = parsedIdentityMetadata.dlFrontBase64
+        dlFrontMimeType = 'image/jpeg' // Default for metadata (usually images)
       } else if (identitySubmission.id_document_url) {
         // Fallback to uploaded file if not in metadata
-        dlFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
+        const result = await fileToBase64(identitySubmission.id_document_url)
+        dlFrontBase64 = result.base64
+        dlFrontMimeType = result.mimeType
       }
       
       if (parsedIdentityMetadata.dlBackBase64) {
@@ -347,11 +375,14 @@ export async function buildBridgeCustomerPayloadFromKyc(
         // Passport only needs front (Bridge requirement)
         if (parsedIdentityMetadata.passportFrontBase64) {
           passportFrontBase64 = parsedIdentityMetadata.passportFrontBase64
+          passportFrontMimeType = 'image/jpeg' // Default for metadata (usually images)
           console.log(`[BRIDGE-KYC-BUILDER] Using passport front from metadata`)
         } else if (identitySubmission.id_document_url) {
           // Fallback to uploaded file if not in metadata
-      passportFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
-          console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file`)
+          const result = await fileToBase64(identitySubmission.id_document_url)
+          passportFrontBase64 = result.base64
+          passportFrontMimeType = result.mimeType
+          console.log(`[BRIDGE-KYC-BUILDER] Converted passport front from uploaded file (${result.mimeType})`)
         }
       } else {
         // National ID or other ID types: Get from uploaded file
@@ -359,8 +390,10 @@ export async function buildBridgeCustomerPayloadFromKyc(
         if (identitySubmission.id_document_url) {
           // For now, we use the uploaded file as front
           // TODO: If mobile app starts storing front/back separately, update this
-          nationalIdFrontBase64 = await fileToBase64(identitySubmission.id_document_url)
-          console.log(`[BRIDGE-KYC-BUILDER] Converted national ID front from uploaded file`)
+          const result = await fileToBase64(identitySubmission.id_document_url)
+          nationalIdFrontBase64 = result.base64
+          nationalIdFrontMimeType = result.mimeType
+          console.log(`[BRIDGE-KYC-BUILDER] Converted national ID front from uploaded file (${result.mimeType})`)
         }
         
         // Check metadata for National ID images if stored separately
@@ -376,8 +409,10 @@ export async function buildBridgeCustomerPayloadFromKyc(
     // Get proof of address document
     if (addressSubmission.address_document_url) {
       console.log(`[BRIDGE-KYC-BUILDER] Converting address document to base64: ${addressSubmission.address_document_url}`)
-      proofOfAddressBase64 = await fileToBase64(addressSubmission.address_document_url)
-      console.log(`[BRIDGE-KYC-BUILDER] ✅ Address document converted successfully (${proofOfAddressBase64.length} chars)`)
+      const result = await fileToBase64(addressSubmission.address_document_url)
+      proofOfAddressBase64 = result.base64
+      proofOfAddressMimeType = result.mimeType
+      console.log(`[BRIDGE-KYC-BUILDER] ✅ Address document converted successfully (${result.base64.length} chars, type: ${result.mimeType})`)
     } else {
       console.warn(`[BRIDGE-KYC-BUILDER] ⚠️ No address document URL found for address submission`)
     }
@@ -426,16 +461,22 @@ export async function buildBridgeCustomerPayloadFromKyc(
     // ID documents
     dlNumber: parsedIdentityMetadata.dlNumber,
     dlFrontBase64: dlFrontBase64,
+    dlFrontMimeType: dlFrontMimeType,
     dlBackBase64: dlBackBase64,
+    dlBackMimeType: dlBackMimeType,
     passportNumber: parsedIdentityMetadata.passportNumber,
     passportFrontBase64: passportFrontBase64,
+    passportFrontMimeType: passportFrontMimeType,
     nationalIdNumber: parsedIdentityMetadata.nationalIdNumber,
     nationalIdFrontBase64: nationalIdFrontBase64,
+    nationalIdFrontMimeType: nationalIdFrontMimeType,
     nationalIdBackBase64: nationalIdBackBase64,
+    nationalIdBackMimeType: nationalIdBackMimeType,
     idType: idType, // Pass ID type to determine passport vs national_id
     
     // Proof of address (for EEA and international)
     proofOfAddressBase64: proofOfAddressBase64,
+    proofOfAddressMimeType: proofOfAddressMimeType,
     
     // Endorsements
     needsUSD,

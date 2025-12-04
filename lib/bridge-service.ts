@@ -330,7 +330,9 @@ interface BuildCustomerPayloadParams {
   ssn?: string
   dlNumber?: string
   dlFrontBase64?: string
+  dlFrontMimeType?: string
   dlBackBase64?: string
+  dlBackMimeType?: string
   phone?: string
   employmentStatus?: string
   expectedMonthly?: string
@@ -340,11 +342,15 @@ interface BuildCustomerPayloadParams {
   actingAsIntermediary?: string
   passportNumber?: string
   passportFrontBase64?: string
+  passportFrontMimeType?: string
   nationalIdNumber?: string
   nationalIdFrontBase64?: string
+  nationalIdFrontMimeType?: string
   nationalIdBackBase64?: string
+  nationalIdBackMimeType?: string
   idType?: string // 'passport', 'national_id', 'drivers_license', etc.
   proofOfAddressBase64?: string
+  proofOfAddressMimeType?: string
   needsUSD?: boolean
   needsEUR?: boolean
 }
@@ -1522,7 +1528,9 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     ssn,
     dlNumber,
     dlFrontBase64,
+    dlFrontMimeType,
     dlBackBase64,
+    dlBackMimeType,
     phone,
     employmentStatus,
     expectedMonthly,
@@ -1532,11 +1540,15 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     actingAsIntermediary,
     passportNumber,
     passportFrontBase64,
+    passportFrontMimeType,
     nationalIdNumber,
     nationalIdFrontBase64,
+    nationalIdFrontMimeType,
     nationalIdBackBase64,
+    nationalIdBackMimeType,
     idType,
     proofOfAddressBase64,
+    proofOfAddressMimeType,
     needsUSD = true,
     needsEUR = false,
   } = params
@@ -1808,9 +1820,12 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     
     // Driver's License (optional for US)
     if (dlNumber && dlFrontBase64 && dlBackBase64) {
-      // Ensure base64 strings have the data URI prefix
-      const frontImage = dlFrontBase64.startsWith('data:') ? dlFrontBase64 : `data:image/jpg;base64,${dlFrontBase64}`
-      const backImage = dlBackBase64.startsWith('data:') ? dlBackBase64 : `data:image/jpg;base64,${dlBackBase64}`
+      // Use provided MIME type or default to image/jpeg
+      const frontMimeType = dlFrontMimeType || 'image/jpeg'
+      const backMimeType = dlBackMimeType || 'image/jpeg'
+      // Ensure base64 strings have the data URI prefix with correct MIME type
+      const frontImage = dlFrontBase64.startsWith('data:') ? dlFrontBase64 : `data:${frontMimeType};base64,${dlFrontBase64}`
+      const backImage = dlBackBase64.startsWith('data:') ? dlBackBase64 : `data:${backMimeType};base64,${dlBackBase64}`
       
       console.log(`[BRIDGE-SERVICE] ✅ Adding driver's license to payload (front: ${frontImage.length} chars, back: ${backImage.length} chars)`)
       identifyingInformation.push({
@@ -1830,7 +1845,8 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
     // Check ID type to determine which document to add
     if (idType === 'passport' && passportNumber && passportFrontBase64) {
       // Passport only needs front image
-      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
+      const frontMimeType = passportFrontMimeType || 'image/jpeg'
+      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:${frontMimeType};base64,${passportFrontBase64}`
       
       console.log(`[BRIDGE-SERVICE] ✅ Adding passport to payload (front: ${frontImage.length} chars)`)
       identifyingInformation.push({
@@ -1842,9 +1858,10 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       console.log(`[BRIDGE-SERVICE] Added passport to identifying_information`)
     } else if ((idType === 'national_id' || !idType) && nationalIdNumber && nationalIdFrontBase64) {
       // National ID needs both front and back images
-      const frontImage = nationalIdFrontBase64.startsWith('data:') ? nationalIdFrontBase64 : `data:image/jpg;base64,${nationalIdFrontBase64}`
+      const frontMimeType = nationalIdFrontMimeType || 'image/jpeg'
+      const frontImage = nationalIdFrontBase64.startsWith('data:') ? nationalIdFrontBase64 : `data:${frontMimeType};base64,${nationalIdFrontBase64}`
       
-      console.log(`[BRIDGE-SERVICE] ✅ Adding national ID to payload (front: ${frontImage.length} chars${nationalIdBackBase64 ? `, back: ${nationalIdBackBase64.length} chars` : ', no back image'})`)
+      console.log(`[BRIDGE-SERVICE] ✅ Adding national ID to payload (front: ${frontImage.length} chars, type: ${frontMimeType}${nationalIdBackBase64 ? `, back: ${nationalIdBackBase64.length} chars` : ', no back image'})`)
       const nationalIdEntry: any = {
         type: 'national_id',
         issuing_country: issuingCountry,
@@ -1854,7 +1871,8 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       
       // Add back image if available
       if (nationalIdBackBase64) {
-        const backImage = nationalIdBackBase64.startsWith('data:') ? nationalIdBackBase64 : `data:image/jpg;base64,${nationalIdBackBase64}`
+        const backMimeType = nationalIdBackMimeType || 'image/jpeg'
+        const backImage = nationalIdBackBase64.startsWith('data:') ? nationalIdBackBase64 : `data:${backMimeType};base64,${nationalIdBackBase64}`
         nationalIdEntry.image_back = backImage
       }
       
@@ -1862,7 +1880,8 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
       console.log(`[BRIDGE-SERVICE] Added national ID to identifying_information`)
     } else if (passportNumber && passportFrontBase64) {
       // Fallback: if no idType specified but we have passport data, use it
-      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:image/jpg;base64,${passportFrontBase64}`
+      const frontMimeType = passportFrontMimeType || 'image/jpeg'
+      const frontImage = passportFrontBase64.startsWith('data:') ? passportFrontBase64 : `data:${frontMimeType};base64,${passportFrontBase64}`
       
       identifyingInformation.push({
         type: 'passport',
@@ -1884,14 +1903,16 @@ export function buildCustomerPayload(params: BuildCustomerPayloadParams): any {
 
   // Documents - Proof of address (Bridge expects this format)
   if (proofOfAddressBase64) {
-    // Ensure base64 string has the data URI prefix
-    const addressImage = proofOfAddressBase64.startsWith('data:') ? proofOfAddressBase64 : `data:image/jpg;base64,${proofOfAddressBase64}`
+    // Use provided MIME type or default to image/jpeg
+    const addressMimeType = proofOfAddressMimeType || 'image/jpeg'
+    // Ensure base64 string has the data URI prefix with correct MIME type
+    const addressImage = proofOfAddressBase64.startsWith('data:') ? proofOfAddressBase64 : `data:${addressMimeType};base64,${proofOfAddressBase64}`
     
     payload.documents = [{
       purposes: ['proof_of_address'],
       file: addressImage,
     }]
-    console.log(`[BRIDGE-SERVICE] ✅ Added proof_of_address document to payload (${addressImage.length} chars)`)
+    console.log(`[BRIDGE-SERVICE] ✅ Added proof_of_address document to payload (${addressImage.length} chars, type: ${addressMimeType})`)
   } else {
     console.warn(`[BRIDGE-SERVICE] ⚠️ No proof_of_address document provided`)
   }
