@@ -2,21 +2,23 @@
 // GET /api/admin/webhooks/check?userId=<userId>&customerId=<customerId>&eventType=<eventType>
 
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/auth-utils"
-import { supabase } from "@/lib/supabase"
+import { requireAdmin } from "@/lib/admin-auth-utils"
+import { createServerClient } from "@/lib/supabase"
 import { bridgeService } from "@/lib/bridge-service"
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin(request)
+    const adminUser = await requireAdmin(request)
+    console.log(`[WEBHOOK-CHECK] Admin ${adminUser.email} checking webhooks`)
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get("userId")
     const customerId = searchParams.get("customerId")
     const eventType = searchParams.get("eventType")
 
-    // Get webhook events from database
-    let query = supabase
+    // Get webhook events from database using service role client
+    const serverClient = createServerClient()
+    let query = serverClient
       .from("bridge_webhook_events")
       .select("*")
       .order("created_at", { ascending: false })
@@ -60,13 +62,16 @@ export async function GET(request: NextRequest) {
     // If userId provided, get user's current KYC status from database
     let userStatus = null
     if (userId) {
-      const { data: user } = await supabase
+      const { data: user, error: userError } = await serverClient
         .from("users")
         .select("id, email, bridge_customer_id, bridge_kyc_status, bridge_kyc_rejection_reasons, updated_at")
         .eq("id", userId)
         .single()
 
-      if (user) {
+      if (userError) {
+        console.error("[WEBHOOK-CHECK] Error fetching user:", userError)
+        userStatus = { error: userError.message }
+      } else if (user) {
         userStatus = {
           email: user.email,
           bridge_customer_id: user.bridge_customer_id,
@@ -90,9 +95,25 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Error checking webhook events:", error)
+    console.error("[WEBHOOK-CHECK] Error checking webhook events:", {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+    })
+    
+    // If it's an admin auth error, return 403
+    if (error.message === "Admin access required" || error.message?.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "Unauthorized - Admin access required" },
+        { status: 403 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: error.message || "Failed to check webhook events" },
+      { 
+        error: error.message || "Failed to check webhook events",
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
