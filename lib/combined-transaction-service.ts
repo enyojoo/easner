@@ -1,5 +1,5 @@
 // Combined Transaction Service - Merges send and receive transactions
-import { transactionService, adminService, cryptoReceiveTransactionService } from "./database"
+import { transactionService, adminService } from "./database"
 
 export interface CombinedTransaction {
   id: string
@@ -48,18 +48,14 @@ export const combinedTransactionService = {
   ): Promise<CombinedTransaction[]> {
     const limit = filters.limit || 100
 
-    // Fetch both types of transactions in parallel
+    // Fetch send transactions only (crypto_receive_transactions table removed)
     const [sendTransactions, receiveTransactions] = await Promise.all([
       transactionService.getByUserId(userId, limit, userId).catch((error) => {
         console.error("Error fetching send transactions:", error)
         return []
       }),
-      filters.type !== "send"
-        ? cryptoReceiveTransactionService.getByUser(userId, limit).catch((error) => {
-            console.error("Error fetching receive transactions:", error)
-            return []
-          })
-        : Promise.resolve([]),
+      // No longer fetching receive transactions
+      Promise.resolve([]),
     ])
 
     console.log("CombinedTransactionService - getUserAllTransactions:", {
@@ -144,37 +140,26 @@ export const combinedTransactionService = {
     try {
       const limit = filters.limit || 100
 
-      // Fetch both types in parallel
-      const [sendTransactions, receiveTransactions] = await Promise.all([
-        adminService.getAllTransactions({
-          status: filters.status,
-          search: filters.search,
-          limit,
-        }).catch((error) => {
-          console.error("Error fetching send transactions in getAdminAllTransactions:", error)
-          console.error("Error message:", error?.message)
-          console.error("Error code:", error?.code)
-          console.error("Error details:", error?.details)
-          console.error("Error stack:", error?.stack)
-          return []
-        }),
-        filters.type !== "send"
-          ? cryptoReceiveTransactionService.getAll({
-              status: filters.status,
-              search: filters.search,
-              limit,
-            }).catch((error) => {
-              console.error("Error fetching receive transactions:", error)
-              console.error("Error details:", error?.message, error?.stack)
-              return []
-            })
-          : Promise.resolve([]),
-      ])
+      // Fetch send transactions only (crypto_receive_transactions table removed)
+      const sendTransactions = await adminService.getAllTransactions({
+        status: filters.status,
+        search: filters.search,
+        limit,
+      }).catch((error) => {
+        console.error("Error fetching send transactions in getAdminAllTransactions:", error)
+        console.error("Error message:", error?.message)
+        console.error("Error code:", error?.code)
+        console.error("Error details:", error?.details)
+        console.error("Error stack:", error?.stack)
+        return []
+      })
+
+      const receiveTransactions: any[] = [] // No longer fetching receive transactions
 
       console.log("CombinedTransactionService - getAdminAllTransactions:", {
         filters,
         sendCount: sendTransactions?.length || 0,
-        receiveCount: receiveTransactions?.length || 0,
+        receiveCount: 0,
       })
 
       // Transform send transactions
