@@ -2,62 +2,65 @@
 // GET /api/admin/webhooks/check?userId=<userId>&customerId=<customerId>&eventType=<eventType>
 
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin, getAdminUser } from "@/lib/admin-auth-utils"
 import { createServerClient } from "@/lib/supabase"
-import { bridgeService } from "@/lib/bridge-service"
 import { createClient } from "@supabase/supabase-js"
+import { bridgeService } from "@/lib/bridge-service"
+import { getAccessTokenFromRequest } from "@/lib/supabase-server-helpers"
 
 export async function GET(request: NextRequest) {
   try {
-    // Log request details for debugging
-    const cookies = request.cookies.getAll()
-    const authHeader = request.headers.get("authorization")
-    console.log(`[WEBHOOK-CHECK] Request received`)
-    console.log(`[WEBHOOK-CHECK] Auth header present:`, !!authHeader)
-    console.log(`[WEBHOOK-CHECK] Cookies count:`, cookies.length)
-    console.log(`[WEBHOOK-CHECK] Cookie names:`, cookies.map(c => c.name))
+    // Use token-based authentication (same as getAdminUser)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     
-    // Try requireAdmin first (uses token from cookies)
-    let adminUser
-    try {
-      adminUser = await requireAdmin(request)
-      console.log(`[WEBHOOK-CHECK] Admin ${adminUser.email} checking webhooks`)
-    } catch (authError: any) {
-      console.warn(`[WEBHOOK-CHECK] requireAdmin failed, trying session-based auth:`, authError?.message)
-      
-      // Fallback: Try getAdminUser directly (might work even if requireAdmin failed)
-      try {
-        adminUser = await getAdminUser(request)
-        if (!adminUser) {
-          console.error(`[WEBHOOK-CHECK] getAdminUser returned null`)
-          return NextResponse.json(
-            { 
-              error: "Authentication failed",
-              message: "Admin access required"
-            },
-            { status: 401 }
-          )
-        }
-        console.log(`[WEBHOOK-CHECK] Admin authenticated via getAdminUser: ${adminUser.email}`)
-      } catch (fallbackError: any) {
-        console.error(`[WEBHOOK-CHECK] Fallback auth also failed:`, fallbackError?.message)
-        return NextResponse.json(
-          { 
-            error: "Authentication failed",
-            message: "Unable to verify admin access. Please ensure you are logged in as an admin."
-          },
-          { status: 401 }
-        )
-      }
+    // Get access token from cookies
+    const token = getAccessTokenFromRequest(request)
+    
+    if (!token) {
+      console.error("[WEBHOOK-CHECK] No authentication token found")
+      const allCookies = request.cookies.getAll()
+      console.log("[WEBHOOK-CHECK] Available cookies:", allCookies.map(c => c.name))
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
+
+    // Create anon client to verify token and get user
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
+    const { data: { user }, error: userError } = await anonClient.auth.getUser(token)
+    
+    if (userError || !user) {
+      console.error("[WEBHOOK-CHECK] Failed to get user from token:", userError?.message)
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
+    }
+
+    console.log("[WEBHOOK-CHECK] Authenticated user found:", user.id, user.email)
+    
+    // Check if user is admin by querying admin_users table using service role
+    const serverClient = createServerClient()
+    const { data: adminUser, error: adminError } = await serverClient
+      .from("admin_users")
+      .select("id, email, role, name, status")
+      .eq("id", user.id)
+      .single()
+    
+    if (adminError || !adminUser) {
+      console.error("[WEBHOOK-CHECK] User is not an admin:", adminError?.message)
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+
+    // Check if admin user is active (if status field exists)
+    if (adminUser.status && adminUser.status !== "active") {
+      console.error("[WEBHOOK-CHECK] Admin user is not active:", adminUser.status)
+      return NextResponse.json({ error: "Admin account is not active" }, { status: 403 })
+    }
+
+    console.log(`[WEBHOOK-CHECK] Admin ${adminUser.email} checking webhooks`)
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get("userId")
     const customerId = searchParams.get("customerId")
     const eventType = searchParams.get("eventType")
 
-    // Get webhook events from database using service role client
-    const serverClient = createServerClient()
+    // Get webhook events from database using service role client (already created above)
     let query = serverClient
       .from("bridge_webhook_events")
       .select("*")
