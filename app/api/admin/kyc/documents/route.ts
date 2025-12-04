@@ -30,18 +30,34 @@ export async function GET(request: NextRequest) {
 
     console.log(`Admin ${adminUser.email} requesting document: ${filePath}`)
 
-    // Since we've already verified the user is an admin, use service role key
-    // to bypass Storage RLS entirely. This is safe because:
-    // 1. We've verified admin status via getAdminUser()
-    // 2. Service role key bypasses all RLS policies
-    // 3. This ensures admins can always access files regardless of RLS configuration
-    const { createServerClient } = await import("@/lib/supabase")
-    const serverClient = createServerClient()
+    // Try using admin's authenticated session first (respects RLS policies)
+    // This uses the admin's auth token which should pass the RLS policy check
+    const { createServerSupabaseClient } = await import("@/lib/supabase-server-helpers")
+    const { client: adminClient } = createServerSupabaseClient(request)
     
-    // Generate signed URL using service role key (bypasses RLS)
-    const { data, error } = await serverClient.storage
+    let data, error
+    
+    // First try with admin's authenticated session (respects RLS)
+    const result = await adminClient.storage
       .from("kyc-documents")
       .createSignedUrl(filePath, 3600) // 1 hour expiry
+    
+    data = result.data
+    error = result.error
+    
+    // If that fails with 403, fall back to service role key
+    if (error && (error.statusCode === 403 || error.statusCode === "403" || error.message?.includes("Forbidden"))) {
+      console.log(`[ADMIN-DOCS] Admin session failed, trying service role key for: ${filePath}`)
+      const { createServerClient } = await import("@/lib/supabase")
+      const serverClient = createServerClient()
+      
+      const fallbackResult = await serverClient.storage
+        .from("kyc-documents")
+        .createSignedUrl(filePath, 3600)
+      
+      data = fallbackResult.data
+      error = fallbackResult.error
+    }
     
     if (error) {
       console.error("Error generating signed URL:", {
