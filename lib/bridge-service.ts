@@ -535,6 +535,66 @@ export const bridgeService = {
   },
 
   /**
+   * Create a new KYC link
+   * Uses POST /v0/kyc_links (Bridge production endpoint)
+   */
+  async createKycLink(
+    fullName: string,
+    email: string,
+    type: string = "individual"
+  ): Promise<{ kyc_link: string; tos_link: string; kyc_status: string; tos_status: string; customer_id?: string }> {
+    console.log(`[BRIDGE-SERVICE] createKycLink: Creating KYC link for ${email}`)
+    
+    try {
+      const endpoint = `/v0/kyc_links`
+      
+      const payload = {
+        full_name: fullName,
+        email,
+        type,
+      }
+      
+      console.log(`[BRIDGE-SERVICE] createKycLink: Using endpoint: ${endpoint}`, {
+        email,
+        type,
+        hasFullName: !!fullName,
+      })
+      
+      const response = await bridgeApiRequest<any>(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      
+      console.log(`[BRIDGE-SERVICE] createKycLink: Response received:`, {
+        hasResponse: !!response,
+        responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+        hasKycLink: !!(response?.kyc_link),
+        hasTosLink: !!(response?.tos_link),
+      })
+      
+      if (!response?.kyc_link) {
+        throw new Error('Bridge API returned invalid response: missing kyc_link field')
+      }
+      
+      if (!response?.tos_link) {
+        throw new Error('Bridge API returned invalid response: missing tos_link field')
+      }
+      
+      console.log(`[BRIDGE-SERVICE] createKycLink: Successfully created KYC link`)
+      return {
+        kyc_link: response.kyc_link,
+        tos_link: response.tos_link,
+        kyc_status: response.kyc_status || "not_started",
+        tos_status: response.tos_status || "pending",
+        customer_id: response.customer_id,
+      }
+    } catch (error: any) {
+      console.error(`[BRIDGE-SERVICE] createKycLink: Error creating KYC link:`, error.message)
+      throw error
+    }
+  },
+
+  /**
    * Get KYC link for an EXISTING customer (missing requirements)
    * Uses GET /v0/customers/{customerID}/kyc_link (Bridge production endpoint)
    */
