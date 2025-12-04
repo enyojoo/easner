@@ -860,7 +860,48 @@ export default function AdminCompliancePage() {
                 {/* Bridge Integration */}
                 {selectedUser && (
                   <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Bridge Integration</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Bridge Integration</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          setCheckingWebhooks(true)
+                          try {
+                            const url = selectedUser.bridge_customer_id
+                              ? `/api/admin/webhooks/check?userId=${selectedUser.id}&customerId=${selectedUser.bridge_customer_id}&eventType=kyc`
+                              : `/api/admin/webhooks/check?userId=${selectedUser.id}&eventType=kyc`
+                            const response = await fetch(url, { credentials: "include" })
+                            const data = await response.json()
+                            setWebhookData(data)
+                          } catch (error) {
+                            console.error("Error checking webhooks:", error)
+                            setNoticeDialog({
+                              open: true,
+                              title: "Error",
+                              message: "Failed to check webhook events",
+                              type: "error",
+                            })
+                          } finally {
+                            setCheckingWebhooks(false)
+                          }
+                        }}
+                        disabled={checkingWebhooks}
+                        className="h-7 text-xs"
+                      >
+                        {checkingWebhooks ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Checking...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-3 w-3 mr-1" />
+                            Check Webhooks
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     <div className="space-y-3">
                       {selectedUser.bridge_customer_id ? (
                         <div className="space-y-2">
@@ -869,45 +910,6 @@ export default function AdminCompliancePage() {
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Sent to Bridge
                             </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={async () => {
-                                setCheckingWebhooks(true)
-                                try {
-                                  const response = await fetch(
-                                    `/api/admin/webhooks/check?userId=${selectedUser.id}&customerId=${selectedUser.bridge_customer_id}&eventType=kyc`,
-                                    { credentials: "include" }
-                                  )
-                                  const data = await response.json()
-                                  setWebhookData(data)
-                                } catch (error) {
-                                  console.error("Error checking webhooks:", error)
-                                  setNoticeDialog({
-                                    open: true,
-                                    title: "Error",
-                                    message: "Failed to check webhook events",
-                                    type: "error",
-                                  })
-                                } finally {
-                                  setCheckingWebhooks(false)
-                                }
-                              }}
-                              disabled={checkingWebhooks}
-                              className="h-7 text-xs"
-                            >
-                              {checkingWebhooks ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                  Checking...
-                                </>
-                              ) : (
-                                <>
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  Check Webhooks
-                                </>
-                              )}
-                            </Button>
                           </div>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-gray-600">
@@ -930,42 +932,6 @@ export default function AdminCompliancePage() {
                                   ? selectedUser.bridge_kyc_rejection_reasons
                                   : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
                               </p>
-                            </div>
-                          )}
-                          {webhookData && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                              <p className="text-sm font-medium text-blue-800 mb-2">Webhook Events:</p>
-                              <div className="space-y-1 text-xs">
-                                <p className="text-blue-700">
-                                  Total Events: {webhookData.summary?.totalEvents || 0}
-                                </p>
-                                <p className="text-blue-700">
-                                  KYC Events: {webhookData.summary?.kycEvents || 0}
-                                </p>
-                                {webhookData.bridgeStatus && (
-                                  <div className="mt-2 pt-2 border-t border-blue-300">
-                                    <p className="text-blue-800 font-medium">Bridge API Status:</p>
-                                    <p className="text-blue-700">
-                                      KYC Status: {webhookData.bridgeStatus.kyc_status || "N/A"}
-                                    </p>
-                                  </div>
-                                )}
-                                {webhookData.webhookEvents && webhookData.webhookEvents.length > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-blue-300">
-                                    <p className="text-blue-800 font-medium mb-1">Recent Events:</p>
-                                    {webhookData.webhookEvents.slice(0, 5).map((event: any, idx: number) => (
-                                      <p key={idx} className="text-blue-700 text-xs">
-                                        • {event.event_type} ({new Date(event.created_at).toLocaleString()})
-                                      </p>
-                                    ))}
-                                  </div>
-                                )}
-                                {webhookData.summary?.kycEvents === 0 && (
-                                  <p className="text-orange-700 mt-2">
-                                    ⚠️ No KYC webhook events found. The webhook may have been missed.
-                                  </p>
-                                )}
-                              </div>
                             </div>
                           )}
                         </div>
@@ -992,6 +958,57 @@ export default function AdminCompliancePage() {
                           {!selectedUser.bridge_signed_agreement_id && (
                             <p className="text-sm text-gray-600">⚠ Terms of Service must be accepted</p>
                           )}
+                        </div>
+                      )}
+                      {webhookData && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                          <p className="text-sm font-medium text-blue-800 mb-2">Webhook Events:</p>
+                          <div className="space-y-1 text-xs">
+                            <p className="text-blue-700">
+                              Total Events: {webhookData.summary?.totalEvents || 0}
+                            </p>
+                            <p className="text-blue-700">
+                              KYC Events: {webhookData.summary?.kycEvents || 0}
+                            </p>
+                            {webhookData.bridgeStatus && (
+                              <div className="mt-2 pt-2 border-t border-blue-300">
+                                <p className="text-blue-800 font-medium">Bridge API Status:</p>
+                                <p className="text-blue-700">
+                                  KYC Status: {webhookData.bridgeStatus.kyc_status || "N/A"}
+                                </p>
+                              </div>
+                            )}
+                            {webhookData.userStatus && (
+                              <div className="mt-2 pt-2 border-t border-blue-300">
+                                <p className="text-blue-800 font-medium">User Status:</p>
+                                <p className="text-blue-700">
+                                  KYC Status: {webhookData.userStatus.bridge_kyc_status || "N/A"}
+                                </p>
+                                {webhookData.userStatus.bridge_kyc_rejection_reasons && (
+                                  <p className="text-blue-700 mt-1">
+                                    Rejection Reasons: {Array.isArray(webhookData.userStatus.bridge_kyc_rejection_reasons) 
+                                      ? webhookData.userStatus.bridge_kyc_rejection_reasons.join(", ")
+                                      : webhookData.userStatus.bridge_kyc_rejection_reasons}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {webhookData.webhookEvents && webhookData.webhookEvents.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-blue-300">
+                                <p className="text-blue-800 font-medium mb-1">Recent Events:</p>
+                                {webhookData.webhookEvents.slice(0, 5).map((event: any, idx: number) => (
+                                  <p key={idx} className="text-blue-700 text-xs">
+                                    • {event.event_type} ({new Date(event.created_at).toLocaleString()})
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                            {webhookData.summary?.kycEvents === 0 && (
+                              <p className="text-orange-700 mt-2">
+                                ⚠️ No KYC webhook events found. The webhook may have been missed.
+                              </p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
