@@ -398,36 +398,11 @@ class AdminDataStore {
         throw sendError
       }
 
-      // Load receive transactions
-      const { data: receiveTransactions, error: receiveError } = await supabase
-        .from("crypto_receive_transactions")
-        .select(`
-          *,
-          user:users(first_name, last_name, email)
-        `)
-        .order("created_at", { ascending: false })
-        .limit(200)
-
-      if (receiveError) {
-        console.error("AdminDataStore: Error loading receive transactions:", receiveError)
-        // Don't throw - continue with send transactions only
-      }
-
-      // Transform receive transactions to match send transaction structure
-      const transformedReceive = (receiveTransactions || []).map((tx: any) => ({
-        ...tx,
-        type: tx.destination_type === "card" ? "card_funding" : "receive",
-      }))
-
-      // Combine all transactions
-      const allTransactions = [
-        ...(sendTransactions || []).map((tx: any) => ({ ...tx, type: "send" })),
-        ...transformedReceive,
-      ]
+      // Only return send transactions (crypto_receive_transactions table removed)
+      const allTransactions = (sendTransactions || []).map((tx: any) => ({ ...tx, type: "send" }))
 
       console.log("AdminDataStore: Transactions loaded successfully:", {
         send: sendTransactions?.length || 0,
-        receive: receiveTransactions?.length || 0,
         total: allTransactions.length,
       })
       
@@ -825,31 +800,6 @@ class AdminDataStore {
         }
       })
 
-    // Subscribe to crypto_receive_transactions table changes (receive transactions)
-    const cryptoReceiveTransactionsChannel = supabase
-      .channel('admin-crypto-receive-transactions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'crypto_receive_transactions',
-        },
-        async (payload) => {
-          console.log('AdminDataStore: Crypto receive transaction change received via Realtime:', payload.eventType)
-          // Reload transactions and recalculate stats
-          await this.refreshTransactionsAndStats()
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('AdminDataStore: Subscribed to crypto_receive_transactions real-time updates')
-        } else if (status === 'CHANNEL_ERROR') {
-          // Realtime subscription failed - this is expected if Realtime is not enabled
-          // Auto-refresh will handle updates instead (silent fallback)
-        }
-      })
-
     // Subscribe to users table changes
     const usersChannel = supabase
       .channel('admin-users')
@@ -949,7 +899,6 @@ class AdminDataStore {
     // Store channels for cleanup
     this.realtimeChannels = [
       transactionsChannel,
-      cryptoReceiveTransactionsChannel,
       usersChannel,
       currenciesChannel,
       exchangeRatesChannel,
