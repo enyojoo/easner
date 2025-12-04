@@ -370,25 +370,26 @@ export default function UserSendPage() {
       return
     }
 
-      const fetchPaymentDetails = async () => {
-        setLoadingPaymentDetails(true)
-        setPaymentDetailsFetchAttempted(true)
-        try {
-          const ref = transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()
-          
-          // Add timeout to prevent hanging
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-          
-          const response = await fetch(
-            `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${ref}`,
-            {
-              credentials: "include",
-              signal: controller.signal,
-            }
-          )
-          
-          clearTimeout(timeoutId)
+    const fetchPaymentDetails = async () => {
+      setLoadingPaymentDetails(true)
+      setPaymentDetailsFetchAttempted(true)
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      try {
+        const ref = transactionId || (() => { const { generateTransactionId } = require("@/lib/transaction-id"); return generateTransactionId(); })()
+        
+        const response = await fetch(
+          `/api/transactions/payment-collection?currency=${sendCurrency}&amount=${sendAmount}&reference=${ref}`,
+          {
+            credentials: "include",
+            signal: controller.signal,
+          }
+        )
+        
+        clearTimeout(timeoutId)
         if (response.ok) {
           const data = await response.json()
           setVirtualAccountDetails(data.virtualAccount)
