@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Animated,
+  Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -303,12 +304,22 @@ const styles = StyleSheet.create({
     borderColor: '#E2E2E2',
     borderRadius: borderRadius.xl,
     backgroundColor: colors.background.primary,
+    minHeight: 48,
   },
   passwordInput: {
     flex: 1,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     color: colors.text.primary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   eyeButton: {
     padding: spacing[3],

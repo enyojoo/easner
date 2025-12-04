@@ -9,6 +9,7 @@ import {
   TextInput,
   Animated,
   ScrollView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { 
@@ -605,8 +606,10 @@ function TransactionsContent({ navigation }: NavigationProps) {
           style={styles.searchInput}
           value={searchTerm}
           onChangeText={setSearchTerm}
-              placeholder="Search by name or ID..."
-              placeholderTextColor={colors.neutral[400]}
+          placeholder="Search by name or ID..."
+          placeholderTextColor={colors.neutral[400]}
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
         />
             {searchTerm.length > 0 && (
               <TouchableOpacity onPress={() => setSearchTerm('')}>

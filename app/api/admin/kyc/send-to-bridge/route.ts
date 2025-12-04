@@ -61,15 +61,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already has a Bridge customer
-    if (targetUser.bridge_customer_id) {
-      return NextResponse.json(
-        { error: "User already has a Bridge customer. Customer ID: " + targetUser.bridge_customer_id },
-        { status: 400 }
-      )
-    }
-
     // Check if user has TOS signed
+    // Note: If user already has a bridge_customer_id, initializeBridgeAccount will update the customer
+    // with the latest KYC data instead of creating a new one
     if (!targetUser.bridge_signed_agreement_id) {
       return NextResponse.json(
         { error: "User must accept Terms of Service before sending KYC to Bridge" },

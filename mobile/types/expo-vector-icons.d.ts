@@ -24,3 +24,5 @@ declare module '@expo/vector-icons' {
   export class Zocial extends Component<IconProps> {}
 }
 
+
+

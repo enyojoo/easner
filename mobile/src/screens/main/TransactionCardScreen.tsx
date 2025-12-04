@@ -7,6 +7,7 @@ import {
   ScrollView,
   RefreshControl,
   TextInput,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { 
@@ -235,6 +236,8 @@ export default function TransactionCardScreen({ navigation }: NavigationProps) {
               onChangeText={setSearchTerm}
               placeholder="Search by merchant or ID..."
               placeholderTextColor={colors.neutral[400]}
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
             {searchTerm.length > 0 && (
               <TouchableOpacity onPress={() => setSearchTerm('')}>

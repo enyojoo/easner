@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Linking,
   Animated,
+  Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -303,12 +304,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
     backgroundColor: '#ffffff',
   },
   textArea: {
     height: 100,
+    lineHeight: 22,
+    textAlignVertical: 'top',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   sendButton: {
     backgroundColor: '#007ACC',

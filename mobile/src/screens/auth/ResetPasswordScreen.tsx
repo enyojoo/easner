@@ -353,12 +353,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border.light,
     borderRadius: borderRadius.xl,
     backgroundColor: colors.background.primary,
+    minHeight: 48,
   },
   passwordInput: {
     flex: 1,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     color: colors.text.primary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   eyeButton: {
     padding: spacing[2],

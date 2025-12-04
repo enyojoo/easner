@@ -13,6 +13,8 @@ import {
   Image,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -518,6 +520,8 @@ function RecipientsContent({ navigation }: NavigationProps) {
                 onChangeText={setSearchTerm}
                 placeholder="Search recipients..."
                 placeholderTextColor={colors.text.secondary}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
               />
               {searchTerm.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchTerm('')}>
@@ -613,7 +617,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
           resetForm()
         }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
@@ -688,6 +696,8 @@ function RecipientsContent({ navigation }: NavigationProps) {
                         placeholderTextColor={colors.neutral[400]}
                         value={currencySearchTerm}
                         onChangeText={setCurrencySearchTerm}
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
                       />
                     </View>
                     <ScrollView 
@@ -735,6 +745,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                   }}
                   onBlur={() => validateField('fullName', newRecipient.fullName)}
                   placeholder="Account Name *"
+                  placeholderTextColor={colors.text.secondary}
+                  autoCapitalize="words"
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                   editable={!isSubmitting}
                 />
                 {fieldErrors.fullName && (
@@ -768,6 +782,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                         }}
                         onBlur={() => validateField('bankName', newRecipient.bankName)}
                         placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                        placeholderTextColor={colors.text.secondary}
+                        autoCapitalize="words"
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
                         editable={!isSubmitting}
                       />
                       {fieldErrors.bankName && (
@@ -789,8 +807,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             }}
                             onBlur={() => validateField('routingNumber', newRecipient.routingNumber)}
                             placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                            placeholderTextColor={colors.text.secondary}
                             keyboardType="numeric"
                             maxLength={9}
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                           {fieldErrors.routingNumber && (
@@ -808,6 +829,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             }}
                             onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                             placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                            placeholderTextColor={colors.text.secondary}
+                            keyboardType="numeric"
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                           {fieldErrors.accountNumber && (
@@ -832,8 +857,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                               }}
                               onBlur={() => validateField('sortCode', newRecipient.sortCode.replace(/-/g, ''))}
                               placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                              placeholderTextColor={colors.text.secondary}
                               keyboardType="numeric"
                               maxLength={8}
+                              returnKeyType="done"
+                              onSubmitEditing={() => Keyboard.dismiss()}
                               editable={!isSubmitting}
                             />
                             {fieldErrors.sortCode && (
@@ -851,6 +879,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                               }}
                               onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                               placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                              placeholderTextColor={colors.text.secondary}
+                              keyboardType="numeric"
+                              returnKeyType="done"
+                              onSubmitEditing={() => Keyboard.dismiss()}
                               editable={!isSubmitting}
                             />
                             {fieldErrors.accountNumber && (
@@ -869,6 +901,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             }}
                             onBlur={() => validateField('iban', newRecipient.iban)}
                             placeholder={accountConfig.fieldLabels.iban}
+                            placeholderTextColor={colors.text.secondary}
+                            autoCapitalize="characters"
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                           {fieldErrors.iban && (
@@ -880,6 +916,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.swiftBic}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.swift_bic}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -899,6 +939,8 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             }}
                             onBlur={() => validateField('iban', newRecipient.iban)}
                             placeholder={`${accountConfig.fieldLabels.iban} *`}
+                            placeholderTextColor={colors.text.secondary}
+                            autoCapitalize="characters"
                             editable={!isSubmitting}
                           />
                           {fieldErrors.iban && (
@@ -910,6 +952,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.swiftBic}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.swift_bic}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -928,6 +974,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           }}
                           onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                           placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          placeholderTextColor={colors.text.secondary}
+                          keyboardType="numeric"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         {fieldErrors.accountNumber && (
@@ -964,7 +1014,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
               </View>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Recipient Modal */}
@@ -976,7 +1026,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
           setShowEditRecipient(false)
         }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
@@ -1061,6 +1115,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                       value={newRecipient.bankName}
                       onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
                       placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                      placeholderTextColor={colors.text.secondary}
+                      autoCapitalize="words"
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
                       editable={!isSubmitting}
                     />
 
@@ -1075,8 +1133,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             setNewRecipient(prev => ({ ...prev, routingNumber: value }))
                           }}
                           placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                          placeholderTextColor={colors.text.secondary}
                           keyboardType="numeric"
                           maxLength={9}
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         <TextInput
@@ -1084,6 +1145,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.accountNumber}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                           placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          placeholderTextColor={colors.text.secondary}
+                          keyboardType="numeric"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -1101,8 +1166,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                               setNewRecipient(prev => ({ ...prev, sortCode: value }))
                             }}
                             placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                            placeholderTextColor={colors.text.secondary}
                             keyboardType="numeric"
                             maxLength={6}
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                           <TextInput
@@ -1110,6 +1178,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             value={newRecipient.accountNumber}
                             onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                             placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                            placeholderTextColor={colors.text.secondary}
+                            keyboardType="numeric"
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                         </View>
@@ -1118,6 +1190,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.iban}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.iban}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         <TextInput
@@ -1125,6 +1201,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.swiftBic}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.swift_bic}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -1138,6 +1218,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.iban}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
                           placeholder={`${accountConfig.fieldLabels.iban} *`}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         <TextInput
@@ -1145,6 +1229,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           value={newRecipient.swiftBic}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.swift_bic}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -1157,6 +1245,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                         value={newRecipient.accountNumber}
                         onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                         placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                        placeholderTextColor={colors.text.secondary}
+                        keyboardType="numeric"
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
                         editable={!isSubmitting}
                       />
                     )}
@@ -1187,7 +1279,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
               </View>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Delete Confirmation Dialog */}
@@ -1454,7 +1546,7 @@ const styles = StyleSheet.create({
     maxHeight: 500,
   },
   modalScrollContent: {
-    paddingBottom: spacing[4],
+    paddingBottom: spacing[8],
     flexGrow: 1,
   },
   modalContent: {
@@ -1462,15 +1554,25 @@ const styles = StyleSheet.create({
     paddingTop: spacing[4],
   },
   modalInput: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.frame.border,
     borderRadius: borderRadius.lg,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     marginBottom: spacing[2],
     backgroundColor: colors.frame.background,
     fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   modalInputError: {
     borderColor: colors.error.main,

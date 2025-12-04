@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -453,10 +454,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.light,
     borderRadius: borderRadius.xl,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   otpContainer: {
     flexDirection: 'row',

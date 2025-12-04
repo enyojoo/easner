@@ -13,6 +13,7 @@ import {
   Dimensions,
   Modal,
   Image,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -594,6 +595,8 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
                     value={note}
                     onChangeText={setNote}
                     multiline={false}
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
                 
@@ -1244,6 +1247,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     // Allow text to scale down
     includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   amountInputDisabled: {
     color: colors.text.secondary,
@@ -1330,6 +1334,14 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   keypadContainer: {
     width: '100%',

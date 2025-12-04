@@ -12,6 +12,8 @@ import {
   FlatList,
   Animated,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as DocumentPicker from 'expo-document-picker'
@@ -600,6 +602,9 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                     onChangeText={setAddressLine1}
                     placeholder="Enter street address"
                     placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
 
@@ -611,6 +616,9 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                     onChangeText={setAddressLine2}
                     placeholder="Apartment, suite, unit, etc."
                     placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
 
@@ -622,6 +630,9 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                     onChangeText={setCity}
                     placeholder="Enter city"
                     placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
 
@@ -633,6 +644,9 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                     onChangeText={setState}
                     placeholder="Enter state or province (if applicable)"
                     placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
 
@@ -644,6 +658,10 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                     onChangeText={setPostalCode}
                     placeholder="Enter postal code"
                     placeholderTextColor={colors.text.secondary}
+                    keyboardType="default"
+                    autoCapitalize="characters"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
 
@@ -716,31 +734,48 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
         visible={showCountryPicker}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowCountryPicker(false)}
+        onRequestClose={() => {
+          setShowCountryPicker(false)
+          setCountrySearch('') // Clear search when closing
+        }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setShowCountryPicker(false)}
+            onPress={() => {
+              setShowCountryPicker(false)
+              setCountrySearch('') // Clear search when closing
+            }}
           />
-          <View style={styles.modalContent}>
+          <View style={styles.modalContentLarge}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Country</Text>
               <TouchableOpacity 
-                onPress={() => setShowCountryPicker(false)}
+                onPress={() => {
+                  setShowCountryPicker(false)
+                  setCountrySearch('') // Clear search when closing
+                }}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search countries..."
-              value={countrySearch}
-              onChangeText={setCountrySearch}
-              placeholderTextColor={colors.text.secondary}
-            />
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search countries..."
+                value={countrySearch}
+                onChangeText={setCountrySearch}
+                placeholderTextColor={colors.text.secondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
             <FlatList
               data={filteredCountries}
               keyExtractor={(item) => item.code}
@@ -750,18 +785,25 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                   onPress={() => {
                     setSelectedCountry(item.code)
                     setShowCountryPicker(false)
-                    setCountrySearch('')
-                      // Reset document type when country changes
-                      setSelectedDocumentType('')
+                    setCountrySearch('') // Clear search when selecting
+                    // Reset document type when country changes
+                    setSelectedDocumentType('')
                   }}
                 >
                   <Text style={styles.countryFlag}>{item.flag_emoji}</Text>
                   <Text style={styles.countryName}>{item.name}</Text>
                 </TouchableOpacity>
               )}
+              keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No countries found</Text>
+                </View>
+              }
+              style={styles.occupationList}
             />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Document Type Picker Modal */}
@@ -801,6 +843,7 @@ function AddressVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -919,13 +962,23 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border.light,
     borderRadius: borderRadius.md,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   textArea: {
     minHeight: 100,
@@ -1086,13 +1139,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalContentLarge: {
+    backgroundColor: colors.background.primary,
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    height: '90%',
+    paddingTop: spacing[2],
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
+  },
+  searchInputContainer: {
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[3],
+  },
   searchInput: {
     borderWidth: 1,
     borderColor: colors.border.light,
     borderRadius: borderRadius.md,
     padding: spacing[3],
-    margin: spacing[5],
-    marginBottom: 0,
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
@@ -1112,6 +1185,18 @@ const styles = StyleSheet.create({
   countryName: {
     ...textStyles.bodyMedium,
     color: colors.text.primary,
+  },
+  occupationList: {
+    flex: 1,
+  },
+  emptyContainer: {
+    padding: spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
 })
 

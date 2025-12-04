@@ -249,6 +249,8 @@ export default function MobileMoneyScreen({ navigation, route }: NavigationProps
                   placeholderTextColor={colors.text.secondary}
                   keyboardType="phone-pad"
                   maxLength={isGhana || isKenya ? 15 : 20}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
               </View>
             </View>

@@ -12,6 +12,8 @@ import {
   Image,
   Modal,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -414,7 +416,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
           resetForm()
         }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
@@ -533,6 +539,9 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                 value={newRecipient.fullName}
                 onChangeText={(text) => setNewRecipient(prev => ({ ...prev, fullName: text }))}
                 placeholder="Account Name *"
+                placeholderTextColor={colors.text.secondary}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
                 editable={!isSubmitting}
               />
 
@@ -557,6 +566,9 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                       value={newRecipient.bankName}
                       onChangeText={(text) => setNewRecipient(prev => ({ ...prev, bankName: text }))}
                       placeholder={`${accountConfig.fieldLabels.bank_name} *`}
+                      placeholderTextColor={colors.text.secondary}
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
                       editable={!isSubmitting}
                     />
 
@@ -571,8 +583,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                             setNewRecipient(prev => ({ ...prev, routingNumber: value }))
                           }}
                           placeholder={`${accountConfig.fieldLabels.routing_number} *`}
+                          placeholderTextColor={colors.text.secondary}
                           keyboardType="numeric"
                           maxLength={9}
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         <TextInput
@@ -580,6 +595,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                           value={newRecipient.accountNumber}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                           placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                          placeholderTextColor={colors.text.secondary}
+                          keyboardType="numeric"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -597,8 +616,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                               setNewRecipient(prev => ({ ...prev, sortCode: value }))
                             }}
                             placeholder={`${accountConfig.fieldLabels.sort_code} *`}
+                            placeholderTextColor={colors.text.secondary}
                             keyboardType="numeric"
                             maxLength={6}
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                           <TextInput
@@ -606,6 +628,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                             value={newRecipient.accountNumber}
                             onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                             placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                            placeholderTextColor={colors.text.secondary}
+                            keyboardType="numeric"
+                            returnKeyType="done"
+                            onSubmitEditing={() => Keyboard.dismiss()}
                             editable={!isSubmitting}
                           />
                         </View>
@@ -614,6 +640,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                           value={newRecipient.iban}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, iban: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.iban}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                         <TextInput
@@ -621,6 +651,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                           value={newRecipient.swiftBic}
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, swiftBic: text.toUpperCase() }))}
                           placeholder={accountConfig.fieldLabels.swift_bic}
+                          placeholderTextColor={colors.text.secondary}
+                          autoCapitalize="characters"
+                          returnKeyType="done"
+                          onSubmitEditing={() => Keyboard.dismiss()}
                           editable={!isSubmitting}
                         />
                       </>
@@ -653,6 +687,10 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                         value={newRecipient.accountNumber}
                         onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                         placeholder={`${accountConfig.fieldLabels.account_number} *`}
+                        placeholderTextColor={colors.text.secondary}
+                        keyboardType="numeric"
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
                         editable={!isSubmitting}
                       />
                     )}
@@ -685,7 +723,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               </View>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenWrapper>
   )
@@ -749,6 +787,14 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   addButton: {
     flexDirection: 'row',
@@ -972,7 +1018,7 @@ const styles = StyleSheet.create({
     maxHeight: 500,
   },
   modalScrollContent: {
-    paddingBottom: spacing[4],
+    paddingBottom: spacing[8],
     flexGrow: 1,
   },
   modalContent: {
@@ -983,12 +1029,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E2E2',
     borderRadius: borderRadius.lg,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     marginBottom: spacing[4],
     backgroundColor: '#F9F9F9',
     fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1082,6 +1138,14 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     paddingVertical: spacing[1],
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   currencyDropdownList: {
     maxHeight: 180,

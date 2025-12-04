@@ -11,6 +11,7 @@ import {
   FlatList,
   Animated,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -134,6 +135,8 @@ function ProfileEditContent({ navigation }: NavigationProps) {
           onChangeText={onChangeText}
           placeholder={`Enter ${label.toLowerCase()}`}
           placeholderTextColor={colors.text.tertiary}
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
           editable={editable}
         />
       ) : (

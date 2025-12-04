@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -246,6 +247,8 @@ export default function AuthScreen({ navigation }: NavigationProps) {
                     placeholder="Enter your first name"
                     placeholderTextColor={colors.text.secondary}
                     autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
                 <View style={styles.inputContainer}>
@@ -257,6 +260,8 @@ export default function AuthScreen({ navigation }: NavigationProps) {
                     placeholder="Enter your last name"
                     placeholderTextColor={colors.text.secondary}
                     autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               </>
@@ -273,6 +278,8 @@ export default function AuthScreen({ navigation }: NavigationProps) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
               />
             </View>
 
@@ -486,10 +493,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.light,
     borderRadius: borderRadius.xl,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -498,12 +515,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border.light,
     borderRadius: borderRadius.xl,
     backgroundColor: colors.background.primary,
+    minHeight: 48,
   },
   passwordInput: {
     flex: 1,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     color: colors.text.primary,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   eyeButton: {
     padding: spacing[2],

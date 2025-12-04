@@ -12,6 +12,8 @@ import {
   FlatList,
   Animated,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Ionicons } from '@expo/vector-icons'
@@ -25,9 +27,10 @@ import { NavigationProps, KYCSubmission } from '../../types'
 import { kycService } from '../../lib/kycService'
 import { countryService, Country, getCountryFlag } from '../../lib/countryService'
 import { getIdTypesForCountry, getIdTypeLabel } from '../../lib/countryIdTypes'
-import { isUSACountry, isEEACountry, getBridgeRequiredFields, EMPLOYMENT_STATUS_OPTIONS, EXPECTED_MONTHLY_OPTIONS, ACCOUNT_PURPOSE_OPTIONS, SOURCE_OF_FUNDS_OPTIONS } from '../../lib/bridgeKycHelpers'
+import { isUSACountry, isEEACountry, getBridgeRequiredFields, EMPLOYMENT_STATUS_OPTIONS, EXPECTED_MONTHLY_OPTIONS, ACCOUNT_PURPOSE_OPTIONS, SOURCE_OF_FUNDS_OPTIONS, OCCUPATION_OPTIONS, getKycOptions } from '../../lib/bridgeKycHelpers'
 import { countryCodeAlpha2ToAlpha3 } from '../../lib/bridgeHelpers'
 import { fileToBase64 } from '../../lib/fileUtils'
+import { apiGet } from '../../lib/apiClient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 import { HapticButton } from '../../components/premium'
@@ -50,6 +53,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
   const [showCountryPicker, setShowCountryPicker] = useState(false)
   const [showIdTypePicker, setShowIdTypePicker] = useState(false)
   const [countrySearch, setCountrySearch] = useState('')
+  const [occupationSearch, setOccupationSearch] = useState('')
   
   // Bridge-specific fields - US
   const [ssn, setSsn] = useState('')
@@ -70,7 +74,13 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
   
   // Bridge-specific fields - International only (non-US, non-EEA)
   const [mostRecentOccupation, setMostRecentOccupation] = useState('')
-  const [actingAsIntermediary, setActingAsIntermediary] = useState('')
+  const [actingAsIntermediary, setActingAsIntermediary] = useState('no') // Default to "no"
+  
+  // Bridge KYC options - all static, no API calls needed
+  const kycOptions = getKycOptions()
+  const occupationOptions = kycOptions.occupationCodes
+  const sourceOfFundsOptions = kycOptions.sourceOfFunds
+  const employmentStatusOptions = kycOptions.employmentStatus
   
   // Dropdown pickers for Bridge fields
   const [showEmploymentPicker, setShowEmploymentPicker] = useState(false)
@@ -133,6 +143,30 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               }
               setSelectedCountry(identity.country_code || '')
               setSelectedIdType(identity.id_type || '')
+              
+              // Load metadata fields if they exist
+              if (identity.metadata) {
+                try {
+                  const metadata = typeof identity.metadata === 'string' 
+                    ? JSON.parse(identity.metadata) 
+                    : identity.metadata
+                  
+                  if (metadata.mostRecentOccupation) {
+                    setMostRecentOccupation(String(metadata.mostRecentOccupation))
+                  }
+                  if (metadata.actingAsIntermediary) {
+                    setActingAsIntermediary(metadata.actingAsIntermediary)
+                  } else {
+                    setActingAsIntermediary('no')
+                  }
+                } catch (error) {
+                  console.error('Error parsing metadata:', error)
+                  setActingAsIntermediary('no')
+                }
+              } else {
+                setActingAsIntermediary('no')
+              }
+              
               setLoading(false)
               // Fetch in background
               fetchSubmission()
@@ -166,6 +200,30 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
           }
           setSelectedCountry(identity.country_code || '')
           setSelectedIdType(identity.id_type || '')
+          
+          // Load metadata fields if they exist
+          if (identity.metadata) {
+            try {
+              const metadata = typeof identity.metadata === 'string' 
+                ? JSON.parse(identity.metadata) 
+                : identity.metadata
+              
+              if (metadata.mostRecentOccupation) {
+                setMostRecentOccupation(String(metadata.mostRecentOccupation))
+              }
+              if (metadata.actingAsIntermediary) {
+                setActingAsIntermediary(metadata.actingAsIntermediary)
+              } else {
+                // Default to "no" if not set
+                setActingAsIntermediary('no')
+              }
+            } catch (error) {
+              console.error('Error parsing metadata:', error)
+            }
+          } else {
+            // Default actingAsIntermediary to "no" if no metadata
+            setActingAsIntermediary('no')
+          }
         }
         
         // Update cache
@@ -194,6 +252,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
       console.error('Error loading countries:', error)
     }
   }
+
 
   const handleFileSelect = async () => {
     try {
@@ -775,10 +834,10 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
         if (sourceOfFunds) metadata.sourceOfFunds = sourceOfFunds
         
         // International-only fields (non-US, non-EEA)
-        if (!isEEACountry(selectedCountry)) {
-          if (mostRecentOccupation) metadata.mostRecentOccupation = mostRecentOccupation
-          // actingAsIntermediary defaults to "no" if not provided (handled in backend)
-          if (actingAsIntermediary) metadata.actingAsIntermediary = actingAsIntermediary
+        if (!isUSACountry(selectedCountry) && !isEEACountry(selectedCountry)) {
+          if (mostRecentOccupation) metadata.mostRecentOccupation = String(mostRecentOccupation)
+          // Always include actingAsIntermediary (defaults to "no")
+          metadata.actingAsIntermediary = actingAsIntermediary || 'no'
         }
       }
 
@@ -905,6 +964,17 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
     country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
     country.code.toLowerCase().includes(countrySearch.toLowerCase())
   )
+  
+  // Filter occupations based on search query
+  const filteredOccupations = useMemo(() => {
+    if (!occupationSearch.trim()) {
+      return occupationOptions
+    }
+    const searchLower = occupationSearch.toLowerCase()
+    return occupationOptions.filter(occupation =>
+      occupation.label.toLowerCase().includes(searchLower)
+    )
+  }, [occupationSearch, occupationOptions])
 
   if (loading && !submission) {
     return (
@@ -973,50 +1043,180 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               <>
                 {/* Record view */}
                 <View style={styles.recordCard}>
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>Full Name</Text>
-                    <Text style={styles.recordValue}>{submission.full_name || '-'}</Text>
-                  </View>
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>Date of Birth</Text>
-                    <Text style={styles.recordValue}>
-                      {submission.date_of_birth ? new Date(submission.date_of_birth).toLocaleDateString() : '-'}
-                    </Text>
-                  </View>
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>Country</Text>
-                    <Text style={styles.recordValue}>
-                      {selectedCountryData ? (
-                        `${selectedCountryData.flag_emoji} ${selectedCountryData.name}`
-                      ) : (
-                        submission.country_code || '-'
-                      )}
-                    </Text>
-                  </View>
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>ID Type</Text>
-                    <Text style={styles.recordValue}>
-                      {submission.id_type ? getIdTypeLabel(submission.id_type) : '-'}
-                    </Text>
-                  </View>
-                  {/* Only show Document field if there's actually a document (not for SSN) */}
-                  {submission.id_type !== 'ssn' && 
-                   submission.id_document_url && 
-                   submission.id_document_filename && 
-                   submission.id_document_filename.trim() !== '' && (
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>Document</Text>
-                    <Text style={styles.recordValue}>
-                        {submission.id_document_filename}
-                    </Text>
-                  </View>
-                  )}
-                  <View style={styles.recordField}>
-                    <Text style={styles.recordLabel}>Status</Text>
-                    <View style={styles.recordValue}>
-                      {getStatusBadge(submission.status)}
-                    </View>
-                  </View>
+                  {/* Parse metadata */}
+                  {(() => {
+                    let metadata: any = {}
+                    try {
+                      metadata = typeof submission.metadata === 'string' 
+                        ? JSON.parse(submission.metadata) 
+                        : submission.metadata || {}
+                    } catch (e) {
+                      console.error('Error parsing metadata:', e)
+                    }
+                    
+                    const isUSA = isUSACountry(submission.country_code || '')
+                    const isEEA = isEEACountry(submission.country_code || '')
+                    const isInternational = !isUSA && !isEEA
+                    
+                    return (
+                      <>
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>Full Name</Text>
+                          <Text style={styles.recordValue}>{submission.full_name || '-'}</Text>
+                        </View>
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>Date of Birth</Text>
+                          <Text style={styles.recordValue}>
+                            {submission.date_of_birth ? new Date(submission.date_of_birth).toLocaleDateString() : '-'}
+                          </Text>
+                        </View>
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>Country</Text>
+                          <Text style={styles.recordValue}>
+                            {selectedCountryData ? (
+                              `${selectedCountryData.flag_emoji} ${selectedCountryData.name}`
+                            ) : (
+                              submission.country_code || '-'
+                            )}
+                          </Text>
+                        </View>
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>ID Type</Text>
+                          <Text style={styles.recordValue}>
+                            {submission.id_type ? getIdTypeLabel(submission.id_type) : '-'}
+                          </Text>
+                        </View>
+                        
+                        {/* Only show Document field if there's actually a document (not for SSN) */}
+                        {submission.id_type !== 'ssn' && 
+                         submission.id_document_url && 
+                         submission.id_document_filename && 
+                         submission.id_document_filename.trim() !== '' && (
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>Document</Text>
+                          <Text style={styles.recordValue}>
+                              {submission.id_document_filename}
+                          </Text>
+                        </View>
+                        )}
+                        
+                        {/* USA-specific fields */}
+                        {isUSA && (
+                          <>
+                            {metadata.ssn && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>SSN</Text>
+                                <Text style={styles.recordValue}>
+                                  {metadata.ssn ? `***-**-${metadata.ssn.slice(-4)}` : '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.dlNumber && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Driver's License Number</Text>
+                                <Text style={styles.recordValue}>{metadata.dlNumber || '-'}</Text>
+                              </View>
+                            )}
+                            {(metadata.dlFrontBase64 || metadata.dlBackBase64) && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Driver's License</Text>
+                                <Text style={styles.recordValue}>
+                                  {metadata.dlFrontBase64 ? 'Front uploaded' : ''}
+                                  {metadata.dlFrontBase64 && metadata.dlBackBase64 ? ', ' : ''}
+                                  {metadata.dlBackBase64 ? 'Back uploaded' : ''}
+                                </Text>
+                              </View>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* International fields (EEA + Other) */}
+                        {!isUSA && (
+                          <>
+                            {metadata.phone && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Phone</Text>
+                                <Text style={styles.recordValue}>{metadata.phone || '-'}</Text>
+                              </View>
+                            )}
+                            {metadata.employmentStatus && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Employment Status</Text>
+                                <Text style={styles.recordValue}>
+                                  {employmentStatusOptions.find(o => o.value === metadata.employmentStatus)?.label || metadata.employmentStatus || '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.expectedMonthly && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Expected Monthly Flows</Text>
+                                <Text style={styles.recordValue}>
+                                  {EXPECTED_MONTHLY_OPTIONS.find(o => o.value === metadata.expectedMonthly)?.label || metadata.expectedMonthly || '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.accountPurpose && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Account Purpose</Text>
+                                <Text style={styles.recordValue}>
+                                  {ACCOUNT_PURPOSE_OPTIONS.find(o => o.value === metadata.accountPurpose)?.label || metadata.accountPurpose || '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.sourceOfFunds && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Source of Funds</Text>
+                                <Text style={styles.recordValue}>
+                                  {sourceOfFundsOptions.find(o => o.value === metadata.sourceOfFunds)?.label || metadata.sourceOfFunds || '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.passportNumber && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Passport Number</Text>
+                                <Text style={styles.recordValue}>{metadata.passportNumber || '-'}</Text>
+                              </View>
+                            )}
+                            {metadata.nationalIdNumber && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>National ID Number</Text>
+                                <Text style={styles.recordValue}>{metadata.nationalIdNumber || '-'}</Text>
+                              </View>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* International-only fields (non-US, non-EEA) */}
+                        {isInternational && (
+                          <>
+                            {metadata.mostRecentOccupation && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Occupation</Text>
+                                <Text style={styles.recordValue}>
+                                  {occupationOptions.find(o => String(o.value) === String(metadata.mostRecentOccupation))?.label || metadata.mostRecentOccupation || '-'}
+                                </Text>
+                              </View>
+                            )}
+                            {metadata.actingAsIntermediary !== undefined && (
+                              <View style={styles.recordField}>
+                                <Text style={styles.recordLabel}>Acting as Intermediary</Text>
+                                <Text style={styles.recordValue}>
+                                  {metadata.actingAsIntermediary === 'yes' ? 'Yes' : 'No'}
+                                </Text>
+                              </View>
+                            )}
+                          </>
+                        )}
+                        
+                        <View style={styles.recordField}>
+                          <Text style={styles.recordLabel}>Status</Text>
+                          <View style={styles.recordValue}>
+                            {getStatusBadge(submission.status)}
+                          </View>
+                        </View>
+                      </>
+                    )
+                  })()}
                 </View>
 
                 {submission.status === "in_review" && (
@@ -1040,6 +1240,10 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   value={fullName}
                   onChangeText={setFullName}
                   placeholder="Enter your full name as it appears on your ID"
+                  placeholderTextColor={colors.text.secondary}
+                  autoCapitalize="words"
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
               </View>
 
@@ -1168,8 +1372,12 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                     value={ssn}
                     onChangeText={setSsn}
                     placeholder="XXX-XX-XXXX"
+                    placeholderTextColor={colors.text.secondary}
                     secureTextEntry
                     keyboardType="numeric"
+                    autoComplete="off"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               )}
@@ -1209,6 +1417,11 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                         selectedIdType === 'national_id' ? 'Enter national ID number' :
                         'Enter identification number'
                       }
+                      placeholderTextColor={colors.text.secondary}
+                      autoCapitalize="characters"
+                      keyboardType="default"
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
                     />
                   </View>
                   
@@ -1282,7 +1495,11 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                       value={phone}
                       onChangeText={setPhone}
                       placeholder="+1234567890"
+                      placeholderTextColor={colors.text.secondary}
                       keyboardType="phone-pad"
+                      autoComplete="tel"
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
                     />
                   </View>
                   <View style={styles.formField}>
@@ -1292,7 +1509,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                       onPress={() => setShowEmploymentPicker(true)}
                     >
                       <Text style={[styles.selectText, !employmentStatus && styles.selectPlaceholder]}>
-                        {employmentStatus ? EMPLOYMENT_STATUS_OPTIONS.find(o => o.value === employmentStatus)?.label : 'Select employment status'}
+                        {employmentStatus ? employmentStatusOptions.find(o => o.value === employmentStatus)?.label : 'Select employment status'}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#6b7280" />
                     </TouchableOpacity>
@@ -1328,7 +1545,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                       onPress={() => setShowSourceOfFundsPicker(true)}
                     >
                       <Text style={[styles.selectText, !sourceOfFunds && styles.selectPlaceholder]}>
-                        {sourceOfFunds ? SOURCE_OF_FUNDS_OPTIONS.find(o => o.value === sourceOfFunds)?.label : 'Select source of funds'}
+                        {sourceOfFunds ? sourceOfFundsOptions.find(o => o.value === sourceOfFunds)?.label : 'Select source of funds'}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#6b7280" />
                     </TouchableOpacity>
@@ -1340,14 +1557,15 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               {selectedCountry && !isUSACountry(selectedCountry) && !isEEACountry(selectedCountry) && (
                 <>
                   <View style={styles.formField}>
-                    <Text style={styles.label}>Most Recent Occupation</Text>
-                    <Text style={styles.helperText}>Optional - will use Source of Funds if not provided</Text>
+                    <Text style={styles.label}>Occupation</Text>
                     <TouchableOpacity
                       style={styles.selectButton}
                       onPress={() => setShowMostRecentOccupationPicker(true)}
                     >
                       <Text style={[styles.selectText, !mostRecentOccupation && styles.selectPlaceholder]}>
-                        {mostRecentOccupation ? SOURCE_OF_FUNDS_OPTIONS.find(o => o.value === mostRecentOccupation)?.label : 'Select most recent occupation (optional)'}
+                        {mostRecentOccupation 
+                          ? (occupationOptions.find(o => String(o.value) === String(mostRecentOccupation))?.label || 'Selected occupation')
+                          : 'Select occupation'}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#6b7280" />
                     </TouchableOpacity>
@@ -1359,7 +1577,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                       onPress={() => setShowActingAsIntermediaryPicker(true)}
                     >
                       <Text style={[styles.selectText, !actingAsIntermediary && styles.selectPlaceholder]}>
-                        {actingAsIntermediary ? (actingAsIntermediary === 'yes' ? 'Yes' : 'No') : 'Select (defaults to No)'}
+                        {actingAsIntermediary === 'yes' ? 'Yes' : 'No'}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#6b7280" />
                     </TouchableOpacity>
@@ -1414,31 +1632,48 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
         visible={showCountryPicker}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowCountryPicker(false)}
+        onRequestClose={() => {
+          setShowCountryPicker(false)
+          setCountrySearch('') // Clear search when closing
+        }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setShowCountryPicker(false)}
+            onPress={() => {
+              setShowCountryPicker(false)
+              setCountrySearch('') // Clear search when closing
+            }}
           />
-          <View style={styles.modalContent}>
+          <View style={styles.modalContentLarge}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Country</Text>
               <TouchableOpacity 
-                onPress={() => setShowCountryPicker(false)}
+                onPress={() => {
+                  setShowCountryPicker(false)
+                  setCountrySearch('') // Clear search when closing
+                }}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search countries..."
-              value={countrySearch}
-              onChangeText={setCountrySearch}
-              placeholderTextColor={colors.text.secondary}
-            />
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search countries..."
+                value={countrySearch}
+                onChangeText={setCountrySearch}
+                placeholderTextColor={colors.text.secondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
             <FlatList
               data={filteredCountries}
               keyExtractor={(item) => item.code}
@@ -1448,16 +1683,23 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   onPress={() => {
                     setSelectedCountry(item.code)
                     setShowCountryPicker(false)
-                    setCountrySearch('')
+                    setCountrySearch('') // Clear search when selecting
                   }}
                 >
                   <Text style={styles.countryFlag}>{item.flag_emoji}</Text>
                   <Text style={styles.countryName}>{item.name}</Text>
                 </TouchableOpacity>
               )}
+              keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No countries found</Text>
+                </View>
+              }
+              style={styles.occupationList}
             />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ID Type Picker Modal */}
@@ -1497,6 +1739,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{getIdTypeLabel(item)}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1526,7 +1769,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={EMPLOYMENT_STATUS_OPTIONS}
+              data={employmentStatusOptions}
               keyExtractor={(item) => item.value}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -1539,6 +1782,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1581,6 +1825,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1623,6 +1868,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1652,7 +1898,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
               </TouchableOpacity>
             </View>
             <FlatList
-              data={SOURCE_OF_FUNDS_OPTIONS}
+              data={sourceOfFundsOptions}
               keyExtractor={(item) => item.value}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -1665,6 +1911,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1675,41 +1922,73 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
         visible={showMostRecentOccupationPicker}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowMostRecentOccupationPicker(false)}
+        onRequestClose={() => {
+          setShowMostRecentOccupationPicker(false)
+          setOccupationSearch('') // Clear search when closing
+        }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <TouchableOpacity 
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setShowMostRecentOccupationPicker(false)}
+            onPress={() => {
+              setShowMostRecentOccupationPicker(false)
+              setOccupationSearch('') // Clear search when closing
+            }}
           />
-          <View style={styles.modalContent}>
+          <View style={styles.modalContentLarge}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Most Recent Occupation</Text>
+              <Text style={styles.modalTitle}>Select Occupation</Text>
               <TouchableOpacity 
-                onPress={() => setShowMostRecentOccupationPicker(false)}
+                onPress={() => {
+                  setShowMostRecentOccupationPicker(false)
+                  setOccupationSearch('') // Clear search when closing
+                }}
                 style={styles.closeButton}
               >
                 <Ionicons name="close" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
+            <View style={styles.searchInputContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search occupations..."
+                value={occupationSearch}
+                onChangeText={setOccupationSearch}
+                placeholderTextColor={colors.text.secondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
             <FlatList
-              data={SOURCE_OF_FUNDS_OPTIONS}
-              keyExtractor={(item) => item.value}
+              data={filteredOccupations}
+              keyExtractor={(item, index) => `${item.value}-${index}`}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.countryItem}
                   onPress={() => {
-                    setMostRecentOccupation(item.value)
+                    setMostRecentOccupation(String(item.value))
                     setShowMostRecentOccupationPicker(false)
+                    setOccupationSearch('') // Clear search when selecting
                   }}
                 >
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No occupations found</Text>
+                </View>
+              }
+              style={styles.occupationList}
             />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Acting as Intermediary Picker Modal */}
@@ -1752,6 +2031,7 @@ function IdentityVerificationContent({ navigation }: NavigationProps) {
                   <Text style={styles.countryName}>{item.label}</Text>
                 </TouchableOpacity>
               )}
+              contentContainerStyle={{ paddingBottom: spacing[4] }}
             />
           </View>
         </View>
@@ -1876,13 +2156,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border.light,
     borderRadius: borderRadius.md,
-    padding: spacing[3],
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
+    fontSize: 13,
+    minHeight: 48,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   selectButton: {
     flexDirection: 'row',
@@ -2016,6 +2306,24 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  modalContentLarge: {
+    backgroundColor: colors.background.primary,
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    height: '90%',
+    paddingTop: spacing[2],
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2039,17 +2347,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  searchInputContainer: {
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[3],
+  },
   searchInput: {
     borderWidth: 1,
     borderColor: colors.border.light,
     borderRadius: borderRadius.md,
     padding: spacing[3],
-    margin: spacing[5],
-    marginBottom: 0,
     ...textStyles.bodyMedium,
     backgroundColor: colors.background.primary,
     color: colors.text.primary,
     fontFamily: 'Outfit-Regular',
+  },
+  occupationList: {
+    flex: 1,
   },
   countryItem: {
     flexDirection: 'row',
@@ -2093,6 +2406,8 @@ const styles = StyleSheet.create({
   datePickerContainer: {
     backgroundColor: '#F9F9F9',
     paddingVertical: spacing[2],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   datePickerHeader: {
     flexDirection: 'row',
@@ -2122,6 +2437,15 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     color: colors.primary.main,
     fontWeight: '600',
+  },
+  emptyContainer: {
+    padding: spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
   },
 })
 

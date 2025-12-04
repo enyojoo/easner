@@ -391,7 +391,7 @@ export async function buildBridgeCustomerPayloadFromKyc(
     expectedMonthly: parsedIdentityMetadata.expectedMonthly,
     accountPurpose: parsedIdentityMetadata.accountPurpose,
     sourceOfFunds: parsedIdentityMetadata.sourceOfFunds,
-    mostRecentOccupation: parsedIdentityMetadata.mostRecentOccupation,
+    mostRecentOccupation: parsedIdentityMetadata.mostRecentOccupation ? String(parsedIdentityMetadata.mostRecentOccupation) : undefined,
     actingAsIntermediary: parsedIdentityMetadata.actingAsIntermediary,
     
     // ID documents

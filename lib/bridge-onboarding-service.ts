@@ -121,7 +121,26 @@ export async function initializeBridgeAccount(
     
     console.log(`[INITIALIZE-BRIDGE-ACCOUNT] Stored new bridge_customer_id in database: ${customer.id}`)
   } else {
-    // Customer already exists, just update KYC status if needed
+    // Customer already exists - update with latest KYC data from submissions
+    // Bridge requires all fields (even unchanged ones) to be resubmitted via PUT
+    console.log(`[INITIALIZE-BRIDGE-ACCOUNT] Customer already exists in Bridge. Updating with latest KYC data...`)
+    try {
+      customer = await bridgeService.updateCustomerWithFullKyc(customer.id, customerPayload)
+      console.log(`[INITIALIZE-BRIDGE-ACCOUNT] Customer updated successfully with new KYC data:`, {
+        customerId: customer.id,
+        kycStatus: customer.kyc_status,
+      })
+    } catch (updateError: any) {
+      console.error(`[INITIALIZE-BRIDGE-ACCOUNT] Error updating existing customer with KYC data:`, {
+        error: updateError.message,
+        customerId: customer.id,
+      })
+      // Continue with existing customer data - don't fail the entire flow
+      // The customer exists, we just couldn't update it
+      console.warn(`[INITIALIZE-BRIDGE-ACCOUNT] Continuing with existing customer data despite update error`)
+    }
+    
+    // Update KYC status in database
     await supabase
       .from("users")
       .update({

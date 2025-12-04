@@ -94,7 +94,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                 setKycStatus('approved')
               } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
                 setKycStatus('rejected')
-              } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+              } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
                 setKycStatus('in_review')
               } else if (identitySubmission || addressSubmission) {
                 setKycStatus('pending')
@@ -126,7 +126,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             setKycStatus('approved')
           } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
             setKycStatus('rejected')
-          } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+          } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
             setKycStatus('in_review')
           } else if (identitySubmission || addressSubmission) {
             setKycStatus('pending')
@@ -313,7 +313,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                   setKycStatus('approved')
                 } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
                   setKycStatus('rejected')
-                } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+                } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
                   setKycStatus('in_review')
                 } else if (identitySubmission || addressSubmission) {
                   setKycStatus('pending')
@@ -340,7 +340,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             setKycStatus('approved')
           } else if (identitySubmission?.status === "rejected" || addressSubmission?.status === "rejected") {
             setKycStatus('rejected')
-          } else if (identitySubmission?.status === "in_review" || addressSubmission?.status === "in_review") {
+          } else if (identitySubmission?.status === "in_review" && addressSubmission?.status === "in_review") {
             setKycStatus('in_review')
           } else if (identitySubmission || addressSubmission) {
             setKycStatus('pending')

@@ -226,6 +226,8 @@ function ProfileContent({ navigation }: NavigationProps) {
           value={value}
           onChangeText={onChangeText}
           placeholder={`Enter ${label.toLowerCase()}`}
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
           editable={editable}
         />
       ) : (
