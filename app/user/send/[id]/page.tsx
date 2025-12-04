@@ -405,9 +405,38 @@ function TransactionStatusPage() {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
-  const handleViewReceipt = () => {
-    if (transaction?.receipt_url) {
-      window.open(transaction.receipt_url, "_blank")
+  const handleViewReceipt = async () => {
+    if (!transaction?.receipt_url) return
+    
+    const receiptUrl = transaction.receipt_url
+    // Check if it's a file path (starts with "receipts/") or a public URL
+    const isPath = receiptUrl.startsWith("receipts/")
+    
+    if (isPath) {
+      // Get signed URL from API
+      try {
+        const response = await fetch(`/api/receipts/documents?path=${encodeURIComponent(receiptUrl)}`, {
+          credentials: "include",
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.url) {
+            window.open(data.url, "_blank")
+          } else {
+            alert("Failed to access receipt: No URL returned from server.")
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+          alert(`Failed to access receipt: ${errorData.error || response.statusText || "Please try again."}`)
+        }
+      } catch (error: any) {
+        console.error("Error fetching signed URL:", error)
+        alert(`Failed to access receipt: ${error.message || "Please try again."}`)
+      }
+    } else {
+      // Public URL - open directly (backward compatibility)
+      window.open(receiptUrl, "_blank")
     }
   }
 

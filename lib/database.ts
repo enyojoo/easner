@@ -545,12 +545,11 @@ export const transactionService = {
         throw new Error(`Upload failed: ${uploadError.message}`)
       }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("transaction-receipts").getPublicUrl(filePath)
-
-      // Update transaction with receipt URL
+      // Store file path instead of public URL for secure access via signed URLs
+      // This allows the bucket to be private and use RLS policies
+      // Format: receipts/transactionId.ext
+      
+      // Update transaction with receipt file path (not public URL)
       const updateTimeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Database update timeout")), 10000),
       )
@@ -558,7 +557,7 @@ export const transactionService = {
       const updatePromise = supabase
         .from("transactions")
         .update({
-          receipt_url: publicUrl,
+          receipt_url: filePath, // Store file path instead of public URL
           receipt_filename: fileName,
           updated_at: new Date().toISOString(),
         })
@@ -581,7 +580,7 @@ export const transactionService = {
       // Force refresh transaction cache
       dataCache.invalidate(CACHE_KEYS.TRANSACTION(transactionId))
 
-      return { ...updatedTransaction, receipt_url: publicUrl }
+      return { ...updatedTransaction, receipt_url: filePath }
     } catch (error) {
       console.error("Receipt upload error:", error)
       throw error

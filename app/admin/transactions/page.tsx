@@ -28,6 +28,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Transaction } from "@/types"
 import { formatCurrency } from "@/utils/currency"
+import { supabase } from "@/lib/supabase"
 import { paymentMethodService } from "@/lib/database"
 import {
   getAccountTypeConfigFromCurrency,
@@ -953,7 +954,49 @@ export default function AdminTransactionsPage() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => window.open(selectedTransaction.receipt_url, "_blank")}
+                                          onClick={async () => {
+                                            const receiptUrl = selectedTransaction.receipt_url!
+                                            // Check if it's a file path (starts with "receipts/") or a public URL
+                                            const isPath = receiptUrl.startsWith("receipts/")
+                                            
+                                            if (isPath) {
+                                              // Get signed URL from API
+                                              try {
+                                                // Get access token from Supabase session
+                                                const { data: { session } } = await supabase.auth.getSession()
+                                                const headers: HeadersInit = {
+                                                  'Content-Type': 'application/json',
+                                                }
+                                                
+                                                if (session?.access_token) {
+                                                  headers['Authorization'] = `Bearer ${session.access_token}`
+                                                }
+                                                
+                                                const response = await fetch(`/api/admin/receipts/documents?path=${encodeURIComponent(receiptUrl)}`, {
+                                                  credentials: "include",
+                                                  headers,
+                                                })
+                                                
+                                                if (response.ok) {
+                                                  const data = await response.json()
+                                                  if (data.url) {
+                                                    window.open(data.url, "_blank")
+                                                  } else {
+                                                    alert("Failed to access receipt: No URL returned from server.")
+                                                  }
+                                                } else {
+                                                  const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+                                                  alert(`Failed to access receipt: ${errorData.error || response.statusText || "Please try again."}`)
+                                                }
+                                              } catch (error: any) {
+                                                console.error("Error fetching signed URL:", error)
+                                                alert(`Failed to access receipt: ${error.message || "Please try again."}`)
+                                              }
+                                            } else {
+                                              // Public URL - open directly (backward compatibility)
+                                              window.open(receiptUrl, "_blank")
+                                            }
+                                          }}
                                         >
                                           <Eye className="h-4 w-4 mr-1" />
                                           View
