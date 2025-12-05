@@ -249,7 +249,7 @@ function PrivacyPageContent() {
                   regulatory requirements including anti-money laundering (AML), know-your-customer (KYC), and sanctions
                   screening obligations. This may require us to collect, process, and retain additional information and
                   to share information with regulatory authorities. Easner embeds verification, AML, and encryption at
-                  the core of every transaction, powered by Stellar, to ensure compliance and security.
+                  the core of every transaction through our licensed partners, including Bridge, to ensure compliance and security.
                 </p>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   For detailed information about our compliance procedures, please review our{" "}
@@ -268,12 +268,13 @@ function PrivacyPageContent() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">12. Cryptocurrency and Digital Assets</h2>
                 <p className="text-gray-700 leading-relaxed">
                   Easner does not hold, store, or manage cryptocurrency or other digital assets on behalf of users.
-                  While Easner's infrastructure leverages stablecoin technology and blockchain settlement (powered by the
-                  Stellar network) to facilitate instant cross-border transfers, end users interact only with traditional
-                  fiat currencies through bank-to-bank transfers. Users do not need to create cryptocurrency wallets,
-                  hold digital assets, or interact with blockchain technology directly. All user funds are processed
-                  through licensed financial service partners who handle fiat currency transactions in compliance with
-                  applicable regulations.
+                  Blockchain and cryptocurrency infrastructure services are provided by our licensed partners, including 
+                  Bridge, who handle blockchain settlement and cryptocurrency-related services. While our infrastructure 
+                  leverages blockchain technology to facilitate instant cross-border transfers, end users interact only 
+                  with traditional fiat currencies through bank-to-bank transfers. Users do not need to create 
+                  cryptocurrency wallets, hold digital assets, or interact with blockchain technology directly. All user 
+                  funds are processed through licensed financial service partners who handle fiat currency transactions in 
+                  compliance with applicable regulations.
                 </p>
               </section>
 

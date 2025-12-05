@@ -85,7 +85,7 @@ function TermsPageContent() {
                   and recipients receive funds in their bank account within minutes, with no virtual wallets required.
                   Users can transfer money between supported currencies with competitive exchange rates and zero fees
                   online with Easner. Easner's infrastructure leverages modern payment standards and blockchain settlement
-                  technology, powered by the Stellar network, to make cross-border transfers instant, transparent, and secure.
+                  technology provided by our licensed partners, including Bridge, to make cross-border transfers instant, transparent, and secure.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
                   <strong>Important:</strong> Financial services are facilitated by licensed partners with appropriate
@@ -224,12 +224,13 @@ function TermsPageContent() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">11. Disclaimers</h2>
                 <p className="text-gray-700 leading-relaxed">
                   Easner is not a bank, money transmitter, or financial institution. Easner does not hold cryptocurrency
-                  or other digital assets. All financial services are provided by licensed third-party partners who hold
-                  appropriate regulatory licenses in their respective jurisdictions. Easner acts solely as a technology
-                  platform facilitating connections between users and licensed financial service providers. While Easner's
-                  infrastructure leverages stablecoin technology and the Stellar network for settlement, end users interact
-                  only with traditional fiat currencies through bank-to-bank transfers. Users do not need to hold, manage,
-                  or interact with cryptocurrency or digital assets to use Easner's services.
+                  or other digital assets. All financial services, including blockchain and cryptocurrency infrastructure,
+                  are provided by licensed third-party partners who hold appropriate regulatory licenses in their 
+                  respective jurisdictions. Easner acts solely as a technology platform facilitating connections between 
+                  users and licensed financial service providers. Our blockchain and cryptocurrency services are provided 
+                  by Bridge and other licensed partners. End users interact only with traditional fiat currencies through 
+                  bank-to-bank transfers. Users do not need to hold, manage, or interact with cryptocurrency or digital 
+                  assets to use Easner's services.
                 </p>
               </section>
 
