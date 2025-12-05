@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 
 export interface UserProfileData {
   firstName: string
+  middleName?: string
   lastName: string
   phone: string
   baseCurrency: string
@@ -18,15 +19,22 @@ export const userService = {
     userId: string,
     updates: UserProfileData
   ): Promise<any> {
+    const updateData: any = {
+      first_name: updates.firstName,
+      last_name: updates.lastName,
+      phone: updates.phone,
+      base_currency: updates.baseCurrency,
+      updated_at: new Date().toISOString(),
+    }
+    
+    // Include middle_name if provided (even if empty string)
+    if (updates.middleName !== undefined) {
+      updateData.middle_name = updates.middleName || null
+    }
+    
     const { data, error } = await supabase
       .from('users')
-      .update({
-        first_name: updates.firstName,
-        last_name: updates.lastName,
-        phone: updates.phone,
-        base_currency: updates.baseCurrency,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', userId)
       .select()
       .single()

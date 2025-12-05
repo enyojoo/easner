@@ -64,7 +64,7 @@ function ProfileEditContent({ navigation }: NavigationProps) {
     if (userProfile) {
       const data = {
         firstName: userProfile.profile.first_name || '',
-        middleName: userProfile.profile.middle_name || '',
+        middleName: userProfile.profile.middle_name || userProfile.middle_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
@@ -292,6 +292,12 @@ function ProfileEditContent({ navigation }: NavigationProps) {
                       <Text style={styles.fieldLabel}>First Name</Text>
                       <Text style={styles.fieldValue}>{profileData.firstName || 'Not set'}</Text>
                     </View>
+                    {profileData.middleName && (
+                      <View style={styles.fieldContainer}>
+                        <Text style={styles.fieldLabel}>Middle Name</Text>
+                        <Text style={styles.fieldValue}>{profileData.middleName}</Text>
+                      </View>
+                    )}
                     <View style={styles.fieldContainer}>
                       <Text style={styles.fieldLabel}>Last Name</Text>
                       <Text style={styles.fieldValue}>{profileData.lastName || 'Not set'}</Text>

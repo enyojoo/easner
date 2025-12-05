@@ -29,6 +29,7 @@ import { getCountryFlag } from '../../utils/flagUtils'
 import { recipientService, RecipientData } from '../../lib/recipientService'
 import { useAuth } from '../../contexts/AuthContext'
 import { analytics } from '../../lib/analytics'
+import { useFocusRefresh } from '../../hooks/useFocusRefresh'
 import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/currencyAccountTypes'
 import { validateRequired, validateAccountNumber, validateIBAN } from '../../utils/validators'
 import { formatIBAN, formatSortCode, formatRoutingNumber, formatAccountNumber } from '../../utils/formatters'
@@ -99,9 +100,17 @@ function RecipientsContent({ navigation }: NavigationProps) {
     analytics.trackScreenView('Recipients')
   }, [])
 
+  // Initial load - will use cache if available (stale-while-revalidate)
   useEffect(() => {
-    refreshRecipients()
+    refreshRecipients(false) // Not forced - will use cache
   }, [])
+
+  // Refresh when screen comes into focus if data is stale
+  useFocusRefresh(
+    () => refreshRecipients(false), // Not forced - will check staleness
+    5 * 60 * 1000, // 5 minutes
+    false
+  )
   
   // Reset form after edit modal closes (for smooth animation)
   useEffect(() => {
@@ -122,7 +131,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
 
   const onRefresh = async () => {
     setRefreshing(true)
-    await refreshRecipients()
+    await refreshRecipients(true) // Force refresh on pull-to-refresh
     setRefreshing(false)
   }
 

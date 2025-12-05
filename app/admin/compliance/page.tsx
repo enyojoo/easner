@@ -708,14 +708,36 @@ export default function AdminCompliancePage() {
                     )}
                     {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                        <p className="text-sm font-medium text-red-800 mb-2">Rejection Reasons:</p>
+                        <div className="space-y-2">
+                          {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) && selectedUser.bridge_kyc_rejection_reasons.length > 0 ? (
+                            selectedUser.bridge_kyc_rejection_reasons.map((reasonObj: any, index: number) => (
+                              <div key={index} className="border-l-2 border-red-300 pl-3">
+                                {typeof reasonObj === 'object' && reasonObj !== null ? (
+                                  <>
+                                    <p className="text-sm font-medium text-red-800">
+                                      Developer Reason: {reasonObj.developer_reason || 'N/A'}
+                                    </p>
                         <p className="text-sm text-red-700">
-                          {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
-                            ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
-                            : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
-                            ? selectedUser.bridge_kyc_rejection_reasons
-                            : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
-                        </p>
+                                      Customer Reason: {reasonObj.reason || 'N/A'}
+                                    </p>
+                                    {reasonObj.created_at && (
+                                      <p className="text-xs text-red-600 mt-1">
+                                        {new Date(reasonObj.created_at).toLocaleString()}
+                                      </p>
+                                    )}
+                                  </>
+                                ) : (
+                                  <p className="text-sm text-red-700">{String(reasonObj)}</p>
+                                )}
+                              </div>
+                            ))
+                          ) : typeof selectedUser.bridge_kyc_rejection_reasons === "string" ? (
+                            <p className="text-sm text-red-700">{selectedUser.bridge_kyc_rejection_reasons}</p>
+                          ) : (
+                            <p className="text-sm text-red-700">{JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}</p>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -759,30 +781,30 @@ export default function AdminCompliancePage() {
                               </div>
                             )}
                             {selectedUser.country_code && (
-                              <div className="flex items-start gap-2">
-                                <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
+                            <div className="flex items-start gap-2">
+                              <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
                                 <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.country_code)}</span>
-                              </div>
+                            </div>
                             )}
                             {selectedUser.bridge_kyc_metadata && (
                               <>
                                 {selectedUser.bridge_kyc_metadata.ssn && (
-                                  <div className="flex items-start gap-2">
+                            <div className="flex items-start gap-2">
                                     <span className="text-gray-500 min-w-[90px] text-xs">SSN:</span>
                                     <span className="text-gray-900 text-xs">***-**-{selectedUser.bridge_kyc_metadata.ssn.slice(-4)}</span>
-                                  </div>
+                            </div>
                                 )}
                                 {selectedUser.bridge_kyc_metadata.passportNumber && (
                                   <div className="flex items-start gap-2">
                                     <span className="text-gray-500 min-w-[90px] text-xs">Passport:</span>
                                     <span className="text-gray-900 text-xs">{selectedUser.bridge_kyc_metadata.passportNumber}</span>
-                                  </div>
-                                )}
+                              </div>
+                            )}
                                 {selectedUser.bridge_kyc_metadata.nationalIdNumber && (
                                   <div className="flex items-start gap-2">
                                     <span className="text-gray-500 min-w-[90px] text-xs">National ID:</span>
                                     <span className="text-gray-900 text-xs">{selectedUser.bridge_kyc_metadata.nationalIdNumber}</span>
-                                  </div>
+                          </div>
                                 )}
                               </>
                             )}
@@ -802,7 +824,7 @@ export default function AdminCompliancePage() {
                 {selectedUser.bridge_kyc_status === "approved" && (
                   <>
                     {/* Bridge Integration Details */}
-                    <div className="border-t pt-6">
+                  <div className="border-t pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold">Bridge Integration Details</h3>
                       <Button
@@ -867,14 +889,36 @@ export default function AdminCompliancePage() {
                           )}
                           {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                              <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                              <p className="text-sm font-medium text-red-800 mb-2">Rejection Reasons:</p>
+                              <div className="space-y-2">
+                                {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) && selectedUser.bridge_kyc_rejection_reasons.length > 0 ? (
+                                  selectedUser.bridge_kyc_rejection_reasons.map((reasonObj: any, index: number) => (
+                                    <div key={index} className="border-l-2 border-red-300 pl-3">
+                                      {typeof reasonObj === 'object' && reasonObj !== null ? (
+                                        <>
+                                          <p className="text-sm font-medium text-red-800">
+                                            Developer Reason: {reasonObj.developer_reason || 'N/A'}
+                                          </p>
                               <p className="text-sm text-red-700">
-                                {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
-                                  ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
-                                  : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
-                                  ? selectedUser.bridge_kyc_rejection_reasons
-                                  : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
-                              </p>
+                                            Customer Reason: {reasonObj.reason || 'N/A'}
+                                          </p>
+                                          {reasonObj.created_at && (
+                                            <p className="text-xs text-red-600 mt-1">
+                                              {new Date(reasonObj.created_at).toLocaleString()}
+                                            </p>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <p className="text-sm text-red-700">{String(reasonObj)}</p>
+                                      )}
+                                    </div>
+                                  ))
+                                ) : typeof selectedUser.bridge_kyc_rejection_reasons === "string" ? (
+                                  <p className="text-sm text-red-700">{selectedUser.bridge_kyc_rejection_reasons}</p>
+                                ) : (
+                                  <p className="text-sm text-red-700">{JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}</p>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -912,11 +956,25 @@ export default function AdminCompliancePage() {
                                   KYC Status: {webhookData.userStatus.bridge_kyc_status || "N/A"}
                                 </p>
                                 {webhookData.userStatus.bridge_kyc_rejection_reasons && (
-                                  <p className="text-blue-700 mt-1">
-                                    Rejection Reasons: {Array.isArray(webhookData.userStatus.bridge_kyc_rejection_reasons) 
-                                      ? webhookData.userStatus.bridge_kyc_rejection_reasons.join(", ")
-                                      : webhookData.userStatus.bridge_kyc_rejection_reasons}
-                                  </p>
+                                  <div className="mt-1">
+                                    <p className="text-blue-800 font-medium mb-1">Rejection Reasons:</p>
+                                    {Array.isArray(webhookData.userStatus.bridge_kyc_rejection_reasons) && webhookData.userStatus.bridge_kyc_rejection_reasons.length > 0 ? (
+                                      webhookData.userStatus.bridge_kyc_rejection_reasons.map((reasonObj: any, index: number) => (
+                                        <div key={index} className="text-blue-700 text-xs mb-1">
+                                          {typeof reasonObj === 'object' && reasonObj !== null ? (
+                                            <>
+                                              <span className="font-medium">Developer:</span> {reasonObj.developer_reason || 'N/A'} | 
+                                              <span className="font-medium"> Customer:</span> {reasonObj.reason || 'N/A'}
+                                            </>
+                                          ) : (
+                                            String(reasonObj)
+                                          )}
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <p className="text-blue-700 text-xs">{String(webhookData.userStatus.bridge_kyc_rejection_reasons)}</p>
+                                    )}
+                                  </div>
                           )}
                         </div>
                       )}
@@ -935,14 +993,14 @@ export default function AdminCompliancePage() {
                                 ⚠️ No KYC webhook events found. The webhook may have been missed.
                               </p>
                             )}
-                          </div>
-                        </div>
-                      )}
+                    </div>
+                  </div>
+                )}
                     </div>
                   </div>
 
-                  {/* Address Verification */}
-                  <div className="border-t pt-6">
+                {/* Address Verification */}
+                <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Address Verification</h3>
                   {selectedUser.address ? (
                     <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 shadow-sm">
@@ -954,10 +1012,10 @@ export default function AdminCompliancePage() {
                           </div>
                           <div className="space-y-1.5 text-sm">
                             {selectedUser.country_code && (
-                              <div className="flex items-start gap-2">
-                                <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
+                            <div className="flex items-start gap-2">
+                              <span className="text-gray-500 min-w-[90px] text-xs">Country:</span>
                                 <span className="text-gray-900 font-medium text-xs">{getCountryName(selectedUser.country_code)}</span>
-                              </div>
+                            </div>
                             )}
                             <div className="flex items-start gap-2">
                               <span className="text-gray-500 min-w-[90px] text-xs pt-0.5">Address:</span>
@@ -975,10 +1033,10 @@ export default function AdminCompliancePage() {
                                     {selectedUser.bridge_kyc_metadata.address.city}
                                     {selectedUser.bridge_kyc_metadata.address.state && `, ${selectedUser.bridge_kyc_metadata.address.state}`}
                                     {selectedUser.bridge_kyc_metadata.address.postal_code && ` ${selectedUser.bridge_kyc_metadata.address.postal_code}`}
-                                  </div>
-                                  <div>{selectedUser.bridge_kyc_metadata.address.country}</div>
-                                </div>
                               </div>
+                                  <div>{selectedUser.bridge_kyc_metadata.address.country}</div>
+                          </div>
+                        </div>
                             )}
                           </div>
                         </div>

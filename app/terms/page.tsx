@@ -110,6 +110,13 @@ function TermsPageContent() {
                   in their respective jurisdictions. Easner does not directly provide financial services but acts as a
                   technology facilitator.
                 </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>KYC Verification Services:</strong> Identity verification services are provided through our 
+                  third-party partner Bridge (Bridge Financial, Inc.). By using our services, you agree to Bridge's terms 
+                  and conditions for identity verification. Easner is not responsible for Bridge's verification processes, 
+                  but we work with Bridge to ensure compliance with applicable regulations. Bridge operates the 
+                  verification platform and processes your identity documents and personal information on our behalf.
+                </p>
               </section>
 
               <section>

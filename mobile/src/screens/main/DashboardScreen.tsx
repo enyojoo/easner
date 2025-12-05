@@ -35,6 +35,8 @@ import { NavigationProps } from '../../types'
 import { colors, textStyles, borderRadius, spacing, shadows } from '../../theme'
 import { bridgeService } from '../../lib/bridgeService'
 import { useEffect } from 'react'
+import { useFocusRefreshAll } from '../../hooks/useFocusRefresh'
+import { useUserData } from '../../contexts/UserDataContext'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -90,6 +92,7 @@ const MOCK_TRANSACTIONS = [
 export default function DashboardScreen({ navigation }: NavigationProps) {
   const { user, userProfile } = useAuth()
   const { unreadCount } = useNotifications()
+  const { refreshStaleData, refreshing: dataRefreshing } = useUserData()
   const insets = useSafeAreaInsets()
   const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'EUR'>('USD')
   const [balanceVisible, setBalanceVisible] = useState(true)
@@ -365,12 +368,20 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
-            refreshing={refreshing} 
+            refreshing={refreshing || dataRefreshing} 
             onRefresh={async () => {
               setRefreshing(true)
-              await fetchBalances()
-              // TODO: Refresh transactions
-              setRefreshing(false)
+              try {
+                // Refresh all data (forced - user pulled to refresh)
+                await Promise.all([
+                  refreshStaleData(), // Refresh stale user data
+                  fetchBalances(), // Refresh balances
+                ])
+              } catch (error) {
+                console.error('Error refreshing dashboard:', error)
+              } finally {
+                setRefreshing(false)
+              }
             }}
             tintColor={colors.primary.main}
           />

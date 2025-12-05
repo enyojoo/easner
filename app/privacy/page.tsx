@@ -95,6 +95,21 @@ function PrivacyPageContent() {
                   <strong>Third-Party Partner Information:</strong> Our licensed financial service partners may also
                   collect additional information as required by their regulatory obligations.
                 </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Third-Party KYC Verification Services:</strong> We partner with Bridge (Bridge Financial, Inc.) 
+                  to provide KYC/KYB verification services. When you complete identity verification, Bridge collects and 
+                  processes your personal information, identity documents, and verification data on our behalf. Bridge acts 
+                  as a data processor and is contractually obligated to protect your information in accordance with 
+                  applicable data protection laws. Information collected by Bridge is shared with us for account 
+                  verification and regulatory compliance purposes. Bridge may collect additional information including:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-gray-700 mt-2">
+                  <li>Social Security Number (SSN) for U.S. residents</li>
+                  <li>Employment status and occupation</li>
+                  <li>Expected monthly transaction volume</li>
+                  <li>Account purpose and source of funds</li>
+                  <li>KYC verification status and rejection reasons (if applicable)</li>
+                </ul>
               </section>
 
               <section>
@@ -127,6 +142,13 @@ function PrivacyPageContent() {
                   <li>With regulatory authorities as required by financial services regulations</li>
                   <li>For fraud prevention and risk management purposes</li>
                 </ul>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Information Sharing with KYC Providers:</strong> We share your personal information and 
+                  identity verification documents with Bridge, our third-party KYC verification provider, to facilitate 
+                  identity verification and regulatory compliance. Bridge processes this information in accordance with 
+                  their privacy policy and our contractual agreements. Bridge may retain your verification data as 
+                  required by their regulatory obligations and data retention policies.
+                </p>
               </section>
 
               <section>
@@ -146,6 +168,13 @@ function PrivacyPageContent() {
                   legal obligations (including financial services regulations that may require extended retention
                   periods), resolve disputes, and enforce our agreements. Retention periods may vary depending on the
                   type of information and regulatory requirements in different jurisdictions.
+                </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Bridge Data Retention:</strong> Bridge, our KYC verification provider, may retain your 
+                  verification data in accordance with their data retention policies and regulatory obligations. Bridge 
+                  may retain certain information even after your account with Easner is closed, as required by financial 
+                  services regulations. For specific information about Bridge's data retention practices, please contact 
+                  us or refer to Bridge's privacy policy.
                 </p>
               </section>
 
@@ -167,6 +196,12 @@ function PrivacyPageContent() {
                   <strong>Note:</strong> Some rights may be limited by regulatory requirements applicable to financial
                   services.
                 </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Accessing Data Held by Bridge:</strong> If you wish to access, correct, or delete personal 
+                  information held by Bridge, our KYC verification provider, you may contact Bridge directly or contact 
+                  us and we will assist you in making such requests. Bridge may retain certain verification data as 
+                  required by their regulatory obligations and data retention policies, even after account deletion.
+                </p>
               </section>
 
               <section>
@@ -185,6 +220,12 @@ function PrivacyPageContent() {
                   residence, including the United States where Easner is headquartered. We ensure that such transfers
                   are conducted in accordance with applicable data protection laws and that appropriate safeguards are
                   in place. Our licensed partners may also process your information in their respective jurisdictions.
+                </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Bridge Data Transfers:</strong> Bridge, our KYC verification provider, may process and store 
+                  your verification data in jurisdictions outside your country of residence. Bridge is contractually 
+                  obligated to implement appropriate safeguards for international data transfers in accordance with 
+                  applicable data protection laws, including standard contractual clauses where required.
                 </p>
               </section>
 

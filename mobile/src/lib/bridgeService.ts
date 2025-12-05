@@ -255,6 +255,46 @@ export const bridgeService = {
   },
 
   /**
+   * Sync Bridge customer status to database
+   * Fetches latest data from Bridge and updates user record
+   * Returns updated status data
+   */
+  async syncStatus(): Promise<{ success: boolean; synced: boolean; data?: { kycStatus: string; rejectionReasons?: any[]; endorsements?: any[] } }> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    // Add timeout to fetch
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bridge/sync-status`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to sync status')
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Sync request timed out')
+      }
+      throw error
+    }
+  },
+
+  /**
    * Get customer KYC status (polling)
    */
   async getCustomerKYCStatus(customerId: string): Promise<{ kycStatus: string; endorsements: any[] }> {

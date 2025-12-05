@@ -83,6 +83,14 @@ function KYCPolicyPageContent() {
                   </Link>
                   .
                 </p>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Verification Provider:</strong> Easner partners with Bridge (Bridge Financial, Inc.), a 
+                  licensed financial services technology company, to provide KYC/KYB verification services. Bridge 
+                  operates the verification platform and processes your identity documents and personal information on 
+                  our behalf. All verification data collected by Bridge is shared with Easner for regulatory compliance 
+                  and account management purposes. Bridge acts as a data processor and is contractually obligated to 
+                  protect your information in accordance with applicable data protection laws.
+                </p>
               </section>
 
               <section>
@@ -152,6 +160,18 @@ function KYCPolicyPageContent() {
                     months)</li>
                   <li>Phone number and email address</li>
                   <li>Additional information as required by specific jurisdictions or transaction types</li>
+                </ul>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Additional Information Collected by Bridge:</strong> In addition to the standard KYC 
+                  information listed above, Bridge, our verification provider, may collect the following information 
+                  as part of the verification process:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-gray-700 mt-2">
+                  <li>Social Security Number (SSN) for U.S. residents</li>
+                  <li>Employment status and occupation</li>
+                  <li>Expected monthly transaction volume</li>
+                  <li>Account purpose and source of funds</li>
+                  <li>KYC verification status and rejection reasons (if applicable)</li>
                 </ul>
                 <p className="text-gray-700 leading-relaxed mt-4 mb-4">
                   <strong>For Business Users (KYB):</strong>
@@ -387,6 +407,26 @@ function KYCPolicyPageContent() {
                     San Francisco, CA 94108
                     <br />
                     <strong>Email:</strong> compliance@easner.com
+                  </p>
+                </div>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Bridge Contact Information:</strong> For questions or requests regarding data held by Bridge, 
+                  our KYC verification provider, you may contact Bridge directly or contact us and we will assist you. 
+                  Bridge may be contacted through their website or through our support team.
+                </p>
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-gray-700">
+                    <strong>Bridge Financial, Inc.</strong>
+                    <br />
+                    <strong>Website:</strong>{" "}
+                    <a href="https://www.bridge.xyz" target="_blank" rel="noopener noreferrer" className="text-easner-primary hover:underline">
+                      www.bridge.xyz
+                    </a>
+                    <br />
+                    <strong>Note:</strong> For data requests related to Bridge verification, please contact Easner 
+                    support first, and we will coordinate with Bridge on your behalf.
+                  </p>
+                </div>
                     <br />
                     <strong>Phone:</strong> +1 628 228 6083
                     <br />

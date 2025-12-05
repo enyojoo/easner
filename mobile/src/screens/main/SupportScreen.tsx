@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import ExternalLinkModal from '../../components/ExternalLinkModal'
+import { useExternalLink } from '../../hooks/useExternalLink'
 import { NavigationProps } from '../../types'
 import { analytics } from '../../lib/analytics'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
@@ -20,6 +22,7 @@ import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 export default function SupportScreen({ navigation }: NavigationProps) {
   const insets = useSafeAreaInsets()
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
+  const telegramLink = useExternalLink()
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -53,7 +56,7 @@ export default function SupportScreen({ navigation }: NavigationProps) {
   }
 
   const handleOpenTelegram = () => {
-    Linking.openURL('https://t.me/enyosam')
+    telegramLink.openLink('https://t.me/enyosam', 'Telegram Chat')
   }
 
   const toggleFAQ = async (index: number) => {
@@ -202,6 +205,12 @@ export default function SupportScreen({ navigation }: NavigationProps) {
           </Animated.View>
         </ScrollView>
       </View>
+      <ExternalLinkModal
+        visible={telegramLink.isVisible}
+        url={telegramLink.url}
+        title={telegramLink.title}
+        onClose={telegramLink.closeLink}
+      />
     </ScreenWrapper>
   )
 }

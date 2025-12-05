@@ -41,16 +41,37 @@ export const userService = {
       updated_at: new Date().toISOString(),
     }
 
+    console.log(`[USER-SERVICE] updateProfile called for user ${userId}:`, {
+      updates,
+      kycStatus: user?.bridge_kyc_status,
+      firstName: updates.firstName,
+      middleName: updates.middleName,
+      lastName: updates.lastName,
+      middleNameUndefined: updates.middleName === undefined,
+      middleNameType: typeof updates.middleName,
+    })
+
     // Only include fields that are being updated and are allowed
-    if (updates.firstName && user?.bridge_kyc_status !== "approved") {
+    if (updates.firstName !== undefined && user?.bridge_kyc_status !== "approved") {
       updateData.first_name = updates.firstName
+      console.log(`[USER-SERVICE] Adding first_name to update:`, updates.firstName)
     }
     if (updates.middleName !== undefined && user?.bridge_kyc_status !== "approved") {
       updateData.middle_name = updates.middleName
+      console.log(`[USER-SERVICE] Adding middle_name to update:`, updates.middleName)
+    } else {
+      console.log(`[USER-SERVICE] NOT adding middle_name:`, {
+        middleNameUndefined: updates.middleName === undefined,
+        kycApproved: user?.bridge_kyc_status === "approved",
+        middleNameValue: updates.middleName,
+      })
     }
-    if (updates.lastName && user?.bridge_kyc_status !== "approved") {
+    if (updates.lastName !== undefined && user?.bridge_kyc_status !== "approved") {
       updateData.last_name = updates.lastName
+      console.log(`[USER-SERVICE] Adding last_name to update:`, updates.lastName)
     }
+
+    console.log(`[USER-SERVICE] Final updateData:`, updateData)
     if (updates.phone !== undefined) {
       updateData.phone = updates.phone
     }

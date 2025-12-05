@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   View,
   Text,
@@ -49,6 +49,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const fetchingBridgeStatusRef = useRef(false)
   // Ref to track the last bridge_signed_agreement_id we processed
   const lastProcessedTosAgreementIdRef = useRef<string | null>(null)
+  // Ref to track periodic sync interval
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  // Ref to prevent multiple simultaneous syncs
+  const syncingRef = useRef(false)
 
   // KYC Link state
   const [kycLink, setKycLink] = useState<string | null>(null)
@@ -97,54 +101,202 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     }, [userProfile?.id, userProfile?.bridge_kyc_status]) // Only refresh if status is missing
   )
 
-  // Fetch Bridge customer status on mount and when userProfile changes
-  // This ensures we always have the latest status from Bridge
-  // Note: We rely on webhooks to update bridge_kyc_status in the database
-  // This effect only syncs if there's a mismatch (should be rare)
-  useEffect(() => {
-    const fetchBridgeStatus = async () => {
-      if (!userProfile?.id || !userProfile?.bridge_customer_id) return
-      
-      // Prevent multiple simultaneous fetches
-      if (fetchingBridgeStatusRef.current) return
-      
-      // Only fetch if we don't have a status yet, or if status is stale (not recently updated)
-      // Webhooks should handle most updates, so we only need to fetch on initial load
-      if (!userProfile?.bridge_kyc_status || userProfile?.bridge_kyc_status === 'not_started') {
-        fetchingBridgeStatusRef.current = true
-        try {
-          const customerStatus = await bridgeService.getCustomerStatus()
+  // Sync Bridge status function - fetches from Bridge and updates database
+  const syncBridgeStatus = useCallback(async (silent: boolean = false, force: boolean = false) => {
+    if (!userProfile?.id || !userProfile?.bridge_customer_id) return
+    
+    // Prevent multiple simultaneous syncs
+    if (syncingRef.current) {
+      if (!silent) {
+        console.log('[SYNC-STATUS] Sync already in progress, skipping')
+      }
+      return
+    }
+    
+    // Check if we should sync based on status
+    // Sync if: status is missing, rejected, under_review, or rejection_reasons are missing for rejected status
+    const shouldSyncByStatus = 
+      !userProfile?.bridge_kyc_status ||
+      userProfile?.bridge_kyc_status === 'rejected' ||
+      userProfile?.bridge_kyc_status === 'under_review' ||
+      (userProfile?.bridge_kyc_status === 'rejected' && !userProfile?.bridge_kyc_rejection_reasons)
+    
+    if (!shouldSyncByStatus && !force) {
+      if (!silent) {
+        console.log('[SYNC-STATUS] Status is approved or not_started, skipping sync')
+      }
+      return
+    }
+    
+    // Check if data is fresh (synced within last 10 minutes)
+    // This prevents unnecessary API calls when data is already up-to-date
+    if (!force) {
+      try {
+        const SYNC_CACHE_KEY = `easner_bridge_sync_${userProfile.id}`
+        const cached = await AsyncStorage.getItem(SYNC_CACHE_KEY)
+        
+        if (cached) {
+          const { lastSyncTime } = JSON.parse(cached)
+          const timeSinceLastSync = Date.now() - lastSyncTime
+          const STALE_THRESHOLD = 10 * 60 * 1000 // 10 minutes
           
-          if (customerStatus && customerStatus.kycStatus) {
-            // Only update if status is different (to avoid unnecessary updates)
-            if (customerStatus.kycStatus !== userProfile?.bridge_kyc_status) {
-              // Update user profile with latest status from Bridge
-              const { error: updateError } = await supabase
-                .from('users')
-                .update({
-                  bridge_kyc_status: customerStatus.kycStatus,
-                  bridge_kyc_rejection_reasons: customerStatus.rejectionReasons,
-                  bridge_endorsements: customerStatus.endorsements,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', userProfile.id)
-              
-              if (!updateError && refreshUserProfile) {
-                await refreshUserProfile()
-              }
+          // Also check database updated_at if available
+          let dataIsFresh = timeSinceLastSync < STALE_THRESHOLD
+          
+          if (userProfile?.updated_at) {
+            const dbUpdatedAt = new Date(userProfile.updated_at).getTime()
+            const timeSinceDbUpdate = Date.now() - dbUpdatedAt
+            // If database was updated recently (within 10 min), data is fresh
+            if (timeSinceDbUpdate < STALE_THRESHOLD) {
+              dataIsFresh = true
             }
           }
-        } catch (error: any) {
-          // Silently fail - webhooks will handle updates
-          // Status from database will be used instead
-        } finally {
-          fetchingBridgeStatusRef.current = false
+          
+          // If data is fresh and we have rejection_reasons (if rejected), skip sync
+          if (dataIsFresh) {
+            const hasRejectionReasons = userProfile?.bridge_kyc_status === 'rejected' 
+              ? userProfile?.bridge_kyc_rejection_reasons 
+              : true // Not rejected, so we don't need rejection_reasons
+            
+            if (hasRejectionReasons) {
+              if (!silent) {
+                console.log('[SYNC-STATUS] Data is fresh (synced', Math.round(timeSinceLastSync / 1000), 'seconds ago), skipping sync')
+              }
+              return
+            }
+          }
+        }
+      } catch (cacheError) {
+        // If cache check fails, continue with sync (better to sync than skip)
+        if (!silent) {
+          console.warn('[SYNC-STATUS] Error checking sync cache:', cacheError)
         }
       }
     }
     
-    fetchBridgeStatus()
-  }, [userProfile?.bridge_customer_id, userProfile?.id, userProfile?.bridge_kyc_status]) // Only fetch if status is missing
+    syncingRef.current = true
+    try {
+      if (!silent) {
+        console.log('[SYNC-STATUS] Syncing Bridge status...')
+      }
+      
+      const result = await bridgeService.syncStatus()
+      
+      if (result.success && result.synced) {
+        if (!silent) {
+          console.log('[SYNC-STATUS] ✅ Status synced successfully:', result.data)
+        }
+        
+        // Store sync timestamp in AsyncStorage
+        try {
+          const SYNC_CACHE_KEY = `easner_bridge_sync_${userProfile.id}`
+          await AsyncStorage.setItem(SYNC_CACHE_KEY, JSON.stringify({
+            lastSyncTime: Date.now(),
+            customerId: userProfile.bridge_customer_id,
+          }))
+        } catch (cacheError) {
+          // Non-critical, just log
+          if (!silent) {
+            console.warn('[SYNC-STATUS] Error storing sync cache:', cacheError)
+          }
+        }
+        
+        // Refresh user profile to get updated data
+        if (refreshUserProfile) {
+          await refreshUserProfile()
+        }
+      } else {
+        if (!silent) {
+          console.log('[SYNC-STATUS] Sync completed but no update needed')
+        }
+      }
+    } catch (error: any) {
+      // Silently fail - webhooks will handle updates, or we'll retry later
+      if (!silent) {
+        console.warn('[SYNC-STATUS] Error syncing status:', error.message)
+      }
+    } finally {
+      syncingRef.current = false
+    }
+  }, [userProfile?.id, userProfile?.bridge_customer_id, userProfile?.bridge_kyc_status, userProfile?.bridge_kyc_rejection_reasons, userProfile?.updated_at, refreshUserProfile])
+
+  // Sync Bridge status on mount - check if sync is needed based on data freshness
+  // Use a ref to track if we've checked for initial sync
+  const initialSyncCheckedRef = useRef(false)
+  useEffect(() => {
+    if (!userProfile?.id || !userProfile?.bridge_customer_id) {
+      initialSyncCheckedRef.current = false // Reset if customer_id is removed
+      return
+    }
+    
+    // Only check once when customer_id first becomes available
+    if (!initialSyncCheckedRef.current) {
+      initialSyncCheckedRef.current = true
+      // Check if sync is needed (will check freshness internally)
+      syncBridgeStatus(true, false) // Silent, not forced - will check freshness
+    }
+  }, [userProfile?.bridge_customer_id, userProfile?.id, syncBridgeStatus]) // Include syncBridgeStatus since we're calling it
+
+  // Set up periodic sync while on screen (every 5 minutes)
+  // Only sync if status is rejected, under_review, or missing rejection_reasons
+  // Use a ref to track the last sync time to prevent rapid successive calls
+  const lastSyncTimeRef = useRef<number>(0)
+  useEffect(() => {
+    if (!userProfile?.bridge_customer_id) {
+      // Clear interval if customer_id is removed
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+        syncIntervalRef.current = null
+      }
+      return
+    }
+    
+    const shouldPeriodicSync = 
+      userProfile?.bridge_kyc_status === 'rejected' ||
+      userProfile?.bridge_kyc_status === 'under_review' ||
+      (userProfile?.bridge_kyc_status === 'rejected' && !userProfile?.bridge_kyc_rejection_reasons)
+    
+    if (shouldPeriodicSync) {
+      // Clear any existing interval first
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+        syncIntervalRef.current = null
+      }
+      
+      // Only sync immediately if it's been at least 30 seconds since last sync
+      // The syncBridgeStatus function will also check data freshness internally
+      const now = Date.now()
+      if (now - lastSyncTimeRef.current > 30000) { // 30 seconds minimum between syncs
+        lastSyncTimeRef.current = now
+        syncBridgeStatus(true, false) // Silent, not forced - will check freshness
+      }
+      
+      // Set up periodic sync every 5 minutes
+      // Note: syncBridgeStatus will check freshness, so it won't sync if data is < 10 minutes old
+      const interval = setInterval(() => {
+        const now = Date.now()
+        if (now - lastSyncTimeRef.current > 30000) { // Ensure at least 30 seconds between syncs
+          lastSyncTimeRef.current = now
+          syncBridgeStatus(true, false) // Silent, not forced - will check freshness
+        }
+      }, 5 * 60 * 1000) // 5 minutes
+      
+      syncIntervalRef.current = interval
+      
+      return () => {
+        if (syncIntervalRef.current) {
+          clearInterval(syncIntervalRef.current)
+          syncIntervalRef.current = null
+        }
+      }
+    } else {
+      // Clear interval if status doesn't require periodic sync
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+        syncIntervalRef.current = null
+      }
+    }
+  }, [userProfile?.bridge_customer_id, userProfile?.bridge_kyc_status, userProfile?.bridge_kyc_rejection_reasons]) // Don't include syncBridgeStatus to prevent loops
 
   useEffect(() => {
     if (!userProfile?.id) return
@@ -697,38 +849,15 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     setTosCompleted(false)
     
     try {
-      // Always fetch and store latest Bridge customer status before opening KYC
-      // This ensures we have the current status even if database is outdated
+      // Always sync latest Bridge customer status before opening KYC
+      // This ensures we have the current status and rejection_reasons even if database is outdated
       if (userProfile?.bridge_customer_id) {
         try {
-          console.log('[KYC-OPEN] Fetching latest Bridge customer status for:', userProfile.bridge_customer_id)
-          const customerStatus = await bridgeService.getCustomerStatus()
-          if (customerStatus && customerStatus.kycStatus) {
-            // Always update database with latest status from Bridge
-            const { error: updateError } = await supabase
-              .from('users')
-              .update({
-                bridge_kyc_status: customerStatus.kycStatus,
-                bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
-                bridge_endorsements: customerStatus.endorsements || [],
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', userProfile.id)
-            
-            if (updateError) {
-              console.error('[KYC-OPEN] Error updating status:', updateError)
-            } else {
-              console.log('[KYC-OPEN] Updated Bridge KYC status from Bridge API:', customerStatus.kycStatus)
-              
-              // Refresh user profile to get updated status immediately
-              if (refreshUserProfile) {
-                await refreshUserProfile()
-              }
-            }
-          }
+          console.log('[KYC-OPEN] Syncing Bridge status before opening KYC...')
+          await syncBridgeStatus(false, true) // Not silent, forced - always sync when customer_id is first discovered
         } catch (statusError: any) {
-          console.warn('[KYC-OPEN] Could not fetch Bridge customer status:', statusError.message)
-          // Continue with KYC link creation even if status fetch fails
+          console.warn('[KYC-OPEN] Could not sync Bridge status:', statusError.message)
+          // Continue with KYC link creation even if sync fails
         }
       } else {
         // No customer_id yet, but try to check if Bridge has a customer for this email
@@ -743,9 +872,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
               .from('users')
               .update({
                 bridge_customer_id: customerStatus.customerId,
-                bridge_kyc_status: customerStatus.kycStatus || 'not_started',
-                bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
-                bridge_endorsements: customerStatus.endorsements || [],
                 updated_at: new Date().toISOString(),
               })
               .eq('id', userProfile.id)
@@ -753,7 +879,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             if (updateError) {
               console.error('[KYC-OPEN] Error storing customer_id:', updateError)
             } else {
-              console.log('[KYC-OPEN] Stored bridge_customer_id and status:', customerStatus.kycStatus)
+              console.log('[KYC-OPEN] Stored bridge_customer_id, now syncing status...')
+              
+              // Now sync the full status including rejection_reasons
+              await syncBridgeStatus(false, true) // Not silent, forced - we just discovered customer_id
               
               // Refresh user profile to get updated status
               if (refreshUserProfile) {
@@ -831,48 +960,14 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
             console.log('[KYC-OPEN] Stored bridge_customer_id:', response.customer_id)
           }
           
-          // Now fetch the latest status from Bridge to ensure we have current data
+          // Sync latest status from Bridge to ensure we have current data including rejection_reasons
           // This handles cases where database has old/missing status
           try {
-            console.log('[KYC-OPEN] Fetching latest customer status from Bridge...')
-            const customerStatus = await bridgeService.getCustomerStatus()
-            
-            if (customerStatus && customerStatus.kycStatus) {
-              // Update with latest status from Bridge
-              const { error: statusError } = await supabase
-                .from('users')
-                .update({
-                  bridge_kyc_status: customerStatus.kycStatus,
-                  bridge_kyc_rejection_reasons: customerStatus.rejectionReasons || [],
-                  bridge_endorsements: customerStatus.endorsements || [],
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', userProfile.id)
-              
-              if (statusError) {
-                console.error('[KYC-OPEN] Error updating status:', statusError)
-              } else {
-                console.log('[KYC-OPEN] Updated status from Bridge:', customerStatus.kycStatus)
-              }
-            } else {
-              // Fallback: use status from response if Bridge fetch failed
-              if (response.kyc_status) {
-                const { error: fallbackError } = await supabase
-                  .from('users')
-                  .update({
-                    bridge_kyc_status: response.kyc_status,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq('id', userProfile.id)
-                
-                if (fallbackError) {
-                  console.error('[KYC-OPEN] Error storing fallback status:', fallbackError)
-                }
-              }
-            }
+            console.log('[KYC-OPEN] Syncing latest customer status from Bridge...')
+            await syncBridgeStatus(false, true) // Not silent, forced - always sync when customer_id is first discovered
           } catch (statusError: any) {
-            console.warn('[KYC-OPEN] Could not fetch status from Bridge:', statusError.message)
-            // Fallback: use status from response
+            console.warn('[KYC-OPEN] Could not sync status from Bridge:', statusError.message)
+            // Fallback: use status from response if sync failed
             if (response.kyc_status) {
               await supabase
                 .from('users')
@@ -1192,24 +1287,60 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
               }
             ]}
           >
-            {/* Info Message */}
+            {/* Status Notice - Always shown until approved */}
             {!bridgeKycApproved && (
               <View style={styles.infoCard}>
                 <View style={styles.infoBox}>
-                  <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />
-                  <Text style={styles.infoText}>
-                    {bridgeKycRejected 
-                      ? (userProfile?.bridge_kyc_rejection_reasons 
-                          ? (Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                              ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. Please complete account verification again to receive your account details.`
+                  {bridgeKycRejected ? (
+                    <>
+                      <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
+                      <Text style={[styles.infoText, { color: colors.error.main }]}>
+                        {userProfile?.bridge_kyc_rejection_reasons 
+                          ? (Array.isArray(userProfile.bridge_kyc_rejection_reasons) && userProfile.bridge_kyc_rejection_reasons.length > 0
+                              ? (() => {
+                                  // Extract unique customer-facing reasons (deduplicate)
+                                  const uniqueReasons = new Set<string>()
+                                  userProfile.bridge_kyc_rejection_reasons.forEach((reasonObj: any) => {
+                                    if (typeof reasonObj === 'object' && reasonObj !== null && reasonObj.reason) {
+                                      const reason = String(reasonObj.reason).trim()
+                                      if (reason) {
+                                        uniqueReasons.add(reason)
+                                      }
+                                    } else if (typeof reasonObj === 'string' && reasonObj.trim()) {
+                                      uniqueReasons.add(reasonObj.trim())
+                                    }
+                                  })
+                                  
+                                  const reasonsArray = Array.from(uniqueReasons)
+                                  const reasonsText = reasonsArray.length > 0 
+                                    ? reasonsArray.join(". ")
+                                    : ''
+                                  
+                                  return reasonsText
+                                    ? `Please complete account verification again to receive your account details. ${reasonsText}.`
+                                    : 'Please complete account verification again to receive your account details.'
+                                })()
                               : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                              ? `${userProfile.bridge_kyc_rejection_reasons}. Please complete account verification again to receive your account details.`
+                              ? `Please complete account verification again to receive your account details. ${userProfile.bridge_kyc_rejection_reasons}.`
                               : 'Please complete account verification again to receive your account details.')
-                          : 'Please complete account verification again to receive your account details.')
-                      : bridgeKycInReview
-                      ? 'Your KYC verification is under review. Please check your email for updates.'
-                      : 'Please complete account verification and accept Terms of Service to proceed.'}
-                  </Text>
+                          : 'Please complete account verification again to receive your account details.'}
+                      </Text>
+                    </>
+                  ) : bridgeKycInReview ? (
+                    <>
+                      <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
+                      <Text style={[styles.infoText, { color: colors.warning.main }]}>
+                        Your KYC verification is under review. Please check your email for updates.
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="information-circle-outline" size={20} color={colors.primary.main} />
+                      <Text style={styles.infoText}>
+                        Please complete account verification and accept Terms of Service to proceed.
+                      </Text>
+                    </>
+                  )}
                 </View>
               </View>
             )}
@@ -1256,31 +1387,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                         )}
                       </View>
                     </View>
-                    {/* Status Notices */}
-                    {bridgeKycInReview && (
-                      <View style={styles.infoCard}>
-                        <View style={styles.infoBox}>
-                          <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
-                          <Text style={styles.infoText}>
-                            Your verification is under review. We will provide an update soonest. Please check your email for updates.
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                    {bridgeKycRejected && userProfile?.bridge_kyc_rejection_reasons && (
-                      <View style={styles.infoCard}>
-                        <View style={styles.infoBox}>
-                          <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
-                          <Text style={styles.infoText}>
-                            {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                              ? userProfile.bridge_kyc_rejection_reasons.join(", ")
-                              : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                              ? userProfile.bridge_kyc_rejection_reasons
-                              : 'Your verification was not approved.'} Please complete account verification again to receive your account details.
-                          </Text>
-                        </View>
-                      </View>
-                    )}
                   </View>
                 </TouchableOpacity>
               )}
@@ -1316,27 +1422,13 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                     </View>
                   </View>
-                  {/* Status Notices */}
+                  {/* Status Notices - Only show if status is actually under_review (shouldn't happen if approved, but just in case) */}
                   {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
                     <View style={styles.infoCard}>
                       <View style={styles.infoBox}>
                         <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
                         <Text style={styles.infoText}>
                           Your verification is under review. We will provide an update soonest. Please check your email for updates.
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'rejected' && userProfile?.bridge_kyc_rejection_reasons && (
-                    <View style={styles.infoCard}>
-                      <View style={styles.infoBox}>
-                        <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
-                        <Text style={styles.infoText}>
-                          {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                            ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
-                            : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                            ? `${userProfile.bridge_kyc_rejection_reasons}. `
-                            : ''}Please complete account verification again to receive your account details.
                         </Text>
                       </View>
                     </View>
@@ -1376,27 +1468,13 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                       <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                     </View>
                   </View>
-                  {/* Status Notices */}
+                  {/* Status Notices - Only show if status is actually under_review (shouldn't happen if approved, but just in case) */}
                   {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
                     <View style={styles.infoCard}>
                       <View style={styles.infoBox}>
                         <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
                         <Text style={styles.infoText}>
                           Your verification is under review. We will provide an update soonest. Please check your email for updates.
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'rejected' && userProfile?.bridge_kyc_rejection_reasons && (
-                    <View style={styles.infoCard}>
-                      <View style={styles.infoBox}>
-                        <Ionicons name="alert-circle-outline" size={20} color={colors.error.main} />
-                        <Text style={styles.infoText}>
-                          {Array.isArray(userProfile.bridge_kyc_rejection_reasons) 
-                            ? `${userProfile.bridge_kyc_rejection_reasons.join(", ")}. `
-                            : typeof userProfile.bridge_kyc_rejection_reasons === 'string'
-                            ? `${userProfile.bridge_kyc_rejection_reasons}. `
-                            : ''}Please complete account verification again to receive your account details.
                         </Text>
                       </View>
                     </View>

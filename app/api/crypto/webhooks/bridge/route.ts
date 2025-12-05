@@ -389,7 +389,11 @@ async function processWebhookEvent(
             updateData.bridge_kyc_status = newStatus
           }
 
-          if (eventObject.rejection_reasons) {
+          // Use rejection_reasons from customerData if available (more complete), otherwise from eventObject
+          if (customerData?.rejection_reasons) {
+            updateData.bridge_kyc_rejection_reasons = customerData.rejection_reasons
+            console.log(`[WEBHOOK] Updated rejection_reasons from customer object:`, customerData.rejection_reasons)
+          } else if (eventObject.rejection_reasons) {
             updateData.bridge_kyc_rejection_reasons = eventObject.rejection_reasons
           }
 

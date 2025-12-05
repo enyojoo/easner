@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Linking,
   ActivityIndicator,
   Animated,
   Keyboard,
@@ -18,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import ExternalLinkModal from '../../components/ExternalLinkModal'
+import { useExternalLink } from '../../hooks/useExternalLink'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import BrandLogo from '../../components/BrandLogo'
@@ -39,6 +40,8 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const { signUp } = useAuth()
   const insets = useSafeAreaInsets()
+  const termsLink = useExternalLink()
+  const privacyLink = useExternalLink()
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -70,11 +73,11 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
   }
 
   const handleTermsPress = () => {
-    Linking.openURL('https://www.easner.com/terms')
+    termsLink.openLink('https://www.easner.com/terms', 'Terms of Service')
   }
 
   const handlePrivacyPress = () => {
-    Linking.openURL('https://www.easner.com/privacy')
+    privacyLink.openLink('https://www.easner.com/privacy', 'Privacy Policy')
   }
 
   const validateForm = () => {
@@ -348,6 +351,18 @@ export default function RegisterScreen({ navigation }: NavigationProps) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <ExternalLinkModal
+        visible={termsLink.isVisible}
+        url={termsLink.url}
+        title={termsLink.title}
+        onClose={termsLink.closeLink}
+      />
+      <ExternalLinkModal
+        visible={privacyLink.isVisible}
+        url={privacyLink.url}
+        title={privacyLink.title}
+        onClose={privacyLink.closeLink}
+      />
     </ScreenWrapper>
   )
 }

@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import ExternalLinkModal from '../../components/ExternalLinkModal'
+import { useExternalLink } from '../../hooks/useExternalLink'
 import { useAuth } from '../../contexts/AuthContext'
 import { NavigationProps } from '../../types'
 import { analytics } from '../../lib/analytics'
@@ -35,8 +37,11 @@ export default function AuthScreen({ navigation }: NavigationProps) {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showBackArrow, setShowBackArrow] = useState(false)
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const { signIn, signUp } = useAuth()
   const insets = useSafeAreaInsets()
+  const termsLink = useExternalLink()
+  const privacyLink = useExternalLink()
 
   // Check if user came from onboarding
   useEffect(() => {
@@ -67,6 +72,15 @@ export default function AuthScreen({ navigation }: NavigationProps) {
     setConfirmPassword('')
     setFirstName('')
     setLastName('')
+    setAcceptTerms(false)
+  }
+
+  const handleTermsPress = () => {
+    termsLink.openLink('https://www.easner.com/terms', 'Terms of Service')
+  }
+
+  const handlePrivacyPress = () => {
+    privacyLink.openLink('https://www.easner.com/privacy', 'Privacy Policy')
   }
 
   const handleBack = async () => {
@@ -116,6 +130,10 @@ export default function AuthScreen({ navigation }: NavigationProps) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(email)) {
         Alert.alert('Error', 'Please enter a valid email address')
+        return false
+      }
+      if (!acceptTerms) {
+        Alert.alert('Error', 'Please accept the Terms and Privacy Policy to continue')
         return false
       }
       return true
@@ -238,31 +256,33 @@ export default function AuthScreen({ navigation }: NavigationProps) {
           <View style={styles.form}>
             {mode === 'signup' && (
               <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>First Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    placeholder="Enter your first name"
-                    placeholderTextColor={colors.text.secondary}
-                    autoCapitalize="words"
-                    returnKeyType="done"
-                    onSubmitEditing={() => Keyboard.dismiss()}
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Last Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={lastName}
-                    onChangeText={setLastName}
-                    placeholder="Enter your last name"
-                    placeholderTextColor={colors.text.secondary}
-                    autoCapitalize="words"
-                    returnKeyType="done"
-                    onSubmitEditing={() => Keyboard.dismiss()}
-                  />
+                <View style={styles.nameRow}>
+                  <View style={[styles.inputContainer, styles.nameInputContainer]}>
+                    <Text style={styles.label}>First Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      placeholder="First name"
+                      placeholderTextColor={colors.text.secondary}
+                      autoCapitalize="words"
+                      returnKeyType="next"
+                      onSubmitEditing={() => Keyboard.dismiss()}
+                    />
+                  </View>
+                  <View style={[styles.inputContainer, styles.nameInputContainer]}>
+                    <Text style={styles.label}>Last Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={lastName}
+                      onChangeText={setLastName}
+                      placeholder="Last name"
+                      placeholderTextColor={colors.text.secondary}
+                      autoCapitalize="words"
+                      returnKeyType="done"
+                      onSubmitEditing={() => Keyboard.dismiss()}
+                    />
+                  </View>
                 </View>
               </>
             )}
@@ -313,34 +333,63 @@ export default function AuthScreen({ navigation }: NavigationProps) {
             </View>
 
             {mode === 'signup' && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Confirm Password</Text>
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Confirm your password"
-                    placeholderTextColor={colors.text.secondary}
-                    secureTextEntry={!confirmPasswordVisible}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
+              <>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Confirm Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      placeholder="Confirm your password"
+                      placeholderTextColor={colors.text.secondary}
+                      secureTextEntry={!confirmPasswordVisible}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeButton}
+                      onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.eyeButtonCircle}>
+                        <Ionicons
+                          name={confirmPasswordVisible ? 'eye-off' : 'eye'}
+                          size={18}
+                          color={colors.text.secondary}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Terms Checkbox */}
+                <View style={styles.termsContainer}>
                   <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                    style={styles.checkboxContainer}
+                    onPress={async () => {
+                      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                      setAcceptTerms(!acceptTerms)
+                    }}
+                    disabled={isLoading}
                     activeOpacity={0.7}
                   >
-                    <View style={styles.eyeButtonCircle}>
-                      <Ionicons
-                        name={confirmPasswordVisible ? 'eye-off' : 'eye'}
-                        size={18}
-                        color={colors.text.secondary}
-                      />
+                    <View style={[styles.checkbox, acceptTerms && styles.checkboxChecked]}>
+                      {acceptTerms && (
+                        <Ionicons name="checkmark" size={16} color={colors.text.inverse} />
+                      )}
                     </View>
                   </TouchableOpacity>
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      I agree to the{' '}
+                      <Text style={styles.termsLink} onPress={handleTermsPress}>Terms</Text>
+                      {' '}and{' '}
+                      <Text style={styles.termsLink} onPress={handlePrivacyPress}>Privacy Policy</Text>
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              </>
             )}
 
             {mode === 'login' && (
@@ -357,9 +406,9 @@ export default function AuthScreen({ navigation }: NavigationProps) {
             )}
 
             <TouchableOpacity
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+              style={[styles.submitButton, (isLoading || (mode === 'signup' && !acceptTerms)) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || (mode === 'signup' && !acceptTerms)}
               activeOpacity={0.8}
             >
               <Text style={styles.submitButtonText}>
@@ -394,6 +443,18 @@ export default function AuthScreen({ navigation }: NavigationProps) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <ExternalLinkModal
+        visible={termsLink.isVisible}
+        url={termsLink.url}
+        title={termsLink.title}
+        onClose={termsLink.closeLink}
+      />
+      <ExternalLinkModal
+        visible={privacyLink.isVisible}
+        url={privacyLink.url}
+        title={privacyLink.title}
+        onClose={privacyLink.closeLink}
+      />
     </View>
   )
 }
@@ -480,8 +541,17 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
+  nameRow: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    marginBottom: spacing[4],
+  },
   inputContainer: {
     marginBottom: spacing[4],
+  },
+  nameInputContainer: {
+    flex: 1,
+    marginBottom: 0,
   },
   label: {
     ...textStyles.bodySmall,
@@ -601,6 +671,43 @@ const styles = StyleSheet.create({
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     fontWeight: '500',
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing[4],
+    marginTop: spacing[2],
+  },
+  checkboxContainer: {
+    marginRight: spacing[3],
+    marginTop: spacing[0],
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.border.light,
+    backgroundColor: colors.background.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary.main,
+    borderColor: colors.primary.main,
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
+  termsText: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    lineHeight: 20,
+  },
+  termsLink: {
+    ...textStyles.bodySmall,
+    color: colors.primary.main,
+    fontWeight: '600',
   },
 })
 

@@ -143,6 +143,13 @@ function AMLPolicyContent() {
                     procedures
                   </li>
                 </ul>
+                <p className="text-gray-700 leading-relaxed mt-4">
+                  <strong>Third-Party Screening Services:</strong> We utilize Bridge's verification and screening services 
+                  as part of our AML program. Bridge conducts identity verification, sanctions screening, and PEP 
+                  (Politically Exposed Person) checks on our behalf. Results from Bridge's screening are integrated into 
+                  our AML monitoring and reporting systems. Bridge acts as a data processor and is contractually obligated 
+                  to maintain appropriate security and compliance standards.
+                </p>
               </section>
 
               <section>

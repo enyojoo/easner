@@ -28,6 +28,7 @@ import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, Transaction } from '../../types'
 import { analytics } from '../../lib/analytics'
 import { useAuth } from '../../contexts/AuthContext'
+import { useFocusRefreshAll } from '../../hooks/useFocusRefresh'
 import { apiGet } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -226,7 +227,7 @@ function TransactionsSkeleton() {
 function TransactionsContent({ navigation }: NavigationProps) {
   const { userProfile } = useAuth()
   const currencies = useCurrencies()
-  const { transactions: userTransactions } = useUserData()
+  const { transactions: userTransactions, refreshStaleData } = useUserData()
   
   const [transactions, setTransactions] = useState<CombinedTransaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -407,6 +408,9 @@ function TransactionsContent({ navigation }: NavigationProps) {
     loadFromCache()
   }, [userProfile?.id])
 
+  // Refresh stale data when screen comes into focus
+  useFocusRefreshAll(false) // Only refresh if stale (> 5 minutes)
+
   // Real-time subscription
   useEffect(() => {
     if (!userProfile?.id) return
@@ -494,6 +498,9 @@ function TransactionsContent({ navigation }: NavigationProps) {
     setRefreshing(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
+      // Refresh stale data from UserDataContext (forced - user pulled to refresh)
+      await refreshStaleData()
+      
       const params = new URLSearchParams()
         params.append('type', 'send') // Only fetch send transactions, not receive or card
       params.append('limit', '100')

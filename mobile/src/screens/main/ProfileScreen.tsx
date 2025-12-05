@@ -9,10 +9,11 @@ import {
   Alert,
   Modal,
   FlatList,
-  Linking,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
+import ExternalLinkModal from '../../components/ExternalLinkModal'
+import { useExternalLink } from '../../hooks/useExternalLink'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps } from '../../types'
@@ -40,6 +41,8 @@ function ProfileContent({ navigation }: NavigationProps) {
     baseCurrency: 'NGN',
   })
   const [editProfileData, setEditProfileData] = useState(profileData)
+  const privacyLink = useExternalLink()
+  const termsLink = useExternalLink()
 
   // Track screen view
   useEffect(() => {
@@ -51,7 +54,7 @@ function ProfileContent({ navigation }: NavigationProps) {
     if (userProfile) {
       const data = {
         firstName: userProfile.profile.first_name || '',
-        middleName: userProfile.profile.middle_name || '',
+        middleName: userProfile.profile.middle_name || userProfile.middle_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
@@ -91,13 +94,16 @@ function ProfileContent({ navigation }: NavigationProps) {
     setLoading(true)
     try {
       // Update profile in database
-      await userService.updateProfile(user.id, {
+      const updatePayload = {
         firstName: editProfileData.firstName,
         middleName: editProfileData.middleName,
         lastName: editProfileData.lastName,
         phone: editProfileData.phone,
         baseCurrency: editProfileData.baseCurrency,
-      })
+      }
+      console.log('[PROFILE-SAVE] Sending update payload:', updatePayload)
+      console.log('[PROFILE-SAVE] middleName value:', editProfileData.middleName, 'type:', typeof editProfileData.middleName, 'undefined?', editProfileData.middleName === undefined)
+      await userService.updateProfile(user.id, updatePayload)
 
       // Update local state
       setProfileData(editProfileData)
@@ -138,11 +144,11 @@ function ProfileContent({ navigation }: NavigationProps) {
   }
 
   const handlePrivacy = () => {
-    Linking.openURL('https://www.easner.com/privacy')
+    privacyLink.openLink('https://www.easner.com/privacy', 'Privacy Policy')
   }
 
   const handleTerms = () => {
-    Linking.openURL('https://www.easner.com/terms')
+    termsLink.openLink('https://www.easner.com/terms', 'Terms of Service')
   }
 
   const getSelectedCurrency = () => {
@@ -360,6 +366,12 @@ function ProfileContent({ navigation }: NavigationProps) {
                     <Text style={styles.fieldLabel}>First Name</Text>
                     <Text style={styles.fieldValue}>{profileData.firstName || 'Not set'}</Text>
                   </View>
+                  {profileData.middleName && (
+                    <View style={styles.fieldContainer}>
+                      <Text style={styles.fieldLabel}>Middle Name</Text>
+                      <Text style={styles.fieldValue}>{profileData.middleName}</Text>
+                    </View>
+                  )}
                   <View style={styles.fieldContainer}>
                     <Text style={styles.fieldLabel}>Last Name</Text>
                     <Text style={styles.fieldValue}>{profileData.lastName || 'Not set'}</Text>
@@ -442,7 +454,19 @@ function ProfileContent({ navigation }: NavigationProps) {
 
         {/* Currency Picker Modal */}
         {renderCurrencyPicker()}
-    </ScrollView>
+      </ScrollView>
+      <ExternalLinkModal
+        visible={privacyLink.isVisible}
+        url={privacyLink.url}
+        title={privacyLink.title}
+        onClose={privacyLink.closeLink}
+      />
+      <ExternalLinkModal
+        visible={termsLink.isVisible}
+        url={termsLink.url}
+        title={termsLink.title}
+        onClose={termsLink.closeLink}
+      />
     </ScreenWrapper>
   )
 }
