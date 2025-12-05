@@ -15,18 +15,22 @@ function TermsPageContent() {
   useEffect(() => {
     // Check if user came from an internal page
     const referrer = document.referrer
-    const fromInternal = searchParams.get('from') === 'internal'
+    const fromParam = searchParams.get('from')
+    const fromInternal = fromParam === 'internal'
+    const fromRegister = fromParam === 'register'
     
     // Show back button if:
-    // 1. There's a 'from=internal' query parameter (set when linking from other internal pages)
+    // 1. There's a 'from=internal' or 'from=register' query parameter
     // 2. Referrer is from the same domain (easner.com)
+    // 3. Referrer includes auth/user/register path
     const isInternalReferrer = referrer && (
       referrer.includes('easner.com') || 
       referrer.includes('localhost') ||
       referrer.includes('127.0.0.1')
     )
+    const isFromRegister = referrer && referrer.includes('/auth/user/register')
     
-    setShowBackButton(fromInternal || isInternalReferrer)
+    setShowBackButton(fromInternal || fromRegister || isInternalReferrer || isFromRegister)
   }, [searchParams])
 
   const handleBack = () => {

@@ -427,12 +427,6 @@ function KYCPolicyPageContent() {
                     support first, and we will coordinate with Bridge on your behalf.
                   </p>
                 </div>
-                    <br />
-                    <strong>Phone:</strong> +1 628 228 6083
-                    <br />
-                    <strong>Website:</strong> www.easner.com
-                  </p>
-                </div>
               </section>
 
               <div className="mt-12 pt-8 border-t border-gray-200">

@@ -270,11 +270,11 @@ function RegisterPageContent() {
                 </div>
                 <Label htmlFor="terms" className="text-sm text-gray-500 leading-relaxed cursor-pointer">
                   I agree to the{" "}
-                  <Link href="/terms" className="text-easner-primary font-semibold hover:text-easner-primary-600">
+                  <Link href="/terms?from=register" className="text-easner-primary font-semibold hover:text-easner-primary-600">
                     Terms
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-easner-primary font-semibold hover:text-easner-primary-600">
+                  <Link href="/privacy?from=register" className="text-easner-primary font-semibold hover:text-easner-primary-600">
                     Privacy Policy
                   </Link>
                 </Label>
