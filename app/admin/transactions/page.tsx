@@ -941,9 +941,6 @@ export default function AdminTransactionsPage() {
                                           <p className="text-sm font-medium text-gray-900">
                                             {selectedTransaction.receipt_filename || "Receipt"}
                                           </p>
-                                          <p className="text-xs text-gray-500">
-                                            Uploaded {formatTimestamp(selectedTransaction.created_at)}
-                                          </p>
                                         </div>
                                         <Button
                                           variant="outline"
