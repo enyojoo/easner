@@ -942,7 +942,7 @@ export default function AdminTransactionsPage() {
                                             {selectedTransaction.receipt_filename || "Receipt"}
                                           </p>
                                           <p className="text-xs text-gray-500">
-                                            Uploaded {formatTimestamp(selectedTransaction.updated_at)}
+                                            Uploaded {formatTimestamp(selectedTransaction.created_at)}
                                           </p>
                                         </div>
                                         <Button
