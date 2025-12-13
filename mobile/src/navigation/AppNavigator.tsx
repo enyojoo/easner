@@ -53,6 +53,7 @@ import BridgeTransactionDetailsScreen from '../screens/transactions/BridgeTransa
 
 // Send Money Flow Screens
 import SendAmountScreen from '../screens/send/SendAmountScreen'
+import SelectRecentRecipientScreen from '../screens/send/SelectRecentRecipientScreen'
 import SelectRecipientScreen from '../screens/send/SelectRecipientScreen'
 import PaymentMethodScreen from '../screens/send/PaymentMethodScreen'
 import ConfirmationScreen from '../screens/send/ConfirmationScreen'
@@ -501,11 +502,45 @@ function MainStack() {
         }}
       />
       <Stack.Screen 
-        name="SendAmount" 
-        component={SendAmountScreen}
+        name="SelectRecentRecipient" 
+        component={SelectRecentRecipientScreen}
         options={{ 
           headerShown: false,
           ...getSendFlowTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
+        name="SendAmount" 
+        component={SendAmountScreen}
+        options={({ navigation }) => {
+          // Check if previous screen is SelectRecentRecipientScreen (no animation when going back)
+          const state = navigation.getState()
+          const currentIndex = state?.index ?? 0
+          const previousRoute = currentIndex > 0 ? state?.routes?.[currentIndex - 1] : null
+          const isFromSelectRecent = previousRoute?.name === 'SelectRecentRecipient'
+          
+          return {
+            headerShown: false,
+            // No animation when going back to SelectRecentRecipientScreen (same header)
+            ...(isFromSelectRecent ? {
+              transitionSpec: {
+                open: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 300,
+                    useNativeDriver: true,
+                  },
+                },
+                close: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 0, // Instant when going back
+                    useNativeDriver: true,
+                  },
+                },
+              },
+            } : getSendFlowTransitionConfig()),
+          }
         }}
       />
       <Stack.Screen 

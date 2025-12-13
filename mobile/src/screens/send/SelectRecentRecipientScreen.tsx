@@ -2,34 +2,36 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   FlatList,
   Animated,
-  Alert,
   Image,
+  ScrollView,
+  TextInput,
   Modal,
   Platform,
   KeyboardAvoidingView,
   Keyboard,
+  Alert,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Plus, Search } from 'lucide-react-native'
+import { User, Wallet, Building2, Smartphone } from 'lucide-react-native'
 import { NavigationProps, Recipient } from '../../types'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { useUserData } from '../../contexts/UserDataContext'
-import { recipientService } from '../../lib/recipientService'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { recipientService } from '../../lib/recipientService'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { getAccountTypeConfigFromCurrency } from '../../lib/currencyAccountTypes'
 import { formatIBAN, formatSortCode, formatRoutingNumber, formatAccountNumber } from '../../utils/formatters'
 import { getAllCountryCurrencies, CountryCurrency } from '../../lib/countryCurrencyMapping'
-import { Wallet, Building2, Smartphone } from 'lucide-react-native'
+import { ShimmerListItem } from '../../components/premium'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Helper function to get flag image source for currency
 const getFlagImageSource = (currency: string) => {
@@ -42,24 +44,39 @@ const getFlagImageSource = (currency: string) => {
     'GHS': require('../../../assets/flags/gh.png'),
     'RUB': require('../../../assets/flags/ru.png'),
   }
-  return flagMap[currency] || require('../../../assets/flags/us.png') // Default to USD
+  return flagMap[currency] || require('../../../assets/flags/us.png')
 }
 
-export default function SelectRecipientScreen({ navigation, route }: NavigationProps) {
+// Helper function to get initials from name
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(' ')
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase()
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+const CACHE_KEY_PREFIX = 'recent_recipients_'
+const CACHE_TTL = 2 * 60 * 1000 // 2 minutes
+
+export default function SelectRecentRecipientScreen({ navigation }: NavigationProps) {
   const insets = useSafeAreaInsets()
-  const { userProfile } = useAuth()
+  const { user, userProfile } = useAuth()
   const { recipients, refreshRecipients, currencies } = useUserData()
-  const [searchTerm, setSearchTerm] = useState('')
-  // New 3-step flow states
-  const [showRecipientTypeModal, setShowRecipientTypeModal] = useState(false) // Step 1: Choose type
-  const [showBankAccountForm, setShowBankAccountForm] = useState(false) // Step 2: Bank account form
+  const [recentRecipients, setRecentRecipients] = useState<Recipient[]>([])
+  const [hasTransactions, setHasTransactions] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Add recipient flow states
+  const [showRecipientTypeModal, setShowRecipientTypeModal] = useState(false)
+  const [showBankAccountForm, setShowBankAccountForm] = useState(false)
   const [selectedRecipientType, setSelectedRecipientType] = useState<'wallet' | 'bank' | 'mobile' | null>(null)
-  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false) // Inline dropdown for country
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
   const [currencySearchTerm, setCurrencySearchTerm] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [selectedCountryCurrency, setSelectedCountryCurrency] = useState<CountryCurrency | null>(null)
-  const [transferType, setTransferType] = useState<'ACH' | 'Wire' | null>(null) // For USA
+  const [transferType, setTransferType] = useState<'ACH' | 'Wire' | null>(null)
   
   const [newRecipient, setNewRecipient] = useState({
     fullName: '',
@@ -71,15 +88,6 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     iban: '',
     swiftBic: '',
   })
-  
-  // Get pre-selected recipient ID from route params
-  const preSelectedRecipientId = (route.params as any)?.selectedRecipientId as string | undefined
-  
-  const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(
-    preSelectedRecipientId 
-      ? recipients.find(r => r.id === preSelectedRecipientId) || null
-      : null
-  )
 
   // Animation refs
   const headerAnim = useRef(new Animated.Value(0)).current
@@ -100,38 +108,101 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     ]).start()
   }, [headerAnim, contentAnim])
 
-  // Update selected recipient when recipients change
+  // Get recent recipients with caching
   useEffect(() => {
-    if (preSelectedRecipientId) {
-      const recipient = recipients.find(r => r.id === preSelectedRecipientId)
-      if (recipient) {
-        setSelectedRecipient(recipient)
+    const getRecentRecipients = async () => {
+      if (!user || recipients.length === 0) {
+        setRecentRecipients([])
+        setHasTransactions(false)
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
+      const cacheKey = `${CACHE_KEY_PREFIX}${user.id}`
+      
+      try {
+        // Check cache first
+        const cached = await AsyncStorage.getItem(cacheKey)
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached)
+          const now = Date.now()
+          if (now - timestamp < CACHE_TTL) {
+            setRecentRecipients(data.recipients || [])
+            setHasTransactions(data.hasTransactions || false)
+            setIsLoading(false)
+            // Continue to fetch fresh data in background
+          }
+        }
+
+        // Get transactions with recipient_id, ordered by most recent
+        const { data: transactionData, error } = await supabase
+          .from('transactions')
+          .select('recipient_id, created_at')
+          .eq('user_id', user.id)
+          .not('recipient_id', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50)
+
+        if (error) throw error
+
+        // Check if user has made any transactions
+        if (!transactionData || transactionData.length === 0) {
+          setRecentRecipients([])
+          setHasTransactions(false)
+          setIsLoading(false)
+          await AsyncStorage.setItem(cacheKey, JSON.stringify({
+            data: { recipients: [], hasTransactions: false },
+            timestamp: Date.now()
+          }))
+          return
+        }
+
+        setHasTransactions(true)
+
+        // Extract unique recipient IDs from most recent transactions
+        const recentRecipientIds = new Set<string>()
+        for (const tx of transactionData) {
+          if (tx.recipient_id && !recentRecipientIds.has(tx.recipient_id)) {
+            recentRecipientIds.add(tx.recipient_id)
+            if (recentRecipientIds.size >= 5) break
+          }
+        }
+
+        // Map recipient IDs to full recipient objects
+        const recentRecipientsList = Array.from(recentRecipientIds)
+          .map(id => recipients.find(r => r.id === id))
+          .filter((r): r is Recipient => r !== undefined)
+
+        setRecentRecipients(recentRecipientsList)
+        setIsLoading(false)
+        
+        // Update cache
+        await AsyncStorage.setItem(cacheKey, JSON.stringify({
+          data: { recipients: recentRecipientsList, hasTransactions: true },
+          timestamp: Date.now()
+        }))
+      } catch (error) {
+        console.error('Error fetching recent recipients:', error)
+        setRecentRecipients([])
+        setHasTransactions(false)
+        setIsLoading(false)
       }
     }
-  }, [recipients, preSelectedRecipientId])
 
-  const getInitials = (fullName: string) => {
-    const names = fullName.trim().split(' ').filter(name => name.length > 0)
-    if (names.length === 0) return '??'
-    if (names.length === 1) return names[0][0].toUpperCase()
-    return names.slice(0, 2).map(name => name[0]).join('').toUpperCase()
-  }
-
-  // Filter recipients by search term (no grouping)
-  const filteredRecipients = recipients.filter(recipient =>
-    recipient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    recipient.bank_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (recipient.account_number && recipient.account_number.includes(searchTerm)) ||
-    (recipient.iban && recipient.iban.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+    getRecentRecipients()
+  }, [user, recipients])
 
   const handleSelectRecipient = async (recipient: Recipient) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setSelectedRecipient(recipient)
-    
-    // Replace current screen with SendAmountScreen to remove SelectRecipientScreen from stack
-    // This ensures back button goes to SelectRecentRecipientScreen, not SelectRecipientScreen
-    navigation.replace('SendAmount' as never, { recipient } as never)
+    // Navigate directly to SendAmountScreen with selected recipient
+    navigation.navigate('SendAmount' as never, { recipient } as never)
+  }
+
+  const handleViewAllRecipients = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    // Navigate to SelectRecipientScreen (full list)
+    navigation.navigate('SelectRecipient' as never)
   }
 
   const handleAddNewRecipient = () => {
@@ -139,14 +210,6 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     resetForm()
     setShowRecipientTypeModal(true)
   }
-
-  // Check if we should show add recipient modal on mount
-  useEffect(() => {
-    const showAddRecipient = (route.params as any)?.showAddRecipient
-    if (showAddRecipient) {
-      setShowRecipientTypeModal(true)
-    }
-  }, [route.params])
 
   const resetForm = () => {
     setNewRecipient({
@@ -160,6 +223,8 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
       swiftBic: '',
     })
     setError('')
+    setSelectedCountryCurrency(null)
+    setTransferType(null)
   }
 
   const mapFieldName = (fieldName: string): string => {
@@ -178,7 +243,6 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
   const isFormValid = () => {
     if (!newRecipient.fullName || !newRecipient.bankName || !newRecipient.currency) return false
 
-    // For US accounts, transfer type is required
     if (selectedCountryCurrency?.countryCode === 'US' && !transferType) {
       return false
     }
@@ -212,7 +276,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
       setIsSubmitting(true)
       setError('')
 
-      await recipientService.create(userProfile.id, {
+      const newRecipientData = await recipientService.create(userProfile.id, {
         fullName: newRecipient.fullName,
         accountNumber: newRecipient.accountNumber,
         bankName: newRecipient.bankName,
@@ -224,10 +288,19 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
       })
 
       await refreshRecipients()
+      
+      // Clear cache to force refresh
+      if (user) {
+        await AsyncStorage.removeItem(`${CACHE_KEY_PREFIX}${user.id}`)
+      }
+      
       setError('')
       resetForm()
       setShowBankAccountForm(false)
-      Alert.alert('Success', 'Recipient added successfully')
+      setShowRecipientTypeModal(false)
+      
+      // Navigate to SendAmountScreen with the newly added recipient
+      navigation.navigate('SendAmount' as never, { recipient: newRecipientData } as never)
     } catch (error) {
       console.error('Error adding recipient:', error)
       setError('Failed to add recipient')
@@ -248,18 +321,16 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
   })
 
   const renderRecipient = ({ item }: { item: Recipient }) => {
-    const isSelected = selectedRecipient?.id === item.id
-
     return (
       <TouchableOpacity
-        style={[styles.recipientItem, isSelected && styles.recipientItemSelected]}
+        style={styles.recipientItem}
         onPress={() => handleSelectRecipient(item)}
         activeOpacity={0.7}
       >
         <View style={styles.recipientRow}>
           <View style={styles.avatarContainer}>
-            <View style={[styles.recipientAvatar, isSelected && styles.recipientAvatarSelected]}>
-              <Text style={[styles.recipientAvatarText, isSelected && styles.recipientAvatarTextSelected]}>
+            <View style={styles.recipientAvatar}>
+              <Text style={styles.recipientAvatarText}>
                 {getInitials(item.full_name)}
               </Text>
             </View>
@@ -283,13 +354,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
             </Text>
           </View>
           
-          <View style={styles.recipientActions}>
-            <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-              {isSelected && (
-                <View style={styles.checkboxInner} />
-              )}
-            </View>
-          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.text.secondary} />
         </View>
       </TouchableOpacity>
     )
@@ -301,40 +366,40 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         >
-          {/* Header */}
-          <Animated.View 
-            style={[
-              styles.header,
-              {
-                opacity: headerAnim,
-                transform: [{
-                  translateY: headerAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-20, 0],
-                  })
-                }]
-              }
-            ]}
-          >
-            <TouchableOpacity 
-              onPress={() => {
-                navigation.goBack()
-              }}
-              style={styles.backButton}
+            {/* Header */}
+            <Animated.View 
+              style={[
+                styles.header,
+                {
+                  opacity: headerAnim,
+                  transform: [{
+                    translateY: headerAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-20, 0],
+                    })
+                  }]
+                }
+              ]}
             >
-              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
-            </TouchableOpacity>
-            <View style={styles.headerContent}>
-              <Text style={styles.title}>Send Money To</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.goBack()
+                }}
+                style={styles.backButton}
+              >
+                <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+              <View style={styles.headerContent}>
+              <Text style={styles.title}>Send Money</Text>
             </View>
-          </Animated.View>
+            </Animated.View>
 
-          {/* Search Bar */}
+          {/* Recipient Selector Box - Matching SendAmountScreen */}
           <Animated.View 
             style={[
-              styles.searchContainer,
+              styles.recipientSelectorContainer,
               {
                 opacity: contentAnim,
                 transform: [{
@@ -346,66 +411,121 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
               }
             ]}
           >
-            <View style={styles.searchWrapper}>
-              <Search size={18} color={colors.text.secondary} strokeWidth={2} />
-              <TextInput
-                style={styles.searchInput}
-                value={searchTerm}
-                onChangeText={setSearchTerm}
-                placeholder="Search recipients..."
-                placeholderTextColor={colors.text.secondary}
-              />
-              {searchTerm.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchTerm('')}>
-                  <Ionicons name="close-circle" size={18} color={colors.text.secondary} />
-                </TouchableOpacity>
-              )}
-            </View>
+            <TouchableOpacity
+              style={styles.selectRecipientBox}
+              onPress={handleViewAllRecipients}
+              activeOpacity={0.7}
+            >
+              <View style={styles.selectRecipientIcon}>
+                <User size={20} color={colors.text.secondary} strokeWidth={2} />
+              </View>
+              <Text style={styles.selectRecipientText}>Select Recipient</Text>
+            </TouchableOpacity>
           </Animated.View>
 
-          {/* Recipients List - No Grouping */}
-          <Animated.View
-            style={[
-              styles.recipientsContainer,
-              {
-                opacity: contentAnim,
-                transform: [{
-                  translateY: contentAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0],
-                  })
-                }]
-              }
-            ]}
-          >
-            {filteredRecipients.length > 0 ? (
-              <FlatList
-                data={filteredRecipients}
-                renderItem={renderRecipient}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            ) : (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIconContainer}>
-                  <Ionicons name="people-outline" size={48} color={colors.text.secondary} />
+          {/* Loading Skeleton */}
+          {isLoading ? (
+            <Animated.View
+              style={[
+                styles.recipientsContainer,
+                {
+                  opacity: contentAnim,
+                  transform: [{
+                    translateY: contentAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    })
+                  }]
+                }
+              ]}
+            >
+              {[1, 2, 3].map((i) => (
+                <View key={i} style={styles.recipientItem}>
+                  <View style={styles.recipientRow}>
+                    <ShimmerListItem style={{ width: 48, height: 48, borderRadius: 24, marginRight: spacing[3] }} />
+                    <View style={{ flex: 1 }}>
+                      <ShimmerListItem style={{ width: '60%', height: 16, borderRadius: borderRadius.md, marginBottom: spacing[1] }} />
+                      <ShimmerListItem style={{ width: '40%', height: 14, borderRadius: borderRadius.md, marginBottom: spacing[1] }} />
+                      <ShimmerListItem style={{ width: '50%', height: 14, borderRadius: borderRadius.md }} />
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.emptyTitle}>No recipients found</Text>
-                <Text style={styles.emptyText}>Add a new recipient to get started</Text>
+              ))}
+            </Animated.View>
+          ) : hasTransactions && recentRecipients.length > 0 ? (
+            <>
+              <Animated.View
+                style={[
+                  styles.sectionTitleContainer,
+                  {
+                    opacity: contentAnim,
+                    transform: [{
+                      translateY: contentAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      })
+                    }]
+                  }
+                ]}
+              >
+                <Text style={styles.sectionTitle}>Recent</Text>
+              </Animated.View>
+
+              <Animated.View
+                style={[
+                  styles.recipientsContainer,
+                  {
+                    opacity: contentAnim,
+                    transform: [{
+                      translateY: contentAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      })
+                    }]
+                  }
+                ]}
+              >
+                <FlatList
+                  data={recentRecipients}
+                  renderItem={renderRecipient}
+                  keyExtractor={(item) => item.id}
+                  scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
+                />
+              </Animated.View>
+            </>
+          ) : (
+            <Animated.View
+              style={[
+                styles.emptyState,
+                {
+                  opacity: contentAnim,
+                  transform: [{
+                    translateY: contentAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    })
+                  }]
+                }
+              ]}
+            >
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="people-outline" size={48} color={colors.text.secondary} />
               </View>
-            )}
-          </Animated.View>
+              <Text style={styles.emptyTitle}>Add or Select a recipient</Text>
+              <Text style={styles.emptyText}>and make your first transfer</Text>
+            </Animated.View>
+          )}
         </ScrollView>
 
-        {/* Add new recipient Button - Fixed at bottom */}
+        {/* Add a recipient Button - Fixed at bottom */}
         <View style={[styles.bottomButtonContainer, { paddingBottom: insets.bottom + spacing[4] }]}>
           <TouchableOpacity
             style={styles.addRecipientButton}
             onPress={handleAddNewRecipient}
             activeOpacity={0.7}
           >
-            <Text style={styles.addRecipientButtonText}>Add new recipient</Text>
+            <Text style={styles.addRecipientButtonText}>Add a recipient</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -453,7 +573,6 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
             </View>
 
             <View style={styles.recipientTypeOptions}>
-              {/* Wallet Address Option */}
               <TouchableOpacity
                 style={styles.recipientTypeOption}
                 onPress={async () => {
@@ -473,7 +592,6 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                 </View>
               </TouchableOpacity>
 
-              {/* Bank Account Option */}
               <TouchableOpacity
                 style={styles.recipientTypeOption}
                 onPress={async () => {
@@ -493,14 +611,13 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                 </View>
               </TouchableOpacity>
 
-              {/* Mobile Wallet Option */}
               <TouchableOpacity
                 style={styles.recipientTypeOption}
                 onPress={async () => {
                   await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                   setSelectedRecipientType('mobile')
                   setShowRecipientTypeModal(false)
-                  setShowBankAccountForm(true) // Use same form for now
+                  setShowBankAccountForm(true)
                 }}
                 activeOpacity={0.7}
               >
@@ -578,7 +695,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                 </View>
               ) : null}
               
-            {/* Country/Currency Selector - Matching RecipientsScreen */}
+            {/* Country/Currency Selector */}
             <View style={styles.currencySelectorWrapper}>
               <TouchableOpacity
                 style={styles.currencySelector}
@@ -627,13 +744,11 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                         ]}
                         onPress={async () => {
                           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                          // Find matching country from countryCurrencyMap
                           const countryCurrency = getAllCountryCurrencies().find(
                             cc => cc.currencyCode === item.code
                           )
                           if (countryCurrency) {
                             setSelectedCountryCurrency(countryCurrency)
-                            // For USA, reset transfer type
                             if (countryCurrency.countryCode === 'US') {
                               setTransferType(null)
                             } else {
@@ -726,7 +841,7 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
                       />
                     </View>
 
-                    {/* Bank Name - Always required */}
+                    {/* Bank Name */}
                     <View>
                       <TextInput
                         style={styles.modalInput}
@@ -950,6 +1065,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingTop: 0,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -970,68 +1088,53 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   title: {
     ...textStyles.headlineMedium,
     color: colors.text.primary,
-    marginBottom: 2,
   },
-  subtitle: {
-    ...textStyles.bodyMedium,
-    color: colors.text.secondary,
-  },
-  searchContainer: {
+  recipientSelectorContainer: {
     paddingHorizontal: spacing[5],
     marginBottom: spacing[4],
   },
-  searchWrapper: {
+  selectRecipientBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F9F9F9',
-    borderRadius: borderRadius.xl,
+    borderRadius: 24,
+    height: 52,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
-    gap: spacing[2],
+    marginBottom: 25,
+    gap: spacing[3],
     borderWidth: 0.5,
     borderColor: '#E2E2E2',
   },
-  searchInput: {
-    flex: 1,
-    ...textStyles.bodyMedium,
-    color: colors.text.primary,
-    fontFamily: 'Outfit-Regular',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlignVertical: 'center',
-    ...Platform.select({
-      android: {
-        includeFontPadding: false,
-      },
-    }),
-  },
-  bottomButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.background.primary,
-    paddingHorizontal: spacing[5],
-    paddingTop: spacing[4],
-    borderTopWidth: 0.5,
-    borderTopColor: colors.frame.border,
-    ...shadows.md,
-  },
-  addRecipientButton: {
-    backgroundColor: colors.primary.main,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing[4],
-    alignItems: 'center',
+  selectRecipientIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F9F9F9',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: '#E2E2E2',
   },
-  addRecipientButtonText: {
-    ...textStyles.bodyLarge,
-    color: colors.text.inverse,
-    fontFamily: 'Outfit-SemiBold',
+  selectRecipientText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Medium',
+  },
+  sectionTitleContainer: {
+    paddingHorizontal: spacing[5],
+    marginBottom: spacing[3],
+    marginTop: spacing[2],
+  },
+  sectionTitle: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Medium',
   },
   recipientsContainer: {
     paddingHorizontal: spacing[5],
@@ -1043,11 +1146,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing[3],
     borderWidth: 0.5,
     borderColor: '#E2E2E2',
-  },
-  recipientItemSelected: {
-    borderWidth: 2,
-    borderColor: colors.primary.main,
-    backgroundColor: colors.primary.main + '05',
   },
   recipientRow: {
     flexDirection: 'row',
@@ -1065,17 +1163,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  recipientAvatarSelected: {
-    backgroundColor: colors.primary.main,
-  },
   recipientAvatarText: {
     ...textStyles.titleMedium,
     color: colors.primary.main,
     fontFamily: 'Outfit-SemiBold',
     fontWeight: '700',
-  },
-  recipientAvatarTextSelected: {
-    color: colors.text.inverse,
   },
   avatarFlagBadge: {
     position: 'absolute',
@@ -1107,94 +1199,91 @@ const styles = StyleSheet.create({
   },
   recipientInfo: {
     flex: 1,
-    marginRight: spacing[2],
   },
   recipientName: {
-    ...textStyles.titleMedium,
+    ...textStyles.bodyMedium,
     color: colors.text.primary,
     fontFamily: 'Outfit-SemiBold',
-    marginBottom: 2,
+    marginBottom: spacing[1],
   },
   recipientBank: {
     ...textStyles.bodySmall,
     color: colors.text.secondary,
     fontFamily: 'Outfit-Regular',
+    marginBottom: spacing[0],
   },
   recipientAccount: {
     ...textStyles.bodySmall,
-    color: colors.text.tertiary,
+    color: colors.text.secondary,
     fontFamily: 'Outfit-Regular',
-    marginTop: 2,
-  },
-  recipientActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.border.light,
-    backgroundColor: colors.background.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxSelected: {
-    borderColor: colors.primary.main,
-    backgroundColor: colors.primary.main,
-  },
-  checkboxInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.background.primary,
   },
   emptyState: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: spacing[10],
-    backgroundColor: '#F9F9F9',
-    borderRadius: borderRadius.xl,
-    borderWidth: 0.5,
-    borderColor: '#E2E2E2',
   },
   emptyIconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.frame.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing[4],
-    borderWidth: 0.5,
-    borderColor: '#E2E2E2',
   },
   emptyTitle: {
-    ...textStyles.titleLarge,
+    ...textStyles.titleMedium,
     color: colors.text.primary,
     fontFamily: 'Outfit-SemiBold',
     marginBottom: spacing[2],
+    textAlign: 'center',
   },
   emptyText: {
     ...textStyles.bodyMedium,
     color: colors.text.secondary,
     fontFamily: 'Outfit-Regular',
+    textAlign: 'center',
   },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background.primary,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    borderTopWidth: 0.5,
+    borderTopColor: colors.frame.border,
+    ...shadows.md,
+  },
+  addRecipientButton: {
+    backgroundColor: colors.primary.main,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing[4],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addRecipientButtonText: {
+    ...textStyles.bodyLarge,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
     backgroundColor: colors.background.primary,
     borderTopLeftRadius: borderRadius['3xl'],
     borderTopRightRadius: borderRadius['3xl'],
-    paddingTop: spacing[2],
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.15,
         shadowRadius: 12,
       },
       android: {
@@ -1505,51 +1594,5 @@ const styles = StyleSheet.create({
   halfInput: {
     flex: 1,
     marginBottom: 0,
-  },
-  currencyModalSearchContainer: {
-    paddingHorizontal: spacing[5],
-    paddingVertical: spacing[3],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-  },
-  currencyModalSearchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.neutral[100],
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing[3],
-    gap: spacing[2],
-  },
-  currencyModalSearchInput: {
-    flex: 1,
-    paddingVertical: spacing[3],
-    ...textStyles.bodyMedium,
-    color: colors.text.primary,
-  },
-  currencyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[5],
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
-  },
-  currencyInfo: {
-    flex: 1,
-    marginLeft: spacing[3],
-  },
-  currencyCode: {
-    ...textStyles.bodyMedium,
-    fontWeight: '600',
-    color: colors.text.primary,
-  },
-  currencyName: {
-    ...textStyles.bodySmall,
-    color: colors.text.secondary,
-    marginTop: spacing[0],
-  },
-  currencySymbol: {
-    ...textStyles.bodyMedium,
-    color: colors.text.secondary,
   },
 })

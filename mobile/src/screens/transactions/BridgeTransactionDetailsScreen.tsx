@@ -395,7 +395,7 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
 
   const handleSendAgain = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    navigation.navigate('SendAmount' as never)
+                navigation.navigate('SelectRecentRecipient' as never)
   }
 
   // Skeleton loading component
@@ -436,7 +436,7 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
         showsVerticalScrollIndicator={false}
       >
         {/* Status Card Skeleton */}
-        <View style={[styles.statusCard, styles.skeletonCard]}>
+        <View style={styles.statusCard}>
           <View style={styles.statusGradient}>
             <ShimmerListItem style={{ width: 150, height: 14, borderRadius: borderRadius.md, marginBottom: spacing[2] }} />
             <ShimmerListItem style={{ width: 200, height: 48, borderRadius: borderRadius.md, marginBottom: spacing[3] }} />
@@ -445,9 +445,9 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
         </View>
 
         {/* Transaction Summary Skeleton */}
-        <View style={[styles.card, styles.skeletonCard]}>
+        <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <ShimmerListItem style={{ width: 24, height: 24, borderRadius: 12, marginRight: spacing[2] }} />
+            <ShimmerListItem style={{ width: 32, height: 32, borderRadius: 16, marginRight: spacing[2] }} />
             <ShimmerListItem style={{ width: 180, height: 20, borderRadius: borderRadius.md }} />
           </View>
           <View style={styles.summaryRows}>
@@ -715,9 +715,9 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
                       </View>
                     )}
 
-                    {/* Arrived */}
+                    {/* When */}
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Arrived</Text>
+                      <Text style={styles.summaryLabel}>When</Text>
                       <Text style={styles.summaryValue}>
                         {formatTimestamp(transaction.bridge_created_at || transaction.created_at)}
                       </Text>
@@ -738,9 +738,9 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
                       </View>
                     )}
 
-                    {/* Arrived */}
+                    {/* When */}
                     <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Arrived</Text>
+                      <Text style={styles.summaryLabel}>When</Text>
                       <Text style={styles.summaryValue}>
                         {formatTimestamp(transaction.bridge_created_at || transaction.created_at)}
                       </Text>

@@ -823,7 +823,7 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
-            refreshing={refreshing || dataRefreshing} 
+            refreshing={refreshing} 
             onRefresh={async () => {
               setRefreshing(true)
               try {
@@ -835,7 +835,8 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
                 })
                 
                 // Refresh all data (forced - user pulled to refresh)
-                await Promise.all([
+                // Use Promise.allSettled to ensure all promises complete even if some fail
+                await Promise.allSettled([
                   syncPromise, // Sync transactions from Bridge API
                   refreshStaleData(), // Refresh stale user data
                   refreshBalances(true), // Force refresh balances (bypass cache)
@@ -844,7 +845,8 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
               } catch (error) {
                 console.error('Error refreshing dashboard:', error)
               } finally {
-              setRefreshing(false)
+                // Always reset refreshing state, even if there's an error
+                setRefreshing(false)
               }
             }}
             tintColor={colors.primary.main}
@@ -939,7 +941,7 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
               style={styles.actionButton}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                navigation.navigate('SendAmount' as never)
+                navigation.navigate('SelectRecentRecipient' as never)
               }}
               activeOpacity={0.7}
             >

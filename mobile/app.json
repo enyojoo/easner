@@ -10,12 +10,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.easner.mobile",
-      "icon": "./assets/icons/ios-light.png",
-      "darkIcon": "./assets/icons/ios-dark.png",
-      "tintedIcon": "./assets/icons/ios-tinted.png",
-      "statusBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#ffffff"
+      "icon": {
+        "light": "./assets/icons/ios-light.png",
+        "dark": "./assets/icons/ios-dark.png",
+        "tinted": "./assets/icons/ios-tinted.png"
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -31,10 +29,6 @@
       },
       "edgeToEdgeEnabled": false,
       "package": "com.easner.mobile",
-      "statusBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#ffffff"
-      },
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],

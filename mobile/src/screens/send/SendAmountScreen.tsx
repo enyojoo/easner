@@ -376,8 +376,24 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
             >
               <TouchableOpacity
                 onPress={() => {
-                  // Go back to MainTabs (which shows Dashboard), not recipient screen
-                  navigation.navigate('MainTabs' as never)
+                  // Check navigation state to determine where to go back
+                  const state = navigation.getState()
+                  const currentIndex = state?.index ?? 0
+                  
+                  // Check if SelectRecipientScreen is in the stack before current screen
+                  // If so, navigate directly to SelectRecentRecipientScreen to skip it
+                  const routes = state?.routes ?? []
+                  const hasSelectRecipientInStack = routes.some(
+                    (route, index) => index < currentIndex && route.name === 'SelectRecipient'
+                  )
+                  
+                  if (hasSelectRecipientInStack) {
+                    // Navigate directly to SelectRecentRecipientScreen, skipping SelectRecipientScreen
+                    navigation.navigate('SelectRecentRecipient' as never)
+                  } else {
+                    // Normal back navigation
+                    navigation.goBack()
+                  }
                 }}
                 style={styles.backButton}
               >
@@ -1102,11 +1118,11 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   title: {
     ...textStyles.headlineMedium,
     color: colors.text.primary,
-    marginBottom: 2,
   },
   content: {
     paddingHorizontal: spacing[5],

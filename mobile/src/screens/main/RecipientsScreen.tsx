@@ -15,6 +15,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Keyboard,
+  InteractionManager,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -34,6 +35,8 @@ import { getAccountTypeConfigFromCurrency, formatFieldValue } from '../../lib/cu
 import { validateRequired, validateAccountNumber, validateIBAN } from '../../utils/validators'
 import { formatIBAN, formatSortCode, formatRoutingNumber, formatAccountNumber } from '../../utils/formatters'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
+import { getAllCountryCurrencies, searchCountryCurrencies, CountryCurrency } from '../../lib/countryCurrencyMapping'
+import { Wallet, Building2, Smartphone } from 'lucide-react-native'
 
 // Helper function to get flag image source for currency
 const getFlagImageSource = (currency: string) => {
@@ -55,7 +58,16 @@ function RecipientsContent({ navigation }: NavigationProps) {
   const insets = useSafeAreaInsets()
   const [searchTerm, setSearchTerm] = useState('')
   const [refreshing, setRefreshing] = useState(false)
-  const [showAddRecipient, setShowAddRecipient] = useState(false)
+  // New 3-step flow states
+  const [showRecipientTypeModal, setShowRecipientTypeModal] = useState(false) // Step 1: Choose type
+  const [showCountryCurrencyModal, setShowCountryCurrencyModal] = useState(false) // Step 2: Choose country/currency
+  const [showBankAccountForm, setShowBankAccountForm] = useState(false) // Step 3: Bank account form
+  const [selectedRecipientType, setSelectedRecipientType] = useState<'wallet' | 'bank' | 'mobile' | null>(null)
+  const [selectedCountryCurrency, setSelectedCountryCurrency] = useState<CountryCurrency | null>(null)
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false) // Inline dropdown like SelectRecipientScreen
+  const [countrySearchTerm, setCountrySearchTerm] = useState('')
+  const [transferType, setTransferType] = useState<'ACH' | 'Wire' | null>(null) // For USA
+  // Legacy states (keep for edit modal)
   const [showEditRecipient, setShowEditRecipient] = useState(false)
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
   const [currencySearchTerm, setCurrencySearchTerm] = useState('')
@@ -184,7 +196,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
 
       // Reset form and close modal
       resetForm()
-      setShowAddRecipient(false)
+      setShowBankAccountForm(false)
       Alert.alert('Success', 'Recipient added successfully')
     } catch (error) {
       console.error('Error adding recipient:', error)
@@ -197,6 +209,18 @@ function RecipientsContent({ navigation }: NavigationProps) {
 
   const handleEditRecipient = (recipient: Recipient) => {
     setEditingRecipient(recipient)
+    // Find country currency for the recipient's currency
+    const countryCurrency = getAllCountryCurrencies().find(
+      cc => cc.currencyCode === recipient.currency
+    )
+    if (countryCurrency) {
+      setSelectedCountryCurrency(countryCurrency)
+      // For US accounts, try to determine transfer type from existing data if possible
+      // Otherwise leave it null and user can select
+      if (countryCurrency.countryCode === 'US') {
+        setTransferType(null) // Reset, user can select
+      }
+    }
     setNewRecipient({
       fullName: recipient.full_name,
       accountNumber: recipient.account_number || '',
@@ -289,6 +313,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
   }
 
   const isFormValid = () => {
+    // For US accounts, transfer type is required
+    if (selectedCountryCurrency?.countryCode === 'US' && !transferType) {
+      return false
+    }
     if (!newRecipient.fullName || !newRecipient.bankName || !newRecipient.currency) return false
 
     const accountConfig = getAccountTypeConfigFromCurrency(newRecipient.currency)
@@ -318,6 +346,14 @@ function RecipientsContent({ navigation }: NavigationProps) {
     })
     setError('')
     setFieldErrors({})
+    // Reset 3-step flow states
+    setSelectedRecipientType(null)
+    setSelectedCountryCurrency(null)
+    setCountrySearchTerm('')
+    setShowCountryDropdown(false)
+    setTransferType(null)
+    setShowRecipientTypeModal(false)
+    setShowBankAccountForm(false)
   }
 
   // Validate a single field
@@ -501,7 +537,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
         <ScrollView 
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -541,35 +577,6 @@ function RecipientsContent({ navigation }: NavigationProps) {
           </Animated.View>
 
           {/* Add New Recipient Button */}
-          <Animated.View
-            style={[
-              {
-                opacity: contentAnim,
-                transform: [{
-                  translateY: contentAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0],
-                  })
-                }]
-              }
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={async () => {
-                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                resetForm()
-                setShowAddRecipient(true)
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.addButtonIcon}>
-                <Plus size={18} color={colors.primary.main} strokeWidth={2.5} />
-              </View>
-              <Text style={styles.addButtonText}>Add new recipient</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
           {/* Recipients List - No Grouping */}
           <Animated.View
             style={[
@@ -614,15 +621,30 @@ function RecipientsContent({ navigation }: NavigationProps) {
             )}
           </Animated.View>
         </ScrollView>
+
+        {/* Add new recipient Button - Fixed at bottom */}
+        <View style={[styles.bottomButtonContainer, { paddingBottom: insets.bottom + spacing[4] }]}>
+          <TouchableOpacity
+            style={styles.addRecipientButton}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              resetForm()
+              setShowRecipientTypeModal(true)
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.addRecipientButtonText}>Add new recipient</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Add Recipient Modal */}
+      {/* Step 1: Recipient Type Selection Modal */}
       <Modal
-        visible={showAddRecipient}
-        animationType="fade"
+        visible={showRecipientTypeModal}
+        animationType="slide"
         transparent={true}
         onRequestClose={() => {
-          setShowAddRecipient(false)
+          setShowRecipientTypeModal(false)
           resetForm()
         }}
       >
@@ -635,22 +657,132 @@ function RecipientsContent({ navigation }: NavigationProps) {
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
             onPress={() => {
-              setShowAddRecipient(false)
+              setShowRecipientTypeModal(false)
               resetForm()
             }}
           />
-          <View style={[styles.modalContainer, { 
-            maxHeight: '90%',
+          <View style={[styles.modalContainer, styles.recipientTypeModal, { 
             paddingBottom: Math.max(insets.bottom, 20),
           }]} 
           onStartShouldSetResponder={() => true}
           onResponderGrant={() => {}}
         >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Recipient</Text>
+              <Text style={styles.modalTitle}>Add a new</Text>
               <TouchableOpacity
                 onPress={() => {
-                  setShowAddRecipient(false)
+                  setShowRecipientTypeModal(false)
+                  resetForm()
+                }}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.recipientTypeOptions}>
+              {/* Wallet Address Option */}
+              <TouchableOpacity
+                style={styles.recipientTypeOption}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  setSelectedRecipientType('wallet')
+                  setShowRecipientTypeModal(false)
+                  // TODO: Navigate to wallet address form
+                  Alert.alert('Coming Soon', 'Wallet address recipient will be available soon')
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.recipientTypeIcon}>
+                  <Wallet size={24} color={colors.primary.main} strokeWidth={2} />
+                </View>
+                <View style={styles.recipientTypeContent}>
+                  <Text style={styles.recipientTypeTitle}>Wallet address</Text>
+                  <Text style={styles.recipientTypeSubtitle}>Send stablecoins to an address</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Bank Account Option */}
+              <TouchableOpacity
+                style={styles.recipientTypeOption}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  setSelectedRecipientType('bank')
+                  setShowRecipientTypeModal(false)
+                  setShowBankAccountForm(true)
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.recipientTypeIcon}>
+                  <Building2 size={24} color={colors.primary.main} strokeWidth={2} />
+                </View>
+                <View style={styles.recipientTypeContent}>
+                  <Text style={styles.recipientTypeTitle}>Bank account</Text>
+                  <Text style={styles.recipientTypeSubtitle}>Send cash to a bank account</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Mobile Wallet Option */}
+              <TouchableOpacity
+                style={styles.recipientTypeOption}
+                onPress={async () => {
+                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  setSelectedRecipientType('mobile')
+                  setShowRecipientTypeModal(false)
+                  setShowBankAccountForm(true) // Use same form for now
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.recipientTypeIcon}>
+                  <Smartphone size={24} color={colors.primary.main} strokeWidth={2} />
+                </View>
+                <View style={styles.recipientTypeContent}>
+                  <Text style={styles.recipientTypeTitle}>Mobile wallet</Text>
+                  <Text style={styles.recipientTypeSubtitle}>Send cash to a mobile wallet</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Step 2: Bank Account Form Modal */}
+      <Modal
+        visible={showBankAccountForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setShowBankAccountForm(false)
+          resetForm()
+        }}
+      >
+        {/* Bank Account Form */}
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <TouchableOpacity 
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => {
+              setShowBankAccountForm(false)
+              resetForm()
+            }}
+          />
+          <View 
+            style={[styles.modalContainer, { 
+              maxHeight: '90%',
+              paddingBottom: Math.max(insets.bottom, 20),
+            }]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {selectedRecipientType === 'mobile' ? 'Add mobile wallet' : 'Add bank account'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowBankAccountForm(false)
                   resetForm()
                 }}
                 style={styles.closeButton}
@@ -673,12 +805,13 @@ function RecipientsContent({ navigation }: NavigationProps) {
                 </View>
               ) : null}
               
+              {/* Country/Currency Selector - Matching SelectRecipientScreen exactly */}
               <View style={styles.currencySelectorWrapper}>
                 <TouchableOpacity
                   style={styles.currencySelector}
                   onPress={() => {
-                    setShowCurrencyDropdown(!showCurrencyDropdown)
-                    setCurrencySearchTerm('')
+                    setShowCountryDropdown(!showCountryDropdown)
+                    setCountrySearchTerm('')
                   }}
                   activeOpacity={0.7}
                 >
@@ -688,14 +821,14 @@ function RecipientsContent({ navigation }: NavigationProps) {
                       {newRecipient.currency} - {currencies.find(c => c.code === newRecipient.currency)?.name || 'Select Currency'}
                     </Text>
                     <Ionicons 
-                      name={showCurrencyDropdown ? "chevron-up" : "chevron-down"} 
+                      name={showCountryDropdown ? "chevron-up" : "chevron-down"} 
                       size={16} 
                       color="#6b7280" 
                     />
                   </View>
                 </TouchableOpacity>
                 
-                {showCurrencyDropdown && (
+                {showCountryDropdown && (
                   <View style={styles.currencyDropdown}>
                     <View style={styles.currencyDropdownSearch}>
                       <Ionicons name="search" size={18} color={colors.neutral[400]} />
@@ -703,10 +836,8 @@ function RecipientsContent({ navigation }: NavigationProps) {
                         style={styles.currencyDropdownSearchInput}
                         placeholder="Search currencies..."
                         placeholderTextColor={colors.neutral[400]}
-                        value={currencySearchTerm}
-                        onChangeText={setCurrencySearchTerm}
-                        returnKeyType="done"
-                        onSubmitEditing={() => Keyboard.dismiss()}
+                        value={countrySearchTerm}
+                        onChangeText={setCountrySearchTerm}
                       />
                     </View>
                     <ScrollView 
@@ -714,72 +845,143 @@ function RecipientsContent({ navigation }: NavigationProps) {
                       nestedScrollEnabled={true}
                       keyboardShouldPersistTaps="handled"
                     >
-                      {filteredCurrencies.map((item) => (
-                        <TouchableOpacity
-                          key={item.code}
-                          style={[
-                            styles.currencyDropdownItem,
-                            newRecipient.currency === item.code && styles.currencyDropdownItemSelected
-                          ]}
-                          onPress={async () => {
-                            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                            setNewRecipient(prev => ({ ...prev, currency: item.code }))
-                            setShowCurrencyDropdown(false)
-                            setCurrencySearchTerm('')
-                          }}
-                        >
-                          <Text style={styles.currencyFlag}>{getCountryFlag(item.code)}</Text>
-                          <View style={styles.currencyInfo}>
-                            <Text style={styles.currencyCode}>{item.code}</Text>
-                            <Text style={styles.currencyName}>{item.name}</Text>
-                          </View>
-                          <Text style={styles.currencySymbol}>{item.symbol}</Text>
-                          {newRecipient.currency === item.code && (
-                            <Ionicons name="checkmark" size={18} color={colors.primary.main} />
-                          )}
-                        </TouchableOpacity>
-                      ))}
+                      {(countrySearchTerm 
+                        ? currencies.filter(c => 
+                            c.name.toLowerCase().includes(countrySearchTerm.toLowerCase()) ||
+                            c.code.toLowerCase().includes(countrySearchTerm.toLowerCase())
+                          )
+                        : currencies
+                      ).map((item) => {
+                        // Find matching country from countryCurrencyMap for country info
+                        const countryCurrency = getAllCountryCurrencies().find(
+                          cc => cc.currencyCode === item.code
+                        )
+                        const isSelected = newRecipient.currency === item.code
+                        
+                        return (
+                          <TouchableOpacity
+                            key={item.code}
+                            style={[
+                              styles.currencyDropdownItem,
+                              isSelected && styles.currencyDropdownItemSelected
+                            ]}
+                            onPress={async () => {
+                              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                              let countryToSet: CountryCurrency
+                              
+                              if (countryCurrency) {
+                                countryToSet = countryCurrency
+                              } else {
+                                // Fallback: create a basic country currency object
+                                countryToSet = {
+                                  countryCode: item.code,
+                                  countryName: item.name,
+                                  currencyCode: item.code,
+                                  currencyName: item.name,
+                                  flagEmoji: getCountryFlag(item.code)
+                                }
+                              }
+                              
+                              setSelectedCountryCurrency(countryToSet)
+                              setNewRecipient(prev => ({ ...prev, currency: item.code }))
+                              
+                              // For USA, reset transfer type
+                              if (countryToSet.countryCode === 'US') {
+                                setTransferType(null)
+                              } else {
+                                setTransferType(null)
+                              }
+                              
+                              setShowCountryDropdown(false)
+                              setCountrySearchTerm('')
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.currencyFlag}>{getCountryFlag(item.code)}</Text>
+                            <View style={styles.currencyInfo}>
+                              <Text style={styles.currencyCode}>{item.code}</Text>
+                              <Text style={styles.currencyName}>{item.name}</Text>
+                            </View>
+                            <Text style={styles.currencySymbol}>{item.symbol}</Text>
+                            {isSelected && (
+                              <Ionicons name="checkmark" size={18} color={colors.primary.main} />
+                            )}
+                          </TouchableOpacity>
+                        )
+                      })}
                     </ScrollView>
                   </View>
                 )}
               </View>
-              
-              <View>
-                <TextInput
-                  style={[styles.modalInput, fieldErrors.fullName && styles.modalInputError]}
-                  value={newRecipient.fullName}
-                  onChangeText={(text) => {
-                    setNewRecipient(prev => ({ ...prev, fullName: text }))
-                    validateField('fullName', text)
-                  }}
-                  onBlur={() => validateField('fullName', newRecipient.fullName)}
-                  placeholder="Account Name *"
-                  placeholderTextColor={colors.text.secondary}
-                  autoCapitalize="words"
-                  returnKeyType="done"
-                  onSubmitEditing={() => Keyboard.dismiss()}
-                  editable={!isSubmitting}
-                />
-                {fieldErrors.fullName && (
-                  <Text style={styles.errorText}>{fieldErrors.fullName}</Text>
-                )}
-              </View>
 
+              {/* Show form fields */}
+              {selectedCountryCurrency && (
+                <>
               {(() => {
                 const accountConfig = newRecipient.currency
                   ? getAccountTypeConfigFromCurrency(newRecipient.currency)
                   : null
 
                 if (!accountConfig) {
-                  return (
-                    <View style={styles.infoBox}>
-                      <Text style={styles.infoText}>Please select a currency first to see the required fields</Text>
-                    </View>
-                  )
+                  return null
                 }
 
                 return (
                   <>
+                    {/* Transfer Type Selection - First field for US accounts */}
+                    {accountConfig.accountType === "us" && (
+                      <View style={styles.transferTypeContainer}>
+                        <View style={styles.transferTypeOptions}>
+                          <TouchableOpacity
+                            style={[styles.transferTypeOption, transferType === 'ACH' && styles.transferTypeOptionSelected]}
+                            onPress={() => {
+                              setTransferType('ACH')
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.transferTypeOptionText, transferType === 'ACH' && styles.transferTypeOptionTextSelected]}>
+                              ACH
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.transferTypeOption, transferType === 'Wire' && styles.transferTypeOptionSelected]}
+                            onPress={() => {
+                              setTransferType('Wire')
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.transferTypeOptionText, transferType === 'Wire' && styles.transferTypeOptionTextSelected]}>
+                              Wire
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Account Name */}
+                    <View>
+                      <TextInput
+                        style={[styles.modalInput, fieldErrors.fullName && styles.modalInputError]}
+                        value={newRecipient.fullName}
+                        onChangeText={(text) => {
+                          setNewRecipient(prev => ({ ...prev, fullName: text }))
+                          validateField('fullName', text)
+                        }}
+                        onBlur={() => validateField('fullName', newRecipient.fullName)}
+                        placeholder="Account name"
+                        placeholderTextColor={colors.text.secondary}
+                        autoCapitalize="words"
+                        returnKeyType="done"
+                        onSubmitEditing={() => Keyboard.dismiss()}
+                        editable={!isSubmitting}
+                      />
+                      {fieldErrors.fullName && (
+                        <Text style={styles.errorText}>{fieldErrors.fullName}</Text>
+                      )}
+                    </View>
+
                     {/* Bank Name - Always required */}
                     <View>
                       <TextInput
@@ -817,10 +1019,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             onBlur={() => validateField('routingNumber', newRecipient.routingNumber)}
                             placeholder={`${accountConfig.fieldLabels.routing_number} *`}
                             placeholderTextColor={colors.text.secondary}
-                            keyboardType="numeric"
+                            keyboardType="number-pad"
                             maxLength={9}
-                            returnKeyType="done"
-                            onSubmitEditing={() => Keyboard.dismiss()}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            textContentType="none"
                             editable={!isSubmitting}
                           />
                           {fieldErrors.routingNumber && (
@@ -839,9 +1042,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                             onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                             placeholder={`${accountConfig.fieldLabels.account_number} *`}
                             placeholderTextColor={colors.text.secondary}
-                            keyboardType="numeric"
-                            returnKeyType="done"
-                            onSubmitEditing={() => Keyboard.dismiss()}
+                            keyboardType="number-pad"
+                            autoComplete="off"
+                            autoCorrect={false}
+                            textContentType="none"
                             editable={!isSubmitting}
                           />
                           {fieldErrors.accountNumber && (
@@ -867,10 +1071,11 @@ function RecipientsContent({ navigation }: NavigationProps) {
                               onBlur={() => validateField('sortCode', newRecipient.sortCode.replace(/-/g, ''))}
                               placeholder={`${accountConfig.fieldLabels.sort_code} *`}
                               placeholderTextColor={colors.text.secondary}
-                              keyboardType="numeric"
+                              keyboardType="number-pad"
                               maxLength={8}
-                              returnKeyType="done"
-                              onSubmitEditing={() => Keyboard.dismiss()}
+                              autoComplete="off"
+                              autoCorrect={false}
+                              textContentType="none"
                               editable={!isSubmitting}
                             />
                             {fieldErrors.sortCode && (
@@ -889,9 +1094,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                               onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                               placeholder={`${accountConfig.fieldLabels.account_number} *`}
                               placeholderTextColor={colors.text.secondary}
-                              keyboardType="numeric"
-                              returnKeyType="done"
-                              onSubmitEditing={() => Keyboard.dismiss()}
+                              keyboardType="number-pad"
+                              autoComplete="off"
+                              autoCorrect={false}
+                              textContentType="none"
                               editable={!isSubmitting}
                             />
                             {fieldErrors.accountNumber && (
@@ -970,7 +1176,7 @@ function RecipientsContent({ navigation }: NavigationProps) {
                       </>
                     )}
 
-                    {/* Generic Account Fields */}
+                    {/* Generic Account Fields (for African countries, etc.) */}
                     {accountConfig.accountType === "generic" && (
                       <View>
                         <TextInput
@@ -984,9 +1190,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           onBlur={() => validateField('accountNumber', newRecipient.accountNumber)}
                           placeholder={`${accountConfig.fieldLabels.account_number} *`}
                           placeholderTextColor={colors.text.secondary}
-                          keyboardType="numeric"
-                          returnKeyType="done"
-                          onSubmitEditing={() => Keyboard.dismiss()}
+                          keyboardType="number-pad"
+                          autoComplete="off"
+                          autoCorrect={false}
+                          textContentType="none"
                           editable={!isSubmitting}
                         />
                         {fieldErrors.accountNumber && (
@@ -997,12 +1204,14 @@ function RecipientsContent({ navigation }: NavigationProps) {
                   </>
                 )
               })()}
+                </>
+              )}
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
                   onPress={() => {
-                    setShowAddRecipient(false)
+                    setShowBankAccountForm(false)
                     setError('')
                     resetForm()
                   }}
@@ -1155,9 +1364,10 @@ function RecipientsContent({ navigation }: NavigationProps) {
                           onChangeText={(text) => setNewRecipient(prev => ({ ...prev, accountNumber: text }))}
                           placeholder={`${accountConfig.fieldLabels.account_number} *`}
                           placeholderTextColor={colors.text.secondary}
-                          keyboardType="numeric"
-                          returnKeyType="done"
-                          onSubmitEditing={() => Keyboard.dismiss()}
+                          keyboardType="number-pad"
+                          autoComplete="off"
+                          autoCorrect={false}
+                          textContentType="none"
                           editable={!isSubmitting}
                         />
                       </>
@@ -1366,31 +1576,29 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     fontFamily: 'Outfit-Regular',
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.frame.background,
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background.primary,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    borderTopWidth: 0.5,
+    borderTopColor: colors.frame.border,
+    ...shadows.md,
+  },
+  addRecipientButton: {
+    backgroundColor: colors.primary.main,
     borderRadius: borderRadius.xl,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    marginHorizontal: spacing[5],
-    marginBottom: spacing[5],
-    gap: spacing[2],
-    borderWidth: 0.5,
-    borderColor: colors.frame.border,
-  },
-  addButtonIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary.main + '15',
-    justifyContent: 'center',
+    paddingVertical: spacing[4],
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  addButtonText: {
-    ...textStyles.bodyMedium,
-    color: colors.text.primary,
-    fontFamily: 'Outfit-Medium',
+  addRecipientButtonText: {
+    ...textStyles.bodyLarge,
+    color: colors.text.inverse,
+    fontFamily: 'Outfit-SemiBold',
   },
   recipientsContainer: {
     paddingHorizontal: spacing[5],
@@ -1788,6 +1996,279 @@ const styles = StyleSheet.create({
   halfInput: {
     flex: 1,
     marginBottom: 0,
+  },
+  // New 3-step flow styles
+  recipientTypeModal: {
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    paddingTop: spacing[2],
+  },
+  recipientTypeOptions: {
+    padding: spacing[5],
+    gap: spacing[3],
+  },
+  recipientTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+    gap: spacing[3],
+  },
+  recipientTypeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary.main + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recipientTypeContent: {
+    flex: 1,
+  },
+  recipientTypeTitle: {
+    ...textStyles.titleMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+    marginBottom: spacing[1],
+  },
+  recipientTypeSubtitle: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+  },
+  countryCurrencyModal: {
+    borderTopLeftRadius: borderRadius['3xl'],
+    borderTopRightRadius: borderRadius['3xl'],
+    paddingTop: spacing[2],
+  },
+  currencySelectorWrapper: {
+    marginBottom: spacing[4],
+    zIndex: 1000,
+  },
+  currencySelector: {
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
+    borderRadius: borderRadius.lg,
+    padding: spacing[3],
+    backgroundColor: '#F9F9F9',
+  },
+  currencySelectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currencySelectorText: {
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    marginLeft: spacing[2],
+    fontFamily: 'Outfit-Regular',
+  },
+  currencyDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: spacing[1],
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.background.primary,
+    maxHeight: 220,
+    zIndex: 1001,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  currencyDropdownSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    gap: spacing[2],
+  },
+  currencyDropdownSearchInput: {
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    paddingVertical: spacing[1],
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
+  },
+  currencyDropdownList: {
+    maxHeight: 180,
+  },
+  currencyDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+    gap: spacing[2],
+  },
+  currencyDropdownItemSelected: {
+    backgroundColor: colors.primary.main + '10',
+  },
+  currencyFlag: {
+    fontSize: 16,
+  },
+  currencyInfo: {
+    flex: 1,
+    marginLeft: spacing[2],
+  },
+  currencyCode: {
+    ...textStyles.bodyMedium,
+    fontWeight: '600',
+    color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  currencyName: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    marginTop: spacing[0],
+    fontFamily: 'Outfit-Regular',
+  },
+  currencySymbol: {
+    ...textStyles.bodyMedium,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+  },
+  modalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    flex: 1,
+  },
+  backButtonModal: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countrySearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginHorizontal: spacing[5],
+    marginBottom: spacing[3],
+    gap: spacing[2],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  countrySearchInput: {
+    flex: 1,
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Regular',
+  },
+  countryList: {
+    flex: 1,
+    paddingHorizontal: spacing[5],
+  },
+  countryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.frame.border,
+    gap: spacing[3],
+  },
+  countryFlag: {
+    fontSize: 32,
+  },
+  countryInfo: {
+    flex: 1,
+  },
+  countryName: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
+    marginBottom: spacing[1],
+  },
+  countryCurrency: {
+    ...textStyles.bodySmall,
+    color: colors.text.secondary,
+    fontFamily: 'Outfit-Regular',
+  },
+  countryDisplay: {
+    marginBottom: spacing[4],
+  },
+  countryDisplayLabel: {
+    ...textStyles.labelMedium,
+    color: colors.text.secondary,
+    marginBottom: spacing[2],
+    fontFamily: 'Outfit-Medium',
+  },
+  countryDisplayValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
+  },
+  countryDisplayText: {
+    ...textStyles.bodyMedium,
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
+  },
+  transferTypeContainer: {
+    marginBottom: spacing[2],
+  },
+  transferTypeOptions: {
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+  transferTypeOption: {
+    flex: 1,
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.frame.border,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transferTypeOptionSelected: {
+    backgroundColor: colors.primary.main + '15',
+    borderColor: colors.primary.main,
+    borderWidth: 1,
+  },
+  transferTypeOptionText: {
+    ...textStyles.bodyMedium,
+    color: colors.text.primary,
+    fontFamily: 'Outfit-Medium',
+  },
+  transferTypeOptionTextSelected: {
+    color: colors.primary.main,
+    fontFamily: 'Outfit-SemiBold',
   },
 })
 
