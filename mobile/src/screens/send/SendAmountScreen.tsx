@@ -376,24 +376,8 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
             >
               <TouchableOpacity
                 onPress={() => {
-                  // Check navigation state to determine where to go back
-                  const state = navigation.getState()
-                  const currentIndex = state?.index ?? 0
-                  
-                  // Check if SelectRecipientScreen is in the stack before current screen
-                  // If so, navigate directly to SelectRecentRecipientScreen to skip it
-                  const routes = state?.routes ?? []
-                  const hasSelectRecipientInStack = routes.some(
-                    (route, index) => index < currentIndex && route.name === 'SelectRecipient'
-                  )
-                  
-                  if (hasSelectRecipientInStack) {
-                    // Navigate directly to SelectRecentRecipientScreen, skipping SelectRecipientScreen
-                    navigation.navigate('SelectRecentRecipient' as never)
-                  } else {
-                    // Normal back navigation
-                    navigation.goBack()
-                  }
+                  // Always go back to SelectRecentRecipientScreen, never to SelectRecipientScreen
+                  navigation.navigate('SelectRecentRecipient' as never)
                 }}
                 style={styles.backButton}
               >

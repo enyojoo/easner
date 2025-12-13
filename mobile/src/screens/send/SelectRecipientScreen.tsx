@@ -129,9 +129,9 @@ export default function SelectRecipientScreen({ navigation, route }: NavigationP
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSelectedRecipient(recipient)
     
-    // Replace current screen with SendAmountScreen to remove SelectRecipientScreen from stack
-    // This ensures back button goes to SelectRecentRecipientScreen, not SelectRecipientScreen
-    navigation.replace('SendAmount' as never, { recipient } as never)
+    // Navigate to SendAmountScreen (same as SelectRecentRecipientScreen)
+    // Pass fromSelectRecipient to enable instant transition
+    navigation.navigate('SendAmount' as never, { recipient, fromSelectRecipient: true } as never)
   }
 
   const handleAddNewRecipient = () => {

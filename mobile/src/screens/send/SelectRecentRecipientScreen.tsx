@@ -196,7 +196,8 @@ export default function SelectRecentRecipientScreen({ navigation }: NavigationPr
   const handleSelectRecipient = async (recipient: Recipient) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     // Navigate directly to SendAmountScreen with selected recipient
-    navigation.navigate('SendAmount' as never, { recipient } as never)
+    // Pass fromSelectRecentRecipient to enable instant transition
+    navigation.navigate('SendAmount' as never, { recipient, fromSelectRecentRecipient: true } as never)
   }
 
   const handleViewAllRecipients = () => {
@@ -300,7 +301,7 @@ export default function SelectRecentRecipientScreen({ navigation }: NavigationPr
       setShowRecipientTypeModal(false)
       
       // Navigate to SendAmountScreen with the newly added recipient
-      navigation.navigate('SendAmount' as never, { recipient: newRecipientData } as never)
+      navigation.navigate('SendAmount' as never, { recipient: newRecipientData, fromSelectRecentRecipient: true } as never)
     } catch (error) {
       console.error('Error adding recipient:', error)
       setError('Failed to add recipient')
@@ -385,7 +386,8 @@ export default function SelectRecentRecipientScreen({ navigation }: NavigationPr
             >
               <TouchableOpacity
                 onPress={() => {
-                  navigation.goBack()
+                  // Always go back to App Dash (MainTabs), never to SendAmountScreen
+                  navigation.navigate('MainTabs' as never)
                 }}
                 style={styles.backButton}
               >

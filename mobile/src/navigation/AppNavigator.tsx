@@ -504,30 +504,63 @@ function MainStack() {
       <Stack.Screen 
         name="SelectRecentRecipient" 
         component={SelectRecentRecipientScreen}
-        options={{ 
-          headerShown: false,
-          ...getSendFlowTransitionConfig(),
+        options={({ navigation }) => {
+          // Check if previous screen is SendAmountScreen (no transition when going back from SendAmountScreen)
+          const state = navigation.getState()
+          const currentIndex = state?.index ?? 0
+          const previousRoute = currentIndex > 0 ? state?.routes?.[currentIndex - 1] : null
+          const isFromSendAmount = previousRoute?.name === 'SendAmount'
+          
+          return {
+            headerShown: false,
+            // No animation when going back from SendAmountScreen
+            ...(isFromSendAmount ? {
+              transitionSpec: {
+                open: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 0, // Instant when opening (going back from SendAmountScreen)
+                    useNativeDriver: true,
+                  },
+                },
+                close: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 0, // Instant when closing
+                    useNativeDriver: true,
+                  },
+                },
+              },
+            } : getSendFlowTransitionConfig()),
+          }
         }}
       />
       <Stack.Screen 
         name="SendAmount" 
         component={SendAmountScreen}
-        options={({ navigation }) => {
-          // Check if previous screen is SelectRecentRecipientScreen (no animation when going back)
+        options={({ navigation, route }) => {
+          // Check route params for flags (forward navigation)
+          const params = route.params as any
+          const fromSelectRecipientParam = params?.fromSelectRecipient === true
+          const fromSelectRecentRecipientParam = params?.fromSelectRecentRecipient === true
+          
+          // Check if previous screen is SelectRecentRecipientScreen or SelectRecipientScreen (backward navigation)
           const state = navigation.getState()
           const currentIndex = state?.index ?? 0
           const previousRoute = currentIndex > 0 ? state?.routes?.[currentIndex - 1] : null
           const isFromSelectRecent = previousRoute?.name === 'SelectRecentRecipient'
+          const isFromSelectRecipient = previousRoute?.name === 'SelectRecipient'
+          const isFromRecipientScreen = isFromSelectRecent || isFromSelectRecipient || fromSelectRecipientParam || fromSelectRecentRecipientParam
           
           return {
             headerShown: false,
-            // No animation when going back to SelectRecentRecipientScreen (same header)
-            ...(isFromSelectRecent ? {
+            // No animation when navigating from/to SelectRecentRecipientScreen or SelectRecipientScreen (same header)
+            ...(isFromRecipientScreen ? {
               transitionSpec: {
                 open: {
                   animation: 'timing' as const,
                   config: {
-                    duration: 300,
+                    duration: 0, // Instant when coming from recipient screen
                     useNativeDriver: true,
                   },
                 },
@@ -546,9 +579,37 @@ function MainStack() {
       <Stack.Screen 
         name="SelectRecipient" 
         component={SelectRecipientScreen}
-        options={{ 
-          headerShown: false,
-          ...getSendFlowTransitionConfig(),
+        options={({ navigation }) => {
+          // Check if previous screen is SendAmountScreen or SelectRecentRecipientScreen (no transition)
+          const state = navigation.getState()
+          const currentIndex = state?.index ?? 0
+          const previousRoute = currentIndex > 0 ? state?.routes?.[currentIndex - 1] : null
+          const isFromSendAmount = previousRoute?.name === 'SendAmount'
+          const isFromSelectRecent = previousRoute?.name === 'SelectRecentRecipient'
+          const shouldHaveNoTransition = isFromSendAmount || isFromSelectRecent
+          
+          return {
+            headerShown: false,
+            // No animation when navigating to/from SendAmountScreen or SelectRecentRecipientScreen
+            ...(shouldHaveNoTransition ? {
+              transitionSpec: {
+                open: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 0, // Instant when opening
+                    useNativeDriver: true,
+                  },
+                },
+                close: {
+                  animation: 'timing' as const,
+                  config: {
+                    duration: 0, // Instant when closing
+                    useNativeDriver: true,
+                  },
+                },
+              },
+            } : getSendFlowTransitionConfig()),
+          }
         }}
       />
       <Stack.Screen 

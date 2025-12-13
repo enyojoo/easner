@@ -33,7 +33,7 @@ export default function PasswordInput({
         passwordRules="minlength: 6;"
         importantForAutofill="yes"
         underlineColorAndroid="transparent"
-        selectionColor="#1D4FF3"
+        selectionColor="#007ACC"
         placeholderTextColor="#9ca3af"
         returnKeyType="done"
       />
