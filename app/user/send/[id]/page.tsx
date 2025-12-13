@@ -30,12 +30,6 @@ function TransactionStatusPage() {
   const [timerDuration, setTimerDuration] = useState(3600) // Payment method's completion_timer_seconds
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
-  const [paymentInfo, setPaymentInfo] = useState<{
-    hasPayment: boolean
-    payments: any[]
-    latestPayment: any | null
-  } | null>(null)
-  const [loadingPayment, setLoadingPayment] = useState(false)
 
   // Load payment methods
   useEffect(() => {
@@ -225,26 +219,6 @@ function TransactionStatusPage() {
     }
   }, [transactionId, user?.id]) // Remove transaction from deps to prevent re-subscription
 
-  // Load payment information for this transaction
-  useEffect(() => {
-    if (!transaction || !user?.id) return
-
-    const loadPaymentInfo = async () => {
-      try {
-        const response = await fetch(`/api/transactions/${transactionId}/payment`, {
-          credentials: "include",
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setPaymentInfo(data)
-        }
-      } catch (error) {
-        console.error("Error loading payment info:", error)
-      }
-    }
-
-    loadPaymentInfo()
-  }, [transaction, transactionId, user?.id])
 
   const getTimeInfo = () => {
     if (!transaction) return { timeRemaining: 0, isOverdue: false, elapsedTime: 0 }
@@ -659,37 +633,6 @@ function TransactionStatusPage() {
                     </>
                   )}
 
-                  {/* Payment Status Section */}
-                  {paymentInfo && paymentInfo.hasPayment && paymentInfo.latestPayment && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Check className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-green-900 mb-1">Payment Received</p>
-                          <p className="text-sm text-green-700 mb-2">
-                            {formatCurrency(
-                              parseFloat(paymentInfo.latestPayment.amount),
-                              paymentInfo.latestPayment.currency.toUpperCase()
-                            )} received via virtual account
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-green-600">
-                            <span>
-                              {paymentInfo.latestPayment.matched
-                                ? "✓ Matched to transaction"
-                                : "⏳ Processing"}
-                            </span>
-                            {paymentInfo.latestPayment.matched_at && (
-                              <span className="text-gray-500">
-                                • {new Date(paymentInfo.latestPayment.matched_at).toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Receipt Section */}
                   {transaction.receipt_url && (

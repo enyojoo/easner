@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons'
 interface ReceiveTransaction {
   id: string
   transaction_id: string
-  stellar_transaction_hash: string
+  receipt_destination_tx_hash?: string // Blockchain transaction hash (Bridge)
   crypto_amount: number
   crypto_currency: string
   fiat_amount: number
@@ -166,12 +166,14 @@ function ReceiveTransactionDetailsContent({ navigation, route }: NavigationProps
               {transaction.transaction_id}
             </Text>
           </View>
+          {transaction.receipt_destination_tx_hash && (
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Stellar Hash</Text>
+              <Text style={styles.infoLabel}>Blockchain Hash</Text>
             <Text style={styles.infoValue} numberOfLines={1}>
-              {transaction.stellar_transaction_hash.slice(0, 20)}...
+                {transaction.receipt_destination_tx_hash.slice(0, 20)}...
             </Text>
           </View>
+          )}
         </View>
 
         <View style={styles.section}>

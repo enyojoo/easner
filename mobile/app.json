@@ -57,7 +57,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "f50954cf-ded8-4635-a858-23a1e11aa758"
+        "projectId": "b1e3438a-faea-4359-a86f-6b279ebe2743"
       }
     },
     "plugins": [
@@ -75,6 +75,6 @@
         }
       ]
     ],
-    "owner": "enyosam"
+    "owner": "easner"
   }
 }

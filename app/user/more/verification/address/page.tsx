@@ -107,6 +107,65 @@ export default function AddressVerificationPage() {
       // Fetch in background to ensure we have latest data
       const loadSubmission = async () => {
         try {
+          // First, check if Bridge KYC is approved and we have Bridge address data
+          const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
+          const bridgeMetadata = typeof userProfile?.bridge_kyc_metadata === 'string'
+            ? JSON.parse(userProfile.bridge_kyc_metadata)
+            : userProfile?.bridge_kyc_metadata || {}
+          const hasBridgeAddress = bridgeKycApproved && (
+            bridgeMetadata.address || 
+            userProfile?.address
+          )
+
+          if (hasBridgeAddress) {
+            // Create synthetic submission from Bridge KYC data
+            const bridgeAddress = bridgeMetadata.address || {}
+            const countryCode = bridgeAddress.country 
+              ? bridgeAddress.country.substring(0, 2).toLowerCase()
+              : userProfile.country_code || ''
+
+            // Build address string from structured address or use existing address field
+            const addressString = userProfile.address || [
+              bridgeAddress.line1,
+              bridgeAddress.line2,
+              bridgeAddress.city,
+              bridgeAddress.state,
+              bridgeAddress.postal_code,
+              bridgeAddress.country
+            ].filter(Boolean).join(', ')
+
+            const bridgeSubmission: KYCSubmission = {
+              id: `bridge-${userProfile.id}`,
+              user_id: userProfile.id,
+              type: 'address',
+              country_code: countryCode,
+              address: addressString,
+              document_type: 'utility_bill', // Default, Bridge doesn't specify document type
+              status: 'approved',
+              metadata: {
+                source: 'bridge_kyc_widget',
+                address: {
+                  line1: bridgeAddress.line1,
+                  line2: bridgeAddress.line2,
+                  city: bridgeAddress.city,
+                  state: bridgeAddress.state,
+                  postalCode: bridgeAddress.postal_code || bridgeAddress.postalCode,
+                  country: bridgeAddress.country
+                }
+              },
+              created_at: userProfile.updated_at || new Date().toISOString(),
+              updated_at: userProfile.updated_at || new Date().toISOString(),
+            }
+
+            setSubmission(bridgeSubmission)
+            setSelectedCountry(countryCode)
+            setAddress(addressString)
+            setSelectedDocumentType('utility_bill')
+            setCachedSubmissions([])
+            return
+          }
+
+          // Fallback to regular KYC submissions
           const submissions = await kycService.getByUserId(userProfile.id)
           const addressSubmission = submissions.find(s => s.type === "address")
           if (addressSubmission) {
@@ -137,6 +196,65 @@ export default function AddressVerificationPage() {
     const loadSubmission = async () => {
       setLoading(true)
       try {
+        // First, check if Bridge KYC is approved and we have Bridge address data
+        const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
+        const bridgeMetadata = typeof userProfile?.bridge_kyc_metadata === 'string'
+          ? JSON.parse(userProfile.bridge_kyc_metadata)
+          : userProfile?.bridge_kyc_metadata || {}
+        const hasBridgeAddress = bridgeKycApproved && (
+          bridgeMetadata.address || 
+          userProfile?.address
+        )
+
+        if (hasBridgeAddress) {
+          // Create synthetic submission from Bridge KYC data
+          const bridgeAddress = bridgeMetadata.address || {}
+          const countryCode = bridgeAddress.country 
+            ? bridgeAddress.country.substring(0, 2).toLowerCase()
+            : userProfile.country_code || ''
+
+          // Build address string from structured address or use existing address field
+          const addressString = userProfile.address || [
+            bridgeAddress.line1,
+            bridgeAddress.line2,
+            bridgeAddress.city,
+            bridgeAddress.state,
+            bridgeAddress.postal_code,
+            bridgeAddress.country
+          ].filter(Boolean).join(', ')
+
+          const bridgeSubmission: KYCSubmission = {
+            id: `bridge-${userProfile.id}`,
+            user_id: userProfile.id,
+            type: 'address',
+            country_code: countryCode,
+            address: addressString,
+            document_type: 'utility_bill', // Default, Bridge doesn't specify document type
+            status: 'approved',
+            metadata: {
+              source: 'bridge_kyc_widget',
+              address: {
+                line1: bridgeAddress.line1,
+                line2: bridgeAddress.line2,
+                city: bridgeAddress.city,
+                state: bridgeAddress.state,
+                postalCode: bridgeAddress.postal_code,
+                country: bridgeAddress.country
+              }
+            },
+            created_at: userProfile.updated_at || new Date().toISOString(),
+            updated_at: userProfile.updated_at || new Date().toISOString(),
+          }
+
+          setSubmission(bridgeSubmission)
+          setSelectedCountry(countryCode)
+          setAddress(addressString)
+          setSelectedDocumentType('utility_bill')
+          setCachedSubmissions([])
+          return
+        }
+
+        // Fallback to regular KYC submissions
         const submissions = await kycService.getByUserId(userProfile.id)
         const addressSubmission = submissions.find(s => s.type === "address")
         if (addressSubmission) {

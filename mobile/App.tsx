@@ -16,6 +16,7 @@ import {
 import { AuthProvider, useAuth } from './src/contexts/AuthContext'
 import { UserDataProvider } from './src/contexts/UserDataContext'
 import { NotificationsProvider } from './src/contexts/NotificationsContext'
+import { BalanceProvider } from './src/contexts/BalanceContext'
 import { ToastProvider } from './src/components/ToastProvider'
 import { PostHogProvider } from './src/components/PostHogProvider'
 import { deepLinkService } from './src/services/DeepLinkService'
@@ -197,6 +198,7 @@ export default function App() {
         <SafeAreaProvider>
           <PostHogProvider>
             <AuthProvider>
+              <BalanceProvider>
               <UserDataProvider>
                 <NotificationsProvider>
                   <ToastProvider>
@@ -204,6 +206,7 @@ export default function App() {
                   </ToastProvider>
                 </NotificationsProvider>
               </UserDataProvider>
+              </BalanceProvider>
             </AuthProvider>
           </PostHogProvider>
         </SafeAreaProvider>

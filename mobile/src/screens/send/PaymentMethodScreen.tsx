@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics'
 import * as DocumentPicker from 'expo-document-picker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../contexts/AuthContext'
+import { useBalance } from '../../contexts/BalanceContext'
 import { useUserData } from '../../contexts/UserDataContext'
 import { NavigationProps, PaymentMethod } from '../../types'
 import { getCountryFlag } from '../../utils/flagUtils'
@@ -28,6 +29,7 @@ import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
 export default function PaymentMethodScreen({ navigation, route }: NavigationProps) {
   const { userProfile } = useAuth()
   const { paymentMethods, refreshPaymentMethods, currencies, refreshTransactions } = useUserData()
+  const { updateBalanceOptimistically } = useBalance()
   const insets = useSafeAreaInsets()
   const [transactionId, setTransactionId] = useState('')
   const [uploadedFile, setUploadedFile] = useState<any>(null)
@@ -140,6 +142,12 @@ export default function PaymentMethodScreen({ navigation, route }: NavigationPro
         totalAmount: Number.parseFloat(sendAmount) + Number.parseFloat(fee),
         transactionId: transactionId,
       })
+
+      // Optimistic balance update (like Revolut/CashApp - immediate UI feedback)
+      if (sendCurrency === 'USD' || sendCurrency === 'EUR') {
+        const totalAmount = Number.parseFloat(sendAmount) + Number.parseFloat(fee || '0')
+        updateBalanceOptimistically(sendCurrency as 'USD' | 'EUR', totalAmount)
+      }
 
       if (uploadedFile && !isUploading) {
           console.log('Receipt upload would happen here:', uploadedFile)

@@ -29,6 +29,8 @@ interface BridgeVirtualAccount {
   bic?: string
   bankName?: string
   accountHolderName?: string
+  bankAddress?: string
+  bankBeneficiaryAddress?: string
   status?: string
 }
 
@@ -378,6 +380,94 @@ export const bridgeService = {
   },
 
   /**
+   * Get liquidation address for receiving crypto deposits
+   */
+  async getLiquidationAddress(currency: 'usdc' | 'eurc', chain: 'solana' = 'solana'): Promise<{
+    hasAddress: boolean
+    currency?: string
+    chain?: string
+    address?: string
+    memo?: string
+    liquidationAddressId?: string
+  }> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    // Add timeout to fetch
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bridge/liquidation-addresses?currency=${currency}&chain=${chain}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to get liquidation address')
+      }
+
+      return await response.json()
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out')
+      }
+      throw error
+    }
+  },
+
+  /**
+   * Create liquidation address for receiving crypto deposits
+   */
+  async createLiquidationAddress(currency: 'usdc' | 'eurc', chain: 'solana' = 'solana'): Promise<{
+    hasAddress: boolean
+    currency?: string
+    chain?: string
+    address?: string
+    memo?: string
+    liquidationAddressId?: string
+  }> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
+
+    // Add timeout to fetch
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bridge/liquidation-addresses`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currency, chain }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create liquidation address')
+      }
+
+      return await response.json()
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out')
+      }
+      throw error
+    }
+  },
+
+  /**
    * Get wallet balances (USD/EUR)
    */
   async getWalletBalances(): Promise<BridgeWalletBalances> {
@@ -389,25 +479,30 @@ export const bridgeService = {
     const timeoutId = setTimeout(() => controller.abort(), 8000)
 
     try {
-    const response = await fetch(`${API_BASE_URL}/api/bridge/wallets/balances`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-      },
+      console.log('[BridgeService] Fetching wallet balances from API...')
+      const response = await fetch(`${API_BASE_URL}/api/bridge/wallets/balances`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         signal: controller.signal,
-    })
+      })
       clearTimeout(timeoutId)
 
-    if (!response.ok) {
-      // Return zero balances on error
-      return { USD: '0', EUR: '0' }
-    }
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`[BridgeService] API error ${response.status}:`, errorText)
+        // Return zero balances on error
+        return { USD: '0', EUR: '0' }
+      }
 
-    return await response.json()
+      const data = await response.json()
+      console.log('[BridgeService] Received balances:', data)
+      return data
     } catch (error: any) {
       clearTimeout(timeoutId)
       // Return zero balances on timeout or error
-      console.error('Error fetching wallet balances:', error)
+      console.error('[BridgeService] Error fetching wallet balances:', error)
       return { USD: '0', EUR: '0' }
     }
   },

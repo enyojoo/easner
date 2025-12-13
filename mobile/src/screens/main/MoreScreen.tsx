@@ -102,18 +102,24 @@ function MoreContent({ navigation }: NavigationProps) {
     return unsubscribe
   }, [userProfile?.id, navigation])
 
-  const getVerificationStatus = (): "verified" | "pending" => {
-    const identitySubmission = kycSubmissions.find(s => s.type === "identity")
-    const addressSubmission = kycSubmissions.find(s => s.type === "address")
-
-    if (identitySubmission?.status === "approved" && addressSubmission?.status === "approved") {
-      return "verified"
+  const getVerificationStatus = (): "approved" | "in_review" | "take_action" => {
+    // Check Bridge KYC status first (primary source of truth)
+    const bridgeKycStatus = userProfile?.bridge_kyc_status
+    
+    if (bridgeKycStatus === 'approved') {
+      return "approved"
+    }
+    
+    if (bridgeKycStatus === 'pending' || bridgeKycStatus === 'in_review' || bridgeKycStatus === 'under_review') {
+      return "in_review"
     }
 
-    return "pending"
+    // If no Bridge customer or status is not_started/rejected/null, user needs to take action
+    return "take_action"
   }
 
   const verificationStatus = getVerificationStatus()
+  const isVerificationComplete = verificationStatus === "approved"
 
   const handleSignOut = async () => {
     setIsLoggingOut(true)
@@ -215,21 +221,42 @@ function MoreContent({ navigation }: NavigationProps) {
                 false,
                 false
               )}
-              {renderMenuItem(
-                'Account Verification',
-                () => navigation.navigate('AccountVerification'),
-                verificationStatus === "verified" ? (
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={async () => {
+                  // Only allow navigation if verification is not complete
+                  if (!isVerificationComplete) {
+                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    navigation.navigate('AccountVerification')
+                  }
+                  // If approved, do nothing (menu item is disabled)
+                }}
+                activeOpacity={isVerificationComplete ? 1 : 0.7}
+                disabled={isVerificationComplete}
+              >
+                <Text style={styles.menuItemText}>
+                  Account Verification
+                </Text>
+                <View style={styles.menuItemRight}>
+                  {verificationStatus === "approved" ? (
                   <View style={styles.badgeGreen}>
-                    <Text style={styles.badgeTextGreen}>Verified</Text>
+                      <Text style={styles.badgeTextGreen}>Approved</Text>
+                    </View>
+                  ) : verificationStatus === "in_review" ? (
+                    <View style={styles.badgeYellow}>
+                      <Text style={styles.badgeTextYellow}>In review</Text>
                   </View>
                 ) : (
                   <View style={styles.badgeYellow}>
                     <Text style={styles.badgeTextYellow}>Take action</Text>
                   </View>
-                ),
-                false,
-                false
-              )}
+                  )}
+                  {/* Only show chevron when verification is NOT complete */}
+                  {!isVerificationComplete && (
+                    <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                  )}
+                </View>
+              </TouchableOpacity>
               {renderMenuItem(
                 'Change Password',
                 () => navigation.navigate('ChangePassword'),
@@ -354,7 +381,7 @@ function MoreContent({ navigation }: NavigationProps) {
         url={termsLink.url}
         title={termsLink.title}
         onClose={termsLink.closeLink}
-      />
+          />
     </ScreenWrapper>
   )
 }
@@ -416,10 +443,16 @@ const styles = StyleSheet.create({
   menuItemLast: {
     borderBottomWidth: 0,
   },
+  menuItemDisabled: {
+    opacity: 0.5,
+  },
   menuItemText: {
     ...textStyles.bodyMedium,
     color: colors.text.primary,
     fontFamily: 'Outfit-Medium',
+  },
+  menuItemTextDisabled: {
+    opacity: 0.6,
   },
   menuItemRight: {
     flexDirection: 'row',

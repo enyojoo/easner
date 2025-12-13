@@ -258,30 +258,30 @@ export default function AuthScreen({ navigation }: NavigationProps) {
               <>
                 <View style={styles.nameRow}>
                   <View style={[styles.inputContainer, styles.nameInputContainer]}>
-                    <Text style={styles.label}>First Name</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={firstName}
-                      onChangeText={setFirstName}
+                  <Text style={styles.label}>First Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={firstName}
+                    onChangeText={setFirstName}
                       placeholder="First name"
-                      placeholderTextColor={colors.text.secondary}
-                      autoCapitalize="words"
+                    placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
                       returnKeyType="next"
-                      onSubmitEditing={() => Keyboard.dismiss()}
-                    />
-                  </View>
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                  />
+                </View>
                   <View style={[styles.inputContainer, styles.nameInputContainer]}>
-                    <Text style={styles.label}>Last Name</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={lastName}
-                      onChangeText={setLastName}
+                  <Text style={styles.label}>Last Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={lastName}
+                    onChangeText={setLastName}
                       placeholder="Last name"
-                      placeholderTextColor={colors.text.secondary}
-                      autoCapitalize="words"
-                      returnKeyType="done"
-                      onSubmitEditing={() => Keyboard.dismiss()}
-                    />
+                    placeholderTextColor={colors.text.secondary}
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                  />
                   </View>
                 </View>
               </>
@@ -334,34 +334,34 @@ export default function AuthScreen({ navigation }: NavigationProps) {
 
             {mode === 'signup' && (
               <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirm Password</Text>
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      placeholder="Confirm your password"
-                      placeholderTextColor={colors.text.secondary}
-                      secureTextEntry={!confirmPasswordVisible}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                    <TouchableOpacity
-                      style={styles.eyeButton}
-                      onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.eyeButtonCircle}>
-                        <Ionicons
-                          name={confirmPasswordVisible ? 'eye-off' : 'eye'}
-                          size={18}
-                          color={colors.text.secondary}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Confirm your password"
+                    placeholderTextColor={colors.text.secondary}
+                    secureTextEntry={!confirmPasswordVisible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.eyeButtonCircle}>
+                      <Ionicons
+                        name={confirmPasswordVisible ? 'eye-off' : 'eye'}
+                        size={18}
+                        color={colors.text.secondary}
+                      />
+                    </View>
+                  </TouchableOpacity>
                 </View>
+              </View>
 
                 {/* Terms Checkbox */}
                 <View style={styles.termsContainer}>

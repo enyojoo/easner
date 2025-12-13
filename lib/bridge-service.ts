@@ -236,12 +236,35 @@ interface BridgeCustomer {
   id: string
   email?: string
   first_name?: string
+  middle_name?: string
   last_name?: string
+  birth_date?: string
+  residential_address?: {
+    line1: string
+    line2?: string
+    city: string
+    state?: string
+    postal_code: string
+    country: string
+  }
   kyc_status?: string
+  status?: string
   endorsements?: any[]
   rejection_reasons?: any[]
+  ssn?: string
+  phone?: string
+  employment_status?: string
+  expected_monthly?: string
+  account_purpose?: string
+  source_of_funds?: string
+  most_recent_occupation?: string
+  passport_number?: string
+  national_id_number?: string
+  dl_number?: string
   created_at: string
   updated_at: string
+  // Bridge API may return additional fields
+  [key: string]: any
 }
 
 interface CustomerStatus {
@@ -286,7 +309,12 @@ interface BridgeWallet {
   chain: string
   address: string
   status: string
-  balances?: {
+  balances?: Array<{
+    balance: string
+    currency: string
+    chain: string
+    contract_address: string
+  }> | {
     [currency: string]: string
   }
   created_at: string
@@ -303,20 +331,74 @@ interface WalletBalance {
 
 interface Transfer {
   id: string
+  customer_id?: string
+  on_behalf_of?: string
+  amount: string
+  currency: string
+  state?: string // Bridge uses 'state' for transfer status
+  status?: string // Some endpoints use 'status'
+  source: {
+    type?: string
+    payment_rail: string
+    currency?: string
+    bridge_wallet_id?: string
+    virtual_account_id?: string
+  }
+  destination: {
+    type?: string
+    payment_rail: string
+    currency?: string
+    external_account_id?: string
+    bridge_wallet_id?: string
+    to_address?: string
+  }
+  receipt?: {
+    final_amount?: string
+    trace_number?: string // ACH trace number
+    imad?: string // Wire IMAD
+    destination_tx_hash?: string // Blockchain transaction hash
+  }
+  created_at: string
+  updated_at: string
+}
+
+interface ExternalAccount {
+  id: string
+  customer_id: string
+  currency: string
+  account_type: string
+  account_owner_name: string
+  account: {
+    routing_number?: string
+    account_number?: string
+    iban?: string
+    swift_bic?: string
+    checking_or_savings?: string
+  }
+  status: string
+  created_at: string
+}
+
+interface VirtualAccountActivity {
+  id: string
+  virtual_account_id: string
   customer_id: string
   amount: string
   currency: string
-  status: string
-  source: {
-    type: string
-    payment_rail: string
-    bridge_wallet_id?: string
+  type: string // 'funds_scheduled', 'funds_received', 'payment_submitted', 'payment_processed', 'in_review', 'refunded'
+  status?: string
+  deposit_id?: string
+  source?: {
+    payment_rail?: string
+    sender_name?: string
+    description?: string
   }
-  destination: {
-    type: string
-    payment_rail: string
-    external_account_id?: string
+  receipt?: {
+    final_amount?: string
+    destination_tx_hash?: string
   }
+  reference?: string
+  memo?: string
   created_at: string
   updated_at: string
 }
@@ -784,6 +866,9 @@ export const bridgeService = {
         method: 'GET',
       })
       
+      // Log FULL response for debugging
+      console.log(`[BRIDGE-SERVICE] listCustomersByEmail: FULL RESPONSE:`, JSON.stringify(response, null, 2))
+      
       console.log(`[BRIDGE-SERVICE] listCustomersByEmail: Response received:`, {
         hasResponse: !!response,
         responseType: typeof response,
@@ -1032,11 +1117,89 @@ export const bridgeService = {
   /**
    * Get customer details
    */
-  async getCustomer(customerId: string): Promise<BridgeCustomer> {
-    console.log(`[BRIDGE-SERVICE] getCustomer: Fetching customer ${customerId}`)
-    const response = await bridgeApiRequest<any>(`/v0/customers/${customerId}`, {
+  async getCustomer(
+    customerId: string, 
+    includeFullData: boolean = false
+  ): Promise<BridgeCustomer> {
+    console.log(`[BRIDGE-SERVICE] getCustomer: Fetching customer ${customerId} (includeFullData: ${includeFullData})`)
+    
+    // Use standard endpoint - Bridge API doesn't support expand parameters
+    // The data should be in the standard response
+    const endpoint = `/v0/customers/${customerId}`
+    const response = await bridgeApiRequest<any>(endpoint, {
       method: 'GET',
     })
+    
+    // Log FULL response for debugging - this is critical to see what Bridge actually returns
+    console.log(`[BRIDGE-SERVICE] getCustomer: FULL RESPONSE (${includeFullData ? 'with expand' : 'standard'}):`, JSON.stringify(response, null, 2))
+    
+    // Deep scan for KYC-related fields that might be nested
+    const deepScanForKycFields = (obj: any, path: string = '', depth: number = 0): void => {
+      if (depth > 5) return // Prevent infinite recursion
+      if (!obj || typeof obj !== 'object') return
+      
+      const kycFields = [
+        'birth_date', 'date_of_birth', 'birthDate', 'dob',
+        'tax_identification_number', 'tax_id', 'tin', 'ssn', 'social_security_number',
+        'address', 'residential_address', 'address_of_residence',
+        'line1', 'line2', 'city', 'postal_code', 'postal', 'zip_code',
+        'source_of_funds', 'sourceOfFunds', 'source_of_funds_questionnaire',
+        'phone', 'phone_number', 'mobile', 'telephone',
+        'employment_status', 'employmentStatus',
+        'account_purpose', 'accountPurpose',
+        'expected_monthly', 'expectedMonthly',
+        'most_recent_occupation', 'occupation',
+        'passport_number', 'passportNumber',
+        'national_id_number', 'nationalIdNumber',
+        'dl_number', 'drivers_license_number'
+      ]
+      
+      for (const key in obj) {
+        const currentPath = path ? `${path}.${key}` : key
+        const value = obj[key]
+        
+        // Check if this is a KYC field we're looking for
+        if (kycFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
+          console.log(`[BRIDGE-SERVICE] getCustomer: 🔍 FOUND KYC FIELD: ${currentPath} =`, 
+            typeof value === 'object' ? JSON.stringify(value) : value
+          )
+        }
+        
+        // Recursively scan nested objects
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          deepScanForKycFields(value, currentPath, depth + 1)
+        } else if (Array.isArray(value)) {
+          value.forEach((item, index) => {
+            if (item && typeof item === 'object') {
+              deepScanForKycFields(item, `${currentPath}[${index}]`, depth + 1)
+            }
+          })
+        }
+      }
+    }
+    
+    // Log ALL keys in the response to see what fields are available
+    if (response && typeof response === 'object') {
+      console.log(`[BRIDGE-SERVICE] getCustomer: ALL AVAILABLE FIELDS IN RESPONSE:`, Object.keys(response))
+      console.log(`[BRIDGE-SERVICE] getCustomer: RESPONSE FIELD VALUES:`, Object.keys(response).reduce((acc: any, key) => {
+        const value = response[key]
+        if (value === null || value === undefined) {
+          acc[key] = value
+        } else if (typeof value === 'object' && !Array.isArray(value)) {
+          acc[key] = `[Object with keys: ${Object.keys(value).join(', ')}]`
+        } else if (Array.isArray(value)) {
+          acc[key] = `[Array of ${value.length} items]`
+        } else {
+          acc[key] = typeof value === 'string' && value.length > 100 ? `${value.substring(0, 100)}...` : value
+        }
+        return acc
+      }, {}))
+      
+      // Deep scan for KYC fields that might be nested
+      console.log(`[BRIDGE-SERVICE] getCustomer: 🔍 DEEP SCANNING FOR KYC FIELDS...`)
+      deepScanForKycFields(response)
+    }
+    
     
     console.log(`[BRIDGE-SERVICE] getCustomer: Response received:`, {
       hasResponse: !!response,
@@ -1300,37 +1463,49 @@ export const bridgeService = {
       payload.destination.bridge_wallet_id = walletId
     }
     
-    const response = await bridgeApiRequest<{ data: VirtualAccount }>(`/v0/customers/${customerId}/virtual_accounts`, {
+    const response = await bridgeApiRequest<VirtualAccount>(`/v0/customers/${customerId}/virtual_accounts`, {
       method: 'POST',
       body: JSON.stringify(payload),
     })
-    return response.data
+    // Bridge API returns virtual account object directly, not wrapped in { data: ... }
+    return response
   },
 
   /**
    * Get virtual account details
    */
-  async getVirtualAccountDetails(virtualAccountId: string): Promise<VirtualAccount> {
-    const response = await bridgeApiRequest<{ data: VirtualAccount }>(
-      `/v0/virtual_accounts/${virtualAccountId}`,
+  async getVirtualAccountDetails(virtualAccountId: string, customerId?: string): Promise<VirtualAccount> {
+    // Bridge API requires customer ID in the path for virtual account details
+    // Use the customer-specific endpoint if customerId is provided
+    const endpoint = customerId 
+      ? `/v0/customers/${customerId}/virtual_accounts/${virtualAccountId}`
+      : `/v0/virtual_accounts/${virtualAccountId}`
+    
+    const response = await bridgeApiRequest<VirtualAccount>(
+      endpoint,
       {
         method: 'GET',
       },
     )
-    return response.data
+    // Bridge API returns virtual account object directly, not wrapped in { data: ... }
+    return response
   },
 
   /**
    * List all virtual accounts for a customer
    */
   async listVirtualAccounts(customerId: string): Promise<VirtualAccount[]> {
-    const response = await bridgeApiRequest<{ data: VirtualAccount[] }>(
+    const response = await bridgeApiRequest<VirtualAccount[] | { data: VirtualAccount[] }>(
       `/v0/virtual_accounts?customer_id=${customerId}`,
       {
         method: 'GET',
       },
     )
-    return response.data
+    // Bridge API may return array directly or wrapped in { data: ... }
+    if (Array.isArray(response)) {
+      return response
+    }
+    return response.data || []
   },
 
   // ============================================================================
@@ -1341,49 +1516,148 @@ export const bridgeService = {
    * Create a wallet for a customer
    */
   async createWallet(customerId: string, chain: string = 'solana'): Promise<BridgeWallet> {
-    const response = await bridgeApiRequest<{ data: BridgeWallet }>(`/v0/customers/${customerId}/wallets`, {
+    const response = await bridgeApiRequest<BridgeWallet>(`/v0/customers/${customerId}/wallets`, {
       method: 'POST',
       body: JSON.stringify({
         chain,
       }),
     })
-    return response.data
+    // Bridge API returns wallet object directly, not wrapped in { data: ... }
+    return response
   },
 
   /**
    * List wallets for a customer
    */
   async listWallets(customerId: string): Promise<BridgeWallet[]> {
-    const response = await bridgeApiRequest<{ data: BridgeWallet[] }>(`/v0/customers/${customerId}/wallets`, {
+    const response = await bridgeApiRequest<BridgeWallet[] | { data: BridgeWallet[] }>(`/v0/customers/${customerId}/wallets`, {
       method: 'GET',
     })
+    // Bridge API may return array directly or wrapped in { data: ... }
+    if (Array.isArray(response)) {
+      return response
+    }
     return response.data || []
   },
 
   /**
    * Get wallet balance
+   * Uses GET /v0/customers/{customerId}/wallets/{walletId}
    */
-  async getWalletBalance(walletId: string): Promise<WalletBalance> {
-    const response = await bridgeApiRequest<{ data: BridgeWallet }>(`/v0/wallets/${walletId}`, {
-      method: 'GET',
-    })
-    
-    // Bridge returns balances in the wallet object
-    // Map usdb to USD and eurc to EUR for consistency
-    const balances: WalletBalance = {}
-    if (response.data.balances) {
-      Object.entries(response.data.balances).forEach(([key, value]) => {
-        if (key === 'usdb' || key === 'usdc') {
-          balances.USD = value
-        } else if (key === 'eurc') {
-          balances.EUR = value
-        } else {
-          balances[key.toUpperCase()] = value
-        }
+  async getWalletBalance(customerId: string, walletId: string): Promise<WalletBalance> {
+    try {
+      console.log(`[BRIDGE-SERVICE] ========== getWalletBalance CALLED (NEW CODE v2) ==========`)
+      console.log(`[BRIDGE-SERVICE] Fetching wallet balance for customer ${customerId}, wallet ${walletId}`)
+      const response = await bridgeApiRequest<BridgeWallet | { data: BridgeWallet }>(`/v0/customers/${customerId}/wallets/${walletId}`, {
+        method: 'GET',
       })
+      
+      console.log(`[BRIDGE-SERVICE] Raw response from Bridge API:`, JSON.stringify(response, null, 2))
+      
+      // Bridge API may return wallet directly or wrapped in { data: ... }
+      const wallet: BridgeWallet = (response as any).data || (response as BridgeWallet)
+      
+      if (!wallet || !wallet.id) {
+        console.error(`[BRIDGE-SERVICE] Invalid wallet response for customer ${customerId}, wallet ${walletId}`)
+        console.error(`[BRIDGE-SERVICE] Response structure:`, {
+          hasData: !!(response as any).data,
+          hasId: !!(response as any).id,
+          responseKeys: response && typeof response === 'object' ? Object.keys(response) : [],
+          responseType: typeof response,
+        })
+        return { USD: '0', EUR: '0' }
+      }
+      
+      // Filter balances to only show USDC and EURC for logging
+      const filteredBalances = Array.isArray(wallet.balances)
+        ? wallet.balances.filter((b: any) => {
+            const currency = b?.currency?.toLowerCase() || ''
+            return currency === 'usdc' || currency === 'eurc'
+          })
+        : wallet.balances && typeof wallet.balances === 'object'
+        ? Object.fromEntries(
+            Object.entries(wallet.balances).filter(([key]) => {
+              const lowerKey = key.toLowerCase()
+              return lowerKey === 'usdc' || lowerKey === 'eurc'
+            })
+          )
+        : wallet.balances
+
+      console.log(`[BRIDGE-SERVICE] Extracted wallet:`, {
+        id: wallet.id,
+        chain: wallet.chain,
+        status: wallet.status,
+        hasBalances: !!wallet.balances,
+        balances: filteredBalances, // Only USDC and EURC
+        balanceType: typeof wallet.balances,
+        balanceKeys: filteredBalances && typeof filteredBalances === 'object' ? Object.keys(filteredBalances) : [],
+        balanceValues: Array.isArray(filteredBalances) ? filteredBalances : (filteredBalances && typeof filteredBalances === 'object' ? Object.values(filteredBalances) : []),
+      })
+      
+      // Bridge returns balances as an array of objects with { balance, currency, chain, contract_address }
+      // Map usdb/usdc to USD and eurc to EUR for consistency
+      // Always initialize with defaults
+      const balances: WalletBalance = { USD: '0', EUR: '0' }
+      if (wallet.balances) {
+        // Check if balances is an array (new format) or object (old format)
+        if (Array.isArray(wallet.balances)) {
+          // New format: array of balance objects
+          wallet.balances.forEach((balanceObj: any) => {
+            const currency = balanceObj.currency?.toLowerCase() || ''
+            const balanceValue = balanceObj.balance != null ? String(balanceObj.balance) : '0'
+            
+            // Only process USDC and EURC, ignore PYUSD, USDB, and other currencies
+            if (currency === 'pyusd' || currency === 'usdb') {
+              // Skip PYUSD and USDB
+              return
+            }
+            
+            if (currency === 'usdc') {
+              // Sum up if multiple USD balances exist
+              const currentUSD = parseFloat(balances.USD || '0')
+              const newBalance = parseFloat(balanceValue || '0')
+              balances.USD = String(currentUSD + newBalance)
+            } else if (currency === 'eurc') {
+              // Sum up if multiple EUR balances exist
+              const currentEUR = parseFloat(balances.EUR || '0')
+              const newBalance = parseFloat(balanceValue || '0')
+              balances.EUR = String(currentEUR + newBalance)
+            }
+            // Ignore all other currencies
+          })
+        } else {
+          // Old format: object with currency keys
+          Object.entries(wallet.balances).forEach(([key, value]) => {
+            // Ensure value is converted to string
+            const balanceValue = value != null ? String(value) : '0'
+            const lowerKey = key.toLowerCase()
+            
+            // Only process USDC and EURC, ignore PYUSD, USDB, and other currencies
+            if (lowerKey === 'pyusd' || lowerKey === 'usdb') {
+              // Skip PYUSD and USDB
+              return
+            }
+            
+            if (lowerKey === 'usdc') {
+              balances.USD = balanceValue
+            } else if (lowerKey === 'eurc') {
+              balances.EUR = balanceValue
+            }
+            // Ignore all other currencies (don't add to balances)
+          })
+        }
+      } else {
+        console.log(`[BRIDGE-SERVICE] Wallet has no balances field or balances is null/undefined`)
+      }
+      
+      console.log(`[BRIDGE-SERVICE] Final mapped balances:`, balances)
+      
+      return balances
+    } catch (error: any) {
+      console.error(`[BRIDGE-SERVICE] Error in getWalletBalance for customer ${customerId}, wallet ${walletId}:`, error)
+      console.error(`[BRIDGE-SERVICE] Error stack:`, error.stack)
+      return { USD: '0', EUR: '0' }
     }
-    
-    return balances
   },
 
   // ============================================================================
@@ -1391,44 +1665,182 @@ export const bridgeService = {
   // ============================================================================
 
   /**
-   * Create a transfer from wallet to external bank account
+   * Create a transfer (send transaction)
+   * Supports: bank transfers, P2P (wallet-to-wallet), external crypto addresses
    */
   async createTransfer(
     customerId: string,
     transferData: {
       amount: string
-      currency: string
-      sourceWalletId: string
-      destinationExternalAccountId: string
+      source: {
+        payment_rail: 'bridge_wallet'
+        currency: string
+        bridge_wallet_id: string
+      }
+      destination: {
+        payment_rail: 'ach' | 'wire' | 'sepa' | 'solana' | 'ethereum' | string
+        currency: string
+        external_account_id?: string // For bank transfers
+        bridge_wallet_id?: string // For P2P
+        to_address?: string // For external crypto addresses
+      }
     },
   ): Promise<Transfer> {
-    const response = await bridgeApiRequest<{ data: Transfer }>('/v0/transfers', {
+    const payload: any = {
+      amount: transferData.amount,
+      on_behalf_of: customerId,
+      source: {
+        payment_rail: transferData.source.payment_rail,
+        currency: transferData.source.currency,
+        bridge_wallet_id: transferData.source.bridge_wallet_id,
+      },
+      destination: {
+        payment_rail: transferData.destination.payment_rail,
+        currency: transferData.destination.currency,
+      },
+    }
+
+    // Add destination-specific fields
+    if (transferData.destination.external_account_id) {
+      payload.destination.external_account_id = transferData.destination.external_account_id
+    } else if (transferData.destination.bridge_wallet_id) {
+      payload.destination.bridge_wallet_id = transferData.destination.bridge_wallet_id
+    } else if (transferData.destination.to_address) {
+      payload.destination.to_address = transferData.destination.to_address
+    }
+
+    const response = await bridgeApiRequest<Transfer>('/v0/transfers', {
       method: 'POST',
-      body: JSON.stringify({
-        customer_id: customerId,
-        amount: transferData.amount,
-        currency: transferData.currency,
-        source: {
-          type: 'wallet',
-          bridge_wallet_id: transferData.sourceWalletId,
-        },
-        destination: {
-          type: 'external_account',
-          external_account_id: transferData.destinationExternalAccountId,
-        },
-      }),
+      body: JSON.stringify(payload),
     })
-    return response.data
+
+    // Bridge API may return the object directly or wrapped in data
+    return (response as any).data || response
   },
 
   /**
-   * Get transfer status
+   * Get transfer by ID
    */
-  async getTransferStatus(transferId: string): Promise<Transfer> {
-    const response = await bridgeApiRequest<{ data: Transfer }>(`/v0/transfers/${transferId}`, {
+  async getTransfer(transferId: string): Promise<Transfer> {
+    const response = await bridgeApiRequest<Transfer>(`/v0/transfers/${transferId}`, {
       method: 'GET',
     })
-    return response.data
+    return (response as any).data || response
+  },
+
+  /**
+   * Get transfer status (alias for getTransfer)
+   */
+  async getTransferStatus(transferId: string): Promise<Transfer> {
+    return this.getTransfer(transferId)
+  },
+
+  /**
+   * List transfers for a customer
+   */
+  async listTransfers(
+    customerId: string,
+    filters?: {
+      limit?: number
+      status?: string
+    },
+  ): Promise<Transfer[]> {
+    const params = new URLSearchParams()
+    if (filters?.limit) params.append('limit', filters.limit.toString())
+    if (filters?.status) params.append('status', filters.status)
+
+    const queryString = params.toString()
+    const endpoint = `/v0/customers/${customerId}/transfers${queryString ? `?${queryString}` : ''}`
+
+    const response = await bridgeApiRequest<Transfer[]>(endpoint, {
+      method: 'GET',
+    })
+
+    return Array.isArray(response) ? response : (response as any).data || []
+  },
+
+  /**
+   * Create an external account (recipient's bank account)
+   */
+  async createExternalAccount(
+    customerId: string,
+    accountData: {
+      currency: string
+      account_type: 'us' | 'uk' | 'euro' | 'generic'
+      account_owner_name: string
+      account: {
+        routing_number?: string
+        account_number?: string
+        iban?: string
+        swift_bic?: string
+        checking_or_savings?: 'checking' | 'savings'
+      }
+    },
+  ): Promise<ExternalAccount> {
+    const payload = {
+      currency: accountData.currency.toLowerCase(),
+      account_type: accountData.account_type,
+      account_owner_name: accountData.account_owner_name,
+      account: {
+        ...(accountData.account.routing_number && { routing_number: accountData.account.routing_number }),
+        ...(accountData.account.account_number && { account_number: accountData.account.account_number }),
+        ...(accountData.account.iban && { iban: accountData.account.iban }),
+        ...(accountData.account.swift_bic && { swift_bic: accountData.account.swift_bic }),
+        ...(accountData.account.checking_or_savings && { checking_or_savings: accountData.account.checking_or_savings }),
+      },
+    }
+
+    const response = await bridgeApiRequest<ExternalAccount>(
+      `/v0/customers/${customerId}/external_accounts`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    )
+
+    return (response as any).data || response
+  },
+
+  /**
+   * Get external account by ID
+   */
+  async getExternalAccount(customerId: string, externalAccountId: string): Promise<ExternalAccount> {
+    const response = await bridgeApiRequest<ExternalAccount>(
+      `/v0/customers/${customerId}/external_accounts/${externalAccountId}`,
+      {
+        method: 'GET',
+      },
+    )
+    return (response as any).data || response
+  },
+
+  /**
+   * List external accounts for a customer
+   */
+  async listExternalAccounts(customerId: string): Promise<ExternalAccount[]> {
+    const response = await bridgeApiRequest<ExternalAccount[]>(
+      `/v0/customers/${customerId}/external_accounts`,
+      {
+        method: 'GET',
+      },
+    )
+    return Array.isArray(response) ? response : (response as any).data || []
+  },
+
+  /**
+   * Get virtual account activity history (for deposits)
+   */
+  async getVirtualAccountHistory(
+    customerId: string,
+    virtualAccountId: string,
+  ): Promise<VirtualAccountActivity[]> {
+    const response = await bridgeApiRequest<VirtualAccountActivity[]>(
+      `/v0/customers/${customerId}/virtual_accounts/${virtualAccountId}/history`,
+      {
+        method: 'GET',
+      },
+    )
+    return Array.isArray(response) ? response : (response as any).data || []
   },
 
   /**

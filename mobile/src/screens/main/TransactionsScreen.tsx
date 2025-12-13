@@ -29,7 +29,7 @@ import { NavigationProps, Transaction } from '../../types'
 import { analytics } from '../../lib/analytics'
 import { useAuth } from '../../contexts/AuthContext'
 import { useFocusRefreshAll } from '../../hooks/useFocusRefresh'
-import { apiGet } from '../../lib/apiClient'
+import { apiGet, apiPost } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
@@ -44,8 +44,10 @@ interface CombinedTransaction {
   id: string
   transaction_id: string
   type: 'send' | 'receive' | 'card_funding'
+  transaction_type?: 'send' | 'receive' // Bridge transactions use transaction_type
   status: string
   created_at: string
+  bridge_created_at?: string
   send_amount?: number
   send_currency?: string
   receive_amount?: number
@@ -59,7 +61,7 @@ interface CombinedTransaction {
   crypto_currency?: string
   fiat_amount?: number
   fiat_currency?: string
-  stellar_transaction_hash?: string
+  receipt_destination_tx_hash?: string // Bridge transaction receipt hash
   crypto_wallet?: {
     wallet_address: string
     crypto_currency: string
@@ -70,6 +72,39 @@ interface CombinedTransaction {
   merchant_name?: string
   description?: string
   direction?: 'credit' | 'debit'
+  name?: string
+  source_type?: string // 'virtual_account', 'liquidation_address', etc.
+  source_liquidation_address_id?: string
+  metadata?: any
+}
+
+// Helper function to get transaction name (defined outside component so it can be used in TransactionItem)
+function getTransactionName(item: CombinedTransaction, transactionType: string): string {
+  if (transactionType === 'receive') {
+    // Check if it's a crypto deposit (stablecoin deposit via liquidation address)
+    if (item.source_type === 'liquidation_address' || item.source_liquidation_address_id) {
+      return 'Stablecoin Deposit'
+    }
+    
+    // For fiat deposits (virtual account/ACH), show sender name only (not "Received from...")
+    if (item.source_type === 'virtual_account') {
+      // Check metadata for sender information
+      const senderName = item.metadata?.source?.sender_name || 
+                        item.metadata?.source?.originator_name ||
+                        item.name
+      if (senderName) {
+        return senderName // Just the sender name for ACH deposits
+      }
+      return 'Bank Deposit'
+    }
+    
+    // Fallback for other receive types
+    return item.recipient_name ? `Received from ${item.recipient_name}` : 'Received'
+  } else if (transactionType === 'send') {
+    return item.recipient_name ? `Sent to ${item.recipient_name}` : 'Sent'
+  } else {
+    return 'Card Top-Up'
+  }
 }
 
 // Animated Transaction Item Component
@@ -125,7 +160,8 @@ function TransactionItem({
     }).start()
   }
 
-  const transactionType = item.type || 'send'
+  // Bridge transactions use transaction_type, legacy uses type
+  const transactionType = item.transaction_type || item.type || 'send'
   const statusColor = colors.status[item.status as keyof typeof colors.status] || colors.neutral[500]
 
   const getTransactionIcon = () => {
@@ -182,14 +218,10 @@ function TransactionItem({
         {getTransactionIcon()}
         <View style={styles.transactionDetails}>
           <Text style={styles.transactionName}>
-            {transactionType === 'receive'
-              ? `Received from ${item.recipient?.full_name || item.crypto_wallet?.wallet_address?.slice(0, 8) || 'Unknown'}`
-              : transactionType === 'send'
-              ? item.recipient?.full_name || 'Unknown'
-              : 'Card Top-Up'}
+            {getTransactionName(item, transactionType)}
           </Text>
           <Text style={styles.transactionDate}>
-            {formatDate(item.created_at)}
+            {formatDate(item.bridge_created_at || item.created_at)}
           </Text>
         </View>
         <Text
@@ -198,13 +230,11 @@ function TransactionItem({
             transactionType === 'receive' && styles.transactionAmountReceived
           ]}
         >
-          {transactionType === 'send'
-            ? formatAmount(item.receive_amount || item.send_amount || 0, 
-                item.receive_currency || item.send_currency || '', false)
-            : transactionType === 'receive'
-            ? formatAmount(item.crypto_amount || item.fiat_amount || 0, 
-                item.crypto_currency || item.fiat_currency || 'USD', true)
-            : formatAmount(item.amount || 0, item.currency || 'USD', false)}
+          {formatAmount(
+            item.amount || item.send_amount || item.crypto_amount || item.fiat_amount || 0,
+            item.currency || item.send_currency || item.crypto_currency || item.fiat_currency || 'USD',
+            transactionType === 'receive'
+          )}
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -252,293 +282,363 @@ function TransactionsContent({ navigation }: NavigationProps) {
     analytics.trackScreenView('Transactions')
   }, [])
 
-  // Fetch combined transactions
-  useEffect(() => {
+  // Cache TTL (10 minutes - same as other screens)
+  const CACHE_TTL = 10 * 60 * 1000
+  const CACHE_KEY = `easner_combined_transactions_${userProfile?.id || ''}`
+
+  // Helper to get cached data (use useCallback to ensure stable reference)
+  const getCachedData = React.useCallback(async <T,>(key: string): Promise<{ data: T; timestamp: number } | null> => {
+    try {
+      const cached = await AsyncStorage.getItem(key)
+      if (!cached) return null
+      return JSON.parse(cached)
+    } catch {
+      return null
+    }
+  }, [])
+
+  // Helper to set cached data (use useCallback to ensure stable reference)
+  const setCachedData = React.useCallback(async <T,>(key: string, data: T): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(key, JSON.stringify({
+        data,
+        timestamp: Date.now(),
+      }))
+    } catch (error) {
+      console.warn(`[Transactions] Error caching ${key}:`, error)
+    }
+  }, [])
+
+  // Helper to check if data is stale (use useCallback to ensure stable reference)
+  const isStale = React.useCallback((timestamp: number | undefined, ttl: number): boolean => {
+    if (!timestamp) return true
+    return Date.now() - timestamp > ttl
+  }, [])
+
+  // Fetch transactions with caching (stale-while-revalidate pattern)
+  const fetchTransactions = React.useCallback(async (force = false, silent = false) => {
     if (!userProfile?.id) return
 
-    const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
-    const CACHE_TTL = 5 * 60 * 1000
+    let cached: { data: CombinedTransaction[]; timestamp: number } | null = null
 
-    const getCachedTransactions = async (): Promise<CombinedTransaction[] | null> => {
-      try {
-        const cached = await AsyncStorage.getItem(CACHE_KEY)
-        if (!cached) return null
-        const { value, timestamp } = JSON.parse(cached)
-        if (Date.now() - timestamp < CACHE_TTL) {
-          return value
-        }
-        await AsyncStorage.removeItem(CACHE_KEY)
-        return null
-      } catch {
-        return null
-      }
-    }
-
-    const setCachedTransactions = async (value: CombinedTransaction[]) => {
-      try {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
-    }
-
-    const loadFromCache = async () => {
-      const cachedTransactions = await getCachedTransactions()
-      
-      if (cachedTransactions !== null && transactions.length === 0) {
-        setTransactions(cachedTransactions)
+    // Try to load from cache first (stale-while-revalidate)
+    if (!force) {
+      cached = await getCachedData<CombinedTransaction[]>(CACHE_KEY)
+      if (cached && !isStale(cached.timestamp, CACHE_TTL)) {
+        // Data is fresh, use cache
+        setTransactions(cached.data)
         setLoading(false)
-      }
-
-      if (cachedTransactions !== null) {
-        const fetchInBackground = async () => {
-          try {
-            const params = new URLSearchParams()
-             params.append('type', 'send') // Only fetch send transactions
-            params.append('limit', '100')
-
-            const response = await apiGet(`/api/transactions?${params.toString()}`)
-            if (response.ok && !(response as any).isNetworkError) {
-              const data = await response.json()
-              const transactionsList = data.transactions || []
-               
-               // Additional client-side filtering to ensure no receive/card transactions
-               const filteredTransactions = transactionsList.filter((tx: any) => {
-                 if (tx.type === 'receive' || tx.type === 'card_funding') return false
-                 if (tx.destination_type === 'card') return false
-                 return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-               })
-               
-               setTransactions(filteredTransactions)
-               await setCachedTransactions(filteredTransactions)
-            } else if ((response as any).isNetworkError) {
-              // Network error - keep cached transactions
-              console.warn("Network error fetching transactions in background, keeping cached data")
-            }
-          } catch (error: any) {
-            // Only log as error if it's not a network error
-            if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
-              console.warn("Network error fetching transactions in background:", error?.message || 'Network unavailable')
-            } else {
-              console.error("Error fetching transactions in background:", error)
-            }
-          }
-        }
-        fetchInBackground()
         return
+      } else if (cached) {
+        // Data is stale, show cached data immediately, then fetch fresh
+        setTransactions(cached.data)
+        setLoading(false)
+        // Continue to fetch fresh data in background
       }
-
-      const fetchCombinedTransactions = async () => {
-        try {
-          const params = new URLSearchParams()
-        params.append('type', 'send') // Only fetch send transactions, not receive or card
-          params.append('limit', '100')
-
-          const response = await apiGet(`/api/transactions?${params.toString()}`)
-          if (response.ok && !(response as any).isNetworkError) {
-            const data = await response.json()
-            const transactionsList = data.transactions || []
-            
-            // TEMPORARILY DISABLED: Filter out receive and card_funding transactions
-            const filteredTransactions = transactionsList.filter((tx: any) => {
-              // Exclude receive and card_funding transactions
-              if (tx.type === 'receive' || tx.type === 'card_funding') return false
-              // Exclude transactions with destination_type card
-              if (tx.destination_type === 'card') return false
-              // Only include send transactions
-              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-            })
-            
-            setTransactions(filteredTransactions)
-            await setCachedTransactions(filteredTransactions)
-          } else if ((response as any).isNetworkError) {
-            // Network error - use fallback
-            console.warn("Network error fetching transactions, using fallback data")
-            const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
-            // Filter fallback transactions too
-            const filteredFallback = fallbackTransactions.filter((tx: any) => {
-              if (tx.type === 'receive' || tx.type === 'card_funding') return false
-              if (tx.destination_type === 'card') return false
-              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-            })
-            setTransactions(filteredFallback)
-            if (filteredFallback.length > 0) {
-              await setCachedTransactions(filteredFallback)
-            }
-          } else {
-            const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
-            // Filter fallback transactions too
-            const filteredFallback = fallbackTransactions.filter((tx: any) => {
-              if (tx.type === 'receive' || tx.type === 'card_funding') return false
-              if (tx.destination_type === 'card') return false
-              return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-            })
-            setTransactions(filteredFallback)
-            if (filteredFallback.length > 0) {
-              await setCachedTransactions(filteredFallback)
-            }
-          }
-        } catch (error: any) {
-          // Handle network errors gracefully
-          if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
-            console.warn("Network error fetching transactions, using fallback data:", error?.message || 'Network unavailable')
-          } else {
-            console.error("Error fetching transactions:", error)
-          }
-          const fallbackTransactions = (userTransactions || []) as CombinedTransaction[]
-          // Filter fallback transactions too
-          const filteredFallback = fallbackTransactions.filter((tx: any) => {
-            if (tx.type === 'receive' || tx.type === 'card_funding') return false
-            if (tx.destination_type === 'card') return false
-            return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-          })
-          setTransactions(filteredFallback)
-          if (filteredFallback.length > 0) {
-            await setCachedTransactions(filteredFallback)
-          }
-        } finally {
-          setLoading(false)
-        }
-      }
-
-      await fetchCombinedTransactions()
     }
 
-    loadFromCache()
-  }, [userProfile?.id])
+    try {
+      // Only show loading if not silent and we don't have cached data
+      if (!silent && (!cached || force)) {
+        setLoading(true)
+      }
+
+      const params = new URLSearchParams()
+      params.append('limit', '100')
+
+      // Try bridge transactions API first, fallback to combined transactions
+      let response = await apiGet(`/api/bridge/transactions?${params.toString()}`)
+      if (!response.ok || (response as any).isNetworkError) {
+        // Fallback to combined transactions API
+        response = await apiGet(`/api/transactions?${params.toString()}`)
+      }
+      
+      if (response.ok && !(response as any).isNetworkError) {
+        const data = await response.json()
+        const transactionsList = data.transactions || []
+        
+        setTransactions(transactionsList)
+        await setCachedData(CACHE_KEY, transactionsList)
+        setError(null)
+      } else if ((response as any).isNetworkError) {
+        // Network error - keep cached data if available
+        console.warn("Network error fetching transactions, keeping cached data")
+        if (!cached) {
+          setError("Network error. Please check your connection.")
+          setTransactions([])
+        }
+      } else {
+        if (!cached) {
+          setTransactions([])
+          setError("Failed to load transactions")
+        }
+      }
+    } catch (error: any) {
+      if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
+        console.warn("Network error fetching transactions:", error?.message || 'Network unavailable')
+        if (!cached) {
+          setError("Network error. Please check your connection.")
+          setTransactions([])
+        }
+      } else {
+        console.error("Error fetching transactions:", error)
+        if (!cached) {
+          setError("Failed to load transactions")
+          setTransactions([])
+        }
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [userProfile?.id, CACHE_KEY, getCachedData, setCachedData, isStale])
+
+  // Initial load
+  useEffect(() => {
+    if (!userProfile?.id) return
+    fetchTransactions(false)
+  }, [userProfile?.id, fetchTransactions])
 
   // Refresh stale data when screen comes into focus
   useFocusRefreshAll(false) // Only refresh if stale (> 5 minutes)
 
-  // Real-time subscription
+  // Real-time subscription with minimal polling fallback (only when real-time fails)
   useEffect(() => {
     if (!userProfile?.id) return
 
-    const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
-    
-    const setCachedTransactions = async (value: CombinedTransaction[]) => {
-      try {
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-          value,
-          timestamp: Date.now()
-        }))
-      } catch {}
+    let pollingInterval: NodeJS.Timeout | null = null
+    let lastTransactionTimestamp: string | null = null
+    let lastRefreshTime = 0
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let realtimeRetryTimeout: NodeJS.Timeout | null = null
+    let isRealTimeActive = false
+    let realtimeRetryCount = 0
+    const DEBOUNCE_MS = 500
+    const POLL_INTERVAL_ONLY_WHEN_REALTIME_FAILS = 300000 // 5 minutes - only when real-time fails
+    const REALTIME_RETRY_DELAY = 5000 // 5 seconds between retries
+    const MAX_REALTIME_RETRIES = 3
+
+    // Start minimal polling ONLY when real-time completely fails (last resort)
+    const startPolling = () => {
+      // Don't start polling if real-time is active
+      if (isRealTimeActive) {
+        return
+      }
+      // Don't start if already polling
+      if (pollingInterval) {
+        return
+      }
+
+      console.log(`[TRANSACTIONS] ⚠️ Real-time unavailable, using minimal polling (every ${POLL_INTERVAL_ONLY_WHEN_REALTIME_FAILS/1000/60}min)`)
+
+      const scheduleNext = () => {
+        if (pollingInterval) {
+          clearTimeout(pollingInterval)
+          pollingInterval = null
+        }
+        
+        pollingInterval = setTimeout(async () => {
+          try {
+            const response = await apiGet(`/api/bridge/transactions?limit=1`)
+            if (response.ok) {
+              const data = await response.json()
+              const latestTx = data.transactions?.[0]
+              const currentTimestamp = latestTx?.created_at || latestTx?.bridge_created_at
+              
+              if (currentTimestamp && currentTimestamp !== lastTransactionTimestamp) {
+                console.log('[TRANSACTIONS] 🔄 Polling detected transaction change, refreshing...')
+                lastTransactionTimestamp = currentTimestamp
+                await fetchTransactions(true, true) // Silent refresh - no skeleton
+              }
+            }
+          } catch (error: any) {
+            // Silently handle errors - we're in fallback mode
+          }
+          
+          // Schedule next poll (recursive)
+          scheduleNext()
+        }, POLL_INTERVAL_ONLY_WHEN_REALTIME_FAILS)
+      }
+
+      // Start polling
+      scheduleNext()
     }
 
-    const fetchCombinedTransactions = async () => {
-      try {
-        const params = new URLSearchParams()
-        params.append('type', 'send') // Only fetch send transactions, not receive or card
-        params.append('limit', '100')
+    // Setup real-time subscription with retry logic
+    const setupRealtime = async (retryAttempt = 0) => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.warn('[TRANSACTIONS] No session, using minimal polling')
+        startPolling()
+        return
+      }
 
-        const response = await apiGet(`/api/transactions?${params.toString()}`)
-        if (response.ok) {
-          const data = await response.json()
-          const transactionsList = data.transactions || []
-          
-          // Additional client-side filtering to ensure no receive/card transactions slip through
-          const filteredTransactions = transactionsList.filter((tx: any) => {
-            // Exclude receive and card_funding transactions
-            if (tx.type === 'receive' || tx.type === 'card_funding') return false
-            // Exclude transactions with destination_type card
-            if (tx.destination_type === 'card') return false
-            // Only include send transactions
-            return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
+      // Clean up existing channel if any
+      if (channel) {
+        supabase.removeChannel(channel)
+        channel = null
+      }
+
+      try {
+        channel = supabase
+          .channel(`user-bridge-transactions-${userProfile.id}-${Date.now()}`) // Unique channel name
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'bridge_transactions',
+              filter: `user_id=eq.${userProfile.id}`,
+            } as any,
+              async (payload: any) => {
+                try {
+                  // Skip UPDATE events that don't change meaningful fields (prevents excessive refreshes)
+                  if (payload.eventType === 'UPDATE') {
+                    const oldStatus = payload.old?.status
+                    const newStatus = payload.new?.status
+                    
+                    // Only process UPDATE if status actually changed
+                    if (oldStatus === newStatus) {
+                      // Status unchanged - skip this update to prevent excessive refreshes
+                      return
+                    }
+                  }
+                  
+                  // Debounce rapid updates (increased to 2 seconds for UPDATE events)
+                  const now = Date.now()
+                  const debounceTime = payload.eventType === 'UPDATE' ? 2000 : DEBOUNCE_MS
+                  if (now - lastRefreshTime < debounceTime) {
+                    return
+                  }
+                  lastRefreshTime = now
+                  
+                console.log('[TRANSACTIONS] ✅ Real-time transaction update:', payload.eventType)
+                await fetchTransactions(true, true) // Silent refresh
+                } catch (error) {
+                  console.error('[TRANSACTIONS] Error processing real-time update:', error)
+                }
+              }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[TRANSACTIONS] ✅ Real-time subscription active')
+              isRealTimeActive = true
+              realtimeRetryCount = 0 // Reset retry count on success
+              // Stop polling if it was running (real-time is more efficient)
+              if (pollingInterval) {
+                clearTimeout(pollingInterval)
+                pollingInterval = null
+              }
+            } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              console.warn(`[TRANSACTIONS] Real-time ${status}, will retry...`)
+              isRealTimeActive = false
+              
+              // Retry real-time setup if we haven't exceeded max retries
+              if (realtimeRetryCount < MAX_REALTIME_RETRIES) {
+                realtimeRetryCount++
+                if (realtimeRetryTimeout) {
+                  clearTimeout(realtimeRetryTimeout)
+                }
+                realtimeRetryTimeout = setTimeout(() => {
+                  console.log(`[TRANSACTIONS] Retrying real-time subscription (attempt ${realtimeRetryCount}/${MAX_REALTIME_RETRIES})...`)
+                  setupRealtime(realtimeRetryCount)
+                }, REALTIME_RETRY_DELAY)
+              } else {
+                // Max retries reached, fall back to minimal polling
+                console.warn('[TRANSACTIONS] Max real-time retries reached, using minimal polling')
+                if (!pollingInterval) {
+                  startPolling()
+                }
+              }
+            } else {
+              console.log(`[TRANSACTIONS] Real-time status: ${status}`)
+            }
           })
-          
-          setTransactions(filteredTransactions)
-          await setCachedTransactions(filteredTransactions)
-        }
       } catch (error) {
-        console.error("Error fetching transactions:", error)
+        console.error('[TRANSACTIONS] Real-time setup error:', error)
+        // Retry if we haven't exceeded max retries
+        if (realtimeRetryCount < MAX_REALTIME_RETRIES) {
+          realtimeRetryCount++
+          if (realtimeRetryTimeout) {
+            clearTimeout(realtimeRetryTimeout)
+          }
+          realtimeRetryTimeout = setTimeout(() => {
+            console.log(`[TRANSACTIONS] Retrying real-time subscription after error (attempt ${realtimeRetryCount}/${MAX_REALTIME_RETRIES})...`)
+            setupRealtime(realtimeRetryCount)
+          }, REALTIME_RETRY_DELAY)
+        } else {
+          // Max retries reached, fall back to minimal polling
+          console.warn('[TRANSACTIONS] Max real-time retries reached after error, using minimal polling')
+          if (!pollingInterval) {
+            startPolling()
+          }
+        }
       }
     }
 
-    const sendTransactionsChannel = supabase
-      .channel(`user-transactions-${userProfile.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `user_id=eq.${userProfile.id}`,
-        },
-        async () => {
-          await fetchCombinedTransactions()
-        }
-      )
-      .subscribe()
-
-    // TEMPORARILY DISABLED: Receive transactions realtime subscription disabled
-    // const receiveTransactionsChannel = supabase
-    //   .channel(`user-crypto-receive-transactions-${userProfile.id}`)
-    //   .on(
-    //     'postgres_changes',
-    //     {
-    //       event: '*',
-    //       schema: 'public',
-    //       table: 'crypto_receive_transactions',
-    //       filter: `user_id=eq.${userProfile.id}`,
-    //     },
-    //     async () => {
-    //       await fetchCombinedTransactions()
-    //     }
-    //   )
-    //   .subscribe()
+    setupRealtime()
 
     return () => {
-      supabase.removeChannel(sendTransactionsChannel)
-      // supabase.removeChannel(receiveTransactionsChannel)
+      if (realtimeRetryTimeout) {
+        clearTimeout(realtimeRetryTimeout)
+        realtimeRetryTimeout = null
+      }
+      if (channel) {
+        supabase.removeChannel(channel)
+        channel = null
+      }
+      if (pollingInterval) {
+        clearTimeout(pollingInterval)
+        pollingInterval = null
+      }
     }
-  }, [userProfile?.id])
+  }, [userProfile?.id, fetchTransactions])
 
   const onRefresh = async () => {
     setRefreshing(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
-      // Refresh stale data from UserDataContext (forced - user pulled to refresh)
-      await refreshStaleData()
+      // Trigger sync to update transaction table in Supabase
+      // This ensures any missing transactions are synced from Bridge API
+      const syncPromise = apiPost('/api/bridge/sync-transactions').catch((error) => {
+        console.warn('[TRANSACTIONS] Sync failed on pull-to-refresh:', error)
+        // Don't block refresh if sync fails
+      })
       
-      const params = new URLSearchParams()
-        params.append('type', 'send') // Only fetch send transactions, not receive or card
-      params.append('limit', '100')
-
-      const response = await apiGet(`/api/transactions?${params.toString()}`)
-      if (response.ok) {
-        const data = await response.json()
-        const transactionsList = data.transactions || []
-        
-        // Filter out receive and card_funding transactions
-        const filteredTransactions = transactionsList.filter((tx: any) => {
-          if (tx.type === 'receive' || tx.type === 'card_funding') return false
-          if (tx.destination_type === 'card') return false
-          return tx.type === 'send' || (tx.send_amount || tx.receive_amount || tx.recipient)
-        })
-        
-        if (userProfile?.id) {
-          const CACHE_KEY = `easner_combined_transactions_${userProfile.id}`
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({
-            value: filteredTransactions,
-            timestamp: Date.now()
-          }))
-        }
-        
-        setTransactions(filteredTransactions)
+      // Refresh stale data from UserDataContext (forced - user pulled to refresh)
+      await Promise.all([
+        syncPromise, // Sync transactions from Bridge API
+        refreshStaleData(), // Refresh stale user data
+        fetchTransactions(true), // Force refresh transactions (bypass cache)
+      ])
+    } catch (error: any) {
+      if (error?.message?.includes('Network request failed') || error?.name === 'TypeError') {
+        console.warn("Network error refreshing transactions:", error?.message || 'Network unavailable')
+      } else {
+        console.error("Error refreshing transactions:", error)
       }
-    } catch (error) {
-      console.error('Error refreshing transactions:', error)
     } finally {
       setRefreshing(false)
     }
   }
 
   const formatAmount = (amount: number, currency: string, isReceived: boolean = false) => {
-    const sign = isReceived ? '' : '- '
-    const currencyData = currencies.find((c) => c && c.code === currency)
-    const symbol = currencyData?.symbol || currency
-    return `${sign}${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    const sign = isReceived ? '+' : '-'
+    // Normalize currency to uppercase for lookup
+    const normalizedCurrency = (currency || 'USD').toUpperCase()
+    const currencyData = currencies.find((c) => c && c.code === normalizedCurrency)
+    // Fallback to common symbols if currency data not found
+    const symbol = currencyData?.symbol || 
+                   (normalizedCurrency === 'USD' ? '$' : 
+                    normalizedCurrency === 'EUR' ? '€' : 
+                    normalizedCurrency)
+    
+    // Check if amount has decimal places
+    const hasDecimals = amount % 1 !== 0
+    const formattedAmount = hasDecimals
+      ? amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    
+    return `${sign}${symbol}${formattedAmount}`
   }
 
   const formatDate = (dateString: string) => {
@@ -553,17 +653,20 @@ function TransactionsContent({ navigation }: NavigationProps) {
     return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
   }
 
-  const filteredTransactions = transactions.filter(transaction => {
+  const filteredTransactions = (transactions || []).filter(transaction => {
     if (!transaction) return false
     if (!searchTerm.trim()) return true
     
     const searchLower = searchTerm.toLowerCase()
+    const txType = transaction.transaction_type || transaction.type
     const matchesSearch =
       (transaction.transaction_id || transaction.id)?.toLowerCase().includes(searchLower) ||
-      (transaction.type === 'send' &&
+      transaction.name?.toLowerCase().includes(searchLower) ||
+      (txType === 'send' &&
         transaction.recipient?.full_name?.toLowerCase().includes(searchLower)) ||
-      (transaction.type === 'receive' &&
-        transaction.crypto_wallet?.wallet_address?.toLowerCase().includes(searchLower))
+      (txType === 'receive' &&
+        (transaction.receipt_destination_tx_hash?.toLowerCase().includes(searchLower) ||
+         transaction.crypto_wallet?.wallet_address?.toLowerCase().includes(searchLower)))
     return matchesSearch
   })
 
@@ -643,24 +746,25 @@ function TransactionsContent({ navigation }: NavigationProps) {
           {loading ? (
             <TransactionsSkeleton />
           ) : filteredTransactions.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View style={styles.emptyStateContainer}>
               <View style={styles.emptyIconContainer}>
-                <Ionicons name="receipt-outline" size={48} color={colors.neutral[400]} />
+                <Ionicons name="receipt-outline" size={40} color={colors.neutral[400]} />
               </View>
-              <Text style={styles.emptyTitle}>No transactions found</Text>
-              <Text style={styles.emptyText}>
+              <Text style={styles.emptyStateTitle}>
+                {searchTerm ? 'No transactions found' : 'No transactions yet'}
+              </Text>
+              <Text style={styles.emptyStateText}>
                 {searchTerm 
-                  ? 'Try adjusting your search' 
-                  : 'Start by sending your first transfer'
-                }
+                  ? 'Try adjusting your search terms or clear the search to see all transactions' 
+                  : 'Your recent transactions will appear here once you send, receive or spend money'}
               </Text>
             </View>
           ) : (
-            <View style={styles.listContent}>
+            <>
               {filteredTransactions.map((item, index) => {
-                const transactionType = item.type || 'send'
-                const detailScreen = transactionType === 'send' ? 'TransactionDetails' : 'ReceiveTransactionDetails'
                 const isLast = index === filteredTransactions.length - 1
+                // Use BridgeTransactionDetails for all bridge transactions
+                const detailScreen = 'BridgeTransactionDetails'
                 
                 return (
                   <TransactionItem
@@ -669,17 +773,17 @@ function TransactionsContent({ navigation }: NavigationProps) {
                     index={index}
                     isLast={isLast}
                     onPress={() => {
-                      navigation.navigate(detailScreen, { 
+                      navigation.navigate(detailScreen as never, { 
                         transactionId: item.transaction_id,
                         fromScreen: 'Transactions'
-                      })
+                      } as never)
                     }}
                     formatAmount={formatAmount}
                     formatDate={formatDate}
                   />
                 )
               })}
-            </View>
+            </>
           )}
         </View>
       </ScrollView>
@@ -724,8 +828,6 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary.background,
   },
   insightsButtonText: {
     ...textStyles.labelMedium,
@@ -741,19 +843,24 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.neutral.white,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing[3],
-    ...shadows.sm,
+    backgroundColor: colors.frame.background,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    borderWidth: 0.5,
+    borderColor: colors.frame.border,
   },
   searchIcon: {
     marginRight: spacing[2],
   },
   searchInput: {
     flex: 1,
-    paddingVertical: spacing[3],
-    fontSize: 16,
+    ...textStyles.bodyMedium,
     color: colors.text.primary,
+    fontFamily: 'Outfit-Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlignVertical: 'center',
   },
   
   // Transactions List
@@ -761,24 +868,22 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing[5],
     marginTop: spacing[3],
     backgroundColor: colors.frame.background,
-    borderRadius: 24,
+    borderRadius: borderRadius['3xl'],
     borderWidth: 0.5,
     borderColor: colors.frame.border,
+    paddingHorizontal: spacing[5],
     paddingTop: spacing[5],
     paddingBottom: spacing[8],
   },
-  listContent: {
-    paddingHorizontal: spacing[5],
-  },
   skeletonContainer: {
-    paddingHorizontal: spacing[5],
+    paddingHorizontal: 0,
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.light,
+    borderBottomColor: '#E2E2E2', // Match More screen divider color
   },
   transactionItemLast: {
     borderBottomWidth: 0,
@@ -818,29 +923,33 @@ const styles = StyleSheet.create({
   },
   
   // Empty State
-  emptyState: {
+  emptyStateContainer: {
     alignItems: 'center',
     paddingVertical: spacing[10],
     paddingHorizontal: spacing[5],
+    marginHorizontal: spacing[5],
+    marginTop: spacing[3],
   },
   emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: colors.neutral[100],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing[4],
   },
-  emptyTitle: {
+  emptyStateTitle: {
     ...textStyles.titleLarge,
     color: colors.text.primary,
+    fontFamily: 'Outfit-SemiBold',
     marginBottom: spacing[2],
   },
-  emptyText: {
+  emptyStateText: {
     ...textStyles.bodyMedium,
     color: colors.text.secondary,
     textAlign: 'center',
+    fontFamily: 'Outfit-Regular',
   },
 })
 

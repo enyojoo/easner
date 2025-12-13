@@ -83,9 +83,9 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       }
 
       // Check wallet if exists
-      if (userProfile.walletId) {
+      if (userProfile.walletId && userProfile.customerId) {
         try {
-          const walletBalance = await bridgeService.getWalletBalance(userProfile.walletId)
+          const walletBalance = await bridgeService.getWalletBalance(userProfile.customerId, userProfile.walletId)
           diagnostics.checks.wallet = {
             exists: true,
             walletId: userProfile.walletId,

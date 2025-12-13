@@ -24,12 +24,12 @@ import Svg, { Path } from 'react-native-svg'
 import ScreenWrapper from '../../components/ScreenWrapper'
 import { NavigationProps } from '../../types'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
-import { bridgeService } from '../../lib/bridgeService'
 import { supabase } from '../../lib/supabase'
 import { Alert } from 'react-native'
 import { useUserData } from '../../contexts/UserDataContext'
 import { mobileFxEngine } from '../../lib/fxEngine'
 import { generateTransactionId } from '../../lib/transactionId'
+import { useBalance } from '../../contexts/BalanceContext'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const KEYPAD_BUTTON_WIDTH = 113
@@ -70,6 +70,7 @@ function LandmarkIcon({ size = 24, color = '#000' }: { size?: number; color?: st
 export default function SendAmountScreen({ navigation, route }: NavigationProps) {
   const insets = useSafeAreaInsets()
   const { exchangeRates: exchangeRatesFromContext } = useUserData()
+  const { balances, updateBalanceOptimistically } = useBalance()
   // Ensure exchangeRates is always an array (fallback to empty array if undefined)
   const exchangeRates = exchangeRatesFromContext || []
   
@@ -89,35 +90,6 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
   })
   const [selectedOtherCurrency, setSelectedOtherCurrency] = useState<string | null>(null)
   const [selectedOtherPaymentMethod, setSelectedOtherPaymentMethod] = useState<string | null>(null)
-
-  // Fetch balances from Bridge
-  const [balances, setBalances] = useState({ USD: '0', EUR: '0' })
-  const [loadingBalances, setLoadingBalances] = useState(true)
-
-  // Fetch balances function
-  const fetchBalances = async () => {
-    try {
-      setLoadingBalances(true)
-      const walletBalances = await bridgeService.getWalletBalances()
-      setBalances(walletBalances)
-    } catch (error) {
-      console.error('Error fetching balances:', error)
-    } finally {
-      setLoadingBalances(false)
-    }
-  }
-
-  // Fetch balances on mount
-  useEffect(() => {
-    fetchBalances()
-  }, [])
-
-  // Refresh balances when screen comes into focus to stay in sync with dashboard
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchBalances()
-    }, [])
-  )
 
   // Auto-select currency with highest balance (prefer USD if > 0, then EUR)
   React.useEffect(() => {
@@ -759,7 +731,7 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
                   // For now, we'll need the recipient to have a Bridge external account ID
                   // This would typically be created when adding a recipient
                   
-                  // Create Bridge transfer - use totalAmount (includes fees)
+                  // Create Bridge transfer FIRST (transaction ID needed for optimistic update tracking)
                   const transfer = await bridgeService.createTransfer({
                     amount: calculatedTotalAmount.toString(),
                     currency: selectedBalanceCurrency.toLowerCase() as 'usd' | 'eur',
@@ -767,8 +739,22 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
                     destinationExternalAccountId: recipient.bridge_external_account_id || '', // This needs to be set when creating recipient
                   })
                   
+                  // Optimistic balance update AFTER transfer created (like CashApp/Revolut - instant UI feedback)
+                  // Pass transaction_id to prevent double update in real-time handler
+                  if (selectedBalanceCurrency === 'USD' || selectedBalanceCurrency === 'EUR') {
+                    updateBalanceOptimistically(
+                      selectedBalanceCurrency as 'USD' | 'EUR', 
+                      calculatedTotalAmount,
+                      'subtract',
+                      transfer.transaction_id || transfer.id
+                    )
+                  }
+                  
+                  // Haptic feedback for success
+                  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+                  
                 navigation.navigate('SendTransactionDetails' as never, {
-                    transactionId: transfer.id,
+                    transactionId: transfer.transaction_id || transfer.id,
                   sendAmount: calculatedSendingAmount,
                   receiveAmount: receiveAmountValue,
                   sendCurrency: selectedBalanceCurrency,
@@ -781,6 +767,11 @@ export default function SendAmountScreen({ navigation, route }: NavigationProps)
                 } as never)
                 } catch (error: any) {
                   console.error('Error creating transfer:', error)
+                  // Revert optimistic balance update on error
+                  if (selectedBalanceCurrency === 'USD' || selectedBalanceCurrency === 'EUR') {
+                    // Balance will be refreshed automatically, but we could add revert logic here if needed
+                  }
+                  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
                   Alert.alert('Error', error.message || 'Failed to create transfer. Please try again.')
                 }
               } else if (selectedPaymentMethod === 'linkBank') {

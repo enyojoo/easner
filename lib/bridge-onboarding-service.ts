@@ -2,7 +2,7 @@
 // Orchestrates the complete Bridge account initialization flow
 
 import { bridgeService } from "./bridge-service"
-import { supabase } from "./supabase"
+import { createServerClient } from "./supabase"
 
 interface InitializeBridgeAccountParams {
   userId: string
@@ -206,6 +206,8 @@ export async function initializeBridgeAccount(
           account_number: usdAccount.source_deposit_instructions?.bank_account_number,
           routing_number: usdAccount.source_deposit_instructions?.bank_routing_number,
           bank_name: usdAccount.source_deposit_instructions?.bank_name,
+          bank_address: usdAccount.source_deposit_instructions?.bank_address,
+          account_holder_name: usdAccount.source_deposit_instructions?.bank_beneficiary_name || usdAccount.source_deposit_instructions?.account_holder_name,
           status: usdAccount.status,
         })
 
@@ -278,32 +280,61 @@ export async function initializeBridgeAccount(
  * Complete account setup after KYC approval (called via webhook or polling)
  * Creates wallet and virtual accounts if they weren't created during initial onboarding
  */
-export async function completeAccountSetupAfterKYC(userId: string): Promise<void> {
+export async function completeAccountSetupAfterKYC(
+  userId: string, 
+  bridgeCustomerId?: string
+): Promise<void> {
   console.log(`[completeAccountSetupAfterKYC] Starting for user ${userId}`)
   
-  const { data: user } = await supabase
+  // Use server client to bypass RLS (this function is called from server-side routes)
+  const supabase = createServerClient()
+  
+  // If bridgeCustomerId is provided, use it directly (avoids extra database query)
+  // Otherwise, fetch from database
+  let customerId: string | undefined = bridgeCustomerId
+  let user: any = null
+  
+  if (!customerId) {
+    const { data: userData } = await supabase
     .from("users")
     .select("bridge_customer_id, bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id")
     .eq("id", userId)
     .single()
 
-  if (!user?.bridge_customer_id) {
+    if (!userData?.bridge_customer_id) {
     throw new Error("User does not have a Bridge customer ID")
   }
 
-  console.log(`[completeAccountSetupAfterKYC] User has customer ID: ${user.bridge_customer_id}`)
+    customerId = userData.bridge_customer_id
+    user = userData
+  } else {
+    // Still need to fetch wallet/account IDs
+    const { data: userData } = await supabase
+      .from("users")
+      .select("bridge_wallet_id, bridge_usd_virtual_account_id, bridge_eur_virtual_account_id")
+      .eq("id", userId)
+      .single()
+    
+    if (!userData) {
+      throw new Error("User not found in database")
+    }
+    
+    user = { bridge_customer_id: customerId, ...userData }
+  }
+
+  console.log(`[completeAccountSetupAfterKYC] User has customer ID: ${customerId}`)
   console.log(`[completeAccountSetupAfterKYC] Current wallet: ${user.bridge_wallet_id || 'none'}`)
   console.log(`[completeAccountSetupAfterKYC] Current USD VA: ${user.bridge_usd_virtual_account_id || 'none'}`)
   console.log(`[completeAccountSetupAfterKYC] Current EUR VA: ${user.bridge_eur_virtual_account_id || 'none'}`)
 
-  const customer = await bridgeService.getCustomer(user.bridge_customer_id)
+  const customer = await bridgeService.getCustomer(customerId)
   console.log(`[completeAccountSetupAfterKYC] Customer endorsements:`, customer.endorsements)
 
   // Create wallet if it doesn't exist
   if (!user.bridge_wallet_id) {
     try {
-      console.log(`[completeAccountSetupAfterKYC] Creating wallet for customer ${user.bridge_customer_id}...`)
-      const wallet = await bridgeService.createWallet(user.bridge_customer_id, "solana")
+      console.log(`[completeAccountSetupAfterKYC] Creating wallet for customer ${customerId}...`)
+      const wallet = await bridgeService.createWallet(customerId, "solana")
       console.log(`[completeAccountSetupAfterKYC] Wallet created: ${wallet.id}, address: ${wallet.address}`)
       
       await supabase.from("bridge_wallets").insert({
@@ -331,6 +362,18 @@ export async function completeAccountSetupAfterKYC(userId: string): Promise<void
     console.log(`[completeAccountSetupAfterKYC] Wallet already exists: ${user.bridge_wallet_id}`)
   }
 
+  // Sync existing liquidation addresses from Bridge to database
+  // This ensures we have liquidation addresses even if they were created outside our system
+  if (user.bridge_wallet_id) {
+    try {
+      console.log(`[completeAccountSetupAfterKYC] Syncing liquidation addresses from Bridge...`)
+      await syncLiquidationAddresses(userId, customerId, user.bridge_wallet_id)
+    } catch (liquidationError: any) {
+      console.error("Error syncing liquidation addresses:", liquidationError)
+      // Don't throw - this is not critical, addresses can be fetched on-demand
+    }
+  }
+
   // Check endorsements and create virtual accounts if approved
   const baseEndorsement = customer.endorsements?.find((e) => e.name === "base")
   const sepaEndorsement = customer.endorsements?.find((e) => e.name === "sepa")
@@ -343,7 +386,7 @@ export async function completeAccountSetupAfterKYC(userId: string): Promise<void
     try {
       console.log(`[completeAccountSetupAfterKYC] Creating USD virtual account...`)
       const usdAccount = await bridgeService.createVirtualAccount(
-        user.bridge_customer_id,
+        customerId,
         "usd",
         user.bridge_wallet_id || undefined,
       )
@@ -356,6 +399,8 @@ export async function completeAccountSetupAfterKYC(userId: string): Promise<void
         account_number: usdAccount.source_deposit_instructions?.bank_account_number,
         routing_number: usdAccount.source_deposit_instructions?.bank_routing_number,
         bank_name: usdAccount.source_deposit_instructions?.bank_name,
+        bank_address: usdAccount.source_deposit_instructions?.bank_address,
+        account_holder_name: usdAccount.source_deposit_instructions?.bank_beneficiary_name || usdAccount.source_deposit_instructions?.account_holder_name,
         status: usdAccount.status,
       })
 
@@ -385,7 +430,7 @@ export async function completeAccountSetupAfterKYC(userId: string): Promise<void
     try {
       console.log(`[completeAccountSetupAfterKYC] Creating EUR virtual account...`)
       const eurAccount = await bridgeService.createVirtualAccount(
-        user.bridge_customer_id,
+        customerId,
         "eur",
         user.bridge_wallet_id || undefined,
       )
@@ -423,5 +468,73 @@ export async function completeAccountSetupAfterKYC(userId: string): Promise<void
   }
   
   console.log(`[completeAccountSetupAfterKYC] Completed for user ${userId}`)
+}
+
+/**
+ * Sync existing liquidation addresses from Bridge to database
+ * Fetches all liquidation addresses for a customer and stores them in bridge_wallets table
+ */
+async function syncLiquidationAddresses(
+  userId: string,
+  customerId: string,
+  walletId: string
+): Promise<void> {
+  const supabase = createServerClient()
+  const { bridgeLiquidationService } = await import("@/lib/bridge-liquidation-service")
+  
+  try {
+    // Fetch all liquidation addresses from Bridge
+    const liquidationAddresses = await bridgeLiquidationService.listLiquidationAddresses(customerId)
+    
+    console.log(`[syncLiquidationAddresses] Found ${liquidationAddresses.length} liquidation addresses in Bridge`)
+    
+    // Filter for wallet deposits (destination_payment_rail matches chain)
+    const walletDepositAddresses = liquidationAddresses.filter(
+      (addr) => addr.destination_payment_rail && 
+                (addr.destination_payment_rail === 'solana' || addr.destination_payment_rail === 'ethereum')
+    )
+    
+    if (walletDepositAddresses.length === 0) {
+      console.log(`[syncLiquidationAddresses] No wallet deposit liquidation addresses found`)
+      return
+    }
+    
+    // Update bridge_wallets table with liquidation addresses
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    }
+    
+    for (const addr of walletDepositAddresses) {
+      const currency = addr.currency.toLowerCase()
+      
+      if (currency === 'usdc') {
+        updateData.usdc_liquidation_address = addr.address
+        updateData.usdc_liquidation_memo = addr.blockchain_memo || null
+        updateData.usdc_liquidation_address_id = addr.id
+        console.log(`[syncLiquidationAddresses] Storing USDC liquidation address: ${addr.address}`)
+      } else if (currency === 'eurc') {
+        updateData.eurc_liquidation_address = addr.address
+        updateData.eurc_liquidation_memo = addr.blockchain_memo || null
+        updateData.eurc_liquidation_address_id = addr.id
+        console.log(`[syncLiquidationAddresses] Storing EURC liquidation address: ${addr.address}`)
+      }
+    }
+    
+    // Update the wallet record
+    const { error } = await supabase
+      .from("bridge_wallets")
+      .update(updateData)
+      .eq("bridge_wallet_id", walletId)
+    
+    if (error) {
+      console.error(`[syncLiquidationAddresses] Error updating bridge_wallets:`, error)
+      throw error
+    }
+    
+    console.log(`[syncLiquidationAddresses] ✅ Successfully synced liquidation addresses to database`)
+  } catch (error: any) {
+    console.error(`[syncLiquidationAddresses] Error syncing liquidation addresses:`, error)
+    throw error
+  }
 }
 

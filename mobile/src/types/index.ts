@@ -104,6 +104,7 @@ export interface User {
   last_name: string
   phone?: string
   base_currency: string
+  easetag?: string
   status: "active" | "inactive"
   // verification_status removed - use bridge_kyc_status for KYC status
   bridge_kyc_status?: string
@@ -111,6 +112,18 @@ export interface User {
   bridge_kyc_rejection_reasons?: any
   bridge_endorsements?: any
   bridge_signed_agreement_id?: string
+  date_of_birth?: string
+  address?: string
+  residential_address?: {
+    line1?: string
+    line2?: string
+    city?: string
+    state?: string
+    postal_code?: string
+    country?: string
+  }
+  country_code?: string
+  bridge_kyc_metadata?: any
   created_at: string
   updated_at: string
 }
@@ -127,6 +140,10 @@ export interface AuthUser {
   bridge_kyc_rejection_reasons?: any
   bridge_endorsements?: any
   bridge_signed_agreement_id?: string
+  // Additional fields that may be available at top level
+  middle_name?: string
+  easetag?: string
+  email_confirmed_at?: string
 }
 
 export interface NavigationProps {

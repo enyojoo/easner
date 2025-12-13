@@ -11,6 +11,17 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const user = await requireUser(request)
 
   try {
+    // Get user's Bridge customer ID
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("bridge_customer_id")
+      .eq("id", user.id)
+      .single()
+
+    if (!userProfile?.bridge_customer_id) {
+      return createErrorResponse("User does not have a Bridge customer", 404)
+    }
+
     // Get wallets from database
     const { data: wallets, error } = await supabase
       .from("bridge_wallets")
@@ -24,7 +35,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       (wallets || []).map(async (wallet) => {
         try {
           const balances = await Promise.race([
-            bridgeService.getWalletBalance(wallet.bridge_wallet_id),
+            bridgeService.getWalletBalance(userProfile.bridge_customer_id, wallet.bridge_wallet_id),
             new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Timeout')), 8000)
             )

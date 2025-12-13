@@ -34,7 +34,6 @@ interface CombinedTransaction {
   crypto_currency?: string
   fiat_amount?: number
   fiat_currency?: string
-  stellar_transaction_hash?: string
   crypto_wallet?: {
     wallet_address: string
     crypto_currency: string

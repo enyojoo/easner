@@ -30,6 +30,15 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([])
   const [loading, setLoading] = useState(true)
   
+  // Check if verification is already complete - if so, redirect back
+  useEffect(() => {
+    if (userProfile?.bridge_kyc_status === 'approved') {
+      // Verification is complete, go back to More screen
+      console.log('[ACCOUNT-VERIFICATION] KYC already approved, redirecting to More screen')
+      navigation.goBack()
+    }
+  }, [userProfile?.bridge_kyc_status, navigation])
+  
   // TOS state
   const [tosLink, setTosLink] = useState<string | null>(null)
   const [tosLinkId, setTosLinkId] = useState<string | null>(null)
@@ -37,7 +46,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const [tosSignedAgreementId, setTosSignedAgreementId] = useState<string | null>(null)
   const [showTosModal, setShowTosModal] = useState(false)
   const [loadingTos, setLoadingTos] = useState(false)
-  const [checkingTosStatus, setCheckingTosStatus] = useState(false)
   const [creatingCustomer, setCreatingCustomer] = useState(false)
   const [customerError, setCustomerError] = useState<string | null>(null)
   
@@ -103,8 +111,8 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
 
   // Sync Bridge status function - fetches from Bridge and updates database
   const syncBridgeStatus = useCallback(async (silent: boolean = false, force: boolean = false) => {
-    if (!userProfile?.id || !userProfile?.bridge_customer_id) return
-    
+      if (!userProfile?.id || !userProfile?.bridge_customer_id) return
+      
     // Prevent multiple simultaneous syncs
     if (syncingRef.current) {
       if (!silent) {
@@ -131,10 +139,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     // Check if data is fresh (synced within last 10 minutes)
     // This prevents unnecessary API calls when data is already up-to-date
     if (!force) {
-      try {
+        try {
         const SYNC_CACHE_KEY = `easner_bridge_sync_${userProfile.id}`
         const cached = await AsyncStorage.getItem(SYNC_CACHE_KEY)
-        
+          
         if (cached) {
           const { lastSyncTime } = JSON.parse(cached)
           const timeSinceLastSync = Date.now() - lastSyncTime
@@ -203,19 +211,19 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
         
         // Refresh user profile to get updated data
         if (refreshUserProfile) {
-          await refreshUserProfile()
-        }
+                await refreshUserProfile()
+              }
       } else {
         if (!silent) {
           console.log('[SYNC-STATUS] Sync completed but no update needed')
-        }
-      }
-    } catch (error: any) {
+            }
+          }
+        } catch (error: any) {
       // Silently fail - webhooks will handle updates, or we'll retry later
       if (!silent) {
         console.warn('[SYNC-STATUS] Error syncing status:', error.message)
       }
-    } finally {
+        } finally {
       syncingRef.current = false
     }
   }, [userProfile?.id, userProfile?.bridge_customer_id, userProfile?.bridge_kyc_status, userProfile?.bridge_kyc_rejection_reasons, userProfile?.updated_at, refreshUserProfile])
@@ -346,34 +354,13 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     loadSubmissions()
   }, [userProfile?.id])
 
-  const identitySubmission = submissions.find(s => s.type === "identity")
-  const addressSubmission = submissions.find(s => s.type === "address")
-
   // Check if Bridge KYC is approved
   const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
   const bridgeKycInReview = userProfile?.bridge_kyc_status === 'under_review'
   const bridgeKycRejected = userProfile?.bridge_kyc_status === 'rejected'
   
-  // If Bridge KYC is approved, use Bridge data (submissions synced from Bridge)
-  // Otherwise, use traditional submissions
-  const bothCompleted = bridgeKycApproved || (
-    identitySubmission?.status === "approved" && 
-    addressSubmission?.status === "approved"
-  )
-  
-  // TOS should appear when Bridge KYC is approved OR both traditional submissions are submitted
-  const bothSubmitted = bridgeKycApproved || (
-    identitySubmission && 
-    addressSubmission &&
-    identitySubmission.status && 
-    addressSubmission.status &&
-    identitySubmission.status !== 'rejected' &&
-    addressSubmission.status !== 'rejected'
-  )
-  
-  // Check if submissions are from Bridge (have metadata.source === 'bridge_kyc_widget')
-  const identityFromBridge = identitySubmission?.metadata?.source === 'bridge_kyc_widget'
-  const addressFromBridge = addressSubmission?.metadata?.source === 'bridge_kyc_widget'
+  // TOS should appear when Bridge KYC is approved
+  const bothSubmitted = bridgeKycApproved
 
   // Load TOS status only if bridge_signed_agreement_id is empty
   // Database is source of truth - if bridge_signed_agreement_id exists, TOS is signed
@@ -814,26 +801,15 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
   const handleTOSModalClose = () => {
     setShowTosModal(false)
     
-    // If we already processed TOS via postMessage, don't start polling
+    // If we already processed TOS via postMessage, no need to check again
     if (tosProcessedRef.current) {
-      console.log('[TOS-MODAL] Modal closed but TOS already processed via postMessage, skipping polling')
+      console.log('[TOS-MODAL] Modal closed but TOS already processed via postMessage')
       return
     }
     
-    // Always start polling when modal closes - user may have accepted TOS
-    // Give Bridge a moment to process the acceptance (Bridge may take a few seconds to update)
-    setTimeout(() => {
-      if (tosLinkId && !tosProcessedRef.current) {
-        console.log('[TOS-MODAL] Modal closed - starting polling with tosLinkId:', tosLinkId)
-        pollTOSStatus()
-      } else {
-        console.warn('[TOS-MODAL] Modal closed but no tosLinkId available or already processed, reloading TOS status')
-        // Try to reload TOS status in case it was accepted
-        if (bothSubmitted && userProfile?.email) {
-          loadTOSStatus()
-        }
-      }
-    }, 3000) // Wait 3 seconds for Bridge to process TOS acceptance
+    // If postMessage didn't fire, rely on webhooks and sync-status
+    // Status will be updated when user refreshes or reopens the screen
+    console.log('[TOS-MODAL] Modal closed. TOS status will be synced via webhooks or next screen load.')
   }
 
   const handleOpenKYC = async () => {
@@ -1034,106 +1010,10 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
     return `${widgetUrl}${separator}iframe-origin=${encodeURIComponent(origin)}`
   }
 
-  const pollTOSStatus = async () => {
-    if (!tosLinkId || checkingTosStatus || tosProcessedRef.current) {
-      console.log(`[TOS-POLL] Skipping poll - tosLinkId: ${!!tosLinkId}, checkingTosStatus: ${checkingTosStatus}, alreadyProcessed: ${tosProcessedRef.current}`)
-      return
-    }
-    
-    setCheckingTosStatus(true)
-    const maxAttempts = 60 // 60 attempts = 2 minutes (2 seconds per attempt)
-    let attempts = 0
-    
-    const checkStatus = async () => {
-      try {
-        console.log(`[TOS-POLL] Checking TOS status (attempt ${attempts + 1}/${maxAttempts}) with tosLinkId: ${tosLinkId}`)
-        const status = await bridgeService.checkTOSStatus(tosLinkId!)
-        console.log(`[TOS-POLL] TOS status response:`, { signed: status.signed, hasAgreementId: !!status.signedAgreementId })
-        
-        if (status.signed && status.signedAgreementId) {
-          console.log(`[TOS-POLL] TOS accepted! signed_agreement_id: ${status.signedAgreementId.substring(0, 8)}...`)
-          
-          // Store signed_agreement_id first
-          await storeSignedAgreementId(status.signedAgreementId)
-          
-          // Update UI
-          setTosSigned(true)
-          setTosSignedAgreementId(status.signedAgreementId)
-          setCheckingTosStatus(false)
-          
-          // Update cache immediately
-          await updateTosStatusInCache(true, status.signedAgreementId, tosLinkId)
-          
-          console.log(`[TOS-POLL] ✅ TOS signed_agreement_id stored in database`)
-          
-          // Check if Bridge customer exists before trying to update
-          const { data: userData } = await supabase
-            .from('users')
-            .select('bridge_customer_id')
-            .eq('id', userProfile?.id)
-            .single()
-          
-          if (userData?.bridge_customer_id) {
-            // Customer exists - update it with signed_agreement_id
-            // Accepting TOS via hosted link doesn't automatically update the customer
-            // We must call PUT /v0/customers/{customerID} with the signed_agreement_id
-            try {
-              console.log(`[TOS-POLL] Customer exists, updating with signed_agreement_id...`)
-              const updateResult = await bridgeService.updateCustomerTOS(status.signedAgreementId)
-              console.log(`[TOS-POLL] Customer updated successfully. hasAcceptedTOS: ${updateResult.hasAcceptedTOS}`)
-            } catch (updateError: any) {
-              console.error(`[TOS-POLL] ⚠️ Error updating customer TOS (customer exists):`, updateError.message)
-              // Non-critical error - TOS is already stored
-            }
-          } else {
-            // Customer doesn't exist yet - this is expected if KYC is still in_review
-            // The admin will create the customer via "Send to Bridge" button
-            console.log(`[TOS-POLL] ℹ️ Customer doesn't exist yet. TOS signed_agreement_id stored. Admin will create customer via "Send to Bridge".`)
-            
-            // Don't try to create customer here - admin must approve KYC first
-            // The old code tried to create customer automatically, but that's not correct
-            // because KYC might still be in_review
-          }
-          
-          return
-        }
-        
-        attempts++
-        if (attempts < maxAttempts) {
-          setTimeout(checkStatus, 2000) // Check every 2 seconds
-        } else {
-          setCheckingTosStatus(false)
-          console.log(`[TOS-POLL] Polling stopped after ${maxAttempts} attempts. TOS may still be processing.`)
-          // Show alert to user that they may need to wait or refresh
-          Alert.alert(
-            'TOS Status',
-            'Terms of Service acceptance is still being processed. Please wait a moment and refresh the screen, or try again later.',
-            [
-              {
-                text: 'Refresh Now',
-                onPress: () => {
-                  if (bothSubmitted && userProfile?.email) {
-                    loadTOSStatus()
-                  }
-                }
-              },
-              { text: 'OK', style: 'cancel' }
-            ]
-          )
-        }
-      } catch (error: any) {
-        console.error('[TOS-POLL] Error checking TOS status:', error)
-        setCheckingTosStatus(false)
-        // Don't stop polling on error - might be temporary network issue
-        attempts++
-        if (attempts < maxAttempts) {
-          setTimeout(checkStatus, 2000)
-        }
-      }
-    }
-    
-    checkStatus()
-  }
+  // TOS polling removed - relying on:
+  // 1. PostMessage from WebView (immediate)
+  // 2. Bridge webhooks (automatic)
+  // 3. sync-status when screen loads (fallback)
 
   const createBridgeCustomer = async (signedAgreementId: string) => {
     if (creatingCustomer) return // Prevent duplicate calls
@@ -1324,7 +1204,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                               ? `Please complete account verification again to receive your account details. ${userProfile.bridge_kyc_rejection_reasons}.`
                               : 'Please complete account verification again to receive your account details.')
                           : 'Please complete account verification again to receive your account details.'}
-                      </Text>
+                  </Text>
                     </>
                   ) : bridgeKycInReview ? (
                     <>
@@ -1374,7 +1254,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                             <View style={{ width: 70, alignItems: 'center' }}>
                               <ActivityIndicator size="small" color={colors.primary.main} />
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} style={{ opacity: 0 }} />
                           </View>
                         ) : (
                           <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing[3] }}>
@@ -1382,105 +1261,19 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                               userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started',
                               userProfile?.bridge_kyc_status || userProfile?.profile?.bridge_kyc_status || 'not_started'
                             )}
-                            <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
                           </View>
                         )}
                       </View>
                     </View>
+                    {/* Start Badge - positioned at bottom right */}
+                    {!loadingKyc && (
+                      <View style={styles.startBadge}>
+                        <Text style={styles.startBadgeText}>Start</Text>
+                        <Ionicons name="chevron-forward" size={12} color="#FFFFFF" />
+                      </View>
+                    )}
                   </View>
                 </TouchableOpacity>
-              )}
-
-              {/* Identity Verification Card - Show only if Bridge KYC is approved */}
-              {bridgeKycApproved && (
-                <TouchableOpacity
-                  onPress={async () => {
-                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                    // Navigate to read-only view if data is from Bridge
-                    if (identityFromBridge) {
-                      // Show read-only view with Bridge data
-                      navigation.navigate('IdentityVerification', { readOnly: true, fromBridge: true })
-                    } else {
-                      navigation.navigate('IdentityVerification')
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                <View style={styles.card}>
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardLeft}>
-                      <View style={styles.iconContainer}>
-                        <Ionicons name="person-outline" size={24} color={colors.primary.main} />
-                      </View>
-                      <Text style={styles.cardTitle}>Identity verification</Text>
-                      <Text style={styles.cardDescription}>
-                        Your ID verification information.
-                      </Text>
-                    </View>
-                    <View style={styles.cardRight}>
-                      {getStatusBadge('approved', userProfile?.bridge_kyc_status)}
-                      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-                    </View>
-                  </View>
-                  {/* Status Notices - Only show if status is actually under_review (shouldn't happen if approved, but just in case) */}
-                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
-                    <View style={styles.infoCard}>
-                      <View style={styles.infoBox}>
-                        <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
-                        <Text style={styles.infoText}>
-                          Your verification is under review. We will provide an update soonest. Please check your email for updates.
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-              )}
-
-              {/* Address Information Card - Show only if Bridge KYC is approved */}
-              {bridgeKycApproved && (
-                <TouchableOpacity
-                  onPress={async () => {
-                    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                    // Navigate to read-only view if data is from Bridge
-                    if (addressFromBridge) {
-                      // Show read-only view with Bridge data
-                      navigation.navigate('AddressVerification', { readOnly: true, fromBridge: true })
-                    } else {
-                      navigation.navigate('AddressVerification')
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                <View style={styles.card}>
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardLeft}>
-                      <View style={styles.iconContainer}>
-                        <Ionicons name="location-outline" size={24} color={colors.primary.main} />
-                      </View>
-                      <Text style={styles.cardTitle}>Address information</Text>
-                      <Text style={styles.cardDescription}>
-                        Your home address and document.
-                      </Text>
-                    </View>
-                    <View style={styles.cardRight}>
-                      {getStatusBadge('approved', userProfile?.bridge_kyc_status)}
-                      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-                    </View>
-                  </View>
-                  {/* Status Notices - Only show if status is actually under_review (shouldn't happen if approved, but just in case) */}
-                  {userProfile?.bridge_customer_id && userProfile?.bridge_kyc_status === 'under_review' && (
-                    <View style={styles.infoCard}>
-                      <View style={styles.infoBox}>
-                        <Ionicons name="information-circle-outline" size={20} color={colors.warning.main} />
-                        <Text style={styles.infoText}>
-                          Your verification is under review. We will provide an update soonest. Please check your email for updates.
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
               )}
 
               {/* Bridge TOS Acceptance Card - Show only if bridge_signed_agreement_id is empty */}
@@ -1504,7 +1297,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                     }
                   }}
                   activeOpacity={0.7}
-                  disabled={loadingTos || checkingTosStatus || creatingCustomer}
+                  disabled={loadingTos || creatingCustomer}
                 >
                   <View style={styles.card}>
                     <View style={styles.cardContent}>
@@ -1518,7 +1311,7 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                         </Text>
                       </View>
                       <View style={styles.cardRight}>
-                        {loadingTos || checkingTosStatus || creatingCustomer ? (
+                        {loadingTos || creatingCustomer ? (
                           <ActivityIndicator size="small" color={colors.primary.main} />
                         ) : (
                           <>
@@ -1627,9 +1420,6 @@ function AccountVerificationContent({ navigation }: NavigationProps) {
                           
                           // Mark as processed to prevent duplicate handling
                           tosProcessedRef.current = true
-                          
-                          // Stop any ongoing polling
-                          setCheckingTosStatus(false)
                           
                           // Store signed_agreement_id first
                           await storeSignedAgreementId(signedAgreementId)
@@ -2026,6 +1816,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: '#E2E2E2',
     marginBottom: spacing[3],
+    position: 'relative',
   },
   cardContent: {
     padding: spacing[5],
@@ -2117,6 +1908,23 @@ const styles = StyleSheet.create({
     ...textStyles.labelSmall,
     fontWeight: '500',
     color: colors.neutral[600],
+  },
+  startBadge: {
+    position: 'absolute',
+    bottom: spacing[3],
+    right: spacing[5],
+    backgroundColor: colors.primary.main,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[1],
+    borderRadius: borderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  startBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   modalContainer: {
     flex: 1,

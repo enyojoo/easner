@@ -13,23 +13,27 @@ interface BridgeLiquidationAddress {
   customer_id: string
   chain: string
   currency: string
-  address: string
+  address: string // The liquidation address (where to send crypto)
   blockchain_memo?: string // For memo-based blockchains like Stellar
-  external_account_id?: string
-  destination_payment_rail: string
-  destination_currency: string
+  external_account_id?: string // For bank payouts
+  bridge_wallet_id?: string // For wallet deposits (may not be in response)
+  destination_payment_rail: string // e.g., "solana" for wallet deposits
+  destination_currency: string // e.g., "usdc"
+  destination_address?: string // The wallet address (destination for wallet deposits)
   destination_wire_message?: string
+  state?: string // e.g., "active"
   created_at: string
   updated_at: string
 }
 
 interface CreateLiquidationAddressRequest {
-  chain: string // e.g., "ethereum", "stellar"
+  chain: string // e.g., "solana", "ethereum", "stellar"
   currency: string // e.g., "usdc", "eurc"
-  external_account_id: string
-  destination_payment_rail: "wire"
-  destination_currency: string
-  destination_wire_message?: string
+  external_account_id?: string // For bank payouts (wire)
+  bridge_wallet_id?: string // For wallet deposits (solana, ethereum, etc.)
+  destination_payment_rail: string // "wire" for bank, "solana"/"ethereum" etc. for wallet
+  destination_currency: string // e.g., "usdc", "eurc"
+  destination_wire_message?: string // Only for wire payouts
 }
 
 async function bridgeApiRequest<T>(
@@ -67,27 +71,43 @@ async function bridgeApiRequest<T>(
 
 export const bridgeLiquidationService = {
   /**
-   * Create a liquidation address pointing to a bank account (wire payouts only)
-   * Note: Cards use Top-Up deposit addresses, not Liquidation Addresses
+   * Create a liquidation address
+   * For wallet deposits: use bridge_wallet_id as destination
+   * For bank payouts: use external_account_id as destination
    */
   async createLiquidationAddress(
     customerId: string,
     liquidationData: {
-      chain: string // e.g., "ethereum", "stellar"
+      chain: string // e.g., "solana", "ethereum", "stellar"
       currency: string // e.g., "usdc", "eurc"
-      externalAccountId: string
-      destinationCurrency: string
-      destinationWireMessage?: string
+      externalAccountId?: string // For bank payouts (wire)
+      bridgeWalletId?: string // For wallet deposits (solana, ethereum, etc.)
+      destinationPaymentRail: string // "wire" for bank, "solana"/"ethereum" etc. for wallet
+      destinationCurrency: string // e.g., "usdc", "eurc"
+      destinationWireMessage?: string // Only for wire payouts
       idempotencyKey?: string
     },
   ): Promise<BridgeLiquidationAddress> {
     const request: CreateLiquidationAddressRequest = {
       chain: liquidationData.chain,
       currency: liquidationData.currency,
-      external_account_id: liquidationData.externalAccountId,
-      destination_payment_rail: "wire",
+      destination_payment_rail: liquidationData.destinationPaymentRail,
       destination_currency: liquidationData.destinationCurrency,
-      destination_wire_message: liquidationData.destinationWireMessage,
+    }
+
+    // Add destination based on payment rail type
+    if (liquidationData.destinationPaymentRail === "wire") {
+      if (!liquidationData.externalAccountId) {
+        throw new Error("externalAccountId is required for wire payouts")
+      }
+      request.external_account_id = liquidationData.externalAccountId
+      request.destination_wire_message = liquidationData.destinationWireMessage
+    } else {
+      // For wallet deposits (solana, ethereum, etc.)
+      if (!liquidationData.bridgeWalletId) {
+        throw new Error("bridgeWalletId is required for wallet deposits")
+      }
+      request.bridge_wallet_id = liquidationData.bridgeWalletId
     }
 
     const headers: Record<string, string> = {}
@@ -95,7 +115,7 @@ export const bridgeLiquidationService = {
       headers["Idempotency-Key"] = liquidationData.idempotencyKey
     }
 
-    const response = await bridgeApiRequest<{ data: BridgeLiquidationAddress }>(
+    const response = await bridgeApiRequest<BridgeLiquidationAddress | { data: BridgeLiquidationAddress }>(
       `/v0/customers/${customerId}/liquidation_addresses`,
       {
         method: "POST",
@@ -104,7 +124,8 @@ export const bridgeLiquidationService = {
       },
     )
 
-    return response.data
+    // Bridge API may return the object directly or wrapped in { data: ... }
+    return (response as any).data || response
   },
 
   /**
@@ -114,28 +135,30 @@ export const bridgeLiquidationService = {
     customerId: string,
     liquidationAddressId: string,
   ): Promise<BridgeLiquidationAddress> {
-    const response = await bridgeApiRequest<{ data: BridgeLiquidationAddress }>(
+    const response = await bridgeApiRequest<BridgeLiquidationAddress | { data: BridgeLiquidationAddress }>(
       `/v0/customers/${customerId}/liquidation_addresses/${liquidationAddressId}`,
       {
         method: "GET",
       },
     )
 
-    return response.data
+    // Bridge API may return the object directly or wrapped in { data: ... }
+    return (response as any).data || response
   },
 
   /**
    * List all liquidation addresses for a customer
    */
   async listLiquidationAddresses(customerId: string): Promise<BridgeLiquidationAddress[]> {
-    const response = await bridgeApiRequest<{ data: BridgeLiquidationAddress[] }>(
+    const response = await bridgeApiRequest<BridgeLiquidationAddress[] | { data: BridgeLiquidationAddress[] }>(
       `/v0/customers/${customerId}/liquidation_addresses`,
       {
         method: "GET",
       },
     )
 
-    return response.data || []
+    // Bridge API may return the array directly or wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response as any).data || []
   },
 
   /**
@@ -152,6 +175,43 @@ export const bridgeLiquidationService = {
       },
     )
   },
+
+  /**
+   * Get drain history for a liquidation address
+   * Returns array of drain records (deposits to the liquidation address)
+   */
+  async getDrainHistory(
+    customerId: string,
+    liquidationAddressId: string,
+  ): Promise<LiquidationDrain[]> {
+    const response = await bridgeApiRequest<LiquidationDrain[] | { data: LiquidationDrain[] }>(
+      `/v0/customers/${customerId}/liquidation_addresses/${liquidationAddressId}/drains`,
+      {
+        method: "GET",
+      },
+    )
+
+    // Bridge API may return the array directly or wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response as any).data || []
+  },
+}
+
+export interface LiquidationDrain {
+  id: string
+  amount: string
+  currency: string
+  state: string // 'in_review', 'funds_received', 'payment_submitted', 'payment_processed', etc.
+  created_at: string
+  destination?: {
+    payment_rail?: string // 'solana', 'ethereum', 'wire', 'ach', etc.
+    currency?: string // 'usdc', 'usd', etc.
+    to_address?: string // For crypto destinations
+    external_account_id?: string // For bank destinations
+    imad?: string // For wire
+    trace_number?: string // For ACH
+  }
+  destination_tx_hash?: string
+  deposit_tx_hash?: string
 }
 
 

@@ -56,7 +56,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
   const [refreshing, setRefreshing] = useState(false) // Background refresh indicator
   const [dataInitialized, setDataInitialized] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
-  
+
   // Track last fetch times for stale-while-revalidate
   const lastFetchTimes = useRef<{
     currencies?: number
@@ -183,7 +183,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
 
   const fetchRecipients = async (force: boolean = false, useCache: boolean = true) => {
     if (!user) {
-      console.log('UserDataContext: No user for recipients fetch')
       return
     }
 
@@ -202,7 +201,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     }
 
     try {
-      console.log('UserDataContext: Fetching recipients for user:', user.id)
       const { data, error } = await supabase
         .from('recipients')
         .select('*')
@@ -210,7 +208,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      console.log('UserDataContext: Recipients fetched:', data?.length || 0)
       const recipientsData = data || []
       setRecipients(recipientsData)
       lastFetchTimes.current.recipients = Date.now()
@@ -222,7 +219,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
 
   const fetchTransactions = async (force: boolean = false, useCache: boolean = true) => {
     if (!user) {
-      console.log('UserDataContext: No user for transactions fetch')
       return
     }
 
@@ -241,7 +237,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     }
 
     try {
-      console.log('UserDataContext: Fetching transactions for user:', user.id)
       const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -253,7 +248,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         .limit(20)
 
       if (error) throw error
-      console.log('UserDataContext: Transactions fetched:', data?.length || 0)
       const transactionsData = data || []
       setTransactions(transactionsData)
       lastFetchTimes.current.transactions = Date.now()
@@ -370,7 +364,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
 
   // Priority-based initial load: critical data first, then rest
   const refreshAll = async (force: boolean = false) => {
-    console.log('UserDataContext: Starting refreshAll', force ? '(forced)' : '')
     setLoading(true)
     
     try {
@@ -386,8 +379,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         fetchRecipients(force, !force),
         fetchPaymentMethods(force, !force),
       ])
-      
-      console.log('UserDataContext: refreshAll completed successfully')
     } catch (error) {
       console.error('UserDataContext: Error in refreshAll:', error)
     } finally {
@@ -397,10 +388,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
 
   // Initialize data on login
   useEffect(() => {
-    console.log('UserDataContext: User changed:', !!user, user?.id, 'dataInitialized:', dataInitialized, 'isClearing:', isClearing)
-    
     if (user && user.id && !dataInitialized) {
-      console.log('UserDataContext: User found with ID, initializing data')
       setDataInitialized(true)
       setIsClearing(false)
       
@@ -410,7 +398,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
         try {
           setLoading(true)
           await refreshAll(false) // Not forced - will use cache if available
-          console.log('UserDataContext: Data initialization completed')
         } catch (error) {
           console.error('UserDataContext: Error initializing data:', error)
         } finally {
@@ -420,7 +407,6 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
       
       initializeData()
     } else if (!user && !isClearing) {
-      console.log('UserDataContext: No user, clearing all data')
       setIsClearing(true)
       setDataInitialized(false)
       // Clear data when user logs out
@@ -451,7 +437,7 @@ export function UserDataProvider({ children }: UserDataProviderProps) {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         // App came to foreground - refresh stale data in background
-        console.log('UserDataContext: App came to foreground, refreshing stale data')
+        // App came to foreground, refresh stale data
         refreshStaleData()
       }
     }

@@ -49,6 +49,7 @@ import InAppNotificationsScreen from '../screens/main/InAppNotificationsScreen'
 
 // Transaction Screens
 import TransactionDetailsScreen from '../screens/transactions/TransactionDetailsScreen'
+import BridgeTransactionDetailsScreen from '../screens/transactions/BridgeTransactionDetailsScreen'
 
 // Send Money Flow Screens
 import SendAmountScreen from '../screens/send/SendAmountScreen'
@@ -66,8 +67,6 @@ import ReceiveTransactionDetailsScreen from '../screens/receive/ReceiveTransacti
 
 // Verification Screens
 import AccountVerificationScreen from '../screens/verification/AccountVerificationScreen'
-import IdentityVerificationScreen from '../screens/verification/IdentityVerificationScreen'
-import AddressVerificationScreen from '../screens/verification/AddressVerificationScreen'
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -403,7 +402,7 @@ function MainTabs() {
         }}
       />
       <Tab.Screen 
-        name="Analytics" 
+        name="Transactions" 
         component={TransactionsScreen}
         options={{
           tabBarLabel: 'Transactions',
@@ -583,6 +582,14 @@ function MainStack() {
         }}
       />
       <Stack.Screen 
+        name="BridgeTransactionDetails" 
+        component={BridgeTransactionDetailsScreen}
+        options={{ 
+          headerShown: false,
+          ...getTransitionConfig(),
+        }}
+      />
+      <Stack.Screen 
         name="Recipients" 
         component={RecipientsScreen}
         options={{ 
@@ -633,22 +640,6 @@ function MainStack() {
       <Stack.Screen 
         name="AccountVerification" 
         component={AccountVerificationScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
-      <Stack.Screen 
-        name="IdentityVerification" 
-        component={IdentityVerificationScreen}
-        options={{ 
-          headerShown: false,
-          ...getTransitionConfig(),
-        }}
-      />
-      <Stack.Screen 
-        name="AddressVerification" 
-        component={AddressVerificationScreen}
         options={{ 
           headerShown: false,
           ...getTransitionConfig(),

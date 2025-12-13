@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   Modal,
   FlatList,
+  Keyboard,
+  ActivityIndicator,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import ScreenWrapper from '../../components/ScreenWrapper'
@@ -20,6 +22,7 @@ import { NavigationProps } from '../../types'
 import { userService, UserProfileData, UserStats } from '../../lib/userService'
 import { getCountryFlag } from '../../utils/flagUtils'
 import { analytics } from '../../lib/analytics'
+import { supabase } from '../../lib/supabase'
 
 function ProfileContent({ navigation }: NavigationProps) {
   const { user, userProfile, signOut, refreshUserProfile } = useAuth()
@@ -39,8 +42,11 @@ function ProfileContent({ navigation }: NavigationProps) {
     email: '',
     phone: '',
     baseCurrency: 'NGN',
+    easetag: '',
   })
   const [editProfileData, setEditProfileData] = useState(profileData)
+  const [checkingEasetag, setCheckingEasetag] = useState(false)
+  const [easetagAvailable, setEasetagAvailable] = useState<boolean | null>(null)
   const privacyLink = useExternalLink()
   const termsLink = useExternalLink()
 
@@ -54,11 +60,12 @@ function ProfileContent({ navigation }: NavigationProps) {
     if (userProfile) {
       const data = {
         firstName: userProfile.profile.first_name || '',
-        middleName: userProfile.profile.middle_name || userProfile.middle_name || '',
+        middleName: userProfile.profile.middle_name || '',
         lastName: userProfile.profile.last_name || '',
         email: userProfile.profile.email || '',
         phone: userProfile.profile.phone || '',
         baseCurrency: userProfile.profile.base_currency || 'NGN',
+        easetag: userProfile.profile.easetag || '',
       }
       setProfileData(data)
       setEditProfileData(data)
@@ -81,6 +88,66 @@ function ProfileContent({ navigation }: NavigationProps) {
   const handleEditProfile = () => {
     setEditProfileData(profileData)
     setIsEditing(true)
+    setEasetagAvailable(null)
+  }
+
+  // Check easetag availability
+  const checkEasetagAvailability = async (easetag: string) => {
+    if (!easetag || easetag === profileData.easetag) {
+      setEasetagAvailable(null)
+      return
+    }
+
+    setCheckingEasetag(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const cleanTag = easetag.replace(/^@/, "").toLowerCase()
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'
+      const response = await fetch(
+        `${apiUrl}/api/username/check?easetag=${encodeURIComponent(cleanTag)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setEasetagAvailable(data.available && data.valid)
+      } else {
+        setEasetagAvailable(false)
+      }
+    } catch (error) {
+      console.error('Error checking easetag:', error)
+      setEasetagAvailable(false)
+    } finally {
+      setCheckingEasetag(false)
+    }
+  }
+
+  // Debounce easetag check
+  const easetagCheckTimeout = useRef<NodeJS.Timeout | null>(null)
+  const handleEasetagChange = (text: string) => {
+    // Remove @ if user types it, we'll add it in display
+    const cleanText = text.replace(/^@/, "")
+    setEditProfileData(prev => ({ ...prev, easetag: cleanText }))
+    
+    // Clear previous timeout
+    if (easetagCheckTimeout.current) {
+      clearTimeout(easetagCheckTimeout.current)
+    }
+
+    // Check availability after 500ms delay
+    if (cleanText.length >= 3) {
+      easetagCheckTimeout.current = setTimeout(() => {
+        checkEasetagAvailability(cleanText)
+      }, 500)
+    } else {
+      setEasetagAvailable(null)
+    }
   }
 
   const handleSaveProfile = async () => {
@@ -100,6 +167,7 @@ function ProfileContent({ navigation }: NavigationProps) {
         lastName: editProfileData.lastName,
         phone: editProfileData.phone,
         baseCurrency: editProfileData.baseCurrency,
+        easetag: editProfileData.easetag,
       }
       console.log('[PROFILE-SAVE] Sending update payload:', updatePayload)
       console.log('[PROFILE-SAVE] middleName value:', editProfileData.middleName, 'type:', typeof editProfileData.middleName, 'undefined?', editProfileData.middleName === undefined)
@@ -114,6 +182,7 @@ function ProfileContent({ navigation }: NavigationProps) {
       }
 
       setIsEditing(false)
+      setEasetagAvailable(null)
       Alert.alert('Success', 'Profile updated successfully')
     } catch (error) {
       console.error('Error updating profile:', error)
@@ -126,6 +195,10 @@ function ProfileContent({ navigation }: NavigationProps) {
   const handleCancelEdit = () => {
     setEditProfileData(profileData)
     setIsEditing(false)
+    setEasetagAvailable(null)
+    if (easetagCheckTimeout.current) {
+      clearTimeout(easetagCheckTimeout.current)
+    }
   }
 
   const handleSignOut = async () => {
@@ -226,18 +299,15 @@ function ProfileContent({ navigation }: NavigationProps) {
   )
 
   const renderProfileField = (label: string, value: string, onChangeText: (text: string) => void, disabled: boolean = false) => {
-    const isKycApproved = userProfile?.bridge_kyc_status === 'approved'
-    const isEditable = isEditing && !disabled && !isKycApproved
+    // In edit mode, show TextInput unless the field is explicitly disabled
+    const showInput = isEditing && !disabled
     
     return (
       <View style={styles.fieldContainer}>
         <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>
           {label}
-          {isKycApproved && (label === 'First Name' || label === 'Last Name') && (
-            <Text style={styles.disabledHint}> (Verified - cannot edit)</Text>
-          )}
         </Text>
-        {isEditable ? (
+        {showInput ? (
           <TextInput
             style={styles.fieldInput}
             value={value}
@@ -246,15 +316,85 @@ function ProfileContent({ navigation }: NavigationProps) {
             returnKeyType="done"
             onSubmitEditing={() => Keyboard.dismiss()}
             editable={true}
+            autoCapitalize="words"
           />
         ) : (
-          <Text style={[styles.fieldValue, (disabled || isKycApproved) && styles.fieldValueDisabled]}>
+          <Text style={[styles.fieldValue, disabled && styles.fieldValueDisabled]}>
             {value || 'Not set'}
           </Text>
         )}
       </View>
     )
   }
+
+  const renderEasetagField = () => (
+    <View style={styles.fieldContainer}>
+      <View style={styles.easetagLabelContainer}>
+        <Text style={isEditing ? styles.fieldLabelEdit : styles.fieldLabel}>Easetag</Text>
+        {isEditing && editProfileData.easetag && !checkingEasetag && (
+          <View style={styles.easetagStatusContainer}>
+            {easetagAvailable === true && (
+              <>
+                <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                <Text style={[styles.easetagStatusTextInline, styles.easetagAvailableText]}>
+                  Available
+                </Text>
+              </>
+            )}
+            {easetagAvailable === false && (
+              <>
+                <Ionicons name="close-circle" size={16} color="#ef4444" />
+                <Text style={[styles.easetagStatusTextInline, styles.easetagUnavailableText]}>
+                  Taken
+                </Text>
+              </>
+            )}
+            {easetagAvailable === null && editProfileData.easetag.length < 3 && (
+              <Text style={[styles.easetagStatusTextInline, { color: '#6b7280' }]}>
+                Min 3 chars
+              </Text>
+            )}
+          </View>
+        )}
+      </View>
+      {isEditing ? (
+        <View>
+          <View style={styles.easetagInputContainer}>
+            <Text style={styles.easetagPrefix}>@</Text>
+            <TextInput
+              style={styles.easetagInput}
+              value={editProfileData.easetag}
+              onChangeText={handleEasetagChange}
+              placeholder="youreasetag"
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
+              maxLength={20}
+            />
+            {checkingEasetag && (
+              <View style={styles.easetagSpinnerContainer}>
+                <ActivityIndicator size="small" color="#6b7280" />
+              </View>
+            )}
+          </View>
+          <Text style={styles.fieldDescription}>
+            People can send you money for free using your Easetag.
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.fieldValue}>
+            {profileData.easetag ? `@${profileData.easetag}` : 'Not set'}
+          </Text>
+          <Text style={styles.fieldDescription}>
+            People can send you money for free using your Easetag.
+          </Text>
+        </>
+      )}
+    </View>
+  )
 
   const renderCurrencyField = () => (
     <View style={styles.fieldContainer}>
@@ -331,33 +471,31 @@ function ProfileContent({ navigation }: NavigationProps) {
                 <>
         {renderProfileField(
           'First Name',
-                    editProfileData.firstName,
-                    (text) => setEditProfileData(prev => ({ ...prev, firstName: text })),
-          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
+          editProfileData.firstName,
+          (text) => setEditProfileData(prev => ({ ...prev, firstName: text }))
         )}
         {renderProfileField(
           'Middle Name',
-                    editProfileData.middleName,
-                    (text) => setEditProfileData(prev => ({ ...prev, middleName: text })),
-          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
+          editProfileData.middleName,
+          (text) => setEditProfileData(prev => ({ ...prev, middleName: text }))
         )}
         {renderProfileField(
           'Last Name',
-                    editProfileData.lastName,
-                    (text) => setEditProfileData(prev => ({ ...prev, lastName: text })),
-          userProfile?.bridge_kyc_status === 'approved' // Disable if KYC approved
+          editProfileData.lastName,
+          (text) => setEditProfileData(prev => ({ ...prev, lastName: text }))
         )}
         {renderProfileField(
           'Email',
-                    editProfileData.email,
-                    (text) => setEditProfileData(prev => ({ ...prev, email: text })),
-          false // Email should not be editable
+          editProfileData.email,
+          (text) => setEditProfileData(prev => ({ ...prev, email: text })),
+          true // Email should not be editable
         )}
         {renderProfileField(
           'Phone Number',
                     editProfileData.phone,
                     (text) => setEditProfileData(prev => ({ ...prev, phone: text }))
                   )}
+                  {renderEasetagField()}
                   {renderCurrencyField()}
                 </>
               ) : (
@@ -383,6 +521,15 @@ function ProfileContent({ navigation }: NavigationProps) {
                   <View style={styles.fieldContainer}>
                     <Text style={styles.fieldLabel}>Phone Number</Text>
                     <Text style={styles.fieldValue}>{profileData.phone || 'Not set'}</Text>
+                  </View>
+                  <View style={styles.fieldContainer}>
+                    <Text style={styles.fieldLabel}>Easetag</Text>
+                    <Text style={styles.fieldValue}>
+                      {profileData.easetag ? `@${profileData.easetag}` : 'Not set'}
+                    </Text>
+                    <Text style={styles.fieldDescription}>
+                      People can send you money for free using your Easetag.
+                    </Text>
                   </View>
                   <View style={styles.fieldContainer}>
                     <Text style={styles.fieldLabel}>Base Currency</Text>
@@ -454,7 +601,7 @@ function ProfileContent({ navigation }: NavigationProps) {
 
         {/* Currency Picker Modal */}
         {renderCurrencyPicker()}
-      </ScrollView>
+    </ScrollView>
       <ExternalLinkModal
         visible={privacyLink.isVisible}
         url={privacyLink.url}
@@ -642,6 +789,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   currencyDescription: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  easetagInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+  },
+  easetagPrefix: {
+    fontSize: 16,
+    color: '#6b7280',
+    paddingLeft: 12,
+    paddingRight: 4,
+    fontWeight: '500',
+  },
+  easetagInput: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingRight: 12,
+    fontSize: 16,
+    color: '#111827',
+  },
+  easetagSpinnerContainer: {
+    paddingRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  easetagAvailableText: {
+    color: '#10b981',
+  },
+  easetagUnavailableText: {
+    color: '#ef4444',
+  },
+  fieldDescription: {
     fontSize: 12,
     color: '#6b7280',
     marginTop: 2,

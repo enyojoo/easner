@@ -107,6 +107,70 @@ export default function IdentityVerificationPage() {
       // Fetch in background to ensure we have latest data
       const loadSubmission = async () => {
         try {
+          // First, check if Bridge KYC is approved and we have Bridge data
+          const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
+          const hasBridgeData = bridgeKycApproved && (
+            userProfile?.first_name || 
+            userProfile?.last_name || 
+            userProfile?.date_of_birth ||
+            userProfile?.bridge_kyc_metadata
+          )
+
+          if (hasBridgeData) {
+            // Create synthetic submission from Bridge KYC data
+            const bridgeMetadata = typeof userProfile.bridge_kyc_metadata === 'string'
+              ? JSON.parse(userProfile.bridge_kyc_metadata)
+              : userProfile.bridge_kyc_metadata || {}
+
+            // Build full name from first, middle, last
+            const fullNameParts = [
+              userProfile.first_name,
+              userProfile.middle_name,
+              userProfile.last_name
+            ].filter(Boolean)
+            const fullName = fullNameParts.join(' ')
+
+            // Determine country code from address metadata or country_code field
+            const countryCode = bridgeMetadata.address?.country 
+              ? bridgeMetadata.address.country.substring(0, 2).toLowerCase()
+              : userProfile.country_code || ''
+
+            // Determine ID type from Bridge metadata
+            let idType = ''
+            if (bridgeMetadata.ssn || bridgeMetadata.dlNumber) {
+              idType = bridgeMetadata.ssn ? 'ssn' : 'drivers_license'
+            } else if (bridgeMetadata.passportNumber) {
+              idType = 'passport'
+            } else if (bridgeMetadata.nationalIdNumber) {
+              idType = 'national_id'
+            }
+
+            const bridgeSubmission: KYCSubmission = {
+              id: `bridge-${userProfile.id}`,
+              user_id: userProfile.id,
+              type: 'identity',
+              full_name: fullName,
+              date_of_birth: userProfile.date_of_birth || '',
+              country_code: countryCode,
+              id_type: idType,
+              status: 'approved',
+              metadata: {
+                source: 'bridge_kyc_widget',
+                ...bridgeMetadata
+              },
+              created_at: userProfile.updated_at || new Date().toISOString(),
+              updated_at: userProfile.updated_at || new Date().toISOString(),
+            }
+
+            setSubmission(bridgeSubmission)
+            setFullName(fullName)
+            setDateOfBirth(bridgeSubmission.date_of_birth || "")
+            setSelectedCountry(countryCode)
+            setSelectedIdType(idType)
+            return
+          }
+
+          // Fallback to regular KYC submissions
           const submissions = await kycService.getByUserId(userProfile.id)
           const identity = submissions.find(s => s.type === "identity")
           if (identity) {
@@ -138,6 +202,71 @@ export default function IdentityVerificationPage() {
     const loadSubmission = async () => {
       setLoading(true)
       try {
+        // First, check if Bridge KYC is approved and we have Bridge data
+        const bridgeKycApproved = userProfile?.bridge_kyc_status === 'approved'
+        const hasBridgeData = bridgeKycApproved && (
+          userProfile?.first_name || 
+          userProfile?.last_name || 
+          userProfile?.date_of_birth ||
+          userProfile?.bridge_kyc_metadata
+        )
+
+        if (hasBridgeData) {
+          // Create synthetic submission from Bridge KYC data
+          const bridgeMetadata = typeof userProfile.bridge_kyc_metadata === 'string'
+            ? JSON.parse(userProfile.bridge_kyc_metadata)
+            : userProfile.bridge_kyc_metadata || {}
+
+          // Build full name from first, middle, last
+          const fullNameParts = [
+            userProfile.first_name,
+            userProfile.middle_name,
+            userProfile.last_name
+          ].filter(Boolean)
+          const fullName = fullNameParts.join(' ')
+
+          // Determine country code from address metadata or country_code field
+          const countryCode = bridgeMetadata.address?.country 
+            ? bridgeMetadata.address.country.substring(0, 2).toLowerCase()
+            : userProfile.country_code || ''
+
+          // Determine ID type from Bridge metadata
+          let idType = ''
+          if (bridgeMetadata.ssn || bridgeMetadata.dlNumber) {
+            idType = bridgeMetadata.ssn ? 'ssn' : 'drivers_license'
+          } else if (bridgeMetadata.passportNumber) {
+            idType = 'passport'
+          } else if (bridgeMetadata.nationalIdNumber) {
+            idType = 'national_id'
+          }
+
+          const bridgeSubmission: KYCSubmission = {
+            id: `bridge-${userProfile.id}`,
+            user_id: userProfile.id,
+            type: 'identity',
+            full_name: fullName,
+            date_of_birth: userProfile.date_of_birth || '',
+            country_code: countryCode,
+            id_type: idType,
+            status: 'approved',
+            metadata: {
+              source: 'bridge_kyc_widget',
+              ...bridgeMetadata
+            },
+            created_at: userProfile.updated_at || new Date().toISOString(),
+            updated_at: userProfile.updated_at || new Date().toISOString(),
+          }
+
+          setSubmission(bridgeSubmission)
+          setFullName(fullName)
+          setDateOfBirth(bridgeSubmission.date_of_birth || "")
+          setSelectedCountry(countryCode)
+          setSelectedIdType(idType)
+          setCachedSubmissions([]) // No need to cache Bridge submissions
+          return
+        }
+
+        // Fallback to regular KYC submissions
         const submissions = await kycService.getByUserId(userProfile.id)
         const identity = submissions.find(s => s.type === "identity")
         if (identity) {

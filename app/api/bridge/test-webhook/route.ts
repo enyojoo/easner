@@ -90,6 +90,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
                   account_number: usdAccount.source_deposit_instructions?.bank_account_number,
                   routing_number: usdAccount.source_deposit_instructions?.bank_routing_number,
                   bank_name: usdAccount.source_deposit_instructions?.bank_name,
+                  bank_address: usdAccount.source_deposit_instructions?.bank_address,
+                  account_holder_name: usdAccount.source_deposit_instructions?.bank_beneficiary_name || usdAccount.source_deposit_instructions?.account_holder_name,
                   status: usdAccount.status,
                 })
                 await supabase

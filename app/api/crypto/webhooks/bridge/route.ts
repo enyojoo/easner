@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { receiveTransactionTracker } from "@/lib/receive-transaction-tracker"
 import { supabase } from "@/lib/supabase"
 import { completeAccountSetupAfterKYC } from "@/lib/bridge-onboarding-service"
+import { bridgeTransactionService } from "@/lib/bridge-transaction-service"
 import crypto from "crypto"
 
 const BRIDGE_WEBHOOK_PUBLIC_KEY = process.env.BRIDGE_WEBHOOK_SECRET || process.env.BRIDGE_WEBHOOK_PUBLIC_KEY
@@ -226,6 +227,9 @@ async function processWebhookEvent(
     eventCreatedAt?: string
   }
 ) {
+  const processStartTime = Date.now()
+  console.log(`[WEBHOOK-PROCESS] 🚀 Starting to process ${eventType} at ${new Date().toISOString()}`)
+  
   try {
     // Handle different webhook event types
     // Support both new format (event_type) and legacy format
@@ -236,32 +240,105 @@ async function processWebhookEvent(
       case "liquidation.completed":
       case "liquidation.processing":
       case "liquidation.failed": {
-        // Liquidation address deposit (bank payouts)
-        // Map new event structure to legacy format for compatibility
-        const liquidationData = {
-          id: eventObject.id,
-          customer_id: eventObject.customer_id || eventObject.on_behalf_of,
-          liquidation_address_id: eventObject.liquidation_address_id || eventObject.id,
-          liquidation_id: eventObject.liquidation_id || eventObject.id,
-          blockchain_tx_hash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
-          blockchain_memo: eventObject.blockchain_memo,
-          amount: eventObject.amount,
-          currency: eventObject.currency,
-          destination_currency: eventObject.destination_currency || eventObject.currency,
-          status: eventObject.status || eventObject.state,
-          created_at: eventObject.created_at,
-          completed_at: eventObject.completed_at,
-        }
+        // Liquidation address deposit (crypto deposits like USDC that convert to USD in wallet)
+        const customerId = eventObject.customer_id || eventObject.on_behalf_of
+        const liquidationAddressId = eventObject.liquidation_address_id || eventObject.id
         
-        await receiveTransactionTracker.processLiquidationWebhook(liquidationData)
-        
-        // Store processed event
+        // Get user ID from customer ID
         const { data: liquidationUser } = await supabase
           .from("users")
           .select("id")
-          .eq("bridge_customer_id", liquidationData.customer_id)
+          .eq("bridge_customer_id", customerId)
           .single()
-        await storeProcessedEvent(eventId, eventType, eventObject, liquidationUser?.id)
+        
+        if (!liquidationUser?.id) {
+          console.warn(`[BRIDGE-WEBHOOK] User not found for customer: ${customerId}`)
+          break
+        }
+
+        // Get liquidation address details to determine if it's a wallet deposit
+        const { data: liquidationAddress } = await supabase
+          .from("bridge_wallets")
+          .select("bridge_wallet_id, usdc_liquidation_address_id, eurc_liquidation_address_id")
+          .eq("user_id", liquidationUser.id)
+          .single()
+
+        // Determine if this is a wallet deposit (USDC/EURC -> USD/EUR conversion)
+        const isWalletDeposit = liquidationAddress && (
+          liquidationAddress.usdc_liquidation_address_id === liquidationAddressId ||
+          liquidationAddress.eurc_liquidation_address_id === liquidationAddressId
+        )
+
+        if (isWalletDeposit) {
+          // This is a crypto deposit (USDC/EURC) that converts to fiat (USD/EUR) in wallet
+          // Map currency: USDC -> USD, EURC -> EUR
+          const sourceCurrency = (eventObject.currency || '').toLowerCase()
+          const destinationCurrency = (eventObject.destination_currency || sourceCurrency).toLowerCase()
+          const displayCurrency = destinationCurrency === 'usdc' ? 'usd' : 
+                                 destinationCurrency === 'eurc' ? 'eur' : 
+                                 destinationCurrency
+
+          // Check if transaction already exists
+          const existing = await bridgeTransactionService.getTransactionByBridgeId(eventObject.id)
+          
+          if (existing) {
+            // Update existing transaction if status changed
+            const newStatus = eventObject.status || eventObject.state || 'processing'
+            if (existing.status !== newStatus) {
+              await bridgeTransactionService.updateTransactionStatus(
+                eventObject.id,
+                newStatus,
+                {
+                  receiptDestinationTxHash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
+                  completedAt: (newStatus === 'completed' || newStatus === 'payment_processed') ? eventObject.completed_at : undefined,
+                  metadata: eventObject,
+                }
+              )
+            }
+          } else {
+            // Create new deposit transaction for liquidation drain
+            await bridgeTransactionService.createDepositTransaction({
+              userId: liquidationUser.id,
+              bridgeActivityId: eventObject.id,
+              liquidationAddressId: liquidationAddressId, // Liquidation address deposit
+              amount: parseFloat(eventObject.amount),
+              currency: displayCurrency, // Show as USD/EUR, not USDC/EURC
+              status: eventObject.status || eventObject.state || 'processing',
+              sourcePaymentRail: sourceCurrency === 'usdc' || sourceCurrency === 'eurc' ? 'solana' : 'ethereum', // Assume Solana for now
+              receiptDestinationTxHash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
+              reference: eventObject.blockchain_memo,
+              metadata: {
+                ...eventObject,
+                source_currency: sourceCurrency,
+                destination_currency: destinationCurrency,
+                liquidation_address_id: liquidationAddressId,
+                liquidation_id: eventObject.liquidation_id,
+              },
+              bridgeCreatedAt: eventObject.created_at,
+            })
+            console.log(`[BRIDGE-WEBHOOK] Created liquidation drain deposit transaction: ${eventObject.id} (${sourceCurrency} -> ${displayCurrency})`)
+          }
+        } else {
+          // Legacy bank payout liquidation - keep old handler for now
+          const liquidationData = {
+            id: eventObject.id,
+            customer_id: customerId,
+            liquidation_address_id: liquidationAddressId,
+            liquidation_id: eventObject.liquidation_id || eventObject.id,
+            blockchain_tx_hash: eventObject.blockchain_tx_hash || eventObject.destination_tx_hash,
+            blockchain_memo: eventObject.blockchain_memo,
+            amount: eventObject.amount,
+            currency: eventObject.currency,
+            destination_currency: eventObject.destination_currency || eventObject.currency,
+            status: eventObject.status || eventObject.state,
+            created_at: eventObject.created_at,
+            completed_at: eventObject.completed_at,
+          }
+          await receiveTransactionTracker.processLiquidationWebhook(liquidationData)
+        }
+        
+        // Store processed event
+        await storeProcessedEvent(eventId, eventType, eventObject, liquidationUser.id)
         break
       }
 
@@ -420,7 +497,8 @@ async function processWebhookEvent(
           // If KYC is approved, complete account setup (create wallet/virtual accounts if needed)
           if (newStatus === "approved") {
             try {
-              await completeAccountSetupAfterKYC(user.id)
+              // Pass customerId directly (we already have it from the event at line 361)
+              await completeAccountSetupAfterKYC(user.id, customerId)
             } catch (error) {
               console.error("[WEBHOOK] Error completing account setup after KYC approval:", error)
             }
@@ -477,7 +555,8 @@ async function processWebhookEvent(
           // If endorsement is approved, create virtual account if it doesn't exist
           if (endorsement.status === "approved") {
             try {
-              await completeAccountSetupAfterKYC(user.id)
+              // Pass customerId from event to avoid re-querying
+              await completeAccountSetupAfterKYC(user.id, customerId)
             } catch (error) {
               console.error("[WEBHOOK] Error completing account setup after endorsement approval:", error)
             }
@@ -522,7 +601,52 @@ async function processWebhookEvent(
                   .eq("id", userByEmail.id)
                 console.log(`[WEBHOOK] Stored bridge_customer_id for user ${userByEmail.id}`)
               }
-              user = { data: userByEmail }
+              // Use the userByEmail directly since we have the data
+              const userId = userByEmail.id
+              
+              // Update KYC status if available
+              const updateData: any = {
+                updated_at: new Date().toISOString(),
+              }
+              
+              if (eventObject.kyc_status) {
+                updateData.bridge_kyc_status = eventObject.kyc_status
+                console.log(`[WEBHOOK] Updating KYC status to: ${eventObject.kyc_status}`)
+              }
+              
+              // Update rejection reasons if available
+              if (eventObject.rejection_reasons) {
+                updateData.bridge_kyc_rejection_reasons = eventObject.rejection_reasons
+              }
+              
+              // Update customer_id if not set
+              if (!userByEmail.bridge_customer_id) {
+                updateData.bridge_customer_id = customerId
+              }
+              
+              await supabase
+                .from("users")
+                .update(updateData)
+                .eq("id", userId)
+              
+              console.log(`[WEBHOOK] Updated user ${userId} with KYC status: ${eventObject.kyc_status || 'N/A'}`)
+              
+              // If KYC is completed (approved, under_review, or rejected), sync full data from Bridge
+              if (eventObject.kyc_status && 
+                  (eventObject.kyc_status === "approved" || 
+                   eventObject.kyc_status === "under_review" || 
+                   eventObject.kyc_status === "rejected")) {
+                try {
+                  const { syncBridgeKycDataToDatabase } = await import("@/lib/bridge-kyc-sync")
+                  await syncBridgeKycDataToDatabase(customerId, userId)
+                  console.log(`[WEBHOOK] Synced Bridge KYC data to database for user ${userId}`)
+                } catch (syncError: any) {
+                  console.error(`[WEBHOOK] Error syncing Bridge KYC data:`, syncError)
+                  // Don't fail the webhook - logging is sufficient
+                }
+              }
+              
+              await storeProcessedEvent(eventId, eventType, eventObject, userId)
             }
           }
           
@@ -586,57 +710,256 @@ async function processWebhookEvent(
       case "virtual_account.activity.created":
       case "virtual_account.activity.updated": {
         // Deposit to virtual account - Payment received!
+        console.log(`[BRIDGE-WEBHOOK] 🚀 Processing virtual_account.activity event at ${new Date().toISOString()}`)
         // eventObject is the activity object in new format
         const activity = eventObject
         const virtualAccountId = activity.virtual_account_id || eventObject.virtual_account_id
         const activityId = activity.id
 
+        const activityType = activity.type || activity.status || ''
+        const activityAmount = parseFloat(activity.amount || '0')
+        const activityStatus = activityType || activity.status || 'funds_received'
+        
+        // Filter out non-transaction activities (same as sync logic)
+        const nonTransactionTypes = [
+          'account_update',
+          'deactivation',
+          'reactivation',
+          'microdeposit',
+        ]
+        
+        if (nonTransactionTypes.includes(activityType)) {
+          console.log(`[BRIDGE-WEBHOOK] ⏭️ Skipping non-transaction activity: ${activityType}`)
+          await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+          break
+        }
+        
+        // Only process activities with positive amount
+        if (activityAmount <= 0) {
+          console.log(`[BRIDGE-WEBHOOK] ⏭️ Skipping activity with zero/negative amount: ${activityAmount}`)
+          await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+          break
+        }
+        
+        // Only process two statuses: funds_received (Processing) and payment_processed (Completed)
+        // Skip all intermediate statuses (funds_scheduled, payment_submitted, in_review, etc.)
+        const validStatuses = ['funds_received', 'payment_processed']
+        if (!validStatuses.includes(activityStatus.toLowerCase())) {
+          console.log(`[BRIDGE-WEBHOOK] ⏭️ Skipping activity ${activityId} with status ${activityStatus} (only tracking funds_received and payment_processed)`)
+          await storeProcessedEvent(eventId, eventType, eventObject, virtualAccount?.user_id)
+          break
+        }
+
+        console.log(`[BRIDGE-WEBHOOK] Activity details:`, {
+          activityId,
+          virtualAccountId,
+          type: activityType,
+          amount: activityAmount,
+          currency: activity.currency,
+          created_at: activity.created_at,
+        })
+
         // Find virtual account and user
-        const { data: virtualAccount } = await supabase
+        const { data: virtualAccount, error: vaError } = await supabase
           .from("bridge_virtual_accounts")
           .select("user_id, currency")
           .eq("bridge_virtual_account_id", virtualAccountId)
           .single()
 
+        if (vaError) {
+          console.error(`[BRIDGE-WEBHOOK] ❌ Error finding virtual account:`, vaError)
+        }
+
         if (virtualAccount) {
           console.log(
-            `[BRIDGE-WEBHOOK] Payment received: ${virtualAccountId}, User: ${virtualAccount.user_id}, Amount: ${activity.amount} ${activity.currency}`,
+            `[BRIDGE-WEBHOOK] ✅ Deposit received: ${virtualAccountId}, User: ${virtualAccount.user_id}, Amount: ${activity.amount} ${activity.currency}, creating transaction NOW at ${new Date().toISOString()}`,
           )
 
+          let transactionCreated = false
           try {
-            // Store payment in database
-            const { storeBridgePayment, matchPaymentToTransaction } = await import("@/lib/bridge-payment-matcher")
+            // Create or update deposit transaction
+            const { bridgeTransactionService } = await import("@/lib/bridge-transaction-service")
             
-            const paymentId = await storeBridgePayment(
-              virtualAccount.user_id,
-              virtualAccountId,
-              activityId,
-              parseFloat(activity.amount),
-              activity.currency || virtualAccount.currency,
-              eventObject, // Store full event data in metadata
-            )
-
-            // Attempt to match payment to transaction
-            // Bridge payments may include a reference field that matches transaction ID
-            const reference = activity.reference || activity.memo || activity.source?.description
-            const matchResult = await matchPaymentToTransaction(
-              paymentId,
-              virtualAccount.user_id,
-              parseFloat(activity.amount),
-              activity.currency || virtualAccount.currency,
-              reference,
-            )
-
-            if (matchResult.matched) {
-              console.log(`[BRIDGE-WEBHOOK] Payment matched to transaction: ${matchResult.transactionId}`)
-              // TODO: Send notification to user about payment received
-            } else {
-              console.log(`[BRIDGE-WEBHOOK] Payment not matched - will need manual review: ${paymentId}`)
-              // TODO: Create notification for unmatched payment
+            // Normalize currency: usdc -> USD, eurc -> EUR
+            const normalizeCurrency = (curr: string): string => {
+              const lower = (curr || '').toLowerCase()
+              if (lower === 'usdc' || lower === 'usd') return 'USD'
+              if (lower === 'eurc' || lower === 'eur') return 'EUR'
+              return curr?.toUpperCase() || virtualAccount.currency
             }
-          } catch (paymentError: any) {
-            console.error(`[BRIDGE-WEBHOOK] Error processing payment:`, paymentError.message)
-            // Don't throw - log error but don't fail webhook processing
+            
+            const activityCurrency = normalizeCurrency(activity.currency || virtualAccount.currency)
+            const activityStatus = activity.type || activity.status || 'funds_received'
+            
+            // Only track two statuses: funds_received (Processing) and payment_processed (Completed)
+            const STATUS_HIERARCHY: Record<string, number> = {
+              'funds_received': 1, // Processing
+              'payment_processed': 2, // Completed
+            }
+            
+            const getStatusPriority = (status: string): number => {
+              return STATUS_HIERARCHY[status.toLowerCase()] || 0
+            }
+            
+            const isStatusForward = (currentStatus: string, newStatus: string): boolean => {
+              const currentPriority = getStatusPriority(currentStatus)
+              const newPriority = getStatusPriority(newStatus)
+              return newPriority > currentPriority
+            }
+            
+            // PRIMARY: Check by deposit_id first (most reliable for grouping same transaction)
+            let existing = null
+            if (activity.deposit_id) {
+              const { data } = await supabase
+                .from('bridge_transactions')
+                .select('*')
+                .eq('deposit_id', activity.deposit_id)
+                .eq('user_id', virtualAccount.user_id)
+                .eq('transaction_type', 'receive')
+                .maybeSingle()
+              
+              if (data) {
+                existing = data
+                console.log(`[BRIDGE-WEBHOOK] Found existing transaction by deposit_id ${activity.deposit_id}: ${existing.transaction_id}`)
+              }
+            }
+            
+            // FALLBACK: Check by bridge_transaction_id (activity.id)
+            if (!existing) {
+              existing = await bridgeTransactionService.getTransactionByBridgeId(activityId)
+            }
+            
+            if (existing) {
+              // Transaction exists - only update if status moves forward
+              const statusChanged = existing.status !== activityStatus
+              const statusIsForward = isStatusForward(existing.status, activityStatus)
+              const hasNewReceiptInfo = activity.receipt?.final_amount || activity.receipt?.destination_tx_hash
+              
+              if ((statusChanged && statusIsForward) || hasNewReceiptInfo) {
+                if (statusChanged && statusIsForward) {
+                  console.log(`[BRIDGE-WEBHOOK] ✅ Updating transaction ${existing.transaction_id} status: ${existing.status} → ${activityStatus}`)
+                } else if (statusChanged && !statusIsForward) {
+                  console.log(`[BRIDGE-WEBHOOK] ⏭️ Skipping backward status update: ${existing.status} → ${activityStatus} (keeping ${existing.status})`)
+                } else {
+                  console.log(`[BRIDGE-WEBHOOK] ✅ Updating transaction ${existing.transaction_id} receipt info`)
+                }
+                
+                // Only update status if it's forward progress
+                const statusToUpdate = statusIsForward ? activityStatus : existing.status
+                
+                await bridgeTransactionService.updateTransactionStatus(
+                  existing.transaction_id, // Use transaction_id (internal ID) to update the same row
+                  statusToUpdate,
+                  {
+                    receiptFinalAmount: activity.receipt?.final_amount ? parseFloat(activity.receipt.final_amount) : undefined,
+                    receiptDestinationTxHash: activity.receipt?.destination_tx_hash,
+                    completedAt: activityStatus === 'payment_processed' ? new Date().toISOString() : undefined,
+                    metadata: eventObject,
+                    activityId: activityId, // Update activity_id and bridge_transaction_id to latest activity.id
+                  },
+                )
+                console.log(`[BRIDGE-WEBHOOK] ✅ Updated deposit transaction: ${existing.transaction_id}`)
+                transactionCreated = true
+              } else {
+                console.log(`[BRIDGE-WEBHOOK] ⏭️ Transaction ${existing.transaction_id} already at status ${existing.status}, no update needed`)
+                transactionCreated = true // Mark as created since it exists
+              }
+            } else {
+              // Create new deposit transaction (on first status - funds_scheduled, funds_received, etc.)
+              // BUT FIRST: Double-check by deposit_id to prevent race conditions
+              // Multiple webhooks with same deposit_id but different activity.id might arrive simultaneously
+              if (activity.deposit_id) {
+                const { data: doubleCheck } = await supabase
+                  .from('bridge_transactions')
+                  .select('*')
+                  .eq('deposit_id', activity.deposit_id)
+                  .eq('user_id', virtualAccount.user_id)
+                  .eq('transaction_type', 'receive')
+                  .maybeSingle()
+                
+                if (doubleCheck) {
+                  // Transaction was created by another webhook with same deposit_id
+                  // Update it instead of creating a new one
+                  console.log(`[BRIDGE-WEBHOOK] Found existing transaction by deposit_id (double-check) ${activity.deposit_id}: ${doubleCheck.transaction_id}`)
+                  const statusChanged = doubleCheck.status !== activityStatus
+                  const statusIsForward = isStatusForward(doubleCheck.status, activityStatus)
+                  const hasNewReceiptInfo = activity.receipt?.final_amount || activity.receipt?.destination_tx_hash
+                  
+                  if ((statusChanged && statusIsForward) || hasNewReceiptInfo) {
+                    const statusToUpdate = statusIsForward ? activityStatus : doubleCheck.status
+                    await bridgeTransactionService.updateTransactionStatus(
+                      doubleCheck.transaction_id, // Use transaction_id (internal ID) to update the same row
+                      statusToUpdate,
+                      {
+                        receiptFinalAmount: activity.receipt?.final_amount ? parseFloat(activity.receipt.final_amount) : undefined,
+                        receiptDestinationTxHash: activity.receipt?.destination_tx_hash,
+                        completedAt: activityStatus === 'payment_processed' ? new Date().toISOString() : undefined,
+                        metadata: eventObject,
+                        activityId: activityId, // Update activity_id and bridge_transaction_id to latest activity.id
+                      }
+                    )
+                    console.log(`[BRIDGE-WEBHOOK] ✅ Updated deposit transaction: ${doubleCheck.transaction_id}`)
+                  }
+                  transactionCreated = true
+                  // Skip creation - transaction already exists
+                }
+              }
+              
+              // Only create if we didn't find an existing transaction in double-check
+              if (!transactionCreated) {
+                const createStartTime = Date.now()
+              console.log(`[BRIDGE-WEBHOOK] 📝 Creating deposit transaction in database at ${new Date().toISOString()}...`)
+              
+                // Use activity.id as bridge_transaction_id (will be updated to latest activity.id when status changes)
+                const bridgeTransactionId = activityId
+              
+              const createdTx = await bridgeTransactionService.createDepositTransaction({
+                userId: virtualAccount.user_id,
+                bridgeActivityId: bridgeTransactionId,
+                virtualAccountId: virtualAccountId,
+                amount: parseFloat(activity.amount),
+                currency: activityCurrency, // Normalized currency (usdc -> USD)
+                status: activityStatus, // Current status (could be funds_scheduled, funds_received, etc.)
+                depositId: activity.deposit_id,
+                recipientName: activity.source?.sender_name,
+                sourcePaymentRail: activity.source?.payment_rail,
+                receiptFinalAmount: activity.receipt?.final_amount ? parseFloat(activity.receipt.final_amount) : undefined,
+                receiptDestinationTxHash: activity.receipt?.destination_tx_hash,
+                reference: activity.reference || activity.memo,
+                metadata: eventObject,
+                bridgeCreatedAt: activity.created_at,
+              })
+              
+                const createDuration = Date.now() - createStartTime
+                console.log(`[BRIDGE-WEBHOOK] ✅ Created deposit transaction ${createdTx.transaction_id} (${activityStatus}) in ${createDuration}ms at ${new Date().toISOString()}`)
+                transactionCreated = true
+              }
+            }
+          } catch (txError: any) {
+            // Log full error details for debugging
+            console.error(`[BRIDGE-WEBHOOK] ❌ CRITICAL: Failed to create/update deposit transaction:`, {
+              error: txError.message,
+              stack: txError.stack,
+              activityId,
+              virtualAccountId,
+              userId: virtualAccount.user_id,
+              amount: activity.amount,
+              currency: activity.currency,
+              eventType,
+            })
+            
+            // Only trigger sync as last resort if transaction creation completely failed
+            // Don't trigger sync for duplicate key errors (transaction already exists)
+            if (!txError?.code || txError.code !== '23505') {
+              console.log(`[BRIDGE-WEBHOOK] 🔄 Triggering background sync as fallback for user ${virtualAccount.user_id}...`)
+              const { syncAllTransactions } = await import("@/lib/bridge-transaction-sync")
+              // Run sync in background, don't await (non-blocking)
+              syncAllTransactions(virtualAccount.user_id).catch((syncError: any) => {
+                console.error(`[BRIDGE-WEBHOOK] ❌ Background sync also failed:`, syncError.message)
+              })
+            } else {
+              console.log(`[BRIDGE-WEBHOOK] ⏭️ Duplicate key error - transaction already exists, skipping sync fallback`)
+            }
           }
 
           // Store processed event
@@ -648,45 +971,198 @@ async function processWebhookEvent(
       }
 
       case "transfer.created": {
-        // New transfer created
-        console.log(`[WEBHOOK] Transfer created: ${eventObject.id}`)
-        const transferId = eventObject.id
-        const customerId = eventObject.on_behalf_of
+        // New transfer created (send transaction)
+        console.log(`[BRIDGE-WEBHOOK] 🚀 Processing transfer.created event at ${new Date().toISOString()}`)
+        const transfer = eventObject
+        const transferId = transfer.id
+        const customerId = transfer.on_behalf_of || transfer.customer_id
+
+        console.log(`[BRIDGE-WEBHOOK] Transfer details:`, {
+          transferId,
+          customerId,
+          amount: transfer.amount,
+          currency: transfer.currency,
+          state: transfer.state,
+          status: transfer.status,
+          created_at: transfer.created_at,
+        })
+
+        // Find user by Bridge customer ID
+        const { data: user, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("bridge_customer_id", customerId)
+          .single()
+
+        if (userError) {
+          console.error(`[BRIDGE-WEBHOOK] ❌ Error finding user:`, userError)
+        }
+
+        if (user) {
+          console.log(`[BRIDGE-WEBHOOK] ✅ User found: ${user.id}, creating transaction NOW at ${new Date().toISOString()}`)
+
+          let transactionCreated = false
+          try {
+            // Create send transaction
+            const { bridgeTransactionService } = await import("@/lib/bridge-transaction-service")
+            
+            // Check if transaction already exists
+            const existing = await bridgeTransactionService.getTransactionByBridgeId(transferId)
+            
+            if (!existing) {
+              await bridgeTransactionService.createSendTransaction({
+                userId: user.id,
+                bridgeTransferId: transferId,
+                amount: parseFloat(transfer.amount),
+                currency: transfer.currency,
+                status: transfer.state || transfer.status || 'awaiting_funds',
+                sourceWalletId: transfer.source?.bridge_wallet_id || '',
+                sourcePaymentRail: transfer.source?.payment_rail || 'bridge_wallet',
+                destinationPaymentRail: transfer.destination?.payment_rail || '',
+                destinationExternalAccountId: transfer.destination?.external_account_id,
+                destinationWalletId: transfer.destination?.bridge_wallet_id,
+                destinationCryptoAddress: transfer.destination?.to_address,
+                receiptFinalAmount: transfer.receipt?.final_amount ? parseFloat(transfer.receipt.final_amount) : undefined,
+                receiptTraceNumber: transfer.receipt?.trace_number,
+                receiptImad: transfer.receipt?.imad,
+                receiptDestinationTxHash: transfer.receipt?.destination_tx_hash,
+                metadata: eventObject,
+                bridgeCreatedAt: transfer.created_at,
+              })
+              console.log(`[BRIDGE-WEBHOOK] ✅ Created send transaction for transfer: ${transferId}`)
+              transactionCreated = true
+            } else {
+              console.log(`[BRIDGE-WEBHOOK] ⚠️ Send transaction already exists for transfer: ${transferId}`)
+              transactionCreated = true
+            }
+          } catch (txError: any) {
+            // Log full error details for debugging
+            console.error(`[BRIDGE-WEBHOOK] ❌ CRITICAL: Failed to create send transaction:`, {
+              error: txError.message,
+              stack: txError.stack,
+              transferId,
+              customerId,
+              userId: user.id,
+              amount: transfer.amount,
+              currency: transfer.currency,
+              eventType,
+            })
+            
+            // Trigger background sync as fallback to ensure transaction is eventually created
+            console.log(`[BRIDGE-WEBHOOK] 🔄 Triggering background sync as fallback for user ${user.id}...`)
+            const { syncAllTransactions } = await import("@/lib/bridge-transaction-sync")
+            syncAllTransactions(user.id).catch((syncError: any) => {
+              console.error(`[BRIDGE-WEBHOOK] ❌ Background sync also failed:`, syncError.message)
+            })
+          }
+
+          // Store processed event
+          await storeProcessedEvent(eventId, eventType, eventObject, user.id)
+        } else {
+          console.warn(`[BRIDGE-WEBHOOK] User not found for customer: ${customerId}`)
+          await storeProcessedEvent(eventId, eventType, eventObject, undefined)
+        }
+        break
+      }
+
+      case "transfer.updated":
+      case "transfer.updated.status_transitioned": {
+        // Transfer status changed (send transaction update)
+        const transfer = eventObject
+        const transferId = transfer.id
+        const newStatus = transfer.state || transfer.status
+
+        console.log(`[BRIDGE-WEBHOOK] Transfer updated: ${transferId}, Status: ${newStatus}`)
+
+        try {
+          // Update transaction status
+          const { bridgeTransactionService } = await import("@/lib/bridge-transaction-service")
+          
+          const existing = await bridgeTransactionService.getTransactionByBridgeId(transferId)
+          
+          if (existing) {
+            await bridgeTransactionService.updateTransactionStatus(
+              transferId,
+              newStatus,
+              {
+                receiptFinalAmount: transfer.receipt?.final_amount ? parseFloat(transfer.receipt.final_amount) : undefined,
+                receiptTraceNumber: transfer.receipt?.trace_number,
+                receiptImad: transfer.receipt?.imad,
+                receiptDestinationTxHash: transfer.receipt?.destination_tx_hash,
+                completedAt: (newStatus === 'payment_processed' || newStatus === 'completed') ? new Date().toISOString() : undefined,
+                metadata: eventObject,
+              },
+            )
+            console.log(`[BRIDGE-WEBHOOK] ✅ Updated send transaction: ${existing.transaction_id}`)
+          } else {
+            // Transaction doesn't exist yet - might be created from API call, try to create it now
+            const customerId = transfer.on_behalf_of || transfer.customer_id
+            const { data: user } = await supabase
+              .from("users")
+              .select("id")
+              .eq("bridge_customer_id", customerId)
+              .single()
+
+            if (user) {
+              await bridgeTransactionService.createSendTransaction({
+                userId: user.id,
+                bridgeTransferId: transferId,
+                amount: parseFloat(transfer.amount),
+                currency: transfer.currency,
+                status: newStatus,
+                sourceWalletId: transfer.source?.bridge_wallet_id || '',
+                sourcePaymentRail: transfer.source?.payment_rail || 'bridge_wallet',
+                destinationPaymentRail: transfer.destination?.payment_rail || '',
+                destinationExternalAccountId: transfer.destination?.external_account_id,
+                destinationWalletId: transfer.destination?.bridge_wallet_id,
+                destinationCryptoAddress: transfer.destination?.to_address,
+                receiptFinalAmount: transfer.receipt?.final_amount ? parseFloat(transfer.receipt.final_amount) : undefined,
+                receiptTraceNumber: transfer.receipt?.trace_number,
+                receiptImad: transfer.receipt?.imad,
+                receiptDestinationTxHash: transfer.receipt?.destination_tx_hash,
+                metadata: eventObject,
+                bridgeCreatedAt: transfer.created_at,
+              })
+              console.log(`[BRIDGE-WEBHOOK] ✅ Created send transaction from update event: ${transferId}`)
+            } else {
+              console.warn(`[BRIDGE-WEBHOOK] ⚠️ User not found for customer ${customerId} when trying to create transaction from update event`)
+            }
+          }
+        } catch (txError: any) {
+          // Log full error details for debugging
+          console.error(`[BRIDGE-WEBHOOK] ❌ CRITICAL: Failed to update/create send transaction:`, {
+            error: txError.message,
+            stack: txError.stack,
+            transferId,
+            newStatus,
+            eventType,
+          })
+          
+          // Trigger background sync as fallback
+          const customerId = transfer.on_behalf_of || transfer.customer_id
+          const { data: user } = await supabase
+            .from("users")
+            .select("id")
+            .eq("bridge_customer_id", customerId)
+            .single()
+          
+          if (user) {
+            console.log(`[BRIDGE-WEBHOOK] 🔄 Triggering background sync as fallback for user ${user.id}...`)
+            const { syncAllTransactions } = await import("@/lib/bridge-transaction-sync")
+            syncAllTransactions(user.id).catch((syncError: any) => {
+              console.error(`[BRIDGE-WEBHOOK] ❌ Background sync also failed:`, syncError.message)
+            })
+          }
+        }
+
+        // Store processed event
+        const customerId = transfer.on_behalf_of || transfer.customer_id
         const { data: user } = await supabase
           .from("users")
           .select("id")
           .eq("bridge_customer_id", customerId)
           .single()
         await storeProcessedEvent(eventId, eventType, eventObject, user?.id)
-        break
-      }
-
-      case "transfer.updated":
-      case "transfer.updated.status_transitioned": {
-        // Transfer status changed
-        const transferId = eventObject.id
-        const newStatus = eventObject.state || eventObject.status
-
-        // Update transfer status in database
-        const { data: transfer } = await supabase
-          .from("bridge_transfers")
-          .select("user_id")
-          .eq("bridge_transfer_id", transferId)
-          .single()
-
-        if (transfer) {
-        await supabase
-          .from("bridge_transfers")
-          .update({
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("bridge_transfer_id", transferId)
-        }
-
-        // TODO: Send notification to user about transfer status change
-        // Store processed event
-        await storeProcessedEvent(eventId, eventType, eventObject, transfer?.user_id)
         break
       }
 
@@ -709,14 +1185,19 @@ async function processWebhookEvent(
       }
 
       default:
-        console.log(`[WEBHOOK] Unhandled Bridge webhook event type: ${eventType}`)
+        console.warn(`[WEBHOOK] ⚠️ Unhandled Bridge webhook event type: ${eventType}`)
+        console.warn(`[WEBHOOK] Event object:`, JSON.stringify(eventObject, null, 2).substring(0, 1000))
         // Store unhandled events for debugging
         await storeProcessedEvent(eventId, eventType, eventObject, undefined)
     }
 
-  } catch (error) {
-    console.error("Error processing Bridge webhook event:", error)
+  } catch (error: any) {
+    const processDuration = Date.now() - processStartTime
+    console.error(`[WEBHOOK-PROCESS] ❌ Error processing Bridge webhook event after ${processDuration}ms:`, error, error.stack)
     // Don't throw - errors are logged but don't affect webhook response
+  } finally {
+    const processDuration = Date.now() - processStartTime
+    console.log(`[WEBHOOK-PROCESS] ✅ Finished processing ${eventType} in ${processDuration}ms at ${new Date().toISOString()}`)
   }
 }
 
@@ -794,12 +1275,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing event_type" }, { status: 400 })
     }
 
-    console.log("[WEBHOOK] Processing event:", {
+    const processingStartTime = new Date().toISOString()
+    console.log("[WEBHOOK] 🎯 Processing event at", processingStartTime, ":", {
       eventType,
       eventCategory,
       eventId,
       hasEventObject: !!eventObject,
       hasChanges: !!eventObjectChanges,
+      eventObjectPreview: eventObject ? JSON.stringify(eventObject).substring(0, 200) : null,
     })
 
     // Check idempotency - prevent duplicate processing
@@ -811,13 +1294,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, message: "Event already processed" })
     }
 
-    // Return 200 immediately and process async
-    processWebhookEvent(eventType, eventObject, eventId, {
+    // Process immediately (don't await, but don't delay response)
+    // This ensures processing starts right away while we return 200
+    const processingPromise = processWebhookEvent(eventType, eventObject, eventId, {
       eventCategory,
       eventObjectChanges,
       eventCreatedAt,
     }).catch((error) => {
-      console.error("[WEBHOOK] Error in async webhook processing:", error)
+      console.error("[WEBHOOK] ❌ Error in async webhook processing:", error, error.stack)
+    })
+
+    // Log that we're starting processing
+    console.log(`[WEBHOOK] ✅ Webhook received, starting immediate processing for ${eventType} at ${new Date().toISOString()}`)
+    
+    // Don't await - return immediately but processing happens in background
+    // This ensures Bridge gets 200 quickly while we process
+    processingPromise.then(() => {
+      console.log(`[WEBHOOK] ✅ Finished processing ${eventType} at ${new Date().toISOString()}`)
     })
 
     return NextResponse.json({ received: true })

@@ -1,5 +1,6 @@
 // Combined Transaction Service - Merges send and receive transactions
 import { transactionService, adminService } from "./database"
+import { bridgeTransactionService } from "./bridge-transaction-service"
 
 export interface CombinedTransaction {
   id: string
@@ -48,23 +49,25 @@ export const combinedTransactionService = {
   ): Promise<CombinedTransaction[]> {
     const limit = filters.limit || 100
 
-    // Fetch send transactions only (crypto_receive_transactions table removed)
-    const [sendTransactions, receiveTransactions] = await Promise.all([
+    // Fetch send transactions and bridge transactions (send + receive)
+    const [sendTransactions, bridgeTransactions] = await Promise.all([
       transactionService.getByUserId(userId, limit, userId).catch((error) => {
         console.error("Error fetching send transactions:", error)
         return []
       }),
-      // No longer fetching receive transactions
-      Promise.resolve([]),
+      bridgeTransactionService.getTransactionsByUser(userId, { limit }).catch((error) => {
+        console.error("Error fetching bridge transactions:", error)
+        return []
+      }),
     ])
 
     console.log("CombinedTransactionService - getUserAllTransactions:", {
       userId,
       sendCount: sendTransactions?.length || 0,
-      receiveCount: receiveTransactions?.length || 0,
+      bridgeCount: bridgeTransactions?.length || 0,
     })
 
-    // Transform send transactions
+    // Transform send transactions (legacy transactions table)
     const sendTxns: CombinedTransaction[] = (sendTransactions || []).map((tx) => ({
       id: tx.id,
       transaction_id: tx.transaction_id,
@@ -80,36 +83,52 @@ export const combinedTransactionService = {
       recipient: tx.recipient,
     }))
 
-    // Transform receive transactions - distinguish between bank payouts and card funding
-    const receiveTxns: CombinedTransaction[] = (receiveTransactions || []).map((tx) => {
-      const isCardFunding = tx.destination_type === "card" || tx.bridge_card_account_id
-      return {
-        id: tx.id,
-        transaction_id: tx.transaction_id || tx.id, // Fallback to id if transaction_id is missing
-        type: (isCardFunding ? "card_funding" : "receive") as const,
-        user_id: tx.user_id,
-        status: tx.status,
-        created_at: tx.created_at,
-        updated_at: tx.updated_at,
-        crypto_amount: tx.crypto_amount,
-        crypto_currency: tx.crypto_currency,
-        fiat_amount: tx.fiat_amount,
-        fiat_currency: tx.fiat_currency,
-        stellar_transaction_hash: tx.stellar_transaction_hash || tx.blockchain_tx_hash, // Fallback to blockchain_tx_hash
-        crypto_wallet: tx.crypto_wallet,
-        destination_type: tx.destination_type,
-        bridge_card_account_id: tx.bridge_card_account_id,
+    // Transform bridge transactions (send + receive from bridge_transactions table)
+    const bridgeTxns: CombinedTransaction[] = (bridgeTransactions || []).map((tx) => {
+      if (tx.transaction_type === "send") {
+        // Bridge send transaction
+        return {
+          id: tx.id,
+          transaction_id: tx.transaction_id,
+          type: "send" as const,
+          user_id: tx.user_id,
+          status: tx.status,
+          created_at: tx.created_at,
+          updated_at: tx.updated_at,
+          send_amount: tx.amount,
+          send_currency: tx.currency.toUpperCase(),
+          receive_amount: tx.final_amount || tx.amount,
+          receive_currency: tx.currency.toUpperCase(),
+          recipient: tx.name ? { full_name: tx.name } : undefined,
+          blockchain_tx_hash: tx.receipt_destination_tx_hash,
+        }
+      } else {
+        // Bridge receive transaction (deposit)
+        return {
+          id: tx.id,
+          transaction_id: tx.transaction_id,
+          type: "receive" as const,
+          user_id: tx.user_id,
+          status: tx.status,
+          created_at: tx.created_at,
+          updated_at: tx.updated_at,
+          crypto_amount: tx.amount,
+          crypto_currency: tx.currency.toUpperCase(),
+          fiat_amount: tx.final_amount || tx.amount,
+          fiat_currency: tx.currency.toUpperCase(),
+          blockchain_tx_hash: tx.receipt_destination_tx_hash,
+        }
       }
     })
 
     // Combine and sort by date (newest first)
-    let combined: CombinedTransaction[] = [...sendTxns, ...receiveTxns]
+    let combined: CombinedTransaction[] = [...sendTxns, ...bridgeTxns]
 
     // Apply type filter
     if (filters.type === "send") {
-      combined = sendTxns
+      combined = [...sendTxns, ...bridgeTxns.filter((tx) => tx.type === "send")]
     } else if (filters.type === "receive") {
-      combined = receiveTxns
+      combined = bridgeTxns.filter((tx) => tx.type === "receive")
     }
 
     // Apply status filter
@@ -140,8 +159,9 @@ export const combinedTransactionService = {
     try {
       const limit = filters.limit || 100
 
-      // Fetch send transactions only (crypto_receive_transactions table removed)
-      const sendTransactions = await adminService.getAllTransactions({
+      // Fetch send transactions and bridge transactions
+      const [sendTransactions, bridgeTransactions] = await Promise.all([
+        adminService.getAllTransactions({
           status: filters.status,
           search: filters.search,
           limit,
@@ -151,10 +171,12 @@ export const combinedTransactionService = {
           console.error("Error code:", error?.code)
           console.error("Error details:", error?.details)
           console.error("Error stack:", error?.stack)
-              return []
-            })
-
-      const receiveTransactions: any[] = [] // No longer fetching receive transactions
+          return []
+        }),
+        // Note: Admin would need to fetch all bridge transactions or filter by user
+        // For now, we'll skip bridge transactions in admin view or implement separately
+        Promise.resolve([]),
+      ])
 
       console.log("CombinedTransactionService - getAdminAllTransactions:", {
         filters,

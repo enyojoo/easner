@@ -6,6 +6,8 @@ export interface UserProfileData {
   lastName: string
   phone: string
   baseCurrency: string
+  easetag?: string
+  dateOfBirth?: string
 }
 
 export interface UserStats {
@@ -30,6 +32,18 @@ export const userService = {
     // Include middle_name if provided (even if empty string)
     if (updates.middleName !== undefined) {
       updateData.middle_name = updates.middleName || null
+    }
+
+    // Include easetag if provided
+    if (updates.easetag !== undefined) {
+      // Remove @ prefix and convert to lowercase
+      const cleanEasetag = updates.easetag.replace(/^@/, "").toLowerCase().trim()
+      updateData.easetag = cleanEasetag || null
+    }
+
+    // Include date_of_birth if provided
+    if (updates.dateOfBirth !== undefined) {
+      updateData.date_of_birth = updates.dateOfBirth || null
     }
     
     const { data, error } = await supabase

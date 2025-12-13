@@ -39,6 +39,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('AuthContext: Fetching user profile for userId:', userId)
       
+      // Get email_confirmed_at from Supabase auth user
+      const { data: { session } } = await supabase.auth.getSession()
+      const emailConfirmedAt = session?.user?.email_confirmed_at || undefined
+      
       // Try regular users table first
       const { data: regularUser, error: regularUserError } = await supabase
         .from('users')
@@ -58,6 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           bridge_kyc_rejection_reasons: regularUser.bridge_kyc_rejection_reasons,
           bridge_endorsements: regularUser.bridge_endorsements,
           bridge_signed_agreement_id: regularUser.bridge_signed_agreement_id,
+          email_confirmed_at: emailConfirmedAt,
           profile: {
             id: regularUser.id,
             email: regularUser.email,
@@ -66,6 +71,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             last_name: regularUser.last_name,
             phone: regularUser.phone,
             base_currency: regularUser.base_currency,
+            easetag: regularUser.easetag,
+            date_of_birth: regularUser.date_of_birth,
             status: regularUser.status,
             // verification_status removed - use bridge_kyc_status for KYC, email_confirmed_at for email verification
             bridge_kyc_status: regularUser.bridge_kyc_status,

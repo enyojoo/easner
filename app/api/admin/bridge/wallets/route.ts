@@ -21,7 +21,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       .from("bridge_wallets")
       .select(`
         *,
-        user:users(id, email, first_name, last_name)
+        user:users(id, email, first_name, last_name, bridge_customer_id)
       `)
 
     if (chain) {
@@ -44,7 +44,16 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     const walletsWithBalances = await Promise.all(
       (wallets || []).map(async (wallet) => {
         try {
-          const balances = await bridgeService.getWalletBalance(wallet.bridge_wallet_id)
+          // Get customer ID from user relationship
+          const customerId = (wallet.user as any)?.bridge_customer_id
+          if (!customerId) {
+            console.warn(`No customer ID found for wallet ${wallet.bridge_wallet_id}`)
+            return {
+              ...wallet,
+              balances: {},
+            }
+          }
+          const balances = await bridgeService.getWalletBalance(customerId, wallet.bridge_wallet_id)
           return {
             ...wallet,
             balances,
