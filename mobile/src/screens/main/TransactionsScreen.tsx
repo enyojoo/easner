@@ -20,7 +20,7 @@ import {
 } from 'lucide-react-native'
 import * as Haptics from 'expo-haptics'
 import ScreenWrapper from '../../components/ScreenWrapper'
-import { ShimmerListItem } from '../../components/premium'
+import { ShimmerLoader } from '../../components/premium'
 import FrameContainer from '../../components/FrameContainer'
 import EmptyState from '../../components/EmptyState'
 import ErrorState from '../../components/ErrorState'
@@ -241,14 +241,18 @@ function TransactionItem({
   )
 }
 
-// Loading Skeleton
+// Loading Skeleton - Frame Only
 function TransactionsSkeleton() {
   return (
     <View style={styles.skeletonContainer}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <View key={i} style={styles.transactionItem}>
-          <ShimmerListItem />
-        </View>
+        <ShimmerLoader 
+          key={i}
+          width="100%" 
+          height={72} 
+          borderRadius={borderRadius.md}
+          style={{ marginBottom: spacing[2] }}
+        />
       ))}
     </View>
   )

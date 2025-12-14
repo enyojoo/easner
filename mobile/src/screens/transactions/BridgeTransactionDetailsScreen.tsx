@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as Haptics from 'expo-haptics'
 import ScreenWrapper from '../../components/ScreenWrapper'
-import { ShimmerListItem } from '../../components/premium'
+import { ShimmerLoader } from '../../components/premium'
 import { NavigationProps } from '../../types'
 import { colors, textStyles, borderRadius, spacing, shadows } from '../../theme'
 import { apiGet } from '../../lib/apiClient'
@@ -435,30 +435,20 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + spacing[5] }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Status Card Skeleton */}
-        <View style={styles.statusCard}>
-          <View style={styles.statusGradient}>
-            <ShimmerListItem style={{ width: 150, height: 14, borderRadius: borderRadius.md, marginBottom: spacing[2] }} />
-            <ShimmerListItem style={{ width: 200, height: 48, borderRadius: borderRadius.md, marginBottom: spacing[3] }} />
-            <ShimmerListItem style={{ width: 100, height: 24, borderRadius: borderRadius.full }} />
-          </View>
-        </View>
+        {/* Status Card Skeleton - Frame Only */}
+        <ShimmerLoader 
+          width="100%" 
+          height={180} 
+          borderRadius={borderRadius.xl}
+          style={{ marginBottom: spacing[4] }}
+        />
 
-        {/* Transaction Summary Skeleton */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <ShimmerListItem style={{ width: 32, height: 32, borderRadius: 16, marginRight: spacing[2] }} />
-            <ShimmerListItem style={{ width: 180, height: 20, borderRadius: borderRadius.md }} />
-          </View>
-          <View style={styles.summaryRows}>
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <View key={i} style={styles.summaryRow}>
-                <ShimmerListItem style={{ width: 80, height: 16, borderRadius: borderRadius.md }} />
-                <ShimmerListItem style={{ width: 150, height: 16, borderRadius: borderRadius.md }} />
-              </View>
-            ))}
-          </View>
-        </View>
+        {/* Transaction Summary Skeleton - Frame Only */}
+        <ShimmerLoader 
+          width="100%" 
+          height={320} 
+          borderRadius={borderRadius.xl}
+        />
       </ScrollView>
     </View>
   )
@@ -845,9 +835,6 @@ const styles = StyleSheet.create({
     ...textStyles.headlineMedium,
     color: colors.text.primary,
     marginBottom: 2,
-  },
-  skeletonCard: {
-    overflow: 'hidden',
   },
   errorContainer: {
     flex: 1,

@@ -30,7 +30,7 @@ import { getCountryFlag } from '../../utils/flagUtils'
 import { getAccountTypeConfigFromCurrency } from '../../lib/currencyAccountTypes'
 import { formatIBAN, formatSortCode, formatRoutingNumber, formatAccountNumber } from '../../utils/formatters'
 import { getAllCountryCurrencies, CountryCurrency } from '../../lib/countryCurrencyMapping'
-import { ShimmerListItem } from '../../components/premium'
+import { ShimmerLoader } from '../../components/premium'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 // Helper function to get flag image source for currency
@@ -425,7 +425,7 @@ export default function SelectRecentRecipientScreen({ navigation }: NavigationPr
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Loading Skeleton */}
+          {/* Loading Skeleton - Frame Only */}
           {isLoading ? (
             <Animated.View
               style={[
@@ -441,17 +441,14 @@ export default function SelectRecentRecipientScreen({ navigation }: NavigationPr
                 }
               ]}
             >
-              {[1, 2, 3].map((i) => (
-                <View key={i} style={styles.recipientItem}>
-                  <View style={styles.recipientRow}>
-                    <ShimmerListItem style={{ width: 48, height: 48, borderRadius: 24, marginRight: spacing[3] }} />
-                    <View style={{ flex: 1 }}>
-                      <ShimmerListItem style={{ width: '60%', height: 16, borderRadius: borderRadius.md, marginBottom: spacing[1] }} />
-                      <ShimmerListItem style={{ width: '40%', height: 14, borderRadius: borderRadius.md, marginBottom: spacing[1] }} />
-                      <ShimmerListItem style={{ width: '50%', height: 14, borderRadius: borderRadius.md }} />
-                    </View>
-                  </View>
-                </View>
+              {[1, 2, 3, 4].map((i) => (
+                <ShimmerLoader 
+                  key={i}
+                  width="100%" 
+                  height={88} 
+                  borderRadius={borderRadius.xl}
+                  style={{ marginBottom: spacing[3] }}
+                />
               ))}
             </Animated.View>
           ) : hasTransactions && recentRecipients.length > 0 ? (

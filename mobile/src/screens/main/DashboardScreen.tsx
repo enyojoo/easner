@@ -41,7 +41,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useBalance } from '../../contexts/BalanceContext'
 import { apiGet, apiPost } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
-import { ShimmerListItem } from '../../components/premium'
+import { ShimmerLoader } from '../../components/premium'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -974,9 +974,13 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
           {loadingTransactions ? (
             <View style={styles.skeletonContainer}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <View key={i} style={styles.transactionItem}>
-                  <ShimmerListItem />
-                </View>
+                <ShimmerLoader 
+                  key={i}
+                  width="100%" 
+                  height={72} 
+                  borderRadius={borderRadius.md}
+                  style={{ marginBottom: spacing[2] }}
+                />
               ))}
             </View>
           ) : recentTransactions.length === 0 && hasAttemptedLoad ? (
