@@ -242,6 +242,13 @@ export const recipientService = {
       sortCode?: string
       iban?: string
       swiftBic?: string
+      addressLine1?: string
+      addressLine2?: string
+      city?: string
+      state?: string
+      postalCode?: string
+      transferType?: "ACH" | "Wire"
+      checkingOrSavings?: "checking" | "savings"
     },
   ) {
     const { data, error } = await supabase
@@ -257,6 +264,13 @@ export const recipientService = {
         sort_code: recipientData.sortCode,
         iban: recipientData.iban,
         swift_bic: recipientData.swiftBic,
+        address_line1: recipientData.addressLine1,
+        address_line2: recipientData.addressLine2,
+        city: recipientData.city,
+        state: recipientData.state,
+        postal_code: recipientData.postalCode,
+        transfer_type: recipientData.transferType,
+        checking_or_savings: recipientData.checkingOrSavings,
       })
       .select()
       .single()
@@ -309,6 +323,13 @@ export const recipientService = {
       sortCode?: string
       iban?: string
       swiftBic?: string
+      addressLine1?: string
+      addressLine2?: string
+      city?: string
+      state?: string
+      postalCode?: string
+      transferType?: "ACH" | "Wire"
+      checkingOrSavings?: "checking" | "savings"
     },
   ) {
     const updateData: Record<string, any> = {}
@@ -320,6 +341,13 @@ export const recipientService = {
     if (updates.sortCode !== undefined) updateData.sort_code = updates.sortCode
     if (updates.iban !== undefined) updateData.iban = updates.iban
     if (updates.swiftBic !== undefined) updateData.swift_bic = updates.swiftBic
+    if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1
+    if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2
+    if (updates.city !== undefined) updateData.city = updates.city
+    if (updates.state !== undefined) updateData.state = updates.state
+    if (updates.postalCode !== undefined) updateData.postal_code = updates.postalCode
+    if (updates.transferType !== undefined) updateData.transfer_type = updates.transferType
+    if (updates.checkingOrSavings !== undefined) updateData.checking_or_savings = updates.checkingOrSavings
 
     const { data, error } = await supabase
       .from("recipients")

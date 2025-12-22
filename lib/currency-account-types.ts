@@ -40,19 +40,31 @@ export function getAccountTypeConfig(accountType: AccountType): AccountTypeConfi
     case "us":
       return {
         accountType: "us",
-        requiredFields: ["routing_number", "account_number", "account_name", "bank_name"],
-        optionalFields: [],
+        requiredFields: ["routing_number", "account_number", "account_name", "bank_name", "address_line1", "city", "state", "postal_code", "checking_or_savings"],
+        optionalFields: ["address_line2"],
         fieldLabels: {
           routing_number: "Routing Number",
           account_number: "Account Number",
           account_name: "Account Name",
           bank_name: "Bank Name",
+          address_line1: "Address Line 1",
+          address_line2: "Address Line 2",
+          city: "City",
+          state: "State",
+          postal_code: "ZIP Code",
+          checking_or_savings: "Account Type",
         },
         fieldPlaceholders: {
           routing_number: "e.g., 123456789",
           account_number: "e.g., 1234567890",
           account_name: "e.g., Company Name LLC",
           bank_name: "e.g., Bank of America",
+          address_line1: "e.g., 123 Main Street",
+          address_line2: "e.g., Apt 4B (optional)",
+          city: "e.g., New York",
+          state: "e.g., NY",
+          postal_code: "e.g., 10001",
+          checking_or_savings: "Select account type",
         },
         fieldFormatters: {
           routing_number: (value: string) => {

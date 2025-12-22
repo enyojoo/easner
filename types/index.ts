@@ -40,6 +40,13 @@ export interface Recipient {
   sort_code?: string
   iban?: string
   swift_bic?: string
+  address_line1?: string
+  address_line2?: string
+  city?: string
+  state?: string
+  postal_code?: string
+  transfer_type?: "ACH" | "Wire"
+  checking_or_savings?: "checking" | "savings"
   created_at: string
   updated_at: string
 }

@@ -192,6 +192,12 @@ import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
 } from "@/lib/currency-account-types"
+import {
+  formatRoutingNumber,
+  formatSortCode,
+  formatIBAN,
+  formatAccountNumber,
+} from "@/lib/formatters"
 
 export default function UserSendPage() {
   const router = useRouter()
@@ -233,6 +239,13 @@ export default function UserSendPage() {
     sortCode: "",
     iban: "",
     swiftBic: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    transferType: "" as "ACH" | "Wire" | "",
+    checkingOrSavings: "" as "checking" | "savings" | "",
   })
 
   // Copy feedback states
@@ -477,6 +490,13 @@ export default function UserSendPage() {
         sortCode: newRecipientData.sortCode || undefined,
         iban: newRecipientData.iban || undefined,
         swiftBic: newRecipientData.swiftBic || undefined,
+        addressLine1: newRecipientData.addressLine1 || undefined,
+        addressLine2: newRecipientData.addressLine2 || undefined,
+        city: newRecipientData.city || undefined,
+        state: newRecipientData.state || undefined,
+        postalCode: newRecipientData.postalCode || undefined,
+        transferType: newRecipientData.transferType || undefined,
+        checkingOrSavings: newRecipientData.checkingOrSavings || undefined,
       })
 
       // Refresh recipients data
@@ -494,6 +514,13 @@ export default function UserSendPage() {
         sortCode: "",
         iban: "",
         swiftBic: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        transferType: "",
+        checkingOrSavings: "",
       })
 
       // Close the dialog
@@ -1195,6 +1222,64 @@ export default function UserSendPage() {
                                 {/* US Account Fields */}
                                 {accountConfig.accountType === "us" && (
                                   <>
+                                    {/* Transfer Type Selection */}
+                                    <div className="space-y-2">
+                                      <Label>Transfer Type *</Label>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewRecipientData({ ...newRecipientData, transferType: "ACH" })}
+                                          className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                                            newRecipientData.transferType === "ACH"
+                                              ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                          }`}
+                                        >
+                                          ACH
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewRecipientData({ ...newRecipientData, transferType: "Wire" })}
+                                          className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                                            newRecipientData.transferType === "Wire"
+                                              ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                          }`}
+                                        >
+                                          Wire
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {/* Account Type Selection (Checking/Savings) */}
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientAccountType">
+                                        {accountConfig.fieldLabels.checking_or_savings} *
+                                      </Label>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewRecipientData({ ...newRecipientData, checkingOrSavings: "checking" })}
+                                          className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                                            newRecipientData.checkingOrSavings === "checking"
+                                              ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                          }`}
+                                        >
+                                          Checking
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewRecipientData({ ...newRecipientData, checkingOrSavings: "savings" })}
+                                          className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                                            newRecipientData.checkingOrSavings === "savings"
+                                              ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                                          }`}
+                                        >
+                                          Savings
+                                        </button>
+                                      </div>
+                                    </div>
                                     <div className="space-y-2">
                                       <Label htmlFor="newRecipientRoutingNumber">
                                         {accountConfig.fieldLabels.routing_number} *
@@ -1203,8 +1288,8 @@ export default function UserSendPage() {
                                         id="newRecipientRoutingNumber"
                                         value={newRecipientData.routingNumber}
                                         onChange={(e) => {
-                                          const value = e.target.value.replace(/\D/g, "").slice(0, 9)
-                                          setNewRecipientData({ ...newRecipientData, routingNumber: value })
+                                          const formatted = formatRoutingNumber(e.target.value)
+                                          setNewRecipientData({ ...newRecipientData, routingNumber: formatted })
                                         }}
                                         placeholder={accountConfig.fieldPlaceholders.routing_number}
                                         maxLength={9}
@@ -1218,13 +1303,81 @@ export default function UserSendPage() {
                             <Input
                               id="newRecipientAccount"
                               value={newRecipientData.accountNumber}
-                              onChange={(e) =>
-                                setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                              }
+                              onChange={(e) => {
+                                const formatted = formatAccountNumber(e.target.value)
+                                setNewRecipientData({ ...newRecipientData, accountNumber: formatted })
+                              }}
                                         placeholder={accountConfig.fieldPlaceholders.account_number}
                               required
                             />
                           </div>
+                                    {/* Address Fields */}
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientAddressLine1">
+                                        {accountConfig.fieldLabels.address_line1} *
+                                      </Label>
+                                      <Input
+                                        id="newRecipientAddressLine1"
+                                        value={newRecipientData.addressLine1}
+                                        onChange={(e) => setNewRecipientData({ ...newRecipientData, addressLine1: e.target.value })}
+                                        placeholder={accountConfig.fieldPlaceholders.address_line1}
+                                        required
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientAddressLine2">
+                                        {accountConfig.fieldLabels.address_line2}
+                                      </Label>
+                                      <Input
+                                        id="newRecipientAddressLine2"
+                                        value={newRecipientData.addressLine2}
+                                        onChange={(e) => setNewRecipientData({ ...newRecipientData, addressLine2: e.target.value })}
+                                        placeholder={accountConfig.fieldPlaceholders.address_line2}
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="newRecipientCity">
+                                          {accountConfig.fieldLabels.city} *
+                                        </Label>
+                                        <Input
+                                          id="newRecipientCity"
+                                          value={newRecipientData.city}
+                                          onChange={(e) => setNewRecipientData({ ...newRecipientData, city: e.target.value })}
+                                          placeholder={accountConfig.fieldPlaceholders.city}
+                                          required
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="newRecipientState">
+                                          {accountConfig.fieldLabels.state} *
+                                        </Label>
+                                        <Input
+                                          id="newRecipientState"
+                                          value={newRecipientData.state}
+                                          onChange={(e) => setNewRecipientData({ ...newRecipientData, state: e.target.value.toUpperCase() })}
+                                          placeholder={accountConfig.fieldPlaceholders.state}
+                                          maxLength={2}
+                                          required
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="newRecipientPostalCode">
+                                        {accountConfig.fieldLabels.postal_code} *
+                                      </Label>
+                                      <Input
+                                        id="newRecipientPostalCode"
+                                        value={newRecipientData.postalCode}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+                                          setNewRecipientData({ ...newRecipientData, postalCode: value })
+                                        }}
+                                        placeholder={accountConfig.fieldPlaceholders.postal_code}
+                                        maxLength={10}
+                                        required
+                                      />
+                                    </div>
                                   </>
                                 )}
 
@@ -1240,11 +1393,11 @@ export default function UserSendPage() {
                                           id="newRecipientSortCode"
                                           value={newRecipientData.sortCode}
                                           onChange={(e) => {
-                                            const value = e.target.value.replace(/\D/g, "").slice(0, 6)
-                                            setNewRecipientData({ ...newRecipientData, sortCode: value })
+                                            const formatted = formatSortCode(e.target.value)
+                                            setNewRecipientData({ ...newRecipientData, sortCode: formatted })
                                           }}
                                           placeholder={accountConfig.fieldPlaceholders.sort_code}
-                                          maxLength={6}
+                                          maxLength={8}
                               required
                             />
                           </div>
@@ -1255,9 +1408,10 @@ export default function UserSendPage() {
                                         <Input
                                           id="newRecipientAccount"
                                           value={newRecipientData.accountNumber}
-                                          onChange={(e) =>
-                                            setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                                          }
+                                          onChange={(e) => {
+                                            const formatted = formatAccountNumber(e.target.value)
+                                            setNewRecipientData({ ...newRecipientData, accountNumber: formatted })
+                                          }}
                                           placeholder={accountConfig.fieldPlaceholders.account_number}
                                           required
                                         />
@@ -1270,9 +1424,10 @@ export default function UserSendPage() {
                                       <Input
                                         id="newRecipientIban"
                                         value={newRecipientData.iban}
-                                        onChange={(e) =>
-                                          setNewRecipientData({ ...newRecipientData, iban: e.target.value.toUpperCase() })
-                                        }
+                                        onChange={(e) => {
+                                          const formatted = formatIBAN(e.target.value)
+                                          setNewRecipientData({ ...newRecipientData, iban: formatted })
+                                        }}
                                         placeholder={accountConfig.fieldPlaceholders.iban}
                                       />
                           </div>
@@ -1340,9 +1495,10 @@ export default function UserSendPage() {
                                     <Input
                                       id="newRecipientAccount"
                                       value={newRecipientData.accountNumber}
-                                      onChange={(e) =>
-                                        setNewRecipientData({ ...newRecipientData, accountNumber: e.target.value })
-                                      }
+                                      onChange={(e) => {
+                                        const formatted = formatAccountNumber(e.target.value)
+                                        setNewRecipientData({ ...newRecipientData, accountNumber: formatted })
+                                      }}
                                       placeholder={accountConfig.fieldPlaceholders.account_number}
                                       required
                                     />
@@ -1359,6 +1515,13 @@ export default function UserSendPage() {
                               const accountConfig = getAccountTypeConfigFromCurrency(receiveCurrency)
                               const requiredFields = accountConfig.requiredFields
 
+                              // For US accounts, transfer type and account type are required
+                              if (accountConfig.accountType === "us") {
+                                if (!newRecipientData.transferType || !newRecipientData.checkingOrSavings) {
+                                  return true
+                                }
+                              }
+
                               // Map snake_case field names from config to camelCase form field names
                               const mapFieldName = (fieldName: string): string => {
                                 const fieldMap: Record<string, string> = {
@@ -1369,6 +1532,12 @@ export default function UserSendPage() {
                                   sort_code: "sortCode",
                                   iban: "iban",
                                   swift_bic: "swiftBic",
+                                  address_line1: "addressLine1",
+                                  address_line2: "addressLine2",
+                                  city: "city",
+                                  state: "state",
+                                  postal_code: "postalCode",
+                                  checking_or_savings: "checkingOrSavings",
                                 }
                                 return fieldMap[fieldName] || fieldName
                               }

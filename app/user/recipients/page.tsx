@@ -19,6 +19,12 @@ import {
   getAccountTypeConfigFromCurrency,
   formatFieldValue,
 } from "@/lib/currency-account-types"
+import {
+  formatRoutingNumber,
+  formatSortCode,
+  formatIBAN,
+  formatAccountNumber,
+} from "@/lib/formatters"
 
 const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitting, currencies, onSubmit }) => {
   const selectedCurrency = currencies.find((c) => c.code === formData.currency)
@@ -34,6 +40,12 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
       sort_code: "sortCode",
       iban: "iban",
       swift_bic: "swiftBic",
+      address_line1: "addressLine1",
+      address_line2: "addressLine2",
+      city: "city",
+      state: "state",
+      postal_code: "postalCode",
+      checking_or_savings: "checkingOrSavings",
     }
     return fieldMap[fieldName] || fieldName
   }
@@ -42,6 +54,13 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
     if (!formData.name || !formData.bankName || isSubmitting) return false
 
     if (!accountConfig) return false
+
+    // For US accounts, transfer type and account type are required
+    if (accountConfig.accountType === "us") {
+      if (!formData.transferType || !formData.checkingOrSavings) {
+        return false
+      }
+    }
 
     const requiredFields = accountConfig.requiredFields
     for (const field of requiredFields) {
@@ -133,6 +152,68 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
           {/* US Account Fields */}
           {accountConfig.accountType === "us" && (
             <>
+              {/* Transfer Type Selection */}
+              <div className="space-y-2">
+                <Label>Transfer Type *</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, transferType: "ACH" })}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      formData.transferType === "ACH"
+                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    ACH
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, transferType: "Wire" })}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      formData.transferType === "Wire"
+                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    Wire
+                  </button>
+                </div>
+              </div>
+              {/* Account Type Selection (Checking/Savings) */}
+              <div className="space-y-2">
+                <Label htmlFor="checkingOrSavings">
+                  {accountConfig.fieldLabels.checking_or_savings} *
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, checkingOrSavings: "checking" })}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      formData.checkingOrSavings === "checking"
+                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    Checking
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, checkingOrSavings: "savings" })}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                      formData.checkingOrSavings === "savings"
+                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    Savings
+                  </button>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="routingNumber">
                   {accountConfig.fieldLabels.routing_number} *
@@ -141,8 +222,8 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                   id="routingNumber"
                   value={formData.routingNumber || ""}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "").slice(0, 9)
-                    setFormData({ ...formData, routingNumber: value })
+                    const formatted = formatRoutingNumber(e.target.value)
+                    setFormData({ ...formData, routingNumber: formatted })
                   }}
                   placeholder={accountConfig.fieldPlaceholders.routing_number}
                   maxLength={9}
@@ -156,8 +237,79 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                 <Input
                   id="accountNumber"
                   value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  onChange={(e) => {
+                    const formatted = formatAccountNumber(e.target.value)
+                    setFormData({ ...formData, accountNumber: formatted })
+                  }}
                   placeholder={accountConfig.fieldPlaceholders.account_number}
+                  disabled={isSubmitting}
+                />
+              </div>
+              {/* Address Fields */}
+              <div className="space-y-2">
+                <Label htmlFor="addressLine1">
+                  {accountConfig.fieldLabels.address_line1} *
+                </Label>
+                <Input
+                  id="addressLine1"
+                  value={formData.addressLine1 || ""}
+                  onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
+                  placeholder={accountConfig.fieldPlaceholders.address_line1}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="addressLine2">
+                  {accountConfig.fieldLabels.address_line2}
+                </Label>
+                <Input
+                  id="addressLine2"
+                  value={formData.addressLine2 || ""}
+                  onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                  placeholder={accountConfig.fieldPlaceholders.address_line2}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">
+                    {accountConfig.fieldLabels.city} *
+                  </Label>
+                  <Input
+                    id="city"
+                    value={formData.city || ""}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder={accountConfig.fieldPlaceholders.city}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">
+                    {accountConfig.fieldLabels.state} *
+                  </Label>
+                  <Input
+                    id="state"
+                    value={formData.state || ""}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                    placeholder={accountConfig.fieldPlaceholders.state}
+                    maxLength={2}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">
+                  {accountConfig.fieldLabels.postal_code} *
+                </Label>
+                <Input
+                  id="postalCode"
+                  value={formData.postalCode || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+                    setFormData({ ...formData, postalCode: value })
+                  }}
+                  placeholder={accountConfig.fieldPlaceholders.postal_code}
+                  maxLength={10}
                   disabled={isSubmitting}
                 />
               </div>
@@ -176,11 +328,11 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                     id="sortCode"
                     value={formData.sortCode || ""}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "").slice(0, 6)
-                      setFormData({ ...formData, sortCode: value })
+                      const formatted = formatSortCode(e.target.value)
+                      setFormData({ ...formData, sortCode: formatted })
                     }}
                     placeholder={accountConfig.fieldPlaceholders.sort_code}
-                    maxLength={6}
+                    maxLength={8}
                     disabled={isSubmitting}
                   />
                 </div>
@@ -191,7 +343,10 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
         <Input
           id="accountNumber"
           value={formData.accountNumber}
-          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+          onChange={(e) => {
+            const formatted = formatAccountNumber(e.target.value)
+            setFormData({ ...formData, accountNumber: formatted })
+          }}
                     placeholder={accountConfig.fieldPlaceholders.account_number}
                     disabled={isSubmitting}
                   />
@@ -204,9 +359,10 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                 <Input
                   id="iban"
                   value={formData.iban || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, iban: e.target.value.toUpperCase() })
-                  }
+                  onChange={(e) => {
+                    const formatted = formatIBAN(e.target.value)
+                    setFormData({ ...formData, iban: formatted })
+                  }}
                   placeholder={accountConfig.fieldPlaceholders.iban}
                   disabled={isSubmitting}
                 />
@@ -238,9 +394,10 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                 <Input
                   id="iban"
                   value={formData.iban || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, iban: e.target.value.toUpperCase() })
-                  }
+                  onChange={(e) => {
+                    const formatted = formatIBAN(e.target.value)
+                    setFormData({ ...formData, iban: formatted })
+                  }}
                   placeholder={accountConfig.fieldPlaceholders.iban}
                   disabled={isSubmitting}
                 />
@@ -312,6 +469,13 @@ export default function UserRecipientsPage() {
     sortCode: "",
     iban: "",
     swiftBic: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    transferType: "" as "ACH" | "Wire" | "",
+    checkingOrSavings: "" as "checking" | "savings" | "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -341,6 +505,13 @@ export default function UserRecipientsPage() {
         sortCode: formData.sortCode || undefined,
         iban: formData.iban || undefined,
         swiftBic: formData.swiftBic || undefined,
+        addressLine1: formData.addressLine1 || undefined,
+        addressLine2: formData.addressLine2 || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
+        postalCode: formData.postalCode || undefined,
+        transferType: formData.transferType || undefined,
+        checkingOrSavings: formData.checkingOrSavings || undefined,
       })
 
       // Refresh recipients data
@@ -368,6 +539,13 @@ export default function UserRecipientsPage() {
       sortCode: recipient.sort_code || "",
       iban: recipient.iban || "",
       swiftBic: recipient.swift_bic || "",
+      addressLine1: recipient.address_line1 || "",
+      addressLine2: recipient.address_line2 || "",
+      city: recipient.city || "",
+      state: recipient.state || "",
+      postalCode: recipient.postal_code || "",
+      transferType: (recipient.transfer_type as "ACH" | "Wire" | "") || "",
+      checkingOrSavings: (recipient.checking_or_savings as "checking" | "savings" | "") || "",
     })
   }
 
@@ -386,6 +564,13 @@ export default function UserRecipientsPage() {
         sortCode: formData.sortCode || undefined,
         iban: formData.iban || undefined,
         swiftBic: formData.swiftBic || undefined,
+        addressLine1: formData.addressLine1 || undefined,
+        addressLine2: formData.addressLine2 || undefined,
+        city: formData.city || undefined,
+        state: formData.state || undefined,
+        postalCode: formData.postalCode || undefined,
+        transferType: formData.transferType || undefined,
+        checkingOrSavings: formData.checkingOrSavings || undefined,
       })
 
       // Refresh recipients data
@@ -440,6 +625,13 @@ export default function UserRecipientsPage() {
       sortCode: "",
       iban: "",
       swiftBic: "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      transferType: "",
+      checkingOrSavings: "",
     })
     setError("")
   }
