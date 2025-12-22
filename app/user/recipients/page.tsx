@@ -672,18 +672,20 @@ export default function UserRecipientsPage() {
                   Add Recipient
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[95vw] max-w-md mx-auto">
+              <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Add New Recipient</DialogTitle>
                 </DialogHeader>
-                <RecipientForm
-                  formData={formData}
-                  setFormData={setFormData}
-                  error={error}
-                  isSubmitting={isSubmitting}
-                  currencies={currencies}
-                  onSubmit={handleAddRecipient}
-                />
+                <div className="overflow-y-auto flex-1 pr-2 -mr-2">
+                  <RecipientForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    error={error}
+                    isSubmitting={isSubmitting}
+                    currencies={currencies}
+                    onSubmit={handleAddRecipient}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
@@ -780,19 +782,21 @@ export default function UserRecipientsPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="w-[95vw] max-w-md mx-auto">
+                        <DialogContent className="w-[95vw] max-w-md mx-auto max-h-[90vh] flex flex-col">
                           <DialogHeader>
                             <DialogTitle>Edit Recipient</DialogTitle>
                           </DialogHeader>
-                          <RecipientForm
-                            isEdit
-                            formData={formData}
-                            setFormData={setFormData}
-                            error={error}
-                            isSubmitting={isSubmitting}
-                            currencies={currencies}
-                            onSubmit={handleUpdateRecipient}
-                          />
+                          <div className="overflow-y-auto flex-1 pr-2 -mr-2">
+                            <RecipientForm
+                              isEdit
+                              formData={formData}
+                              setFormData={setFormData}
+                              error={error}
+                              isSubmitting={isSubmitting}
+                              currencies={currencies}
+                              onSubmit={handleUpdateRecipient}
+                            />
+                          </div>
                         </DialogContent>
                       </Dialog>
                       <Button

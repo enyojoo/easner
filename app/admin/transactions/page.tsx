@@ -774,7 +774,7 @@ export default function AdminTransactionsPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
+                          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                             <DialogHeader>
                               <div className="flex items-center gap-6">
                                 <DialogTitle>Transaction Details</DialogTitle>
@@ -787,7 +787,7 @@ export default function AdminTransactionsPage() {
                               </div>
                             </DialogHeader>
                             {selectedTransaction && (
-                              <div className="space-y-4">
+                              <div className="overflow-y-auto flex-1 pr-2 -mr-2 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <label className="text-sm font-medium text-gray-600">Transaction ID</label>
@@ -867,6 +867,32 @@ export default function AdminTransactionsPage() {
                                             <p className="font-mono text-xs">SWIFT/BIC: {recipient.swift_bic}</p>
                                           )}
                                           <p>{recipient.bank_name}</p>
+                                          {/* US Account Additional Fields */}
+                                          {accountType === "us" && (
+                                            <>
+                                              {recipient.transfer_type && (
+                                                <p className="text-xs">
+                                                  Transfer Type: <span className="font-medium">{recipient.transfer_type}</span>
+                                                </p>
+                                              )}
+                                              {recipient.checking_or_savings && (
+                                                <p className="text-xs">
+                                                  Account Type: <span className="font-medium capitalize">{recipient.checking_or_savings}</span>
+                                                </p>
+                                              )}
+                                              {recipient.address_line1 && (
+                                                <p className="text-xs">
+                                                  Address: {recipient.address_line1}
+                                                  {recipient.address_line2 && `, ${recipient.address_line2}`}
+                                                </p>
+                                              )}
+                                              {(recipient.city || recipient.state || recipient.postal_code) && (
+                                                <p className="text-xs">
+                                                  {[recipient.city, recipient.state, recipient.postal_code].filter(Boolean).join(", ")}
+                                                </p>
+                                              )}
+                                            </>
+                                          )}
                                         </div>
                                       )
                                     })()}

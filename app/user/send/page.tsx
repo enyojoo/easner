@@ -1163,11 +1163,11 @@ export default function UserSendPage() {
                         </div>
                       </DialogTrigger>
 
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
                         <DialogHeader>
                           <DialogTitle>Add New Recipient</DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-4">
+                        <div className="overflow-y-auto flex-1 pr-2 -mr-2 space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="newRecipientCurrency">Currency</Label>
                             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
