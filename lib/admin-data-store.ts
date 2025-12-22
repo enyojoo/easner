@@ -388,7 +388,7 @@ class AdminDataStore {
         .select(`
           *,
           user:users(first_name, last_name, email),
-          recipient:recipients(full_name, bank_name, account_number, routing_number, sort_code, iban, swift_bic, currency)
+          recipient:recipients(full_name, bank_name, account_number, routing_number, sort_code, iban, swift_bic, currency, address_line1, address_line2, city, state, postal_code, transfer_type, checking_or_savings)
         `)
         .order("created_at", { ascending: false })
         .limit(200)
