@@ -4,6 +4,31 @@ import { generateTransactionId } from "./transaction-id"
 
 // User operations
 export const userService = {
+  async create(userData: {
+    email: string
+    password?: string // Not stored in users table - handled by Supabase Auth
+    firstName: string
+    lastName: string
+    phone?: string
+    baseCurrency?: string
+  }) {
+    const { data, error } = await supabase
+      .from("users")
+      .insert({
+        email: userData.email,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        phone: userData.phone,
+        base_currency: userData.baseCurrency || "USD",
+        status: "active",
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
   async findByEmail(email: string) {
     const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
