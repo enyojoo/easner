@@ -268,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Proceed with Supabase Auth signup
+      // Proceed with signup if email doesn't exist
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -283,33 +283,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         return { error }
-      }
-
-      // Create user profile record in the users table
-      try {
-        const registerResponse = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email,
-            password, // Required by API but not stored (handled by Supabase Auth)
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            baseCurrency: userData.baseCurrency || "USD",
-          }),
-        })
-
-        if (!registerResponse.ok) {
-          const errorData = await registerResponse.json()
-          console.error('Failed to create user profile:', errorData)
-          // Don't fail the entire signup if profile creation fails
-          // The user can still log in, but profile will be null
-        }
-      } catch (registerError) {
-        console.error('Failed to create user profile:', registerError)
-        // Don't fail signup if profile creation fails
       }
 
       return { error: null }
