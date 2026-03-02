@@ -30,7 +30,7 @@ export default function HomePage() {
       <PublicHeader />
       <main
         className="min-h-screen"
-        style={{ paddingTop: '9rem' }}
+        style={{ paddingTop: '4.5rem' }}
       >
         <Hero onSendMoney={handleSendMoney} />
         <EasnerForIndividuals />
@@ -84,7 +84,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
   const router = useRouter()
 
   return (
-    <section className="relative bg-white pt-20 pb-16 sm:pt-24 sm:pb-20 md:pt-28 md:pb-24 lg:pt-32 lg:pb-32 overflow-hidden">
+    <section className="relative bg-white pt-10 pb-16 sm:pt-12 sm:pb-20 md:pt-14 md:pb-24 lg:pt-16 lg:pb-32 overflow-hidden">
       <div className="absolute inset-0 bg-easner-primary-50/10 pointer-events-none" style={{ clipPath: 'ellipse(80% 50% at 50% 0%)' }} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         <motion.div
