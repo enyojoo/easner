@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   description:
     "API-first cross-border payment infrastructure for US and EU businesses, with built-in KYC/AML compliance. For individuals and businesses.",
   keywords:
-    "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, US fintech, business banking, global payments, US EU Africa Asia transfers, instant cross border transfer, no wallet money transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
+    "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, US fintech, business banking, global payments, US EU Africa Asia transfers, instant cross border transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
   formatDetection: {
     email: false,
     address: false,
@@ -147,7 +147,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "FinancialService",
               "name": "Easner",
-              "description": "Technology platform facilitating instant cross-border money transfers. API-first cross-border payment infrastructure. No wallets required.",
+              "description": "Technology platform facilitating instant cross-border money transfers. API-first cross-border payment infrastructure for US and EU businesses.",
               "url": "https://www.easner.com",
               "logo": "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
               "serviceType": "Money Transfer",
@@ -167,7 +167,7 @@ export default function RootLayout({
               },
               "offers": {
                 "@type": "Offer",
-                "description": "Instant bank-to-bank international money transfers with zero fees. No wallets, no crypto apps required.",
+                "description": "Instant bank-to-bank international money transfers with zero fees.",
                 "price": "0",
                 "priceCurrency": "USD"
               },
