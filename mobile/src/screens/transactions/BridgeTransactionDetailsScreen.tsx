@@ -229,7 +229,7 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
   const formatScheme = (transaction: BridgeTransaction, paymentRail: string) => {
     const railLower = (paymentRail || '').toLowerCase().replace(/_/g, ' ')
     
-    // For crypto deposits (liquidation address), show "USDC on SOL" format
+    // For crypto deposits (liquidation address), show "USDC on SOL" or "EURC on SOL" format
     if (transaction.source_type === 'liquidation_address') {
       const railMap: Record<string, string> = {
         'solana': 'SOL',
@@ -237,9 +237,11 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
         'polygon': 'MATIC',
       }
       const railDisplay = railMap[railLower] || railLower.toUpperCase()
-      // Use currency from transaction (USDC/EURC)
-      const currency = transaction.currency?.toUpperCase() || 'USDC'
-      return `${currency} on ${railDisplay}`
+      // Map USD->USDC, EUR->EURC from metadata or transaction currency
+      const sourceCurrency = transaction.metadata?.source_currency?.toUpperCase() || 
+        transaction.currency?.toUpperCase() || ''
+      const stablecoin = sourceCurrency === 'EUR' || sourceCurrency === 'EURC' ? 'EURC' : 'USDC'
+      return `${stablecoin} on ${railDisplay}`
     }
     
     // For fiat deposits (virtual account), determine ACH PUSH, ACH PULL, WIRE, SEPA, or SEPA INSTANT
@@ -718,15 +720,13 @@ export default function BridgeTransactionDetailsScreen({ navigation, route }: Na
                 {/* For Stablecoin deposits (liquidation address) */}
                 {transaction.transaction_type === 'receive' && transaction.source_type === 'liquidation_address' && (
                   <>
-                    {/* Scheme */}
-                    {transaction.source_payment_rail && (
-                      <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Scheme</Text>
-                        <Text style={styles.summaryValue}>
-                          {formatScheme(transaction, transaction.source_payment_rail)}
-                        </Text>
-                      </View>
-                    )}
+                    {/* Scheme - always show "USDC on SOL" or "EURC on SOL" */}
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Scheme</Text>
+                      <Text style={styles.summaryValue}>
+                        {formatScheme(transaction, transaction.source_payment_rail || 'solana')}
+                      </Text>
+                    </View>
 
                     {/* When */}
                     <View style={styles.summaryRow}>

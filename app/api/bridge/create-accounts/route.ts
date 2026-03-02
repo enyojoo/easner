@@ -929,6 +929,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           iban: eurAccount.source_deposit_instructions?.iban,
           bic: eurAccount.source_deposit_instructions?.bic,
           bank_name: eurAccount.source_deposit_instructions?.bank_name,
+          bank_address: eurAccount.source_deposit_instructions?.bank_address,
+          account_holder_name: eurAccount.source_deposit_instructions?.account_holder_name || eurAccount.source_deposit_instructions?.bank_beneficiary_name,
           status: eurAccount.status,
         })
 

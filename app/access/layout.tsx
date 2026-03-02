@@ -1,21 +1,21 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Early Access - Easner",
-  description: "Get early access to Easner's zero-fee international money transfer service. Join the waitlist and be among the first to experience instant, fee-free transfers.",
-  keywords: "early access, easner waitlist, money transfer early access, zero fee transfer, international money transfer, join waitlist",
+  title: "Request Access - Easner",
+  description: "Request access to Easner's cross-border payment infrastructure. For US and EU businesses.",
+  keywords: "request access, cross border payments, API, business banking, international money transfer, fintech",
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: "Early Access - Easner",
-    description: "Get early access to Easner's zero-fee international money transfer service. Join the waitlist and be among the first to experience instant, fee-free transfers.",
+    title: "Request Access - Easner",
+    description: "Request access to Easner's cross-border payment infrastructure. For US and EU businesses.",
     url: "https://www.easner.com/access",
   },
   twitter: {
-    title: "Early Access - Easner",
-    description: "Get early access to Easner's zero-fee international money transfer service. Join the waitlist and be among the first to experience instant, fee-free transfers.",
+    title: "Request Access - Easner",
+    description: "Request access to Easner's cross-border payment infrastructure. For US and EU businesses.",
   },
   alternates: {
     canonical: "/access",

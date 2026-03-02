@@ -386,7 +386,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
   }
 
   return (
-    <Card className="w-full shadow-2xl border-0 ring-1 ring-gray-100 bg-white/80 backdrop-blur-sm">
+    <Card className="w-full rounded-2xl shadow-lg border-0 ring-1 ring-gray-200/60 bg-white">
       <CardContent className="p-6 space-y-6">
         {/* You Send Section */}
         <div className="space-y-4">

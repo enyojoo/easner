@@ -251,6 +251,8 @@ export async function initializeBridgeAccount(
           iban: eurAccount.source_deposit_instructions?.iban,
           bic: eurAccount.source_deposit_instructions?.bic,
           bank_name: eurAccount.source_deposit_instructions?.bank_name,
+          bank_address: eurAccount.source_deposit_instructions?.bank_address,
+          account_holder_name: eurAccount.source_deposit_instructions?.account_holder_name || eurAccount.source_deposit_instructions?.bank_beneficiary_name,
           status: eurAccount.status,
         })
 
@@ -443,6 +445,8 @@ export async function completeAccountSetupAfterKYC(
         iban: eurAccount.source_deposit_instructions?.iban,
         bic: eurAccount.source_deposit_instructions?.bic,
         bank_name: eurAccount.source_deposit_instructions?.bank_name,
+        bank_address: eurAccount.source_deposit_instructions?.bank_address,
+        account_holder_name: eurAccount.source_deposit_instructions?.account_holder_name || eurAccount.source_deposit_instructions?.bank_beneficiary_name,
         status: eurAccount.status,
       })
 

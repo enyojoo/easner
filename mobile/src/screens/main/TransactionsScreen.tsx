@@ -33,6 +33,7 @@ import { apiGet, apiPost } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { colors, shadows, textStyles, borderRadius, spacing } from '../../theme'
+import { getTransactionStatusDisplay } from '../../utils/formatters'
 
 // Get currencies from useUserData for formatAmount
 function useCurrencies() {
@@ -162,7 +163,8 @@ function TransactionItem({
 
   // Bridge transactions use transaction_type, legacy uses type
   const transactionType = item.transaction_type || item.type || 'send'
-  const statusColor = colors.status[item.status as keyof typeof colors.status] || colors.neutral[500]
+  const statusDisplay = getTransactionStatusDisplay(item.status)
+  const statusColor = statusDisplay?.color || colors.neutral[500]
 
   const getTransactionIcon = () => {
     const iconColor = colors.primary.main
@@ -224,18 +226,30 @@ function TransactionItem({
             {formatDate(item.bridge_created_at || item.created_at)}
           </Text>
         </View>
-        <Text
-          style={[
-            styles.transactionAmount,
-            transactionType === 'receive' && styles.transactionAmountReceived
-          ]}
-        >
-          {formatAmount(
-            item.amount || item.send_amount || item.crypto_amount || item.fiat_amount || 0,
-            item.currency || item.send_currency || item.crypto_currency || item.fiat_currency || 'USD',
-            transactionType === 'receive'
-          )}
-        </Text>
+        <View style={styles.transactionAmountContainer}>
+          <Text
+            style={[
+              styles.transactionAmount,
+              transactionType === 'receive' && styles.transactionAmountReceived
+            ]}
+          >
+            {formatAmount(
+              item.amount || item.send_amount || item.crypto_amount || item.fiat_amount || 0,
+              item.currency || item.send_currency || item.crypto_currency || item.fiat_currency || 'USD',
+              transactionType === 'receive'
+            )}
+          </Text>
+          {statusDisplay ? (
+            <Text
+              style={[
+                styles.transactionStatus,
+                { color: statusColor }
+              ]}
+            >
+              {statusDisplay.label}
+            </Text>
+          ) : null}
+        </View>
       </TouchableOpacity>
     </Animated.View>
   )
@@ -906,6 +920,10 @@ const styles = StyleSheet.create({
   transactionDetails: {
     flex: 1,
   },
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+    gap: spacing[0.5],
+  },
   transactionName: {
     ...textStyles.bodyMedium,
     color: colors.text.primary,
@@ -924,6 +942,10 @@ const styles = StyleSheet.create({
   },
   transactionAmountReceived: {
     color: colors.primary.main,
+  },
+  transactionStatus: {
+    ...textStyles.bodySmall,
+    fontFamily: 'Outfit-Regular',
   },
   
   // Empty State

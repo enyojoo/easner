@@ -88,6 +88,34 @@ export function formatCurrency(
 }
 
 /**
+ * Map Bridge API transaction status to user-friendly label and color
+ * Matches logic used in BridgeTransactionDetailsScreen
+ */
+export function getTransactionStatusDisplay(status: string): { label: string; color: string } | null {
+  if (!status) return null
+  const statusLower = status.toLowerCase()
+  if (statusLower.includes('processed') || statusLower.includes('completed')) {
+    return { label: 'Completed', color: '#10B981' }
+  }
+  if (statusLower.includes('pending') || statusLower.includes('awaiting') || statusLower.includes('scheduled') || statusLower.includes('received') || statusLower.includes('submitted')) {
+    return { label: 'Processing', color: '#1D4FF3' }
+  }
+  if (statusLower.includes('failed') || statusLower.includes('returned')) {
+    return { label: 'Failed', color: '#EF4444' }
+  }
+  if (statusLower.includes('refunded')) {
+    return { label: 'Refunded', color: '#EF4444' }
+  }
+  if (statusLower.includes('review')) {
+    return { label: 'In Review', color: '#F59E0B' }
+  }
+  if (statusLower.includes('cancelled')) {
+    return { label: 'Cancelled', color: '#6B7280' }
+  }
+  return { label: status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()), color: '#6B7280' }
+}
+
+/**
  * Format large numbers (e.g., 1.5M for 1,500,000)
  */
 export function formatLargeNumber(amount: number): string {

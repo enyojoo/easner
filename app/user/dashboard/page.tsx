@@ -3,8 +3,7 @@
 import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Send, Users, MessageCircle, UserPlus } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Send, MessageCircle, UserPlus } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect, useState } from "react"
@@ -185,30 +184,7 @@ export default function UserDashboardPage() {
           }
         }
 
-        // 2. Receive transactions: use fiat_amount (what user received as payout)
-        // Only include if type is explicitly "receive" (not card_funding)
-        const receiveTransactions = transactionsList.filter((t) => {
-          if (!t) return false
-          if (t.status !== "completed") return false
-          // Must be explicitly marked as receive (not card_funding)
-          return t.type === "receive" && t.destination_type === "bank"
-        })
-
-        for (const transaction of receiveTransactions) {
-          if (transaction.fiat_amount && transaction.fiat_currency) {
-            const amountInBaseCurrency = convertToBaseCurrency(
-              transaction.fiat_amount,
-              transaction.fiat_currency,
-              baseCurrency,
-              exchangeRates
-            )
-            if (amountInBaseCurrency > 0) {
-              totalInBaseCurrency += amountInBaseCurrency
-            }
-          }
-        }
-
-        // 3. Card transactions: use amount spent (debit transactions)
+        // 2. Card transactions: use amount spent (debit transactions)
         for (const cardTx of cardTransactions || []) {
           if (cardTx.amount && cardTx.currency && cardTx.amount > 0) {
             const amountInBaseCurrency = convertToBaseCurrency(
@@ -284,7 +260,17 @@ export default function UserDashboardPage() {
     return `${month} ${day}, ${year}`
   }
 
-  const recentTransactions = transactions?.slice(0, 2) || []
+  // Only show send transactions on web (receive/card_funding are mobile-only)
+  const recentTransactions = (transactions || [])
+    .filter((t) => {
+      if (!t) return false
+      if (t.type === "receive" || t.type === "card_funding") return false
+      if (t.destination_type === "card") return false
+      if (t.type === "send") return true
+      if (t.send_amount || t.receive_amount || t.recipient) return true
+      return false
+    })
+    .slice(0, 2)
 
   // Check if we have valid data to display
   const hasValidData = 
@@ -388,25 +374,10 @@ export default function UserDashboardPage() {
               {recentTransactions.map((transaction) => {
                 if (!transaction) return null
                 const statusColor = getStatusColor(transaction.status)
-                
-                // Determine transaction type: send, receive (bank), or card_funding
-                let transactionType: "send" | "receive" | "card_funding" = "send"
-                if (transaction.type === "receive" || transaction.type === "card_funding") {
-                  transactionType = transaction.type
-                } else if (transaction.destination_type === "card") {
-                  transactionType = "card_funding"
-                } else if (transaction.destination_type === "bank" || transaction.crypto_amount) {
-                  transactionType = "receive"
-                }
-                
-                const detailUrl =
-                  transactionType === "send"
-                    ? `/user/send/${transaction.transaction_id.toLowerCase()}`
-                    : `/user/receive/${transaction.transaction_id.toLowerCase()}`
 
                 return (
                   <Link
-                    href={detailUrl}
+                    href={`/user/send/${transaction.transaction_id.toLowerCase()}`}
                     key={transaction.id}
                     className="block"
                   >
@@ -415,20 +386,6 @@ export default function UserDashboardPage() {
                         {/* Transaction Header */}
                         <div className="flex items-center justify-between mb-3 sm:mb-4">
                           <div className="flex items-center gap-2">
-                            {transactionType !== "send" && (
-                            <Badge
-                              variant={
-                                  transactionType === "card_funding"
-                                  ? "outline"
-                                  : "secondary"
-                              }
-                              className="text-xs"
-                            >
-                                {transactionType === "card_funding"
-                                ? "Card Funding"
-                                : "Receive"}
-                            </Badge>
-                            )}
                             <span className="text-xs sm:text-sm text-gray-500 font-mono">
                               {transaction.transaction_id}
                             </span>
@@ -444,91 +401,35 @@ export default function UserDashboardPage() {
                           </span>
                         </div>
 
-                        {transactionType === "send" ? (
-                          <>
-                            {/* Recipient Info */}
-                            <div className="mb-4 sm:mb-5">
-                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                                To
-                              </div>
-                              <div className="text-base sm:text-lg font-semibold text-gray-900">
-                                {transaction.recipient?.full_name || "Unknown"}
-                              </div>
-                            </div>
+                        {/* Recipient Info */}
+                        <div className="mb-4 sm:mb-5">
+                          <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
+                            To
+                          </div>
+                          <div className="text-base sm:text-lg font-semibold text-gray-900">
+                            {transaction.recipient?.full_name || "Unknown"}
+                          </div>
+                        </div>
 
-                            {/* Amount Section */}
-                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                  Send Amount
-                                </span>
-                                <span className="text-base sm:text-lg font-semibold text-gray-900">
-                                  {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
-                                </span>
-                              </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                    Receive Amount
-                                  </span>
-                                  <span className="text-base sm:text-lg font-semibold text-green-600">
-                                  {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
-                                  </span>
-                                </div>
-                            </div>
-                          </>
-                        ) : transactionType === "card_funding" ? (
-                          <>
-                            {/* Card Funding Info */}
-                            <div className="mb-4 sm:mb-5">
-                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                                Card Top-Up
-                              </div>
-                              <div className="text-base sm:text-lg font-semibold text-gray-900">
-                                {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || "USDC")}
-                              </div>
-                            </div>
-
-                            {/* Amount Section */}
-                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                              {transaction.fiat_amount && transaction.fiat_currency && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                    Card Currency
-                                  </span>
-                                  <span className="text-base sm:text-lg font-semibold text-green-600">
-                                    {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* Receive Transaction Info */}
-                            <div className="mb-4 sm:mb-5">
-                              <div className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide mb-1">
-                                Stablecoin Received
-                              </div>
-                              <div className="text-base sm:text-lg font-semibold text-gray-900">
-                                {formatAmount(transaction.crypto_amount || 0, transaction.crypto_currency || "USDC")}
-                              </div>
-                            </div>
-
-                            {/* Amount Section */}
-                            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
-                              {transaction.fiat_amount && transaction.fiat_currency && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
-                                    Converted To
-                                  </span>
-                                  <span className="text-base sm:text-lg font-semibold text-green-600">
-                                    {formatAmount(transaction.fiat_amount, transaction.fiat_currency)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
+                        {/* Amount Section */}
+                        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                              Send Amount
+                            </span>
+                            <span className="text-base sm:text-lg font-semibold text-gray-900">
+                              {formatAmount(transaction.send_amount || 0, transaction.send_currency || "")}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs sm:text-sm text-gray-600 uppercase tracking-wide">
+                              Receive Amount
+                            </span>
+                            <span className="text-base sm:text-lg font-semibold text-green-600">
+                              {formatAmount(transaction.receive_amount || 0, transaction.receive_currency || "")}
+                            </span>
+                          </div>
+                        </div>
 
                         {/* Footer */}
                         <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">

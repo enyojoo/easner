@@ -42,6 +42,7 @@ import { useBalance } from '../../contexts/BalanceContext'
 import { apiGet, apiPost } from '../../lib/apiClient'
 import { supabase } from '../../lib/supabase'
 import { ShimmerLoader } from '../../components/premium'
+import { getTransactionStatusDisplay } from '../../utils/formatters'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -1020,14 +1021,29 @@ export default function DashboardScreen({ navigation }: NavigationProps) {
                       {formatTransactionDate(transaction.bridge_created_at || transaction.created_at)}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.transactionAmount,
-                      isReceived && styles.transactionAmountReceived
-                    ]}
-                  >
-                    {formatAmount(transaction.amount, isReceived, transaction.currency)}
-                  </Text>
+                  <View style={styles.transactionAmountContainer}>
+                    <Text
+                      style={[
+                        styles.transactionAmount,
+                        isReceived && styles.transactionAmountReceived
+                      ]}
+                    >
+                      {formatAmount(transaction.amount, isReceived, transaction.currency)}
+                    </Text>
+                    {(() => {
+                      const statusDisplay = getTransactionStatusDisplay(transaction.status)
+                      return statusDisplay ? (
+                        <Text
+                          style={[
+                            styles.transactionStatus,
+                            { color: statusDisplay.color }
+                          ]}
+                        >
+                          {statusDisplay.label}
+                        </Text>
+                      ) : null
+                    })()}
+                  </View>
                 </TouchableOpacity>
               )
             })
@@ -1413,6 +1429,10 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontFamily: 'Outfit-Regular',
   },
+  transactionAmountContainer: {
+    alignItems: 'flex-end',
+    gap: spacing[0.5],
+  },
   transactionAmount: {
     ...textStyles.bodyLarge,
     color: colors.text.primary,
@@ -1420,6 +1440,10 @@ const styles = StyleSheet.create({
   },
   transactionAmountReceived: {
     color: colors.primary.main,
+  },
+  transactionStatus: {
+    ...textStyles.bodySmall,
+    fontFamily: 'Outfit-Regular',
   },
   emptyStateContainer: {
     alignItems: 'center',

@@ -398,13 +398,13 @@ export function EarlyAccessForm() {
 
   if (isSubmitted) {
     return (
-      <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
+      <Card className="w-full max-w-md rounded-2xl shadow-lg border-0 ring-1 ring-gray-200/60">
         <CardContent className="pt-6 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
-          <p className="text-gray-600 mb-2">We've received your early access request. We'll review your application and send you an invitation to join Easner soon.</p>
+          <p className="text-gray-600 mb-2">We've received your request. We'll review your application and send you an invitation to join Easner soon.</p>
           <p className="text-sm text-gray-500 mb-6">You'll receive an email at <strong>{formData.email}</strong> with next steps.</p>
           <Link href="/">
             <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
@@ -417,10 +417,10 @@ export function EarlyAccessForm() {
   }
 
   return (
-    <Card className="w-full max-w-md shadow-2xl border-0 ring-1 ring-gray-100">
+    <Card className="w-full max-w-md rounded-2xl shadow-lg border-0 ring-1 ring-gray-200/60">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl text-gray-900">Get Early Access</CardTitle>
-        <CardDescription className="text-gray-600">Join the waitlist to be among the first to experience zero-fee international money transfers.</CardDescription>
+        <CardTitle className="text-2xl text-gray-900">Request Access</CardTitle>
+        <CardDescription className="text-gray-600">Request access to Easner's cross-border payment infrastructure for businesses and financial institutions.</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -658,7 +658,7 @@ export function EarlyAccessForm() {
             ) : (
               <>
                 <Send className="w-4 h-4 mr-2" />
-                Request Early Access
+                Request Access
               </>
             )}
           </Button>

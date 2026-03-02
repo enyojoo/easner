@@ -232,6 +232,19 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                 setLoading(false)
                 // Mark data as loaded to prevent unnecessary refetches
                 dataLoadedRef.current = true
+                // Backfill account holder name and bank address from Bridge API if missing (e.g. EUR accounts created before fix)
+                if (!account.account_holder_name || !account.bank_address) {
+                  bridgeService.getVirtualAccount(currencyLower).then((apiAccount) => {
+                    if (apiAccount?.hasAccount) {
+                      const updates: Record<string, string> = {}
+                      if (apiAccount.accountHolderName && !account.account_holder_name) updates.accountHolderName = apiAccount.accountHolderName
+                      if (apiAccount.bankAddress && !account.bank_address) updates.bankAddress = apiAccount.bankAddress
+                      if (Object.keys(updates).length > 0) {
+                        setVirtualAccount((prev) => prev ? { ...prev, ...updates } : prev)
+                      }
+                    }
+                  }).catch(() => {})
+                }
               } else {
                 // Account ID exists but no account data found - might need to fetch from API
                 console.log('Account ID exists but no account data in database, will fetch from API')
@@ -463,6 +476,20 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             setDataLoadedFromCache(true)
             setInitialCheckComplete(true)
             dataLoadedRef.current = true
+            // Backfill missing EUR fields (accountHolderName, bankAddress) from API - cache may be stale
+            if (currencyLower === 'eur' && cachedAccount.data && (!cachedAccount.data.accountHolderName || !cachedAccount.data.bankAddress)) {
+              bridgeService.getVirtualAccount(currencyLower).then((apiAccount) => {
+                if (apiAccount?.hasAccount) {
+                  const updates: Record<string, string> = {}
+                  if (apiAccount.accountHolderName && !cachedAccount.data.accountHolderName) updates.accountHolderName = apiAccount.accountHolderName
+                  if (apiAccount.bankAddress && !cachedAccount.data.bankAddress) updates.bankAddress = apiAccount.bankAddress
+                  if (Object.keys(updates).length > 0) {
+                    setVirtualAccount((prev) => prev ? { ...prev, ...updates } : prev)
+                    setCachedDataLocal(CACHE_KEY_ACCOUNT, { ...cachedAccount.data, ...updates })
+                  }
+                }
+              }).catch(() => {})
+            }
           } else if (cachedAccount) {
             // Cache is stale - show it immediately, then refresh in background
             foundAccountData = true
@@ -471,6 +498,20 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
             setDataLoadedFromCache(true)
             setInitialCheckComplete(true)
             dataLoadedRef.current = true
+            // Backfill missing EUR fields when cache is stale
+            if (currencyLower === 'eur' && cachedAccount.data && (!cachedAccount.data.accountHolderName || !cachedAccount.data.bankAddress)) {
+              bridgeService.getVirtualAccount(currencyLower).then((apiAccount) => {
+                if (apiAccount?.hasAccount) {
+                  const updates: Record<string, string> = {}
+                  if (apiAccount.accountHolderName && !cachedAccount.data.accountHolderName) updates.accountHolderName = apiAccount.accountHolderName
+                  if (apiAccount.bankAddress && !cachedAccount.data.bankAddress) updates.bankAddress = apiAccount.bankAddress
+                  if (Object.keys(updates).length > 0) {
+                    setVirtualAccount((prev) => prev ? { ...prev, ...updates } : prev)
+                    setCachedDataLocal(CACHE_KEY_ACCOUNT, { ...cachedAccount.data, ...updates })
+                  }
+                }
+              }).catch(() => {})
+            }
           }
           
           const cachedWallet = await getCachedDataLocal<any>(CACHE_KEY_WALLET)
@@ -543,6 +584,20 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
               dataLoadedRef.current = true
               // Cache the account data
               await setCachedDataLocal(CACHE_KEY_ACCOUNT, accountData)
+              // Backfill account holder name and bank address from Bridge API if missing (e.g. EUR accounts created before fix)
+              if (!account.account_holder_name || !account.bank_address) {
+                bridgeService.getVirtualAccount(currencyLower).then((apiAccount) => {
+                  if (apiAccount?.hasAccount) {
+                    const updates: Record<string, string> = {}
+                    if (apiAccount.accountHolderName && !account.account_holder_name) updates.accountHolderName = apiAccount.accountHolderName
+                    if (apiAccount.bankAddress && !account.bank_address) updates.bankAddress = apiAccount.bankAddress
+                    if (Object.keys(updates).length > 0) {
+                      setVirtualAccount((prev) => prev ? { ...prev, ...updates } : prev)
+                      setCachedDataLocal(CACHE_KEY_ACCOUNT, { ...accountData, ...updates })
+                    }
+                  }
+                }).catch(() => {})
+              }
             } else {
               // No account data found
               setInitialCheckComplete(true)
@@ -876,7 +931,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
           iban: virtualAccount.iban, // Bridge provides this for EUR
           swiftBic: virtualAccount.bic, // Bridge returns 'bic' for EUR accounts
           bankName: virtualAccount.bankName,
-          bankAddress: undefined, // Not for EUR
+          bankAddress: virtualAccount.bankAddress, // Bridge provides for EUR
         }
       }
     }
@@ -1180,7 +1235,7 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                         )}
                         
                         {/* Bank Address - Bridge provides this for USD */}
-                        {currency === 'USD' && bankAccountDetails.bankAddress && (
+                        {bankAccountDetails.bankAddress && (
                           renderCopyableField('Bank Address', bankAccountDetails.bankAddress, 'bankAddress')
                         )}
                       </>
@@ -1210,11 +1265,12 @@ export default function ReceiveMoneyScreen({ navigation, route }: NavigationProp
                         </Text>
                       ) : (
                         <Text style={styles.instructionsText}>
-                          1. Share these bank account details with the sender{'\n'}
-                          2. The sender should transfer {currency} to the account above{'\n'}
-                          3. Include your name or reference in the transfer memo/note{'\n'}
-                          4. Funds will be credited to your {getCurrencyName(currency)} wallet once received{'\n'}
-                          5. Processing time: 1-3 business days
+                          • Only send SEPA transfers{'\n'}
+                          • SWIFT is NOT supported{'\n'}
+                          • Receive EUR from your own bank app or any business{'\n'}
+                          • SEPA zone only (Single Euro Payments Area){'\n'}
+                          • Include your name or reference in the transfer note{'\n'}
+                          • Processing time: 1-3 business days
                         </Text>
                       )}
                     </View>

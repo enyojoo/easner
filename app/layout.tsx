@@ -23,9 +23,9 @@ const geistSans = GeistSans
 export const metadata: Metadata = {
   title: "Easner - Move Money Globally Like SMS",
   description:
-    "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
+    "API-first cross-border payment infrastructure for US and EU businesses, with built-in KYC/AML compliance. For individuals and businesses.",
   keywords:
-    "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, stablecoin payment infrastructure, Stellar network, business banking, global payments, EU Africa Asia transfers, instant cross border transfer, no wallet money transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
+    "instant money transfer, bank to bank transfer, cross border payments, international money transfer, zero fee transfer, US fintech, business banking, global payments, US EU Africa Asia transfers, instant cross border transfer, no wallet money transfer, fiat to fiat transfer, business international payments, treasury FX, compliance gateway, money transfer API",
   formatDetection: {
     email: false,
     address: false,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Easner - Move Money Globally Like SMS",
     description:
-      "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
+      "API-first cross-border payment infrastructure for US and EU businesses, with built-in KYC/AML compliance. For individuals and businesses.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Easner - Move Money Globally Like SMS",
     description:
-      "Instant bank-to-bank transfers between Europe, Africa, and Asia. No wallets, no crypto apps. Powered by stablecoins. For individuals and businesses.",
+      "API-first cross-border payment infrastructure for US and EU businesses, with built-in KYC/AML compliance. For individuals and businesses.",
     creator: "@easner",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png"],
   },
@@ -109,7 +109,7 @@ export default function RootLayout({
                   "name": "How fast are international money transfers?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Transfers are processed instantly using stablecoin technology. Money typically arrives in the recipient's bank account within minutes, not days like traditional services."
+                    "text": "Transfers are processed instantly using real-time settlement infrastructure. Money typically arrives in the recipient's bank account within minutes, not days like traditional services."
                   }
                 },
                 {
@@ -125,7 +125,7 @@ export default function RootLayout({
                   "name": "Is it safe to send money with Easner?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Yes, Easner uses bank-level security and stablecoin technology. All transfers are encrypted and processed through regulated financial institutions. Your money is always safe."
+                    "text": "Yes, Easner uses bank-level security. All transfers are encrypted and processed through regulated financial institutions. Your money is always safe."
                   }
                 },
                 {
@@ -133,7 +133,7 @@ export default function RootLayout({
                   "name": "How does Easner compare to Wise, Remitly, or WorldRemit?",
                   "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Easner offers zero fees compared to 0.5-3% fees charged by competitors. We also provide instant transfers using stablecoin technology, while traditional services can take 1-3 business days."
+                    "text": "Easner offers zero fees compared to 0.5-3% fees charged by competitors. We also provide instant transfers, while traditional services can take 1-3 business days."
                   }
                 }
               ]
@@ -147,7 +147,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "FinancialService",
               "name": "Easner",
-              "description": "Technology platform facilitating instant cross-border money transfers. Bank-to-bank transfers powered by stablecoin infrastructure on the Stellar network. No wallets required.",
+              "description": "Technology platform facilitating instant cross-border money transfers. API-first cross-border payment infrastructure. No wallets required.",
               "url": "https://www.easner.com",
               "logo": "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20web%20app.png",
               "serviceType": "Money Transfer",

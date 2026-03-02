@@ -3,9 +3,8 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowRight, Code2, ShieldCheck, CreditCard, BarChart3, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PublicHeader } from '@/components/layout/public-header'
@@ -29,7 +28,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <PublicHeader />
-      <main className="min-h-screen">
+      <main
+        className="min-h-screen"
+        style={{ paddingTop: '9rem' }}
+      >
         <Hero onSendMoney={handleSendMoney} />
         <EasnerForIndividuals />
         <EasnerForBusiness />
@@ -48,6 +50,12 @@ export default function HomePage() {
                 </Link>
                 <Link href="/privacy" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">
                   Privacy Policy
+                </Link>
+                <Link href="/kyc-policy" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">
+                  KYC Policy
+                </Link>
+                <Link href="/aml-policy" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">
+                  AML Policy
                 </Link>
               </div>
             </div>
@@ -76,48 +84,44 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
   const router = useRouter()
 
   return (
-    <section className="relative bg-gradient-to-br from-easner-primary-50 via-blue-50 to-purple-50 pt-8 pb-12 sm:pt-10 sm:pb-16 md:pt-12 md:pb-20 lg:pt-16 lg:pb-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-easner-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
-          {/* Left Side - Hero Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-6 sm:space-y-8 order-1 lg:order-1 text-center lg:text-left"
-          >
-            <div className="space-y-4 sm:space-y-6">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
-                Move Money
-                <br />
-                <span className="text-easner-primary">Globally Like SMS</span>.
-              </h1>
-              <p className="text-lg sm:text-xl md:text-2xl lg:text-xl text-gray-500 leading-relaxed max-w-2xl text-center lg:text-left">
-                Easner lets individuals, businesses, and financial institutions send and receive money across borders; bank-to-bank powered by stablecoins under the hood.
-              </p>
-            </div>
-            <div className="mt-8 flex flex-wrap items-center gap-3 justify-center lg:justify-start">
-              <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                Early Access <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Right Side - Currency Converter */}
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex justify-center lg:justify-end order-2 lg:order-2"
-          >
-            <div className="w-full max-w-sm sm:max-w-sm md:max-w-md">
-              <div id="currency-converter" className="relative">
-                <CurrencyConverter onSendMoney={onSendMoney} />
-              </div>
-            </div>
-          </motion.div>
-        </div>
+    <section className="relative bg-white pt-20 pb-16 sm:pt-24 sm:pb-20 md:pt-28 md:pb-24 lg:pt-32 lg:pb-32 overflow-hidden">
+      <div className="absolute inset-0 bg-easner-primary-50/10 pointer-events-none" style={{ clipPath: 'ellipse(80% 50% at 50% 0%)' }} />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="space-y-6 sm:space-y-8"
+        >
+          <div className="space-y-4 sm:space-y-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
+              Move Money
+              <br />
+              <span className="text-easner-primary">Globally Like SMS</span>.
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-2xl mx-auto">
+              API-first cross-border payment infrastructure for US and EU businesses. Built-in KYC/AML, instant payouts, and treasury operations.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-4">
+            <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
+              Get Started <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+      {/* Currency converter - secondary, below the fold feel */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-12 sm:mt-16 pb-12 sm:pb-16 md:pb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex justify-center"
+        >
+          <div className="w-full max-w-sm sm:max-w-md">
+            <CurrencyConverter onSendMoney={onSendMoney} />
+          </div>
+        </motion.div>
       </div>
     </section>
   )
@@ -128,7 +132,7 @@ function EasnerForIndividuals() {
   const router = useRouter()
 
   return (
-    <section className="bg-gray-50 py-16 md:py-20">
+    <section className="bg-slate-50 py-20 md:py-28">
       <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -137,10 +141,10 @@ function EasnerForIndividuals() {
                 Send money anywhere. Instantly.
               </h2>
               <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
-                No wallets. No crypto apps. No waiting days. Just low-cost, bank-to-bank transfers between Europe, Africa, and Asia — powered by Stablecoins under the hood, making global payments instant.
+                No waiting days. Just low-cost, bank-to-bank transfers between the US, Europe, Africa, and Asia — making global payments instant.
               </p>
               <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                Early Access <ArrowRight className="h-4 w-4" />
+                Get Started <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
             <div className="relative overflow-hidden">
@@ -149,7 +153,7 @@ function EasnerForIndividuals() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
-                className="relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-easner-primary"
+                className="relative w-full rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
               >
                 <Image
                   src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/ew1.png"
@@ -174,7 +178,7 @@ function EasnerForBusiness() {
   const router = useRouter()
 
   return (
-    <section className="py-16 md:py-20">
+    <section className="py-20 md:py-28 bg-white">
       <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -184,7 +188,7 @@ function EasnerForBusiness() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
-                className="relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-easner-primary"
+                className="relative w-full rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
               >
                 <Image
                   src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/eb1.png"
@@ -205,7 +209,7 @@ function EasnerForBusiness() {
                 Manage accounts, cards, invoices, and cross-border payments from one dashboard. Automate payouts, FX, and treasury operations through the Easner API — with compliance, reconciliation, and transparency built in.
               </p>
               <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                Early Access <ArrowRight className="h-4 w-4" />
+                Get Started <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -225,7 +229,7 @@ function ComplianceSecurity() {
   ]
 
   return (
-    <section className="bg-gray-50 py-16 md:py-20">
+    <section className="bg-slate-50 py-20 md:py-28">
       <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -234,7 +238,7 @@ function ComplianceSecurity() {
                 Compliance is built in, not added later.
               </h2>
               <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
-                Easner embeds verification, AML, and encryption at the core of every transaction powered by Stellar. Our partners move money globally with full confidence in security and oversight.
+                Easner embeds verification, AML, and encryption at the core of every transaction. Our partners move money globally with full confidence in security and oversight.
               </p>
               <ul className="space-y-3">
                 {complianceFeatures.map((feature, index) => (
@@ -251,7 +255,7 @@ function ComplianceSecurity() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5 }}
-                className="relative w-full max-w-md"
+                className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
               >
                 <Image
                   src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/security.svg"
@@ -275,7 +279,7 @@ function GlobalReach() {
   const router = useRouter()
 
   return (
-    <section className="py-16 md:py-20 relative">
+    <section className="py-20 md:py-28 bg-slate-50 relative">
       {/* World Map Background */}
       <div 
         className="absolute inset-0 opacity-[0.05] pointer-events-none"
@@ -289,14 +293,14 @@ function GlobalReach() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
-            Built in Europe. Connecting the world.
+            Moving Money with Ease
           </h2>
           <p className="text-lg md:text-xl text-gray-500 leading-relaxed">
-            From the EU to Africa and Asia, Easner provides financial infrastructure that makes global money movement simple, compliant, and instant — for individuals, SMEs, and institutions alike.
+            From the US and EU to Africa and Asia, Easner provides financial infrastructure that makes global money movement simple, compliant, and instant — for individuals, SMEs, and institutions alike.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600 shadow-md" onClick={() => router.push("/access")}>
-              Early Access <ArrowRight className="h-4 w-4" />
+              Get Started <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" className="gap-2 border-easner-primary/30 hover:bg-easner-primary/5" onClick={() => router.push("/access")}>
               Explore the API
