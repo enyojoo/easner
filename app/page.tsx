@@ -84,7 +84,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
   const router = useRouter()
 
   return (
-    <section className="relative bg-white pt-10 pb-16 sm:pt-12 sm:pb-20 md:pt-14 md:pb-24 lg:pt-16 lg:pb-32 overflow-hidden">
+    <section className="relative bg-white pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 lg:pt-16 lg:pb-16 overflow-hidden">
       <div className="absolute inset-0 bg-easner-primary-50/10 pointer-events-none" style={{ clipPath: 'ellipse(80% 50% at 50% 0%)' }} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         <motion.div
@@ -111,7 +111,7 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
         </motion.div>
       </div>
       {/* Currency converter - secondary, below the fold feel */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-12 sm:mt-16 pb-12 sm:pb-16 md:pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-12 sm:mt-16 pb-6 sm:pb-8 md:pb-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
