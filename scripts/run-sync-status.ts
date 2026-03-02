@@ -10,10 +10,10 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
 process.env.BRIDGE_API_KEY = process.env.BRIDGE_API_KEY || require('dotenv').config({ path: '.env.local' }).parsed?.BRIDGE_API_KEY
 
 // Now import
-import { createServerClient } from '../lib/supabase'
-import { bridgeService } from '../lib/bridge-service'
-import { syncBridgeKycDataToDatabase } from '../lib/bridge-kyc-sync'
-import { completeAccountSetupAfterKYC } from '../lib/bridge-onboarding-service'
+import { createServerClient } from '../web/lib/supabase'
+import { bridgeService } from '../web/lib/bridge-service'
+import { syncBridgeKycDataToDatabase } from '../web/lib/bridge-kyc-sync'
+import { completeAccountSetupAfterKYC } from '../web/lib/bridge-onboarding-service'
 
 async function syncStatus(userEmail: string) {
   const supabase = createServerClient()

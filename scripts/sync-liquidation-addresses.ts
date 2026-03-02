@@ -13,8 +13,8 @@ const __dirname = dirname(__filename)
 dotenv.config({ path: resolve(__dirname, '../.env.local') })
 
 import { createClient } from '@supabase/supabase-js'
-import { bridgeLiquidationService } from '../lib/bridge-liquidation-service'
-import { createServerClient } from '../lib/supabase'
+import { bridgeLiquidationService } from '../web/lib/bridge-liquidation-service'
+import { createServerClient } from '../web/lib/supabase'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

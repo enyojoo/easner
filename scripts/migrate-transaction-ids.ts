@@ -25,8 +25,8 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 // Now import
-import { createServerClient } from '../lib/supabase'
-import { generateTransactionId } from '../lib/transaction-id'
+import { createServerClient } from '../web/lib/supabase'
+import { generateTransactionId } from '../web/lib/transaction-id'
 
 async function migrateTransactionIds(dryRun: boolean = false) {
   const supabase = createServerClient()

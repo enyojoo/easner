@@ -6,10 +6,10 @@
 import { config } from 'dotenv'
 import { resolve } from 'path'
 config({ path: resolve(__dirname, '../.env.local') })
-import { createServerClient } from '../lib/supabase'
-import { bridgeService } from '../lib/bridge-service'
-import { syncBridgeKycDataToDatabase } from '../lib/bridge-kyc-sync'
-import { completeAccountSetupAfterKYC } from '../lib/bridge-onboarding-service'
+import { createServerClient } from '../web/lib/supabase'
+import { bridgeService } from '../web/lib/bridge-service'
+import { syncBridgeKycDataToDatabase } from '../web/lib/bridge-kyc-sync'
+import { completeAccountSetupAfterKYC } from '../web/lib/bridge-onboarding-service'
 
 async function syncStatus(userEmail: string) {
   const supabase = createServerClient()

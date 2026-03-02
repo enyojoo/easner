@@ -10,9 +10,9 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
 process.env.BRIDGE_API_KEY = process.env.BRIDGE_API_KEY || require('dotenv').config({ path: '.env.local' }).parsed?.BRIDGE_API_KEY
 
 // Now import
-import { createServerClient } from '../lib/supabase'
-import { bridgeLiquidationService } from '../lib/bridge-liquidation-service'
-import { syncAllTransactions } from '../lib/bridge-transaction-sync'
+import { createServerClient } from '../web/lib/supabase'
+import { bridgeLiquidationService } from '../web/lib/bridge-liquidation-service'
+import { syncAllTransactions } from '../web/lib/bridge-transaction-sync'
 
 async function syncTransactions(userEmail: string) {
   const supabase = createServerClient()

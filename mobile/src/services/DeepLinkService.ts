@@ -130,7 +130,7 @@ export class DeepLinkService {
    */
   createDeepLink(screen: string, params: Record<string, string> = {}): string {
     try {
-      const baseUrl = 'https://www.easner.com'
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
       
       const screenMap: Record<string, string> = {
         'Dashboard': '/user/dashboard',
@@ -152,7 +152,7 @@ export class DeepLinkService {
       return `${baseUrl}${path}`
     } catch (error) {
       console.error('DeepLinkService: Error creating deep link:', error)
-      return 'https://www.easner.com/user/dashboard'
+      return `${process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'}/user/dashboard`
     }
   }
 

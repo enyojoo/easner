@@ -2,7 +2,7 @@
 // Usage: npx tsx scripts/check-webhook-events.ts [--eventType=kyc] [--customerId=<id>] [--userId=<id>]
 
 import { createClient } from "@supabase/supabase-js"
-import { bridgeService } from "../lib/bridge-service"
+import { bridgeService } from "../web/lib/bridge-service"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!

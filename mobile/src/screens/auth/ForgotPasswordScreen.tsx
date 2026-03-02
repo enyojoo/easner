@@ -144,7 +144,8 @@ export default function ForgotPasswordScreen({ navigation }: NavigationProps) {
     setError('')
 
     try {
-      const response = await fetch('https://easnerapp.vercel.app/api/auth/verify-reset-otp', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
+      const response = await fetch(`${apiUrl}/api/auth/verify-reset-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -90,7 +90,8 @@ export default function ResetPasswordScreen({ navigation, route }: NavigationPro
         return
       }
 
-      const response = await fetch('https://easnerapp.vercel.app/api/auth/reset-password', {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
+      const response = await fetch(`${apiUrl}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

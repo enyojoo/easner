@@ -2,10 +2,10 @@
 // Run this to verify KYC data format for a specific user
 // Usage: npx tsx scripts/verify-kyc-data.ts <userId>
 
-import { createServerClient } from "../lib/supabase"
-import { kycService } from "../lib/kyc-service"
-import { validateKYCForBridge, getBridgeRequirementsForCountry } from "../lib/bridge-kyc-validator"
-import { buildBridgeCustomerPayloadFromKyc } from "../lib/bridge-kyc-builder"
+import { createServerClient } from "../web/lib/supabase"
+import { kycService } from "../web/lib/kyc-service"
+import { validateKYCForBridge, getBridgeRequirementsForCountry } from "../web/lib/bridge-kyc-validator"
+import { buildBridgeCustomerPayloadFromKyc } from "../web/lib/bridge-kyc-builder"
 
 async function verifyKYCData(userId: string) {
   console.log(`\n🔍 Verifying KYC data for user: ${userId}\n`)

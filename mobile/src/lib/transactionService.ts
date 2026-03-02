@@ -84,7 +84,7 @@ export const transactionService = {
     // Send initial pending status email via API (non-blocking)
     try {
       console.log('Sending initial pending email for transaction:', data.transaction_id)
-      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
       
       // Use fetch to call the email API endpoint
       fetch(`${baseUrl}/api/send-email-notification`, {
@@ -114,7 +114,7 @@ export const transactionService = {
     // Send admin notification email via API (non-blocking)
     try {
       console.log('Sending admin notification for new transaction:', data.transaction_id)
-      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
       
       // Use fetch to call the admin notification API endpoint
       fetch(`${baseUrl}/api/send-email-notification`, {
@@ -202,7 +202,7 @@ export const transactionService = {
     // Send status update email via API (non-blocking)
     try {
       console.log('Sending status update email for transaction:', transactionId, 'status:', status)
-      const baseUrl = 'https://www.easner.com' // Use production URL for mobile app
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://app.easner.com'
       
       // Use fetch to call the email API endpoint
       fetch(`${baseUrl}/api/send-email-notification`, {
