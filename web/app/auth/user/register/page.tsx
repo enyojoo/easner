@@ -16,7 +16,7 @@ import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 function RegisterPageContent() {
   const router = useRouter()
   const { signUp, signInWithGoogle } = useAuth()
-  const { isChecking } = useRouteProtection({ requireAuth: false })
+  useRouteProtection({ requireAuth: false })
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -43,11 +43,6 @@ function RegisterPageContent() {
     }
     loadSecuritySettings()
   }, [])
-
-  // Show loading spinner while checking authentication
-  if (isChecking) {
-    return null
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

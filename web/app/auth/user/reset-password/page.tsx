@@ -23,35 +23,31 @@ function ResetPasswordForm() {
     confirm: false,
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [isValidSession, setIsValidSession] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(() => {
+    if (typeof window === "undefined") return false
+    const token = searchParams.get("token") || sessionStorage.getItem("reset-token")
+    const email = searchParams.get("email") || sessionStorage.getItem("reset-email")
+    return !!(token && email)
+  })
+  const [error, setError] = useState(() => {
+    if (typeof window === "undefined") return ""
+    const token = searchParams.get("token") || sessionStorage.getItem("reset-token")
+    const email = searchParams.get("email") || sessionStorage.getItem("reset-email")
+    return !(token && email) ? "Invalid or expired reset link. Please request a new password reset." : ""
+  })
   const [securitySettings, setSecuritySettings] = useState<any>(null)
 
-  // Load security settings
   useEffect(() => {
     const loadSecuritySettings = async () => {
       try {
         const settings = await getSecuritySettings()
         setSecuritySettings(settings)
-      } catch (error) {
-        console.error("Error loading security settings:", error)
+      } catch (err) {
+        console.error("Error loading security settings:", err)
       }
     }
     loadSecuritySettings()
   }, [])
-
-  useEffect(() => {
-    // Check for reset token from session storage or URL params
-    const resetToken = sessionStorage.getItem("reset-token") || searchParams.get("token")
-    const resetEmail = sessionStorage.getItem("reset-email") || searchParams.get("email")
-
-    if (!resetToken || !resetEmail) {
-      setError("Invalid or expired reset link. Please request a new password reset.")
-      return
-    }
-
-    setIsValidSession(true)
-  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,10 +101,6 @@ function ResetPasswordForm() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (!isValidSession && !error) {
-    return null
   }
 
   return (

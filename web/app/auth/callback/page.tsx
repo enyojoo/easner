@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 export default function AuthCallbackPage() {
@@ -66,9 +67,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center p-6">
-        <div className="animate-pulse text-muted-foreground">Completing sign in...</div>
-      </div>
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
   )
 }

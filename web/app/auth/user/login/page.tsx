@@ -33,11 +33,6 @@ function LoginPageContent() {
     }
   }, [user, userProfile, isAdmin, loading, router])
 
-  // Show loading only while auth is loading, not for form submission
-  if (loading) {
-    return null
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormLoading(true)
