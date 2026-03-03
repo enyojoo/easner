@@ -2262,8 +2262,8 @@ export default function UserSendPage() {
                               />
                             )}
                           </div>
-                          <div className="text-left">
-                            <h3 className="font-medium text-gray-900 text-sm">
+                          <div className="text-left min-w-0 flex-1">
+                            <h3 className="font-medium text-gray-900 text-sm truncate" title={uploadedFile?.name}>
                               {uploadedFile
                                 ? uploadedFile.name
                                 : uploadError
