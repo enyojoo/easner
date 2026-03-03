@@ -91,3 +91,12 @@
     font-family: var(--font-unbounded);
   }
 }
+
+@keyframes trusted-by-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

@@ -75,9 +75,7 @@ function PrivacyPageContent() {
                   This Privacy Policy describes how Easner, Inc. ("Easner," "we," "us," or "our") collects, uses, and
                   shares information about you when you use our platform and mobile application. Easner provides
                   instant, zero-fee cross-border transfers through licensed financial service partners. Easner is a
-                  technology platform that facilitates money movement services and does not hold cryptocurrency or other
-                  digital assets. All financial services are provided through licensed partners and regulated financial
-                  institutions.
+                  financial technology company and not a bank, exchange, or asset custodian. Easner does not facilitate FDIC insurance or hold deposits. Easner acts as a technology platform facilitating money movement services. Payment products are provided in partnership with licensed institutions. Cards are issued by partners licensed in their respective jurisdictions.
                 </p>
               </section>
 

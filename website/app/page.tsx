@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { PublicHeader } from '@/components/layout/public-header'
 import { CurrencyConverter } from '@/components/currency-converter'
+import { TrustedBy } from '@/components/trusted-by'
 
 export default function HomePage() {
   const router = useRouter()
@@ -61,7 +62,7 @@ export default function HomePage() {
             </div>
             <div className="pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-400 text-center max-w-4xl mx-auto leading-relaxed">
-                Easner is not a bank and does not hold cryptocurrency or other digital assets. All financial services are provided through licensed partners and regulated financial institutions. Easner acts as a technology platform facilitating money movement services.
+                Easner is a financial technology company and not a bank, exchange, or asset custodian. Easner does not facilitate FDIC insurance or hold deposits. Easner acts as a technology platform facilitating money movement services. Payment products are provided in partnership with licensed institutions. Cards are issued by partners licensed in their respective jurisdictions.
               </p>
             </div>
           </div>
@@ -116,11 +117,12 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex justify-center"
+          className="flex flex-col items-center"
         >
           <div className="w-full max-w-sm sm:max-w-md">
             <CurrencyConverter onSendMoney={onSendMoney} />
           </div>
+          <TrustedBy />
         </motion.div>
       </div>
     </section>
