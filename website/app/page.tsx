@@ -72,6 +72,15 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
+            <div className="text-center sm:text-left text-xs sm:text-sm text-gray-500 mb-4">
+              <p>Have questions about something else?</p>
+              <p>
+                Email us at{" "}
+                <a href="mailto:hello@easner.com" className="text-easner-primary hover:underline">
+                  hello@easner.com
+                </a>
+              </p>
+            </div>
             <div className="pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-400 text-center max-w-4xl mx-auto leading-relaxed">
                 Easner is a financial technology company and not a bank, exchange, or asset custodian. Easner does not facilitate FDIC insurance or hold deposits. Easner acts as a technology platform facilitating money movement services. Payment products are provided in partnership with licensed institutions. Cards are issued by partners licensed in their respective jurisdictions.
