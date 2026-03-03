@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus } from "lucide-react"
+import { Home, LayoutDashboard, Send, History, LogOut, X, UserPlus } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -14,15 +14,15 @@ interface UserDashboardLayoutProps {
 }
 
 const baseNavigation = [
-  { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Home", href: "/user/dashboard", icon: Home },
   { name: "Send Money", href: "/user/send", icon: Send },
   { name: "Recipients", href: "/user/recipients", icon: UserPlus },
   { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "More", href: "/user/more", icon: MoreHorizontal },
+  { name: "More", href: "/user/more", icon: LayoutDashboard },
 ]
 
 const bottomNavItems = [
-  { name: "Home", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Home", href: "/user/dashboard", icon: Home },
   { name: "Transactions", href: "/user/transactions", icon: History },
   { name: "Recipients", href: "/user/recipients", icon: UserPlus },
 ]
@@ -132,7 +132,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               prefetch={true}
               className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
             >
-              <MoreHorizontal
+              <LayoutDashboard
                 className={`h-5 w-5 ${
                   pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-primary" : "text-gray-600"
                 }`}
