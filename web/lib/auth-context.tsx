@@ -59,6 +59,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [lastActivity, setLastActivity] = useState<number>(Date.now())
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // Extract first_name/last_name from OAuth provider (Google, etc.) user_metadata or identity_data
+  const getNameFromAuthUser = (authUser: any): { first_name?: string; last_name?: string } => {
+    const meta = authUser?.user_metadata
+    const identity = authUser?.identities?.[0]?.identity_data
+    const full = meta?.full_name || identity?.full_name || meta?.name
+    const given = meta?.given_name || identity?.given_name
+    const family = meta?.family_name || identity?.family_name
+
+    if (given && family) return { first_name: given, last_name: family }
+    if (full) {
+      const parts = full.trim().split(/\s+/)
+      if (parts.length >= 2) {
+        return { first_name: parts[0], last_name: parts.slice(1).join(" ") }
+      }
+      return { first_name: full, last_name: "" }
+    }
+    return {}
+  }
+
   const fetchUserProfile = async (userId: string, user?: any) => {
     try {
       // Check if this is an admin user by looking at the user metadata
@@ -94,6 +113,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (userProfile && !userError) {
+        // For OAuth users (e.g. Google), sync name from auth user_metadata when profile is missing it
+        const oauthName = getNameFromAuthUser(user)
+        const needsName = (oauthName.first_name || oauthName.last_name) && (!userProfile.first_name || !userProfile.last_name)
+        if (needsName && user) {
+          const { first_name, last_name } = oauthName
+          if (first_name || last_name) {
+            const mergedProfile = { ...userProfile, first_name: first_name || userProfile.first_name, last_name: last_name || userProfile.last_name }
+            // Persist to users table so name is available server-side (Bridge, etc.)
+            try {
+              await supabase
+                .from("users")
+                .update({
+                  first_name: mergedProfile.first_name,
+                  last_name: mergedProfile.last_name,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", userId)
+            } catch (e) {
+              console.warn("Could not persist OAuth name to users table:", e)
+            }
+            setUserProfile(mergedProfile)
+            setIsAdmin(false)
+            setUser(user)
+            return mergedProfile
+          }
+        }
         setUserProfile(userProfile)
         setIsAdmin(false)
         setUser(user)
