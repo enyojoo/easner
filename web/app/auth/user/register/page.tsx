@@ -286,7 +286,7 @@ function RegisterPageContent() {
             </div>
 
             <Button type="submit" className="w-full h-10 sm:h-11" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Signing up..." : "Sign up"}
             </Button>
           </form>
 
