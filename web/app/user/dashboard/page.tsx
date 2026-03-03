@@ -307,9 +307,9 @@ export default function UserDashboardPage() {
           </div>
         </div>
 
-        {/* Stats Cards - business style gradient/glass */}
+        {/* Stats Cards - match transaction card UI (border, shadow) */}
         <div className="px-5 sm:px-6 flex gap-3 sm:gap-6">
-          <Card className="flex-[1.5] sm:flex-1 border-0 shadow-lg bg-gradient-to-br from-slate-50/50 to-gray-50/50 dark:from-slate-900/30 dark:to-gray-900/30 backdrop-blur-sm">
+          <Card className="flex-[1.5] sm:flex-1">
             <CardContent className="p-5 sm:p-6 text-center">
               <div className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                 {formatCurrencyValue(totalSentValue, baseCurrency)}
@@ -318,7 +318,7 @@ export default function UserDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="flex-1 border-0 shadow-lg bg-gradient-to-br from-slate-50/50 to-gray-50/50 dark:from-slate-900/30 dark:to-gray-900/30 backdrop-blur-sm">
+          <Card className="flex-1">
             <CardContent className="p-5 sm:p-6 text-center">
               <div className="text-3xl sm:text-4xl font-bold text-foreground mb-2">{completedTransactions}</div>
               <div className="text-base sm:text-lg font-medium text-muted-foreground">Transactions</div>
