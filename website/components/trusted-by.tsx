@@ -25,16 +25,16 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
         <div className="relative w-full flex justify-center">
           {/* Framed viewport: 2 logos on mobile, 4 on tablet/laptop/large */}
           <div className="relative overflow-hidden max-w-[320px] sm:max-w-[640px]">
-            {/* Left fade - Mercury-style frame effect */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 sm:w-28 bg-gradient-to-r from-white via-white/50 to-transparent" />
+            {/* Left fade - reduced on tablet/laptop/large */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 sm:w-16 bg-gradient-to-r from-white via-white/30 to-transparent" />
             {/* Right fade */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-12 sm:w-28 bg-gradient-to-l from-white via-white/50 to-transparent" />
-            {/* Visible area: ~4 logos (each ~140px) = 560px */}
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-12 sm:w-16 bg-gradient-to-l from-white via-white/30 to-transparent" />
+            {/* Visible area: ~4 logos (each ~140px) = 560px. Fixed duration for SSR hydration consistency. */}
             <div
               className="flex"
               style={{
-                animation: `trusted-by-scroll ${logoList.length * 3}s linear infinite`,
                 width: "max-content",
+                animation: `trusted-by-scroll ${logoList.length * 5}s linear infinite`,
               }}
             >
               {[...logoList, ...logoList].map((logo, index) => (

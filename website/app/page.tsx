@@ -138,16 +138,18 @@ function EasnerForIndividuals() {
       <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div>
+            <div className="text-center lg:text-left flex flex-col items-center lg:items-start">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
                 Send money anywhere. Instantly.
               </h2>
               <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
                 No waiting days. Just low-cost, bank-to-bank transfers between the US, Europe, Africa, and Asia — making global payments instant.
               </p>
-              <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                Get Started <ArrowRight className="h-4 w-4" />
-              </Button>
+              <div className="flex justify-center lg:justify-start">
+                <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
+                  Get Started <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="relative overflow-hidden">
               <motion.div
@@ -203,16 +205,18 @@ function EasnerForBusiness() {
                 />
               </motion.div>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 text-center lg:text-left flex flex-col items-center lg:items-start">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
                 Business banking without borders.
               </h2>
               <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
                 Manage accounts, cards, invoices, and cross-border payments from one dashboard. Automate payouts, FX, and treasury operations through the Easner API — with compliance, reconciliation, and transparency built in.
               </p>
-              <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                Get Started <ArrowRight className="h-4 w-4" />
-              </Button>
+              <div className="flex justify-center lg:justify-start">
+                <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
+                  Get Started <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
