@@ -532,8 +532,8 @@ function TransactionStatusPage() {
                       </span>
                       {transaction && getTimerDisplay() && (
                         <div className="flex items-center justify-center sm:hidden text-orange-600 mt-2">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span className="font-mono text-sm">{getTimerDisplay()}</span>
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span className="font-mono text-xs">{getTimerDisplay()}</span>
                         </div>
                       )}
                     </div>
