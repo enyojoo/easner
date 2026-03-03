@@ -24,7 +24,7 @@ export default function UserLayout({
           <p className="text-gray-600 mb-4">Admin users cannot access user pages.</p>
           <a 
             href="/admin/dashboard" 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-easner-primary hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90"
           >
             Go to Admin Dashboard
           </a>

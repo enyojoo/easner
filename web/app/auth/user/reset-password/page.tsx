@@ -147,7 +147,7 @@ function ResetPasswordForm() {
                     placeholder="Enter new password"
                     value={passwords.newPassword}
                     onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                    className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                    className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
                     required
                     disabled={isLoading}
                   />
@@ -173,7 +173,7 @@ function ResetPasswordForm() {
                     placeholder="Confirm new password"
                     value={passwords.confirmPassword}
                     onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                    className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                    className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
                     required
                     disabled={isLoading}
                   />
@@ -190,7 +190,7 @@ function ResetPasswordForm() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
                 disabled={isLoading}
               >
                 {isLoading ? "Resetting..." : "Reset Password"}
@@ -202,7 +202,7 @@ function ResetPasswordForm() {
           <div className="mt-8 text-center">
             <Link
               href="/auth/user/login"
-              className="inline-flex items-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600"
+              className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/90"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Sign In

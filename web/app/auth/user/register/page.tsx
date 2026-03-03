@@ -163,7 +163,7 @@ function RegisterPageContent() {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="First name"
-                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
                   required
                   disabled={loading}
                 />
@@ -179,7 +179,7 @@ function RegisterPageContent() {
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Last name"
-                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
                   required
                   disabled={loading}
                 />
@@ -197,7 +197,7 @@ function RegisterPageContent() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
                 required
                 disabled={loading}
               />
@@ -215,7 +215,7 @@ function RegisterPageContent() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Create a password"
-                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
                   required
                   disabled={loading}
                 />
@@ -242,7 +242,7 @@ function RegisterPageContent() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your password"
-                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary pr-12 text-base"
+                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
                   required
                   disabled={loading}
                 />
@@ -265,16 +265,16 @@ function RegisterPageContent() {
                 className="flex items-start space-x-3 pt-1"
                 disabled={loading}
               >
-                <div className={`w-5 h-5 border-2 rounded mt-0.5 ${acceptTerms ? 'bg-easner-primary border-easner-primary' : 'border-gray-300 bg-white'} flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-5 h-5 border-2 rounded mt-0.5 ${acceptTerms ? 'bg-primary border-primary' : 'border-gray-300 bg-white'} flex items-center justify-center flex-shrink-0`}>
                   {acceptTerms && <span className="text-white text-xs">✓</span>}
                 </div>
                 <Label htmlFor="terms" className="text-sm text-gray-500 leading-relaxed cursor-pointer">
                   I agree to the{" "}
-                  <a href={`${APP_URLS.website}/terms?from=register`} target="_blank" rel="noopener noreferrer" className="text-easner-primary font-semibold hover:text-easner-primary-600">
+                  <a href={`${APP_URLS.website}/terms?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:text-primary/90">
                     Terms
                   </a>{" "}
                   and{" "}
-                  <a href={`${APP_URLS.website}/privacy?from=register`} target="_blank" rel="noopener noreferrer" className="text-easner-primary font-semibold hover:text-easner-primary-600">
+                  <a href={`${APP_URLS.website}/privacy?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:text-primary/90">
                     Privacy Policy
                   </a>
                 </Label>
@@ -284,7 +284,7 @@ function RegisterPageContent() {
             <Button
               type="submit"
               disabled={loading || !acceptTerms}
-              className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
@@ -297,7 +297,7 @@ function RegisterPageContent() {
             Already have an account?{" "}
             <Link
               href="/auth/user/login"
-              className="text-sm text-easner-primary font-semibold hover:text-easner-primary-600"
+              className="text-sm text-primary font-semibold hover:text-primary/90"
             >
               Sign In
             </Link>

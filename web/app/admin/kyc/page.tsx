@@ -319,7 +319,7 @@ export default function AdminKYCPage() {
                       <Button
                         onClick={() => handleSendToBridge(userData.userId)}
                         disabled={sendingToBridge === userData.userId}
-                        className="bg-easner-primary hover:bg-easner-primary-600"
+                        className="bg-primary hover:bg-primary/90"
                       >
                         {sendingToBridge === userData.userId ? (
                           <>
@@ -571,7 +571,7 @@ export default function AdminKYCPage() {
               <Button
                 onClick={handleReview}
                 disabled={updating || (reviewStatus === "rejected" && !rejectionReason)}
-                className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
                 {updating ? "Updating..." : "Submit Review"}
               </Button>

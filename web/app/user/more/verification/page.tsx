@@ -245,8 +245,8 @@ export default function VerificationPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     {/* Icon on top */}
-                    <div className="w-12 h-12 rounded-full bg-easner-primary-100 flex items-center justify-center mb-3">
-                      <MapPin className="h-5 w-5 text-easner-primary" />
+                    <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center mb-3">
+                      <MapPin className="h-5 w-5 text-primary" />
                     </div>
                     {/* Title below icon */}
                     <h3 className="text-base font-semibold text-gray-900 mb-1">Identity verification</h3>
@@ -276,8 +276,8 @@ export default function VerificationPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     {/* Icon on top */}
-                    <div className="w-12 h-12 rounded-full bg-easner-primary-100 flex items-center justify-center mb-3">
-                      <User className="h-5 w-5 text-easner-primary" />
+                    <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center mb-3">
+                      <User className="h-5 w-5 text-primary" />
                     </div>
                     {/* Title below icon */}
                     <h3 className="text-base font-semibold text-gray-900 mb-1">Address information</h3>

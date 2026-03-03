@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
                   placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 border-gray-300 focus:border-easner-primary focus:ring-easner-primary text-base"
+                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
                   required
                   disabled={isLoading}
                 />
@@ -208,7 +208,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
                 disabled={isLoading}
               >
                 {isLoading ? "Sending..." : "Send Verification Code"}
@@ -229,7 +229,7 @@ export default function ForgotPasswordPage() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-lg font-semibold border-gray-300 focus:border-easner-primary focus:ring-easner-primary"
+                      className="w-12 h-12 text-center text-lg font-semibold border-gray-300 focus:border-primary focus:ring-primary"
                       disabled={isLoading}
                     />
                   ))}
@@ -238,7 +238,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-easner-primary hover:bg-easner-primary-600 text-white text-base font-semibold rounded-lg"
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
                 disabled={isLoading || otp.join("").length !== 6}
               >
                 {isLoading ? "Verifying..." : "Verify Code"}
@@ -249,7 +249,7 @@ export default function ForgotPasswordPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || isLoading}
-                  className="text-sm text-easner-primary hover:text-easner-primary-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  className="text-sm text-primary hover:text-primary/90 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
                 </button>
@@ -271,7 +271,7 @@ export default function ForgotPasswordPage() {
                   router.push("/auth/user/login")
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 text-sm text-easner-primary hover:text-easner-primary-600"
+              className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:text-primary/90"
             >
               <ArrowLeft className="h-4 w-4" />
               {step === "otp" ? "Change Email" : "Back to Sign In"}
@@ -280,7 +280,7 @@ export default function ForgotPasswordPage() {
               Don't have an account?{" "}
               <Link
                 href="/auth/user/register"
-                className="text-sm text-easner-primary font-semibold hover:text-easner-primary-600"
+                className="text-sm text-primary font-semibold hover:text-primary/90"
               >
                 Sign up
               </Link>

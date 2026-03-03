@@ -455,12 +455,12 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-easner-primary-100 rounded-full flex items-center justify-center">
-                <span className="text-easner-primary text-xs">%</span>
+              <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-primary text-xs">%</span>
               </div>
               <span className="text-sm text-gray-600">Rate</span>
             </div>
-            <span className="font-medium text-easner-primary">
+            <span className="font-medium text-primary">
               1 {sendCurrency} = {getExchangeRate(sendCurrency, receiveCurrency)?.rate.toFixed(2) || "0.00"}{" "}
               {receiveCurrency}
             </span>
@@ -519,7 +519,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
           <h4 className="text-sm font-medium text-gray-700 uppercase tracking-wide">DELIVERY METHOD</h4>
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-easner-primary rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm">🏦</span>
               </div>
               <div>
@@ -533,7 +533,7 @@ export function CurrencyConverter({ onSendMoney }: CurrencyConverterProps) {
 
         <Button
           onClick={handleSendMoney}
-          className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-12 text-lg font-semibold"
+          className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-12 text-lg font-semibold"
         >
           Send Money
         </Button>

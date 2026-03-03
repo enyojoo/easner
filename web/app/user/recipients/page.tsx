@@ -161,7 +161,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                     onClick={() => setFormData({ ...formData, transferType: "ACH" })}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                       formData.transferType === "ACH"
-                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        ? "border-primary bg-primary/5 text-primary font-medium"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                     disabled={isSubmitting}
@@ -173,7 +173,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                     onClick={() => setFormData({ ...formData, transferType: "Wire" })}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                       formData.transferType === "Wire"
-                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        ? "border-primary bg-primary/5 text-primary font-medium"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                     disabled={isSubmitting}
@@ -193,7 +193,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                     onClick={() => setFormData({ ...formData, checkingOrSavings: "checking" })}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                       formData.checkingOrSavings === "checking"
-                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        ? "border-primary bg-primary/5 text-primary font-medium"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                     disabled={isSubmitting}
@@ -205,7 +205,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
                     onClick={() => setFormData({ ...formData, checkingOrSavings: "savings" })}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                       formData.checkingOrSavings === "savings"
-                        ? "border-easner-primary bg-easner-primary-50 text-easner-primary font-medium"
+                        ? "border-primary bg-primary/5 text-primary font-medium"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                     disabled={isSubmitting}
@@ -445,7 +445,7 @@ const RecipientForm = ({ isEdit = false, formData, setFormData, error, isSubmitt
 
       <Button
         onClick={onSubmit}
-        className="w-full bg-easner-primary hover:bg-easner-primary-600"
+        className="w-full bg-primary hover:bg-primary/90"
         disabled={!isFormValid()}
       >
         {isSubmitting ? "Saving..." : isEdit ? "Update Recipient" : "Add Recipient"}
@@ -667,7 +667,7 @@ export default function UserRecipientsPage() {
         <div className="p-5 sm:p-6 pb-3 sm:pb-4">
             <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogOpenChange}>
               <DialogTrigger asChild>
-                <Button className="bg-easner-primary hover:bg-easner-primary-600 w-full sm:w-auto">
+                <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Recipient
                 </Button>
@@ -720,8 +720,8 @@ export default function UserRecipientsPage() {
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                   <div className="flex items-center space-x-3 flex-1">
-                    <div className="w-12 h-12 bg-easner-primary-100 rounded-full flex items-center justify-center relative flex-shrink-0">
-                      <span className="text-easner-primary font-semibold text-sm">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center relative flex-shrink-0">
+                      <span className="text-primary font-semibold text-sm">
                         {recipient.full_name
                           .split(" ")
                           .map((n) => n[0])

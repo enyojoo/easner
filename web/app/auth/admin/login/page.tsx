@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { BrandLogo } from "@/components/brand/brand-logo"
 import { supabase } from "@/lib/supabase"
 
 function AdminLoginPageContent() {
@@ -69,18 +68,12 @@ function AdminLoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <BrandLogo className="mx-auto h-12 w-auto" />
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin Login</CardTitle>
-            <CardDescription>Enter your admin credentials to access the dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Admin Login</CardTitle>
+        <CardDescription>Enter your admin credentials to access the dashboard</CardDescription>
+      </CardHeader>
+      <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <Alert variant="destructive">
@@ -118,10 +111,8 @@ function AdminLoginPageContent() {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 

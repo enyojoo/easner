@@ -1,24 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins, Unbounded } from "next/font/google"
 import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
 import "./globals.css"
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-poppins",
-})
-
-const unbounded = Unbounded({
-  subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-unbounded",
-})
-
-const geistSans = GeistSans
 
 export const metadata: Metadata = {
   title: "Easner - Move Money Globally Like SMS",
@@ -86,9 +72,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap" rel="stylesheet" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -205,7 +188,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${poppins.variable} ${unbounded.variable} ${geistSans.variable} font-sans`} suppressHydrationWarning>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
         <PostHogProvider>
           <AuthProvider>{children}</AuthProvider>
         </PostHogProvider>

@@ -482,7 +482,7 @@ function TransactionStatusPage() {
               <div className="flex gap-4 justify-center">
                 <Button
                   onClick={() => router.push("/user/dashboard")}
-                  className="bg-easner-primary hover:bg-easner-primary-600"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   Back to Dashboard
                 </Button>
@@ -664,7 +664,7 @@ function TransactionStatusPage() {
                     ) : (
                       <Button
                         onClick={() => router.push("/user/dashboard")}
-                        className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                        className="flex-1 bg-primary hover:bg-primary/90"
                       >
                         Dashboard
                       </Button>

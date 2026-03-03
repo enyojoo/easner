@@ -288,7 +288,7 @@ export default function CardsPage() {
               {cards.length > 0 && (
                 <Dialog open={createCardOpen} onOpenChange={setCreateCardOpen}>
                   <DialogTrigger asChild>
-                    <Button className="gap-2 bg-easner-primary hover:bg-easner-primary-600">
+                    <Button className="gap-2 bg-primary hover:bg-primary/90">
                       <Plus className="h-4 w-4" />
                       Add Card
                     </Button>
@@ -356,7 +356,7 @@ export default function CardsPage() {
                 <Button
                   onClick={handleCreateCard}
                   disabled={isCreatingCard || !newCardData.firstName || !newCardData.lastName}
-                  className="w-full bg-easner-primary hover:bg-easner-primary-600"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   {isCreatingCard ? "Creating..." : "Create Card"}
                 </Button>
@@ -384,7 +384,7 @@ export default function CardsPage() {
                     </p>
                     <Dialog open={createCardOpen} onOpenChange={setCreateCardOpen}>
                       <DialogTrigger asChild>
-                        <Button className="bg-easner-primary hover:bg-easner-primary-600">
+                        <Button className="bg-primary hover:bg-primary/90">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Card
                         </Button>
@@ -399,7 +399,7 @@ export default function CardsPage() {
                     onClick={() => setSelectedCard(card)}
                     className={`cursor-pointer transition-all ${
                       selectedCard?.id === card.id
-                        ? "border-easner-primary border-2 shadow-lg"
+                        ? "border-primary border-2 shadow-lg"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -411,7 +411,7 @@ export default function CardsPage() {
                             {formatCurrency(card.balance, card.currency)}
                           </p>
                         </div>
-                        <CreditCard className="h-8 w-8 text-easner-primary" />
+                        <CreditCard className="h-8 w-8 text-primary" />
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
@@ -552,7 +552,7 @@ export default function CardsPage() {
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Transaction history</h2>
                 <Link href="/user/card/transactions">
-                  <button className="text-sm sm:text-base text-easner-primary font-medium hover:underline">
+                  <button className="text-sm sm:text-base text-primary font-medium hover:underline">
                     See all
                   </button>
                 </Link>

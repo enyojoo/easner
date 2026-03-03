@@ -57,16 +57,16 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
         </div>
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - business style: fixed w-56, bg-sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed inset-y-0 left-0 z-50 w-56 border-r bg-sidebar flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         <div className="flex flex-col h-full w-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 h-16 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
               <BrandLogo size="sm" />
-              <span className="text-sm text-easner-primary font-medium">Admin</span>
+              <span className="text-sm text-primary font-medium">Admin</span>
             </div>
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
@@ -83,8 +83,8 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
                   href={item.href}
                   className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                     isActive
-                      ? "bg-easner-primary-100 text-easner-primary"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -96,7 +96,7 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
           </nav>
 
           {/* Logout */}
-          <div className="px-3 py-4 border-t border-gray-200">
+          <div className="px-3 py-4 border-t border-sidebar-border">
             <Button
               variant="ghost"
               className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-3"
@@ -109,10 +109,10 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content area - ml-56 for desktop */}
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-56">
         {/* Top bar */}
-        <div className="bg-white border-b border-gray-200 px-4 h-16 flex items-center sm:px-6 lg:px-8">
+        <div className="bg-background border-b border-border px-4 h-14 flex items-center sm:px-6 lg:px-8">
           <div className="flex items-center justify-between w-full">
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />

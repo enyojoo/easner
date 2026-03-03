@@ -294,7 +294,7 @@ export default function UserDashboardPage() {
     <UserDashboardLayout>
       <div className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
         {/* Page Header - Mobile Style */}
-        <div className="bg-white p-5 sm:p-6 mb-5 sm:mb-6">
+        <div className="bg-card p-5 sm:p-6 mb-5 sm:mb-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Hi {userName} 👋🏻</h1>
             <button
@@ -307,21 +307,21 @@ export default function UserDashboardPage() {
           </div>
         </div>
 
-        {/* Stats Cards - Mobile Style */}
+        {/* Stats Cards - business style gradient/glass */}
         <div className="px-5 sm:px-6 flex gap-3 sm:gap-6">
-          <Card className="flex-[1.5] sm:flex-1">
+          <Card className="flex-[1.5] sm:flex-1 border-0 shadow-lg bg-gradient-to-br from-slate-50/50 to-gray-50/50 dark:from-slate-900/30 dark:to-gray-900/30 backdrop-blur-sm">
             <CardContent className="p-5 sm:p-6 text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+              <div className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
                 {formatCurrencyValue(totalSentValue, baseCurrency)}
               </div>
-              <div className="text-base sm:text-lg font-medium text-gray-600">Total Volume</div>
+              <div className="text-base sm:text-lg font-medium text-muted-foreground">Total Volume</div>
             </CardContent>
           </Card>
 
-          <Card className="flex-1">
+          <Card className="flex-1 border-0 shadow-lg bg-gradient-to-br from-slate-50/50 to-gray-50/50 dark:from-slate-900/30 dark:to-gray-900/30 backdrop-blur-sm">
             <CardContent className="p-5 sm:p-6 text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{completedTransactions}</div>
-              <div className="text-base sm:text-lg font-medium text-gray-600">Transactions</div>
+              <div className="text-3xl sm:text-4xl font-bold text-foreground mb-2">{completedTransactions}</div>
+              <div className="text-base sm:text-lg font-medium text-muted-foreground">Transactions</div>
             </CardContent>
           </Card>
         </div>
@@ -331,20 +331,20 @@ export default function UserDashboardPage() {
           {/* Send Button */}
           <Link href="/user/send" className="flex-1 group">
             <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
-              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
-                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+              <div className="p-3 sm:p-3.5 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <Send className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Send</span>
+              <span className="text-primary text-xs sm:text-sm font-semibold tracking-wide">Send</span>
             </div>
           </Link>
           
           {/* Recipient Button */}
           <Link href="/user/recipients" className="flex-1 group">
             <div className="w-full flex flex-col items-center justify-center gap-2 sm:gap-2.5 py-4 sm:py-5 cursor-pointer transition-all duration-200">
-              <div className="p-3 sm:p-3.5 rounded-full bg-[#007ACC]/10 group-hover:bg-[#007ACC]/20 transition-colors">
-                <UserPlus className="h-5 w-5 sm:h-6 sm:w-6 text-[#007ACC]" />
+              <div className="p-3 sm:p-3.5 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                <UserPlus className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <span className="text-[#007ACC] text-xs sm:text-sm font-semibold tracking-wide">Recipient</span>
+              <span className="text-primary text-xs sm:text-sm font-semibold tracking-wide">Recipient</span>
             </div>
           </Link>
         </div>
@@ -354,17 +354,17 @@ export default function UserDashboardPage() {
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Recent Transactions</h2>
             <Link href="/user/transactions">
-              <button className="text-sm sm:text-base text-easner-primary font-medium hover:underline">
+              <button className="text-sm sm:text-base text-primary font-medium hover:underline">
                 See All
               </button>
             </Link>
           </div>
 
           {!transactions || transactions.length === 0 ? (
-            <div className="bg-white rounded-xl p-8 sm:p-12 text-center border border-gray-200">
+            <div className="bg-card rounded-xl p-8 sm:p-12 text-center border border-border">
               <p className="text-base sm:text-lg text-gray-600 mb-4">No recent transactions</p>
               <Link href="/user/send">
-                <div className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#007ACC] to-[#005A9E] hover:from-[#0088E0] hover:to-[#0066B8] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer">
+                <div className="inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer">
                   Send Your First Transfer
                 </div>
               </Link>

@@ -700,7 +700,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <Dialog open={isAddPaymentMethodOpen} onOpenChange={setIsAddPaymentMethodOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-easner-primary hover:bg-easner-primary-600">
+                      <Button className="bg-primary hover:bg-primary/90">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Payment Method
                       </Button>
@@ -1124,7 +1124,7 @@ export default function AdminSettingsPage() {
 
                             return false
                           })()}
-                          className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                          className="flex-1 bg-primary hover:bg-primary/90"
                         >
                           {saving ? "Adding..." : "Add Payment Method"}
                         </Button>
@@ -1602,7 +1602,7 @@ export default function AdminSettingsPage() {
 
                                 return false
                               })()}
-                              className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                              className="flex-1 bg-primary hover:bg-primary/90"
                             >
                               {saving ? "Saving..." : "Save Changes"}
                             </Button>
@@ -1753,7 +1753,7 @@ export default function AdminSettingsPage() {
                   {!isEditingSecuritySettings && (
                     <Button
                       onClick={() => setIsEditingSecuritySettings(true)}
-                      className="bg-easner-primary hover:bg-easner-primary-600"
+                      className="bg-primary hover:bg-primary/90"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Settings
@@ -1819,7 +1819,7 @@ export default function AdminSettingsPage() {
                     <Button
                       onClick={handleSaveSecuritySettings}
                       disabled={saving}
-                      className="flex-1 bg-easner-primary hover:bg-easner-primary-600"
+                      className="flex-1 bg-primary hover:bg-primary/90"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {saving ? "Saving..." : "Save Security Settings"}

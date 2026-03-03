@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus } from "lucide-react"
+import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus, Search } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -47,13 +47,13 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         </div>
       )}
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - business style: fixed w-56, bg-sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 hidden lg:flex ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed inset-y-0 left-0 z-50 w-56 border-r bg-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 hidden lg:flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         <div className="flex flex-col h-full w-full">
           {/* Logo */}
-          <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 h-16 border-b border-sidebar-border">
             <BrandLogo size="md" />
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
@@ -71,8 +71,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   prefetch={true}
                   className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-md transition-all duration-200 ${
                     isActive
-                      ? "bg-easner-primary-100 text-easner-primary"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   }`}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -84,7 +84,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
           </nav>
 
           {/* Logout */}
-          <div className="px-3 py-4 border-t border-gray-200">
+          <div className="px-3 py-4 border-t border-sidebar-border">
             <Button
               variant="ghost"
               className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-3"
@@ -97,20 +97,27 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content area - ml-56 for desktop to account for fixed sidebar */}
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-56">
         {/* Top bar - Desktop only */}
-        <div className="bg-white border-b border-gray-200 px-4 h-16 items-center sm:px-6 lg:px-8 hidden lg:flex">
+        <div className="bg-background border-b border-border px-4 h-14 items-center sm:px-6 lg:px-8 hidden lg:flex">
           <div className="flex items-center justify-between w-full">
-            <div className="flex-1"></div>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="Search or jump to..."
+                className="w-full pl-9 h-9 bg-muted/50 border-0 rounded-md text-sm"
+              />
+            </div>
           </div>
         </div>
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">{children}</main>
 
-        {/* Bottom Navigation - Mobile/Tablet only */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40">
+        {/* Bottom Navigation - Mobile/Tablet only (preserved per plan) */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border lg:hidden z-40">
           <div className="flex justify-around items-center py-2 px-2">
             {bottomNavItems.map((item) => {
               const isActive = pathname === item.href
@@ -122,8 +129,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   prefetch={true}
                   className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
                 >
-                  <item.icon className={`h-5 w-5 ${isActive ? "text-easner-primary" : "text-gray-600"}`} />
-                  <span className={`text-xs mt-1 ${isActive ? "text-easner-primary" : "text-gray-600"}`}>
+                  <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-gray-600"}`} />
+                  <span className={`text-xs mt-1 ${isActive ? "text-primary" : "text-gray-600"}`}>
                     {item.name}
                   </span>
                 </Link>
@@ -138,11 +145,11 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
             >
               <MoreHorizontal
                 className={`h-5 w-5 ${
-                  pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-easner-primary" : "text-gray-600"
+                  pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-primary" : "text-gray-600"
                 }`}
               />
               <span className={`text-xs mt-1 ${
-                pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-easner-primary" : "text-gray-600"
+                pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-primary" : "text-gray-600"
               }`}>
                 More
               </span>

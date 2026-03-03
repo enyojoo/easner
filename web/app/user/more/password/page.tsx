@@ -89,7 +89,7 @@ export default function ChangePasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                    className="bg-easner-primary hover:bg-easner-primary-600"
+                    className="bg-primary hover:bg-primary/90"
                   >
                     {loading ? "Updating..." : "Update Password"}
                   </Button>

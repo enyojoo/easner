@@ -136,8 +136,8 @@ export default function ProfilePage() {
                     onClick={() => setIsEditingProfile(true)}
                     className="bg-blue-50 border-blue-200 hover:bg-blue-100"
                   >
-                    <Pencil className="h-4 w-4 mr-2 text-easner-primary" />
-                    <span className="text-easner-primary font-semibold">Edit</span>
+                    <Pencil className="h-4 w-4 mr-2 text-primary" />
+                    <span className="text-primary font-semibold">Edit</span>
                   </Button>
                 ) : (
                   <div className="flex gap-3">
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                       size="sm"
                       onClick={handleProfileUpdate}
                       disabled={loading}
-                      className="bg-easner-primary hover:bg-easner-primary-600"
+                      className="bg-primary hover:bg-primary/90"
                     >
                       {loading ? "Saving..." : "Save"}
                     </Button>

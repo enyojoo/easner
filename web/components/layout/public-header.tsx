@@ -15,7 +15,7 @@ export function PublicHeader() {
 
           <div className="flex items-center space-x-3">
             <Link href="/access">
-              <Button className="bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200">
                 Get Started
               </Button>
             </Link>

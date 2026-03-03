@@ -654,12 +654,12 @@ export default function IdentityVerificationPage() {
                           onDrop={handleDrop}
                           className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                             isDragOver
-                              ? "border-easner-primary bg-easner-primary-50"
+                              ? "border-primary bg-primary/5"
                               : identityFile
                                 ? "border-green-300 bg-green-50"
                                 : uploadError
                                   ? "border-red-300 bg-red-50"
-                                  : "border-gray-200 hover:border-easner-primary-300"
+                                  : "border-gray-200 hover:border-primary/30"
                           }`}
                         >
                           <div className="flex items-center justify-center gap-3">
@@ -670,8 +670,8 @@ export default function IdentityVerificationPage() {
                                   : uploadError
                                     ? "bg-red-100"
                                     : isDragOver
-                                      ? "bg-easner-primary-100"
-                                      : "bg-gray-100 group-hover:bg-easner-primary-50"
+                                      ? "bg-accent"
+                                      : "bg-gray-100 group-hover:bg-primary/5"
                               }`}
                             >
                               {identityFile ? (
@@ -681,7 +681,7 @@ export default function IdentityVerificationPage() {
                               ) : (
                                 <Upload
                                   className={`h-5 w-5 transition-colors ${
-                                    isDragOver ? "text-easner-primary" : "text-gray-400"
+                                    isDragOver ? "text-primary" : "text-gray-400"
                                   }`}
                                 />
                               )}
@@ -847,12 +847,12 @@ export default function IdentityVerificationPage() {
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                     isDragOver
-                      ? "border-easner-primary bg-easner-primary-50"
+                      ? "border-primary bg-primary/5"
                       : identityFile
                         ? "border-green-300 bg-green-50"
                         : uploadError
                           ? "border-red-300 bg-red-50"
-                          : "border-gray-200 hover:border-easner-primary-300"
+                          : "border-gray-200 hover:border-primary/30"
                   }`}
                 >
                   <div className="flex items-center justify-center gap-3">
@@ -863,8 +863,8 @@ export default function IdentityVerificationPage() {
                           : uploadError
                             ? "bg-red-100"
                             : isDragOver
-                              ? "bg-easner-primary-100"
-                              : "bg-gray-100 group-hover:bg-easner-primary-50"
+                              ? "bg-accent"
+                              : "bg-gray-100 group-hover:bg-primary/5"
                       }`}
                     >
                       {identityFile ? (
@@ -874,7 +874,7 @@ export default function IdentityVerificationPage() {
                       ) : (
                         <Upload
                           className={`h-5 w-5 transition-colors ${
-                            isDragOver ? "text-easner-primary" : "text-gray-400"
+                            isDragOver ? "text-primary" : "text-gray-400"
                           }`}
                         />
                       )}

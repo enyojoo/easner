@@ -408,7 +408,7 @@ export function EarlyAccessForm() {
           <p className="text-gray-600 mb-2">We've received your request. We'll review your application and send you an invitation to join Easner soon.</p>
           <p className="text-sm text-gray-500 mb-6">You'll receive an email at <strong>{formData.email}</strong> with next steps.</p>
           <Link href="/">
-            <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200">
               Go Home
             </Button>
           </Link>
@@ -439,7 +439,7 @@ export function EarlyAccessForm() {
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="Enter your email"
-              className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
+              className="border-gray-200 focus:border-primary focus:ring-primary"
               required
               disabled={isSubmitting}
             />
@@ -453,7 +453,7 @@ export function EarlyAccessForm() {
               value={formData.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
               placeholder="Enter your full name"
-              className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
+              className="border-gray-200 focus:border-primary focus:ring-primary"
               required
               disabled={isSubmitting}
             />
@@ -467,7 +467,7 @@ export function EarlyAccessForm() {
               value={formData.whatsappTelegram}
               onChange={(e) => handleInputChange("whatsappTelegram", e.target.value)}
               placeholder="+1234567890 or @username"
-              className="border-gray-200 focus:border-easner-primary focus:ring-easner-primary"
+              className="border-gray-200 focus:border-primary focus:ring-primary"
               required
               disabled={isSubmitting}
             />
@@ -479,7 +479,7 @@ export function EarlyAccessForm() {
               <button
                 type="button"
                 onClick={handlePrimaryUseCaseDropdownToggle}
-                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-easner-primary focus:border-easner-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 <span className={formData.primaryUseCase ? "text-gray-900" : "text-gray-500"}>
@@ -520,7 +520,7 @@ export function EarlyAccessForm() {
               <button
                 type="button"
                 onClick={handleLocatedInDropdownToggle}
-                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-easner-primary focus:border-easner-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 <span className={formData.locatedIn ? "text-gray-900" : "text-gray-500"}>
@@ -576,7 +576,7 @@ export function EarlyAccessForm() {
               <button
                 type="button"
                 onClick={handleSendingToDropdownToggle}
-                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-easner-primary focus:border-easner-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-between px-3 py-2 border border-gray-200 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 <span className={formData.sendingTo ? "text-gray-900" : "text-gray-500"}>
@@ -636,11 +636,11 @@ export function EarlyAccessForm() {
             />
             <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
               I agree to the{" "}
-              <a href={`${APP_URLS.website}/terms`} target="_blank" rel="noopener noreferrer" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
+              <a href={`${APP_URLS.website}/terms`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">
                 Terms
               </a>{" "}
               and{" "}
-              <a href={`${APP_URLS.website}/privacy`} target="_blank" rel="noopener noreferrer" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
+              <a href={`${APP_URLS.website}/privacy`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">
                 Privacy Policy
               </a>
             </Label>
@@ -649,7 +649,7 @@ export function EarlyAccessForm() {
           <Button
             type="submit"
             disabled={isSubmitting || !acceptTerms}
-            className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>

@@ -23,7 +23,8 @@ interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>
+  signInWithGoogle: () => Promise<{ error: any }>
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   refreshUserProfile: () => Promise<void>
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   loading: true,
   signIn: async () => ({ error: null }),
+  signInWithGoogle: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
   refreshUserProfile: async () => {},
@@ -222,6 +224,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" })
+      if (error) return { error }
+      return { error: null }
+    } catch (error) {
+      console.error("Google sign in error:", error)
+      return { error: error as any }
+    }
+  }, [])
+
   const signIn = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -321,11 +334,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     loading,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     refreshUserProfile,
     isAdmin,
-  }), [user, userProfile, loading, signIn, signUp, signOut, refreshUserProfile, isAdmin])
+  }), [user, userProfile, loading, signIn, signInWithGoogle, signUp, signOut, refreshUserProfile, isAdmin])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
