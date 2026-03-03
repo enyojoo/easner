@@ -4,7 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus, Search } from "lucide-react"
+import { LayoutDashboard, Send, History, LogOut, X, MoreHorizontal, UserPlus } from "lucide-react"
 import { BrandLogo } from "@/components/brand/brand-logo"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -99,19 +99,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
       {/* Main content area - ml-56 for desktop to account for fixed sidebar */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-56">
-        {/* Top bar - Desktop only */}
-        <div className="bg-background border-b border-border px-4 h-14 items-center sm:px-6 lg:px-8 hidden lg:flex">
-          <div className="flex items-center justify-between w-full">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder="Search or jump to..."
-                className="w-full pl-9 h-9 bg-muted/50 border-0 rounded-md text-sm"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Top bar - Desktop only, matches sidebar header line (h-16, border-sidebar-border) */}
+        <div className="bg-background border-b border-sidebar-border px-4 h-16 items-center sm:px-6 lg:px-8 hidden lg:flex" />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">{children}</main>

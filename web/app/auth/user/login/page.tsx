@@ -14,7 +14,7 @@ import { useEffect } from "react"
 
 function LoginPageContent() {
   const router = useRouter()
-  const { signIn, user, userProfile, isAdmin, loading } = useAuth()
+  const { signIn, signInWithGoogle, user, userProfile, isAdmin, loading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -94,7 +94,7 @@ function LoginPageContent() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-bold">Welcome back</CardTitle>
         <CardDescription>Sign in to your Easner account</CardDescription>
       </CardHeader>
       <CardContent>
@@ -108,7 +108,7 @@ function LoginPageContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="h-12"
+              className="h-10 sm:h-11"
               required
               disabled={formLoading}
             />
@@ -122,7 +122,7 @@ function LoginPageContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="h-12 pr-12"
+                className="h-10 sm:h-11 pr-10"
                 required
                 disabled={formLoading}
               />
@@ -145,8 +145,8 @@ function LoginPageContent() {
               className="flex items-center space-x-3"
               disabled={formLoading}
             >
-              <div className={`w-5 h-5 border-2 rounded ${rememberMe ? "bg-primary border-primary" : "border-gray-300 bg-white"} flex items-center justify-center`}>
-                {rememberMe && <span className="text-white text-xs">✓</span>}
+              <div className={`w-5 h-5 border-2 rounded flex items-center justify-center flex-shrink-0 ${rememberMe ? "bg-primary border-primary" : "border-input bg-background"}`}>
+                {rememberMe && <span className="text-primary-foreground text-xs">✓</span>}
               </div>
               <Label className="text-sm font-medium cursor-pointer">Remember me</Label>
             </button>
@@ -156,7 +156,7 @@ function LoginPageContent() {
               Forgot password?
             </Link>
           </div>
-          <Button type="submit" className="w-full h-12" disabled={formLoading}>
+          <Button type="submit" className="w-full h-10 sm:h-11" disabled={formLoading}>
             {formLoading ? "Signing In..." : "Sign in"}
           </Button>
         </form>

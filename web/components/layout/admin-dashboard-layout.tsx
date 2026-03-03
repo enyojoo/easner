@@ -111,8 +111,8 @@ export function AdminDashboardLayout({ children }: AdminDashboardLayoutProps) {
 
       {/* Main content area - ml-56 for desktop */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-56">
-        {/* Top bar */}
-        <div className="bg-background border-b border-border px-4 h-14 flex items-center sm:px-6 lg:px-8">
+        {/* Top bar - matches sidebar header line (h-16, border-sidebar-border) */}
+        <div className="bg-background border-b border-sidebar-border px-4 h-16 flex items-center sm:px-6 lg:px-8">
           <div className="flex items-center justify-between w-full">
             <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
               <Menu className="h-5 w-5" />

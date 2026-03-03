@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BrandLogo } from "@/components/brand/brand-logo"
-import { BRAND } from "@/components/brand/brand-constants"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
@@ -155,69 +154,55 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="mb-5 flex justify-center">
-            <Link href={BRAND.url}>
-              <BrandLogo size="lg" />
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {step === "email" ? "Forgot Password" : "Enter Verification Code"}
-          </h1>
-          <p className="text-base text-gray-500">
-            {step === "email"
-              ? "Enter your email for verification code"
-              : `We've sent a 6-digit code to ${email}`}
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-5">
+    <Card className="w-full max-w-md">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-xl sm:text-2xl font-bold">
+          {step === "email" ? "Forgot Password" : "Enter Verification Code"}
+        </CardTitle>
+        <CardDescription>
+          {step === "email"
+            ? "Enter your email for verification code"
+            : `We've sent a 6-digit code to ${email}`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 sm:space-y-5">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           {message && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">{message}</p>
+            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+              <p className="text-sm text-green-700 dark:text-green-400">{message}</p>
             </div>
           )}
 
           {step === "email" ? (
-            <form onSubmit={handleEmailSubmit} className="space-y-5">
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-base font-semibold text-gray-700">
-                  Email Address
-                </Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
+                  className="h-10 sm:h-11"
                   required
                   disabled={isLoading}
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
                 {isLoading ? "Sending..." : "Send Verification Code"}
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-5">
+            <form onSubmit={handleOtpSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-base font-semibold text-gray-700">Enter 6-digit code</Label>
+                <Label>Enter 6-digit code</Label>
                 <div className="flex gap-2 justify-center">
                   {otp.map((digit, index) => (
                     <Input
@@ -229,7 +214,7 @@ export default function ForgotPasswordPage() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-12 h-12 text-center text-lg font-semibold border-gray-300 focus:border-primary focus:ring-primary"
+                      className="w-10 h-10 sm:w-12 sm:h-12 text-center text-base sm:text-lg font-semibold"
                       disabled={isLoading}
                     />
                   ))}
@@ -238,7 +223,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
+                className="w-full h-10 sm:h-11"
                 disabled={isLoading || otp.join("").length !== 6}
               >
                 {isLoading ? "Verifying..." : "Verify Code"}
@@ -249,7 +234,7 @@ export default function ForgotPasswordPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || isLoading}
-                  className="text-sm text-primary hover:text-primary/90 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  className="text-sm text-primary hover:underline disabled:text-muted-foreground disabled:cursor-not-allowed"
                 >
                   {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
                 </button>
@@ -257,8 +242,7 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          {/* Footer */}
-          <div className="mt-8 flex flex-col gap-2 text-center">
+          <div className="mt-6 flex flex-col gap-2 text-center">
             <button
               type="button"
               onClick={() => {
@@ -271,23 +255,20 @@ export default function ForgotPasswordPage() {
                   router.push("/auth/user/login")
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:text-primary/90"
+              className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
             >
               <ArrowLeft className="h-4 w-4" />
               {step === "otp" ? "Change Email" : "Back to Sign In"}
             </button>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link
-                href="/auth/user/register"
-                className="text-sm text-primary font-semibold hover:text-primary/90"
-              >
+              <Link href="/auth/user/register" className="text-primary font-medium hover:underline">
                 Sign up
               </Link>
             </p>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

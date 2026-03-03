@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
+import { BrandLogo } from "@/components/brand/brand-logo"
 
 export const metadata: Metadata = {
   title: "User Authentication - Easner",
@@ -17,19 +17,13 @@ export default function UserAuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen flex flex-col justify-center px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-12 bg-background overflow-y-auto">
+      <div className="flex-shrink-0 sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/" className="flex justify-center">
-          <Image
-            src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.svg"
-            alt="Easner"
-            width={120}
-            height={34}
-            className="h-8 w-auto"
-          />
+          <BrandLogo size="lg" className="h-7 sm:h-8" />
         </Link>
       </div>
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-4 sm:mt-6 lg:mt-8 sm:mx-auto sm:w-full sm:max-w-md flex-shrink-0">
         {children}
       </div>
     </div>

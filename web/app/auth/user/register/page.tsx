@@ -6,8 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BrandLogo } from "@/components/brand/brand-logo"
-import { BRAND, APP_URLS } from "@easner/shared"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { APP_URLS } from "@easner/shared"
 import { useAuth } from "@/lib/auth-context"
 import { CheckCircle, Eye, EyeOff } from "lucide-react"
 import { useRouteProtection } from "@/hooks/use-route-protection"
@@ -15,7 +15,7 @@ import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 
 function RegisterPageContent() {
   const router = useRouter()
-  const { signUp, signIn } = useAuth()
+  const { signUp, signInWithGoogle } = useAuth()
   const { isChecking } = useRouteProtection({ requireAuth: false })
   const [formData, setFormData] = useState({
     firstName: "",
@@ -26,7 +26,6 @@ function RegisterPageContent() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [acceptTerms, setAcceptTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -70,12 +69,6 @@ function RegisterPageContent() {
       return
     }
 
-    if (!acceptTerms) {
-      setError("Please accept the terms and conditions")
-      setLoading(false)
-      return
-    }
-
     try {
       const { error: signUpError } = await signUp(formData.email, formData.password, {
         firstName: formData.firstName,
@@ -110,76 +103,99 @@ function RegisterPageContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
-        <div className="w-full max-w-md text-center">
-          <div className="mb-5 flex justify-center">
-            <Link href={BRAND.url}>
-              <BrandLogo size="lg" />
-            </Link>
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-8 pb-8 text-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-7 w-7 sm:h-8 sm:w-8 text-green-600 dark:text-green-400" />
           </div>
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Account Created Successfully!</h3>
-          <p className="text-gray-600 mb-2">Welcome to Easner! Please check your email to verify your account.</p>
-          <p className="text-sm text-gray-500 mb-4">After verification, you can sign in to start sending money.</p>
-          <p className="text-sm text-gray-500">Redirecting to login...</p>
-        </div>
-      </div>
+          <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">Account Created Successfully!</h3>
+          <p className="text-muted-foreground mb-2 text-sm sm:text-base">Welcome to Easner! Please check your email to verify your account.</p>
+          <p className="text-sm text-muted-foreground mb-4">After verification, you can sign in to start sending money.</p>
+          <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="mb-5 flex justify-center">
-            <Link href={BRAND.url}>
-              <BrandLogo size="lg" />
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-base text-gray-500">To send money with Ease</p>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-5">
+    <Card className="w-full max-w-md">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-xl sm:text-2xl font-bold">Create Account</CardTitle>
+        <CardDescription>To send money with ease</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 sm:space-y-5">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+          <p className="text-sm text-muted-foreground text-center">
+            By creating an account you agree to the{" "}
+            <a href={`${APP_URLS.website}/terms?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">
+              Terms
+            </a>{" "}
+            and{" "}
+            <a href={`${APP_URLS.website}/privacy?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">
+              Privacy Policy
+            </a>
+            .
+          </p>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-10 sm:h-11"
+            onClick={async () => {
+              const { error: err } = await signInWithGoogle()
+              if (err) setError(err.message)
+            }}
+            disabled={loading}
+          >
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            </svg>
+            Sign up with Google
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-base font-semibold text-gray-700">
-                  First Name *
-                </Label>
+                <Label htmlFor="firstName">First Name *</Label>
                 <Input
                   id="firstName"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="First name"
-                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
+                  className="h-10 sm:h-11"
                   required
                   disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-base font-semibold text-gray-700">
-                  Last Name *
-                </Label>
+                <Label htmlFor="lastName">Last Name *</Label>
                 <Input
                   id="lastName"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Last name"
-                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
+                  className="h-10 sm:h-11"
                   required
                   disabled={loading}
                 />
@@ -187,9 +203,7 @@ function RegisterPageContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-base font-semibold text-gray-700">
-                Email *
-              </Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 name="email"
@@ -197,16 +211,14 @@ function RegisterPageContent() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="h-12 border-gray-300 focus:border-primary focus:ring-primary text-base"
+                className="h-10 sm:h-11"
                 required
                 disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-base font-semibold text-gray-700">
-                Password *
-              </Label>
+              <Label htmlFor="password">Password *</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -215,25 +227,25 @@ function RegisterPageContent() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Create a password"
-                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
+                  className="h-10 sm:h-11 pr-10"
                   required
                   disabled={loading}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   disabled={loading}
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-base font-semibold text-gray-700">
-                Confirm Password *
-              </Label>
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -242,69 +254,37 @@ function RegisterPageContent() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm your password"
-                  className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
+                  className="h-10 sm:h-11 pr-10"
                   required
                   disabled={loading}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   disabled={loading}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
               </div>
             </div>
 
-            {/* Terms Checkbox */}
-            <div className="flex items-start space-x-3">
-              <button
-                type="button"
-                onClick={() => setAcceptTerms(!acceptTerms)}
-                className="flex items-start space-x-3 pt-1"
-                disabled={loading}
-              >
-                <div className={`w-5 h-5 border-2 rounded mt-0.5 ${acceptTerms ? 'bg-primary border-primary' : 'border-gray-300 bg-white'} flex items-center justify-center flex-shrink-0`}>
-                  {acceptTerms && <span className="text-white text-xs">✓</span>}
-                </div>
-                <Label htmlFor="terms" className="text-sm text-gray-500 leading-relaxed cursor-pointer">
-                  I agree to the{" "}
-                  <a href={`${APP_URLS.website}/terms?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:text-primary/90">
-                    Terms
-                  </a>{" "}
-                  and{" "}
-                  <a href={`${APP_URLS.website}/privacy?from=register`} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:text-primary/90">
-                    Privacy Policy
-                  </a>
-                </Label>
-              </button>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading || !acceptTerms}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" className="w-full h-10 sm:h-11" disabled={loading}>
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
-        </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
+          <div className="mt-6 text-center text-sm">
             Already have an account?{" "}
-            <Link
-              href="/auth/user/login"
-              className="text-sm text-primary font-semibold hover:text-primary/90"
-            >
+            <Link href="/auth/user/login" className="text-primary font-medium hover:underline">
               Sign In
             </Link>
-          </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 

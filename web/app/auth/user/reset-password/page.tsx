@@ -7,8 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { BrandLogo } from "@/components/brand/brand-logo"
-import { BRAND } from "@/components/brand/brand-constants"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 
@@ -113,33 +112,23 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-5 py-8">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="mb-5 flex justify-center">
-            <Link href={BRAND.url}>
-              <BrandLogo size="lg" />
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
-          <p className="text-base text-gray-500">Enter your new password below</p>
-        </div>
-
-        {/* Form */}
-        <div className="space-y-5">
+    <Card className="w-full max-w-md">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-xl sm:text-2xl font-bold">Reset Password</CardTitle>
+        <CardDescription>Enter your new password below</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 sm:space-y-5">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
 
           {isValidSession && (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-base font-semibold text-gray-700">
-                  New Password
-                </Label>
+                <Label htmlFor="newPassword">New Password</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -147,25 +136,25 @@ function ResetPasswordForm() {
                     placeholder="Enter new password"
                     value={passwords.newPassword}
                     onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                    className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
+                    className="h-10 sm:h-11 pr-10"
                     required
                     disabled={isLoading}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     disabled={isLoading}
                   >
-                    {showPassword.new ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+                    {showPassword.new ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-base font-semibold text-gray-700">
-                  Confirm New Password
-                </Label>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -173,44 +162,38 @@ function ResetPasswordForm() {
                     placeholder="Confirm new password"
                     value={passwords.confirmPassword}
                     onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                    className="h-12 border-gray-300 focus:border-primary focus:ring-primary pr-12 text-base"
+                    className="h-10 sm:h-11 pr-10"
                     required
                     disabled={isLoading}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     disabled={isLoading}
                   >
-                    {showPassword.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
+                    {showPassword.confirm ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-semibold rounded-lg"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
                 {isLoading ? "Resetting..." : "Reset Password"}
               </Button>
             </form>
           )}
 
-          {/* Footer */}
-          <div className="mt-8 text-center">
-            <Link
-              href="/auth/user/login"
-              className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/90"
-            >
+          <div className="mt-6 text-center">
+            <Link href="/auth/user/login" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
               <ArrowLeft className="h-4 w-4" />
               Back to Sign In
             </Link>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
