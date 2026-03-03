@@ -23,12 +23,12 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
       </p>
       {logoList.length > 0 && (
         <div className="relative w-full flex justify-center">
-          {/* Framed viewport: shows ~4 logos at a time (Mercury-style), centered with fade edges */}
-          <div className="relative overflow-hidden max-w-[480px] sm:max-w-[560px]">
+          {/* Framed viewport: 2 logos on mobile, 4 on tablet/laptop/large */}
+          <div className="relative overflow-hidden max-w-[280px] sm:max-w-[560px]">
             {/* Left fade - Mercury-style frame effect */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-20 sm:w-28 bg-gradient-to-r from-white via-white/50 to-transparent" />
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-12 sm:w-28 bg-gradient-to-r from-white via-white/50 to-transparent" />
             {/* Right fade */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-20 sm:w-28 bg-gradient-to-l from-white via-white/50 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-12 sm:w-28 bg-gradient-to-l from-white via-white/50 to-transparent" />
             {/* Visible area: ~4 logos (each ~140px) = 560px */}
             <div
               className="flex"
