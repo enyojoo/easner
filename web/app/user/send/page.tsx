@@ -1662,9 +1662,8 @@ export default function UserSendPage() {
                     <CardTitle>Make Payment</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Payment Method - Dynamic based on admin settings */}
-                    <div className="bg-gradient-to-br from-primary/5 to-blue-50 rounded-xl p-4 border border-primary/10">
-                      <div className="flex items-center gap-2 mb-4">
+                    {/* Transfer amount and description */}
+                    <div className="flex items-center gap-2">
                         <div className="w-10 h-10 border border-primary rounded-lg flex items-center justify-center">
                           {sendCurrencyData && <FlagIcon currency={sendCurrencyData} />}
                         </div>
@@ -1680,7 +1679,7 @@ export default function UserSendPage() {
                         </div>
                       </div>
 
-                      {/* Render payment methods - Dynamic from Yellow Card/Bridge or fallback to static */}
+                    {/* Payment Method - Dynamic from Yellow Card/Bridge or fallback to static */}
                       {(() => {
                         // Use dynamic virtual account if available, otherwise fallback to static
                         const useDynamic = virtualAccountDetails && !loadingPaymentDetails
@@ -2192,7 +2191,6 @@ export default function UserSendPage() {
                           </div>
                         )
                       })()}
-                    </div>
 
                     {/* Upload Receipt Section with Better Error Handling */}
                     <div className="space-y-3">
