@@ -242,10 +242,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         if (session?.user) {
+          // Set user immediately to prevent loading issues
           setUser(session.user)
-          setLastActivity(Date.now())
-          // Await profile fetch so we don't show login form before redirect
-          await fetchUserProfile(session.user.id, session.user)
+          setLastActivity(Date.now()) // Reset activity timer on login
+          // Then fetch profile asynchronously
+          fetchUserProfile(session.user.id, session.user).catch(error => {
+            console.error("Error fetching profile after auth change:", error)
+          })
         } else {
           setUser(null)
           setUserProfile(null)
@@ -268,7 +271,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" })
+      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: redirectTo ? { redirectTo } : undefined,
+      })
       if (error) return { error }
       return { error: null }
     } catch (error) {

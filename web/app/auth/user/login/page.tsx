@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { useEffect } from "react"
 
 function LoginPageContent() {
@@ -33,28 +33,9 @@ function LoginPageContent() {
     }
   }, [user, userProfile, isAdmin, loading, router])
 
-  // Show spinner while auth is loading or when redirecting after OAuth
+  // Show loading only while auth is loading, not for form submission
   if (loading) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Taking you to dashboard...</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Redirecting to dashboard - show spinner (avoids flash of login form)
-  if (user && userProfile !== undefined) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Taking you to dashboard...</p>
-        </CardContent>
-      </Card>
-    )
+    return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
