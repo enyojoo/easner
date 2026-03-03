@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { APP_URLS } from "@easner/shared"
 import { useAuth } from "@/lib/auth-context"
-import { CheckCircle, Eye, EyeOff } from "lucide-react"
+import { CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react"
 import { useRouteProtection } from "@/hooks/use-route-protection"
 import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 
 function RegisterPageContent() {
   const router = useRouter()
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signUp, signInWithGoogle, user, userProfile } = useAuth()
   const { isChecking } = useRouteProtection({ requireAuth: false })
   const [formData, setFormData] = useState({
     firstName: "",
@@ -44,9 +44,28 @@ function RegisterPageContent() {
     loadSecuritySettings()
   }, [])
 
-  // Show loading spinner while checking authentication
+  // Show spinner while checking auth or redirecting after OAuth
   if (isChecking) {
-    return null
+    return (
+      <Card className="w-full max-w-md">
+        <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Taking you to dashboard...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Redirecting to dashboard after Google sign-up
+  if (user && userProfile !== undefined) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardContent className="py-12 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Taking you to dashboard...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
