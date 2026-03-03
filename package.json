@@ -2,6 +2,7 @@
   "name": "easner",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.3",
   "workspaces": [
     "packages/*",
     "website",
@@ -9,16 +10,20 @@
     "mobile"
   ],
   "scripts": {
-    "dev": "npm run dev:web",
-    "dev:website": "npm run dev --workspace=website",
-    "dev:web": "npm run dev --workspace=web",
+    "dev": "turbo run dev --filter=web",
+    "dev:website": "turbo run dev --filter=website",
+    "dev:web": "turbo run dev --filter=web",
     "dev:mobile": "npm run start --workspace=easner-mobile",
-    "build": "npm run build --workspaces --if-present",
-    "build:website": "npm run build --workspace=website",
-    "build:web": "npm run build --workspace=web",
-    "build:shared": "npm run build --workspace=@easner/shared",
-    "lint": "npm run lint --workspaces --if-present",
-    "start:website": "npm run start --workspace=website",
-    "start:web": "npm run start --workspace=web"
+    "dev:all": "turbo run dev --filter=website --filter=web",
+    "build": "turbo run build",
+    "build:website": "turbo run build --filter=website",
+    "build:web": "turbo run build --filter=web",
+    "build:shared": "turbo run build --filter=@easner/shared",
+    "lint": "turbo run lint",
+    "start:website": "turbo run start --filter=website",
+    "start:web": "turbo run start --filter=web"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.12"
   }
 }

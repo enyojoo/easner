@@ -293,7 +293,7 @@ function GlobalReach() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
-            Moving Money with Ease
+            Move Money with Ease
           </h2>
           <p className="text-lg md:text-xl text-gray-500 leading-relaxed">
             From the US and EU to Africa and Asia, Easner provides financial infrastructure that makes global money movement simple, compliant, and instant — for individuals, SMEs, and institutions alike.
@@ -301,9 +301,6 @@ function GlobalReach() {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600 shadow-md" onClick={() => router.push("/access")}>
               Get Started <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2 border-easner-primary/30 hover:bg-easner-primary/5" onClick={() => router.push("/access")}>
-              Explore the API
             </Button>
           </div>
         </div>

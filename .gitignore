@@ -115,6 +115,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Turborepo
+.turbo
+
 # vercel
 .vercel
 
