@@ -71,7 +71,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Pending
   transactionPending: {
-    subject: (data: TransactionEmailData) => `Transaction Created - #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transfer Created - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="confirmation-text">
@@ -122,7 +122,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Processing
   transactionProcessing: {
-    subject: (data: TransactionEmailData) => `Transfer Processing - Transaction #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transfer Processing - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="confirmation-text">
@@ -173,7 +173,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Completed
   transactionCompleted: {
-    subject: (data: TransactionEmailData) => `Transfer Completed Successfully! 🎉 Transaction #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transfer Completed Successfully! 🎉 #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="confirmation-text">
@@ -224,7 +224,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Failed
   transactionFailed: {
-    subject: (data: TransactionEmailData) => `Transaction Failed - #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transfer Failed - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="confirmation-text">
@@ -276,7 +276,7 @@ Need help? Contact us at support@easner.com
 
   // Transaction Cancelled
   transactionCancelled: {
-    subject: (data: TransactionEmailData) => `Transaction Cancelled - #${data.transactionId}`,
+    subject: (data: TransactionEmailData) => `Transfer Cancelled - #${data.transactionId}`,
     html: (data: TransactionEmailData) => {
       const content = `
         <p class="confirmation-text">
@@ -459,7 +459,7 @@ If you have any questions about your early access request or our platform, feel 
 
   // Admin Transaction Notification
   adminTransactionNotification: {
-    subject: (data: any) => `New Transaction ${data.status === 'pending' ? 'Created' : 'Updated'} - #${data.transactionId}`,
+    subject: (data: any) => `New Transfer ${data.status === 'pending' ? 'Created' : 'Updated'} - #${data.transactionId}`,
     html: (data: any) => {
       const userName = data.userName && data.userName !== 'User' && data.userName !== 'Unknown' ? data.userName : 'a user'
       const content = `
