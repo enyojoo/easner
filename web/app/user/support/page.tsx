@@ -30,7 +30,7 @@ export default function UserSupportPage() {
   }
 
   const handleOpenTelegram = () => {
-    window.open('https://t.me/enyosam', '_blank')
+    window.open('https://t.me/enyosamm', '_blank')
   }
 
 
