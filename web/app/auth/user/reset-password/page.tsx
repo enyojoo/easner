@@ -14,14 +14,8 @@ import { getSecuritySettings, validatePassword } from "@/lib/security-settings"
 function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [passwords, setPasswords] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  })
-  const [showPassword, setShowPassword] = useState({
-    new: false,
-    confirm: false,
-  })
+  const [newPassword, setNewPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isValidSession, setIsValidSession] = useState(() => {
     if (typeof window === "undefined") return false
@@ -54,14 +48,8 @@ function ResetPasswordForm() {
     setIsLoading(true)
     setError("")
 
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
     // Use security settings for password validation
-    const passwordValidation = validatePassword(passwords.newPassword, securitySettings?.passwordMinLength)
+    const passwordValidation = validatePassword(newPassword, securitySettings?.passwordMinLength)
     if (!passwordValidation.valid) {
       setError(passwordValidation.error || "Password validation failed")
       setIsLoading(false)
@@ -80,7 +68,7 @@ function ResetPasswordForm() {
         body: JSON.stringify({
           token: resetToken,
           email: resetEmail,
-          newPassword: passwords.newPassword,
+          newPassword,
         }),
       })
 
@@ -124,10 +112,10 @@ function ResetPasswordForm() {
                 <div className="relative">
                   <Input
                     id="newPassword"
-                    type={showPassword.new ? "text" : "password"}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter new password"
-                    value={passwords.newPassword}
-                    onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     className="h-10 sm:h-11 pr-10"
                     required
                     disabled={isLoading}
@@ -137,36 +125,10 @@ function ResetPasswordForm() {
                     variant="ghost"
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                    onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    {showPassword.new ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showPassword.confirm ? "text" : "password"}
-                    placeholder="Confirm new password"
-                    value={passwords.confirmPassword}
-                    onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                    className="h-10 sm:h-11 pr-10"
-                    required
-                    disabled={isLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
-                    disabled={isLoading}
-                  >
-                    {showPassword.confirm ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                   </Button>
                 </div>
               </div>

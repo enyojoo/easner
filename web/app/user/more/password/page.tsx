@@ -12,7 +12,6 @@ import Link from "next/link"
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +22,6 @@ export default function ChangePasswordPage() {
       setLoading(false)
       setCurrentPassword("")
       setNewPassword("")
-      setConfirmPassword("")
     }, 1000)
   }
 
@@ -74,21 +72,10 @@ export default function ChangePasswordPage() {
                     className="font-medium"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="confirmPassword" className="text-xs font-normal text-gray-500 uppercase tracking-wide">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={loading}
-                    className="font-medium"
-                  />
-                </div>
                 <div className="pt-4">
                   <Button
                     type="submit"
-                    disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+                    disabled={loading || !currentPassword || !newPassword}
                     className="bg-primary hover:bg-primary/90"
                   >
                     {loading ? "Updating..." : "Update Password"}
