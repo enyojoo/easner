@@ -1,6 +1,5 @@
 "use client"
 
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Send, MessageCircle, UserPlus } from "lucide-react"
@@ -283,16 +282,11 @@ export default function UserDashboardPage() {
   // 2. No user profile
   // This prevents flickering when navigating with cached data
   if ((loading && !hasValidData) || !userProfile) {
-    return (
-      <UserDashboardLayout>
-        <DashboardSkeleton />
-      </UserDashboardLayout>
-    )
+    return <DashboardSkeleton />
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
+    <div className="space-y-5 sm:space-y-6 pb-5 sm:pb-6">
         {/* Page Header - Mobile Style */}
         <div className="bg-card p-5 sm:p-6 mb-5 sm:mb-6">
           <div className="flex items-center justify-between">
@@ -447,6 +441,5 @@ export default function UserDashboardPage() {
           )}
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }

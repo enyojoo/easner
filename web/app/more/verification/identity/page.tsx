@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Upload, X, Search, Check, AlertCircle } from "lucide-react"
 import Link from "next/link"
@@ -445,8 +444,7 @@ export default function IdentityVerificationPage() {
   const selectedCountryData = countries.find(c => c.code === selectedCountry)
 
   return (
-    <UserDashboardLayout>
-      <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
         {/* Header */}
         <div className="bg-white px-5 py-6 border-b">
           <div className="flex items-center gap-3">
@@ -923,7 +921,6 @@ export default function IdentityVerificationPage() {
           )}
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }
 

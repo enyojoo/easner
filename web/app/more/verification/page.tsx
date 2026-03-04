@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { ArrowLeft, MapPin, User, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
@@ -211,8 +210,7 @@ export default function VerificationPage() {
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
         {/* Header - Simple and clean */}
         <div className="bg-white px-5 py-6">
           <div className="flex items-center gap-3">
@@ -301,6 +299,5 @@ export default function VerificationPage() {
           </Link>
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }

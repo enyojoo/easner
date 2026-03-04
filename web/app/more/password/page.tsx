@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,8 +25,7 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
@@ -86,7 +84,6 @@ export default function ChangePasswordPage() {
           </Card>
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }
 

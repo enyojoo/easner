@@ -2,7 +2,6 @@
 
 import { useState, useEffect, memo } from "react"
 
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Check, Clock, XCircle, AlertTriangle, Copy } from "lucide-react"
@@ -474,8 +473,7 @@ function TransactionStatusPage() {
 
   if (hasAttemptedLoad && (error || !transaction)) {
     return (
-      <UserDashboardLayout>
-        <div className="p-6">
+      <div className="p-6">
           <div className="max-w-6xl mx-auto">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
               <p className="text-red-700 mb-4">{error || "Transaction not found"}</p>
@@ -498,16 +496,13 @@ function TransactionStatusPage() {
             </div>
           </div>
         </div>
-      </UserDashboardLayout>
     )
   }
 
   // Show loading only if we haven't attempted to load yet or if auth is still loading
   if (authLoading || (!hasAttemptedLoad && !transaction)) {
     return (
-      <UserDashboardLayout>
-        <TransactionDetailsSkeleton />
-      </UserDashboardLayout>
+      <TransactionDetailsSkeleton />
     )
   }
 
@@ -516,8 +511,7 @@ function TransactionStatusPage() {
   const { timeRemaining, isOverdue } = getTimeInfo()
 
   return (
-    <UserDashboardLayout>
-      <div className="p-6">
+    <div className="p-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
@@ -735,7 +729,6 @@ function TransactionStatusPage() {
           </div>
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }
 

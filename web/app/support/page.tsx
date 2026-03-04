@@ -1,7 +1,5 @@
 "use client"
 
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Clock } from "lucide-react"
@@ -39,8 +37,7 @@ export default function UserSupportPage() {
   }
 
   return (
-    <UserDashboardLayout>
-      <div className="space-y-0">
+    <div className="space-y-0">
         {/* Header - Mobile Style */}
         <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Support</h1>
@@ -132,6 +129,5 @@ export default function UserSupportPage() {
           </Card>
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }

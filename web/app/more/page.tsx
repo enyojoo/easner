@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -171,8 +170,8 @@ export default function MorePage() {
   const verificationStatus = getVerificationStatus()
 
   return (
-    <UserDashboardLayout>
-      <div className="space-y-0">
+    <>
+    <div className="space-y-0">
         {/* Header - Mobile Style */}
         <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">More</h1>
@@ -310,6 +309,6 @@ export default function MorePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </UserDashboardLayout>
+    </>
   )
 }

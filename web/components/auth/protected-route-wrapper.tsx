@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { useRouteProtection } from "@/hooks/use-route-protection"
 import { AuthLoadingSkeleton } from "@/components/auth-loading-skeleton"
+import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 
 const PROTECTED_PATHS = ["/dashboard", "/send", "/transactions", "/recipients", "/card", "/more", "/support"]
 
@@ -40,5 +41,5 @@ export function ProtectedRouteWrapper({ children }: { children: React.ReactNode 
     )
   }
 
-  return <>{children}</>
+  return <UserDashboardLayout>{children}</UserDashboardLayout>
 }

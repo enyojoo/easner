@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 
-import { UserDashboardLayout } from "@/components/layout/user-dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -231,9 +230,7 @@ export default function UserTransactionsPage() {
   // Show skeleton only if we're loading and have no data at all
   if ((loading || userDataLoading) && transactions.length === 0 && !userTransactions?.length) {
     return (
-      <UserDashboardLayout>
-        <TransactionsSkeleton />
-      </UserDashboardLayout>
+      <TransactionsSkeleton />
     )
   }
 
@@ -294,8 +291,7 @@ export default function UserTransactionsPage() {
 
 
   return (
-    <UserDashboardLayout>
-      <div className="space-y-0">
+    <div className="space-y-0">
         {/* Header - Mobile Style */}
         <div className="bg-white p-5 sm:p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Transaction History</h1>
@@ -402,6 +398,5 @@ export default function UserTransactionsPage() {
           )}
         </div>
       </div>
-    </UserDashboardLayout>
   )
 }
