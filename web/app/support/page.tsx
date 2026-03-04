@@ -21,7 +21,7 @@ export default function UserSupportPage() {
     },
     {
       question: 'How long does it take?',
-      answer: 'All transactions are completed within 5 minutes or less, ensuring your money reaches its destination quickly and efficiently.'
+      answer: 'All transactions are completed within minutes, ensuring your money reaches its destination quickly and efficiently.'
     }
   ]
 
