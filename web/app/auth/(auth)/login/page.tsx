@@ -28,7 +28,7 @@ function LoginPageContent() {
       if (isAdmin) {
         router.push("/admin/dashboard")
       } else {
-        router.push("/user/dashboard")
+        router.push("/dashboard")
       }
     }
   }, [user, userProfile, isAdmin, loading, router])
@@ -67,10 +67,10 @@ function LoginPageContent() {
           step: "2",
         })
 
-        router.push(`/user/send?${params.toString()}`)
+        router.push(`/send?${params.toString()}`)
       } else {
         // Regular users always go to user dashboard
-        router.push("/user/dashboard")
+        router.push("/dashboard")
       }
     } catch (err: any) {
       setError(err.message || "An error occurred during login")

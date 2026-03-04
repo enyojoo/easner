@@ -93,7 +93,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Track Transaction",
-          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}`
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -114,7 +114,7 @@ Transaction Details:
 What's Next:
 We're working on your transfer and will notify you as soon as it's completed. You can track the progress in your dashboard.
 
-Track Transaction: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}
+Track Transaction: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -144,7 +144,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Track Transfer",
-          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}`
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -165,7 +165,7 @@ Transaction Details:
 What's Happening:
 We're working with our banking partners to complete your transfer. Thanks to our advanced technology, this typically takes under 5 minutes!
 
-Track Transfer: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}
+Track Transfer: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -195,7 +195,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "View Transaction",
-          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}`
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}`
         }
       )
     },
@@ -216,7 +216,7 @@ Transaction Details:
 What's Next:
 Your recipient should receive the money within minutes thanks to our fast processing. You can track all your transfers in your dashboard.
 
-View Transaction: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send/${data.transactionId.toLowerCase()}
+View Transaction: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send/${data.transactionId.toLowerCase()}
 
 Need help? Contact us at support@easner.com
     `
@@ -246,7 +246,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Contact Support",
-          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/support`
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/support`
         }
       )
     },
@@ -268,7 +268,7 @@ Transaction Details:
 What Happens Next:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Contact Support: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/support
+Contact Support: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/support
 
 Need help? Contact us at support@easner.com
     `
@@ -298,7 +298,7 @@ Need help? Contact us at support@easner.com
         content,
         {
           text: "Send New Transfer",
-          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send`
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send`
         }
       )
     },
@@ -320,7 +320,7 @@ Transaction Details:
 Refund Information:
 If you were charged for this transfer, we will automatically refund the amount to your original payment method within 3-5 business days.
 
-Send New Transfer: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/user/send
+Send New Transfer: ${process.env.NEXT_PUBLIC_APP_URL || 'https://app.easner.com'}/send
 
 Need help? Contact us at support@easner.com
     `

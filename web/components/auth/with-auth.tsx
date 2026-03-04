@@ -37,7 +37,7 @@ export function withAuth<P extends object>(
 
       // If admin access is required but user is not admin
       if (adminOnly && (!isAdmin || !userProfile)) {
-        router.push("/user/dashboard") // Redirect to user dashboard instead of login
+        router.push("/dashboard") // Redirect to user dashboard instead of login
         return
       }
 
@@ -46,7 +46,7 @@ export function withAuth<P extends object>(
         if (isAdmin) {
           router.push("/admin/dashboard")
         } else {
-          router.push("/user/dashboard")
+          router.push("/dashboard")
         }
         return
       }

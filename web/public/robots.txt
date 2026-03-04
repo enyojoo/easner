@@ -8,7 +8,13 @@ Sitemap: https://www.easner.com/sitemap.xml
 Crawl-delay: 1
 
 # Disallow authenticated user and admin areas
-Disallow: /user/
+Disallow: /dashboard
+Disallow: /send
+Disallow: /transactions
+Disallow: /recipients
+Disallow: /card
+Disallow: /more
+Disallow: /support
 Disallow: /admin/
 Disallow: /api/
 Disallow: /debug-*

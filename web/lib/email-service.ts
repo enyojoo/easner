@@ -161,7 +161,7 @@ export class EmailService {
         lastName: 'User',
         email: to,
         baseCurrency: 'USD',
-        dashboardUrl: `${appUrl}/user/dashboard`
+        dashboardUrl: `${appUrl}/dashboard`
       }
     })
   }

@@ -14,17 +14,17 @@ interface UserDashboardLayoutProps {
 }
 
 const baseNavigation = [
-  { name: "Home", href: "/user/dashboard", icon: Home },
-  { name: "Send Money", href: "/user/send", icon: Send },
-  { name: "Recipients", href: "/user/recipients", icon: UserPlus },
-  { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "More", href: "/user/more", icon: LayoutDashboard },
+  { name: "Home", href: "/dashboard", icon: Home },
+  { name: "Send Money", href: "/send", icon: Send },
+  { name: "Recipients", href: "/recipients", icon: UserPlus },
+  { name: "Transactions", href: "/transactions", icon: History },
+  { name: "More", href: "/more", icon: LayoutDashboard },
 ]
 
 const bottomNavItems = [
-  { name: "Home", href: "/user/dashboard", icon: Home },
-  { name: "Transactions", href: "/user/transactions", icon: History },
-  { name: "Recipients", href: "/user/recipients", icon: UserPlus },
+  { name: "Home", href: "/dashboard", icon: Home },
+  { name: "Transactions", href: "/transactions", icon: History },
+  { name: "Recipients", href: "/recipients", icon: UserPlus },
 ]
 
 export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
@@ -128,17 +128,17 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
             {/* More Menu */}
             <Link
-              href="/user/more"
+              href="/more"
               prefetch={true}
               className="flex flex-col items-center justify-center p-2 min-w-0 flex-1"
             >
               <LayoutDashboard
                 className={`h-5 w-5 ${
-                  pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-primary" : "text-gray-600"
+                  pathname === "/more" || pathname?.startsWith("/more/") ? "text-primary" : "text-gray-600"
                 }`}
               />
               <span className={`text-xs mt-1 ${
-                pathname === "/user/more" || pathname?.startsWith("/user/more/") ? "text-primary" : "text-gray-600"
+                pathname === "/more" || pathname?.startsWith("/more/") ? "text-primary" : "text-gray-600"
               }`}>
                 More
               </span>

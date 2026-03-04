@@ -31,7 +31,7 @@ export default function AuthCallbackPage() {
           }
           // Success - redirect based on user type (admin vs regular)
           const isAdmin = data?.user?.user_metadata?.isAdmin ?? false
-          router.replace(isAdmin ? "/admin/dashboard" : "/user/dashboard")
+          router.replace(isAdmin ? "/admin/dashboard" : "/dashboard")
         } catch (err: any) {
           setError(err?.message || "Failed to complete sign in")
           setTimeout(() => router.replace("/auth/login"), 2000)
@@ -44,7 +44,7 @@ export default function AuthCallbackPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         const isAdmin = session.user?.user_metadata?.isAdmin ?? false
-        router.replace(isAdmin ? "/admin/dashboard" : "/user/dashboard")
+        router.replace(isAdmin ? "/admin/dashboard" : "/dashboard")
       } else {
         // No session, redirect to login
         router.replace("/auth/login")

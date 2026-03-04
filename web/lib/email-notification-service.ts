@@ -227,7 +227,7 @@ export class EmailNotificationService {
         lastName: '',
         email: userEmail,
         baseCurrency: 'USD',
-        dashboardUrl: `${appUrl}/user/dashboard`
+        dashboardUrl: `${appUrl}/dashboard`
       })
       
       if (result.success) {

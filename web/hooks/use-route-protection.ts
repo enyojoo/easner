@@ -83,7 +83,7 @@ export function useRouteProtection(options: UseRouteProtectionOptions = {}) {
         if (isAdmin) {
           router.push("/admin/dashboard")
         } else {
-          router.push("/user/dashboard")
+          router.push("/dashboard")
         }
         setIsAuthorized(false)
         return

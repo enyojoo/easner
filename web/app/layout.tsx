@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { AuthProvider } from "@/lib/auth-context"
 import { PostHogProvider } from "@/components/posthog-provider"
+import { ProtectedRouteWrapper } from "@/components/auth/protected-route-wrapper"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -189,9 +190,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
-        <PostHogProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </PostHogProvider>
+<PostHogProvider>
+        <AuthProvider>
+          <ProtectedRouteWrapper>{children}</ProtectedRouteWrapper>
+        </AuthProvider>
+      </PostHogProvider>
       </body>
     </html>
   )
