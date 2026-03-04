@@ -80,7 +80,7 @@ function ResetPasswordForm() {
         sessionStorage.removeItem("reset-email")
 
         // Redirect to login with success message
-        router.push("/auth/user/login?message=Password reset successful. Please sign in with your new password.")
+        router.push("/auth/login?message=Password reset successful. Please sign in with your new password.")
       } else {
         setError(data.error || "Failed to reset password")
       }
@@ -140,7 +140,7 @@ function ResetPasswordForm() {
           )}
 
           <div className="mt-6 text-center">
-            <Link href="/auth/user/login" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+            <Link href="/auth/login" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
               <ArrowLeft className="h-4 w-4" />
               Back to Sign In
             </Link>

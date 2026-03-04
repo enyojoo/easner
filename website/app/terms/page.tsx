@@ -22,13 +22,13 @@ function TermsPageContent() {
     // Show back button if:
     // 1. There's a 'from=internal' or 'from=register' query parameter
     // 2. Referrer is from the same domain (easner.com)
-    // 3. Referrer includes auth/user/register path
+    // 3. Referrer includes auth/register path
     const isInternalReferrer = referrer && (
       referrer.includes('easner.com') || 
       referrer.includes('localhost') ||
       referrer.includes('127.0.0.1')
     )
-    const isFromRegister = referrer && referrer.includes('/auth/user/register')
+    const isFromRegister = referrer && referrer.includes('/auth/register')
     
     setShowBackButton(fromInternal || fromRegister || isInternalReferrer || isFromRegister)
   }, [searchParams])

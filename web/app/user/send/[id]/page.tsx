@@ -76,7 +76,7 @@ function TransactionStatusPage() {
       
       // If no user is authenticated, redirect to login
       if (!user?.id) {
-        router.push('/auth/user/login')
+        router.push('/auth/login')
         return
       }
       
@@ -488,7 +488,7 @@ function TransactionStatusPage() {
                 </Button>
                 {error && error.includes("access denied") && (
                   <Button
-                    onClick={() => router.push("/auth/user/login")}
+                    onClick={() => router.push("/auth/login")}
                     variant="outline"
                   >
                     Login

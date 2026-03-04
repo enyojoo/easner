@@ -54,7 +54,7 @@ export default function MorePage() {
     setIsLoggingOut(true)
     try {
       await signOut()
-      router.push("/auth/user/login")
+      router.push("/auth/login")
     } catch (error) {
       console.error("Error signing out:", error)
     } finally {

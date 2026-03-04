@@ -71,7 +71,7 @@ function RegisterPageContent() {
       // Redirect after a short delay to show success message
       setTimeout(() => {
         // Redirect to login page after successful signup
-        router.push("/auth/user/login")
+        router.push("/auth/login")
       }, 2000)
     } catch (err: any) {
       setError(err.message || "An error occurred during registration")
@@ -232,7 +232,7 @@ function RegisterPageContent() {
 
           <div className="mt-6 text-center text-sm">
             Already have an account?{" "}
-            <Link href="/auth/user/login" className="text-primary font-medium hover:underline">
+            <Link href="/auth/login" className="text-primary font-medium hover:underline">
               Sign In
             </Link>
           </div>

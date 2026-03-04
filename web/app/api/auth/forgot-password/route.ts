@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Send password reset email using Supabase Auth
     // Supabase will generate the OTP and send it via {{ .Token }} in the email template
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.easner.com"}/auth/user/reset-password`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://app.easner.com"}/auth/reset-password`,
     })
 
     if (resetError) {

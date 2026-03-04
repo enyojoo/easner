@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/lib/auth-context"
-import { Eye, EyeOff } from "lucide-react"
+import { Check, Eye, EyeOff } from "lucide-react"
 import { useEffect } from "react"
 
 function LoginPageContent() {
@@ -171,13 +171,13 @@ function LoginPageContent() {
                 disabled={formLoading}
               >
                 <div className={`w-5 h-5 border-2 rounded flex items-center justify-center flex-shrink-0 ${rememberMe ? "bg-primary border-primary" : "border-input bg-background"}`}>
-                  {rememberMe && <span className="text-primary-foreground text-xs">✓</span>}
+                  {rememberMe ? <Check className="h-3 w-3 text-primary-foreground" /> : null}
                 </div>
                 <Label className="text-sm font-medium cursor-pointer">Remember me</Label>
               </button>
             </div>
             <div className="flex items-center justify-between">
-              <Link href="/auth/user/forgot-password" className="text-sm text-primary hover:underline">
+              <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -188,7 +188,7 @@ function LoginPageContent() {
 
           <div className="text-center text-sm">
             Don't have an account?{" "}
-            <Link href="/auth/user/register" className="text-primary hover:underline font-semibold">
+            <Link href="/auth/register" className="text-primary hover:underline font-semibold">
               Sign up
             </Link>
           </div>

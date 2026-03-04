@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
         // Store reset token and redirect to reset password page
         sessionStorage.setItem("reset-token", data.resetToken)
         sessionStorage.setItem("reset-email", email)
-        router.push("/auth/user/reset-password")
+        router.push("/auth/reset-password")
       } else {
         setError(data.error || "Invalid code. Please try again.")
       }
@@ -252,7 +252,7 @@ export default function ForgotPasswordPage() {
                   setError("")
                   setMessage("")
                 } else {
-                  router.push("/auth/user/login")
+                  router.push("/auth/login")
                 }
               }}
               className="inline-flex items-center justify-center gap-2 text-sm text-primary hover:underline"
@@ -262,7 +262,7 @@ export default function ForgotPasswordPage() {
             </button>
             <p className="text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link href="/auth/user/register" className="text-primary font-medium hover:underline">
+              <Link href="/auth/register" className="text-primary font-medium hover:underline">
                 Sign up
               </Link>
             </p>

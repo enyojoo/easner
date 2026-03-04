@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
 
       if (errorParam) {
         setError(errorParam === "access_denied" ? "Sign in was cancelled" : errorParam)
-        setTimeout(() => router.replace("/auth/user/login"), 2000)
+        setTimeout(() => router.replace("/auth/login"), 2000)
         return
       }
 
@@ -26,7 +26,7 @@ export default function AuthCallbackPage() {
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           if (exchangeError) {
             setError(exchangeError.message)
-            setTimeout(() => router.replace("/auth/user/login"), 2000)
+            setTimeout(() => router.replace("/auth/login"), 2000)
             return
           }
           // Success - redirect based on user type (admin vs regular)
@@ -34,7 +34,7 @@ export default function AuthCallbackPage() {
           router.replace(isAdmin ? "/admin/dashboard" : "/user/dashboard")
         } catch (err: any) {
           setError(err?.message || "Failed to complete sign in")
-          setTimeout(() => router.replace("/auth/user/login"), 2000)
+          setTimeout(() => router.replace("/auth/login"), 2000)
         }
         return
       }
@@ -47,7 +47,7 @@ export default function AuthCallbackPage() {
         router.replace(isAdmin ? "/admin/dashboard" : "/user/dashboard")
       } else {
         // No session, redirect to login
-        router.replace("/auth/user/login")
+        router.replace("/auth/login")
       }
     }
 
