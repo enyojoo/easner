@@ -3,8 +3,8 @@ import Link from "next/link"
 import { BrandLogo } from "@easner/shared"
 
 export const metadata: Metadata = {
-  title: "Office - Easner",
-  description: "Office login",
+  title: "Sign in - Easner",
+  description: "Sign in to Easner Office",
   robots: {
     index: false,
     follow: false,
