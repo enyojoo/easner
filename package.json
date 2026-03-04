@@ -7,6 +7,7 @@
     "packages/*",
     "website",
     "web",
+    "office",
     "mobile"
   ],
   "scripts": {
@@ -21,7 +22,10 @@
     "build:shared": "turbo run build --filter=@easner/shared",
     "lint": "turbo run lint",
     "start:website": "turbo run start --filter=website",
-    "start:web": "turbo run start --filter=web"
+    "start:web": "turbo run start --filter=web",
+    "dev:office": "turbo run dev --filter=office",
+    "build:office": "turbo run build --filter=office",
+    "start:office": "turbo run start --filter=office"
   },
   "devDependencies": {
     "turbo": "^2.8.12"

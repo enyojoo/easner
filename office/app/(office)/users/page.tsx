@@ -1,0 +1,1084 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { OfficeDashboardLayout } from "@/components/layout/office-dashboard-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Search,
+  Download,
+  Filter,
+  Eye,
+  MoreHorizontal,
+  Calendar,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle,
+  User,
+  Mail,
+  Phone,
+  Ban,
+  UserCheck,
+  TrendingUp,
+} from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { supabase } from "@/lib/supabase"
+import { formatCurrency } from "@/utils/currency"
+import { useOfficeData } from "@/hooks/use-office-data"
+import { officeDataStore, calculateUserVolume } from "@/lib/office-data-store"
+import { OfficeUsersSkeleton } from "@/components/office-users-skeleton"
+import { kycService, KYCSubmission } from "@/lib/kyc-service"
+import { getIdTypeLabel } from "@/lib/country-id-types"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/lib/auth-context"
+
+interface UserData {
+  id: string
+  email: string
+  first_name: string
+  middle_name?: string
+  last_name: string
+  phone?: string
+  date_of_birth?: string
+  address?: string
+  country_code?: string
+  bridge_kyc_metadata?: any
+  status: string
+  // verification_status removed - use bridge_kyc_status for KYC status
+  bridge_kyc_status?: string
+  bridge_customer_id?: string
+  bridge_kyc_rejection_reasons?: any
+  email_confirmed_at?: string
+  base_currency: string
+  created_at: string
+  last_login?: string
+  totalTransactions: number
+  totalVolume: number
+}
+
+interface TransactionData {
+  transaction_id: string
+  created_at: string
+  send_currency: string
+  receive_currency: string
+  send_amount: number
+  receive_amount: number
+  status: string
+  recipient: {
+    full_name: string
+  }
+}
+
+export default function AdminUsersPage() {
+  const { data, loading } = useOfficeData()
+  const { userProfile } = useAuth()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [verificationFilter, setVerificationFilter] = useState("all")
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
+  const [userTransactions, setUserTransactions] = useState<TransactionData[]>([])
+  const [saving, setSaving] = useState(false)
+  const [kycSubmissions, setKycSubmissions] = useState<KYCSubmission[]>([])
+  const [loadingKyc, setLoadingKyc] = useState(false)
+  const [selectedKycSubmission, setSelectedKycSubmission] = useState<KYCSubmission | null>(null)
+  const [kycReviewDialogOpen, setKycReviewDialogOpen] = useState(false)
+  const [kycReviewSubDialogOpen, setKycReviewSubDialogOpen] = useState(false)
+  const [reviewStatus, setReviewStatus] = useState<"approved" | "rejected">("approved")
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [updatingKyc, setUpdatingKyc] = useState(false)
+  const [userKycMap, setUserKycMap] = useState<Map<string, KYCSubmission[]>>(new Map())
+
+  // Format currency using database currencies
+  const formatCurrencyFromDB = (amount: number, currencyCode: string): string => {
+    const currency = data?.currencies?.find((c: any) => c.code === currencyCode)
+    const symbol = currency?.symbol || currencyCode
+    return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    const hours = date.getHours()
+    const minutes = date.getMinutes().toString().padStart(2, "0")
+    const ampm = hours >= 12 ? "PM" : "AM"
+    const displayHours = hours % 12 || 12
+    // Format: "Nov 07, 2025 • 7:29 PM"
+    return `${month} ${day}, ${year} • ${displayHours}:${minutes} ${ampm}`
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const month = date.toLocaleString("en-US", { month: "short" })
+    const day = date.getDate().toString().padStart(2, "0")
+    const year = date.getFullYear()
+    // Format: "Nov 07, 2025"
+    return `${month} ${day}, ${year}`
+  }
+
+  const fetchUserTransactions = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(`
+          transaction_id,
+          created_at,
+          send_currency,
+          receive_currency,
+          send_amount,
+          receive_amount,
+          status,
+          recipient:recipients(full_name)
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+      // Remove .limit(20) to show all transactions
+
+      if (error) throw error
+      // Transform the data to match TransactionData interface
+      const transformedData = (data || []).map((tx: any) => ({
+        transaction_id: tx.transaction_id,
+        created_at: tx.created_at,
+        send_currency: tx.send_currency,
+        receive_currency: tx.receive_currency,
+        send_amount: tx.send_amount,
+        receive_amount: tx.receive_amount,
+        status: tx.status,
+        recipient: {
+          full_name: Array.isArray(tx.recipient) ? tx.recipient[0]?.full_name || '' : tx.recipient?.full_name || ''
+        }
+      }))
+      setUserTransactions(transformedData)
+    } catch (err) {
+      console.error("Error fetching user transactions:", err)
+      setUserTransactions([])
+    }
+  }
+
+  // Fetch KYC submissions for all users (must be before conditional return to follow Rules of Hooks)
+  useEffect(() => {
+    const fetchAllKyc = async () => {
+      if (!data?.users) return
+      
+      // KYC data is now in users table, no need to fetch from kyc_submissions
+      // Set empty map since we're using user data directly
+      setUserKycMap(new Map())
+    }
+    
+    fetchAllKyc()
+  }, [data?.users])
+
+  // Only show skeleton if we're truly loading and have no cached data
+  if (loading && (!data || !data.users?.length)) {
+    return (
+      <OfficeDashboardLayout>
+        <OfficeUsersSkeleton />
+      </OfficeDashboardLayout>
+    )
+  }
+
+  // Ensure we have data structure even if empty
+  if (!data) {
+    return (
+      <OfficeDashboardLayout>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <p className="text-gray-600">No data available. Please refresh the page.</p>
+          </div>
+        </div>
+      </OfficeDashboardLayout>
+    )
+  }
+
+  // Calculate transaction stats and verification status for each user
+  const usersWithStats = (data?.users || []).map((user: any) => {
+    const userTransactions = (data?.transactions || []).filter((t: any) => t.user_id === user.id)
+    const userExchangeRates = data?.exchangeRates || []
+    const baseCurrency = user.base_currency || "NGN"
+
+    // Use the same calculation method as the dashboard for consistency
+    const totalVolume = calculateUserVolume(userTransactions, baseCurrency, userExchangeRates)
+    const completedTransactions = userTransactions.filter((t: any) => t.status === "completed")
+
+    // Use bridge_kyc_status for KYC verification status
+    // Map bridge_kyc_status to display values: approved -> verified, others -> pending
+    const bridgeKycStatus = user.bridge_kyc_status || "not_started"
+    const verificationStatus = bridgeKycStatus === "approved" ? "verified" : "pending"
+
+    return {
+      ...user,
+      totalTransactions: completedTransactions.length,
+      totalVolume,
+      verificationStatus,
+      bridgeKycStatus, // Include for filtering
+    }
+  })
+
+  const filteredUsers = usersWithStats.filter((user: any) => {
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+    const matchesSearch =
+      fullName.includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter
+    // Filter by bridge_kyc_status: map filter values to bridge status
+    const bridgeKycStatus = user.bridgeKycStatus || user.bridge_kyc_status || "not_started"
+    let matchesVerification = true
+    if (verificationFilter !== "all") {
+      if (verificationFilter === "verified") {
+        matchesVerification = bridgeKycStatus === "approved"
+      } else if (verificationFilter === "pending") {
+        matchesVerification = bridgeKycStatus !== "approved" && bridgeKycStatus !== "rejected"
+      } else if (verificationFilter === "rejected") {
+        matchesVerification = bridgeKycStatus === "rejected"
+      } else if (verificationFilter === "in_review") {
+        matchesVerification = bridgeKycStatus === "under_review" || bridgeKycStatus === "in_review"
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesVerification
+  })
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      active: { color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      suspended: { color: "bg-red-100 text-red-800", icon: <Ban className="h-3 w-3 mr-1" /> },
+      inactive: { color: "bg-gray-100 text-gray-800", icon: <Clock className="h-3 w-3 mr-1" /> },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive
+
+    return (
+      <Badge className={`${config.color} hover:${config.color} flex items-center`}>
+        {config.icon}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    )
+  }
+
+
+  const getVerificationBadge = (user: UserData & { bridge_kyc_status?: string }) => {
+    // Use bridge_kyc_status for KYC verification
+    const bridgeKycStatus = user.bridge_kyc_status || "not_started"
+    const status = bridgeKycStatus === "approved" ? "verified" : bridgeKycStatus === "rejected" ? "rejected" : bridgeKycStatus === "under_review" ? "in_review" : "pending"
+    
+    const statusConfig = {
+      verified: { color: "bg-green-100 text-green-700", text: "Verified" },
+      pending: { color: "bg-amber-100 text-amber-700", text: "Pending" },
+      rejected: { color: "bg-red-100 text-red-700", text: "Rejected" },
+      in_review: { color: "bg-yellow-100 text-yellow-700", text: "In Review" },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+
+    return (
+      <Badge className={`${config.color} hover:${config.color}`}>
+        {config.text}
+      </Badge>
+    )
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(filteredUsers.map((u: UserData) => u.id))
+    } else {
+      setSelectedUsers([])
+    }
+  }
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUsers([...selectedUsers, userId])
+    } else {
+      setSelectedUsers(selectedUsers.filter((id) => id !== userId))
+    }
+  }
+
+  const handleStatusUpdate = async (userId: string, newStatus: string) => {
+    try {
+      await officeDataStore.updateUserStatus(userId, newStatus)
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev) => (prev ? { ...prev, status: newStatus } : null))
+      }
+    } catch (err) {
+      console.error("Error updating user status:", err)
+    }
+  }
+
+  const handleVerificationUpdate = async (userId: string, newStatus: string) => {
+    try {
+      await officeDataStore.updateUserVerification(userId, newStatus)
+      if (selectedUser?.id === userId) {
+        setSelectedUser((prev) => {
+          // Map old verification_status to bridge_kyc_status
+          const statusMap: Record<string, string> = {
+            "verified": "approved",
+            "pending": "not_started",
+            "rejected": "rejected",
+            "unverified": "not_started",
+          }
+          const bridgeKycStatus = statusMap[newStatus] || newStatus
+          return prev ? { ...prev, bridge_kyc_status: bridgeKycStatus } : null
+        })
+      }
+    } catch (err) {
+      console.error("Error updating user verification:", err)
+    }
+  }
+
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    try {
+      await Promise.all(selectedUsers.map((userId) => officeDataStore.updateUserStatus(userId, newStatus)))
+      setSelectedUsers([])
+    } catch (err) {
+      console.error("Error bulk updating user status:", err)
+    }
+  }
+
+  const handleExport = () => {
+    const csvContent = [
+      ["Name", "Email", "Phone", "Status", "Verification", "Registration Date", "Total Volume"].join(","),
+      ...filteredUsers.map((u: UserData) =>
+        [
+          `${u.first_name} ${u.last_name}`,
+          u.email,
+          u.phone || "",
+          u.status,
+          u.email_confirmed_at ? "verified" : "unverified",
+          formatDate(u.created_at),
+          formatCurrencyFromDB(u.totalVolume, u.base_currency),
+        ].join(","),
+      ),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "users.csv"
+    a.click()
+  }
+
+  const handleUserSelect = (user: UserData) => {
+    setSelectedUser(user)
+    fetchUserTransactions(user.id)
+  }
+
+  const handleKycOpen = async (user: UserData) => {
+    setSelectedUser(user)
+    // KYC data is now in users table, no need to fetch from kyc_submissions
+    setKycSubmissions([])
+    setKycReviewDialogOpen(true)
+  }
+
+  const handleKycReview = async () => {
+    if (!selectedKycSubmission || !userProfile) return
+
+    setUpdatingKyc(true)
+    try {
+      await kycService.updateStatus(
+        selectedKycSubmission.id,
+        reviewStatus,
+        userProfile.id,
+        reviewStatus === "rejected" ? rejectionReason : undefined
+      )
+      
+      // Reload KYC submissions
+      if (selectedUser) {
+        const submissions = await kycService.getByUserId(selectedUser.id)
+        setKycSubmissions(submissions)
+      }
+      
+      setKycReviewSubDialogOpen(false)
+      setSelectedKycSubmission(null)
+      setRejectionReason("")
+    } catch (error) {
+      console.error("Error updating KYC submission:", error)
+      alert("Failed to update KYC submission")
+    } finally {
+      setUpdatingKyc(false)
+    }
+  }
+
+  const getKycStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800"
+      case "in_review":
+        return "bg-yellow-100 text-yellow-800"
+      case "rejected":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+
+  // Registration analytics data
+  const registrationStats = {
+    totalUsers: data?.stats.totalUsers || 0,
+    activeUsers: data?.stats.activeUsers || 0,
+    verifiedUsers: data?.stats.verifiedUsers || 0,
+    newThisWeek: (data?.users || []).filter(
+      (u: UserData) => new Date(u.created_at).getTime() > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).getTime(),
+    ).length,
+  }
+
+  return (
+    <OfficeDashboardLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+            <p className="text-gray-600">Manage user accounts and verification status</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export Users
+            </Button>
+          </div>
+        </div>
+
+        {/* Registration Analytics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+              <User className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{registrationStats.totalUsers}</div>
+              <p className="text-xs text-green-600">+{registrationStats.newThisWeek} this week</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{registrationStats.activeUsers}</div>
+              <p className="text-xs text-gray-600">
+                {registrationStats.totalUsers > 0
+                  ? Math.round((registrationStats.activeUsers / registrationStats.totalUsers) * 100)
+                  : 0}
+                % of total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Verified Users</CardTitle>
+              <UserCheck className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{registrationStats.verifiedUsers}</div>
+              <p className="text-xs text-gray-600">
+                {registrationStats.totalUsers > 0
+                  ? Math.round((registrationStats.verifiedUsers / registrationStats.totalUsers) * 100)
+                  : 0}
+                % verified
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">New This Week</CardTitle>
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{registrationStats.newThisWeek}</div>
+              <p className="text-xs text-green-600">Growing steadily</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={verificationFilter} onValueChange={setVerificationFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Verification" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Verification</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" className="w-full bg-transparent">
+                <Calendar className="h-4 w-4 mr-2" />
+                Date Range
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bulk Actions */}
+        {selectedUsers.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{selectedUsers.length} user(s) selected</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("active")}>
+                    Activate
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate("suspended")}>
+                    Suspend
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Users Table */}
+        <Card>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead className="text-left">Name</TableHead>
+                  <TableHead className="w-[120px] text-center">Status</TableHead>
+                  <TableHead className="w-[140px] text-center">Verification</TableHead>
+                  <TableHead className="w-[120px] text-center">Transactions</TableHead>
+                  <TableHead className="w-[150px] text-center">Total Volume</TableHead>
+                  <TableHead className="w-[120px] text-center">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usersWithStats.map((user: UserData) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedUsers.includes(user.id)}
+                        onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                      />
+                    </TableCell>
+                    <TableCell className="text-left">
+                      <div className="font-medium">
+                        {user.first_name} {user.last_name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[120px] text-center">{getStatusBadge(user.status)}</TableCell>
+                    <TableCell className="w-[140px] text-center">{getVerificationBadge(user)}</TableCell>
+                    <TableCell className="w-[120px] text-center font-medium">{user.totalTransactions}</TableCell>
+                    <TableCell className="w-[150px] text-center font-medium">{formatCurrencyFromDB(user.totalVolume, user.base_currency)}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => handleUserSelect(user)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                User Details - {selectedUser?.first_name} {selectedUser?.last_name}
+                              </DialogTitle>
+                            </DialogHeader>
+                            {selectedUser && (
+                              <div className="space-y-6">
+                                {/* User Information */}
+                                <div className="grid grid-cols-2 gap-6">
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Personal Information</label>
+                                      <div className="mt-2 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <User className="h-4 w-4 text-gray-400" />
+                                          <span>
+                                            {selectedUser.first_name} {selectedUser.last_name}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Mail className="h-4 w-4 text-gray-400" />
+                                          <span>{selectedUser.email}</span>
+                                        </div>
+                                        {selectedUser.phone && (
+                                          <div className="flex items-center gap-2">
+                                            <Phone className="h-4 w-4 text-gray-400" />
+                                            <span>{selectedUser.phone}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Account Status</label>
+                                      <div className="mt-2 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-sm">Status:</span>
+                                          {getStatusBadge(selectedUser.status)}
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-sm">Verification:</span>
+                                          {getVerificationBadge(selectedUser)}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Account Details</label>
+                                      <div className="mt-2 space-y-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-sm text-gray-600">Registration:</span>
+                                          <span className="text-sm">
+                                            {formatDate(selectedUser.created_at)}
+                                          </span>
+                                        </div>
+                                        {selectedUser.last_login && (
+                                          <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600">Last Login:</span>
+                                            <span className="text-sm">
+                                              {formatTimestamp(selectedUser.last_login)}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="flex justify-between">
+                                          <span className="text-sm text-gray-600">Base Currency:</span>
+                                          <span className="text-sm font-medium">{selectedUser.base_currency}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-600">Transaction Summary</label>
+                                      <div className="mt-2 space-y-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-sm text-gray-600">Total Transactions:</span>
+                                          <span className="font-medium">{selectedUser.totalTransactions}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm text-gray-600">Total Volume:</span>
+                                          <span className="font-medium">
+                                            {formatCurrencyFromDB(selectedUser.totalVolume, selectedUser.base_currency)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Transaction History */}
+                                <div>
+                                  <label className="text-sm font-medium text-gray-600">Recent Transactions</label>
+                                  <div className="mt-2 max-h-64 overflow-y-auto">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Transaction ID</TableHead>
+                                          <TableHead>Date</TableHead>
+                                          <TableHead>Currency Pair</TableHead>
+                                          <TableHead>Amount</TableHead>
+                                          <TableHead>Status</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {userTransactions.map((transaction) => (
+                                          // Remove .slice(0, 5) to show all transactions
+                                          <TableRow key={transaction.transaction_id}>
+                                            <TableCell className="font-mono text-sm">
+                                              {transaction.transaction_id}
+                                            </TableCell>
+                                            <TableCell>
+                                              {formatTimestamp(transaction.created_at)}
+                                            </TableCell>
+                                            <TableCell>
+                                              {transaction.send_currency} → {transaction.receive_currency}
+                                            </TableCell>
+                                            <TableCell>
+                                              <div>
+                                                <div className="font-medium">
+                                                  {formatCurrencyFromDB(transaction.send_amount, transaction.send_currency)}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                  →{" "}
+                                                  {formatCurrencyFromDB(
+                                                    transaction.receive_amount,
+                                                    transaction.receive_currency,
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </TableCell>
+                                            <TableCell>
+                                              <Badge
+                                                className={
+                                                  transaction.status === "completed"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : transaction.status === "processing"
+                                                      ? "bg-yellow-100 text-yellow-800"
+                                                      : "bg-gray-100 text-gray-800"
+                                                }
+                                              >
+                                                {transaction.status}
+                                              </Badge>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                        {userTransactions.length === 0 && (
+                                          <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-4 text-gray-500">
+                                              No transactions found
+                                            </TableCell>
+                                          </TableRow>
+                                        )}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="border-t pt-4">
+                                  <label className="text-sm font-medium text-gray-600">Account Actions</label>
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleStatusUpdate(selectedUser.id, "active")}
+                                      disabled={selectedUser.status === "active"}
+                                    >
+                                      Activate Account
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleStatusUpdate(selectedUser.id, "suspended")}
+                                      disabled={selectedUser.status === "suspended"}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      Suspend Account
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* KYC Dialog */}
+                        <Dialog open={kycReviewDialogOpen} onOpenChange={setKycReviewDialogOpen}>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                KYC Verification - {selectedUser?.first_name} {selectedUser?.last_name}
+                              </DialogTitle>
+                            </DialogHeader>
+                            {selectedUser && (
+                              <div className="space-y-6">
+                                {/* Bridge KYC Status */}
+                                <div className="border-t pt-6">
+                                  <h3 className="text-lg font-semibold mb-4">Bridge KYC Status</h3>
+                                  {selectedUser.bridge_kyc_status ? (
+                                    <div className="space-y-3">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600">Status:</span>
+                                        {getVerificationBadge(selectedUser.bridge_kyc_status)}
+                                      </div>
+                                      {selectedUser.bridge_customer_id && (
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-gray-600">Bridge Customer ID:</span>
+                                          <span className="text-sm font-mono">{selectedUser.bridge_customer_id}</span>
+                                        </div>
+                                      )}
+                                      {selectedUser.bridge_kyc_status === "rejected" && selectedUser.bridge_kyc_rejection_reasons && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                          <p className="text-sm font-medium text-red-800 mb-1">Rejection Reasons:</p>
+                                          <p className="text-sm text-red-700">
+                                            {Array.isArray(selectedUser.bridge_kyc_rejection_reasons) 
+                                              ? selectedUser.bridge_kyc_rejection_reasons.join(", ")
+                                              : typeof selectedUser.bridge_kyc_rejection_reasons === "string"
+                                              ? selectedUser.bridge_kyc_rejection_reasons
+                                              : JSON.stringify(selectedUser.bridge_kyc_rejection_reasons)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                      <p className="text-gray-500 text-xs">KYC verification not started</p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Identity Verification - Show only if Bridge KYC is approved */}
+                                {selectedUser.bridge_kyc_status === "approved" && (
+                                  <>
+                                    {/* Identity Verification */}
+                                    {selectedUser.first_name || selectedUser.date_of_birth ? (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Identity Verification</label>
+                                        <div className="mt-2 space-y-4">
+                                          <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                              <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                  <span className="text-sm text-gray-600">Status:</span>
+                                                  <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
+                                                </div>
+                                                {selectedUser.first_name && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">First Name:</span>
+                                                    <span className="text-sm">{selectedUser.first_name}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.middle_name && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Middle Name:</span>
+                                                    <span className="text-sm">{selectedUser.middle_name}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.last_name && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Last Name:</span>
+                                                    <span className="text-sm">{selectedUser.last_name}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.date_of_birth && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Date of Birth:</span>
+                                                    <span className="text-sm">{new Date(selectedUser.date_of_birth).toLocaleDateString()}</span>
+                                                  </div>
+                                                )}
+                                                {selectedUser.country_code && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Country:</span>
+                                                    <span className="text-sm">{selectedUser.country_code.toUpperCase()}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                              {selectedUser.bridge_kyc_metadata && (
+                                                <>
+                                                  {selectedUser.bridge_kyc_metadata.ssn && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">SSN:</span>
+                                                      <span className="text-sm">***-**-{selectedUser.bridge_kyc_metadata.ssn.slice(-4)}</span>
+                                                    </div>
+                                                  )}
+                                                  {selectedUser.bridge_kyc_metadata.passportNumber && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">Passport:</span>
+                                                      <span className="text-sm">{selectedUser.bridge_kyc_metadata.passportNumber}</span>
+                                                    </div>
+                                                  )}
+                                                  {selectedUser.bridge_kyc_metadata.nationalIdNumber && (
+                                                    <div className="flex justify-between">
+                                                      <span className="text-sm text-gray-600">National ID:</span>
+                                                      <span className="text-sm">{selectedUser.bridge_kyc_metadata.nationalIdNumber}</span>
+                                                    </div>
+                                                  )}
+                                                </>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                        <p className="text-gray-500 text-xs">No identity verification data available</p>
+                                      </div>
+                                    )}
+
+                                    {/* Address Verification */}
+                                    {selectedUser.address ? (
+                                      <div>
+                                        <label className="text-sm font-medium text-gray-600">Address Verification</label>
+                                        <div className="mt-2 space-y-4">
+                                          <div className="grid grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                              <div>
+                                                <div className="flex items-center justify-between mb-2">
+                                                  <span className="text-sm text-gray-600">Status:</span>
+                                                  <Badge className="bg-green-100 text-green-700">APPROVED</Badge>
+                                                </div>
+                                                {selectedUser.country_code && (
+                                                  <div className="flex justify-between">
+                                                    <span className="text-sm text-gray-600">Country:</span>
+                                                    <span className="text-sm">{selectedUser.country_code.toUpperCase()}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <div className="space-y-4">
+                                              <div className="flex justify-between">
+                                                <span className="text-sm text-gray-600">Address:</span>
+                                                <span className="text-sm text-right">{selectedUser.address}</span>
+                                              </div>
+                                              {selectedUser.bridge_kyc_metadata?.address && (
+                                                <div className="pt-2 border-t">
+                                                  <p className="text-xs text-gray-500 mb-1">Structured Address:</p>
+                                                  <div className="text-xs text-gray-700 space-y-0.5">
+                                                    <div>{selectedUser.bridge_kyc_metadata.address.line1}</div>
+                                                    {selectedUser.bridge_kyc_metadata.address.line2 && (
+                                                      <div>{selectedUser.bridge_kyc_metadata.address.line2}</div>
+                                                    )}
+                                                    <div>
+                                                      {selectedUser.bridge_kyc_metadata.address.city}
+                                                      {selectedUser.bridge_kyc_metadata.address.state && `, ${selectedUser.bridge_kyc_metadata.address.state}`}
+                                                      {selectedUser.bridge_kyc_metadata.address.postal_code && ` ${selectedUser.bridge_kyc_metadata.address.postal_code}`}
+                                                    </div>
+                                                    <div>{selectedUser.bridge_kyc_metadata.address.country}</div>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                                        <p className="text-gray-500 text-xs">No address verification data available</p>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+
+                        {/* KYC Review Sub-Dialog */}
+                        <Dialog open={kycReviewSubDialogOpen} onOpenChange={setKycReviewSubDialogOpen}>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Review KYC Submission</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>Decision</Label>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant={reviewStatus === "approved" ? "default" : "outline"}
+                                    onClick={() => setReviewStatus("approved")}
+                                    className="flex-1"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    variant={reviewStatus === "rejected" ? "default" : "outline"}
+                                    onClick={() => setReviewStatus("rejected")}
+                                    className="flex-1 text-red-600 hover:text-red-700"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Reject
+                                  </Button>
+                                </div>
+                              </div>
+                              {reviewStatus === "rejected" && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="rejection-reason">Rejection Reason</Label>
+                                  <Textarea
+                                    id="rejection-reason"
+                                    placeholder="Enter reason for rejection..."
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    rows={3}
+                                  />
+                                </div>
+                              )}
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setKycReviewSubDialogOpen(false)
+                                    setSelectedKycSubmission(null)
+                                    setRejectionReason("")
+                                  }}
+                                  disabled={updatingKyc}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button onClick={handleKycReview} disabled={updatingKyc || (reviewStatus === "rejected" && !rejectionReason.trim())}>
+                                  {updatingKyc ? "Updating..." : "Submit Review"}
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(user.id, "active")}>
+                              Activate Account
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(user.id, "suspended")}>
+                              Suspend Account
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-8 text-gray-500">No users found matching your criteria.</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </OfficeDashboardLayout>
+  )
+}
