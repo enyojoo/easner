@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +18,14 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { user, isAdmin, loading } = useAuth()
+
+  useEffect(() => {
+    if (loading) return
+    if (user && isAdmin) {
+      router.replace("/dashboard")
+    }
+  }, [user, isAdmin, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
 export default function OfficePage() {
-  redirect("/dashboard")
+  redirect("/auth/login")
 }
