@@ -1,4 +1,11 @@
+import type { Metadata } from "next"
 import { BusinessLogo } from "@/components/brand/business-logo"
+import { businessInfo } from "@/lib/business-info"
+
+export const metadata: Metadata = {
+  title: `Invoice - ${businessInfo.name}`,
+  description: `View your invoice from ${businessInfo.name}`,
+}
 
 export default function InvoiceViewLayout({
   children,
