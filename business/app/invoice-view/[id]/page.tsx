@@ -69,59 +69,62 @@ export default function InvoiceViewPage() {
 
   return (
     <div className="w-full max-w-2xl space-y-4">
-      <div className="flex justify-between items-center gap-4 print:hidden">
+      {/* Header: logo first, buttons below on mobile; side-by-side on desktop */}
+      <div className="flex flex-col items-center sm:flex-row sm:justify-between sm:items-center gap-4 print:hidden">
         <BusinessLogo size="lg" href="/" />
-        <div className="flex gap-2">
+        <div className="flex flex-row gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
+            className="flex-1 sm:flex-initial"
           >
-          {copiedLink ? (
-            <Check className="h-4 w-4 mr-2 text-green-600" />
-          ) : (
-            <Copy className="h-4 w-4 mr-2" />
-          )}
-          {copiedLink ? "Copied" : "Copy Link"}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownloadPdf}
-          disabled={isDownloading}
-        >
-          {isDownloading ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4 mr-2" />
-          )}
-          Download PDF
-        </Button>
+            {copiedLink ? (
+              <Check className="h-4 w-4 mr-2 text-green-600" />
+            ) : (
+              <Copy className="h-4 w-4 mr-2" />
+            )}
+            {copiedLink ? "Copied" : "Copy Link"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            className="flex-1 sm:flex-initial"
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Download PDF
+          </Button>
         </div>
       </div>
       <Card className="print:shadow-none print:border">
-        <CardContent className="p-8">
-          {/* Business info & Invoice header */}
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <h2 className="text-lg font-semibold">{businessInfo.name}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{businessInfo.address}</p>
-              <p className="text-sm text-muted-foreground">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
+          {/* Business info & Invoice header - two columns on all screens */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-lg font-semibold">{businessInfo.name}</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{businessInfo.address}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {businessInfo.city}, {businessInfo.state} {businessInfo.zipCode}
               </p>
-              <p className="text-sm text-muted-foreground">{businessInfo.country}</p>
-              <p className="text-sm text-muted-foreground mt-2">{businessInfo.email}</p>
-              <p className="text-sm text-muted-foreground">{businessInfo.phone}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{businessInfo.country}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">{businessInfo.email}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{businessInfo.phone}</p>
             </div>
-            <div className="text-right">
-              <h1 className="text-2xl font-bold">Invoice</h1>
-              <p className="text-sm text-muted-foreground mt-1">{invoice.invoiceNumber}</p>
+            <div className="text-right min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold">Invoice</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{invoice.invoiceNumber}</p>
               <InvoiceStatusBadge status={invoice.status} />
             </div>
           </div>
 
           {/* Bill to & Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-6 sm:mb-8">
             <div className="text-left">
               <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Bill to</h3>
               <p className="font-medium">{invoice.customerName}</p>
@@ -139,39 +142,65 @@ export default function InvoiceViewPage() {
             </div>
           </div>
 
-          {/* Line items */}
-          <div className="border rounded-lg overflow-hidden mb-6">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Description</th>
-                  <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Qty</th>
-                  <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Unit Price</th>
-                  <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.lineItems.map((item, i) => (
-                  <tr key={i} className="border-t">
-                    <td className="p-3 text-sm">{item.description}</td>
-                    <td className="p-3 text-right text-sm">{item.quantity}</td>
-                    <td className="p-3 text-right text-sm">
-                      {formatCurrency(item.unitPrice, invoice.currency)}
-                    </td>
-                    <td className="p-3 text-right text-sm font-medium">
-                      {formatCurrency(item.amount, invoice.currency)}
-                    </td>
+          {/* Line items - card layout on mobile, table on desktop */}
+          <div className="mb-6">
+            {/* Mobile: card layout */}
+            <div className="sm:hidden border rounded-lg overflow-hidden">
+              <div className="flex justify-between items-center px-3 py-2.5 bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <span>Description</span>
+                <span>Amount</span>
+              </div>
+              {invoice.lineItems.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-start gap-3 px-3 py-3 border-t bg-muted/20"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm">{item.description}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {item.quantity} × {formatCurrency(item.unitPrice, invoice.currency)}
+                    </p>
+                  </div>
+                  <span className="text-sm font-medium flex-shrink-0">
+                    {formatCurrency(item.amount, invoice.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden sm:block border rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Description</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Qty</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Unit Price</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoice.lineItems.map((item, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="p-3 text-sm">{item.description}</td>
+                      <td className="p-3 text-right text-sm">{item.quantity}</td>
+                      <td className="p-3 text-right text-sm">
+                        {formatCurrency(item.unitPrice, invoice.currency)}
+                      </td>
+                      <td className="p-3 text-right text-sm font-medium">
+                        {formatCurrency(item.amount, invoice.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Total */}
           <div className="flex justify-end mb-6">
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">
+              <p className="text-xl sm:text-2xl font-bold">
                 {formatCurrency(invoice.total, invoice.currency)}
               </p>
             </div>
