@@ -30,7 +30,7 @@ function TransferStatusContent() {
         <p className="text-sm text-muted-foreground mt-1">Your transfer has been initiated</p>
       </div>
 
-      <Card className="border-0 shadow-sm bg-primary/5">
+      <Card className="bg-primary/5">
         <CardContent className="p-8 text-center">
           <div className="flex justify-center mb-4">
             <div className="bg-primary/10 rounded-full p-4">
@@ -46,7 +46,7 @@ function TransferStatusContent() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm">
+      <Card>
         <CardContent className="p-6 space-y-4">
           <div className="flex justify-between items-center pb-4 border-b">
             <span className="text-sm text-muted-foreground">Transfer ID</span>

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { DashboardNav } from "@/components/dashboard-nav"
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function PaymentLinksLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
 
@@ -24,8 +24,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-background">
       <DashboardNav />
-      <div className="ml-56 flex flex-col">
-        <main className="flex-1 p-8">{children}</main>
+      <div className="ml-56">
+        <main className="p-8">{children}</main>
       </div>
     </div>
   )

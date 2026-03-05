@@ -47,7 +47,7 @@ export function OfficeDashboardLayout({ children }: OfficeDashboardLayoutProps) 
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
@@ -92,7 +92,7 @@ export function OfficeDashboardLayout({ children }: OfficeDashboardLayoutProps) 
           <div className="px-3 py-4 border-t border-sidebar-border">
             <Button
               variant="ghost"
-              className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-3"
+              className="w-full justify-start text-muted-foreground hover:text-accent-foreground hover:bg-accent px-3 py-3"
               onClick={handleLogout}
             >
               <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />

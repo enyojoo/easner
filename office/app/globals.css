@@ -1,4 +1,7 @@
-/* Easner Brand Standards - Office */
+/* Easner Brand Standards
+ * Primary Color: #007ACC
+ * Logo: https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.svg
+ */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -24,6 +27,11 @@
   --border: oklch(0.93 0 0);
   --input: oklch(0.93 0 0);
   --ring: #007acc;
+  --chart-1: #007acc;
+  --chart-2: oklch(0.6 0.15 180);
+  --chart-3: oklch(0.65 0.2 140);
+  --chart-4: oklch(0.7 0.15 80);
+  --chart-5: oklch(0.55 0.18 300);
   --radius: 0.5rem;
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.15 0 0);
@@ -55,6 +63,11 @@
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
+  --chart-1: #007acc;
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: #007acc;
@@ -87,6 +100,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -105,10 +123,33 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  textarea {
+    caret-color: var(--foreground);
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  textarea:focus {
+    caret-color: var(--primary);
   }
 }

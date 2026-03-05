@@ -98,6 +98,96 @@ export const mockAccounts: Account[] = [
   },
 ]
 
+export interface StablecoinAccount {
+  currency: "USD" | "EUR"
+  stablecoin: "USDC" | "EURC"
+  chain: string
+  address: string
+  memo: string
+}
+
+export const mockStablecoinAccounts: StablecoinAccount[] = [
+  {
+    currency: "USD",
+    stablecoin: "USDC",
+    chain: "Solana",
+    address: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    memo: "DEP-USD-1234",
+  },
+  {
+    currency: "EUR",
+    stablecoin: "EURC",
+    chain: "Ethereum",
+    address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+    memo: "DEP-EUR-3000",
+  },
+]
+
+export interface PendingItem {
+  id: string
+  type: "approval" | "failed" | "action_required"
+  title: string
+  description: string
+  amount?: number
+  currency?: string
+  createdAt: string
+  href?: string
+}
+
+export interface PaymentLink {
+  id: string
+  amount: number
+  currency: string
+  description: string
+  status: "active" | "expired" | "paid"
+  url: string
+  createdAt: string
+}
+
+export const mockPaymentLinks: PaymentLink[] = [
+  {
+    id: "pl_1",
+    amount: 150,
+    currency: "USD",
+    description: "Consulting fee",
+    status: "active",
+    url: "https://app.easner.com/pay/pl_1",
+    createdAt: "2025-03-01T10:00:00",
+  },
+  {
+    id: "pl_2",
+    amount: 500,
+    currency: "EUR",
+    description: "Invoice #INV-002",
+    status: "paid",
+    url: "https://app.easner.com/pay/pl_2",
+    createdAt: "2025-02-28T14:30:00",
+  },
+]
+
+export const mockPendingItems: PendingItem[] = [
+  {
+    id: "pending_1",
+    type: "approval",
+    title: "Payment pending approval",
+    description: "Wire transfer of $5,000 to Wilson Dagah",
+    amount: 5000,
+    currency: "USD",
+    createdAt: "2025-03-04T10:30:00",
+    href: "/transactions",
+  },
+  {
+    id: "pending_2",
+    type: "failed",
+    title: "Payment failed",
+    description: "Vendor payment of $3,500 could not be processed",
+    amount: 3500,
+    currency: "USD",
+    createdAt: "2025-03-03T14:20:00",
+    href: "/transactions",
+  },
+]
+
 export const mockCards: Card[] = [
   {
     id: "card_1",
@@ -686,6 +776,15 @@ export const mockMonthlyExpenses = [
   { month: "Nov", amount: 10500 },
   { month: "Dec", amount: 12500 },
   { month: "Jan", amount: 9800 },
+]
+
+export const mockMonthlyIncome = [
+  { month: "Aug", amount: 12000 },
+  { month: "Sep", amount: 11500 },
+  { month: "Oct", amount: 13200 },
+  { month: "Nov", amount: 10800 },
+  { month: "Dec", amount: 14200 },
+  { month: "Jan", amount: 11800 },
 ]
 
 export const currencyRates: Record<string, number> = {

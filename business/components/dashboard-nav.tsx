@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { CreditCard, Home, ArrowLeftRight, History, Search, Landmark, Users, FileText, UserCheck, ChevronDown, ChevronRight, Send, Receipt, Code } from "lucide-react"
+import { CreditCard, Home, ArrowLeftRight, History, Landmark, Users, FileText, UserCheck, ChevronDown, ChevronRight, Send, Receipt, Link2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
 import { BusinessDropdown } from "@/components/business-dropdown"
-import Image from "next/image"
+import { BrandLogo } from "@/components/brand/brand-logo"
 
 export function DashboardNav() {
   const { user, logout } = useAuth()
@@ -23,7 +22,7 @@ export function DashboardNav() {
     if (pathname.startsWith('/send') || pathname.startsWith('/beneficiaries')) {
       openGroups.add('payments')
     }
-    if (pathname.startsWith('/invoices') || pathname.startsWith('/customers')) {
+    if (pathname.startsWith('/invoices') || pathname.startsWith('/payment-links') || pathname.startsWith('/customers')) {
       openGroups.add('collections')
     }
     
@@ -70,28 +69,22 @@ export function DashboardNav() {
       type: "group",
       items: [
         { href: "/invoices", label: "Invoices", icon: FileText },
+        { href: "/payment-links", label: "Payment links", icon: Link2 },
         { href: "/customers", label: "Customers", icon: UserCheck }
       ]
     },
-    { href: "/transactions", label: "Transactions", icon: History, type: "single" },
-    { href: "/developers", label: "Developers", icon: Code, type: "single" }
+    { href: "/transactions", label: "Transactions", icon: History, type: "single" }
   ]
 
   const businessName = "Easner Banking" // This could come from user context or props
 
   return (
     <div className="fixed left-0 top-0 h-screen w-56 border-r bg-sidebar flex flex-col">
-      <div className="flex items-center gap-2 px-6 py-5 border-b">
-        <Image
-          src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.svg"
-          alt="Easner Banking"
-          width={100}
-          height={28}
-          className="h-7 w-auto"
-        />
+      <div className="flex items-center justify-between px-6 h-16 border-b border-sidebar-border">
+        <BrandLogo size="sm" className="h-7" />
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-2">
+      <nav className="flex-1 px-3 py-6 space-y-1">
         {menuItems.map((item) => {
           if (item.type === "single") {
             const Icon = item.icon
@@ -101,12 +94,14 @@ export function DashboardNav() {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-3 h-9 px-3 text-sm font-normal",
-                    isActive && "bg-accent text-accent-foreground font-medium",
+                    "w-full justify-start gap-3 px-3 py-3 h-auto text-sm font-medium rounded-md transition-all duration-200",
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
                 </Button>
               </Link>
             )
@@ -115,28 +110,30 @@ export function DashboardNav() {
             const hasActiveChild = item.items?.some(child => pathname === child.href) || false
             
             return (
-              <div key={item.key} className="space-y-2">
+              <div key={item.key} className="space-y-1">
                 <Button
                   variant="ghost"
                   onClick={() => toggleGroup(item.key || "")}
                   className={cn(
-                    "w-full justify-between gap-3 h-9 px-3 text-sm font-normal",
-                    hasActiveChild && "bg-accent text-accent-foreground font-medium",
+                    "w-full justify-between gap-3 px-3 py-3 h-auto text-sm font-medium rounded-md transition-all duration-200",
+                    hasActiveChild
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </div>
                   {isOpen ? (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
                   )}
                 </Button>
                 
                 {isOpen && (
-                  <div className="ml-4 space-y-1.5">
+                  <div className="ml-4 space-y-1">
                     {item.items?.map((child) => {
                       const ChildIcon = child.icon
                       const isActive = pathname === child.href
@@ -145,12 +142,14 @@ export function DashboardNav() {
                           <Button
                             variant="ghost"
                             className={cn(
-                              "w-full justify-start gap-3 h-8 px-3 text-sm font-normal",
-                              isActive && "bg-accent text-accent-foreground font-medium",
+                              "w-full justify-start gap-3 px-3 py-3 h-auto text-sm font-medium rounded-md transition-all duration-200",
+                              isActive
+                                ? "bg-accent text-accent-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                             )}
                           >
-                            <ChildIcon className="h-4 w-4" />
-                            {child.label}
+                            <ChildIcon className="h-5 w-5 flex-shrink-0" />
+                            <span className="truncate">{child.label}</span>
                           </Button>
                         </Link>
                       )
@@ -163,7 +162,7 @@ export function DashboardNav() {
         })}
       </nav>
 
-      <div className="border-t p-3">
+      <div className="px-3 py-4 border-t border-sidebar-border">
         <BusinessDropdown
           businessName={businessName}
           adminName={user?.name || "Admin"}
@@ -171,20 +170,6 @@ export function DashboardNav() {
           onSignOut={logout}
         />
       </div>
-    </div>
-  )
-}
-
-export function DashboardTopBar() {
-  return (
-    <div className="border-b bg-background h-14 flex items-center px-6 gap-4">
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search or jump to..." className="pl-9 h-9 bg-muted/50 border-0" />
-      </div>
-      <Button size="sm" className="ml-auto">
-        Move Money
-      </Button>
     </div>
   )
 }

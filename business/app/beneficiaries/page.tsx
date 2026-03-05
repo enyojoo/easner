@@ -145,7 +145,7 @@ export default function RecipientsPage() {
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-sm">
+      <Card>
         <CardContent className="p-0">
           {filteredBeneficiaries.length === 0 ? (
             <div className="py-12 text-center">

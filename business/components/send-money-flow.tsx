@@ -401,7 +401,7 @@ export function SendMoneyFlow() {
             </div>
           </div>
 
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardContent className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -502,7 +502,7 @@ export function SendMoneyFlow() {
           </Card>
 
           {recipient.country && (
-            <Card className="border-0 shadow-sm">
+            <Card>
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
@@ -640,7 +640,7 @@ export function SendMoneyFlow() {
             </div>
           </div>
 
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b">
                 <div>
@@ -732,7 +732,7 @@ export function SendMoneyFlow() {
                     setAmount(value)
                   }
                 }}
-                className="h-28 !text-5xl pl-16 border-0 shadow-sm font-semibold"
+                className="h-28 !text-5xl pl-16 font-semibold"
                 placeholder="0.00"
                 required
               />
@@ -774,7 +774,7 @@ export function SendMoneyFlow() {
             </div>
           </div>
 
-          <Card className="border-0 shadow-sm bg-primary/5">
+          <Card className="bg-primary/5">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -795,7 +795,7 @@ export function SendMoneyFlow() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm relative">
+          <Card className="relative">
             <CardContent className="p-6">
               {suggestedAccount ? (
                 <>
@@ -991,7 +991,7 @@ export function SendMoneyFlow() {
             </div>
           </div>
 
-          <Card className="border-0 shadow-sm bg-primary/5">
+          <Card className="bg-primary/5">
             <CardContent className="p-8 text-center">
               <p className="text-sm text-muted-foreground mb-2">You're sending</p>
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -1005,7 +1005,7 @@ export function SendMoneyFlow() {
 
           <div className="space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">From Account</p>
-            <Card className="border-0 shadow-sm">
+            <Card>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -1045,7 +1045,7 @@ export function SendMoneyFlow() {
 
           <div className="space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">To Recipient</p>
-            <Card className="border-0 shadow-sm">
+            <Card>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -1115,7 +1115,7 @@ export function SendMoneyFlow() {
 
           <div className="space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Transfer Details</p>
-            <Card className="border-0 shadow-sm">
+            <Card>
               <CardContent className="p-5 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Transfer Method</span>

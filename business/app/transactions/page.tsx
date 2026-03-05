@@ -124,7 +124,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm">
+      <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="text-center">
@@ -149,7 +149,7 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm">
+      <Card>
         <CardContent className="p-0">
           {filteredTransactions.length === 0 ? (
             <div className="py-12 text-center">

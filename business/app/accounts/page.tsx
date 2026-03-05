@@ -5,15 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { mockAccounts, currencySymbols } from "@/lib/mock-data"
-import { Copy, Check, Plus, MoreVertical, FileText, Ban, Trash2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Plus, MoreVertical, FileText, Ban, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { CurrencyDepositDialog } from "@/components/currency-deposit-dialog"
+import { FXConvertDialog } from "@/components/fx-convert-dialog"
 
 const currencyFlags: Record<string, string> = {
   USD: "🇺🇸",
@@ -36,47 +30,6 @@ export default function AccountsPage() {
     navigator.clipboard.writeText(text)
     setCopiedField(field)
     setTimeout(() => setCopiedField(null), 2000)
-  }
-
-  const getInsuranceInfo = (currency: string) => {
-    switch (currency) {
-      case "USD":
-        return "FDIC insured up to $250,000"
-      case "EUR":
-        return "Protected up to €100,000 by EU Deposit Guarantee"
-      case "GBP":
-        return "FSCS protected up to £85,000"
-      case "NGN":
-        return "NDIC insured up to ₦500,000"
-      default:
-        return "Insured by local partner"
-    }
-  }
-
-  const getAccountIdentifierLabel = (currency: string) => {
-    switch (currency) {
-      case "EUR":
-        return "IBAN"
-      case "GBP":
-        return "Account Number"
-      case "USD":
-      case "NGN":
-      default:
-        return "Account Number"
-    }
-  }
-
-  const getSecondaryIdentifier = (account: (typeof mockAccounts)[0]) => {
-    if (account.currency === "USD" && account.routingNumber) {
-      return { label: "Routing Number", value: account.routingNumber }
-    }
-    if (account.currency === "GBP" && account.sortCode) {
-      return { label: "Sort Code", value: account.sortCode }
-    }
-    if (account.currency === "EUR" && account.bic) {
-      return { label: "BIC/SWIFT", value: account.bic }
-    }
-    return null
   }
 
   return (
@@ -95,10 +48,8 @@ export default function AccountsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {mockAccounts.map((account) => {
-          const secondaryId = getSecondaryIdentifier(account)
-          return (
-            <Card key={account.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+        {mockAccounts.map((account) => (
+            <Card key={account.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex flex-col h-full">
                   <div className="flex-1 space-y-4">
@@ -124,147 +75,12 @@ export default function AccountsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex-1 bg-transparent gap-2">
-                          <Plus className="h-4 w-4" />
-                          Deposit
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Account Details</DialogTitle>
-                          <DialogDescription>Complete account information and details</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 pt-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground mb-1">Bank Name</p>
-                              <p className="text-sm font-medium">{account.bankName}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground mb-1">Account Name</p>
-                              <p className="text-sm font-medium">{account.accountName}</p>
-                            </div>
-                          </div>
-                          {account.currency === "EUR" && account.iban ? (
-                            <>
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-1">IBAN</p>
-                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                  <code className="text-sm font-mono">{account.iban}</code>
-                                  <button
-                                    onClick={() => copyToClipboard(account.iban!, `dialog-iban-${account.id}`)}
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                  >
-                                    {copiedField === `dialog-iban-${account.id}` ? (
-                                      <Check className="h-4 w-4 text-green-600" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                              {account.bic && (
-                                <div>
-                                  <p className="text-sm text-muted-foreground mb-1">BIC/SWIFT</p>
-                                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                    <code className="text-sm font-mono">{account.bic}</code>
-                                    <button
-                                      onClick={() => copyToClipboard(account.bic!, `dialog-bic-${account.id}`)}
-                                      className="text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                      {copiedField === `dialog-bic-${account.id}` ? (
-                                        <Check className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <Copy className="h-4 w-4" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <div>
-                                <p className="text-sm text-muted-foreground mb-1">Account Number</p>
-                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                  <code className="text-sm font-mono">{account.fullAccountNumber}</code>
-                                  <button
-                                    onClick={() =>
-                                      copyToClipboard(account.fullAccountNumber, `dialog-acc-${account.id}`)
-                                    }
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                  >
-                                    {copiedField === `dialog-acc-${account.id}` ? (
-                                      <Check className="h-4 w-4 text-green-600" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                              {account.routingNumber && (
-                                <div>
-                                  <p className="text-sm text-muted-foreground mb-1">Routing Number</p>
-                                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                    <code className="text-sm font-mono">{account.routingNumber}</code>
-                                    <button
-                                      onClick={() =>
-                                        copyToClipboard(account.routingNumber!, `dialog-routing-${account.id}`)
-                                      }
-                                      className="text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                      {copiedField === `dialog-routing-${account.id}` ? (
-                                        <Check className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <Copy className="h-4 w-4" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                              {account.sortCode && (
-                                <div>
-                                  <p className="text-sm text-muted-foreground mb-1">Sort Code</p>
-                                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                    <code className="text-sm font-mono">{account.sortCode}</code>
-                                    <button
-                                      onClick={() => copyToClipboard(account.sortCode!, `dialog-sort-${account.id}`)}
-                                      className="text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                      {copiedField === `dialog-sort-${account.id}` ? (
-                                        <Check className="h-4 w-4 text-green-600" />
-                                      ) : (
-                                        <Copy className="h-4 w-4" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          )}
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Currency</p>
-                            <p className="text-sm font-medium flex items-center gap-2">
-                              <span className="text-xl">{currencyFlags[account.currency]}</span>
-                              {account.currency}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Status</p>
-                            <Badge variant="secondary" className="capitalize">
-                              {account.status}
-                            </Badge>
-                          </div>
-                          <div className="pt-2 border-t">
-                            <p className="text-xs text-muted-foreground">
-                              {getInsuranceInfo(account.currency)} • {account.bankName}
-                            </p>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <CurrencyDepositDialog
+                      account={account}
+                      copiedField={copiedField}
+                      onCopy={copyToClipboard}
+                    />
+                    <FXConvertDialog account={account} />
 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -292,8 +108,7 @@ export default function AccountsPage() {
                 </div>
               </CardContent>
             </Card>
-          )
-        })}
+        ))}
       </div>
     </div>
   )
