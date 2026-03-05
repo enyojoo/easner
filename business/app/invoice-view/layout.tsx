@@ -12,8 +12,8 @@ export default function InvoiceViewLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 flex flex-col items-center justify-center w-full px-4 sm:px-6 py-6 sm:py-8">
+    <div className="min-h-screen flex flex-col bg-background overflow-y-auto">
+      <main className="flex-1 flex flex-col items-center justify-start w-full min-h-0 px-4 sm:px-6 py-6 sm:py-8 pb-12">
         {children}
       </main>
     </div>
