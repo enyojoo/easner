@@ -98,6 +98,83 @@ export const mockAccounts: Account[] = [
   },
 ]
 
+export interface Beneficiary {
+  id: string
+  name: string
+  bankName: string
+  accountNumber: string
+  fullAccountNumber: string
+  routingNumber?: string
+  iban?: string
+  bic?: string
+  sortCode?: string
+  country: string
+  currency: string
+  email: string
+  phone: string
+  createdAt: string
+  lastUsed: string
+}
+
+export const mockBeneficiaries: Beneficiary[] = [
+  {
+    id: "1",
+    name: "John Doe",
+    bankName: "Chase Bank",
+    accountNumber: "1234567891234",
+    fullAccountNumber: "1234567891234",
+    routingNumber: "121000248",
+    country: "United States",
+    currency: "USD",
+    email: "john.doe@email.com",
+    phone: "+1 (555) 123-4567",
+    createdAt: "2024-01-15",
+    lastUsed: "2024-01-20",
+  },
+  {
+    id: "2",
+    name: "Maria Garcia",
+    bankName: "Santander",
+    accountNumber: "ES1234567890123456789012",
+    fullAccountNumber: "ES1234567890123456789012",
+    iban: "ES1234567890123456789012",
+    bic: "BSCHESMMXXX",
+    country: "Spain",
+    currency: "EUR",
+    email: "maria.garcia@email.com",
+    phone: "+34 612 345 678",
+    createdAt: "2024-01-10",
+    lastUsed: "2024-01-18",
+  },
+  {
+    id: "3",
+    name: "David Smith",
+    bankName: "Barclays",
+    accountNumber: "12345678",
+    fullAccountNumber: "12345678",
+    sortCode: "20-00-00",
+    country: "United Kingdom",
+    currency: "GBP",
+    email: "david.smith@email.com",
+    phone: "+44 7700 900123",
+    createdAt: "2024-01-05",
+    lastUsed: "2024-01-12",
+  },
+  {
+    id: "4",
+    name: "Aisha Okafor",
+    bankName: "Access Bank",
+    accountNumber: "1234567893456",
+    fullAccountNumber: "1234567893456",
+    country: "Nigeria",
+    currency: "NGN",
+    email: "aisha.okafor@email.com",
+    phone: "+234 801 234 5678",
+    createdAt: "2024-01-08",
+    lastUsed: "2024-01-15",
+  },
+]
+
 export interface StablecoinAccount {
   currency: "USD" | "EUR"
   stablecoin: "USDC" | "EURC"

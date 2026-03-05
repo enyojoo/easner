@@ -24,7 +24,7 @@ export default function AboutPage() {
 
               <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                 <p>
-                  Easner is building <strong className="text-gray-900">stablecoin banking</strong> — cross-border stablecoin banking for businesses and individuals. We believe money should move globally like SMS: instant, low-cost, and compliant.
+                  Easner is building cross-border stablecoin banking for businesses and individuals. We believe money should move globally like SMS: instant, low-cost, and compliant.
                 </p>
                 <p>
                   Our infrastructure combines stablecoin rails with built-in KYC/AML, licensed partner networks, and API-first design — so fintechs, businesses, and individuals can move money between the US, Europe, Africa, and Asia without the friction of traditional banking.

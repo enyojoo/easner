@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { ArrowLeftRight, Landmark, User, Mail, Phone, CreditCard, MapPin, ChevronDown } from "lucide-react"
+import type { Beneficiary } from "@/lib/mock-data"
 
 interface RecipientFormProps {
   recipient?: any
   onSuccess: () => void
   isEdit?: boolean
+  /** When provided and in add mode, called with the new beneficiary before onSuccess */
+  onSuccessWithData?: (beneficiary: Beneficiary) => void
 }
 
 const countries = [
@@ -26,7 +29,7 @@ const countries = [
   { name: "Australia", currency: "AUD", flag: "🇦🇺" },
 ]
 
-export function RecipientForm({ recipient, onSuccess, isEdit = false }: RecipientFormProps) {
+export function RecipientForm({ recipient, onSuccess, isEdit = false, onSuccessWithData }: RecipientFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     bankName: "",
@@ -118,8 +121,31 @@ export function RecipientForm({ recipient, onSuccess, isEdit = false }: Recipien
     e.preventDefault()
     
     if (validateForm()) {
-      // Handle form submission here
-      console.log("Form submitted:", formData)
+      if (!isEdit && onSuccessWithData) {
+        const selectedCountry = countries.find((c) => c.name === formData.country)
+        const currency = selectedCountry?.currency || "USD"
+        const fullAccountNumber = formData.iban || formData.accountNumber
+        const beneficiary: Beneficiary = {
+          id: `ben_${Date.now()}`,
+          name: formData.name.trim(),
+          bankName: formData.bankName.trim(),
+          accountNumber: formData.accountNumber.trim(),
+          fullAccountNumber: fullAccountNumber.trim(),
+          country: formData.country,
+          currency,
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          createdAt: new Date().toISOString().split("T")[0],
+          lastUsed: new Date().toISOString().split("T")[0],
+          ...(currency === "USD" && { routingNumber: formData.routingNumber?.trim() }),
+          ...(currency === "EUR" && {
+            iban: formData.iban?.trim(),
+            bic: formData.bic?.trim(),
+          }),
+          ...(currency === "GBP" && { sortCode: formData.sortCode?.trim() }),
+        }
+        onSuccessWithData(beneficiary)
+      }
       onSuccess()
     }
   }
