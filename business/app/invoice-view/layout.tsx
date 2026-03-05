@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { businessInfo } from "@/lib/business-info"
 
 export const metadata: Metadata = {
-  title: `Invoice - ${businessInfo.name}`,
+  title: `Invoice from ${businessInfo.name}`,
   description: `View your invoice from ${businessInfo.name}`,
 }
 

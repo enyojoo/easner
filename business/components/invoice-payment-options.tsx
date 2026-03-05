@@ -9,6 +9,7 @@ import { QRCodeSVG } from "qrcode.react"
 import type { Account } from "@/lib/mock-data"
 import type { Invoice } from "@/lib/mock-data"
 import { formatCurrency } from "@/lib/utils"
+import { businessInfo } from "@/lib/business-info"
 
 interface StablecoinAccount {
   currency: string
@@ -195,12 +196,10 @@ export function InvoicePaymentOptions({
     return { details, url }
   }
 
-  const shareTitle = `Invoice ${invoice.invoiceNumber}\nPayment Details`
-
   const handleShare = async (type: "bank" | "stablecoin") => {
     const { details, url } = getShareContent(type)
     const body = url ? `${details}\n\nView invoice: ${url}` : details
-    const fullText = `${shareTitle}\n\n${body}`
+    const fullText = `Invoice ${invoice.invoiceNumber} from ${businessInfo.name}\n\nPayment Details:\n${body}`
 
     if (navigator.share) {
       try {
