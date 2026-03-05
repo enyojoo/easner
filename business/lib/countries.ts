@@ -4,7 +4,9 @@ export interface Country {
   flag: string
 }
 
-export const countries: Country[] = [
+const PRIORITY_COUNTRY_CODES = ["US", "EE", "NG", "GB", "CA"] // USA, Estonia, Nigeria, UK, Canada
+
+const countriesRaw: Country[] = [
   { name: "Afghanistan", code: "AF", flag: "🇦🇫" },
   { name: "Albania", code: "AL", flag: "🇦🇱" },
   { name: "Algeria", code: "DZ", flag: "🇩🇿" },
@@ -201,3 +203,9 @@ export const countries: Country[] = [
   { name: "Zambia", code: "ZM", flag: "🇿🇲" },
   { name: "Zimbabwe", code: "ZW", flag: "🇿🇼" },
 ]
+
+const priorityCountries = PRIORITY_COUNTRY_CODES.map(
+  (code) => countriesRaw.find((c) => c.code === code)!
+)
+const otherCountries = countriesRaw.filter((c) => !PRIORITY_COUNTRY_CODES.includes(c.code))
+export const countries: Country[] = [...priorityCountries, ...otherCountries]

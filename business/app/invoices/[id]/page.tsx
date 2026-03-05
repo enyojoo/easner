@@ -1,23 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  ArrowLeft, 
-  Copy, 
-  Check,
-  Download, 
+import {
+  ArrowLeft,
+  Copy,
+  Download,
   MoreHorizontal,
   ExternalLink,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Building2,
-  Coins
+  FileText,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -25,64 +22,48 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import Link from "next/link"
 import { mockAccounts, mockStablecoinAccounts } from "@/lib/mock-data"
-import { QRCodeSVG } from "qrcode.react"
+import { formatCurrency } from "@/lib/utils"
+import { businessInfo } from "@/lib/business-info"
+import { useInvoices } from "@/lib/invoices-context"
+import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
+import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
+import type { Invoice } from "@/lib/mock-data"
 
-// Mock invoice data - in real app this would come from API
-const mockInvoice = {
-  id: "1",
-  invoiceNumber: "A99204FB-0001",
-  customerName: "Rosalyn Ward",
-  customerEmail: "rosward1990@gmail.com",
-  total: 500.00,
-  currency: "USD",
-  status: "open",
-  dueDate: "2024-12-15",
-  createdDate: "2024-12-10T17:46:00",
-  finalizedDate: "2024-12-10T17:47:00",
-  paymentPageUrl: "https://invoice.stripe.com/i/acct_1Ke7LKCWrIYLwGATet8R3tOJ",
-  lineItems: [
-    { description: "Donation", quantity: 1, unitPrice: 500.00, amount: 500.00 }
-  ],
-  activities: [
-    {
-      id: "1",
+function getInvoiceActivities(invoice: Invoice): { id: string; type: string; description: string; timestamp: string }[] {
+  const activities: { id: string; type: string; description: string; timestamp: string }[] = []
+  const createdTs = invoice.createdDate.includes("T") ? invoice.createdDate : `${invoice.createdDate}T00:00:00`
+  activities.push({ id: "1", type: "created", description: "Invoice was created", timestamp: createdTs })
+  if (invoice.finalizedDate) {
+    const finalizedTs = invoice.finalizedDate.includes("T") ? invoice.finalizedDate : `${invoice.finalizedDate}T00:00:00`
+    activities.push({ id: "2", type: "finalized", description: "Invoice was finalized", timestamp: finalizedTs })
+  }
+  if (invoice.status === "void") {
+    activities.push({
+      id: "3",
       type: "voided",
       description: "Invoice was voided",
-      timestamp: "2024-12-10T17:48:00",
-      icon: XCircle
-    },
-    {
-      id: "2", 
-      type: "collection_off",
-      description: "Automatic collection for this invoice was turned off",
-      timestamp: "2024-12-10T17:47:30",
-      icon: AlertCircle
-    },
-    {
-      id: "3",
-      type: "finalized",
-      description: "Invoice was finalized",
-      timestamp: "2024-12-10T17:47:00",
-      icon: CheckCircle
-    }
-  ]
-}
-
-const getStatusBadge = (status: string) => {
-  const statusConfig = {
-    draft: { label: "Draft", variant: "secondary" as const },
-    open: { label: "Open", variant: "default" as const },
-    past_due: { label: "Past due", variant: "destructive" as const },
-    paid: { label: "Paid", variant: "default" as const },
-    void: { label: "Void", variant: "secondary" as const },
-    uncollectible: { label: "Uncollectible", variant: "secondary" as const },
-    failed: { label: "Failed", variant: "destructive" as const }
+      timestamp: invoice.finalizedDate ? `${invoice.finalizedDate}T00:01:00` : createdTs,
+    })
   }
-  
-  const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const }
-  return <Badge variant={config.variant}>{config.label}</Badge>
+  if (invoice.status === "paid") {
+    activities.push({
+      id: "4",
+      type: "paid",
+      description: "Invoice was paid",
+      timestamp: invoice.finalizedDate ? `${invoice.finalizedDate}T00:02:00` : createdTs,
+    })
+  }
+  return activities.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  )
 }
 
 const getActivityIcon = (type: string) => {
@@ -97,48 +78,78 @@ const getActivityIcon = (type: string) => {
   return iconConfig[type as keyof typeof iconConfig] || Clock
 }
 
-function CopyableField({ label, value, copiedField, fieldId, onCopy }: { label: string; value: string; copiedField: string | null; fieldId: string; onCopy: (t: string, f: string) => void }) {
-  return (
-    <div>
-      <p className="text-sm text-muted-foreground mb-1">{label}</p>
-      <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-2">
-        <code className="text-sm font-mono break-all flex-1 min-w-0">{value}</code>
-        <button onClick={() => onCopy(value, fieldId)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
-          {copiedField === fieldId ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-3" />}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function InvoiceDetailPage() {
+  const params = useParams()
+  const { invoices } = useInvoices()
+  const invoice = invoices.find((i) => i.id === params.id)
   const [showMoreActivities, setShowMoreActivities] = useState(false)
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
-  
-  const copyToClipboard = (text: string, field?: string) => {
-    navigator.clipboard.writeText(text)
-    if (field) {
-      setCopiedField(field)
-      setTimeout(() => setCopiedField(null), 2000)
+
+  const copyToClipboard = async (text: string, field?: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+      }
+      if (field) {
+        setCopiedField(field)
+        setTimeout(() => setCopiedField(null), 2000)
+      }
+    } catch (err) {
+      console.error("Failed to copy:", err)
     }
   }
 
-  const bankAccount = mockAccounts.find((a) => a.currency === mockInvoice.currency)
-  const stablecoinAccount = mockStablecoinAccounts.find((s) => s.currency === mockInvoice.currency)
-  const hasStablecoin = stablecoinAccount !== undefined
-  const showPayCard = mockInvoice.status === "open" || mockInvoice.status === "past_due"
+  if (!invoice) {
+    return (
+      <div className="space-y-6">
+        <Link href="/invoices">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div className="py-12 text-center">
+          <h2 className="text-lg font-semibold">Invoice not found</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            The invoice you&apos;re looking for doesn&apos;t exist or has been removed.
+          </p>
+          <Link href="/invoices">
+            <Button className="mt-4">Back to invoices</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const bankAccount = mockAccounts.find((a) => a.currency === invoice.currency)
+  const stablecoinAccount = mockStablecoinAccounts.find((s) => s.currency === invoice.currency)
+  const showPayCard = invoice.status === "open" || invoice.status === "past_due"
+  const activities = getInvoiceActivities(invoice)
+  const displayedActivities = showMoreActivities ? activities : activities.slice(0, 3)
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
-      day: "numeric", 
+      day: "numeric",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     })
   }
 
-  const displayedActivities = showMoreActivities ? mockInvoice.activities : mockInvoice.activities.slice(0, 3)
+  const [customerViewUrl, setCustomerViewUrl] = useState(`/invoice-view/${invoice.id}`)
+  useEffect(() => {
+    setCustomerViewUrl(`${window.location.origin}/invoice-view/${invoice.id}`)
+  }, [invoice.id])
 
   return (
     <div className="space-y-6">
@@ -151,15 +162,19 @@ export default function InvoiceDetailPage() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-foreground">{mockInvoice.invoiceNumber}</h1>
-            {getStatusBadge(mockInvoice.status)}
+            <h1 className="text-2xl font-semibold text-foreground">{invoice.invoiceNumber}</h1>
+            <InvoiceStatusBadge status={invoice.status} />
           </div>
           <p className="text-muted-foreground mt-1">
-            Billed to {mockInvoice.customerName} - ${mockInvoice.total.toFixed(2)}
+            Billed to {invoice.customerName} - {formatCurrency(invoice.total, invoice.currency)}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setPdfPreviewOpen(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            Preview PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
@@ -183,73 +198,13 @@ export default function InvoiceDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Pay this invoice */}
+          {/* Invoice payment options */}
           {showPayCard && bankAccount && (
-            <Card className="border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-lg">Pay this invoice</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Share these details with your customer. Reference must be the invoice number for reconciliation.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="bank" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="bank" className="gap-2">
-                      <Building2 className="h-4 w-4" />
-                      Bank transfer
-                    </TabsTrigger>
-                    <TabsTrigger value="stablecoin" className="gap-2" disabled={!hasStablecoin}>
-                      <Coins className="h-4 w-4" />
-                      Stablecoin
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="bank" className="space-y-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Bank Name</p>
-                        <p className="text-sm font-medium">{bankAccount.bankName}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Account Name</p>
-                        <p className="text-sm font-medium">{bankAccount.accountName}</p>
-                      </div>
-                    </div>
-                    {bankAccount.currency === "EUR" && bankAccount.iban ? (
-                      <>
-                        <CopyableField label="IBAN" value={bankAccount.iban} copiedField={copiedField} fieldId="inv-iban" onCopy={copyToClipboard} />
-                        {bankAccount.bic && <CopyableField label="BIC/SWIFT" value={bankAccount.bic} copiedField={copiedField} fieldId="inv-bic" onCopy={copyToClipboard} />}
-                      </>
-                    ) : (
-                      <>
-                        <CopyableField label="Account Number" value={bankAccount.fullAccountNumber} copiedField={copiedField} fieldId="inv-acc" onCopy={copyToClipboard} />
-                        {bankAccount.routingNumber && <CopyableField label="Routing Number" value={bankAccount.routingNumber} copiedField={copiedField} fieldId="inv-routing" onCopy={copyToClipboard} />}
-                        {bankAccount.sortCode && <CopyableField label="Sort Code" value={bankAccount.sortCode} copiedField={copiedField} fieldId="inv-sort" onCopy={copyToClipboard} />}
-                      </>
-                    )}
-                    <CopyableField label="Reference (required)" value={mockInvoice.invoiceNumber} copiedField={copiedField} fieldId="inv-ref" onCopy={copyToClipboard} />
-                  </TabsContent>
-                  <TabsContent value="stablecoin" className="space-y-4 mt-4">
-                    {hasStablecoin && stablecoinAccount && (
-                      <>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Amount</p>
-                          <p className="text-sm font-medium">${mockInvoice.total.toFixed(2)} {stablecoinAccount.stablecoin} on {stablecoinAccount.chain}</p>
-                        </div>
-                        <CopyableField label="Address" value={stablecoinAccount.address} copiedField={copiedField} fieldId="inv-addr" onCopy={copyToClipboard} />
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">QR Code</p>
-                          <div className="p-4 bg-white rounded-lg inline-block">
-                            <QRCodeSVG value={stablecoinAccount.address} size={160} level="M" />
-                          </div>
-                        </div>
-                        <CopyableField label="Memo (use invoice number)" value={mockInvoice.invoiceNumber} copiedField={copiedField} fieldId="inv-memo" onCopy={copyToClipboard} />
-                      </>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            <InvoicePaymentOptions
+              invoice={invoice}
+              bankAccount={bankAccount}
+              stablecoinAccount={stablecoinAccount}
+            />
           )}
 
           {/* Recent Activity */}
@@ -282,7 +237,7 @@ export default function InvoiceDetailPage() {
                     </div>
                   )
                 })}
-                {mockInvoice.activities.length > 3 && (
+                {activities.length > 3 && (
                   <Button 
                     variant="ghost" 
                     size="sm"
@@ -304,20 +259,20 @@ export default function InvoiceDetailPage() {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Billed to</span>
-                  <span className="text-sm font-medium">{mockInvoice.customerName}</span>
+                  <span className="text-sm font-medium">{invoice.customerName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Invoice number</span>
-                  <span className="text-sm font-medium font-mono">{mockInvoice.invoiceNumber}</span>
+                  <span className="text-sm font-medium font-mono">{invoice.invoiceNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total amount</span>
-                  <span className="text-sm font-medium">${mockInvoice.total.toFixed(2)} {mockInvoice.currency}</span>
+                  <span className="text-sm font-medium">{formatCurrency(invoice.total, invoice.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Due date</span>
                   <span className="text-sm font-medium">
-                    {new Date(mockInvoice.dueDate).toLocaleDateString()}
+                    {new Date(invoice.dueDate).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -347,7 +302,7 @@ export default function InvoiceDetailPage() {
                 <span className="text-sm text-muted-foreground">Created</span>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm">{formatDate(mockInvoice.createdDate)}</span>
+                  <span className="text-sm">{formatDate(invoice.createdDate)}</span>
                 </div>
               </div>
               
@@ -355,54 +310,122 @@ export default function InvoiceDetailPage() {
                 <span className="text-sm text-muted-foreground">Finalized</span>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm">{formatDate(mockInvoice.finalizedDate)}</span>
+                  <span className="text-sm">{invoice.finalizedDate ? formatDate(invoice.finalizedDate) : "-"}</span>
                 </div>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Payment page</span>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(mockInvoice.paymentPageUrl, "url")}>
+                <span className="text-sm text-muted-foreground">Invoice Link</span>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(customerViewUrl, "invoice-link")}>
                     <Copy className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Enabled payment methods</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
-                    <span className="text-xs">💳</span>
-                  </div>
-                  <div className="w-4 h-4 bg-muted rounded flex items-center justify-center">
-                    <span className="text-xs">$</span>
-                  </div>
+                  <Link href={`/invoice-view/${invoice.id}`} target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" size="sm">
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Metadata */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Metadata</CardTitle>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                No metadata
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Invoice Preview</DialogTitle>
+          </DialogHeader>
+          <div id="invoice-pdf-content" className="bg-white p-8 rounded-lg border">
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h2 className="text-lg font-semibold">{businessInfo.name}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{businessInfo.address}</p>
+                <p className="text-sm text-muted-foreground">{businessInfo.city}, {businessInfo.state} {businessInfo.zipCode}</p>
+                <p className="text-sm text-muted-foreground">{businessInfo.country}</p>
+              </div>
+              <div className="text-right">
+                <h2 className="text-2xl font-bold">Invoice</h2>
+                <p className="text-sm text-muted-foreground mt-1">{invoice.invoiceNumber}</p>
+                <InvoiceStatusBadge status={invoice.status} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Bill to</h3>
+                <p className="font-medium">{invoice.customerName}</p>
+                <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Invoice details</h3>
+                <p className="text-sm"><span className="text-muted-foreground">Due date:</span> {formatDate(invoice.dueDate)}</p>
+                <p className="text-sm"><span className="text-muted-foreground">Created:</span> {formatDate(invoice.createdDate)}</p>
+              </div>
+            </div>
+            <div className="border rounded-lg overflow-hidden mb-6">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Description</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Qty</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Unit Price</th>
+                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoice.lineItems.map((item, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="p-3 text-sm">{item.description}</td>
+                      <td className="p-3 text-right text-sm">{item.quantity}</td>
+                      <td className="p-3 text-right text-sm">${item.unitPrice.toFixed(2)}</td>
+                      <td className="p-3 text-right text-sm font-medium">${item.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end">
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{formatCurrency(invoice.total, invoice.currency)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setPdfPreviewOpen(false)}>Close</Button>
+            <Button
+              onClick={() => {
+                const content = document.getElementById("invoice-pdf-content")
+                if (content) {
+                  const printWindow = window.open("", "_blank")
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <!DOCTYPE html>
+                      <html>
+                        <head><title>Invoice ${invoice.invoiceNumber}</title></head>
+                        <body style="font-family: system-ui; padding: 2rem; max-width: 800px; margin: 0 auto;">
+                          ${content.outerHTML}
+                        </body>
+                      </html>
+                    `)
+                    printWindow.document.close()
+                    printWindow.focus()
+                    printWindow.print()
+                    printWindow.close()
+                  }
+                }
+                setPdfPreviewOpen(false)
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Print / Save as PDF
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

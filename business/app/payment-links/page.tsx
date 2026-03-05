@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { mockPaymentLinks, currencySymbols } from "@/lib/mock-data"
+import { mockPaymentLinks, currencySymbols, type PaymentLink } from "@/lib/mock-data"
+import { formatDate } from "@/lib/utils"
 import { Plus, Copy, Check, Link2, Search } from "lucide-react"
 import {
   Dialog,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/select"
 
 export default function PaymentLinksPage() {
+  const [links, setLinks] = useState<PaymentLink[]>(mockPaymentLinks)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -38,7 +40,27 @@ export default function PaymentLinksPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const filteredLinks = mockPaymentLinks.filter(
+  const handleCreateLink = () => {
+    const amount = parseFloat(newAmount)
+    if (isNaN(amount) || amount <= 0 || !newDescription.trim()) return
+    const id = `pl_${Date.now()}`
+    const newLink: PaymentLink = {
+      id,
+      amount,
+      currency: newCurrency,
+      description: newDescription.trim(),
+      status: "active",
+      url: `https://app.easner.com/pay/${id}`,
+      createdAt: new Date().toISOString(),
+    }
+    setLinks((prev) => [newLink, ...prev])
+    setNewAmount("")
+    setNewCurrency("USD")
+    setNewDescription("")
+    setIsCreateOpen(false)
+  }
+
+  const filteredLinks = links.filter(
     (link) =>
       link.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       link.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -108,8 +130,8 @@ export default function PaymentLinksPage() {
                   onChange={(e) => setNewDescription(e.target.value)}
                 />
               </div>
-              <Button className="w-full" onClick={() => setIsCreateOpen(false)}>
-                Create link (Preview)
+              <Button className="w-full" onClick={handleCreateLink}>
+                Create link
               </Button>
             </div>
           </DialogContent>
@@ -158,7 +180,9 @@ export default function PaymentLinksPage() {
                         {currencySymbols[link.currency]}
                         {link.amount.toLocaleString()} • {link.description}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono">{link.id}</p>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {link.id} • Created {formatDate(link.createdAt)}
+                      </p>
                     </div>
                     {getStatusBadge(link.status)}
                   </div>

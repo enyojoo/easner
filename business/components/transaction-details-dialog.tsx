@@ -100,19 +100,17 @@ export function TransactionDetailsDialog({
               </div>
             )}
 
-            {transaction.category && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Category</span>
-                <span className="font-medium">{transaction.category}</span>
-              </div>
-            )}
-
-            {card && (
+            {card ? (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Card</span>
                 <span className="font-medium">•••• {card.last4}</span>
               </div>
-            )}
+            ) : transaction.category ? (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Category</span>
+                <span className="font-medium">{transaction.category}</span>
+              </div>
+            ) : null}
 
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Date</span>

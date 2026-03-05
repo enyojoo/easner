@@ -1,5 +1,4 @@
-import Image from "next/image"
-import Link from "next/link"
+import { BusinessLogo } from "@/components/brand/business-logo"
 
 export default function AuthLayout({
   children,
@@ -8,16 +7,8 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link href="/" className="flex justify-center">
-          <Image
-            src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Logo.svg"
-                  alt="Easner Banking"
-            width={120}
-            height={34}
-            className="h-8 w-auto"
-          />
-        </Link>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex justify-center">
+        <BusinessLogo size="lg" href="/" />
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         {children}

@@ -52,7 +52,7 @@ export default function DevelopersOverviewPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-semibold text-foreground">Developer Tools</h1>
-        <p className="text-muted-foreground mt-2">Build and integrate with Easner Banking's APIs and services</p>
+        <p className="text-muted-foreground mt-2">Build and integrate with Easner Business Banking's APIs and services</p>
       </div>
 
       {/* Quick Stats */}

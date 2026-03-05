@@ -21,62 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-
-// Mock customers data
-const mockCustomers = [
-  {
-    id: "1",
-    name: "Rosalyn Ward",
-    email: "rosward1990@gmail.com",
-    phone: "+1 (555) 123-4567",
-    company: "Ward Enterprises",
-    address: "123 Main St, New York, NY 10001",
-    totalInvoices: 5,
-    totalPaid: 2500.00,
-    currency: "USD",
-    status: "active",
-    lastInvoiceDate: "2024-12-10"
-  },
-  {
-    id: "2", 
-    name: "Wilson Dagah",
-    email: "admin@thekingsrubies.org",
-    phone: "+1 (555) 987-6543",
-    company: "The Kings Rubies",
-    address: "456 Business Ave, Los Angeles, CA 90210",
-    totalInvoices: 12,
-    totalPaid: 8500.00,
-    currency: "USD",
-    status: "active",
-    lastInvoiceDate: "2024-12-10"
-  },
-  {
-    id: "3",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@techcorp.com",
-    phone: "+1 (555) 456-7890",
-    company: "TechCorp Solutions",
-    address: "789 Tech Blvd, San Francisco, CA 94105",
-    totalInvoices: 3,
-    totalPaid: 1200.00,
-    currency: "USD",
-    status: "active",
-    lastInvoiceDate: "2024-11-28"
-  },
-  {
-    id: "4",
-    name: "Michael Chen",
-    email: "m.chen@startup.io",
-    phone: "+1 (555) 321-0987",
-    company: "StartupIO",
-    address: "321 Innovation Dr, Austin, TX 78701",
-    totalInvoices: 8,
-    totalPaid: 4200.00,
-    currency: "USD",
-    status: "inactive",
-    lastInvoiceDate: "2024-10-15"
-  }
-]
+import { mockCustomers } from "@/lib/mock-data"
+import { formatCurrency } from "@/lib/utils"
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -174,7 +120,7 @@ export default function CustomersPage() {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <div className="text-sm font-semibold">
-                        ${customer.totalPaid.toFixed(2)} {customer.currency}
+                        {formatCurrency(customer.totalPaid, customer.currency)}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {customer.totalInvoices} invoice{customer.totalInvoices !== 1 ? 's' : ''}

@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { CreditCard, Home, ArrowLeftRight, History, Landmark, Users, FileText, UserCheck, ChevronDown, ChevronRight, Send, Receipt, Link2 } from "lucide-react"
+import { CreditCard, Home, ArrowLeftRight, History, Landmark, Users, FileText, UserCheck, ChevronDown, ChevronRight, Send, Receipt, Link2, Building2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BusinessDropdown } from "@/components/business-dropdown"
-import { BrandLogo } from "@/components/brand/brand-logo"
+import { BusinessLogo } from "@/components/brand/business-logo"
+import { businessInfo } from "@/lib/business-info"
 
 export function DashboardNav() {
   const { user, logout } = useAuth()
@@ -76,15 +76,16 @@ export function DashboardNav() {
     { href: "/transactions", label: "Transactions", icon: History, type: "single" }
   ]
 
-  const businessName = "Easner Banking" // This could come from user context or props
-
   return (
-    <div className="fixed left-0 top-0 h-screen w-56 border-r bg-sidebar flex flex-col">
-      <div className="flex items-center justify-between px-6 h-16 border-b border-sidebar-border">
-        <BrandLogo size="sm" className="h-7" />
+    <div className="fixed left-0 top-0 h-screen w-64 border-r bg-sidebar flex flex-col">
+      <div className="flex items-center gap-3 px-4 py-4 h-16 border-b border-sidebar-border min-h-[4rem]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <Building2 className="h-5 w-5 text-primary" />
+        </div>
+        <span className="text-sm font-semibold truncate">{businessInfo.name}</span>
       </div>
 
-      <nav className="flex-1 px-3 py-6 space-y-1">
+      <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           if (item.type === "single") {
             const Icon = item.icon
@@ -162,13 +163,8 @@ export function DashboardNav() {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-sidebar-border">
-        <BusinessDropdown
-          businessName={businessName}
-          adminName={user?.name || "Admin"}
-          adminEmail={user?.email || ""}
-          onSignOut={logout}
-        />
+      <div className="px-4 py-4 border-t border-sidebar-border flex items-center justify-center">
+        <BusinessLogo size="sm" href="/" />
       </div>
     </div>
   )

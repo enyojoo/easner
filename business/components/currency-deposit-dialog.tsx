@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Check, Plus, Share2, AlertCircle } from "lucide-react"
+import { Copy, Check, Plus, Share2 } from "lucide-react"
 import { mockStablecoinAccounts, type Account } from "@/lib/mock-data"
 import { QRCodeSVG } from "qrcode.react"
 
@@ -58,7 +58,6 @@ function PaymentInstructions({ currency, type }: { currency: string; type: "bank
         <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
           <li>Only send ACH or domestic US Wire</li>
           <li>SWIFT is NOT supported</li>
-          <li>Include the reference in your transfer</li>
           <li>Processing time: within 12–48 hours</li>
         </ul>
       )
@@ -68,7 +67,6 @@ function PaymentInstructions({ currency, type }: { currency: string; type: "bank
         <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
           <li>Only send SEPA transfers</li>
           <li>SWIFT is NOT supported</li>
-          <li>Include the reference in your transfer</li>
           <li>Processing time: 1–3 business days</li>
         </ul>
       )
@@ -77,7 +75,6 @@ function PaymentInstructions({ currency, type }: { currency: string; type: "bank
       return (
         <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
           <li>Only send Faster Payments or BACS</li>
-          <li>Include the reference in your transfer</li>
           <li>Processing time: same day or 1–2 business days</li>
         </ul>
       )
@@ -85,7 +82,6 @@ function PaymentInstructions({ currency, type }: { currency: string; type: "bank
     if (currency === "NGN") {
       return (
         <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-          <li>Include the reference in your transfer</li>
           <li>Processing time: within 24 hours</li>
         </ul>
       )
@@ -116,7 +112,6 @@ interface CurrencyDepositDialogProps {
 export function CurrencyDepositDialog({ account, copiedField, onCopy }: CurrencyDepositDialogProps) {
   const stablecoinAccount = mockStablecoinAccounts.find((s) => s.currency === account.currency)
   const hasStablecoin = stablecoinAccount !== undefined
-  const reference = `DEP-${account.currency}-${account.accountNumber.replace(/\*/g, "")}`
 
   const handleShare = async (type: "bank" | "stablecoin") => {
     const bankDetails = type === "bank"
@@ -128,13 +123,11 @@ export function CurrencyDepositDialog({ account, copiedField, onCopy }: Currency
           account.routingNumber && `Routing Number: ${account.routingNumber}`,
           account.sortCode && `Sort Code: ${account.sortCode}`,
           `Bank Name: ${account.bankName}`,
-          `Reference: ${reference}`,
         ].filter(Boolean).join("\n")
       : stablecoinAccount
         ? [
             `Network: SOL • Solana`,
             `${stablecoinAccount.stablecoin} Address: ${stablecoinAccount.address}`,
-            stablecoinAccount.memo && `Memo (Required): ${stablecoinAccount.memo}`,
           ].filter(Boolean).join("\n")
         : ""
 
@@ -247,14 +240,6 @@ export function CurrencyDepositDialog({ account, copiedField, onCopy }: Currency
                 fieldId={`bank-bank-${account.id}`}
                 onCopy={onCopy}
               />
-
-              <CopyableField
-                label="Reference (required)"
-                value={reference}
-                copiedField={copiedField}
-                fieldId={`bank-ref-${account.id}`}
-                onCopy={onCopy}
-              />
             </div>
 
             <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleShare("bank")}>
@@ -298,24 +283,6 @@ export function CurrencyDepositDialog({ account, copiedField, onCopy }: Currency
                   fieldId={`stable-addr-${account.id}`}
                   onCopy={onCopy}
                 />
-
-                {stablecoinAccount.memo && (
-                  <>
-                    <CopyableField
-                      label="Memo (Required)"
-                      value={stablecoinAccount.memo}
-                      copiedField={copiedField}
-                      fieldId={`stable-memo-${account.id}`}
-                      onCopy={onCopy}
-                    />
-                    <div className="flex gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
-                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-amber-800 dark:text-amber-200">
-                        Include this memo when sending to this address on {stablecoinAccount.chain}. Sending without the memo may result in lost funds.
-                      </p>
-                    </div>
-                  </>
-                )}
 
                 <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleShare("stablecoin")}>
                   <Share2 className="h-4 w-4" />

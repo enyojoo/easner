@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight, Snowflake } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { type Card } from "@/lib/mock-data"
+import { BRAND } from "@/components/brand/brand-constants"
 
 interface CardCarouselProps {
   cards: Card[]
@@ -27,30 +28,32 @@ export function CardCarousel({ cards, onCardChange, frozenCardIds = new Set() }:
     onCardChange?.(cards[newIndex])
   }
 
-  const isActive = currentCard.status === "active"
   const isFrozen = frozenCardIds.has(currentCard.id)
+  const isPhysical = currentCard.form === "physical"
+  // Easner brand color #007ACC - physical uses Easner blue gradient
+  const cardGradient = isPhysical
+    ? "linear-gradient(135deg, #005a99 0%, #007ACC 50%, #0099e6 100%)"
+    : "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%)"
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Card Display */}
+    <div className="relative w-full max-w-[400px] mx-auto">
+      {/* Card Display - virtual: dark slate, physical: Easner blue */}
       <div
         className="relative overflow-hidden rounded-2xl shadow-xl transition-all duration-300 w-full"
         style={{
-          background: isActive
-            ? "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%)"
-            : "linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)",
-          border: isActive ? "none" : "1px solid #E5E7EB",
+          background: cardGradient,
+          border: "none",
           aspectRatio: "1.586",
         }}
       >
-        <div className={`absolute inset-0 z-[1] ${isActive ? "opacity-10" : "opacity-5"}`}>
+        <div className="absolute inset-0 z-[1] opacity-10">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id={`dots-${currentCard.id}`} x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1.5" fill={isActive ? "white" : "#6B7280"} />
+                <circle cx="2" cy="2" r="1.5" fill="white" />
               </pattern>
               <pattern id={`lines-${currentCard.id}`} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M0 60 L60 0" stroke={isActive ? "white" : "#6B7280"} strokeWidth="0.5" />
+                <path d="M0 60 L60 0" stroke="white" strokeWidth="0.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill={`url(#dots-${currentCard.id})`} />
@@ -68,28 +71,30 @@ export function CardCarousel({ cards, onCardChange, frozenCardIds = new Set() }:
         )}
 
         <div className="flex h-full flex-col justify-between p-6 sm:p-7 relative z-[2]">
-          {/* Top section with chip and logo */}
+          {/* Top section: Easner logo left, badge + Mastercard right */}
           <div className="flex items-start justify-between">
-            {/* EMV Chip */}
-            <div
-              className="h-10 w-12 rounded-md"
-              style={{
-                background: isActive
-                  ? "linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)"
-                  : "linear-gradient(135deg, #D1D5DB 0%, #9CA3AF 100%)",
-              }}
-            />
-
+            <div className="flex items-center gap-2">
+              {/* Easner Icon (matches mobile card design) */}
+              <img
+                src={BRAND.icon}
+                alt="Easner"
+                className="h-10 w-auto object-contain brightness-0 invert opacity-90"
+              />
+              {/* Virtual/Physical badge */}
+              <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white/90">
+                {currentCard.form}
+              </span>
+            </div>
             {/* Mastercard Logo */}
             <svg width="56" height="36" viewBox="0 0 56 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="18" r="14" fill="#EB001B" opacity={isActive ? 1 : 0.6} />
-              <circle cx="36" cy="18" r="14" fill="#F79E1B" opacity={isActive ? 1 : 0.6} />
+              <circle cx="20" cy="18" r="14" fill="#EB001B" />
+              <circle cx="36" cy="18" r="14" fill="#F79E1B" />
             </svg>
           </div>
 
           {/* Card Number */}
           <div className="py-4">
-            <p className={`font-mono text-2xl tracking-[0.3em] ${isActive ? "text-white" : "text-gray-700"}`}>
+            <p className="font-mono text-sm tracking-[0.2em] whitespace-nowrap text-white">
               •••• •••• •••• {currentCard.last4}
             </p>
           </div>
@@ -97,24 +102,18 @@ export function CardCarousel({ cards, onCardChange, frozenCardIds = new Set() }:
           {/* Bottom section with cardholder and expiry */}
           <div className="flex items-end justify-between">
             <div>
-              <p
-                className={`text-[10px] font-medium uppercase tracking-wider ${isActive ? "text-white/60" : "text-gray-500"}`}
-              >
+              <p className="text-[10px] font-medium uppercase tracking-wider text-white/60">
                 Card Holder
               </p>
-              <p
-                className={`mt-1 text-sm font-semibold uppercase tracking-wide ${isActive ? "text-white" : "text-gray-900"}`}
-              >
+              <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-white">
                 {currentCard.cardholderName}
               </p>
             </div>
             <div className="text-right">
-              <p
-                className={`text-[10px] font-medium uppercase tracking-wider ${isActive ? "text-white/60" : "text-gray-500"}`}
-              >
+              <p className="text-[10px] font-medium uppercase tracking-wider text-white/60">
                 Expires
               </p>
-              <p className={`mt-1 text-sm font-semibold ${isActive ? "text-white" : "text-gray-900"}`}>
+              <p className="mt-1 text-sm font-semibold text-white">
                 {currentCard.expiryDate}
               </p>
             </div>
@@ -128,7 +127,7 @@ export function CardCarousel({ cards, onCardChange, frozenCardIds = new Set() }:
             variant="ghost"
             size="icon"
             onClick={goToPrevious}
-            className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[20] rounded-full bg-white shadow-lg hover:bg-gray-50"
+            className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[20] rounded-full bg-white shadow-lg hover:bg-gray-50 border border-border"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -136,7 +135,7 @@ export function CardCarousel({ cards, onCardChange, frozenCardIds = new Set() }:
             variant="ghost"
             size="icon"
             onClick={goToNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-[20] rounded-full bg-white shadow-lg hover:bg-gray-50"
+            className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 z-[20] rounded-full bg-white shadow-lg hover:bg-gray-50 border border-border"
           >
             <ChevronRight className="h-5 w-5" />
           </Button>

@@ -42,14 +42,12 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import Link from "next/link"
-
-// Mock customers data
-const mockCustomers = [
-  { id: "1", name: "Rosalyn Ward", email: "rosward1990@gmail.com", company: "Ward Enterprises" },
-  { id: "2", name: "Wilson Dagah", email: "admin@thekingsrubies.org", company: "The Kings Rubies" },
-  { id: "3", name: "Sarah Johnson", email: "sarah.johnson@techcorp.com", company: "TechCorp Solutions" },
-  { id: "4", name: "Michael Chen", email: "m.chen@startup.io", company: "StartupIO" }
-]
+import { useRouter } from "next/navigation"
+import { mockCustomers } from "@/lib/mock-data"
+import { formatCurrency } from "@/lib/utils"
+import { businessInfo } from "@/lib/business-info"
+import { useInvoices } from "@/lib/invoices-context"
+import type { Invoice } from "@/lib/mock-data"
 
 interface LineItem {
   id: string
@@ -71,6 +69,8 @@ interface InvoiceForm {
 }
 
 export default function CreateInvoicePage() {
+  const router = useRouter()
+  const { addInvoice } = useInvoices()
   const [formData, setFormData] = useState<InvoiceForm>({
     customerId: "",
     customerName: "",
@@ -128,7 +128,7 @@ export default function CreateInvoicePage() {
   }
 
   // Select customer
-  const selectCustomer = (customer: typeof mockCustomers[0]) => {
+  const selectCustomer = (customer: (typeof mockCustomers)[0]) => {
     setFormData(prev => ({
       ...prev,
       customerId: customer.id,
@@ -137,6 +137,47 @@ export default function CreateInvoicePage() {
       customerCompany: customer.company
     }))
     setIsCustomerDialogOpen(false)
+  }
+
+  const createInvoiceFromForm = (status: "draft" | "open"): Invoice => {
+    const id = `inv_${Date.now()}`
+    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`
+    const now = new Date().toISOString().split("T")[0]
+    const lineItems = formData.lineItems
+      .filter((item) => item.description.trim() && item.amount > 0)
+      .map(({ description, quantity, unitPrice, amount }) => ({
+        description,
+        quantity,
+        unitPrice,
+        amount,
+      }))
+    const total = lineItems.reduce((sum, item) => sum + item.amount, 0)
+    return {
+      id,
+      invoiceNumber,
+      customerName: formData.customerName || "Unknown",
+      customerEmail: formData.customerEmail || "",
+      total,
+      currency: formData.currency,
+      status,
+      dueDate: formData.dueDate || now,
+      createdDate: now,
+      finalizedDate: status === "draft" ? null : now,
+      frequency: null,
+      lineItems,
+    }
+  }
+
+  const handleSaveDraft = () => {
+    const invoice = createInvoiceFromForm("draft")
+    addInvoice(invoice)
+    router.push(`/invoices/${invoice.id}`)
+  }
+
+  const handleSendInvoice = () => {
+    const invoice = createInvoiceFromForm("open")
+    addInvoice(invoice)
+    router.push(`/invoices/${invoice.id}`)
   }
 
   // Set default due date (30 days from now)
@@ -350,15 +391,15 @@ export default function CreateInvoicePage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${subtotal.toFixed(2)} {formData.currency}</span>
+                <span>{formatCurrency(subtotal, formData.currency)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Tax</span>
-                <span>${tax.toFixed(2)} {formData.currency}</span>
+                <span>{formatCurrency(tax, formData.currency)}</span>
               </div>
               <div className="flex justify-between font-semibold border-t pt-3">
                 <span>Total</span>
-                <span>${total.toFixed(2)} {formData.currency}</span>
+                <span>{formatCurrency(total, formData.currency)}</span>
               </div>
             </CardContent>
           </Card>
@@ -369,7 +410,7 @@ export default function CreateInvoicePage() {
               <CardTitle className="text-base">Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={handleSaveDraft}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
@@ -377,7 +418,7 @@ export default function CreateInvoicePage() {
                 <Eye className="h-4 w-4 mr-2" />
                 Preview
               </Button>
-              <Button className="w-full">
+              <Button className="w-full" onClick={handleSendInvoice}>
                 <Send className="h-4 w-4 mr-2" />
                 Send Invoice
               </Button>
@@ -426,9 +467,9 @@ export default function CreateInvoicePage() {
                 <p className="text-sm text-muted-foreground">Invoice number: DRAFT-{Date.now().toString().slice(-6)}</p>
               </div>
               <div className="text-right">
-                <p className="font-semibold">Easner Banking</p>
-                <p className="text-sm text-muted-foreground">123 Business St</p>
-                <p className="text-sm text-muted-foreground">New York, NY 10001</p>
+                <p className="font-semibold">{businessInfo.name}</p>
+                <p className="text-sm text-muted-foreground">{businessInfo.address}</p>
+                <p className="text-sm text-muted-foreground">{businessInfo.city}, {businessInfo.state} {businessInfo.zipCode}</p>
               </div>
             </div>
 
@@ -442,7 +483,6 @@ export default function CreateInvoicePage() {
               <div>
                 <h3 className="font-semibold mb-2">Invoice details:</h3>
                 <p className="text-sm"><span className="text-muted-foreground">Due date:</span> {formData.dueDate ? new Date(formData.dueDate).toLocaleDateString() : "Not set"}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Currency:</span> {formData.currency}</p>
               </div>
             </div>
 
@@ -461,8 +501,8 @@ export default function CreateInvoicePage() {
                     <tr key={item.id} className="border-t">
                       <td className="p-3 text-sm">{item.description || "Item description"}</td>
                       <td className="p-3 text-right text-sm">{item.quantity}</td>
-                      <td className="p-3 text-right text-sm">${item.unitPrice.toFixed(2)}</td>
-                      <td className="p-3 text-right text-sm font-medium">${item.amount.toFixed(2)}</td>
+                      <td className="p-3 text-right text-sm">{formatCurrency(item.unitPrice, formData.currency)}</td>
+                      <td className="p-3 text-right text-sm font-medium">{formatCurrency(item.amount, formData.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -473,15 +513,15 @@ export default function CreateInvoicePage() {
               <div className="w-64 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">${subtotal.toFixed(2)} {formData.currency}</span>
+                  <span className="font-medium">{formatCurrency(subtotal, formData.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax:</span>
-                  <span className="font-medium">${tax.toFixed(2)} {formData.currency}</span>
+                  <span className="font-medium">{formatCurrency(tax, formData.currency)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-base border-t pt-2">
                   <span>Total:</span>
-                  <span>${total.toFixed(2)} {formData.currency}</span>
+                  <span>{formatCurrency(total, formData.currency)}</span>
                 </div>
               </div>
             </div>

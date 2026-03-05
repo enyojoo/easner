@@ -1,38 +1,13 @@
 "use client"
 
-import { DashboardNav } from "@/components/dashboard-nav"
-import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import type React from "react"
+import { DashboardShell } from "@/components/dashboard-shell"
+import { InvoicesProvider } from "@/lib/invoices-context"
 
-export default function InvoicesLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/auth/login")
-    }
-  }, [user, isLoading, router])
-
-  if (isLoading) {
-    return null
-  }
-
-  if (!user) {
-    return null
-  }
-
+export default function InvoicesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardNav />
-      <main className="flex-1 ml-56 p-8 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <DashboardShell mainClassName="overflow-y-auto">
+      <InvoicesProvider>{children}</InvoicesProvider>
+    </DashboardShell>
   )
 }

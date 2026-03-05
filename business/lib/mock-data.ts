@@ -9,6 +9,7 @@ export interface Account {
   sortCode?: string // Only for GBP
   iban?: string // Only for EUR
   bic?: string // Only for EUR
+  bankAddress?: string // Bank address (e.g. for US accounts)
   balance: number
   availableBalance: number
   status: "active" | "pending" | "closed"
@@ -17,6 +18,7 @@ export interface Account {
 export interface Card {
   id: string
   type: "debit" | "credit"
+  form: "virtual" | "physical"
   last4: string
   fullCardNumber: string
   cvv: string
@@ -51,11 +53,12 @@ export const mockAccounts: Account[] = [
   {
     id: "acc_usd",
     currency: "USD",
-    accountName: "Easner", // Changed to business name
+    accountName: "Amazon, Inc",
     bankName: "Column Bank",
     accountNumber: "****1234",
     fullAccountNumber: "1234567891234",
     routingNumber: "121000248",
+    bankAddress: "201 Spear Street, Suite 1100, San Francisco, CA 94105",
     balance: 12450.75,
     availableBalance: 12450.75,
     status: "active",
@@ -63,12 +66,13 @@ export const mockAccounts: Account[] = [
   {
     id: "acc_eur",
     currency: "EUR",
-    accountName: "Easner", // Changed to business name
+    accountName: "Amazon, Inc",
     bankName: "Solaris Bank",
     accountNumber: "****3000",
     fullAccountNumber: "DE89370400440532013000",
     iban: "DE89370400440532013000",
     bic: "SOBKDEB2XXX",
+    bankAddress: "Friedrichstraße 123, 10117 Berlin, Germany",
     balance: 8320.5,
     availableBalance: 8320.5,
     status: "active",
@@ -76,11 +80,12 @@ export const mockAccounts: Account[] = [
   {
     id: "acc_gbp",
     currency: "GBP",
-    accountName: "Easner", // Changed to business name
+    accountName: "Amazon, Inc",
     bankName: "ClearBank",
     accountNumber: "****6819",
     fullAccountNumber: "31926819",
     sortCode: "04-00-04",
+    bankAddress: "1 Bartholomew Lane, London EC2N 2AX, United Kingdom",
     balance: 5640.25,
     availableBalance: 5640.25,
     status: "active",
@@ -88,10 +93,11 @@ export const mockAccounts: Account[] = [
   {
     id: "acc_ngn",
     currency: "NGN",
-    accountName: "Easner", // Changed to business name
+    accountName: "Amazon, Inc",
     bankName: "Providus Bank",
     accountNumber: "****3456",
     fullAccountNumber: "1234567893456",
+    bankAddress: "1263 Adeola Odeku Street, Victoria Island, Lagos, Nigeria",
     balance: 2450000.0,
     availableBalance: 2450000.0,
     status: "active",
@@ -242,6 +248,240 @@ export const mockPaymentLinks: PaymentLink[] = [
   },
 ]
 
+export interface InvoiceLineItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  amount: number
+}
+
+export interface Invoice {
+  id: string
+  invoiceNumber: string
+  customerName: string
+  customerEmail: string
+  total: number
+  currency: string
+  status: "draft" | "open" | "past_due" | "paid" | "void" | "uncollectible" | "failed"
+  dueDate: string
+  createdDate: string
+  finalizedDate: string | null
+  frequency: string | null
+  lineItems: InvoiceLineItem[]
+}
+
+export interface Customer {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  address: string
+  totalInvoices: number
+  totalPaid: number
+  currency: string
+  status: "active" | "inactive"
+  lastInvoiceDate: string
+}
+
+export const mockCustomers: Customer[] = [
+  {
+    id: "1",
+    name: "Rosalyn Ward",
+    email: "rosward1990@gmail.com",
+    phone: "+1 (555) 123-4567",
+    company: "Ward Enterprises",
+    address: "123 Main St, New York, NY 10001",
+    totalInvoices: 5,
+    totalPaid: 2500.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-12-10",
+  },
+  {
+    id: "2",
+    name: "Wilson Dagah",
+    email: "admin@thekingsrubies.org",
+    phone: "+1 (555) 987-6543",
+    company: "The Kings Rubies",
+    address: "456 Business Ave, Los Angeles, CA 90210",
+    totalInvoices: 12,
+    totalPaid: 8500.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-12-10",
+  },
+  {
+    id: "3",
+    name: "Sarah Johnson",
+    email: "sarah.johnson@techcorp.com",
+    phone: "+1 (555) 456-7890",
+    company: "TechCorp Solutions",
+    address: "789 Tech Blvd, San Francisco, CA 94105",
+    totalInvoices: 3,
+    totalPaid: 1200.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-11-28",
+  },
+  {
+    id: "4",
+    name: "Michael Chen",
+    email: "m.chen@startup.io",
+    phone: "+1 (555) 321-0987",
+    company: "StartupIO",
+    address: "321 Innovation Dr, Austin, TX 78701",
+    totalInvoices: 8,
+    totalPaid: 4200.0,
+    currency: "USD",
+    status: "inactive",
+    lastInvoiceDate: "2024-10-15",
+  },
+]
+
+export const mockInvoices: Invoice[] = [
+  {
+    id: "1",
+    invoiceNumber: "A99204FB-0001",
+    customerName: "Rosalyn Ward",
+    customerEmail: "rosward1990@gmail.com",
+    total: 500.0,
+    currency: "USD",
+    status: "void",
+    dueDate: "2024-12-15",
+    createdDate: "2024-12-10",
+    finalizedDate: "2024-12-10",
+    frequency: null,
+    lineItems: [{ description: "Donation", quantity: 1, unitPrice: 500.0, amount: 500.0 }],
+  },
+  {
+    id: "2",
+    invoiceNumber: "D91F75E6-0005",
+    customerName: "Wilson Dagah",
+    customerEmail: "admin@thekingsrubies.org",
+    total: 500.0,
+    currency: "USD",
+    status: "uncollectible",
+    dueDate: "2024-12-15",
+    createdDate: "2024-12-10",
+    finalizedDate: "2024-12-10",
+    frequency: null,
+    lineItems: [{ description: "Service Fee", quantity: 1, unitPrice: 500.0, amount: 500.0 }],
+  },
+  {
+    id: "3",
+    invoiceNumber: "D91F75E6-0004",
+    customerName: "Wilson Dagah",
+    customerEmail: "admin@thekingsrubies.org",
+    total: 1000.0,
+    currency: "USD",
+    status: "failed",
+    dueDate: "2024-05-30",
+    createdDate: "2024-05-23",
+    finalizedDate: "2024-05-23",
+    frequency: null,
+    lineItems: [{ description: "Consulting Services", quantity: 10, unitPrice: 100.0, amount: 1000.0 }],
+  },
+  {
+    id: "4",
+    invoiceNumber: "A99204FB-DRAFT",
+    customerName: "Rosalyn Ward",
+    customerEmail: "rosward1990@gmail.com",
+    total: 0.0,
+    currency: "USD",
+    status: "draft",
+    dueDate: "2024-05-30",
+    createdDate: "2024-05-23",
+    finalizedDate: null,
+    frequency: null,
+    lineItems: [],
+  },
+  {
+    id: "5",
+    invoiceNumber: "D91F75E6-0003",
+    customerName: "Wilson Dagah",
+    customerEmail: "admin@thekingsrubies.org",
+    total: 5.46,
+    currency: "USD",
+    status: "void",
+    dueDate: "2023-02-08",
+    createdDate: "2023-01-08",
+    finalizedDate: "2023-01-08",
+    frequency: "monthly",
+    lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+  },
+  {
+    id: "6",
+    invoiceNumber: "D91F75E6-0002",
+    customerName: "Wilson Dagah",
+    customerEmail: "admin@thekingsrubies.org",
+    total: 5.46,
+    currency: "USD",
+    status: "void",
+    dueDate: "2023-01-08",
+    createdDate: "2023-01-08",
+    finalizedDate: "2023-01-08",
+    frequency: "monthly",
+    lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+  },
+  {
+    id: "7",
+    invoiceNumber: "D91F75E6-0001",
+    customerName: "Wilson Dagah",
+    customerEmail: "admin@thekingsrubies.org",
+    total: 5.46,
+    currency: "USD",
+    status: "void",
+    dueDate: "2023-01-08",
+    createdDate: "2023-01-08",
+    finalizedDate: "2023-01-08",
+    frequency: "monthly",
+    lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+  },
+  {
+    id: "8",
+    invoiceNumber: "INV-OPEN-001",
+    customerName: "Sarah Johnson",
+    customerEmail: "sarah.johnson@techcorp.com",
+    total: 2500.0,
+    currency: "USD",
+    status: "open",
+    dueDate: "2025-04-15",
+    createdDate: "2025-03-01",
+    finalizedDate: "2025-03-01",
+    frequency: null,
+    lineItems: [{ description: "Software License", quantity: 1, unitPrice: 2500.0, amount: 2500.0 }],
+  },
+  {
+    id: "9",
+    invoiceNumber: "INV-PASTDUE-001",
+    customerName: "Michael Chen",
+    customerEmail: "m.chen@startup.io",
+    total: 1200.0,
+    currency: "USD",
+    status: "past_due",
+    dueDate: "2025-02-01",
+    createdDate: "2025-01-15",
+    finalizedDate: "2025-01-15",
+    frequency: null,
+    lineItems: [{ description: "Consulting", quantity: 12, unitPrice: 100.0, amount: 1200.0 }],
+  },
+  {
+    id: "10",
+    invoiceNumber: "INV-PAID-001",
+    customerName: "Rosalyn Ward",
+    customerEmail: "rosward1990@gmail.com",
+    total: 1500.0,
+    currency: "USD",
+    status: "paid",
+    dueDate: "2025-01-20",
+    createdDate: "2025-01-10",
+    finalizedDate: "2025-01-10",
+    frequency: null,
+    lineItems: [{ description: "Design Services", quantity: 1, unitPrice: 1500.0, amount: 1500.0 }],
+  },
+]
+
 export const mockPendingItems: PendingItem[] = [
   {
     id: "pending_1",
@@ -269,6 +509,7 @@ export const mockCards: Card[] = [
   {
     id: "card_1",
     type: "debit",
+    form: "virtual",
     last4: "1234",
     fullCardNumber: "4532 7788 9012 1234",
     cvv: "123",
@@ -287,8 +528,9 @@ export const mockCards: Card[] = [
   {
     id: "card_2",
     type: "debit",
-    last4: "1234",
-    fullCardNumber: "4532 7788 9012 1234",
+    form: "physical",
+    last4: "5678",
+    fullCardNumber: "4532 7788 9012 5678",
     cvv: "456",
     status: "inactive",
     expiryDate: "12/22",
