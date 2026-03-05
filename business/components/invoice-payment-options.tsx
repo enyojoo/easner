@@ -334,7 +334,7 @@ export function InvoicePaymentOptions({
               ) : (
                 <Share2 className="h-4 w-4" />
               )}
-              {copiedField === "share-bank" ? "Copied" : "Share"}
+              {copiedField === "share-bank" ? "Copied" : "Share Account Details"}
             </Button>
             <div className="pt-4 border-t">
               <p className="text-sm font-medium mb-2">Payment Instructions</p>
@@ -391,7 +391,7 @@ export function InvoicePaymentOptions({
                   ) : (
                     <Share2 className="h-4 w-4" />
                   )}
-                  {copiedField === "share-stablecoin" ? "Copied" : "Share"}
+                  {copiedField === "share-stablecoin" ? "Copied" : `Share ${stablecoinAccount.stablecoin} Details`}
                 </Button>
                 <div className="pt-4 border-t">
                   <p className="text-sm font-medium mb-2">Payment Instructions</p>
