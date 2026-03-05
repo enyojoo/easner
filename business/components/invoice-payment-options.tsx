@@ -160,8 +160,8 @@ export function InvoicePaymentOptions({
     }
   }
 
-  const handleShare = async (type: "bank" | "stablecoin") => {
-    const bankDetails =
+  const getShareContent = (type: "bank" | "stablecoin") => {
+    const details =
       type === "bank"
         ? [
             `Amount: ${formatCurrency(invoice.total, invoice.currency)}`,
@@ -188,21 +188,33 @@ export function InvoicePaymentOptions({
               .filter(Boolean)
               .join("\n")
           : ""
+    const url =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/invoice-view/${invoice.id}`
+        : ""
+    return { details, url }
+  }
+
+  const handleShare = async (type: "bank" | "stablecoin") => {
+    const { details, url } = getShareContent(type)
+    const text = url ? `${details}\n\nView invoice: ${url}` : details
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Invoice ${invoice.invoiceNumber}\nPayment Details`,
-          text: bankDetails,
+          title: `Invoice ${invoice.invoiceNumber} - Payment Details`,
+          text,
         })
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          copyToClipboard(bankDetails, "share")
+          copyToClipboard(text, `share-${type}`)
         }
       }
     } else {
-      copyToClipboard(bankDetails, "share")
+      copyToClipboard(text, `share-${type}`)
     }
   }
+
 
   const header = (
     <div className={embedded ? "mb-4" : ""}>
@@ -317,8 +329,12 @@ export function InvoicePaymentOptions({
               className="w-full gap-2"
               onClick={() => handleShare("bank")}
             >
-              <Share2 className="h-4 w-4" />
-              Share Account Details
+              {copiedField === "share-bank" ? (
+                <Check className="h-4 w-4 text-green-600" />
+              ) : (
+                <Share2 className="h-4 w-4" />
+              )}
+              {copiedField === "share-bank" ? "Copied" : "Share"}
             </Button>
             <div className="pt-4 border-t">
               <p className="text-sm font-medium mb-2">Payment Instructions</p>
@@ -370,8 +386,12 @@ export function InvoicePaymentOptions({
                   className="w-full gap-2"
                   onClick={() => handleShare("stablecoin")}
                 >
-                  <Share2 className="h-4 w-4" />
-                  Share {stablecoinAccount.stablecoin} Details
+                  {copiedField === "share-stablecoin" ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                  {copiedField === "share-stablecoin" ? "Copied" : "Share"}
                 </Button>
                 <div className="pt-4 border-t">
                   <p className="text-sm font-medium mb-2">Payment Instructions</p>
