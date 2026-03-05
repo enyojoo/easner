@@ -195,23 +195,26 @@ export function InvoicePaymentOptions({
     return { details, url }
   }
 
+  const shareTitle = `Invoice ${invoice.invoiceNumber}\nPayment Details`
+
   const handleShare = async (type: "bank" | "stablecoin") => {
     const { details, url } = getShareContent(type)
-    const text = url ? `${details}\n\nView invoice: ${url}` : details
+    const body = url ? `${details}\n\nView invoice: ${url}` : details
+    const fullText = `${shareTitle}\n\n${body}`
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Invoice ${invoice.invoiceNumber}\nPayment Details`,
-          text,
+          title: shareTitle,
+          text: body,
         })
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          copyToClipboard(text, `share-${type}`)
+          copyToClipboard(fullText, `share-${type}`)
         }
       }
     } else {
-      copyToClipboard(text, `share-${type}`)
+      copyToClipboard(fullText, `share-${type}`)
     }
   }
 
