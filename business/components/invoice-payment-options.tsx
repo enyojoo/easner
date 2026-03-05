@@ -202,7 +202,7 @@ export function InvoicePaymentOptions({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Invoice ${invoice.invoiceNumber} - Payment Details`,
+          title: `Invoice ${invoice.invoiceNumber}\nPayment Details`,
           text,
         })
       } catch (err) {
