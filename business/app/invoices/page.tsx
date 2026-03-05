@@ -32,7 +32,7 @@ export default function InvoicesPage() {
   const statusTabs = [
     { id: "all", label: "All invoices", count: invoices.length },
     { id: "draft", label: "Draft", count: invoices.filter((i) => i.status === "draft").length },
-    { id: "open", label: "Open", count: invoices.filter((i) => i.status === "open").length },
+    { id: "open", label: "Unpaid", count: invoices.filter((i) => i.status === "open").length },
     { id: "past_due", label: "Past due", count: invoices.filter((i) => i.status === "past_due").length },
     { id: "paid", label: "Paid", count: invoices.filter((i) => i.status === "paid").length },
   ]
@@ -59,29 +59,27 @@ export default function InvoicesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Invoices</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your billing and invoicing</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/invoices/create">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create invoice
+      {/* Header + Tabs - sticky so content doesn't scroll through */}
+      <div className="sticky top-0 z-20 flex flex-col gap-4 shrink-0 pb-4 bg-background border-b">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Invoices</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your billing and invoicing</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+            <Link href="/invoices/create">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create invoice
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
-
-      {/* Status Tabs - sticky when scrolling */}
-      <div className="sticky top-0 z-10 bg-background shrink-0 pt-4">
-        <div className="flex space-x-1 border-b">
+        <div className="flex space-x-1">
           {statusTabs.map((tab) => (
             <button
               key={tab.id}

@@ -204,6 +204,7 @@ export default function InvoiceDetailPage() {
               invoice={invoice}
               bankAccount={bankAccount}
               stablecoinAccount={stablecoinAccount}
+              audience="business"
             />
           )}
 

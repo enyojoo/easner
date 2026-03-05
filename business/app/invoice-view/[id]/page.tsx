@@ -1,17 +1,37 @@
 "use client"
 
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Check, Copy, Download, Loader2 } from "lucide-react"
 import { getInvoiceById } from "@/lib/invoice-store"
 import { businessInfo } from "@/lib/business-info"
 import { mockAccounts, mockStablecoinAccounts } from "@/lib/mock-data"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
+import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
+import { BusinessLogo } from "@/components/brand/business-logo"
 
 export default function InvoiceViewPage() {
   const params = useParams()
   const invoice = getInvoiceById(params.id as string)
+  const [paymentTab, setPaymentTab] = useState<"bank" | "stablecoin">("bank")
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  const handleCopyLink = async () => {
+    if (typeof window === "undefined" || !invoice) return
+    const url = `${window.location.origin}/invoice-view/${invoice.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy link:", err)
+    }
+  }
 
   if (!invoice) {
     return (
@@ -35,8 +55,50 @@ export default function InvoiceViewPage() {
   const showPayCard =
     (invoice.status === "open" || invoice.status === "past_due") && bankAccount
 
+  const handleDownloadPdf = async () => {
+    if (!invoice) return
+    setIsDownloading(true)
+    try {
+      await downloadInvoicePdf(invoice, bankAccount, stablecoinAccount)
+    } catch (err) {
+      console.error("Failed to download PDF:", err)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full max-w-2xl space-y-4">
+      <div className="flex justify-between items-center gap-4 print:hidden">
+        <BusinessLogo size="lg" href="/" />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyLink}
+          >
+          {copiedLink ? (
+            <Check className="h-4 w-4 mr-2 text-green-600" />
+          ) : (
+            <Copy className="h-4 w-4 mr-2" />
+          )}
+          {copiedLink ? "Copied" : "Copy Link"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadPdf}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4 mr-2" />
+          )}
+          Download PDF
+        </Button>
+        </div>
+      </div>
       <Card className="print:shadow-none print:border">
         <CardContent className="p-8">
           {/* Business info & Invoice header */}
@@ -122,6 +184,9 @@ export default function InvoiceViewPage() {
               bankAccount={bankAccount}
               stablecoinAccount={stablecoinAccount}
               embedded
+              audience="customer"
+              value={paymentTab}
+              onValueChange={setPaymentTab}
             />
           )}
         </CardContent>

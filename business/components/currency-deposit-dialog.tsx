@@ -94,7 +94,6 @@ function PaymentInstructions({ currency, type }: { currency: string; type: "bank
       <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
         <li>Only send {stablecoin} on the supported network to this address</li>
         <li>Sending unsupported assets will be lost</li>
-        <li>Ensure amount is above 1 {stablecoin}</li>
         <li>Processing time: within seconds</li>
       </ul>
     )

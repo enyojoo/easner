@@ -34,7 +34,7 @@ export function DashboardShell({ children, mainClassName = "", constrained = fal
     <div className="min-h-screen bg-background">
       <DashboardNav />
       <div className="ml-64 flex flex-col min-h-screen">
-        <header className="fixed top-0 left-64 right-0 z-10 flex h-16 min-h-16 items-center justify-end gap-4 border-b bg-background px-6">
+        <header className="fixed top-0 left-64 right-0 z-30 flex h-16 min-h-16 items-center justify-end gap-4 border-b bg-background px-6">
           <BusinessDropdown
             businessName={businessInfo.name}
             adminName={user?.name || "Admin"}

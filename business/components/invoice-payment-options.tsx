@@ -99,7 +99,6 @@ function PaymentInstructions({
       <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
         <li>Only send {stablecoin} on the supported network to this address</li>
         <li>Sending unsupported assets will be lost</li>
-        <li>Ensure amount is above 1 {stablecoin}</li>
         <li>Processing time: within seconds</li>
       </ul>
     )
@@ -113,13 +112,27 @@ interface InvoicePaymentOptionsProps {
   stablecoinAccount?: StablecoinAccount
   /** When true, render without Card wrapper (e.g. inside invoice frame) */
   embedded?: boolean
+  /** "customer" = invoice view; "business" = invoice detail page */
+  audience?: "customer" | "business"
+  /** Controlled tab value - when provided, parent tracks selection */
+  value?: "bank" | "stablecoin"
+  onValueChange?: (value: "bank" | "stablecoin") => void
 }
+
+const audienceDescriptions = {
+  customer:
+    "Kindly pay the invoice via any of the payment options. Reference must be the invoice number for reconciliation.",
+  business: "Share these details with your customer.",
+} as const
 
 export function InvoicePaymentOptions({
   invoice,
   bankAccount,
   stablecoinAccount,
   embedded = false,
+  audience = "customer",
+  value,
+  onValueChange,
 }: InvoicePaymentOptionsProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const hasStablecoin = stablecoinAccount !== undefined
@@ -151,6 +164,7 @@ export function InvoicePaymentOptions({
     const bankDetails =
       type === "bank"
         ? [
+            `Amount: ${formatCurrency(invoice.total, invoice.currency)}`,
             `Account Name: ${bankAccount.accountName}`,
             bankAccount.iban && `IBAN: ${bankAccount.iban}`,
             bankAccount.bic && `BIC/SWIFT: ${bankAccount.bic}`,
@@ -170,7 +184,6 @@ export function InvoicePaymentOptions({
               `Amount: ${formatCurrency(invoice.total, invoice.currency)}`,
               `Network: ${stablecoinAccount.chain}`,
               `Address: ${stablecoinAccount.address}`,
-              `Memo (use invoice number): ${invoice.invoiceNumber}`,
             ]
               .filter(Boolean)
               .join("\n")
@@ -178,7 +191,7 @@ export function InvoicePaymentOptions({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Invoice ${invoice.invoiceNumber} - Payment Details`,
+          title: `Invoice ${invoice.invoiceNumber}\nPayment Details`,
           text: bankDetails,
         })
       } catch (err) {
@@ -195,14 +208,22 @@ export function InvoicePaymentOptions({
     <div className={embedded ? "mb-4" : ""}>
       <h3 className="text-lg font-semibold">Invoice payment options</h3>
       <p className="text-sm text-muted-foreground mt-1">
-        Share these details with your customer. Reference must be the invoice
-        number for reconciliation.
+        {audienceDescriptions[audience]}
       </p>
     </div>
   )
 
   const tabsContent = (
-    <Tabs defaultValue="bank" className="w-full">
+    <Tabs
+      {...(value !== undefined && onValueChange
+        ? {
+            value,
+            onValueChange: (v: string) =>
+              onValueChange(v as "bank" | "stablecoin"),
+          }
+        : { defaultValue: "bank" })}
+      className="w-full"
+    >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="bank">
               {bankAccount.currency === "USD"
@@ -385,8 +406,7 @@ export function InvoicePaymentOptions({
       <CardHeader>
         <CardTitle className="text-lg">Invoice payment options</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Share these details with your customer. Reference must be the invoice
-          number for reconciliation.
+          {audienceDescriptions[audience]}
         </p>
       </CardHeader>
       <CardContent>{tabsContent}</CardContent>
