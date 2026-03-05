@@ -205,8 +205,7 @@ export function InvoicePaymentOptions({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: shareTitle,
-          text: body,
+          text: fullText,
         })
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
