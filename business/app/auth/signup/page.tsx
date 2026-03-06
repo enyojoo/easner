@@ -20,6 +20,7 @@ import {
 import { Eye, EyeOff, Info, MapPin, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { countries } from "@/lib/countries"
+import { setOnboarding } from "@/lib/onboarding-store"
 
 const TERMS_URL = "https://www.easner.com/terms?from=register"
 
@@ -45,6 +46,7 @@ export default function SignupPage() {
       return
     }
     try {
+      setOnboarding({ countryCode: country, businessName: businessName.trim() })
       await signup(email, password, name)
       router.push("/dashboard")
     } catch (err) {

@@ -13,6 +13,7 @@ import {
 import { RecipientForm } from "@/components/recipient-form"
 import { mockBeneficiaries } from "@/lib/mock-data"
 import type { Beneficiary } from "@/lib/mock-data"
+import { Label } from "@/components/ui/label"
 import { Search, Plus, User, ChevronDown } from "lucide-react"
 
 const currencyFlags: Record<string, string> = {
@@ -31,12 +32,14 @@ interface SendRecipientPickerProps {
   selected: Beneficiary | null
   onSelect: (beneficiary: Beneficiary | null) => void
   beneficiaries?: Beneficiary[]
+  label?: string
 }
 
 export function SendRecipientPicker({
   selected,
   onSelect,
   beneficiaries: initialBeneficiaries,
+  label = "Recipient",
 }: SendRecipientPickerProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isPickerOpen, setIsPickerOpen] = useState(false)
@@ -72,7 +75,8 @@ export function SendRecipientPicker({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
+      <Label className="text-muted-foreground">{label}</Label>
       <button
         type="button"
         onClick={() => setIsPickerOpen(true)}
@@ -95,15 +99,6 @@ export function SendRecipientPicker({
         )}
         <ChevronDown className="h-4 w-4 text-muted-foreground" />
       </button>
-      {selected && (
-        <button
-          type="button"
-          onClick={() => onSelect(null)}
-          className="text-sm text-primary hover:underline"
-        >
-          Change
-        </button>
-      )}
 
       <Dialog open={isPickerOpen} onOpenChange={setIsPickerOpen}>
         <DialogContent className="sm:max-w-md">

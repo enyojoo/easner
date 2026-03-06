@@ -29,7 +29,12 @@ export function getPaymentInstructions(
     }
   }
   if (type === "stablecoin") {
-    const stablecoin = currency === "USD" ? "USDC" : "EURC"
+    const stablecoin =
+      currency === "USD"
+        ? "USDC"
+        : currency === "EUR"
+          ? "EURC"
+          : "USDC"
     return [
       `Only send ${stablecoin} on the supported network to this address`,
       "Sending unsupported assets will be lost",
@@ -37,4 +42,13 @@ export function getPaymentInstructions(
     ]
   }
   return []
+}
+
+/** Pass stablecoin name explicitly for send flow */
+export function getStablecoinPaymentInstructions(stablecoin: "USDC" | "USDT"): string[] {
+  return [
+    `Only send ${stablecoin} on the supported network to this address`,
+    "Sending unsupported assets will be lost",
+    "Processing time: within seconds",
+  ]
 }

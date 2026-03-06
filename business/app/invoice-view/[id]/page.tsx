@@ -12,6 +12,7 @@ import { formatDate, formatCurrency } from "@/lib/utils"
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
 import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
+import { downloadInvoiceReceiptPdf } from "@/lib/use-invoice-receipt-pdf"
 import { BusinessLogo } from "@/components/brand/business-logo"
 import { BRAND } from "@/components/brand/brand-constants"
 
@@ -64,6 +65,7 @@ export default function InvoiceViewPage() {
   )
   const showPayCard =
     (invoice.status === "open" || invoice.status === "sent" || invoice.status === "past_due") && bankAccount
+  const showReceiptCard = invoice.status === "paid"
 
   const handleDownloadPdf = async () => {
     if (!invoice) return
@@ -237,11 +239,25 @@ export default function InvoiceViewPage() {
 
           {/* Total */}
           <div className="flex justify-end mb-6">
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
-              <p className="text-lg sm:text-2xl font-bold mt-0.5">
-                {formatCurrency(invoice.total, invoice.currency)}
-              </p>
+            <div className="text-right space-y-1">
+              {(invoice.tax ?? 0) > 0 && invoice.subtotal != null && (
+                <>
+                  <div className="flex justify-between gap-8 text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
+                  </div>
+                  <div className="flex justify-between gap-8 text-sm">
+                    <span className="text-muted-foreground">Tax</span>
+                    <span>{formatCurrency(invoice.tax!, invoice.currency)}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between gap-8 items-baseline pt-1">
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Total</span>
+                <span className="text-lg sm:text-2xl font-bold">
+                  {formatCurrency(invoice.total, invoice.currency)}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -256,6 +272,39 @@ export default function InvoiceViewPage() {
               value={paymentTab}
               onValueChange={setPaymentTab}
             />
+          )}
+
+          {/* Invoice receipt - when paid */}
+          {showReceiptCard && (
+            <div className="rounded-lg border bg-muted/30 p-4 sm:p-6">
+              <h3 className="text-sm font-semibold mb-2">Invoice Receipt</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                This invoice has been paid.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (!invoice) return
+                  setIsDownloading(true)
+                  try {
+                    await downloadInvoiceReceiptPdf(invoice)
+                  } catch (err) {
+                    console.error("Failed to download receipt:", err)
+                  } finally {
+                    setIsDownloading(false)
+                  }
+                }}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                )}
+                Download Receipt
+              </Button>
+            </div>
           )}
 
           {/* Powered by - bottom of frame, matches PDF */}

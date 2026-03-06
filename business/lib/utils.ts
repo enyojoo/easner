@@ -6,10 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Format amount with currency symbol only (no currency code) */
+/** Format amount with currency symbol and thousands separators (e.g. $250,000,000.00) */
 export function formatCurrency(amount: number, currency: string): string {
   const symbol = currencySymbols[currency] ?? '$'
-  return `${symbol}${amount.toFixed(2)}`
+  const formatted = amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return `${symbol}${formatted}`
 }
 
 export function formatDate(dateString: string | Date, options?: Intl.DateTimeFormatOptions): string {

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { 
   Plus, 
   Search, 
@@ -12,7 +12,10 @@ import {
   User,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  Eye,
+  Pencil,
+  Trash2
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -20,17 +23,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import Link from "next/link"
-import { mockCustomers } from "@/lib/mock-data"
+import { useCustomers } from "@/lib/customers-context"
+import { useInvoices } from "@/lib/invoices-context"
+import { AddEditCustomerDialog } from "@/components/add-edit-customer-dialog"
+import { getCustomerStats } from "@/lib/mock-data"
 import { formatCurrency } from "@/lib/utils"
+import type { Customer } from "@/lib/mock-data"
 
 export default function CustomersPage() {
+  const router = useRouter()
+  const { customers, addCustomer, updateCustomer, deleteCustomer } = useCustomers()
+  const { invoices } = useInvoices()
   const [searchTerm, setSearchTerm] = useState("")
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
 
-  const filteredCustomers = mockCustomers.filter(customer =>
+  const filteredCustomers = customers.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.company.toLowerCase().includes(searchTerm.toLowerCase())
+    (customer.company ?? "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
@@ -41,7 +65,7 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-semibold text-foreground">Customers</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your customer information for invoicing</p>
         </div>
-        <Button>
+        <Button onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Customer
         </Button>
@@ -73,7 +97,7 @@ export default function CustomersPage() {
                 {searchTerm ? "Try adjusting your search terms" : "Get started by adding your first customer"}
               </p>
               {!searchTerm && (
-                <Button>
+                <Button onClick={() => setAddDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Customer
                 </Button>
@@ -89,17 +113,22 @@ export default function CustomersPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-primary">
-                        {customer.name.split(' ').map(n => n[0]).join('')}
+                        {customer.company?.trim()
+                          ? customer.company.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+                          : customer.name.split(" ").map((n) => n[0]).join("")}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm truncate">{customer.name}</h3>
-                        <Badge variant={customer.status === "active" ? "default" : "secondary"} className="text-xs">
-                          {customer.status}
-                        </Badge>
+                        <h3 className="font-semibold text-sm truncate">
+                          {customer.company?.trim() || customer.name}
+                        </h3>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2">{customer.company}</p>
+                      {customer.company?.trim() && (
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {customer.name}
+                        </p>
+                      )}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
@@ -119,16 +148,23 @@ export default function CustomersPage() {
                   
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <div className="text-sm font-semibold">
-                        {formatCurrency(customer.totalPaid, customer.currency)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {customer.totalInvoices} invoice{customer.totalInvoices !== 1 ? 's' : ''}
-                      </div>
+                      {(() => {
+                        const stats = getCustomerStats(customer.id, customer.email, invoices)
+                        return (
+                          <>
+                            <div className="text-sm font-semibold">
+                              {formatCurrency(stats.totalPaid, customer.currency)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {stats.totalInvoices} invoice{stats.totalInvoices !== 1 ? 's' : ''}
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Link href="/invoices/create">
+                      <Link href={`/invoices/create?customer=${customer.id}`}>
                         <Button variant="outline" size="sm">
                           Create Invoice
                         </Button>
@@ -140,11 +176,24 @@ export default function CustomersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit Customer</DropdownMenuItem>
-                          <DropdownMenuItem>View Invoices</DropdownMenuItem>
-                          <DropdownMenuItem>Send Message</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/customers/${customer.id}`)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Customer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditCustomer(customer)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Customer
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              setCustomerToDelete(customer)
+                              setDeleteDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -160,6 +209,46 @@ export default function CustomersPage() {
       <div className="text-sm text-muted-foreground">
         {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
       </div>
+
+      <AddEditCustomerDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSave={addCustomer}
+      />
+      <AddEditCustomerDialog
+        open={!!editCustomer}
+        onOpenChange={(open) => !open && setEditCustomer(null)}
+        customer={editCustomer}
+        onSave={(c) => {
+          updateCustomer(c.id, c)
+          setEditCustomer(null)
+        }}
+      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {customerToDelete?.name}. Invoices linked to this customer will remain but the customer record will be removed. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (customerToDelete) {
+                  deleteCustomer(customerToDelete.id)
+                  setCustomerToDelete(null)
+                  setDeleteDialogOpen(false)
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

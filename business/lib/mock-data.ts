@@ -224,11 +224,22 @@ export interface InvoiceLineItem {
   amount: number
 }
 
+export interface InvoicePaymentInfo {
+  paidAt: string
+  method: "easner" | "cash"
+  transactionId?: string
+  cashNote?: string
+}
+
 export interface Invoice {
   id: string
   invoiceNumber: string
   customerName: string
   customerEmail: string
+  /** Sum of line items (before tax). When absent, derived from lineItems. */
+  subtotal?: number
+  /** Tax amount. When absent, treated as 0. */
+  tax?: number
   total: number
   currency: string
   status: "draft" | "open" | "sent" | "past_due" | "paid" | "void" | "uncollectible" | "failed"
@@ -251,7 +262,30 @@ export interface Invoice {
   archived?: boolean
   /** Note to customer (e.g. payment terms, thank you message) */
   memo?: string
+  /** Payment details when status is paid */
+  paymentInfo?: InvoicePaymentInfo
 }
+
+export interface StablecoinDeposit {
+  id: string
+  amount: number
+  currency: "USD" | "EUR"
+  stablecoin: "USDC" | "EURC"
+  chain: string
+  date: string
+  senderAddress?: string
+  memo?: string
+  reference?: string
+}
+
+export const mockStablecoinDeposits: StablecoinDeposit[] = [
+  { id: "ETID000201", amount: 1500, currency: "USD", stablecoin: "USDC", chain: "Solana", date: "2025-01-10", memo: "EINV-0010", reference: "EINV-0010" },
+  { id: "ETID000202", amount: 2500, currency: "USD", stablecoin: "USDC", chain: "Solana", date: "2025-01-08", memo: "Invoice payment" },
+  { id: "ETID000203", amount: 500, currency: "EUR", stablecoin: "EURC", chain: "Ethereum", date: "2025-01-05", memo: "DEP-EUR-3000" },
+  { id: "ETID000204", amount: 1200, currency: "USD", stablecoin: "USDC", chain: "Solana", date: "2025-01-12", memo: "EINV-0009" },
+  { id: "ETID000205", amount: 3200, currency: "USD", stablecoin: "USDC", chain: "Ethereum", date: "2025-01-03", memo: "Freelance payment" },
+  { id: "ETID000206", amount: 800, currency: "EUR", stablecoin: "EURC", chain: "Ethereum", date: "2025-01-01", memo: "DEP-EUR-3000" },
+]
 
 export interface Customer {
   id: string
@@ -324,8 +358,8 @@ export const mockCustomers: Customer[] = [
 
 export const mockInvoices: Invoice[] = [
   {
-    id: "1",
-    invoiceNumber: "A99204FB-0001",
+    id: "EINV000001",
+    invoiceNumber: "EINV-0001",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 500.0,
@@ -342,8 +376,8 @@ export const mockInvoices: Invoice[] = [
     customerPhone: "+1 (555) 123-4567",
   },
   {
-    id: "2",
-    invoiceNumber: "D91F75E6-0005",
+    id: "EINV000002",
+    invoiceNumber: "EINV-0002",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 500.0,
@@ -354,12 +388,14 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2024-12-10",
     frequency: null,
     lineItems: [{ description: "Service Fee", quantity: 1, unitPrice: 500.0, amount: 500.0 }],
+    billToType: "company",
+    customerCompany: "The Kings Rubies",
     customerAddress: "456 Business Ave, Los Angeles, CA 90210",
     customerPhone: "+1 (555) 987-6543",
   },
   {
-    id: "3",
-    invoiceNumber: "D91F75E6-0004",
+    id: "EINV000003",
+    invoiceNumber: "EINV-0003",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 1000.0,
@@ -370,10 +406,14 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2024-05-23",
     frequency: null,
     lineItems: [{ description: "Consulting Services", quantity: 10, unitPrice: 100.0, amount: 1000.0 }],
+    billToType: "company",
+    customerCompany: "The Kings Rubies",
+    customerAddress: "456 Business Ave, Los Angeles, CA 90210",
+    customerPhone: "+1 (555) 987-6543",
   },
   {
-    id: "4",
-    invoiceNumber: "A99204FB-DRAFT",
+    id: "EINV000004",
+    invoiceNumber: "EINV-DRAFT",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 0.0,
@@ -384,10 +424,14 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: null,
     frequency: null,
     lineItems: [],
+    billToType: "company",
+    customerCompany: "Ward Enterprises",
+    customerAddress: "123 Main St, New York, NY 10001",
+    customerPhone: "+1 (555) 123-4567",
   },
   {
-    id: "5",
-    invoiceNumber: "D91F75E6-0003",
+    id: "EINV000005",
+    invoiceNumber: "EINV-0005",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -398,10 +442,14 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2023-01-08",
     frequency: "monthly",
     lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+    billToType: "company",
+    customerCompany: "The Kings Rubies",
+    customerAddress: "456 Business Ave, Los Angeles, CA 90210",
+    customerPhone: "+1 (555) 987-6543",
   },
   {
-    id: "6",
-    invoiceNumber: "D91F75E6-0002",
+    id: "EINV000006",
+    invoiceNumber: "EINV-0006",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -412,10 +460,14 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2023-01-08",
     frequency: "monthly",
     lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+    billToType: "company",
+    customerCompany: "The Kings Rubies",
+    customerAddress: "456 Business Ave, Los Angeles, CA 90210",
+    customerPhone: "+1 (555) 987-6543",
   },
   {
-    id: "7",
-    invoiceNumber: "D91F75E6-0001",
+    id: "EINV000007",
+    invoiceNumber: "EINV-0007",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -426,15 +478,22 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2023-01-08",
     frequency: "monthly",
     lineItems: [{ description: "Subscription", quantity: 1, unitPrice: 5.46, amount: 5.46 }],
+    billToType: "company",
+    customerCompany: "The Kings Rubies",
+    customerAddress: "456 Business Ave, Los Angeles, CA 90210",
+    customerPhone: "+1 (555) 987-6543",
   },
   {
-    id: "8",
-    invoiceNumber: "INV-OPEN-001",
+    id: "EINV000008",
+    invoiceNumber: "EINV-0008",
     customerName: "Sarah Johnson",
     customerEmail: "sarah.johnson@techcorp.com",
+    subtotal: 2500.0,
+    tax: 0,
     total: 2500.0,
     currency: "USD",
-    status: "open",
+    status: "paid",
+    paymentInfo: { paidAt: "2025-01-09", method: "easner", transactionId: "ETID000202" },
     dueDate: "2025-04-15",
     createdDate: "2025-03-01",
     finalizedDate: "2025-03-01",
@@ -446,32 +505,44 @@ export const mockInvoices: Invoice[] = [
     customerPhone: "+1 (555) 456-7890",
   },
   {
-    id: "9",
-    invoiceNumber: "INV-PASTDUE-001",
+    id: "EINV000009",
+    invoiceNumber: "EINV-0009",
     customerName: "Michael Chen",
     customerEmail: "m.chen@startup.io",
-    total: 1200.0,
+    subtotal: 1200.0,
+    tax: 96.0,
+    total: 1296.0,
     currency: "USD",
-    status: "past_due",
+    status: "paid",
+    paymentInfo: { paidAt: "2025-01-08", method: "cash", cashNote: "Received in person" },
     dueDate: "2025-02-01",
     createdDate: "2025-01-15",
     finalizedDate: "2025-01-15",
     frequency: null,
     lineItems: [{ description: "Consulting", quantity: 12, unitPrice: 100.0, amount: 1200.0 }],
+    billToType: "company",
+    customerCompany: "StartupIO",
+    customerAddress: "321 Innovation Dr, Austin, TX 78701",
+    customerPhone: "+1 (555) 321-0987",
   },
   {
-    id: "10",
-    invoiceNumber: "INV-PAID-001",
+    id: "EINV000010",
+    invoiceNumber: "EINV-0010",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 1500.0,
     currency: "USD",
     status: "paid",
+    paymentInfo: { paidAt: "2025-01-10", method: "easner", transactionId: "ETID000017" },
     dueDate: "2025-01-20",
     createdDate: "2025-01-10",
     finalizedDate: "2025-01-10",
     frequency: null,
     lineItems: [{ description: "Design Services", quantity: 1, unitPrice: 1500.0, amount: 1500.0 }],
+    billToType: "company",
+    customerCompany: "Ward Enterprises",
+    customerAddress: "123 Main St, New York, NY 10001",
+    customerPhone: "+1 (555) 123-4567",
   },
 ]
 
@@ -541,7 +612,7 @@ export const mockCards: Card[] = [
 
 export const mockTransactions: Transaction[] = [
   {
-    id: "txn_1",
+    id: "ETID000001",
     type: "ach",
     amount: 2500.0,
     description: "Salary Deposit",
@@ -552,7 +623,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2025-001",
   },
   {
-    id: "txn_2",
+    id: "ETID000002",
     type: "card",
     amount: 45.99,
     description: "Amazon Purchase",
@@ -565,7 +636,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2025-002",
   },
   {
-    id: "txn_3",
+    id: "ETID000003",
     type: "wire",
     amount: 1000.0,
     description: "Wire Transfer to Savings",
@@ -577,7 +648,7 @@ export const mockTransactions: Transaction[] = [
     reference: "WIRE-2025-003",
   },
   {
-    id: "txn_4",
+    id: "ETID000004",
     type: "book",
     amount: 500.0,
     description: "Internal Transfer",
@@ -588,7 +659,7 @@ export const mockTransactions: Transaction[] = [
     reference: "BOOK-2025-004",
   },
   {
-    id: "txn_5",
+    id: "ETID000005",
     type: "ach",
     amount: 150.0,
     description: "Utility Payment",
@@ -599,7 +670,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2025-005",
   },
   {
-    id: "txn_6",
+    id: "ETID000006",
     type: "card",
     amount: 89.99,
     description: "Netflix Subscription",
@@ -612,7 +683,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-006",
   },
   {
-    id: "txn_7",
+    id: "ETID000007",
     type: "ach",
     amount: 3200.0,
     description: "Freelance Payment",
@@ -623,7 +694,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2024-007",
   },
   {
-    id: "txn_8",
+    id: "ETID000008",
     type: "wire",
     amount: 5000.0,
     description: "Investment Transfer",
@@ -635,7 +706,7 @@ export const mockTransactions: Transaction[] = [
     reference: "WIRE-2024-008",
   },
   {
-    id: "txn_9",
+    id: "ETID000009",
     type: "card",
     amount: 234.5,
     description: "Whole Foods Market",
@@ -648,7 +719,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-009",
   },
   {
-    id: "txn_10",
+    id: "ETID000010",
     type: "book",
     amount: 1500.0,
     description: "Account Transfer",
@@ -659,7 +730,7 @@ export const mockTransactions: Transaction[] = [
     reference: "BOOK-2024-010",
   },
   {
-    id: "txn_11",
+    id: "ETID000011",
     type: "ach",
     amount: 450.0,
     description: "Insurance Premium",
@@ -670,7 +741,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2024-011",
   },
   {
-    id: "txn_12",
+    id: "ETID000012",
     type: "card",
     amount: 125.0,
     description: "Gas Station",
@@ -683,7 +754,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-012",
   },
   {
-    id: "txn_13",
+    id: "ETID000013",
     type: "wire",
     amount: 2500.0,
     description: "Vendor Payment",
@@ -695,7 +766,7 @@ export const mockTransactions: Transaction[] = [
     reference: "WIRE-2024-013",
   },
   {
-    id: "txn_14",
+    id: "ETID000014",
     type: "ach",
     amount: 1800.0,
     description: "Rent Payment",
@@ -706,7 +777,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2024-014",
   },
   {
-    id: "txn_15",
+    id: "ETID000015",
     type: "card",
     amount: 67.5,
     description: "Restaurant Dining",
@@ -719,7 +790,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-015",
   },
   {
-    id: "txn_16",
+    id: "ETID000016",
     type: "book",
     amount: 800.0,
     description: "Savings Transfer",
@@ -730,7 +801,7 @@ export const mockTransactions: Transaction[] = [
     reference: "BOOK-2024-016",
   },
   {
-    id: "txn_17",
+    id: "ETID000017",
     type: "ach",
     amount: 4500.0,
     description: "Client Payment",
@@ -738,10 +809,10 @@ export const mockTransactions: Transaction[] = [
     status: "completed",
     direction: "credit",
     category: "Income",
-    reference: "ACH-2024-017",
+    reference: "EINV-0010",
   },
   {
-    id: "txn_18",
+    id: "ETID000018",
     type: "card",
     amount: 199.99,
     description: "Apple Store",
@@ -754,7 +825,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-018",
   },
   {
-    id: "txn_19",
+    id: "ETID000019",
     type: "wire",
     amount: 750.0,
     description: "Tax Payment",
@@ -766,7 +837,7 @@ export const mockTransactions: Transaction[] = [
     reference: "WIRE-2024-019",
   },
   {
-    id: "txn_20",
+    id: "ETID000020",
     type: "ach",
     amount: 320.0,
     description: "Gym Membership",
@@ -777,7 +848,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2024-020",
   },
   {
-    id: "txn_21",
+    id: "ETID000021",
     type: "card",
     amount: 55.0,
     description: "Coffee Shop",
@@ -790,7 +861,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-021",
   },
   {
-    id: "txn_22",
+    id: "ETID000022",
     type: "book",
     amount: 2000.0,
     description: "Emergency Fund Transfer",
@@ -801,7 +872,7 @@ export const mockTransactions: Transaction[] = [
     reference: "BOOK-2024-022",
   },
   {
-    id: "txn_23",
+    id: "ETID000023",
     type: "ach",
     amount: 890.0,
     description: "Car Payment",
@@ -812,7 +883,7 @@ export const mockTransactions: Transaction[] = [
     reference: "ACH-2024-023",
   },
   {
-    id: "txn_24",
+    id: "ETID000024",
     type: "card",
     amount: 145.75,
     description: "Target Shopping",
@@ -825,7 +896,7 @@ export const mockTransactions: Transaction[] = [
     reference: "CARD-2024-024",
   },
   {
-    id: "txn_25",
+    id: "ETID000025",
     type: "wire",
     amount: 3500.0,
     description: "Contractor Payment",
@@ -840,7 +911,7 @@ export const mockTransactions: Transaction[] = [
 
 export const mockCardTransactions: Transaction[] = [
   {
-    id: "txn_card_1",
+    id: "ETID000101",
     type: "card",
     amount: -2500.0,
     description: "Spotify Subscription",
@@ -852,7 +923,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-101",
   },
   {
-    id: "txn_card_2",
+    id: "ETID000102",
     type: "card",
     amount: 750.0,
     description: "Freepik Sales",
@@ -864,7 +935,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-102",
   },
   {
-    id: "txn_card_3",
+    id: "ETID000103",
     type: "card",
     amount: -150.0,
     description: "Mobile Service",
@@ -876,7 +947,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-103",
   },
   {
-    id: "txn_card_4",
+    id: "ETID000104",
     type: "card",
     amount: -1050.0,
     description: "Wilson",
@@ -888,7 +959,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-104",
   },
   {
-    id: "txn_card_5",
+    id: "ETID000105",
     type: "card",
     amount: 840.0,
     description: "Emilly",
@@ -900,7 +971,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-105",
   },
   {
-    id: "txn_card_6",
+    id: "ETID000106",
     type: "card",
     amount: -89.99,
     description: "Netflix Subscription",
@@ -912,7 +983,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-106",
   },
   {
-    id: "txn_card_7",
+    id: "ETID000107",
     type: "card",
     amount: -234.5,
     description: "Whole Foods Market",
@@ -924,7 +995,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-107",
   },
   {
-    id: "txn_card_8",
+    id: "ETID000108",
     type: "card",
     amount: -125.0,
     description: "Shell Gas Station",
@@ -936,7 +1007,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-108",
   },
   {
-    id: "txn_card_9",
+    id: "ETID000109",
     type: "card",
     amount: -67.5,
     description: "Chipotle Mexican Grill",
@@ -948,7 +1019,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-109",
   },
   {
-    id: "txn_card_10",
+    id: "ETID000110",
     type: "card",
     amount: -199.99,
     description: "Apple Store",
@@ -960,7 +1031,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-110",
   },
   {
-    id: "txn_card_11",
+    id: "ETID000111",
     type: "card",
     amount: -55.0,
     description: "Starbucks Coffee",
@@ -972,7 +1043,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2025-111",
   },
   {
-    id: "txn_card_12",
+    id: "ETID000112",
     type: "card",
     amount: -145.75,
     description: "Target Shopping",
@@ -984,7 +1055,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-112",
   },
   {
-    id: "txn_card_13",
+    id: "ETID000113",
     type: "card",
     amount: -320.0,
     description: "Equinox Gym",
@@ -996,7 +1067,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-113",
   },
   {
-    id: "txn_card_14",
+    id: "ETID000114",
     type: "card",
     amount: -78.9,
     description: "Uber Rides",
@@ -1008,7 +1079,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-114",
   },
   {
-    id: "txn_card_15",
+    id: "ETID000115",
     type: "card",
     amount: -42.0,
     description: "AMC Theaters",
@@ -1020,7 +1091,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-115",
   },
   {
-    id: "txn_card_16",
+    id: "ETID000116",
     type: "card",
     amount: -167.5,
     description: "Costco Wholesale",
@@ -1032,7 +1103,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-116",
   },
   {
-    id: "txn_card_17",
+    id: "ETID000117",
     type: "card",
     amount: -95.0,
     description: "CVS Pharmacy",
@@ -1044,7 +1115,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-117",
   },
   {
-    id: "txn_card_18",
+    id: "ETID000118",
     type: "card",
     amount: -28.5,
     description: "Panera Bread",
@@ -1056,7 +1127,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-118",
   },
   {
-    id: "txn_card_19",
+    id: "ETID000119",
     type: "card",
     amount: -450.0,
     description: "Best Buy Electronics",
@@ -1068,7 +1139,7 @@ export const mockCardTransactions: Transaction[] = [
     reference: "CARD-2024-119",
   },
   {
-    id: "txn_card_20",
+    id: "ETID000120",
     type: "card",
     amount: -112.3,
     description: "Trader Joe's",
@@ -1104,6 +1175,9 @@ export const currencyRates: Record<string, number> = {
   EUR: 1.09,
   GBP: 1.27,
   NGN: 0.00065,
+  KES: 0.0077,
+  GHS: 0.065,
+  RUB: 0.011,
 }
 
 export const currencySymbols: Record<string, string> = {
@@ -1111,6 +1185,9 @@ export const currencySymbols: Record<string, string> = {
   EUR: "€",
   GBP: "£",
   NGN: "₦",
+  KES: "KSh",
+  GHS: "₵",
+  RUB: "₽",
 }
 
 export const defaultCurrency = "USD"
@@ -1123,4 +1200,29 @@ export function getTotalBalanceInDefaultCurrency(): number {
   return mockAccounts.reduce((sum, acc) => {
     return sum + convertToDefaultCurrency(acc.balance, acc.currency)
   }, 0)
+}
+
+export function getCustomerStats(
+  customerId: string,
+  customerEmail: string,
+  invoices: Invoice[]
+): { totalInvoices: number; totalPaid: number; lastInvoiceDate: string } {
+  const customerInvoices = invoices.filter(
+    (inv) =>
+      !inv.archived &&
+      ((inv as Invoice & { customerId?: string }).customerId === customerId ||
+        inv.customerEmail?.toLowerCase() === customerEmail?.toLowerCase())
+  )
+  const totalPaid = customerInvoices
+    .filter((inv) => inv.status === "paid")
+    .reduce((sum, inv) => sum + inv.total, 0)
+  const dates = customerInvoices
+    .map((inv) => inv.finalizedDate ?? inv.createdDate)
+    .filter(Boolean) as string[]
+  const lastInvoiceDate = dates.length > 0 ? dates.sort().reverse()[0] : ""
+  return {
+    totalInvoices: customerInvoices.length,
+    totalPaid,
+    lastInvoiceDate,
+  }
 }

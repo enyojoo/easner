@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [transactionDetailsOpen, setTransactionDetailsOpen] = useState(false)
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("30d")
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all")
   const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,

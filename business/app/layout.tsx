@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 import { Analytics } from "@vercel/analytics/next"
 import { ClientAuthProvider } from "@/components/client-auth-provider"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
+import { Providers } from "@/components/providers"
 import { Suspense } from "react"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import "./globals.css"
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ChunkLoadErrorHandler />
         <Suspense fallback={<LoadingSpinner />}>
-          <ClientAuthProvider>{children}</ClientAuthProvider>
+          <ClientAuthProvider>
+            <Providers>{children}</Providers>
+          </ClientAuthProvider>
           <Toaster />
           <Analytics />
         </Suspense>

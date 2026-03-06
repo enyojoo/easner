@@ -1,15 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Building2, Globe, FileText, MapPin, Edit, X, Check } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Building2, Globe, FileText, MapPin, Edit, X, Check, ChevronDown } from "lucide-react"
 import { businessInfo } from "@/lib/business-info"
+import { getOnboarding, setOnboarding } from "@/lib/onboarding-store"
+import { countries } from "@/lib/countries"
+import { getKybFields } from "@/lib/kyb-by-country"
+
+function getCountryFromCode(code: string) {
+  return countries.find((c) => c.code === code)
+}
+
+function getInitialCountryCode(): string {
+  if (typeof window === "undefined") return "US"
+  const onboarding = getOnboarding()
+  if (onboarding?.countryCode) return onboarding.countryCode
+  const match = countries.find((c) => c.name === businessInfo.country)
+  return match?.code ?? "US"
+}
 
 export function SettingsBusinessTab() {
+  const [countryCode, setCountryCode] = useState("US")
+  const [countryOpen, setCountryOpen] = useState(false)
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     businessName: businessInfo.name,
@@ -27,15 +46,39 @@ export function SettingsBusinessTab() {
     baseCurrency: "USD",
   })
 
+  useEffect(() => {
+    const code = getInitialCountryCode()
+    setCountryCode(code)
+    const c = getCountryFromCode(code)
+    if (c) setFormData((prev) => ({ ...prev, country: c.name }))
+  }, [])
+
   const handleEdit = (section: string) => setEditingSection(section)
   const handleCancel = () => setEditingSection(null)
   const handleSave = (section: string) => {
     console.log(`Saving ${section}:`, formData)
+    if (section === "legal") {
+      const onboarding = getOnboarding()
+      setOnboarding({
+        countryCode,
+        businessName: onboarding?.businessName ?? formData.businessName,
+      })
+    }
     setEditingSection(null)
   }
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
+
+  const handleCountryChange = (code: string) => {
+    setCountryCode(code)
+    const c = getCountryFromCode(code)
+    if (c) handleInputChange("country", c.name)
+    setCountryOpen(false)
+  }
+
+  const selectedCountry = getCountryFromCode(countryCode)
+  const kybFields = getKybFields(countryCode)
 
   return (
     <div className="space-y-6">
@@ -148,35 +191,82 @@ export function SettingsBusinessTab() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ein">EIN / Tax ID</Label>
-              <Input
-                id="ein"
-                value={formData.taxId}
-                onChange={(e) => handleInputChange("taxId", e.target.value)}
-                disabled={editingSection !== "legal"}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="registrationNumber">Registration Number</Label>
-              <Input
-                id="registrationNumber"
-                value={formData.registrationNumber}
-                onChange={(e) => handleInputChange("registrationNumber", e.target.value)}
-                disabled={editingSection !== "legal"}
-              />
-            </div>
-          </div>
           <div className="space-y-2">
-            <Label htmlFor="jurisdiction">Jurisdiction</Label>
-            <Input
-              id="jurisdiction"
-              value="Delaware, United States"
-              onChange={(e) => handleInputChange("jurisdiction", e.target.value)}
-              disabled={editingSection !== "legal"}
-            />
+            <Label>Country</Label>
+            {editingSection === "legal" ? (
+              <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={countryOpen}
+                    className="w-full justify-between h-10 font-normal"
+                  >
+                    {selectedCountry ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{selectedCountry.flag}</span>
+                        <span>{selectedCountry.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Select country</span>
+                    )}
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search country..." />
+                    <CommandList className="max-h-[200px]">
+                      <CommandEmpty>No country found.</CommandEmpty>
+                      <CommandGroup>
+                        {countries.map((c) => (
+                          <CommandItem
+                            key={c.code}
+                            value={c.name}
+                            onSelect={() => handleCountryChange(c.code)}
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              <span className="text-lg">{c.flag}</span>
+                              <span className="flex-1">{c.name}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="flex items-center gap-2 h-10 px-3 py-2 rounded-md border bg-muted/30">
+                {selectedCountry && (
+                  <>
+                    <span className="text-lg">{selectedCountry.flag}</span>
+                    <span>{selectedCountry.name}</span>
+                  </>
+                )}
+                {!selectedCountry && <span className="text-muted-foreground">{formData.country || "—"}</span>}
+              </div>
+            )}
           </div>
+
+          {kybFields.length > 0 && (
+            <div className="pt-2 space-y-4">
+              <div className={kybFields.length > 1 ? "grid grid-cols-1 md:grid-cols-2 gap-4" : ""}>
+                {kybFields.map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <Label htmlFor={field.id}>{field.label}</Label>
+                    <Input
+                      id={field.id}
+                      value={formData[field.id as keyof typeof formData] as string}
+                      onChange={(e) => handleInputChange(field.id, e.target.value)}
+                      placeholder={field.placeholder}
+                      disabled={editingSection !== "legal"}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

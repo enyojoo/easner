@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { mockAccounts } from "@/lib/mock-data"
+import { formatCurrency } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 
 export function TransferForm() {
@@ -55,7 +56,7 @@ export function TransferForm() {
                   <SelectContent>
                     {mockAccounts.map((acc) => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountName} {acc.accountNumber} - ${acc.balance.toFixed(2)}
+                        {acc.accountName} {acc.accountNumber} - {formatCurrency(acc.balance, acc.currency)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -140,7 +141,7 @@ export function TransferForm() {
                   <SelectContent>
                     {mockAccounts.map((acc) => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountName} {acc.accountNumber} - ${acc.balance.toFixed(2)}
+                        {acc.accountName} {acc.accountNumber} - {formatCurrency(acc.balance, acc.currency)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -225,7 +226,7 @@ export function TransferForm() {
                   <SelectContent>
                     {mockAccounts.map((acc) => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountName} {acc.accountNumber} - ${acc.balance.toFixed(2)}
+                        {acc.accountName} {acc.accountNumber} - {formatCurrency(acc.balance, acc.currency)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -243,7 +244,7 @@ export function TransferForm() {
                       .filter((acc) => acc.id !== fromAccount)
                       .map((acc) => (
                         <SelectItem key={acc.id} value={acc.id}>
-                          {acc.accountName} {acc.accountNumber} - ${acc.balance.toFixed(2)}
+                          {acc.accountName} {acc.accountNumber} - {formatCurrency(acc.balance, acc.currency)}
                         </SelectItem>
                       ))}
                   </SelectContent>

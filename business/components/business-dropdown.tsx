@@ -32,16 +32,13 @@ export function BusinessDropdown({ businessName, adminName, adminEmail, onSignOu
         {variant === "header" ? (
           <Button
             variant="ghost"
-            className="gap-2 px-2 py-1.5 h-auto hover:bg-muted/50 min-w-[200px] w-[200px] shrink-0"
+            className="gap-2 px-2 py-1.5 h-auto hover:bg-muted/50"
           >
             <Avatar className="h-8 w-8 shrink-0">
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                 {adminName.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium truncate min-w-0 flex-1 text-left">
-              {adminName.split(" ")[0]}
-            </span>
             <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
           </Button>
         ) : (
@@ -73,11 +70,20 @@ export function BusinessDropdown({ businessName, adminName, adminEmail, onSignOu
         align={variant === "header" ? "end" : "start"}
         className={cn(
           "p-2",
-          variant === "header" ? "w-[200px] min-w-[200px]" : "w-64"
+          variant === "header" ? "w-56 min-w-[14rem]" : "w-64"
         )}
         side={variant === "header" ? "bottom" : "top"}
         sideOffset={8}
       >
+        {variant === "header" && (
+          <>
+            <div className="px-2 py-2">
+              <p className="text-sm font-medium">{adminName}</p>
+              <p className="text-xs text-muted-foreground truncate">{adminEmail}</p>
+            </div>
+            <DropdownMenuSeparator />
+          </>
+        )}
         {variant === "sidebar" && (
           <>
             <div className="px-3 py-2">
@@ -105,7 +111,7 @@ export function BusinessDropdown({ businessName, adminName, adminEmail, onSignOu
         <DropdownMenuItem asChild>
           <a href="mailto:support@easner.com" className="flex items-center gap-2">
             <HelpCircle className="h-4 w-4" />
-            <span>Contact Support</span>
+            <span>Contact</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="gap-2">

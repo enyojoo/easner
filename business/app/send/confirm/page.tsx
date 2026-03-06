@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PinDialog } from "@/components/pin-dialog"
 import { mockAccounts, currencySymbols } from "@/lib/mock-data"
 import type { Beneficiary } from "@/lib/mock-data"
-import { ArrowLeft, User } from "lucide-react"
+import { generateTransactionId } from "@/lib/transaction-id"
+import { ArrowLeft, User, Copy, Check } from "lucide-react"
 
 const SEND_FLOW_STATE_KEY = "send_flow_state"
 
@@ -18,8 +18,10 @@ interface SendFlowState {
   receiveCurrency: string
   sendAmount: number
   sendCurrency: string
-  sourceAccountId: string
+  sourceAccountId?: string
+  paymentMethod?: string
   note: string
+  transactionId?: string
 }
 
 function getTransferMethod(recipient: Beneficiary, currency: string): string {
@@ -50,12 +52,32 @@ export default function SendConfirmPage() {
   const router = useRouter()
   const [state, setState] = useState<SendFlowState | null>(null)
   const [showPinDialog, setShowPinDialog] = useState(false)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 2000)
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     const raw = sessionStorage.getItem(SEND_FLOW_STATE_KEY)
     if (raw) {
       try {
-        setState(JSON.parse(raw) as SendFlowState)
+        const parsed = JSON.parse(raw) as SendFlowState
+        if (parsed.paymentMethod && parsed.paymentMethod !== "balance") {
+          router.replace("/send")
+          return
+        }
+        if (!parsed.sourceAccountId) {
+          router.replace("/send")
+          return
+        }
+        setState(parsed)
       } catch {
         router.replace("/send")
       }
@@ -66,10 +88,10 @@ export default function SendConfirmPage() {
 
   const handlePinConfirm = () => {
     if (!state) return
-    const transferId = `TXN${Date.now()}`
+    const transactionId = state.transactionId ?? generateTransactionId()
     sessionStorage.removeItem(SEND_FLOW_STATE_KEY)
     router.push(
-      `/send/status?id=${transferId}&amount=${state.amount}&currency=${state.receiveCurrency}&recipient=${encodeURIComponent(state.recipient.name)}`
+      `/send/status?id=${transactionId}&amount=${state.amount}&currency=${state.receiveCurrency}&recipient=${encodeURIComponent(state.recipient.name)}`
     )
   }
 
@@ -85,7 +107,7 @@ export default function SendConfirmPage() {
     )
   }
 
-  const sourceAccount = mockAccounts.find((a) => a.id === state.sourceAccountId)
+  const sourceAccount = mockAccounts.find((a) => a.id === state.sourceAccountId!)
   const transferMethod = getTransferMethod(state.recipient, state.receiveCurrency)
   const processingTime = getProcessingTime(transferMethod)
   const fee = getFee(transferMethod)
@@ -102,6 +124,21 @@ export default function SendConfirmPage() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
+          <div className="flex justify-between items-center pb-4 border-b gap-2">
+            <span className="text-sm text-muted-foreground">Transaction ID</span>
+            <button
+              type="button"
+              onClick={() => handleCopy(state.transactionId ?? generateTransactionId(), "transactionId")}
+              className="flex items-center gap-2 font-mono text-sm font-medium hover:text-primary transition-colors"
+            >
+              {state.transactionId ?? generateTransactionId()}
+              {copiedKey === "transactionId" ? (
+                <Check className="h-4 w-4 text-primary shrink-0" />
+              ) : (
+                <Copy className="h-4 w-4 shrink-0" />
+              )}
+            </button>
+          </div>
           <div className="flex justify-between items-center pb-4 border-b">
             <span className="text-sm text-muted-foreground">Amount</span>
             <span className="text-xl font-semibold">
@@ -160,11 +197,9 @@ export default function SendConfirmPage() {
       )}
 
       <div className="flex gap-3">
-        <Button asChild variant="outline" size="lg" className="h-11">
-          <Link href="/send">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Link>
+        <Button variant="outline" size="lg" className="h-11" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
         </Button>
         <Button
           size="lg"

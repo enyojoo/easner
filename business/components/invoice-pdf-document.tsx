@@ -165,6 +165,21 @@ const styles = StyleSheet.create({
   totalBox: {
     alignItems: "flex-end",
   },
+  totalSubRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: 140,
+    marginBottom: 4,
+  },
+  totalSubLabel: {
+    fontSize: 9,
+    color: "#6b7280",
+  },
+  totalSubAmount: {
+    fontSize: 10,
+    textAlign: "right",
+  },
   totalLabel: {
     fontSize: 9,
     color: "#6b7280",
@@ -418,13 +433,31 @@ export function InvoicePDFDocument({
           ))}
         </View>
 
-        {/* Total */}
+        {/* Subtotal, Tax (when > 0), Total */}
         <View style={styles.totalRow}>
           <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>
-              {formatCurrency(invoice.total, invoice.currency)}
-            </Text>
+            {(invoice.tax ?? 0) > 0 && invoice.subtotal != null && (
+              <>
+                <View style={styles.totalSubRow}>
+                  <Text style={styles.totalSubLabel}>Subtotal</Text>
+                  <Text style={styles.totalSubAmount}>
+                    {formatCurrency(invoice.subtotal, invoice.currency)}
+                  </Text>
+                </View>
+                <View style={styles.totalSubRow}>
+                  <Text style={styles.totalSubLabel}>Tax</Text>
+                  <Text style={styles.totalSubAmount}>
+                    {formatCurrency(invoice.tax!, invoice.currency)}
+                  </Text>
+                </View>
+              </>
+            )}
+            <View style={styles.totalSubRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(invoice.total, invoice.currency)}
+              </Text>
+            </View>
           </View>
         </View>
 

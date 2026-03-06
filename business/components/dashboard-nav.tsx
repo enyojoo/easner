@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { CreditCard, LayoutDashboard, ArrowRightLeft, ChartNoAxesGantt, Wallet, UsersRound, ReceiptText, Contact, ChevronDown, ChevronRight, Send, Inbox, Building2 } from "lucide-react"
+import { CreditCard, LayoutDashboard, ArrowRightLeft, List, Wallet, UsersRound, ReceiptText, Contact, ChevronDown, ChevronRight, Send, Inbox, Building2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -71,7 +71,7 @@ export function DashboardNav() {
         { href: "/customers", label: "Customers", icon: Contact }
       ]
     },
-    { href: "/transactions", label: "Transactions", icon: ChartNoAxesGantt, type: "single" },
+    { href: "/transactions", label: "Transactions", icon: List, type: "single" },
     { href: "/accounts", label: "Accounts", icon: Wallet, type: "single" }
   ]
 

@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { mockCards, mockCardTransactions, type Transaction, type Card } from "@/lib/mock-data"
+import Link from "next/link"
+import { mockCards, type Transaction } from "@/lib/mock-data"
+import { getDateRange, getTransactionsFiltered } from "@/lib/transactions"
 import { Button } from "@/components/ui/button"
 import { Plus, Eye, Settings, Snowflake, ArrowUpRight, ArrowDownLeft, AlertCircle } from "lucide-react"
 import { CardCarousel } from "@/components/card-carousel"
@@ -9,6 +11,7 @@ import { CardSettingsDialog } from "@/components/card-settings-dialog"
 import { CardDetailsDialog } from "@/components/card-details-dialog"
 import { TransactionDetailsDialog } from "@/components/transaction-details-dialog"
 import { DateRangeFilter, type TimePeriod } from "@/components/date-range-filter"
+import { formatCurrency } from "@/lib/utils"
 
 export default function CardsPage() {
   const [selectedCard, setSelectedCard] = useState(mockCards[0])
@@ -37,44 +40,17 @@ export default function CardsPage() {
 
   const isCurrentCardFrozen = frozenCardIds.has(selectedCard.id)
 
-  const getDateRange = () => {
-    const now = new Date()
-    const startDate = new Date()
-
-    if (timePeriod === "all") {
-      return { start: new Date(0), end: now }
-    }
-
-    if (timePeriod === "custom" && customDateRange.from && customDateRange.to) {
-      return { start: customDateRange.from, end: customDateRange.to }
-    }
-
-    switch (timePeriod) {
-      case "7d":
-        startDate.setDate(now.getDate() - 7)
-        break
-      case "30d":
-        startDate.setDate(now.getDate() - 30)
-        break
-      case "90d":
-        startDate.setDate(now.getDate() - 90)
-        break
-      case "1y":
-        startDate.setFullYear(now.getFullYear() - 1)
-        break
-    }
-
-    return { start: startDate, end: now }
-  }
-
-  const { start, end } = getDateRange()
-
-  const filteredTransactions = useMemo(() => {
-    return mockCardTransactions.filter((txn) => {
-      const txnDate = new Date(txn.date)
-      return txnDate >= start && txnDate <= end
-    })
-  }, [start, end])
+  const { start, end } = getDateRange({ timePeriod, customDateRange })
+  const filteredTransactions = useMemo(
+    () =>
+      getTransactionsFiltered({
+        start,
+        end,
+        source: "card",
+        cardId: selectedCard.id,
+      }),
+    [start, end, selectedCard.id]
+  )
 
   return (
     <div className="flex flex-col h-[calc(100vh-9rem)] min-h-[500px] overflow-hidden">
@@ -121,12 +97,17 @@ export default function CardsPage() {
         <div className="flex flex-col min-h-0 flex-1 min-w-0">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-2xl font-semibold text-foreground">Transactions</h2>
-            <DateRangeFilter
-              timePeriod={timePeriod}
-              customDateRange={customDateRange}
-              onTimePeriodChange={setTimePeriod}
-              onCustomDateRangeChange={setCustomDateRange}
-            />
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/transactions?source=card">View all</Link>
+              </Button>
+              <DateRangeFilter
+                timePeriod={timePeriod}
+                customDateRange={customDateRange}
+                onTimePeriodChange={setTimePeriod}
+                onCustomDateRangeChange={setCustomDateRange}
+              />
+            </div>
           </div>
 
           <div className="rounded-lg border bg-card flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -168,7 +149,7 @@ export default function CardsPage() {
                       transaction.direction === "credit" ? "text-green-600" : "text-foreground"
                     }`}
                   >
-                    {transaction.direction === "credit" ? "+" : "-"}${Math.abs(transaction.amount).toFixed(2)}
+                    {transaction.direction === "credit" ? "+" : "-"}{formatCurrency(Math.abs(transaction.amount), "USD")}
                   </p>
                 </div>
               ))}

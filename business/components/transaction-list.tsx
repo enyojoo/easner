@@ -1,4 +1,5 @@
 import type { Transaction } from "@/lib/mock-data"
+import { formatCurrency } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react"
@@ -55,7 +56,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   <div
                     className={`text-lg font-semibold ${txn.direction === "credit" ? "text-green-600" : "text-red-600"}`}
                   >
-                    {txn.direction === "credit" ? "+" : "-"}${Math.abs(txn.amount).toFixed(2)}
+                    {txn.direction === "credit" ? "+" : "-"}{formatCurrency(Math.abs(txn.amount), "USD")}
                   </div>
                   <Badge
                     variant={

@@ -1,10 +1,14 @@
 "use client"
 
+import { useState } from "react"
+import Link from "next/link"
 import { type Transaction, mockCards } from "@/lib/mock-data"
+import { formatCurrency } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Copy, Download } from "lucide-react"
+import { Copy, Check, Download, FileText, ExternalLink } from "lucide-react"
+import { downloadTransactionReceiptPdf } from "@/lib/use-transaction-receipt-pdf"
 
 interface TransactionDetailsDialogProps {
   open: boolean
@@ -19,12 +23,30 @@ export function TransactionDetailsDialog({
   transaction,
   hideType = false,
 }: TransactionDetailsDialogProps) {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false)
+
   if (!transaction) return null
 
   const card = transaction.cardId ? mockCards.find((c) => c.id === transaction.cardId) : null
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 2000)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleDownloadReceipt = async () => {
+    setDownloadingReceipt(true)
+    try {
+      await downloadTransactionReceiptPdf(transaction, card?.last4)
+    } finally {
+      setDownloadingReceipt(false)
+    }
   }
 
   return (
@@ -42,7 +64,7 @@ export function TransactionDetailsDialog({
               <p
                 className={`text-2xl font-semibold ${transaction.direction === "credit" ? "text-green-600" : "text-foreground"}`}
               >
-                {transaction.direction === "credit" ? "+" : "-"}${Math.abs(transaction.amount).toFixed(2)}
+                {transaction.direction === "credit" ? "+" : "-"}{formatCurrency(Math.abs(transaction.amount), "USD")}
               </p>
             </div>
             <Badge
@@ -70,8 +92,17 @@ export function TransactionDetailsDialog({
               <span className="text-muted-foreground">Transaction ID</span>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs">{transaction.id}</span>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(transaction.id)}>
-                  <Copy className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => handleCopy(transaction.id, "transactionId")}
+                >
+                  {copiedKey === "transactionId" ? (
+                    <Check className="h-3 w-3 text-primary" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -85,9 +116,13 @@ export function TransactionDetailsDialog({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => copyToClipboard(transaction.reference!)}
+                    onClick={() => handleCopy(transaction.reference!, "reference")}
                   >
-                    <Copy className="h-3 w-3" />
+                    {copiedKey === "reference" ? (
+                      <Check className="h-3 w-3 text-primary" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -128,16 +163,37 @@ export function TransactionDetailsDialog({
             {transaction.fee !== undefined && transaction.fee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Fee</span>
-                <span className="font-medium">${transaction.fee.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(transaction.fee, "USD")}</span>
               </div>
             )}
           </div>
 
-          {/* Actions */}
-          <div className="pt-4 border-t">
-            <Button variant="outline" className="w-full gap-2 bg-transparent">
+          {/* Contextual Links */}
+          <div className="pt-4 border-t space-y-2">
+            {transaction.invoiceId && (
+              <Button variant="outline" className="w-full gap-2 bg-transparent" asChild>
+                <Link href={`/invoices/${transaction.invoiceId}`}>
+                  <FileText className="h-4 w-4" />
+                  View invoice
+                </Link>
+              </Button>
+            )}
+            {(transaction.transferId || transaction.id.startsWith("ETID")) && (
+              <Button variant="outline" className="w-full gap-2 bg-transparent" asChild>
+                <Link href={`/send/status?id=${transaction.transferId ?? transaction.id}`}>
+                  <ExternalLink className="h-4 w-4" />
+                  Track transfer
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              className="w-full gap-2 bg-transparent"
+              onClick={handleDownloadReceipt}
+              disabled={downloadingReceipt}
+            >
               <Download className="h-4 w-4" />
-              Download Receipt
+              {downloadingReceipt ? "Downloading..." : "Download Receipt"}
             </Button>
           </div>
         </div>

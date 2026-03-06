@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 export type TimePeriod = "all" | "7d" | "30d" | "90d" | "1y" | "custom"
 
@@ -14,6 +15,7 @@ interface DateRangeFilterProps {
   customDateRange: { from: Date | undefined; to: Date | undefined }
   onTimePeriodChange: (period: TimePeriod) => void
   onCustomDateRangeChange: (range: { from: Date | undefined; to: Date | undefined }) => void
+  triggerClassName?: string
 }
 
 export function DateRangeFilter({
@@ -21,6 +23,7 @@ export function DateRangeFilter({
   customDateRange,
   onTimePeriodChange,
   onCustomDateRangeChange,
+  triggerClassName,
 }: DateRangeFilterProps) {
   const [tempDateRange, setTempDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
@@ -80,7 +83,7 @@ export function DateRangeFilter({
   return (
     <Popover open={calendarOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-2 bg-transparent">
+        <Button variant="outline" size="sm" className={cn("h-8 gap-2 bg-transparent shrink-0", triggerClassName)}>
           <CalendarIcon className="h-3 w-3" />
           <span className="text-xs">{getPeriodLabel()}</span>
         </Button>

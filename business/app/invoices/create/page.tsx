@@ -45,6 +45,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { mockCustomers } from "@/lib/mock-data"
 import { formatCurrency } from "@/lib/utils"
 import { useInvoices } from "@/lib/invoices-context"
+import { generateInvoiceId } from "@/lib/invoice-id"
 import type { Invoice } from "@/lib/mock-data"
 
 interface LineItem {
@@ -161,10 +162,14 @@ export default function CreateInvoicePage() {
         unitPrice,
         amount,
       }))
-    const total = lineItems.reduce((sum, item) => sum + item.amount, 0)
+    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0)
+    const tax = 0 // For now, no tax
+    const total = subtotal + tax
     const base = {
       customerName: formData.customerName || "Unknown",
       customerEmail: formData.customerEmail || "",
+      subtotal,
+      tax,
       total,
       currency: formData.currency,
       status,
@@ -188,9 +193,10 @@ export default function CreateInvoicePage() {
         archived: invoiceToEdit.archived,
       }
     }
+    const id = generateInvoiceId()
     return {
-      id: `inv_${Date.now()}`,
-      invoiceNumber: `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+      id,
+      invoiceNumber: `EINV-${id.slice(4)}`,
       createdDate: now,
       finalizedDate: status === "draft" ? null : now,
       ...base,

@@ -1,19 +1,54 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2, Clock, ArrowLeft } from "lucide-react"
+import { useState } from "react"
+import { CheckCircle2, Clock, ArrowLeft, Copy, Check } from "lucide-react"
 import Link from "next/link"
 import { currencySymbols } from "@/lib/mock-data"
 import { Suspense } from "react"
 
+const METHOD_MESSAGES: Record<string, { title: string; description: string }> = {
+  "bank-transfer": {
+    title: "Awaiting Bank Transfer",
+    description: "Complete your bank transfer using the details provided. We'll notify you once the payment is received.",
+  },
+  "mobile-money": {
+    title: "Awaiting Mobile Money Payment",
+    description: "Complete the payment via M-Pesa or MTN MOMO. You'll receive a confirmation once it's processed.",
+  },
+  "open-banking": {
+    title: "Bank Connection in Progress",
+    description: "Your bank connection is being verified. The transfer will complete once authorized.",
+  },
+  stablecoin: {
+    title: "Awaiting Stablecoin Payment",
+    description: "Complete the payment by sending USDC or USDT to the address provided. Processing typically completes within seconds.",
+  },
+}
+
 function TransferStatusContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const transferId = searchParams.get("id")
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const handleCopy = async (text: string, key: string) => {
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 2000)
+    } catch {
+      // ignore
+    }
+  }
   const amount = searchParams.get("amount")
   const currency = searchParams.get("currency") as keyof typeof currencySymbols
   const recipient = searchParams.get("recipient")
+  const method = searchParams.get("method")
+  const methodInfo = method ? METHOD_MESSAGES[method] : null
 
   const formatName = (name: string) => {
     return name
@@ -27,7 +62,9 @@ function TransferStatusContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Transfer Status</h1>
-        <p className="text-sm text-muted-foreground mt-1">Your transfer has been initiated</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {methodInfo ? methodInfo.description : "Your transfer has been initiated"}
+        </p>
       </div>
 
       <Card className="bg-primary/5">
@@ -37,8 +74,12 @@ function TransferStatusContent() {
               <CheckCircle2 className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Transfer Initiated</h2>
-          <p className="text-sm text-muted-foreground mb-6">Your transfer is being processed</p>
+          <h2 className="text-xl font-semibold mb-2">
+            {methodInfo ? methodInfo.title : "Transfer Initiated"}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            {methodInfo?.description ?? "Your transfer is being processed"}
+          </p>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
             <Clock className="h-4 w-4" />
             Processing
@@ -48,9 +89,24 @@ function TransferStatusContent() {
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b">
-            <span className="text-sm text-muted-foreground">Transfer ID</span>
-            <span className="font-mono font-medium">{transferId}</span>
+          <div className="flex justify-between items-center pb-4 border-b gap-2">
+            <span className="text-sm text-muted-foreground">Transaction ID</span>
+            {transferId ? (
+              <button
+                type="button"
+                onClick={() => handleCopy(transferId, "transactionId")}
+                className="flex items-center gap-2 font-mono text-sm font-medium hover:text-primary transition-colors"
+              >
+                {transferId}
+                {copiedKey === "transactionId" ? (
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                ) : (
+                  <Copy className="h-4 w-4 shrink-0" />
+                )}
+              </button>
+            ) : (
+              <span className="font-mono text-sm font-medium">—</span>
+            )}
           </div>
           <div className="flex justify-between items-center pb-4 border-b">
             <span className="text-sm text-muted-foreground">Amount</span>
@@ -71,11 +127,9 @@ function TransferStatusContent() {
       </Card>
 
       <div className="flex gap-3">
-        <Button asChild variant="outline" size="lg" className="flex-1 h-11 bg-transparent">
-          <Link href="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
+        <Button variant="outline" size="lg" className="flex-1 h-11 bg-transparent" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
         </Button>
         <Button asChild size="lg" className="flex-1 h-11">
           <Link href="/transactions">View All Transactions</Link>

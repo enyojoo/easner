@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, MoreVertical, Edit, Trash2, User, ArrowRightLeft } from "lucide-react"
+import { Plus, Search, MoreVertical, Edit, Trash2, User, Send } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -141,7 +141,7 @@ export default function RecipientsPage() {
                         {currencyFlags[recipient.currency]} {recipient.currency}
                       </Badge>
                       <Button variant="outline" size="sm" className="gap-1">
-                        <ArrowRightLeft className="h-3 w-3" />
+                        <Send className="h-3 w-3" />
                         Send
                       </Button>
                       <DropdownMenu>

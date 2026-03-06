@@ -50,9 +50,13 @@ import { mockAccounts, mockStablecoinAccounts } from "@/lib/mock-data"
 import { businessInfo } from "@/lib/business-info"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { useInvoices } from "@/lib/invoices-context"
+import { generateInvoiceId } from "@/lib/invoice-id"
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
+import { MarkAsPaidDialog } from "@/components/mark-as-paid-dialog"
 import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
+import { downloadInvoiceReceiptPdf } from "@/lib/use-invoice-receipt-pdf"
+import { getPaymentRecordDisplay } from "@/lib/deposits"
 import type { Invoice } from "@/lib/mock-data"
 
 const STATUS_ACTIVITY_DESCRIPTIONS: Record<string, string> = {
@@ -151,6 +155,7 @@ export default function InvoiceDetailPage() {
   const [addNoteOpen, setAddNoteOpen] = useState(false)
   const [noteText, setNoteText] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [markAsPaidOpen, setMarkAsPaidOpen] = useState(false)
   const [customerViewUrl, setCustomerViewUrl] = useState("")
 
   const bankAccount = invoice ? mockAccounts.find((a) => a.currency === invoice.currency) : undefined
@@ -198,8 +203,8 @@ export default function InvoiceDetailPage() {
   }
 
   const handleDuplicate = () => {
-    const newId = `inv_${Date.now()}`
-    const newInvoiceNumber = `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`
+    const newId = generateInvoiceId()
+    const newInvoiceNumber = `EINV-${newId.slice(4)}`
     const now = new Date().toISOString().split("T")[0]
     const duplicate: Invoice = {
       ...invoice,
@@ -312,7 +317,7 @@ export default function InvoiceDetailPage() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem
-                    onClick={() => handleStatusChange("paid")}
+                    onClick={() => setMarkAsPaidOpen(true)}
                     disabled={invoice.status === "paid"}
                   >
                     Mark as Paid
@@ -409,7 +414,7 @@ export default function InvoiceDetailPage() {
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
-              Download PDF
+              Download Invoice
             </Button>
           )}
           <DropdownMenu>
@@ -550,25 +555,137 @@ export default function InvoiceDetailPage() {
               )}
 
               <div className="flex justify-end">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="text-xl sm:text-2xl font-bold">
-                    {formatCurrency(invoice.total, invoice.currency)}
-                  </p>
+                <div className="text-right space-y-1">
+                  {(invoice.tax ?? 0) > 0 && invoice.subtotal != null && (
+                    <>
+                      <div className="flex justify-between gap-8 text-sm">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
+                      </div>
+                      <div className="flex justify-between gap-8 text-sm">
+                        <span className="text-muted-foreground">Tax</span>
+                        <span>{formatCurrency(invoice.tax!, invoice.currency)}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-between gap-8 items-baseline pt-1">
+                    <span className="text-sm text-muted-foreground">Total</span>
+                    <span className="text-xl sm:text-2xl font-bold">
+                      {formatCurrency(invoice.total, invoice.currency)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Invoice payment options */}
-          {!invoice.archived && invoice.status !== "draft" && bankAccount && (
-            <InvoicePaymentOptions
-              invoice={invoice}
-              bankAccount={bankAccount}
-              stablecoinAccount={stablecoinAccount}
-              audience="business"
-            />
-          )}
+          {!invoice.archived &&
+            invoice.status !== "draft" &&
+            invoice.status !== "paid" &&
+            bankAccount && (
+              <InvoicePaymentOptions
+                invoice={invoice}
+                bankAccount={bankAccount}
+                stablecoinAccount={stablecoinAccount}
+                audience="business"
+              />
+            )}
+
+          {/* Invoice receipt - when paid */}
+          {!invoice.archived && invoice.status === "paid" && (() => {
+            const paymentRecord = getPaymentRecordDisplay(invoice)
+            return (
+              <div className="rounded-lg border bg-muted/30 p-4 sm:p-6 space-y-4">
+                <h3 className="text-sm font-semibold">Invoice Receipt</h3>
+                {paymentRecord && (
+                  <div className="rounded-lg border bg-background p-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Payment record
+                    </p>
+                    {paymentRecord.method === "easner" ? (
+                      <div className="space-y-2 text-sm">
+                        {paymentRecord.paymentMethod && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Method</span>
+                            <span>{paymentRecord.paymentMethod}</span>
+                          </div>
+                        )}
+                        {paymentRecord.amount != null && paymentRecord.currency && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount</span>
+                            <span>{formatCurrency(paymentRecord.amount, paymentRecord.currency)}</span>
+                          </div>
+                        )}
+                        {paymentRecord.date && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Date</span>
+                            <span>{formatDate(paymentRecord.date)}</span>
+                          </div>
+                        )}
+                        {paymentRecord.reference && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Reference</span>
+                            <span>{paymentRecord.reference}</span>
+                          </div>
+                        )}
+                        {paymentRecord.transactionId && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Transaction ID</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs">{paymentRecord.transactionId}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => copyToClipboard(paymentRecord.transactionId!, "payment-txn-id")}
+                              >
+                                {copiedField === "payment-txn-id" ? (
+                                  <Check className="h-3 w-3 text-green-600" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm">
+                        <p className="text-muted-foreground">Payment received by cash or other method</p>
+                        {paymentRecord.cashNote && (
+                          <p className="mt-2 p-2 rounded bg-muted/50 text-sm">{paymentRecord.cashNote}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (!invoice) return
+                    setIsDownloading(true)
+                    try {
+                      await downloadInvoiceReceiptPdf(invoice)
+                    } catch (err) {
+                      console.error("Failed to download receipt:", err)
+                    } finally {
+                      setIsDownloading(false)
+                    }
+                  }}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Download Receipt
+                </Button>
+              </div>
+            )
+          })()}
 
         </div>
 
@@ -689,6 +806,27 @@ export default function InvoiceDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Mark as Paid dialog */}
+      {invoice && (
+        <MarkAsPaidDialog
+          invoice={invoice}
+          open={markAsPaidOpen}
+          onOpenChange={setMarkAsPaidOpen}
+          onSuccess={(paymentInfo) => {
+            const entry = {
+              status: "paid" as const,
+              timestamp: paymentInfo.paidAt,
+            }
+            updateInvoice(invoice.id, {
+              status: "paid",
+              paymentInfo,
+              statusHistory: [...(invoice.statusHistory ?? []), entry],
+            })
+            toast.success("Invoice marked as paid")
+          }}
+        />
+      )}
 
       {/* Add note dialog */}
       <Dialog open={addNoteOpen} onOpenChange={setAddNoteOpen}>

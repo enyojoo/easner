@@ -38,6 +38,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { useInvoices } from "@/lib/invoices-context"
+import { generateInvoiceId } from "@/lib/invoice-id"
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
 import { mockAccounts, mockStablecoinAccounts } from "@/lib/mock-data"
@@ -106,8 +107,8 @@ export default function InvoicesPage() {
 
   const handleDuplicate = (invoice: Invoice, e: React.MouseEvent) => {
     e.stopPropagation()
-    const newId = `inv_${Date.now()}`
-    const newInvoiceNumber = `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`
+    const newId = generateInvoiceId()
+    const newInvoiceNumber = `EINV-${newId.slice(4)}`
     const now = new Date().toISOString().split("T")[0]
     const duplicate: Invoice = {
       ...invoice,
