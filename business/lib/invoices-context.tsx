@@ -8,12 +8,13 @@ import {
   type ReactNode,
 } from "react"
 import { mockInvoices, type Invoice } from "@/lib/mock-data"
-import { addInvoiceToStore } from "@/lib/invoice-store"
+import { addInvoiceToStore, updateInvoiceInStore, removeInvoiceFromStore } from "@/lib/invoice-store"
 
 interface InvoicesContextValue {
   invoices: Invoice[]
   addInvoice: (invoice: Invoice) => void
   updateInvoice: (id: string, updates: Partial<Invoice>) => void
+  deleteInvoice: (id: string) => void
 }
 
 const InvoicesContext = createContext<InvoicesContextValue | null>(null)
@@ -27,13 +28,19 @@ export function InvoicesProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateInvoice = useCallback((id: string, updates: Partial<Invoice>) => {
+    updateInvoiceInStore(id, updates)
     setInvoices((prev) =>
       prev.map((inv) => (inv.id === id ? { ...inv, ...updates } : inv))
     )
   }, [])
 
+  const deleteInvoice = useCallback((id: string) => {
+    removeInvoiceFromStore(id)
+    setInvoices((prev) => prev.filter((inv) => inv.id !== id))
+  }, [])
+
   return (
-    <InvoicesContext.Provider value={{ invoices, addInvoice, updateInvoice }}>
+    <InvoicesContext.Provider value={{ invoices, addInvoice, updateInvoice, deleteInvoice }}>
       {children}
     </InvoicesContext.Provider>
   )

@@ -19,6 +19,7 @@ import { getPaymentInstructions } from "@/lib/payment-instructions"
 const statusLabels: Record<string, string> = {
   draft: "Draft",
   open: "Unpaid",
+  sent: "Sent",
   past_due: "Past due",
   paid: "Paid",
   void: "Void",
@@ -290,7 +291,7 @@ export function InvoicePDFDocument({
   qrDataUrl,
 }: InvoicePDFDocumentProps) {
   const showPayCard =
-    (invoice.status === "open" || invoice.status === "past_due") && bankAccount
+    (invoice.status === "open" || invoice.status === "sent" || invoice.status === "past_due") && bankAccount
 
   const formatDatePdf = (dateString: string) =>
     formatDate(dateString, {
@@ -335,8 +336,34 @@ export function InvoicePDFDocument({
         <View style={styles.grid}>
           <View style={styles.gridCol}>
             <Text style={styles.sectionTitle}>Bill to</Text>
-            <Text style={styles.sectionText}>{invoice.customerName}</Text>
-            <Text style={styles.sectionTextMuted}>{invoice.customerEmail}</Text>
+            {invoice.billToType === "company" && invoice.customerCompany ? (
+              <>
+                <Text style={styles.sectionText}>{invoice.customerCompany}</Text>
+                <Text style={styles.sectionTextMuted}>{invoice.customerEmail}</Text>
+                {invoice.customerAddress ? (
+                  <Text style={styles.sectionTextMuted}>{invoice.customerAddress}</Text>
+                ) : null}
+                {invoice.customerPhone ? (
+                  <Text style={styles.sectionTextMuted}>{invoice.customerPhone}</Text>
+                ) : null}
+                {invoice.customerName ? (
+                  <Text style={[styles.sectionTextMuted, { marginTop: 4 }]}>
+                    Attn: {invoice.customerName}
+                  </Text>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <Text style={styles.sectionText}>{invoice.customerName}</Text>
+                <Text style={styles.sectionTextMuted}>{invoice.customerEmail}</Text>
+                {invoice.customerAddress ? (
+                  <Text style={styles.sectionTextMuted}>{invoice.customerAddress}</Text>
+                ) : null}
+                {invoice.customerPhone ? (
+                  <Text style={styles.sectionTextMuted}>{invoice.customerPhone}</Text>
+                ) : null}
+              </>
+            )}
           </View>
           <View style={styles.gridColEmpty} />
           <View style={styles.gridColRight}>

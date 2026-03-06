@@ -262,12 +262,24 @@ export interface Invoice {
   customerEmail: string
   total: number
   currency: string
-  status: "draft" | "open" | "past_due" | "paid" | "void" | "uncollectible" | "failed"
+  status: "draft" | "open" | "sent" | "past_due" | "paid" | "void" | "uncollectible" | "failed"
   dueDate: string
   createdDate: string
   finalizedDate: string | null
   frequency: string | null
   lineItems: InvoiceLineItem[]
+  /** "individual" = bill to person; "company" = bill to company with Attn */
+  billToType?: "individual" | "company"
+  customerAddress?: string
+  customerPhone?: string
+  /** Company name when billToType === "company" */
+  customerCompany?: string
+  /** Notes added by business owner */
+  notes?: { id: string; text: string; createdAt: string }[]
+  /** Status change history - each change creates a new activity entry */
+  statusHistory?: { status: string; timestamp: string }[]
+  /** When true, invoice is hidden from main list (archived) */
+  archived?: boolean
 }
 
 export interface Customer {

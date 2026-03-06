@@ -12,7 +12,6 @@ import {
   Trash2, 
   Save, 
   Send, 
-  Eye,
   Calendar as CalendarIcon,
   DollarSign,
   User,
@@ -42,10 +41,9 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { mockCustomers } from "@/lib/mock-data"
 import { formatCurrency } from "@/lib/utils"
-import { businessInfo } from "@/lib/business-info"
 import { useInvoices } from "@/lib/invoices-context"
 import type { Invoice } from "@/lib/mock-data"
 
@@ -59,9 +57,12 @@ interface LineItem {
 
 interface InvoiceForm {
   customerId: string
+  billToType: "individual" | "company"
   customerName: string
   customerEmail: string
   customerCompany: string
+  customerAddress: string
+  customerPhone: string
   currency: string
   dueDate: string
   memo: string
@@ -70,19 +71,26 @@ interface InvoiceForm {
 
 export default function CreateInvoicePage() {
   const router = useRouter()
-  const { addInvoice } = useInvoices()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get("edit")
+  const { invoices, addInvoice, updateInvoice } = useInvoices()
+  const invoiceToEdit = editId ? invoices.find((i) => i.id === editId) : null
+  const isEditMode = !!invoiceToEdit
+
   const [formData, setFormData] = useState<InvoiceForm>({
     customerId: "",
+    billToType: "individual",
     customerName: "",
     customerEmail: "",
     customerCompany: "",
+    customerAddress: "",
+    customerPhone: "",
     currency: "USD",
     dueDate: "",
     memo: "",
     lineItems: [{ id: "1", description: "", quantity: 1, unitPrice: 0, amount: 0 }]
   })
 
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
@@ -134,14 +142,14 @@ export default function CreateInvoicePage() {
       customerId: customer.id,
       customerName: customer.name,
       customerEmail: customer.email,
-      customerCompany: customer.company
+      customerCompany: customer.company || "",
+      customerAddress: customer.address || "",
+      customerPhone: customer.phone || "",
     }))
     setIsCustomerDialogOpen(false)
   }
 
   const createInvoiceFromForm = (status: "draft" | "open"): Invoice => {
-    const id = `inv_${Date.now()}`
-    const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`
     const now = new Date().toISOString().split("T")[0]
     const lineItems = formData.lineItems
       .filter((item) => item.description.trim() && item.amount > 0)
@@ -152,42 +160,97 @@ export default function CreateInvoicePage() {
         amount,
       }))
     const total = lineItems.reduce((sum, item) => sum + item.amount, 0)
-    return {
-      id,
-      invoiceNumber,
+    const base = {
       customerName: formData.customerName || "Unknown",
       customerEmail: formData.customerEmail || "",
       total,
       currency: formData.currency,
       status,
       dueDate: formData.dueDate || now,
-      createdDate: now,
-      finalizedDate: status === "draft" ? null : now,
       frequency: null,
       lineItems,
+      billToType: formData.billToType,
+      customerAddress: formData.customerAddress || undefined,
+      customerPhone: formData.customerPhone || undefined,
+      customerCompany: formData.billToType === "company" ? (formData.customerCompany || undefined) : undefined,
+    }
+    if (isEditMode && invoiceToEdit) {
+      return {
+        ...invoiceToEdit,
+        ...base,
+        createdDate: invoiceToEdit.createdDate,
+        finalizedDate: status === "draft" ? null : (invoiceToEdit.finalizedDate || now),
+        notes: invoiceToEdit.notes,
+        statusHistory: invoiceToEdit.statusHistory,
+        archived: invoiceToEdit.archived,
+      }
+    }
+    return {
+      id: `inv_${Date.now()}`,
+      invoiceNumber: `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`,
+      createdDate: now,
+      finalizedDate: status === "draft" ? null : now,
+      ...base,
     }
   }
 
   const handleSaveDraft = () => {
     const invoice = createInvoiceFromForm("draft")
-    addInvoice(invoice)
-    router.push(`/invoices/${invoice.id}`)
+    if (isEditMode) {
+      updateInvoice(invoice.id, invoice)
+      router.push(`/invoices/${invoice.id}`)
+    } else {
+      addInvoice(invoice)
+      router.push(`/invoices/${invoice.id}`)
+    }
   }
 
   const handleSendInvoice = () => {
     const invoice = createInvoiceFromForm("open")
-    addInvoice(invoice)
-    router.push(`/invoices/${invoice.id}`)
+    if (isEditMode) {
+      updateInvoice(invoice.id, invoice)
+      router.push(`/invoices/${invoice.id}`)
+    } else {
+      addInvoice(invoice)
+      router.push(`/invoices/${invoice.id}`)
+    }
   }
 
-  // Set default due date (30 days from now)
+  // Load invoice when editing
   useEffect(() => {
-    const futureDate = new Date()
-    futureDate.setDate(futureDate.getDate() + 30)
-    setFormData(prev => ({
-      ...prev,
-      dueDate: futureDate.toISOString().split('T')[0]
-    }))
+    if (invoiceToEdit) {
+      setFormData({
+        customerId: "",
+        billToType: (invoiceToEdit.billToType as "individual" | "company") || "individual",
+        customerName: invoiceToEdit.customerName,
+        customerEmail: invoiceToEdit.customerEmail,
+        customerCompany: invoiceToEdit.customerCompany || "",
+        customerAddress: invoiceToEdit.customerAddress || "",
+        customerPhone: invoiceToEdit.customerPhone || "",
+        currency: invoiceToEdit.currency,
+        dueDate: invoiceToEdit.dueDate,
+        memo: "",
+        lineItems: invoiceToEdit.lineItems.map((item, i) => ({
+          id: (i + 1).toString(),
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        })),
+      })
+    }
+  }, [editId])
+
+  // Set default due date (30 days from now) - only when creating
+  useEffect(() => {
+    if (!isEditMode) {
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 30)
+      setFormData(prev => ({
+        ...prev,
+        dueDate: futureDate.toISOString().split('T')[0]
+      }))
+    }
   }, [])
 
   return (
@@ -200,8 +263,12 @@ export default function CreateInvoicePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Create invoice</h1>
-          <p className="text-muted-foreground">Create a new invoice for your customer</p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {isEditMode ? "Edit invoice" : "Create invoice"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditMode ? "Update your invoice details" : "Create a new invoice for your customer"}
+          </p>
         </div>
       </div>
 
@@ -217,30 +284,112 @@ export default function CreateInvoicePage() {
                 Customer
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {formData.customerId ? (
-                <div className="space-y-2">
+                <>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{formData.customerName}</p>
                       <p className="text-sm text-muted-foreground">{formData.customerEmail}</p>
-                      <p className="text-sm text-muted-foreground">{formData.customerCompany}</p>
+                      {formData.customerCompany && (
+                        <p className="text-sm text-muted-foreground">{formData.customerCompany}</p>
+                      )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setIsCustomerDialogOpen(true)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setIsCustomerDialogOpen(true)}>
                       Change
                     </Button>
                   </div>
-                </div>
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="flex gap-4">
+                      <Label className="text-sm font-medium">Bill to</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={formData.billToType === "individual" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setFormData((p) => ({ ...p, billToType: "individual" }))}
+                        >
+                          Individual
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={formData.billToType === "company" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setFormData((p) => ({ ...p, billToType: "company" }))}
+                        >
+                          Company
+                        </Button>
+                      </div>
+                    </div>
+                    {formData.billToType === "individual" ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Name</Label>
+                          <Input
+                            value={formData.customerName}
+                            onChange={(e) => setFormData((p) => ({ ...p, customerName: e.target.value }))}
+                            placeholder="Customer name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            value={formData.customerEmail}
+                            onChange={(e) => setFormData((p) => ({ ...p, customerEmail: e.target.value }))}
+                            placeholder="customer@example.com"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Company name</Label>
+                          <Input
+                            value={formData.customerCompany}
+                            onChange={(e) => setFormData((p) => ({ ...p, customerCompany: e.target.value }))}
+                            placeholder="Company name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Attn (contact person)</Label>
+                          <Input
+                            value={formData.customerName}
+                            onChange={(e) => setFormData((p) => ({ ...p, customerName: e.target.value }))}
+                            placeholder="Contact person name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            value={formData.customerEmail}
+                            onChange={(e) => setFormData((p) => ({ ...p, customerEmail: e.target.value }))}
+                            placeholder="billing@company.com"
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="space-y-2">
+                      <Label>Address (optional)</Label>
+                      <Input
+                        value={formData.customerAddress}
+                        onChange={(e) => setFormData((p) => ({ ...p, customerAddress: e.target.value }))}
+                        placeholder="Street, city, state, zip"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone (optional)</Label>
+                      <Input
+                        value={formData.customerPhone}
+                        onChange={(e) => setFormData((p) => ({ ...p, customerPhone: e.target.value }))}
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                  </div>
+                </>
               ) : (
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setIsCustomerDialogOpen(true)}
-                >
+                <Button variant="outline" className="w-full" onClick={() => setIsCustomerDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Select Customer
                 </Button>
@@ -412,15 +561,11 @@ export default function CreateInvoicePage() {
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full" onClick={handleSaveDraft}>
                 <Save className="h-4 w-4 mr-2" />
-                Save Draft
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => setIsPreviewOpen(true)}>
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
+                Save as Draft
               </Button>
               <Button className="w-full" onClick={handleSendInvoice}>
                 <Send className="h-4 w-4 mr-2" />
-                Send Invoice
+                {isEditMode ? "Save Changes" : "Create Invoice"}
               </Button>
             </CardContent>
           </Card>
@@ -450,81 +595,6 @@ export default function CreateInvoicePage() {
                 </Button>
               </div>
             ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Invoice Preview Dialog */}
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Invoice Preview</DialogTitle>
-          </DialogHeader>
-          <div className="bg-white p-8 rounded-lg border">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <h2 className="text-2xl font-bold">Invoice</h2>
-                <p className="text-sm text-muted-foreground">Invoice number: DRAFT-{Date.now().toString().slice(-6)}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">{businessInfo.name}</p>
-                <p className="text-sm text-muted-foreground">{businessInfo.address}</p>
-                <p className="text-sm text-muted-foreground">{businessInfo.city}, {businessInfo.state} {businessInfo.zipCode}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className="font-semibold mb-2">Bill to:</h3>
-                <p className="font-medium">{formData.customerName || "Select a customer"}</p>
-                <p className="text-sm text-muted-foreground">{formData.customerEmail}</p>
-                <p className="text-sm text-muted-foreground">{formData.customerCompany}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Invoice details:</h3>
-                <p className="text-sm"><span className="text-muted-foreground">Due date:</span> {formData.dueDate ? new Date(formData.dueDate).toLocaleDateString() : "Not set"}</p>
-              </div>
-            </div>
-
-            <div className="border rounded-lg overflow-hidden mb-6">
-              <table className="w-full">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Description</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Qty</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Unit Price</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.lineItems.map((item) => (
-                    <tr key={item.id} className="border-t">
-                      <td className="p-3 text-sm">{item.description || "Item description"}</td>
-                      <td className="p-3 text-right text-sm">{item.quantity}</td>
-                      <td className="p-3 text-right text-sm">{formatCurrency(item.unitPrice, formData.currency)}</td>
-                      <td className="p-3 text-right text-sm font-medium">{formatCurrency(item.amount, formData.currency)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-end">
-              <div className="w-64 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">{formatCurrency(subtotal, formData.currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax:</span>
-                  <span className="font-medium">{formatCurrency(tax, formData.currency)}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-base border-t pt-2">
-                  <span>Total:</span>
-                  <span>{formatCurrency(total, formData.currency)}</span>
-                </div>
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

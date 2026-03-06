@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { Toaster } from "sonner"
 import { Analytics } from "@vercel/analytics/next"
 import { ClientAuthProvider } from "@/components/client-auth-provider"
 import { ChunkLoadErrorHandler } from "@/components/chunk-load-error-handler"
@@ -29,6 +30,7 @@ export default function RootLayout({
         <ChunkLoadErrorHandler />
         <Suspense fallback={<LoadingSpinner />}>
           <ClientAuthProvider>{children}</ClientAuthProvider>
+          <Toaster />
           <Analytics />
         </Suspense>
       </body>

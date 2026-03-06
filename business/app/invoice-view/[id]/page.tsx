@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
 import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
 import { BusinessLogo } from "@/components/brand/business-logo"
+import { BRAND } from "@/components/brand/brand-constants"
 
 export default function InvoiceViewPage() {
   const params = useParams()
@@ -20,6 +21,15 @@ export default function InvoiceViewPage() {
   const [paymentTab, setPaymentTab] = useState<"bank" | "stablecoin">("bank")
   const [isDownloading, setIsDownloading] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+
+  // Record view when page loads (API checks IP to distinguish customer vs business owner)
+  useEffect(() => {
+    if (invoice?.id) {
+      fetch(`/api/invoices/${invoice.id}/record-view`, { method: "POST" }).catch(
+        () => {}
+      )
+    }
+  }, [invoice?.id])
 
   const handleCopyLink = async () => {
     if (typeof window === "undefined" || !invoice) return
@@ -53,7 +63,7 @@ export default function InvoiceViewPage() {
     (s) => s.currency === invoice.currency
   )
   const showPayCard =
-    (invoice.status === "open" || invoice.status === "past_due") && bankAccount
+    (invoice.status === "open" || invoice.status === "sent" || invoice.status === "past_due") && bankAccount
 
   const handleDownloadPdf = async () => {
     if (!invoice) return
@@ -68,42 +78,40 @@ export default function InvoiceViewPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl space-y-4">
-      {/* Header: logo first, buttons below on mobile; side-by-side on desktop */}
-      <div className="flex flex-col items-center sm:flex-row sm:justify-between sm:items-center gap-4 print:hidden">
-        <BusinessLogo size="lg" href="/" />
-        <div className="flex flex-row gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyLink}
-            className="flex-1 sm:flex-initial"
-          >
-            {copiedLink ? (
-              <Check className="h-4 w-4 mr-2 text-green-600" />
-            ) : (
-              <Copy className="h-4 w-4 mr-2" />
-            )}
-            {copiedLink ? "Copied" : "Copy Link"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadPdf}
-            disabled={isDownloading}
-            className="flex-1 sm:flex-initial"
-          >
-            {isDownloading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            Download PDF
-          </Button>
-        </div>
-      </div>
+    <div className="w-full max-w-2xl">
       <Card className="print:shadow-none print:border">
-        <CardContent className="p-4 sm:p-6 lg:p-8">
+        <CardContent className="p-4 pt-1 pb-0.5 sm:p-6 sm:pt-2 sm:pb-1 lg:p-8 lg:pt-3 lg:pb-2">
+          {/* Copy & Download - top left & top right, inside frame */}
+          <div className="flex justify-between items-center mb-6 print:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyLink}
+              className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+            >
+              {copiedLink ? (
+                <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 text-green-600" />
+              ) : (
+                <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+              )}
+              {copiedLink ? "Copied" : "Copy Link"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+              className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
+            >
+              {isDownloading ? (
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+              )}
+              Download PDF
+            </Button>
+          </div>
+
           {/* Business info & Invoice header - two columns on all screens */}
           <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div className="min-w-0">
@@ -127,8 +135,32 @@ export default function InvoiceViewPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-6 sm:mb-8">
             <div className="text-left">
               <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Bill to</h3>
-              <p className="font-medium">{invoice.customerName}</p>
-              <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
+              {invoice.billToType === "company" && invoice.customerCompany ? (
+                <>
+                  <p className="font-medium">{invoice.customerCompany}</p>
+                  <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
+                  {invoice.customerAddress && (
+                    <p className="text-sm text-muted-foreground">{invoice.customerAddress}</p>
+                  )}
+                  {invoice.customerPhone && (
+                    <p className="text-sm text-muted-foreground">{invoice.customerPhone}</p>
+                  )}
+                  {invoice.customerName && (
+                    <p className="text-sm text-muted-foreground mt-1">Attn: {invoice.customerName}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="font-medium">{invoice.customerName}</p>
+                  <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
+                  {invoice.customerAddress && (
+                    <p className="text-sm text-muted-foreground">{invoice.customerAddress}</p>
+                  )}
+                  {invoice.customerPhone && (
+                    <p className="text-sm text-muted-foreground">{invoice.customerPhone}</p>
+                  )}
+                </>
+              )}
             </div>
             <div />
             <div className="text-left">
@@ -218,6 +250,23 @@ export default function InvoiceViewPage() {
               onValueChange={setPaymentTab}
             />
           )}
+
+          {/* Powered by - bottom of frame, matches PDF */}
+          <div className="flex items-center justify-center gap-1.5 mt-8 pt-6 pb-0 border-t text-[10px] sm:text-xs text-muted-foreground">
+            <span>Powered by</span>
+            <a
+              href="https://www.easner.com/business"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center"
+            >
+              <img
+                src={BRAND.logoBusiness}
+                alt="Easner Business"
+                className="h-5 sm:h-6 w-auto object-contain"
+              />
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>

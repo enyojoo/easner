@@ -6,6 +6,7 @@ const statusConfig: Record<
 > = {
   draft: { label: "Draft", variant: "secondary" },
   open: { label: "Unpaid", variant: "default" },
+  sent: { label: "Sent", variant: "secondary" },
   past_due: { label: "Past due", variant: "destructive" },
   paid: { label: "Paid", variant: "default" },
   void: { label: "Void", variant: "secondary" },

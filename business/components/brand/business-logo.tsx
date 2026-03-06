@@ -25,8 +25,16 @@ export function BusinessLogo({ size = "md", href = "/", className = "" }: Busine
   )
 
   if (href) {
+    const isExternal = href.startsWith("http")
     return (
-      <Link href={href} className="inline-flex items-center">
+      <Link
+        href={href}
+        className="inline-flex items-center"
+        {...(isExternal && {
+          target: "_blank",
+          rel: "noopener noreferrer",
+        })}
+      >
         {img}
       </Link>
     )

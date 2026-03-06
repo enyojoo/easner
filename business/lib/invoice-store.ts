@@ -18,6 +18,14 @@ export function addInvoiceToStore(invoice: Invoice) {
   store = [invoice, ...store]
 }
 
+export function updateInvoiceInStore(id: string, updates: Partial<Invoice>) {
+  store = store.map((inv) => (inv.id === id ? { ...inv, ...updates } : inv))
+}
+
+export function removeInvoiceFromStore(id: string) {
+  store = store.filter((inv) => inv.id !== id)
+}
+
 export function syncInvoicesFromMock() {
   store = [...mockInvoices]
 }

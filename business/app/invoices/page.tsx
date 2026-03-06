@@ -29,20 +29,28 @@ export default function InvoicesPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
 
+  const activeInvoices = invoices.filter((i) => !i.archived)
+  const archivedInvoices = invoices.filter((i) => i.archived)
+
   const statusTabs = [
-    { id: "all", label: "All invoices", count: invoices.length },
-    { id: "draft", label: "Draft", count: invoices.filter((i) => i.status === "draft").length },
-    { id: "open", label: "Unpaid", count: invoices.filter((i) => i.status === "open").length },
-    { id: "past_due", label: "Past due", count: invoices.filter((i) => i.status === "past_due").length },
-    { id: "paid", label: "Paid", count: invoices.filter((i) => i.status === "paid").length },
+    { id: "all", label: "All invoices", count: activeInvoices.length },
+    { id: "draft", label: "Draft", count: activeInvoices.filter((i) => i.status === "draft").length },
+    { id: "open", label: "Unpaid", count: activeInvoices.filter((i) => i.status === "open" || i.status === "sent").length },
+    { id: "past_due", label: "Past due", count: activeInvoices.filter((i) => i.status === "past_due").length },
+    { id: "paid", label: "Paid", count: activeInvoices.filter((i) => i.status === "paid").length },
+    { id: "archived", label: "Archived", count: archivedInvoices.length },
   ]
 
   const filteredInvoices = useMemo(() => {
-    let filtered = invoices
+    let filtered = activeTab === "archived" ? archivedInvoices : activeInvoices
 
-    // Filter by status tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter(invoice => invoice.status === activeTab)
+    // Filter by status tab (when not viewing archived)
+    if (activeTab !== "all" && activeTab !== "archived") {
+      if (activeTab === "open") {
+        filtered = filtered.filter(invoice => invoice.status === "open" || invoice.status === "sent")
+      } else {
+        filtered = filtered.filter(invoice => invoice.status === activeTab)
+      }
     }
 
     // Filter by search term
@@ -55,7 +63,7 @@ export default function InvoicesPage() {
     }
 
     return filtered
-  }, [invoices, activeTab, searchTerm])
+  }, [invoices, activeTab, searchTerm, activeInvoices, archivedInvoices])
 
   return (
     <div className="flex flex-col gap-6">
