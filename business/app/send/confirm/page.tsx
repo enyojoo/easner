@@ -143,8 +143,7 @@ export default function SendConfirmPage() {
             <span className="text-sm text-muted-foreground">Amount</span>
             <span className="text-xl font-semibold">
               {currencySymbols[state.receiveCurrency] ?? state.receiveCurrency}
-              {state.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
-              {state.receiveCurrency}
+              {state.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
           {hasFx && (
@@ -152,8 +151,7 @@ export default function SendConfirmPage() {
               <span className="text-sm text-muted-foreground">You send</span>
               <span className="font-medium">
                 {currencySymbols[state.sendCurrency] ?? state.sendCurrency}
-                {state.sendAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
-                {state.sendCurrency}
+                {state.sendAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </span>
             </div>
           )}

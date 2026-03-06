@@ -13,6 +13,7 @@ import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
 import { InvoicePaymentOptions } from "@/components/invoice-payment-options"
 import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
 import { downloadInvoiceReceiptPdf } from "@/lib/use-invoice-receipt-pdf"
+import { getPaymentRecordDisplay } from "@/lib/deposits"
 import { BusinessLogo } from "@/components/brand/business-logo"
 import { BRAND } from "@/components/brand/brand-constants"
 
@@ -22,6 +23,7 @@ export default function InvoiceViewPage() {
   const [paymentTab, setPaymentTab] = useState<"bank" | "stablecoin">("bank")
   const [isDownloading, setIsDownloading] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   // Record view when page loads (API checks IP to distinguish customer vs business owner)
   useEffect(() => {
@@ -41,6 +43,29 @@ export default function InvoiceViewPage() {
       setTimeout(() => setCopiedLink(false), 2000)
     } catch (err) {
       console.error("Failed to copy link:", err)
+    }
+  }
+
+  const copyToClipboard = async (text: string, field?: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+      }
+      if (field) {
+        setCopiedField(field)
+        setTimeout(() => setCopiedField(null), 2000)
+      }
+    } catch (err) {
+      console.error("Failed to copy:", err)
     }
   }
 
@@ -277,37 +302,99 @@ export default function InvoiceViewPage() {
           )}
 
           {/* Invoice receipt - when paid */}
-          {showReceiptCard && (
-            <div className="rounded-lg border bg-muted/30 p-4 sm:p-6">
-              <h3 className="text-sm font-semibold mb-2">Invoice Receipt</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                This invoice has been paid.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  if (!invoice) return
-                  setIsDownloading(true)
-                  try {
-                    await downloadInvoiceReceiptPdf(invoice)
-                  } catch (err) {
-                    console.error("Failed to download receipt:", err)
-                  } finally {
-                    setIsDownloading(false)
-                  }
-                }}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+          {showReceiptCard && (() => {
+            const paymentRecord = getPaymentRecordDisplay(invoice)
+            return (
+              <div className="rounded-lg border bg-muted/30 p-4 sm:p-6 space-y-4">
+                <h3 className="text-sm font-semibold">Invoice Receipt</h3>
+                {paymentRecord && (
+                  <div className="rounded-lg border bg-background p-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Payment record
+                    </p>
+                    {paymentRecord.method === "easner" ? (
+                      <div className="space-y-2 text-sm">
+                        {paymentRecord.paymentMethod && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Method</span>
+                            <span>{paymentRecord.paymentMethod}</span>
+                          </div>
+                        )}
+                        {paymentRecord.amount != null && paymentRecord.currency && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount</span>
+                            <span>{formatCurrency(paymentRecord.amount, paymentRecord.currency)}</span>
+                          </div>
+                        )}
+                        {paymentRecord.date && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Date</span>
+                            <span>{formatDate(paymentRecord.date)}</span>
+                          </div>
+                        )}
+                        {paymentRecord.reference && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Reference</span>
+                            <span>{paymentRecord.reference}</span>
+                          </div>
+                        )}
+                        {paymentRecord.transactionId && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Transaction ID</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs">{paymentRecord.transactionId}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => copyToClipboard(paymentRecord.transactionId!, "payment-txn-id")}
+                              >
+                                {copiedField === "payment-txn-id" ? (
+                                  <Check className="h-3 w-3 text-green-600" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm">
+                        <p className="text-muted-foreground">Payment received by cash or other method</p>
+                        {paymentRecord.cashNote && (
+                          <p className="mt-2 p-2 rounded bg-muted/50 text-sm">{paymentRecord.cashNote}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
-                Download Receipt
-              </Button>
-            </div>
-          )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (!invoice) return
+                    setIsDownloading(true)
+                    try {
+                      await downloadInvoiceReceiptPdf(invoice)
+                    } catch (err) {
+                      console.error("Failed to download receipt:", err)
+                    } finally {
+                      setIsDownloading(false)
+                    }
+                  }}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                  )}
+                  Download Receipt
+                </Button>
+              </div>
+            )
+          })()}
 
           {/* Powered by - bottom of frame, matches PDF */}
           <div className="flex items-center justify-center gap-1.5 mt-8 pt-6 pb-0 border-t text-xs text-muted-foreground">
