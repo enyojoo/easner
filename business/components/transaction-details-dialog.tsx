@@ -187,15 +187,17 @@ export function TransactionDetailsDialog({
                   </Link>
                 </Button>
               )}
-            <Button
-              variant="outline"
-              className="w-full gap-2 bg-transparent"
-              onClick={handleDownloadReceipt}
-              disabled={downloadingReceipt}
-            >
-              <Download className="h-4 w-4" />
-              {downloadingReceipt ? "Downloading..." : "Download Receipt"}
-            </Button>
+            {transaction.status === "completed" && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 bg-transparent"
+                onClick={handleDownloadReceipt}
+                disabled={downloadingReceipt}
+              >
+                <Download className="h-4 w-4" />
+                {downloadingReceipt ? "Downloading..." : "Download Receipt"}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

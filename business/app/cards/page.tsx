@@ -47,9 +47,8 @@ export default function CardsPage() {
         start,
         end,
         source: "card",
-        cardId: selectedCard.id,
       }),
-    [start, end, selectedCard.id]
+    [start, end]
   )
 
   return (
