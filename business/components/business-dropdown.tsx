@@ -111,7 +111,7 @@ export function BusinessDropdown({ businessName, adminName, adminEmail, onSignOu
         <DropdownMenuItem asChild>
           <a href="mailto:support@easner.com" className="flex items-center gap-2">
             <HelpCircle className="h-4 w-4" />
-            <span>Contact</span>
+            <span>Contact Support</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="gap-2">

@@ -58,6 +58,7 @@ export default function InvoicesPage() {
       router.replace("/invoices")
     }
   }, [searchParams, deleteInvoice, router])
+
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
@@ -67,25 +68,27 @@ export default function InvoicesPage() {
   const activeInvoices = invoices.filter((i) => !i.archived)
   const archivedInvoices = invoices.filter((i) => i.archived)
 
+  const draftCount = activeInvoices.filter((i) => i.status === "draft").length
+  const archivedCount = archivedInvoices.length
+
   const statusTabs = [
     { id: "all", label: "All invoices", count: activeInvoices.length },
-    { id: "draft", label: "Draft", count: activeInvoices.filter((i) => i.status === "draft").length },
-    { id: "open", label: "Unpaid", count: activeInvoices.filter((i) => i.status === "open" || i.status === "sent").length },
-    { id: "past_due", label: "Past due", count: activeInvoices.filter((i) => i.status === "past_due").length },
-    { id: "paid", label: "Paid", count: activeInvoices.filter((i) => i.status === "paid").length },
-    { id: "archived", label: "Archived", count: archivedInvoices.length },
+    ...(draftCount > 0 ? [{ id: "draft", label: "Draft", count: draftCount }] : []),
+    ...(archivedCount > 0 ? [{ id: "archived", label: "Archived", count: archivedCount }] : []),
   ]
+
+  // Reset activeTab when current tab no longer has data (e.g. last draft archived)
+  useEffect(() => {
+    if (activeTab === "draft" && draftCount === 0) setActiveTab("all")
+    if (activeTab === "archived" && archivedCount === 0) setActiveTab("all")
+  }, [activeTab, draftCount, archivedCount])
 
   const filteredInvoices = useMemo(() => {
     let filtered = activeTab === "archived" ? archivedInvoices : activeInvoices
 
     // Filter by status tab (when not viewing archived)
     if (activeTab !== "all" && activeTab !== "archived") {
-      if (activeTab === "open") {
-        filtered = filtered.filter(invoice => invoice.status === "open" || invoice.status === "sent")
-      } else {
-        filtered = filtered.filter(invoice => invoice.status === activeTab)
-      }
+      filtered = filtered.filter(invoice => invoice.status === activeTab)
     }
 
     // Filter by search term
