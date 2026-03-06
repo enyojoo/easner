@@ -120,7 +120,7 @@ export default function CustomersPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-sm truncate">
+                        <h3 className="font-semibold text-base truncate">
                           {customer.company?.trim() || customer.name}
                         </h3>
                       </div>

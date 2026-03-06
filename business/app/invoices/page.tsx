@@ -288,7 +288,9 @@ export default function InvoicesPage() {
                   {filteredInvoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => router.push(`/invoices/${invoice.id}`)}>
                       <td className="p-4 align-middle min-w-0">
-                        <span className="font-medium text-sm block truncate">{invoice.customerName}</span>
+                        <span className="font-medium text-sm block truncate">
+                          {invoice.customerCompany?.trim() || invoice.customerName}
+                        </span>
                       </td>
                       <td className="p-4 align-middle min-w-0">
                         <Link

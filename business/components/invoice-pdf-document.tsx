@@ -433,25 +433,26 @@ export function InvoicePDFDocument({
           ))}
         </View>
 
-        {/* Subtotal, Tax (when > 0), Total */}
+        {/* Subtotal, Tax, Total - always show full breakdown like invoice pages */}
         <View style={styles.totalRow}>
           <View style={styles.totalBox}>
-            {(invoice.tax ?? 0) > 0 && invoice.subtotal != null && (
-              <>
-                <View style={styles.totalSubRow}>
-                  <Text style={styles.totalSubLabel}>Subtotal</Text>
-                  <Text style={styles.totalSubAmount}>
-                    {formatCurrency(invoice.subtotal, invoice.currency)}
-                  </Text>
-                </View>
-                <View style={styles.totalSubRow}>
-                  <Text style={styles.totalSubLabel}>Tax</Text>
-                  <Text style={styles.totalSubAmount}>
-                    {formatCurrency(invoice.tax!, invoice.currency)}
-                  </Text>
-                </View>
-              </>
-            )}
+            <View style={styles.totalSubRow}>
+              <Text style={styles.totalSubLabel}>Subtotal</Text>
+              <Text style={styles.totalSubAmount}>
+                {formatCurrency(
+                  invoice.subtotal ?? invoice.lineItems.reduce((s, i) => s + i.amount, 0),
+                  invoice.currency
+                )}
+              </Text>
+            </View>
+            <View style={styles.totalSubRow}>
+              <Text style={styles.totalSubLabel}>
+                Tax{invoice.taxRate != null && invoice.taxRate > 0 ? ` (${invoice.taxRate}%)` : ""}
+              </Text>
+              <Text style={styles.totalSubAmount}>
+                {formatCurrency(invoice.tax ?? 0, invoice.currency)}
+              </Text>
+            </View>
             <View style={styles.totalSubRow}>
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalAmount}>

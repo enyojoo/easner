@@ -234,11 +234,15 @@ export interface InvoicePaymentInfo {
 export interface Invoice {
   id: string
   invoiceNumber: string
+  /** Customer id for linking to Customer record. When absent, matched by customerEmail. */
+  customerId?: string
   customerName: string
   customerEmail: string
   /** Sum of line items (before tax). When absent, derived from lineItems. */
   subtotal?: number
-  /** Tax amount. When absent, treated as 0. */
+  /** Tax rate as percentage (0–100), e.g. 10 for 10%. When absent, treated as 0. */
+  taxRate?: number
+  /** Tax amount. When absent, derived from subtotal × (taxRate / 100). */
   tax?: number
   total: number
   currency: string
@@ -354,12 +358,91 @@ export const mockCustomers: Customer[] = [
     status: "inactive",
     lastInvoiceDate: "2024-10-15",
   },
+  {
+    id: "5",
+    name: "Emma Rodriguez",
+    email: "emma.rodriguez@gmail.com",
+    phone: "+1 (555) 234-5678",
+    company: "",
+    address: "100 Oak Lane, Denver, CO 80202",
+    totalInvoices: 2,
+    totalPaid: 450.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-11-15",
+  },
+  {
+    id: "6",
+    name: "James Wilson",
+    email: "j.wilson@outlook.com",
+    phone: "+1 (555) 345-6789",
+    company: "",
+    address: "55 Pine St, Seattle, WA 98101",
+    totalInvoices: 1,
+    totalPaid: 0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-10-20",
+  },
+  {
+    id: "7",
+    name: "Lisa Park",
+    email: "lisa.park@yahoo.com",
+    phone: "+1 (555) 456-7890",
+    company: "",
+    address: "200 Elm Ave, Portland, OR 97201",
+    totalInvoices: 0,
+    totalPaid: 0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "",
+  },
+  {
+    id: "8",
+    name: "David Kim",
+    email: "david.kim@nexus.io",
+    phone: "+1 (555) 567-8901",
+    company: "Nexus Digital",
+    address: "88 Innovation Way, Boston, MA 02108",
+    totalInvoices: 4,
+    totalPaid: 3200.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2025-01-15",
+  },
+  {
+    id: "9",
+    name: "Priya Sharma",
+    email: "priya@globaltech.co",
+    phone: "+1 (555) 678-9012",
+    company: "GlobalTech Inc",
+    address: "500 Commerce St, Chicago, IL 60601",
+    totalInvoices: 6,
+    totalPaid: 18500.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2025-02-01",
+  },
+  {
+    id: "10",
+    name: "Alex Turner",
+    email: "alex.turner@gmail.com",
+    phone: "+1 (555) 789-0123",
+    company: "",
+    address: "22 Maple Dr, Nashville, TN 37201",
+    totalInvoices: 3,
+    totalPaid: 890.0,
+    currency: "USD",
+    status: "active",
+    lastInvoiceDate: "2024-12-20",
+  },
 ]
 
 export const mockInvoices: Invoice[] = [
   {
     id: "EINV000001",
     invoiceNumber: "EINV-0001",
+    customerId: "1",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 500.0,
@@ -378,6 +461,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000002",
     invoiceNumber: "EINV-0002",
+    customerId: "2",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 500.0,
@@ -396,6 +480,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000003",
     invoiceNumber: "EINV-0003",
+    customerId: "2",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 1000.0,
@@ -414,6 +499,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000004",
     invoiceNumber: "EINV-DRAFT",
+    customerId: "1",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 0.0,
@@ -432,6 +518,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000005",
     invoiceNumber: "EINV-0005",
+    customerId: "2",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -450,6 +537,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000006",
     invoiceNumber: "EINV-0006",
+    customerId: "2",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -468,6 +556,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000007",
     invoiceNumber: "EINV-0007",
+    customerId: "2",
     customerName: "Wilson Dagah",
     customerEmail: "admin@thekingsrubies.org",
     total: 5.46,
@@ -486,6 +575,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000008",
     invoiceNumber: "EINV-0008",
+    customerId: "3",
     customerName: "Sarah Johnson",
     customerEmail: "sarah.johnson@techcorp.com",
     subtotal: 2500.0,
@@ -507,9 +597,11 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000009",
     invoiceNumber: "EINV-0009",
+    customerId: "4",
     customerName: "Michael Chen",
     customerEmail: "m.chen@startup.io",
     subtotal: 1200.0,
+    taxRate: 8,
     tax: 96.0,
     total: 1296.0,
     currency: "USD",
@@ -528,6 +620,7 @@ export const mockInvoices: Invoice[] = [
   {
     id: "EINV000010",
     invoiceNumber: "EINV-0010",
+    customerId: "1",
     customerName: "Rosalyn Ward",
     customerEmail: "rosward1990@gmail.com",
     total: 1500.0,
@@ -543,6 +636,119 @@ export const mockInvoices: Invoice[] = [
     customerCompany: "Ward Enterprises",
     customerAddress: "123 Main St, New York, NY 10001",
     customerPhone: "+1 (555) 123-4567",
+  },
+  {
+    id: "EINV000011",
+    invoiceNumber: "EINV-0011",
+    customerId: "5",
+    customerName: "Emma Rodriguez",
+    customerEmail: "emma.rodriguez@gmail.com",
+    total: 225.0,
+    currency: "USD",
+    status: "paid",
+    paymentInfo: { paidAt: "2024-11-10", method: "cash", cashNote: "Check received" },
+    dueDate: "2024-11-15",
+    createdDate: "2024-11-01",
+    finalizedDate: "2024-11-01",
+    frequency: null,
+    lineItems: [{ description: "Consulting", quantity: 3, unitPrice: 75.0, amount: 225.0 }],
+    customerAddress: "100 Oak Lane, Denver, CO 80202",
+    customerPhone: "+1 (555) 234-5678",
+  },
+  {
+    id: "EINV000012",
+    invoiceNumber: "EINV-0012",
+    customerId: "5",
+    customerName: "Emma Rodriguez",
+    customerEmail: "emma.rodriguez@gmail.com",
+    total: 225.0,
+    currency: "USD",
+    status: "paid",
+    paymentInfo: { paidAt: "2024-11-15", method: "easner", transactionId: "ETID000201" },
+    dueDate: "2024-11-25",
+    createdDate: "2024-11-05",
+    finalizedDate: "2024-11-05",
+    frequency: null,
+    lineItems: [{ description: "Follow-up Consulting", quantity: 3, unitPrice: 75.0, amount: 225.0 }],
+    customerAddress: "100 Oak Lane, Denver, CO 80202",
+    customerPhone: "+1 (555) 234-5678",
+  },
+  {
+    id: "EINV000013",
+    invoiceNumber: "EINV-0013",
+    customerId: "6",
+    customerName: "James Wilson",
+    customerEmail: "j.wilson@outlook.com",
+    total: 450.0,
+    currency: "USD",
+    status: "sent",
+    dueDate: "2024-11-15",
+    createdDate: "2024-10-20",
+    finalizedDate: "2024-10-20",
+    frequency: null,
+    lineItems: [{ description: "Web Development", quantity: 1, unitPrice: 450.0, amount: 450.0 }],
+    customerAddress: "55 Pine St, Seattle, WA 98101",
+    customerPhone: "+1 (555) 345-6789",
+  },
+  {
+    id: "EINV000014",
+    invoiceNumber: "EINV-0014",
+    customerId: "8",
+    customerName: "David Kim",
+    customerEmail: "david.kim@nexus.io",
+    total: 1200.0,
+    currency: "USD",
+    status: "paid",
+    paymentInfo: { paidAt: "2025-01-12", method: "easner", transactionId: "ETID000204" },
+    dueDate: "2025-01-25",
+    createdDate: "2025-01-15",
+    finalizedDate: "2025-01-15",
+    frequency: null,
+    lineItems: [{ description: "API Integration", quantity: 1, unitPrice: 1200.0, amount: 1200.0 }],
+    billToType: "company",
+    customerCompany: "Nexus Digital",
+    customerAddress: "88 Innovation Way, Boston, MA 02108",
+    customerPhone: "+1 (555) 567-8901",
+  },
+  {
+    id: "EINV000015",
+    invoiceNumber: "EINV-0015",
+    customerId: "9",
+    customerName: "Priya Sharma",
+    customerEmail: "priya@globaltech.co",
+    subtotal: 5000.0,
+    taxRate: 10,
+    tax: 500.0,
+    total: 5500.0,
+    currency: "USD",
+    status: "open",
+    dueDate: "2025-04-01",
+    createdDate: "2025-02-01",
+    finalizedDate: "2025-02-01",
+    frequency: null,
+    lineItems: [{ description: "Enterprise Support", quantity: 1, unitPrice: 5000.0, amount: 5000.0 }],
+    billToType: "company",
+    customerCompany: "GlobalTech Inc",
+    customerAddress: "500 Commerce St, Chicago, IL 60601",
+    customerPhone: "+1 (555) 678-9012",
+  },
+  {
+    id: "EINV000016",
+    invoiceNumber: "EINV-0016",
+    customerId: "10",
+    customerName: "Alex Turner",
+    customerEmail: "alex.turner@gmail.com",
+    total: 350.0,
+    currency: "USD",
+    status: "paid",
+    paymentInfo: { paidAt: "2024-12-18", method: "cash", cashNote: "Venmo" },
+    dueDate: "2024-12-20",
+    createdDate: "2024-12-10",
+    finalizedDate: "2024-12-10",
+    frequency: null,
+    lineItems: [{ description: "Logo Design", quantity: 1, unitPrice: 350.0, amount: 350.0 }],
+    customerAddress: "22 Maple Dr, Nashville, TN 37201",
+    customerPhone: "+1 (555) 789-0123",
   },
 ]
 
@@ -1210,7 +1416,7 @@ export function getCustomerStats(
   const customerInvoices = invoices.filter(
     (inv) =>
       !inv.archived &&
-      ((inv as Invoice & { customerId?: string }).customerId === customerId ||
+      (inv.customerId === customerId ||
         inv.customerEmail?.toLowerCase() === customerEmail?.toLowerCase())
   )
   const totalPaid = customerInvoices

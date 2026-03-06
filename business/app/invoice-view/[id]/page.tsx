@@ -247,7 +247,9 @@ export default function InvoiceViewPage() {
                     <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between gap-8 text-sm">
-                    <span className="text-muted-foreground">Tax</span>
+                    <span className="text-muted-foreground">
+                      Tax{invoice.taxRate != null && invoice.taxRate > 0 ? ` (${invoice.taxRate}%)` : ""}
+                    </span>
                     <span>{formatCurrency(invoice.tax!, invoice.currency)}</span>
                   </div>
                 </>

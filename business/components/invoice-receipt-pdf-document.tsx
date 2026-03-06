@@ -184,19 +184,48 @@ export function InvoiceReceiptPDFDocument({
   invoice,
   logoUrl,
 }: InvoiceReceiptPDFDocumentProps) {
-  const paidDateStr = invoice.paymentInfo
-    ? formatDate(invoice.paymentInfo.paidAt, {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "-"
+  const txn =
+    invoice.paymentInfo?.method === "easner" &&
+    invoice.paymentInfo.transactionId
+      ? findTransactionById(invoice.paymentInfo.transactionId)
+      : undefined
+  const deposit =
+    invoice.paymentInfo?.method === "easner" &&
+    invoice.paymentInfo.transactionId
+      ? findStablecoinDepositById(invoice.paymentInfo.transactionId)
+      : undefined
+
+  const heroAmount =
+    txn != null
+      ? formatCurrency(txn.amount, invoice.currency)
+      : deposit != null
+        ? formatCurrency(deposit.amount, deposit.currency)
+        : formatCurrency(invoice.total, invoice.currency)
+
+  const heroDateStr =
+    txn != null
+      ? formatDate(txn.date, {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : deposit != null
+        ? formatDate(deposit.date, {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+        : invoice.paymentInfo
+          ? formatDate(invoice.paymentInfo.paidAt, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "-"
 
   const rows: { label: string; value: string }[] = [
     { label: "Invoice Number", value: invoice.invoiceNumber },
     { label: "Customer", value: invoice.customerName },
-    { label: "Total", value: formatCurrency(invoice.total, invoice.currency) },
-    { label: "Paid Date", value: paidDateStr },
   ]
 
   let paymentSection: { label: string; value: string }[] = []
@@ -215,9 +244,6 @@ export function InvoiceReceiptPDFDocument({
     invoice.paymentInfo?.method === "easner" &&
     invoice.paymentInfo.transactionId
   ) {
-    const txn = findTransactionById(invoice.paymentInfo.transactionId)
-    const deposit = findStablecoinDepositById(invoice.paymentInfo.transactionId)
-
     if (txn) {
       const method =
         txn.type === "ach"
@@ -229,15 +255,6 @@ export function InvoiceReceiptPDFDocument({
               : txn.type.toUpperCase()
       paymentSection = [
         { label: "Payment Method", value: method },
-        { label: "Amount", value: formatCurrency(txn.amount, invoice.currency) },
-        {
-          label: "Date",
-          value: formatDate(txn.date, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-        },
         ...(txn.reference ? [{ label: "Reference", value: txn.reference }] : []),
         { label: "Description", value: txn.description },
       ]
@@ -245,18 +262,6 @@ export function InvoiceReceiptPDFDocument({
       const methodLabel = `${deposit.stablecoin} on ${deposit.chain}`
       paymentSection = [
         { label: "Payment Method", value: methodLabel },
-        {
-          label: "Amount",
-          value: formatCurrency(deposit.amount, deposit.currency),
-        },
-        {
-          label: "Date",
-          value: formatDate(deposit.date, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }),
-        },
         ...(deposit.reference || deposit.memo
           ? [
               {
@@ -296,10 +301,8 @@ export function InvoiceReceiptPDFDocument({
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>Paid</Text>
           </View>
-          <Text style={styles.amountBig}>
-            {formatCurrency(invoice.total, invoice.currency)}
-          </Text>
-          <Text style={styles.dateText}>{paidDateStr}</Text>
+          <Text style={styles.amountBig}>{heroAmount}</Text>
+          <Text style={styles.dateText}>{heroDateStr}</Text>
         </View>
 
         <View style={styles.tableWrapper}>
