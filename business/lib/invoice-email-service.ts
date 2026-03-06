@@ -2,6 +2,7 @@ import sgMail from "@sendgrid/mail"
 import {
   generateInvoiceEmailHtml,
   generateInvoiceEmailText,
+  getInvoiceEmailSubject,
   type InvoiceEmailData,
 } from "@/lib/invoice-email-template"
 import { businessInfo } from "@/lib/business-info"
@@ -50,11 +51,12 @@ export async function sendInvoiceEmail(
 
     const html = generateInvoiceEmailHtml(data)
     const text = generateInvoiceEmailText(data)
+    const subject = getInvoiceEmailSubject(data)
 
     const msg = {
       to: invoice.customerEmail,
       from: { email: fromEmail, name: fromName },
-      subject: `Invoice ${invoice.invoiceNumber} from ${businessName}`,
+      subject,
       html,
       text,
       attachments: [

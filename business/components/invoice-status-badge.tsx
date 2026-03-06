@@ -10,7 +10,6 @@ const statusConfig: Record<
   past_due: { label: "Past due", variant: "destructive" },
   paid: { label: "Paid", variant: "default" },
   void: { label: "Void", variant: "secondary" },
-  uncollectible: { label: "Uncollectible", variant: "secondary" },
   failed: { label: "Failed", variant: "destructive" },
 }
 

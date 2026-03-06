@@ -8,6 +8,72 @@ export interface InvoiceEmailData {
   businessName: string
 }
 
+/** Status-specific email copy */
+const EMAIL_BY_STATUS: Record<
+  string,
+  { subject: string; bodyIntro: string; bodyIntroPlain: string }
+> = {
+  draft: {
+    subject: "Invoice from",
+    bodyIntro: "has sent you an invoice.",
+    bodyIntroPlain: "has sent you an invoice.",
+  },
+  open: {
+    subject: "Invoice from",
+    bodyIntro: "has sent you an invoice.",
+    bodyIntroPlain: "has sent you an invoice.",
+  },
+  sent: {
+    subject: "Invoice from",
+    bodyIntro: "has sent you an invoice.",
+    bodyIntroPlain: "has sent you an invoice.",
+  },
+  past_due: {
+    subject: "Reminder: Your invoice from",
+    bodyIntro: "This is a reminder that your invoice is past due.",
+    bodyIntroPlain: "This is a reminder that your invoice is past due.",
+  },
+  paid: {
+    subject: "Your invoice from",
+    bodyIntro: "Your invoice has been marked as paid.",
+    bodyIntroPlain: "Your invoice has been marked as paid.",
+  },
+  void: {
+    subject: "Your invoice from",
+    bodyIntro: "Your invoice has been voided.",
+    bodyIntroPlain: "Your invoice has been voided.",
+  },
+  failed: {
+    subject: "Invoice from",
+    bodyIntro: "has sent you an invoice.",
+    bodyIntroPlain: "has sent you an invoice.",
+  },
+}
+
+const defaultEmail = EMAIL_BY_STATUS.sent
+
+export function getInvoiceEmailSubject(data: InvoiceEmailData): string {
+  const { invoice, businessName } = data
+  const config = EMAIL_BY_STATUS[invoice.status] ?? defaultEmail
+  return `${config.subject} ${businessName} — ${invoice.invoiceNumber}`
+}
+
+function getBodyIntro(data: InvoiceEmailData): string {
+  const { invoice, businessName } = data
+  const config = EMAIL_BY_STATUS[invoice.status] ?? defaultEmail
+  return config.bodyIntro.includes("has sent")
+    ? `${businessName} ${config.bodyIntro}`
+    : config.bodyIntro
+}
+
+function getBodyIntroPlain(data: InvoiceEmailData): string {
+  const { invoice, businessName } = data
+  const config = EMAIL_BY_STATUS[invoice.status] ?? defaultEmail
+  return config.bodyIntroPlain.includes("has sent")
+    ? `${businessName} ${config.bodyIntroPlain}`
+    : config.bodyIntroPlain
+}
+
 export function generateInvoiceEmailHtml(data: InvoiceEmailData): string {
   const { invoice, invoiceViewUrl, businessName } = data
   const dueDate = formatDate(invoice.dueDate, {
@@ -16,6 +82,7 @@ export function generateInvoiceEmailHtml(data: InvoiceEmailData): string {
     year: "numeric",
   })
   const amount = formatCurrency(invoice.total, invoice.currency)
+  const bodyIntro = getBodyIntro(data)
 
   return `
 <!DOCTYPE html>
@@ -56,7 +123,7 @@ export function generateInvoiceEmailHtml(data: InvoiceEmailData): string {
 
     <p class="greeting">Dear ${invoice.customerName},</p>
     
-    <p class="body-text">${businessInfo.name} has sent you an invoice.</p>
+    <p class="body-text">${bodyIntro}</p>
 
     <div class="invoice-details">
       <h3>Invoice details</h3>
@@ -85,11 +152,12 @@ export function generateInvoiceEmailText(data: InvoiceEmailData): string {
     year: "numeric",
   })
   const amount = formatCurrency(invoice.total, invoice.currency)
+  const bodyIntro = getBodyIntroPlain(data)
 
   return `
 Dear ${invoice.customerName},
 
-${businessInfo.name} has sent you an invoice.
+${bodyIntro}
 
 Invoice #${invoice.invoiceNumber} — ${amount} ${invoice.currency}
 Due: ${dueDate}

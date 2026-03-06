@@ -373,7 +373,7 @@ export const mockInvoices: Invoice[] = [
     customerEmail: "admin@thekingsrubies.org",
     total: 500.0,
     currency: "USD",
-    status: "uncollectible",
+    status: "void",
     dueDate: "2024-12-15",
     createdDate: "2024-12-10",
     finalizedDate: "2024-12-10",

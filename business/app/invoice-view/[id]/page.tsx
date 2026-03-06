@@ -115,18 +115,18 @@ export default function InvoiceViewPage() {
           {/* Business info & Invoice header - two columns on all screens */}
           <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div className="min-w-0">
-              <h2 className="text-sm sm:text-lg font-semibold">{businessInfo.name}</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{businessInfo.address}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <h2 className="text-base sm:text-lg font-semibold">{businessInfo.name}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{businessInfo.address}</p>
+              <p className="text-sm text-muted-foreground">
                 {businessInfo.city}, {businessInfo.state} {businessInfo.zipCode}
               </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">{businessInfo.country}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-2">{businessInfo.email}</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">{businessInfo.phone}</p>
+              <p className="text-sm text-muted-foreground">{businessInfo.country}</p>
+              <p className="text-sm text-muted-foreground mt-2">{businessInfo.email}</p>
+              <p className="text-sm text-muted-foreground">{businessInfo.phone}</p>
             </div>
             <div className="text-right min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold">Invoice</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{invoice.invoiceNumber}</p>
+              <h1 className="text-base sm:text-2xl font-bold">Invoice</h1>
+              <p className="text-sm text-muted-foreground mt-1">{invoice.invoiceNumber}</p>
               <InvoiceStatusBadge status={invoice.status} />
             </div>
           </div>
@@ -134,10 +134,10 @@ export default function InvoiceViewPage() {
           {/* Bill to & Details */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-6 sm:mb-8">
             <div className="text-left">
-              <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Bill to</h3>
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">Bill to</h3>
               {invoice.billToType === "company" && invoice.customerCompany ? (
                 <>
-                  <p className="font-medium">{invoice.customerCompany}</p>
+                  <p className="text-sm font-medium">{invoice.customerCompany}</p>
                   <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
                   {invoice.customerAddress && (
                     <p className="text-sm text-muted-foreground">{invoice.customerAddress}</p>
@@ -151,7 +151,7 @@ export default function InvoiceViewPage() {
                 </>
               ) : (
                 <>
-                  <p className="font-medium">{invoice.customerName}</p>
+                  <p className="text-sm font-medium">{invoice.customerName}</p>
                   <p className="text-sm text-muted-foreground">{invoice.customerEmail}</p>
                   {invoice.customerAddress && (
                     <p className="text-sm text-muted-foreground">{invoice.customerAddress}</p>
@@ -164,7 +164,7 @@ export default function InvoiceViewPage() {
             </div>
             <div />
             <div className="text-left">
-              <h3 className="font-semibold mb-2 text-sm text-muted-foreground uppercase tracking-wide">Invoice details</h3>
+              <h3 className="text-xs font-semibold mb-2 text-muted-foreground uppercase tracking-wide">Invoice details</h3>
               <p className="text-sm">
                 <span className="text-muted-foreground">Due date:</span> {formatDate(invoice.dueDate)}
               </p>
@@ -188,7 +188,7 @@ export default function InvoiceViewPage() {
                   className="flex justify-between items-start gap-3 px-3 py-3 border-t bg-muted/20"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm">{item.description}</p>
+                    <p className="text-sm font-medium">{item.description}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {item.quantity} × {formatCurrency(item.unitPrice, invoice.currency)}
                     </p>
@@ -204,10 +204,10 @@ export default function InvoiceViewPage() {
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="text-left p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Description</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Qty</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Unit Price</th>
-                    <th className="text-right p-3 font-medium text-xs text-muted-foreground uppercase tracking-wide">Amount</th>
+                    <th className="text-left p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</th>
+                    <th className="text-right p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Qty</th>
+                    <th className="text-right p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Unit Price</th>
+                    <th className="text-right p-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -231,8 +231,8 @@ export default function InvoiceViewPage() {
           {/* Total */}
           <div className="flex justify-end mb-6">
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-xl sm:text-2xl font-bold">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Total</p>
+              <p className="text-lg sm:text-2xl font-bold mt-0.5">
                 {formatCurrency(invoice.total, invoice.currency)}
               </p>
             </div>
@@ -252,7 +252,7 @@ export default function InvoiceViewPage() {
           )}
 
           {/* Powered by - bottom of frame, matches PDF */}
-          <div className="flex items-center justify-center gap-1.5 mt-8 pt-6 pb-0 border-t text-[10px] sm:text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-1.5 mt-8 pt-6 pb-0 border-t text-xs text-muted-foreground">
             <span>Powered by</span>
             <a
               href="https://www.easner.com/business"

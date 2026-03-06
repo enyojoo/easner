@@ -314,7 +314,7 @@ export default function InvoiceDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleStatusChange("open")}
-                  disabled={invoice.status !== "paid"}
+                  disabled={invoice.status === "open"}
                 >
                   Mark as Unpaid
                 </DropdownMenuItem>
@@ -335,12 +335,6 @@ export default function InvoiceDetailPage() {
                   disabled={invoice.status === "void"}
                 >
                   Mark as Void
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("uncollectible")}
-                  disabled={invoice.status === "uncollectible"}
-                >
-                  Mark Uncollectible
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
