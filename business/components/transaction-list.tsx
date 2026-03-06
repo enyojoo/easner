@@ -60,7 +60,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   </div>
                   <Badge
                     variant={
-                      txn.status === "completed" ? "default" : txn.status === "pending" ? "secondary" : "destructive"
+                      txn.status === "completed" ? "default" : txn.status === "pending" || txn.status === "processing" ? "secondary" : "destructive"
                     }
                     className="mt-1"
                   >

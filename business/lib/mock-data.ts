@@ -41,12 +41,16 @@ export interface Transaction {
   amount: number
   description: string
   date: string
-  status: "completed" | "pending" | "failed"
+  status: "completed" | "pending" | "processing" | "failed"
   direction: "credit" | "debit"
   cardId?: string
   category?: string
   fee?: number
   reference?: string
+  /** For send/transfer transactions - links to status page */
+  transferId?: string
+  /** When linked to an invoice */
+  invoiceId?: string
 }
 
 export const mockAccounts: Account[] = [
@@ -970,6 +974,44 @@ export const mockTransactions: Transaction[] = [
     category: "Business",
     fee: 15.0,
     reference: "WIRE-2024-013",
+    transferId: "ETID000013",
+  },
+  {
+    id: "ETID000026",
+    type: "wire",
+    amount: 5000.0,
+    description: "Supplier Payment",
+    date: "2025-01-15",
+    status: "processing",
+    direction: "debit",
+    category: "Business",
+    fee: 25.0,
+    reference: "WIRE-2025-026",
+    transferId: "ETID000026",
+  },
+  {
+    id: "ETID000027",
+    type: "ach",
+    amount: 1200.0,
+    description: "Payroll Batch",
+    date: "2025-01-16",
+    status: "processing",
+    direction: "debit",
+    category: "Business",
+    reference: "ACH-2025-027",
+    transferId: "ETID000027",
+  },
+  {
+    id: "ETID000028",
+    type: "ach",
+    amount: 850.0,
+    description: "Contractor Payment",
+    date: "2025-01-17",
+    status: "pending",
+    direction: "debit",
+    category: "Business",
+    reference: "ACH-2025-028",
+    transferId: "ETID000028",
   },
   {
     id: "ETID000014",
@@ -1307,6 +1349,42 @@ export const mockCardTransactions: Transaction[] = [
     cardId: "card_1",
     category: "Shopping",
     reference: "CARD-2024-116",
+  },
+  {
+    id: "ETID000121",
+    type: "card",
+    amount: -320.0,
+    description: "Hotel Booking",
+    date: "2025-01-18T14:00:00",
+    status: "processing",
+    direction: "debit",
+    cardId: "card_1",
+    category: "Travel",
+    reference: "CARD-2025-121",
+  },
+  {
+    id: "ETID000122",
+    type: "card",
+    amount: -89.0,
+    description: "Software Subscription",
+    date: "2025-01-19T09:30:00",
+    status: "pending",
+    direction: "debit",
+    cardId: "card_1",
+    category: "Subscription",
+    reference: "CARD-2025-122",
+  },
+  {
+    id: "ETID000123",
+    type: "card",
+    amount: 1200.0,
+    description: "Refund - Returns",
+    date: "2025-01-20T11:00:00",
+    status: "processing",
+    direction: "credit",
+    cardId: "card_1",
+    category: "Refund",
+    reference: "CARD-2025-123",
   },
   {
     id: "ETID000117",

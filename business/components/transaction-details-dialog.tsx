@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Copy, Check, Download, FileText, ExternalLink } from "lucide-react"
+import { Copy, Check, Download, FileText, Activity } from "lucide-react"
 import { downloadTransactionReceiptPdf } from "@/lib/use-transaction-receipt-pdf"
 
 interface TransactionDetailsDialogProps {
@@ -71,7 +71,7 @@ export function TransactionDetailsDialog({
               variant={
                 transaction.status === "completed"
                   ? "default"
-                  : transaction.status === "pending"
+                  : transaction.status === "pending" || transaction.status === "processing"
                     ? "secondary"
                     : "destructive"
               }
@@ -178,14 +178,15 @@ export function TransactionDetailsDialog({
                 </Link>
               </Button>
             )}
-            {(transaction.transferId || transaction.id.startsWith("ETID")) && (
-              <Button variant="outline" className="w-full gap-2 bg-transparent" asChild>
-                <Link href={`/send/status?id=${transaction.transferId ?? transaction.id}`}>
-                  <ExternalLink className="h-4 w-4" />
-                  Track transfer
-                </Link>
-              </Button>
-            )}
+            {(transaction.transferId || transaction.id.startsWith("ETID")) &&
+              (transaction.status === "pending" || transaction.status === "processing") && (
+                <Button variant="outline" className="w-full gap-2 bg-transparent" asChild>
+                  <Link href={`/send/status?id=${transaction.transferId ?? transaction.id}`}>
+                    <Activity className="h-4 w-4" />
+                    Track status
+                  </Link>
+                </Button>
+              )}
             <Button
               variant="outline"
               className="w-full gap-2 bg-transparent"

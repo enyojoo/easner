@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils"
 const statusLabels: Record<string, string> = {
   completed: "Completed",
   pending: "Pending",
+  processing: "Processing",
   failed: "Failed",
 }
 

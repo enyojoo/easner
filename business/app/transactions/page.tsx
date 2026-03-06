@@ -54,7 +54,7 @@ export default function TransactionsPage() {
     const status = searchParams.get("status")
     const period = searchParams.get("period")
     if (source === "card" || source === "account") setSourceFilter(source)
-    if (status && ["completed", "pending", "failed"].includes(status)) setStatusFilter(status)
+    if (status && ["completed", "pending", "processing", "failed"].includes(status)) setStatusFilter(status)
     if (period && ["7d", "30d", "90d", "1y", "custom"].includes(period)) setTimePeriod(period as TimePeriod)
   }, [searchParams])
 
@@ -149,6 +149,7 @@ export default function TransactionsPage() {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
