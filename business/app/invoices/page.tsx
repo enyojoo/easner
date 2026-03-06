@@ -1,33 +1,67 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { 
   Plus, 
-  Search, 
   Download,
   MoreHorizontal,
-  DollarSign
+  DollarSign,
+  Eye,
+  Pencil,
+  Copy,
+  Mail,
+  FileDown,
+  Archive,
+  ArchiveRestore,
+  Trash2,
 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { formatDate, formatCurrency } from "@/lib/utils"
 import { useInvoices } from "@/lib/invoices-context"
 import { InvoiceStatusBadge } from "@/components/invoice-status-badge"
+import { downloadInvoicePdf } from "@/lib/use-invoice-pdf"
+import { mockAccounts, mockStablecoinAccounts } from "@/lib/mock-data"
+import { toast } from "sonner"
+import type { Invoice } from "@/lib/mock-data"
 
 export default function InvoicesPage() {
   const router = useRouter()
-  const { invoices } = useInvoices()
+  const searchParams = useSearchParams()
+  const { invoices, updateInvoice, addInvoice, deleteInvoice } = useInvoices()
   const [activeTab, setActiveTab] = useState("all")
+
+  useEffect(() => {
+    const deletedId = searchParams.get("deleted")
+    if (deletedId) {
+      deleteInvoice(deletedId)
+      router.replace("/invoices")
+    }
+  }, [searchParams, deleteInvoice, router])
   const [searchTerm, setSearchTerm] = useState("")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
+  const [sendingId, setSendingId] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   const activeInvoices = invoices.filter((i) => !i.archived)
   const archivedInvoices = invoices.filter((i) => i.archived)
@@ -64,6 +98,100 @@ export default function InvoicesPage() {
 
     return filtered
   }, [invoices, activeTab, searchTerm, activeInvoices, archivedInvoices])
+
+  const handleEdit = (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    router.push(`/invoices/create?edit=${invoice.id}`)
+  }
+
+  const handleDuplicate = (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newId = `inv_${Date.now()}`
+    const newInvoiceNumber = `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`
+    const now = new Date().toISOString().split("T")[0]
+    const duplicate: Invoice = {
+      ...invoice,
+      id: newId,
+      invoiceNumber: newInvoiceNumber,
+      status: "draft",
+      createdDate: now,
+      finalizedDate: null,
+      statusHistory: [],
+      archived: false,
+    }
+    addInvoice(duplicate)
+    toast.success("Invoice duplicated")
+    router.push(`/invoices/create?edit=${duplicate.id}`)
+  }
+
+  const handleEmailInvoice = async (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!invoice.customerEmail?.trim()) {
+      toast.error("Invoice has no customer email")
+      return
+    }
+    setSendingId(invoice.id)
+    try {
+      const res = await fetch("/api/invoices/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoice }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to send email")
+      updateInvoice(invoice.id, {
+        status: "sent",
+        statusHistory: [...(invoice.statusHistory ?? []), { status: "sent", timestamp: new Date().toISOString() }],
+      })
+      toast.success(`Invoice sent to ${invoice.customerEmail}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send email")
+    } finally {
+      setSendingId(null)
+    }
+  }
+
+  const handleDownloadPdf = async (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const bankAccount = mockAccounts.find((a) => a.currency === invoice.currency)
+    const stablecoinAccount = mockStablecoinAccounts.find((s) => s.currency === invoice.currency)
+    setDownloadingId(invoice.id)
+    try {
+      await downloadInvoicePdf(invoice, bankAccount, stablecoinAccount)
+    } catch (err) {
+      console.error("Failed to download PDF:", err)
+      toast.error("Failed to download PDF")
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const handleArchive = (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    updateInvoice(invoice.id, { archived: true })
+    toast.success("Invoice archived")
+  }
+
+  const handleUnarchive = (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    updateInvoice(invoice.id, { archived: false, status: "draft" })
+    toast.success("Invoice restored")
+  }
+
+  const handleDeleteClick = (invoice: Invoice, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setInvoiceToDelete(invoice)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (invoiceToDelete) {
+      deleteInvoice(invoiceToDelete.id)
+      toast.success("Invoice deleted")
+      setInvoiceToDelete(null)
+      setDeleteDialogOpen(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -184,7 +312,7 @@ export default function InvoicesPage() {
                         </span>
                       </td>
                       <td className="p-4 align-middle">
-                        <InvoiceStatusBadge status={invoice.status} />
+                        <InvoiceStatusBadge status={invoice.archived ? "archived" : invoice.status} />
                       </td>
                       <td className="p-4 align-middle">
                         <DropdownMenu>
@@ -198,12 +326,50 @@ export default function InvoicesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>View</DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Send</DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Download PDF</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={(e) => e.stopPropagation()}>Void</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/invoices/${invoice.id}`) }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleEdit(invoice, e)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit invoice
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleDuplicate(invoice, e)}>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            {invoice.status !== "draft" && invoice.customerEmail?.trim() && (
+                              <DropdownMenuItem
+                                onClick={(e) => handleEmailInvoice(invoice, e)}
+                                disabled={sendingId === invoice.id}
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                {sendingId === invoice.id ? "Sending…" : "Email Invoice"}
+                              </DropdownMenuItem>
+                            )}
+                            {invoice.status !== "draft" && (
+                              <DropdownMenuItem onClick={(e) => handleDownloadPdf(invoice, e)} disabled={downloadingId === invoice.id}>
+                                <FileDown className="h-4 w-4 mr-2" />
+                                {downloadingId === invoice.id ? "Downloading…" : "Download PDF"}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => (invoice.archived ? handleUnarchive(invoice, e) : handleArchive(invoice, e))}
+                            >
+                              {invoice.archived ? (
+                                <><ArchiveRestore className="h-4 w-4 mr-2" />Unarchive</>
+                              ) : (
+                                <><Archive className="h-4 w-4 mr-2" />Archive</>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={(e) => handleDeleteClick(invoice, e)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -220,6 +386,23 @@ export default function InvoicesPage() {
       <div className="text-sm text-muted-foreground shrink-0 pt-2">
         {filteredInvoices.length} result{filteredInvoices.length !== 1 ? 's' : ''}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete invoice?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete invoice {invoiceToDelete?.invoiceNumber}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

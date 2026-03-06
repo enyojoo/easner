@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { CreditCard, Home, ArrowLeftRight, History, Landmark, Users, FileText, UserCheck, ChevronDown, ChevronRight, Send, Receipt, Link2, Building2 } from "lucide-react"
+import { CreditCard, LayoutDashboard, ArrowRightLeft, ChartNoAxesGantt, Wallet, UsersRound, ReceiptText, Contact, ChevronDown, ChevronRight, Send, Inbox, Building2 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -22,7 +22,7 @@ export function DashboardNav() {
     if (pathname.startsWith('/send') || pathname.startsWith('/beneficiaries')) {
       openGroups.add('payments')
     }
-    if (pathname.startsWith('/invoices') || pathname.startsWith('/payment-links') || pathname.startsWith('/customers')) {
+    if (pathname.startsWith('/invoices') || pathname.startsWith('/customers')) {
       openGroups.add('collections')
     }
     
@@ -49,31 +49,30 @@ export function DashboardNav() {
   }
 
   const menuItems = [
-    { href: "/dashboard", label: "Home", icon: Home, type: "single" },
-    { href: "/accounts", label: "Accounts", icon: Landmark, type: "single" },
+    { href: "/dashboard", label: "Home", icon: LayoutDashboard, type: "single" },
     {
       key: "payments",
       label: "Payments",
-      icon: Send,
+      icon: ArrowRightLeft,
       type: "group",
       items: [
-        { href: "/send", label: "Send", icon: ArrowLeftRight },
-        { href: "/beneficiaries", label: "Beneficiaries", icon: Users }
+        { href: "/send", label: "Send", icon: Send },
+        { href: "/beneficiaries", label: "Beneficiaries", icon: UsersRound }
       ]
     },
     { href: "/cards", label: "Cards", icon: CreditCard, type: "single" },
     {
       key: "collections",
       label: "Collections", 
-      icon: Receipt,
+      icon: Inbox,
       type: "group",
       items: [
-        { href: "/invoices", label: "Invoices", icon: FileText },
-        { href: "/payment-links", label: "Payment links", icon: Link2 },
-        { href: "/customers", label: "Customers", icon: UserCheck }
+        { href: "/invoices", label: "Invoices", icon: ReceiptText },
+        { href: "/customers", label: "Customers", icon: Contact }
       ]
     },
-    { href: "/transactions", label: "Transactions", icon: History, type: "single" }
+    { href: "/transactions", label: "Transactions", icon: ChartNoAxesGantt, type: "single" },
+    { href: "/accounts", label: "Accounts", icon: Wallet, type: "single" }
   ]
 
   return (

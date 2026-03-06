@@ -141,7 +141,7 @@ const getActivityIcon = (type: string) => {
 export default function InvoiceDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { invoices, updateInvoice, addInvoice, deleteInvoice } = useInvoices()
+  const { invoices, updateInvoice, addInvoice } = useInvoices()
   const invoice = invoices.find((i) => i.id === params.id)
   const [showMoreActivities, setShowMoreActivities] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -151,6 +151,38 @@ export default function InvoiceDetailPage() {
   const [addNoteOpen, setAddNoteOpen] = useState(false)
   const [noteText, setNoteText] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [customerViewUrl, setCustomerViewUrl] = useState("")
+
+  const bankAccount = invoice ? mockAccounts.find((a) => a.currency === invoice.currency) : undefined
+  const stablecoinAccount = invoice ? mockStablecoinAccounts.find((s) => s.currency === invoice.currency) : undefined
+
+  useEffect(() => {
+    if (!invoice?.id) return
+    fetch(`/api/invoices/${invoice.id}/views`)
+      .then((res) => res.json())
+      .then((data) => setCustomerViews(data.views ?? []))
+      .catch(() => {})
+  }, [invoice?.id])
+
+  const activities = useMemo(() => {
+    if (!invoice) return []
+    const base = getInvoiceActivities(invoice)
+    const viewActivities = customerViews.map((v, i) => ({
+      id: `view-${i}`,
+      type: "viewed",
+      description: "Invoice viewed by customer",
+      timestamp: v.viewedAt,
+    }))
+    return [...base, ...viewActivities].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  }, [invoice, customerViews])
+
+  useEffect(() => {
+    if (invoice?.id && typeof window !== "undefined") {
+      setCustomerViewUrl(`${window.location.origin}/invoice-view/${invoice.id}`)
+    }
+  }, [invoice?.id])
 
   const handleStatusChange = (newStatus: Invoice["status"]) => {
     if (!invoice) return
@@ -181,7 +213,7 @@ export default function InvoiceDetailPage() {
     }
     addInvoice(duplicate)
     toast.success("Invoice duplicated")
-    router.push(`/invoices/${duplicate.id}`)
+    router.push(`/invoices/create?edit=${duplicate.id}`)
   }
 
   const handleArchive = () => {
@@ -191,14 +223,15 @@ export default function InvoiceDetailPage() {
   }
 
   const handleUnarchive = () => {
-    updateInvoice(invoice.id, { archived: false })
+    updateInvoice(invoice.id, { archived: false, status: "draft" })
     toast.success("Invoice restored")
   }
 
   const handleDelete = () => {
-    deleteInvoice(invoice.id)
+    const id = invoice.id
+    setDeleteDialogOpen(false)
     toast.success("Invoice deleted")
-    router.push("/invoices")
+    router.replace(`/invoices?deleted=${id}`)
   }
 
   const copyToClipboard = async (text: string, field?: string) => {
@@ -224,6 +257,18 @@ export default function InvoiceDetailPage() {
     }
   }
 
+  const displayedActivities = showMoreActivities ? activities : activities.slice(0, 3)
+
+  const formatDateWithTime = (dateString: string) => {
+    return formatDate(dateString, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   if (!invoice) {
     return (
       <div className="space-y-6">
@@ -245,47 +290,6 @@ export default function InvoiceDetailPage() {
     )
   }
 
-  const bankAccount = mockAccounts.find((a) => a.currency === invoice.currency)
-  const stablecoinAccount = mockStablecoinAccounts.find((s) => s.currency === invoice.currency)
-  // Fetch customer view events
-  useEffect(() => {
-    if (!invoice?.id) return
-    fetch(`/api/invoices/${invoice.id}/views`)
-      .then((res) => res.json())
-      .then((data) => setCustomerViews(data.views ?? []))
-      .catch(() => {})
-  }, [invoice?.id])
-
-  const activities = useMemo(() => {
-    const base = getInvoiceActivities(invoice)
-    const viewActivities = customerViews.map((v, i) => ({
-      id: `view-${i}`,
-      type: "viewed",
-      description: "Invoice viewed by customer",
-      timestamp: v.viewedAt,
-    }))
-    return [...base, ...viewActivities].sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
-  }, [invoice, customerViews])
-
-  const displayedActivities = showMoreActivities ? activities : activities.slice(0, 3)
-
-  const formatDateWithTime = (dateString: string) => {
-    return formatDate(dateString, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const [customerViewUrl, setCustomerViewUrl] = useState(`/invoice-view/${invoice.id}`)
-  useEffect(() => {
-    setCustomerViewUrl(`${window.location.origin}/invoice-view/${invoice.id}`)
-  }, [invoice.id])
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -298,53 +302,55 @@ export default function InvoiceDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold text-foreground">{invoice.invoiceNumber}</h1>
-            <InvoiceStatusBadge status={invoice.status} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground">
-                  Change status
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("paid")}
-                  disabled={invoice.status === "paid"}
-                >
-                  Mark as Paid
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("open")}
-                  disabled={invoice.status === "open"}
-                >
-                  Mark as Unpaid
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("sent")}
-                  disabled={invoice.status === "sent"}
-                >
-                  Mark as Sent
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("past_due")}
-                  disabled={invoice.status === "past_due"}
-                >
-                  Mark Past Due
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleStatusChange("void")}
-                  disabled={invoice.status === "void"}
-                >
-                  Mark as Void
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <InvoiceStatusBadge status={invoice.archived ? "archived" : invoice.status} />
+            {!invoice.archived && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground">
+                    Change status
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    onClick={() => handleStatusChange("paid")}
+                    disabled={invoice.status === "paid"}
+                  >
+                    Mark as Paid
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusChange("open")}
+                    disabled={invoice.status === "open"}
+                  >
+                    Mark as Unpaid
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusChange("sent")}
+                    disabled={invoice.status === "sent"}
+                  >
+                    Mark as Sent
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusChange("past_due")}
+                    disabled={invoice.status === "past_due"}
+                  >
+                    Mark Past Due
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleStatusChange("void")}
+                    disabled={invoice.status === "void"}
+                  >
+                    Mark as Void
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <p className="text-muted-foreground mt-1">
             Billed to {invoice.customerName} - {formatCurrency(invoice.total, invoice.currency)}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {invoice.customerEmail?.trim() && (
+          {!invoice.archived && invoice.status !== "draft" && invoice.customerEmail?.trim() && (
             <Button
               variant="outline"
               size="sm"
@@ -381,29 +387,31 @@ export default function InvoiceDetailPage() {
               Email Invoice
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              if (!invoice) return
-              setIsDownloading(true)
-              try {
-                await downloadInvoicePdf(invoice, bankAccount, stablecoinAccount)
-              } catch (err) {
-                console.error("Failed to download PDF:", err)
-              } finally {
-                setIsDownloading(false)
-              }
-            }}
-            disabled={isDownloading}
-          >
-            {isDownloading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            Download PDF
-          </Button>
+          {!invoice.archived && invoice.status !== "draft" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (!invoice) return
+                setIsDownloading(true)
+                try {
+                  await downloadInvoicePdf(invoice, bankAccount, stablecoinAccount)
+                } catch (err) {
+                  console.error("Failed to download PDF:", err)
+                } finally {
+                  setIsDownloading(false)
+                }
+              }}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Download PDF
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -534,6 +542,13 @@ export default function InvoiceDetailPage() {
               </div>
 
               {/* Total */}
+              {invoice.memo?.trim() && (
+                <div className="mb-6 p-4 rounded-lg bg-muted/50 border border-border">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Memo</p>
+                  <p className="text-sm whitespace-pre-wrap">{invoice.memo}</p>
+                </div>
+              )}
+
               <div className="flex justify-end">
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Total</p>
@@ -546,7 +561,7 @@ export default function InvoiceDetailPage() {
           </Card>
 
           {/* Invoice payment options */}
-          {bankAccount && (
+          {!invoice.archived && invoice.status !== "draft" && bankAccount && (
             <InvoicePaymentOptions
               invoice={invoice}
               bankAccount={bankAccount}
@@ -565,15 +580,17 @@ export default function InvoiceDetailPage() {
               <CardTitle className="text-base">Invoice details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">ID</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-mono">in_1QUWaMCWrIYLwGATet8R3tOJ</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard("in_1QUWaMCWrIYLwGATet8R3tOJ", "id")}>
-                    {copiedField === "id" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                  </Button>
+              {!invoice.archived && invoice.status !== "draft" && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">ID</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono">in_1QUWaMCWrIYLwGATet8R3tOJ</span>
+                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard("in_1QUWaMCWrIYLwGATet8R3tOJ", "id")}>
+                      {copiedField === "id" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Due date</span>
                 <span className="text-sm">{formatDate(invoice.dueDate)}</span>
@@ -582,19 +599,21 @@ export default function InvoiceDetailPage() {
                 <span className="text-sm text-muted-foreground">Created</span>
                 <span className="text-sm">{formatDate(invoice.createdDate)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Invoice link</span>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(customerViewUrl, "invoice-link")}>
-                    {copiedField === "invoice-link" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                  </Button>
-                  <Link href={`/invoice-view/${invoice.id}`} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="sm">
-                      <ExternalLink className="h-3 w-3" />
+              {!invoice.archived && invoice.status !== "draft" && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Invoice link</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(customerViewUrl, "invoice-link")}>
+                      {copiedField === "invoice-link" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
                     </Button>
-                  </Link>
+                    <Link href={`/invoice-view/${invoice.id}`} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="sm">
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

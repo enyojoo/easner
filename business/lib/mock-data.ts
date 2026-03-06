@@ -217,37 +217,6 @@ export interface PendingItem {
   href?: string
 }
 
-export interface PaymentLink {
-  id: string
-  amount: number
-  currency: string
-  description: string
-  status: "active" | "expired" | "paid"
-  url: string
-  createdAt: string
-}
-
-export const mockPaymentLinks: PaymentLink[] = [
-  {
-    id: "pl_1",
-    amount: 150,
-    currency: "USD",
-    description: "Consulting fee",
-    status: "active",
-    url: "https://app.easner.com/pay/pl_1",
-    createdAt: "2025-03-01T10:00:00",
-  },
-  {
-    id: "pl_2",
-    amount: 500,
-    currency: "EUR",
-    description: "Invoice #INV-002",
-    status: "paid",
-    url: "https://app.easner.com/pay/pl_2",
-    createdAt: "2025-02-28T14:30:00",
-  },
-]
-
 export interface InvoiceLineItem {
   description: string
   quantity: number
@@ -280,6 +249,8 @@ export interface Invoice {
   statusHistory?: { status: string; timestamp: string }[]
   /** When true, invoice is hidden from main list (archived) */
   archived?: boolean
+  /** Note to customer (e.g. payment terms, thank you message) */
+  memo?: string
 }
 
 export interface Customer {
@@ -365,6 +336,10 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2024-12-10",
     frequency: null,
     lineItems: [{ description: "Donation", quantity: 1, unitPrice: 500.0, amount: 500.0 }],
+    billToType: "company",
+    customerCompany: "Ward Enterprises",
+    customerAddress: "123 Main St, New York, NY 10001",
+    customerPhone: "+1 (555) 123-4567",
   },
   {
     id: "2",
@@ -379,6 +354,8 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2024-12-10",
     frequency: null,
     lineItems: [{ description: "Service Fee", quantity: 1, unitPrice: 500.0, amount: 500.0 }],
+    customerAddress: "456 Business Ave, Los Angeles, CA 90210",
+    customerPhone: "+1 (555) 987-6543",
   },
   {
     id: "3",
@@ -463,6 +440,10 @@ export const mockInvoices: Invoice[] = [
     finalizedDate: "2025-03-01",
     frequency: null,
     lineItems: [{ description: "Software License", quantity: 1, unitPrice: 2500.0, amount: 2500.0 }],
+    billToType: "company",
+    customerCompany: "TechCorp Solutions",
+    customerAddress: "789 Tech Blvd, San Francisco, CA 94105",
+    customerPhone: "+1 (555) 456-7890",
   },
   {
     id: "9",

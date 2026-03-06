@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { mockAccounts, currencyRates, currencySymbols } from "@/lib/mock-data"
-import { ArrowRightLeft } from "lucide-react"
+import { Repeat } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -50,7 +50,7 @@ export function FXConvertDialog({ account }: FXConvertDialogProps) {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <ArrowRightLeft className="h-4 w-4" />
+          <Repeat className="h-4 w-4" />
           Convert
         </Button>
       </DialogTrigger>

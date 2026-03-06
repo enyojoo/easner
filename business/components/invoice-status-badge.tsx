@@ -11,6 +11,7 @@ const statusConfig: Record<
   paid: { label: "Paid", variant: "default" },
   void: { label: "Void", variant: "secondary" },
   failed: { label: "Failed", variant: "destructive" },
+  archived: { label: "Archived", variant: "secondary" },
 }
 
 export function InvoiceStatusBadge({ status }: { status: string }) {

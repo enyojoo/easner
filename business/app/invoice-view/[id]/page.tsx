@@ -174,6 +174,13 @@ export default function InvoiceViewPage() {
             </div>
           </div>
 
+          {invoice.memo?.trim() && (
+            <div className="mb-6 p-4 rounded-lg bg-muted/50 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Memo</p>
+              <p className="text-sm whitespace-pre-wrap">{invoice.memo}</p>
+            </div>
+          )}
+
           {/* Line items - card layout on mobile, table on desktop */}
           <div className="mb-6">
             {/* Mobile: card layout */}

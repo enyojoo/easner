@@ -30,7 +30,7 @@ const statusLabels: Record<string, string> = {
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    paddingBottom: 55,
+    paddingBottom: 40,
     fontSize: 10,
     fontFamily: "Helvetica",
   },
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     flexDirection: "row",
-    marginBottom: 32,
+    marginBottom: 16,
     gap: 24,
   },
   gridCol: {
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   table: {
-    marginBottom: 24,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e5e7eb",
     borderRadius: 4,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   totalRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 24,
+    marginBottom: 12,
   },
   totalBox: {
     alignItems: "flex-end",
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   paymentSection: {
-    marginTop: 24,
-    paddingTop: 24,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: "absolute",
-    bottom: 30,
+    bottom: 12,
     left: 40,
     right: 40,
     flexDirection: "row",
@@ -376,6 +376,15 @@ export function InvoicePDFDocument({
             </Text>
           </View>
         </View>
+
+        {invoice.memo?.trim() ? (
+          <View style={[styles.grid, { marginBottom: 16 }]}>
+            <View style={styles.gridCol}>
+              <Text style={styles.sectionTitle}>Memo</Text>
+              <Text style={styles.sectionText}>{invoice.memo}</Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* Line items table */}
         <View style={styles.table}>

@@ -137,6 +137,7 @@ export default function CreateInvoicePage() {
 
   // Select customer
   const selectCustomer = (customer: (typeof mockCustomers)[0]) => {
+    const hasCompany = !!customer.company?.trim()
     setFormData(prev => ({
       ...prev,
       customerId: customer.id,
@@ -145,6 +146,7 @@ export default function CreateInvoicePage() {
       customerCompany: customer.company || "",
       customerAddress: customer.address || "",
       customerPhone: customer.phone || "",
+      billToType: hasCompany ? "company" : "individual",
     }))
     setIsCustomerDialogOpen(false)
   }
@@ -173,6 +175,7 @@ export default function CreateInvoicePage() {
       customerAddress: formData.customerAddress || undefined,
       customerPhone: formData.customerPhone || undefined,
       customerCompany: formData.billToType === "company" ? (formData.customerCompany || undefined) : undefined,
+      memo: formData.memo?.trim() || undefined,
     }
     if (isEditMode && invoiceToEdit) {
       return {
@@ -216,11 +219,11 @@ export default function CreateInvoicePage() {
     }
   }
 
-  // Load invoice when editing
+  // Load invoice when editing (including duplicated invoices)
   useEffect(() => {
     if (invoiceToEdit) {
       setFormData({
-        customerId: "",
+        customerId: mockCustomers.find((c) => c.email === invoiceToEdit.customerEmail)?.id ?? "invoice",
         billToType: (invoiceToEdit.billToType as "individual" | "company") || "individual",
         customerName: invoiceToEdit.customerName,
         customerEmail: invoiceToEdit.customerEmail,
@@ -229,7 +232,7 @@ export default function CreateInvoicePage() {
         customerPhone: invoiceToEdit.customerPhone || "",
         currency: invoiceToEdit.currency,
         dueDate: invoiceToEdit.dueDate,
-        memo: "",
+        memo: invoiceToEdit.memo || "",
         lineItems: invoiceToEdit.lineItems.map((item, i) => ({
           id: (i + 1).toString(),
           description: item.description,
@@ -239,7 +242,7 @@ export default function CreateInvoicePage() {
         })),
       })
     }
-  }, [editId])
+  }, [editId, invoiceToEdit])
 
   // Set default due date (30 days from now) - only when creating
   useEffect(() => {
