@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Unbounded } from "next/font/google"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { PostHogProvider } from "@/components/posthog-provider"
 import "./globals.css"
 
 const unbounded = Unbounded({
@@ -59,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`${unbounded.variable} ${GeistSans.variable} ${GeistMono.variable} font-sans`} suppressHydrationWarning>
-        {children}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   )
