@@ -10,8 +10,6 @@ import {
   ArrowLeft, 
   Plus, 
   Trash2, 
-  Save, 
-  FileCheck,
   Search,
   Calendar as CalendarIcon,
   DollarSign,
@@ -48,6 +46,7 @@ import { useInvoices } from "@/lib/invoices-context"
 import { useCustomers } from "@/lib/customers-context"
 import { generateInvoiceId } from "@/lib/invoice-id"
 import type { Invoice } from "@/lib/mock-data"
+import { AddEditCustomerDialog } from "@/components/add-edit-customer-dialog"
 
 interface LineItem {
   id: string
@@ -77,7 +76,7 @@ export default function CreateInvoicePage() {
   const searchParams = useSearchParams()
   const editId = searchParams.get("edit")
   const { invoices, addInvoice, updateInvoice } = useInvoices()
-  const { customers } = useCustomers()
+  const { customers, addCustomer } = useCustomers()
   const invoiceToEdit = editId ? invoices.find((i) => i.id === editId) : null
   const isEditMode = !!invoiceToEdit
 
@@ -97,6 +96,7 @@ export default function CreateInvoicePage() {
   })
 
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false)
+  const [isAddCustomerDialogOpen, setIsAddCustomerDialogOpen] = useState(false)
   const [customerSearchTerm, setCustomerSearchTerm] = useState("")
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
@@ -326,10 +326,16 @@ export default function CreateInvoicePage() {
                   </Button>
                 </div>
               ) : (
-                <Button variant="outline" className="w-full" onClick={() => setIsCustomerDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Select Customer
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setIsAddCustomerDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add new customer
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => setIsCustomerDialogOpen(true)}>
+                    <User className="h-4 w-4 mr-2" />
+                    Select existing customer
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -472,11 +478,9 @@ export default function CreateInvoicePage() {
           {/* Action buttons - above Invoice Summary */}
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
               Save as Draft
             </Button>
             <Button className="flex-1" onClick={handleSendInvoice}>
-              <FileCheck className="h-4 w-4 mr-2" />
               {isEditMode ? "Save Changes" : "Create Invoice"}
             </Button>
           </div>
@@ -573,6 +577,16 @@ export default function CreateInvoicePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AddEditCustomerDialog
+        open={isAddCustomerDialogOpen}
+        onOpenChange={setIsAddCustomerDialogOpen}
+        onSave={(c) => {
+          addCustomer(c)
+          selectCustomer(c)
+          setIsAddCustomerDialogOpen(false)
+        }}
+      />
     </div>
   )
 }

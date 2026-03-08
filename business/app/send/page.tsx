@@ -451,7 +451,7 @@ export default function SendPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">From Another Currency</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Through Another Currency</p>
                 {!otherCurrency ? (
                   <div className="space-y-1">
                     <button
