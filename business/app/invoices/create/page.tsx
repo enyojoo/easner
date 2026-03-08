@@ -66,7 +66,6 @@ interface InvoiceForm {
   customerPhone: string
   currency: string
   dueDate: string
-  memo: string
   taxRate: number
   lineItems: LineItem[]
 }
@@ -90,7 +89,6 @@ export default function CreateInvoicePage() {
     customerPhone: "",
     currency: "USD",
     dueDate: "",
-    memo: "",
     taxRate: 0,
     lineItems: [{ id: "1", description: "", quantity: 1, unitPrice: 0, amount: 0 }]
   })
@@ -195,7 +193,6 @@ export default function CreateInvoicePage() {
       customerAddress: formData.customerAddress || undefined,
       customerPhone: formData.customerPhone || undefined,
       customerCompany: formData.billToType === "company" ? (formData.customerCompany || undefined) : undefined,
-      memo: formData.memo?.trim() || undefined,
     }
     if (isEditMode && invoiceToEdit) {
       return {
@@ -253,7 +250,6 @@ export default function CreateInvoicePage() {
         customerPhone: invoiceToEdit.customerPhone || "",
         currency: invoiceToEdit.currency,
         dueDate: invoiceToEdit.dueDate,
-        memo: invoiceToEdit.memo || "",
         taxRate: invoiceToEdit.taxRate ?? 0,
         lineItems: invoiceToEdit.lineItems.map((item, i) => ({
           id: (i + 1).toString(),
@@ -391,15 +387,6 @@ export default function CreateInvoicePage() {
                     </PopoverContent>
                   </Popover>
                 </div>
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="memo">Memo</Label>
-                <Input
-                  id="memo"
-                  placeholder="Add a note to your customer"
-                  value={formData.memo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, memo: e.target.value }))}
-                />
               </div>
             </CardContent>
           </Card>

@@ -699,17 +699,6 @@ export default function InvoiceDetailPage() {
               <CardTitle className="text-base">Invoice details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!invoice.archived && invoice.status !== "draft" && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">ID</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono">in_1QUWaMCWrIYLwGATet8R3tOJ</span>
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard("in_1QUWaMCWrIYLwGATet8R3tOJ", "id")}>
-                      {copiedField === "id" ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                    </Button>
-                  </div>
-                </div>
-              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Due date</span>
                 <span className="text-sm">{formatDate(invoice.dueDate)}</span>
