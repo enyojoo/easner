@@ -45,7 +45,12 @@ export function PublicHeader() {
                 <DropdownMenuContent
                   align="start"
                   sideOffset={4}
-                  className="w-[min(28rem,90vw)] p-2 rounded-xl border border-gray-200 shadow-xl"
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                  className={
+                    section.items.length > 3
+                      ? "w-[min(28rem,90vw)] p-2 rounded-xl border border-gray-200 shadow-xl"
+                      : "w-[min(14rem,45vw)] p-2 rounded-xl border border-gray-200 shadow-xl"
+                  }
                 >
                   <div
                     className={

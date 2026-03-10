@@ -145,6 +145,11 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  /* Radix programmatic focus can trigger focus-visible; strip ring/outline when not keyboard */
+  *:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 @keyframes trusted-by-scroll {
