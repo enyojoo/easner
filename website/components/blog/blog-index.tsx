@@ -89,10 +89,10 @@ export function BlogIndex(props: BlogIndexProps) {
             <div className="w-[11rem] flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium">
-                <span className="truncate">
+                <span className="truncate min-w-0 flex-1">
                   {isAllView(props) ? "All" : tabTopics.find((t) => t.slug === props.topicFilter)?.name ?? props.topicHeading}
                 </span>
-                <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                <ChevronDown className="h-4 w-4 flex-shrink-0 ml-auto text-gray-400" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[11rem] min-w-[11rem]">
                 <DropdownMenuItem asChild>
