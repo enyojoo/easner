@@ -256,23 +256,25 @@ export default function NewBlogPostPage() {
                   required
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  checked={featured}
-                  onChange={(e) => setFeatured(e.target.checked)}
-                />
-                <Label htmlFor="featured">Featured</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="publish"
-                  checked={publish}
-                  onChange={(e) => setPublish(e.target.checked)}
-                />
-                <Label htmlFor="publish">Publish immediately</Label>
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    checked={featured}
+                    onChange={(e) => setFeatured(e.target.checked)}
+                  />
+                  <Label htmlFor="featured">Featured</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="publish"
+                    checked={publish}
+                    onChange={(e) => setPublish(e.target.checked)}
+                  />
+                  <Label htmlFor="publish">Publish immediately</Label>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={saving}>

@@ -86,8 +86,9 @@ export function BlogIndex(props: BlogIndexProps) {
         <div className="mb-10 sm:mb-12 md:mb-16">
           {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) */}
           <div className="flex items-center justify-between gap-4 lg:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium min-w-[12rem] flex-1 max-w-[70%]">
+            <div className="flex-1 min-w-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium">
                 <span className="truncate">
                   {isAllView(props) ? "All" : tabTopics.find((t) => t.slug === props.topicFilter)?.name ?? props.topicHeading}
                 </span>
@@ -108,6 +109,7 @@ export function BlogIndex(props: BlogIndexProps) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setSearchOpen(true)}
