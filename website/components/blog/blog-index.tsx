@@ -71,17 +71,17 @@ export function BlogIndex(props: BlogIndexProps) {
             <br />
             future of banking
           </h1>
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 max-w-2xl">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 md:whitespace-nowrap md:max-w-none max-w-2xl">
             The latest updates on Easner, the world of stablecoins and finance.
           </p>
         </section>
 
-        {/* Toolbar: tabs (left) + search + RSS (right) */}
-        <div className="grid grid-cols-[1fr_auto] items-center gap-4 mb-10 sm:mb-12 md:mb-16">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 -ml-4 pl-4 pr-2 min-w-0">
+        {/* Toolbar: tabs (left) + search + RSS (right); stacks on mobile for full-width tab scroll */}
+        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[1fr_auto] sm:items-center mb-10 sm:mb-12 md:mb-16">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:ml-0 sm:-ml-4 sm:pl-4 sm:pr-2 min-w-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <Link
               href="/blog"
-              className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
+              className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 touch-manipulation ${
                 isAllView(props)
                   ? "bg-easner-primary text-white shadow-sm"
                   : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
@@ -93,7 +93,7 @@ export function BlogIndex(props: BlogIndexProps) {
               <Link
                 key={t.slug}
                 href={`/blog?topic=${t.slug}`}
-                className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
+                className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 touch-manipulation ${
                   !isAllView(props) && props.topicFilter === t.slug
                     ? "bg-easner-primary text-white shadow-sm"
                     : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
@@ -103,7 +103,7 @@ export function BlogIndex(props: BlogIndexProps) {
               </Link>
             ))}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 sm:justify-end">
             <button
               onClick={() => setSearchOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm"
