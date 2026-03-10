@@ -86,7 +86,7 @@ export function BlogIndex(props: BlogIndexProps) {
         <div className="mb-10 sm:mb-12 md:mb-16">
           {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) */}
           <div className="flex items-center justify-between gap-4 lg:hidden">
-            <div className="min-w-0 max-w-[12rem]">
+            <div className="w-[11rem] flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium">
                 <span className="truncate">
