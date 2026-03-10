@@ -81,10 +81,10 @@ export function BlogIndex(props: BlogIndexProps) {
           <div className="flex items-center gap-2 overflow-x-auto pb-2 -ml-4 pl-4 pr-2 min-w-0">
             <Link
               href="/blog"
-              className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+              className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
                 isAllView(props)
-                  ? "ring-2 ring-gray-900 text-gray-900"
-                  : "text-gray-500 hover:text-gray-900"
+                  ? "bg-easner-primary text-white shadow-sm"
+                  : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
               }`}
             >
               All
@@ -93,10 +93,10 @@ export function BlogIndex(props: BlogIndexProps) {
               <Link
                 key={t.slug}
                 href={`/blog?topic=${t.slug}`}
-                className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
                   !isAllView(props) && props.topicFilter === t.slug
-                    ? "ring-2 ring-gray-900 text-gray-900"
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-easner-primary text-white shadow-sm"
+                    : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
                 }`}
               >
                 {t.name}
@@ -106,7 +106,7 @@ export function BlogIndex(props: BlogIndexProps) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm"
             >
               <Search className="h-4 w-4" />
               <span>Search...</span>
@@ -116,7 +116,7 @@ export function BlogIndex(props: BlogIndexProps) {
             </button>
             <Link
               href="/blog/feed"
-              className="p-2 text-gray-500 hover:text-gray-900 transition-colors"
+              className="p-2 text-gray-600 hover:text-easner-primary transition-colors duration-200 rounded-lg hover:bg-easner-primary-50"
               aria-label="RSS feed"
             >
               <Rss className="h-5 w-5" />

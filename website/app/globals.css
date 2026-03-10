@@ -1,93 +1,140 @@
-/* Easner Brand Standards - Website */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Easner Brand Standards - Website
+ * Based on business UI stack (Tailwind v4, @theme inline)
+ * Primary: #007ACC | Unbounded + easner-primary scale: website-only
+ */
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 207 100% 40%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-    --font-unbounded: "Unbounded", sans-serif;
-    --easner-primary: 207 100% 40%;
-    --easner-primary-50: 207 100% 97%;
-    --easner-primary-100: 207 100% 92%;
-    --easner-primary-200: 207 100% 84%;
-    --easner-primary-300: 207 100% 72%;
-    --easner-primary-400: 207 100% 56%;
-    --easner-primary-500: 207 100% 40%;
-    --easner-primary-600: 207 100% 32%;
-    --easner-primary-700: 207 100% 24%;
-    --easner-primary-800: 207 100% 16%;
-    --easner-primary-900: 207 100% 8%;
-  }
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@source "../../packages/shared/src/**/*.{js,ts,jsx,tsx,mdx}";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Business-style base tokens (oklch, #007ACC) */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: #007acc;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.93 0 0);
+  --input: oklch(0.93 0 0);
+  --ring: #007acc;
+  --radius: 0.5rem;
+
+  /* Website-only: Unbounded + easner-primary scale (HSL) */
+  --font-unbounded: "Unbounded", sans-serif;
+  --easner-primary: 207 100% 40%;
+  --easner-primary-50: 207 100% 97%;
+  --easner-primary-100: 207 100% 92%;
+  --easner-primary-200: 207 100% 84%;
+  --easner-primary-300: 207 100% 72%;
+  --easner-primary-400: 207 100% 56%;
+  --easner-primary-500: 207 100% 40%;
+  --easner-primary-600: 207 100% 32%;
+  --easner-primary-700: 207 100% 24%;
+  --easner-primary-800: 207 100% 16%;
+  --easner-primary-900: 207 100% 8%;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: #007acc;
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-unbounded: var(--font-unbounded);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-easner-primary: hsl(var(--easner-primary));
+  --color-easner-primary-50: hsl(var(--easner-primary-50));
+  --color-easner-primary-100: hsl(var(--easner-primary-100));
+  --color-easner-primary-200: hsl(var(--easner-primary-200));
+  --color-easner-primary-300: hsl(var(--easner-primary-300));
+  --color-easner-primary-400: hsl(var(--easner-primary-400));
+  --color-easner-primary-500: hsl(var(--easner-primary-500));
+  --color-easner-primary-600: hsl(var(--easner-primary-600));
+  --color-easner-primary-700: hsl(var(--easner-primary-700));
+  --color-easner-primary-800: hsl(var(--easner-primary-800));
+  --color-easner-primary-900: hsl(var(--easner-primary-900));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+
   html {
     scroll-behavior: smooth;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   input[type="text"],
   input[type="email"],
   input[type="number"],
   input[type="tel"],
   input[type="password"],
   textarea {
-    caret-color: hsl(var(--foreground));
+    caret-color: var(--foreground);
   }
+
   input:focus,
   textarea:focus {
-    caret-color: hsl(var(--easner-primary));
-  }
-}
-
-@layer utilities {
-  .bg-easner-primary {
-    background-color: hsl(var(--easner-primary));
-  }
-  .bg-easner-primary-50 {
-    background-color: hsl(var(--easner-primary-50));
-  }
-  .bg-easner-primary-100 {
-    background-color: hsl(var(--easner-primary-100));
-  }
-  .bg-easner-primary-600 {
-    background-color: hsl(var(--easner-primary-600));
-  }
-  .text-easner-primary {
-    color: hsl(var(--easner-primary));
-  }
-  .text-easner-primary-600 {
-    color: hsl(var(--easner-primary-600));
-  }
-  .border-easner-primary {
-    border-color: hsl(var(--easner-primary));
-  }
-  .font-unbounded {
-    font-family: var(--font-unbounded);
+    caret-color: var(--primary);
   }
 }
 
@@ -99,4 +146,3 @@
     transform: translateX(-50%);
   }
 }
-
