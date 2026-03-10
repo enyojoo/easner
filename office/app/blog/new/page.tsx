@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
+import { BLOG_TOPICS } from "@easner/shared"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -17,23 +18,17 @@ interface Author {
   slug: string
 }
 
-interface Topic {
-  id: string
-  name: string
-  slug: string
-}
-
 export default function NewBlogPostPage() {
   const router = useRouter()
   const [authors, setAuthors] = useState<Author[]>([])
-  const [topics, setTopics] = useState<Topic[]>([])
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
   const [body, setBody] = useState("")
   const [coverImageUrl, setCoverImageUrl] = useState("")
   const [authorId, setAuthorId] = useState("")
-  const [topicId, setTopicId] = useState("")
+  const [topicSlug, setTopicSlug] = useState("")
+  const [featured, setFeatured] = useState(false)
   const [publish, setPublish] = useState(false)
   const [saving, setSaving] = useState(false)
   const [newAuthorName, setNewAuthorName] = useState("")
@@ -41,7 +36,6 @@ export default function NewBlogPostPage() {
 
   useEffect(() => {
     loadAuthors()
-    loadTopics()
   }, [])
 
   useEffect(() => {
@@ -60,9 +54,19 @@ export default function NewBlogPostPage() {
     setAuthors((data || []) as Author[])
   }
 
-  async function loadTopics() {
-    const { data } = await supabase.from("blog_topics").select("id, name, slug").order("sort_order")
-    setTopics((data || []) as Topic[])
+  async function upsertTopicBySlug(slug: string): Promise<string | null> {
+    const topicConfig = BLOG_TOPICS.find((t) => t.slug === slug)
+    if (!topicConfig) return null
+    const { data: existing } = await supabase.from("blog_topics").select("id").eq("slug", slug).single()
+    if (existing) return existing.id
+    const sortOrder = BLOG_TOPICS.findIndex((t) => t.slug === slug)
+    const { data: inserted, error } = await supabase
+      .from("blog_topics")
+      .insert({ slug, name: topicConfig.name, sort_order: sortOrder >= 0 ? sortOrder : 0 })
+      .select("id")
+      .single()
+    if (error || !inserted) return null
+    return inserted.id
   }
 
   async function addAuthor() {
@@ -93,6 +97,10 @@ export default function NewBlogPostPage() {
       return
     }
     setSaving(true)
+    let topicId: string | null = null
+    if (topicSlug) {
+      topicId = await upsertTopicBySlug(topicSlug)
+    }
     const { error } = await supabase.from("blog_posts").insert({
       title,
       slug,
@@ -100,7 +108,8 @@ export default function NewBlogPostPage() {
       body,
       cover_image_url: coverImageUrl || null,
       author_id: authorId,
-      topic_id: topicId || null,
+      topic_id: topicId,
+      featured,
       published_at: publish ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     })
@@ -196,13 +205,13 @@ export default function NewBlogPostPage() {
                 <Label htmlFor="topic">Topic</Label>
                 <select
                   id="topic"
-                  value={topicId}
-                  onChange={(e) => setTopicId(e.target.value)}
+                  value={topicSlug}
+                  onChange={(e) => setTopicSlug(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
                 >
                   <option value="">No topic</option>
-                  {topics.map((t) => (
-                    <option key={t.id} value={t.id}>
+                  {BLOG_TOPICS.map((t) => (
+                    <option key={t.slug} value={t.slug}>
                       {t.name}
                     </option>
                   ))}
@@ -217,6 +226,9 @@ export default function NewBlogPostPage() {
                   placeholder="https://..."
                   className="mt-1"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Min 1200 × 630 pixels recommended for optimal display on social media when shared.
+                </p>
               </div>
               <div>
                 <Label htmlFor="body">Body (HTML) *</Label>
@@ -228,6 +240,15 @@ export default function NewBlogPostPage() {
                   className="flex min-h-[300px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
                   required
                 />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={featured}
+                  onChange={(e) => setFeatured(e.target.checked)}
+                />
+                <Label htmlFor="featured">Featured</Label>
               </div>
               <div className="flex items-center gap-2">
                 <input

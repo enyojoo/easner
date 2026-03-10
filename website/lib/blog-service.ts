@@ -28,6 +28,7 @@ export interface BlogPost {
   cover_image_url: string | null
   author_id: string
   topic_id: string | null
+  featured?: boolean
   published_at: string | null
   created_at: string
   updated_at: string
@@ -49,6 +50,7 @@ export async function getPublishedPosts(options?: {
     `)
     .not("published_at", "is", null)
     .lte("published_at", new Date().toISOString())
+    .order("featured", { ascending: false })
     .order("published_at", { ascending: false })
 
   if (options?.topicSlug) {
@@ -57,9 +59,8 @@ export async function getPublishedPosts(options?: {
       .select("id")
       .eq("slug", options.topicSlug)
       .single()
-    if (topic) {
-      query = query.eq("topic_id", topic.id)
-    }
+    if (!topic) return []
+    query = query.eq("topic_id", topic.id)
   }
 
   if (options?.limit !== undefined) {
