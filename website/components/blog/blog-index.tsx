@@ -83,10 +83,10 @@ export function BlogIndex(props: BlogIndexProps) {
         </section>
 
         {/* Toolbar: mobile/tablet = dropdown + icons | desktop = tabs + search button + RSS */}
-        <div className="mb-10 sm:mb-12 md:mb-16 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-          {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) - full width to match frame */}
+        <div className="mb-10 sm:mb-12 md:mb-16">
+          {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) */}
           <div className="flex items-center justify-between gap-4 lg:hidden">
-            <div className="flex-1 min-w-0 w-full">
+            <div className="min-w-0 max-w-[12rem]">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium">
                 <span className="truncate">
