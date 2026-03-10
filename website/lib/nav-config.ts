@@ -7,6 +7,7 @@ import {
   Landmark,
   Receipt,
   Coins,
+  Code,
   ShoppingCart,
   Briefcase,
   HardHat,
@@ -42,6 +43,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Business Banking", href: "/business-banking", icon: Landmark },
       { label: "Invoicing", href: "/invoicing", icon: Receipt },
       { label: "Stablecoin Payments", href: "/stablecoin", icon: Coins },
+      { label: "APIs", href: "/apis", icon: Code },
     ],
   },
   {
