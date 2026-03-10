@@ -24,17 +24,17 @@ export function BlogPostRow({ post }: BlogPostRowProps) {
       className="group flex gap-3 sm:gap-4 rounded-xl border border-gray-200 overflow-hidden hover:border-easner-primary/50 hover:shadow-lg transition-all duration-200"
     >
       {post.cover_image_url ? (
-        <div className="relative w-20 sm:w-24 md:w-32 flex-shrink-0 aspect-video bg-gray-100 rounded-l-xl overflow-hidden">
+        <div className="relative w-24 sm:w-28 md:w-36 lg:w-40 flex-shrink-0 aspect-video bg-gray-100 rounded-l-xl overflow-hidden">
           <Image
             src={post.cover_image_url}
             alt={post.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-200"
-            sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 128px"
+            sizes="(max-width: 640px) 96px, (max-width: 768px) 112px, (max-width: 1024px) 144px, 160px"
           />
         </div>
       ) : (
-        <div className="w-20 sm:w-24 md:w-32 flex-shrink-0 aspect-video bg-gray-100 rounded-l-xl" />
+        <div className="w-24 sm:w-28 md:w-36 lg:w-40 flex-shrink-0 aspect-video bg-gray-100 rounded-l-xl" />
       )}
       <div className="flex-1 min-w-0 py-2 sm:py-3 pr-3 sm:pr-4 flex flex-col justify-center">
         <p className="text-xs sm:text-sm text-gray-500 mb-0.5 sm:mb-1">

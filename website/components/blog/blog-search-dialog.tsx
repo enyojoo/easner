@@ -93,7 +93,14 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
           <h2 id="search-dialog-title" className="text-lg font-semibold text-gray-900">
             What are you searching for?
           </h2>
-          <span className="text-xs text-gray-500">Esc</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Close search"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

@@ -26,42 +26,44 @@ export function BlogFeaturedBlock({ posts }: BlogFeaturedBlockProps) {
 
   return (
     <section className="mb-12 sm:mb-16 md:mb-24">
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-        {/* Large featured post - ~2/3 width */}
-        <Link
-          href={`/blog/${largePost.slug}`}
-          className="lg:col-span-2 group block rounded-xl border border-gray-200 overflow-hidden hover:border-easner-primary/50 hover:shadow-lg transition-all duration-200"
-        >
-          {largePost.cover_image_url && (
-            <div className="aspect-video relative bg-gray-100">
-              <Image
-                src={largePost.cover_image_url}
-                alt={largePost.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-                sizes="(max-width: 1024px) 100vw, 66vw"
-                priority
-              />
+      <div className="grid lg:grid-cols-[1.5fr_1fr] gap-6 sm:gap-8 lg:gap-10">
+        {/* Large featured post - left column, reduced size with spacing */}
+        <div className="flex flex-col justify-center">
+          <Link
+            href={`/blog/${largePost.slug}`}
+            className="group block rounded-xl border border-gray-200 overflow-hidden hover:border-easner-primary/50 hover:shadow-lg transition-all duration-200"
+          >
+            {largePost.cover_image_url && (
+              <div className="aspect-video relative bg-gray-100">
+                <Image
+                  src={largePost.cover_image_url}
+                  alt={largePost.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  priority
+                />
+              </div>
+            )}
+            <div className="p-4 sm:p-5 md:p-6">
+              <p className="text-xs sm:text-sm text-gray-500 mb-1 sm:mb-2">
+                {author && <span>{author.name}</span>}
+                {author && publishedDate && <span> · </span>}
+                {publishedDate && (
+                  <time dateTime={largePost.published_at || undefined}>
+                    {publishedDate}
+                  </time>
+                )}
+              </p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 font-unbounded group-hover:text-easner-primary transition-colors line-clamp-2">
+                {largePost.title}
+              </h2>
             </div>
-          )}
-          <div className="p-4 sm:p-6">
-            <p className="text-xs sm:text-sm text-gray-500 mb-1 sm:mb-2">
-              {author && <span>{author.name}</span>}
-              {author && publishedDate && <span> · </span>}
-              {publishedDate && (
-                <time dateTime={largePost.published_at || undefined}>
-                  {publishedDate}
-                </time>
-              )}
-            </p>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 font-unbounded group-hover:text-easner-primary transition-colors line-clamp-2">
-              {largePost.title}
-            </h2>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
-        {/* Small posts - ~1/3 width */}
-        <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Small posts - right column, gaps between each */}
+        <div className="flex flex-col gap-4 sm:gap-5 lg:gap-6">
           {displaySmall.map((post) => (
             <BlogPostRow key={post.id} post={post} />
           ))}

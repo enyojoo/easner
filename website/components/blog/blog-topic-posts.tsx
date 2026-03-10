@@ -30,7 +30,7 @@ export function BlogTopicPosts({ topicSlug, initialPosts }: BlogTopicPostsProps)
 
   return (
     <div className="mb-12 sm:mb-16 md:mb-24">
-      <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
+      <div className="grid sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
         {posts.map((post) => (
           <BlogPostRow key={post.id} post={post} />
         ))}

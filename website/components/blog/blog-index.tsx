@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Search, Rss } from "lucide-react"
+import { Search, Rss, ChevronDown } from "lucide-react"
 import { BLOG_TOPICS } from "@easner/shared"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { BlogFeaturedBlock } from "./blog-featured-block"
 import { BlogTopicSection } from "./blog-topic-section"
 import { BlogTopicPosts } from "./blog-topic-posts"
@@ -76,51 +82,94 @@ export function BlogIndex(props: BlogIndexProps) {
           </p>
         </section>
 
-        {/* Toolbar: tabs (left) + search + RSS (right); stacks on mobile for full-width tab scroll */}
-        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[1fr_auto] sm:items-center mb-10 sm:mb-12 md:mb-16">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:ml-0 sm:-ml-4 sm:pl-4 sm:pr-2 min-w-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <Link
-              href="/blog"
-              className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 touch-manipulation ${
-                isAllView(props)
-                  ? "bg-easner-primary text-white shadow-sm"
-                  : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
-              }`}
-            >
-              All
-            </Link>
-            {tabTopics.map((t) => (
+        {/* Toolbar: mobile/tablet = dropdown + icons | desktop = tabs + search button + RSS */}
+        <div className="mb-10 sm:mb-12 md:mb-16">
+          {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) */}
+          <div className="flex items-center justify-between gap-4 lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium min-w-0 max-w-[60%]">
+                <span className="truncate">
+                  {isAllView(props) ? "All" : tabTopics.find((t) => t.slug === props.topicFilter)?.name ?? props.topicHeading}
+                </span>
+                <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[12rem]">
+                <DropdownMenuItem asChild>
+                  <Link href="/blog" className="cursor-pointer">
+                    All
+                  </Link>
+                </DropdownMenuItem>
+                {tabTopics.map((t) => (
+                  <DropdownMenuItem key={t.slug} asChild>
+                    <Link href={`/blog?topic=${t.slug}`} className="cursor-pointer">
+                      {t.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="p-2.5 text-gray-600 hover:text-easner-primary transition-colors duration-200 rounded-lg hover:bg-easner-primary-50"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5" />
+              </button>
               <Link
-                key={t.slug}
-                href={`/blog?topic=${t.slug}`}
-                className={`px-3 sm:px-4 py-2.5 sm:py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 touch-manipulation ${
-                  !isAllView(props) && props.topicFilter === t.slug
+                href="/blog/feed"
+                className="p-2.5 text-gray-600 hover:text-easner-primary transition-colors duration-200 rounded-lg hover:bg-easner-primary-50"
+                aria-label="RSS feed"
+              >
+                <Rss className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Desktop: tabs + search button + RSS */}
+          <div className="hidden lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 -ml-4 pl-4 pr-2 min-w-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <Link
+                href="/blog"
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
+                  isAllView(props)
                     ? "bg-easner-primary text-white shadow-sm"
                     : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
                 }`}
               >
-                {t.name}
+                All
               </Link>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 sm:justify-end">
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm"
-            >
-              <Search className="h-4 w-4" />
-              <span>Search...</span>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs bg-gray-100 rounded">
-                ⌘K
-              </kbd>
-            </button>
-            <Link
-              href="/blog/feed"
-              className="p-2 text-gray-600 hover:text-easner-primary transition-colors duration-200 rounded-lg hover:bg-easner-primary-50"
-              aria-label="RSS feed"
-            >
-              <Rss className="h-5 w-5" />
-            </Link>
+              {tabTopics.map((t) => (
+                <Link
+                  key={t.slug}
+                  href={`/blog?topic=${t.slug}`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors duration-200 ${
+                    !isAllView(props) && props.topicFilter === t.slug
+                      ? "bg-easner-primary text-white shadow-sm"
+                      : "text-gray-600 hover:text-easner-primary hover:bg-easner-primary-50"
+                  }`}
+                >
+                  {t.name}
+                </Link>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm"
+              >
+                <Search className="h-4 w-4" />
+                <span>Search...</span>
+                <kbd className="px-1.5 py-0.5 text-xs bg-gray-100 rounded">⌘K</kbd>
+              </button>
+              <Link
+                href="/blog/feed"
+                className="p-2 text-gray-600 hover:text-easner-primary transition-colors duration-200 rounded-lg hover:bg-easner-primary-50"
+                aria-label="RSS feed"
+              >
+                <Rss className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
         </div>
 

@@ -21,10 +21,10 @@ export function BlogTopicSection({ topicName, topicSlug, posts }: BlogTopicSecti
           href={`/blog?topic=${topicSlug}`}
           className="text-sm font-medium text-easner-primary hover:text-easner-primary-600 transition-colors"
         >
-          See All Posts →
+          See All Posts &gt;
         </Link>
       </div>
-      <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+      <div className="grid sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
         {posts.map((post) => (
           <BlogPostRow key={post.id} post={post} />
         ))}
