@@ -61,7 +61,13 @@ export default async function BlogPage({
     }
   }
 
-  const topicsWithPosts = BLOG_TOPICS.filter((t) => (postsByTopic[t.slug]?.length ?? 0) > 0).map(
+  // Topics with at least one post (from all posts) - show alongside "All" in tabs
+  const topicSlugsWithPosts = new Set<string>()
+  for (const post of allPosts) {
+    const slug = post.topic?.slug
+    if (slug) topicSlugsWithPosts.add(slug)
+  }
+  const topicsWithPosts = BLOG_TOPICS.filter((t) => topicSlugsWithPosts.has(t.slug)).map(
     (t) => t.slug
   )
 
