@@ -29,8 +29,8 @@ export function BlogTopicPosts({ topicSlug, initialPosts }: BlogTopicPostsProps)
   }
 
   return (
-    <div className="mb-16 md:mb-24">
-      <div className="grid sm:grid-cols-2 gap-6 md:gap-8 mb-8">
+    <div className="mb-12 sm:mb-16 md:mb-24">
+      <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
         {posts.map((post) => (
           <BlogPostRow key={post.id} post={post} />
         ))}
@@ -40,7 +40,7 @@ export function BlogTopicPosts({ topicSlug, initialPosts }: BlogTopicPostsProps)
           <button
             onClick={loadMore}
             disabled={loading}
-            className="px-6 py-2.5 rounded-full border-2 border-gray-900 text-gray-900 font-medium hover:bg-gray-900 hover:text-white transition-colors disabled:opacity-50"
+            className="px-5 sm:px-6 py-2.5 rounded-full border-2 border-gray-900 text-gray-900 text-sm sm:text-base font-medium hover:bg-gray-900 hover:text-white transition-colors disabled:opacity-50"
           >
             {loading ? "Loading..." : "Show More"}
           </button>

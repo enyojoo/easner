@@ -20,8 +20,8 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
     : null
 
   return (
-    <article className="py-16 md:py-24">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <article className="py-12 sm:py-16 md:py-24">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 min-w-0">
         {topic && (
           <Link
             href={`/blog?topic=${topic.slug}`}
@@ -30,7 +30,7 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
             {topic.name}
           </Link>
         )}
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 font-unbounded mb-6">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900 font-unbounded mb-4 sm:mb-6">
           {post.title}
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-gray-500 mb-8">
@@ -70,13 +70,13 @@ export function BlogPostContent({ post }: BlogPostContentProps) {
         )}
 
         <div
-          className="prose prose-lg max-w-none prose-headings:font-unbounded prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-easner-primary prose-a:no-underline hover:prose-a:underline"
+          className="prose prose-sm sm:prose-base md:prose-lg max-w-none prose-headings:font-unbounded prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-easner-primary prose-a:no-underline hover:prose-a:underline prose-img:max-w-full prose-pre:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"
           dangerouslySetInnerHTML={{ __html: post.body }}
         />
 
         {author && author.bio && (
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <div className="flex items-start gap-4">
+          <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
               {author.avatar_url && (
                 <Image
                   src={author.avatar_url}

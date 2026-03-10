@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
-import { BLOG_TOPICS } from "@easner/shared"
+import { DEFAULT_BLOG_TOPICS } from "@/lib/blog-topics"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -21,6 +21,7 @@ interface Author {
 export default function NewBlogPostPage() {
   const router = useRouter()
   const [authors, setAuthors] = useState<Author[]>([])
+  const [dbTopics, setDbTopics] = useState<{ slug: string; name: string }[]>([])
   const [title, setTitle] = useState("")
   const [slug, setSlug] = useState("")
   const [excerpt, setExcerpt] = useState("")
@@ -36,6 +37,7 @@ export default function NewBlogPostPage() {
 
   useEffect(() => {
     loadAuthors()
+    loadTopics()
   }, [])
 
   useEffect(() => {
@@ -54,19 +56,32 @@ export default function NewBlogPostPage() {
     setAuthors((data || []) as Author[])
   }
 
+  async function loadTopics() {
+    const { data } = await supabase.from("blog_topics").select("slug, name").order("sort_order")
+    setDbTopics((data || []) as { slug: string; name: string }[])
+  }
+
+  const defaultSlugs = new Set(DEFAULT_BLOG_TOPICS.map((t) => t.slug))
+  const allTopics = [
+    ...DEFAULT_BLOG_TOPICS.map((t) => ({ slug: t.slug, name: t.name })),
+    ...(dbTopics.filter((t) => !defaultSlugs.has(t.slug))),
+  ]
+
   async function upsertTopicBySlug(slug: string): Promise<string | null> {
-    const topicConfig = BLOG_TOPICS.find((t) => t.slug === slug)
-    if (!topicConfig) return null
     const { data: existing } = await supabase.from("blog_topics").select("id").eq("slug", slug).single()
     if (existing) return existing.id
-    const sortOrder = BLOG_TOPICS.findIndex((t) => t.slug === slug)
-    const { data: inserted, error } = await supabase
-      .from("blog_topics")
-      .insert({ slug, name: topicConfig.name, sort_order: sortOrder >= 0 ? sortOrder : 0 })
-      .select("id")
-      .single()
-    if (error || !inserted) return null
-    return inserted.id
+    const topicConfig = DEFAULT_BLOG_TOPICS.find((t) => t.slug === slug)
+    if (topicConfig) {
+      const sortOrder = DEFAULT_BLOG_TOPICS.findIndex((t) => t.slug === slug)
+      const { data: inserted, error } = await supabase
+        .from("blog_topics")
+        .insert({ slug, name: topicConfig.name, sort_order: sortOrder >= 0 ? sortOrder : 0 })
+        .select("id")
+        .single()
+      if (error || !inserted) return null
+      return inserted.id
+    }
+    return null
   }
 
   async function addAuthor() {
@@ -210,7 +225,7 @@ export default function NewBlogPostPage() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
                 >
                   <option value="">No topic</option>
-                  {BLOG_TOPICS.map((t) => (
+                  {allTopics.map((t) => (
                     <option key={t.slug} value={t.slug}>
                       {t.name}
                     </option>

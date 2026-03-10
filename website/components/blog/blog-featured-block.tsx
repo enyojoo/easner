@@ -25,8 +25,8 @@ export function BlogFeaturedBlock({ posts }: BlogFeaturedBlockProps) {
     : null
 
   return (
-    <section className="mb-16 md:mb-24">
-      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
+    <section className="mb-12 sm:mb-16 md:mb-24">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
         {/* Large featured post - ~2/3 width */}
         <Link
           href={`/blog/${largePost.slug}`}
@@ -44,8 +44,8 @@ export function BlogFeaturedBlock({ posts }: BlogFeaturedBlockProps) {
               />
             </div>
           )}
-          <div className="p-6">
-            <p className="text-sm text-gray-500 mb-2">
+          <div className="p-4 sm:p-6">
+            <p className="text-xs sm:text-sm text-gray-500 mb-1 sm:mb-2">
               {author && <span>{author.name}</span>}
               {author && publishedDate && <span> · </span>}
               {publishedDate && (
@@ -54,14 +54,14 @@ export function BlogFeaturedBlock({ posts }: BlogFeaturedBlockProps) {
                 </time>
               )}
             </p>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 font-unbounded group-hover:text-easner-primary transition-colors">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 font-unbounded group-hover:text-easner-primary transition-colors line-clamp-2">
               {largePost.title}
             </h2>
           </div>
         </Link>
 
         {/* Small posts - ~1/3 width */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {displaySmall.map((post) => (
             <BlogPostRow key={post.id} post={post} />
           ))}

@@ -7,7 +7,7 @@ import { BlogIndex } from "@/components/blog/blog-index"
 export const metadata = {
   title: "Blog - Easner",
   description:
-    "Insights on the future of banking. The latest updates on Easner and the world of stablecoins and business finance.",
+    "Insights on the future of banking. The latest updates on Easner, the world of stablecoins and finance.",
 }
 
 export default async function BlogPage({

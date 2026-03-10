@@ -62,24 +62,26 @@ export function BlogIndex(props: BlogIndexProps) {
   const tabTopics = BLOG_TOPICS.filter((t) => topicsWithPosts.includes(t.slug))
 
   return (
-    <div className="py-16 md:py-24">
+    <div className="pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-12 sm:pb-16 md:pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero */}
-        <section className="mb-12 md:mb-16">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 font-unbounded mb-4">
-            Insights on the future of banking
+        <section className="mb-10 sm:mb-12 md:mb-16">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 font-unbounded mb-3 sm:mb-4 lg:mb-5">
+            Insights on the
+            <br />
+            future of banking
           </h1>
-          <p className="text-lg sm:text-xl text-gray-500 max-w-2xl">
-            The latest updates on Easner and the world of stablecoins and business finance.
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-500 max-w-2xl">
+            The latest updates on Easner, the world of stablecoins and finance.
           </p>
         </section>
 
-        {/* Toolbar: tabs + search + RSS */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12 md:mb-16">
-          <div className="flex flex-wrap items-center gap-2 overflow-x-auto">
+        {/* Toolbar: tabs (left) + search + RSS (right) */}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-4 mb-10 sm:mb-12 md:mb-16">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 -ml-4 pl-4 pr-2 min-w-0">
             <Link
               href="/blog"
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 isAllView(props)
                   ? "ring-2 ring-gray-900 text-gray-900"
                   : "text-gray-500 hover:text-gray-900"
@@ -91,7 +93,7 @@ export function BlogIndex(props: BlogIndexProps) {
               <Link
                 key={t.slug}
                 href={`/blog?topic=${t.slug}`}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   !isAllView(props) && props.topicFilter === t.slug
                     ? "ring-2 ring-gray-900 text-gray-900"
                     : "text-gray-500 hover:text-gray-900"
@@ -104,7 +106,7 @@ export function BlogIndex(props: BlogIndexProps) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 transition-colors text-sm"
             >
               <Search className="h-4 w-4" />
               <span>Search...</span>
@@ -142,7 +144,7 @@ export function BlogIndex(props: BlogIndexProps) {
           </>
         ) : (
           <>
-            <h2 className="text-3xl font-bold text-gray-900 font-unbounded mb-8">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6 sm:mb-8">
               {props.topicHeading}
             </h2>
             <BlogTopicPosts topicSlug={props.topicFilter} initialPosts={props.topicPosts} />

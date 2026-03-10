@@ -87,7 +87,7 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
         role="dialog"
         aria-modal="true"
         aria-labelledby="search-dialog-title"
-        className="fixed left-1/2 top-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-200 bg-white p-6 shadow-xl"
+        className="fixed left-4 right-4 top-1/2 z-50 max-h-[85vh] -translate-y-1/2 rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-xl sm:left-1/2 sm:right-auto sm:w-full sm:max-w-xl sm:-translate-x-1/2"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 id="search-dialog-title" className="text-lg font-semibold text-gray-900">
@@ -114,7 +114,7 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
           <h3 className="text-sm font-medium text-gray-500 mb-2">Suggestions</h3>
           <div
             ref={listRef}
-            className="max-h-64 overflow-y-auto rounded-lg border border-gray-200"
+            className="max-h-48 sm:max-h-64 overflow-y-auto rounded-lg border border-gray-200"
           >
             {suggestions.length === 0 ? (
               <p className="py-8 text-center text-sm text-gray-500">No posts found</p>

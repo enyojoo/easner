@@ -9,7 +9,7 @@ export async function GET() {
   <channel>
     <title>Easner Blog</title>
     <link>${BASE_URL}/blog</link>
-    <description>Insights on the future of banking. The latest updates on Easner and the world of stablecoins and business finance.</description>
+    <description>Insights on the future of banking. The latest updates on Easner, the world of stablecoins and finance.</description>
     <atom:link href="${BASE_URL}/blog/feed" rel="self" type="application/rss+xml"/>
     ${posts
       .map(
