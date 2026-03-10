@@ -152,4 +152,13 @@
   textarea:focus {
     caret-color: var(--primary);
   }
+
+  /* Remove persistent focus outline; show ring only for keyboard (focus-visible) */
+  button:focus, a:focus, [role="button"]:focus, [role="menuitem"]:focus, [role="option"]:focus, select:focus, [data-state]:focus, [tabindex]:not([tabindex="-1"]):focus {
+    outline: none;
+  }
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible, [role="menuitem"]:focus-visible, [role="option"]:focus-visible, select:focus-visible, [data-state]:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
