@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
-import { DEFAULT_BLOG_TOPICS } from "@/lib/blog-topics"
+import { BLOG_TOPICS } from "@easner/shared"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -75,18 +75,18 @@ export default function EditBlogPostPage() {
     setDbTopics((data || []) as { slug: string; name: string }[])
   }
 
-  const defaultSlugs = new Set(DEFAULT_BLOG_TOPICS.map((t) => t.slug))
+  const defaultSlugs = new Set(BLOG_TOPICS.map((t) => t.slug))
   const allTopics = [
-    ...DEFAULT_BLOG_TOPICS.map((t) => ({ slug: t.slug, name: t.name })),
+    ...BLOG_TOPICS.map((t) => ({ slug: t.slug, name: t.name })),
     ...(dbTopics.filter((t) => !defaultSlugs.has(t.slug))),
   ]
 
   async function upsertTopicBySlug(slug: string): Promise<string | null> {
     const { data: existing } = await supabase.from("blog_topics").select("id").eq("slug", slug).single()
     if (existing) return existing.id
-    const topicConfig = DEFAULT_BLOG_TOPICS.find((t) => t.slug === slug)
+    const topicConfig = BLOG_TOPICS.find((t) => t.slug === slug)
     if (topicConfig) {
-      const sortOrder = DEFAULT_BLOG_TOPICS.findIndex((t) => t.slug === slug)
+      const sortOrder = BLOG_TOPICS.findIndex((t) => t.slug === slug)
       const { data: inserted, error } = await supabase
         .from("blog_topics")
         .insert({ slug, name: topicConfig.name, sort_order: sortOrder >= 0 ? sortOrder : 0 })
