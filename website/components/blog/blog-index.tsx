@@ -94,7 +94,7 @@ export function BlogIndex(props: BlogIndexProps) {
                 </span>
                 <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[12rem]">
+              <DropdownMenuContent align="start" className="w-[11rem] min-w-[11rem]">
                 <DropdownMenuItem asChild>
                   <Link href="/blog" className="cursor-pointer">
                     All
