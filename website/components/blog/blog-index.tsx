@@ -87,7 +87,7 @@ export function BlogIndex(props: BlogIndexProps) {
           {/* Mobile/tablet: topic dropdown (left) + search icon + RSS icon (right) */}
           <div className="flex items-center justify-between gap-4 lg:hidden">
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium min-w-0 max-w-[60%]">
+              <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 hover:border-easner-primary hover:text-easner-primary transition-colors duration-200 text-sm font-medium min-w-[12rem] flex-1 max-w-[70%]">
                 <span className="truncate">
                   {isAllView(props) ? "All" : tabTopics.find((t) => t.slug === props.topicFilter)?.name ?? props.topicHeading}
                 </span>
