@@ -6,9 +6,12 @@ import { getOfficeCorsHeaders } from '@/lib/cors'
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // CORS for office app (admin API routes)
-  const isAdminApi = pathname.startsWith('/api/admin/') || pathname.startsWith('/api/auth/admin/')
-  if (isAdminApi) {
+  // CORS for office app (admin API routes + send-email-notification used when office updates transaction status)
+  const isOfficeApi =
+    pathname.startsWith('/api/admin/') ||
+    pathname.startsWith('/api/auth/admin/') ||
+    pathname === '/api/send-email-notification'
+  if (isOfficeApi) {
     const corsHeaders = getOfficeCorsHeaders(request)
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, { status: 204, headers: corsHeaders })
