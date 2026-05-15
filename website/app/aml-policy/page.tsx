@@ -68,7 +68,7 @@ function AMLPolicyContent() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Overview</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  Easner, Inc. ("Easner," "we," "us," or "our") is committed to preventing money laundering, terrorist
+                  Easner Group, Inc. ("Easner," "we," "us," or "our") is committed to preventing money laundering, terrorist
                   financing, and other financial crimes. As a technology platform facilitating financial services through
                   licensed partners, we maintain a comprehensive Anti-Money Laundering (AML) program designed to detect,
                   prevent, and report suspicious activities in accordance with applicable laws and regulations.
@@ -365,7 +365,7 @@ function AMLPolicyContent() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    <strong>Easner, Inc.</strong>
+                    <strong>Easner Group, Inc.</strong>
                     <br />
                     Compliance Department
                     <br />

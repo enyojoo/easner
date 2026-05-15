@@ -80,7 +80,7 @@ function TermsPageContent() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">2. About Easner</h2>
                 <p className="text-gray-700 leading-relaxed mb-4">
-                  Easner, Inc. is a Delaware C-corporation that operates the Easner platform and mobile application.
+                  Easner Group, Inc. is a Delaware C-corporation that operates the Easner platform and mobile application.
                   Easner provides instant, zero-fee cross-border transfers where users send money from their local bank
                   and recipients receive funds in their bank account within minutes, with no virtual wallets required.
                   Users can transfer money between supported currencies with competitive exchange rates and zero fees
@@ -238,7 +238,7 @@ function TermsPageContent() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    <strong>Easner, Inc.</strong>
+                    <strong>Easner Group, Inc.</strong>
                     <br />
                     28 Geary St Ste 650
                     <br />

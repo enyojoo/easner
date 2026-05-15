@@ -72,7 +72,7 @@ function PrivacyPageContent() {
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. About This Policy</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  This Privacy Policy describes how Easner, Inc. ("Easner," "we," "us," or "our") collects, uses, and
+                  This Privacy Policy describes how Easner Group, Inc. ("Easner," "we," "us," or "our") collects, uses, and
                   shares information about you when you use our platform and mobile application. Easner provides
                   instant, zero-fee cross-border transfers through licensed financial service partners. Easner is a
                   financial technology company and not a bank, exchange, or asset custodian. Easner does not facilitate FDIC insurance or hold deposits. Easner acts as a technology platform facilitating money movement services. Payment products are provided in partnership with licensed institutions. Cards are issued by partners licensed in their respective jurisdictions.
@@ -300,7 +300,7 @@ function PrivacyPageContent() {
                 </p>
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-gray-700">
-                    <strong>Easner, Inc.</strong>
+                    <strong>Easner Group, Inc.</strong>
                     <br />
                     28 Geary St Ste 650
                     <br />

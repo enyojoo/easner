@@ -38,7 +38,7 @@ export function PublicFooter() {
         <div className="py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div className="flex flex-col items-center sm:items-start gap-2">
-              <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">© {new Date().getFullYear()} Easner Inc.</div>
+              <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">© {new Date().getFullYear()} Easner Group, Inc.</div>
               <div className="flex items-center gap-3">
                 <a href="https://x.com/easnerbanking" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-easner-primary transition-colors" aria-label="X (Twitter)">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -63,9 +63,30 @@ export function PublicFooter() {
             </p>
           </div>
           <div className="pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-400 text-center max-w-4xl mx-auto leading-relaxed">
-              Easner is a financial technology company and not a bank, exchange, or asset custodian. Easner does not facilitate FDIC insurance or hold deposits. Easner acts as a technology platform facilitating money movement services. Payment products are provided in partnership with licensed institutions. Cards are issued by partners licensed in their respective jurisdictions.
-            </p>
+            <div className="text-xs text-gray-400 text-center sm:text-left max-w-4xl mx-auto space-y-3 leading-relaxed">
+              <p>
+                Easner Group, Inc. (&quot;Easner&quot;) is a financial technology company, not a bank or investment adviser. The Easner platform provides software tools that enable you to access services offered by third-party providers. Easner does not provide investment, legal, tax, or financial advice.
+              </p>
+              <p>
+                Banking services are provided by third-party banking partners, not by Easner. Easner itself is not FDIC-insured.
+              </p>
+              <p>
+                Digital asset services, including self-custody wallets, swaps, and DeFi protocol access, are provided by third parties or operate on public blockchains. Digital assets are not legal tender, are not backed by a government, and are not FDIC-insured or protected by SIPC. Digital asset transactions are irreversible.
+              </p>
+              <p>
+                Corporate and personal card products are issued by a third-party issuer and are subject to credit approval.
+              </p>
+              <p>
+                Easner may receive compensation from third-party service providers.
+              </p>
+              <p>
+                Use of the Easner platform is subject to the{" "}
+                <Link href="/terms" className="text-easner-primary hover:underline">Terms of Use</Link>
+                {" "}and{" "}
+                <Link href="/privacy" className="text-easner-primary hover:underline">Privacy Policy</Link>
+                , which include limitations of liability, a class action waiver, and mandatory arbitration.
+              </p>
+            </div>
           </div>
         </div>
       </div>
