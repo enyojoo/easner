@@ -6,7 +6,7 @@ import { getOfficeCorsHeaders } from '@/lib/cors'
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // CORS for office app (admin API routes + send-email-notification used when office updates transaction status)
+  // CORS for admin dashboard origin (NEXT_PUBLIC_OFFICE_URL / localhost:3002) on admin API routes + send-email-notification
   const isOfficeApi =
     pathname.startsWith('/api/admin/') ||
     pathname.startsWith('/api/auth/admin/') ||
