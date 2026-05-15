@@ -51,8 +51,6 @@ export function PublicFooter() {
               </div>
             </div>
             <div className="flex items-center space-x-6 sm:space-x-8">
-              <Link href="/blog" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">Blog</Link>
-              <Link href="/about" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">About</Link>
               <Link href="/terms" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">Terms</Link>
               <Link href="/privacy" className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors">Privacy Policy</Link>
             </div>

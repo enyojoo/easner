@@ -1,32 +1,15 @@
 'use client'
 
-import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 import Image from 'next/image'
 import { PublicHeader } from '@/components/layout/public-header'
 import { PublicFooter } from '@/components/layout/public-footer'
-import { CurrencyConverter } from '@/components/currency-converter'
 import { TrustedBy } from '@/components/trusted-by'
 
 export default function HomePage() {
-  const router = useRouter()
-
-  const handleSendMoney = (data: {
-    sendAmount: string
-    sendCurrency: string
-    receiveCurrency: string
-    receiveAmount: number
-    exchangeRate: number
-    fee: number
-  }) => {
-    // Redirect to early access form instead of normal flow
-    router.push("/access")
-  }
-
   return (
     <div className="min-h-screen bg-white">
       <PublicHeader />
@@ -34,7 +17,7 @@ export default function HomePage() {
         className="min-h-screen"
         style={{ paddingTop: '4.5rem' }}
       >
-        <Hero onSendMoney={handleSendMoney} />
+        <Hero />
         <EasnerForIndividuals />
         <EasnerForBusiness />
         <ComplianceSecurity />
@@ -46,14 +29,7 @@ export default function HomePage() {
 
 // ----------------------- Sections -----------------------
 
-function Hero({ onSendMoney }: { onSendMoney: (data: {
-  sendAmount: string
-  sendCurrency: string
-  receiveCurrency: string
-  receiveAmount: number
-  exchangeRate: number
-  fee: number
-}) => void }) {
+function Hero() {
   const router = useRouter()
 
   return (
@@ -83,7 +59,6 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
           </div>
         </motion.div>
       </div>
-      {/* Currency converter - secondary, below the fold feel */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-12 sm:mt-16 pb-6 sm:pb-8 md:pb-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -91,9 +66,6 @@ function Hero({ onSendMoney }: { onSendMoney: (data: {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="flex flex-col items-center"
         >
-          <div className="w-full max-w-sm sm:max-w-md">
-            <CurrencyConverter onSendMoney={onSendMoney} />
-          </div>
           <TrustedBy />
         </motion.div>
       </div>

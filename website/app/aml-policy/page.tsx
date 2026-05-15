@@ -1,67 +1,18 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
-import { BrandLogo } from "@easner/shared"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useEffect, useState, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { Card, CardContent } from "@/components/ui/card"
+import { PublicHeader } from "@/components/layout/public-header"
+import { PublicFooter } from "@/components/layout/public-footer"
 
-function AMLPolicyContent() {
-  const searchParams = useSearchParams()
-  const [showBackButton, setShowBackButton] = useState(false)
-
-  useEffect(() => {
-    // Check if user came from an internal page
-    const referrer = document.referrer
-    const fromInternal = searchParams.get('from') === 'internal'
-    
-    // Show back button if:
-    // 1. There's a 'from=internal' query parameter (set when linking from other internal pages)
-    // 2. Referrer is from the same domain (easner.com)
-    const isInternalReferrer = referrer && (
-      referrer.includes('easner.com') || 
-      referrer.includes('localhost') ||
-      referrer.includes('127.0.0.1')
-    )
-    
-    setShowBackButton(fromInternal || isInternalReferrer)
-  }, [searchParams])
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back()
-    } else {
-      window.location.href = "/"
-    }
-  }
-
+export default function AMLPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          {showBackButton ? (
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="inline-flex items-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors p-0 h-auto"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Back
-            </Button>
-          ) : (
-            <div className="w-16" /> // Spacer to keep logo centered
-          )}
-          <BrandLogo size="md" />
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <Card className="shadow-lg border-0 ring-1 ring-gray-100">
-          <CardContent className="p-8">
+    <div className="min-h-screen bg-white">
+      <PublicHeader />
+      <main style={{ paddingTop: "4.5rem" }}>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <Card className="shadow-lg border-0 ring-1 ring-gray-100">
+            <CardContent className="p-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-8">Anti-Money Laundering (AML) Policy</h1>
 
             <div className="prose prose-lg max-w-none space-y-8">
@@ -386,22 +337,12 @@ function AMLPolicyContent() {
                 <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </main>
+      <PublicFooter />
     </div>
-  )
-}
-
-export default function AMLPolicyPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    }>
-      <AMLPolicyContent />
-    </Suspense>
   )
 }
 

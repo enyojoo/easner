@@ -1,71 +1,18 @@
 "use client"
 
-import { ArrowLeft } from "lucide-react"
-import { BrandLogo } from "@easner/shared"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useEffect, useState, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { Card, CardContent } from "@/components/ui/card"
+import { PublicHeader } from "@/components/layout/public-header"
+import { PublicFooter } from "@/components/layout/public-footer"
 
-function TermsPageContent() {
-  const searchParams = useSearchParams()
-  const [showBackButton, setShowBackButton] = useState(false)
-
-  useEffect(() => {
-    // Check if user came from an internal page
-    const referrer = document.referrer
-    const fromParam = searchParams.get('from')
-    const fromInternal = fromParam === 'internal'
-    const fromRegister = fromParam === 'register'
-    
-    // Show back button if:
-    // 1. There's a 'from=internal' or 'from=register' query parameter
-    // 2. Referrer is from the same domain (easner.com)
-    // 3. Referrer includes auth/register path
-    const isInternalReferrer = referrer && (
-      referrer.includes('easner.com') || 
-      referrer.includes('localhost') ||
-      referrer.includes('127.0.0.1')
-    )
-    const isFromRegister = referrer && referrer.includes('/auth/register')
-    
-    setShowBackButton(fromInternal || fromRegister || isInternalReferrer || isFromRegister)
-  }, [searchParams])
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back()
-    } else {
-      window.location.href = "/"
-    }
-  }
-
+export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          {showBackButton ? (
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="inline-flex items-center gap-2 text-easner-primary hover:text-easner-primary-600 transition-colors p-0 h-auto"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Back
-            </Button>
-          ) : (
-            <div className="w-16" /> // Spacer to keep logo centered
-          )}
-          <BrandLogo size="md" />
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <Card className="shadow-lg border-0 ring-1 ring-gray-100">
-          <CardContent className="p-8">
+    <div className="min-h-screen bg-white">
+      <PublicHeader />
+      <main style={{ paddingTop: "4.5rem" }}>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <Card className="shadow-lg border-0 ring-1 ring-gray-100">
+            <CardContent className="p-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-8">Terms of Service</h1>
 
             <div className="prose prose-lg max-w-none space-y-8">
@@ -257,21 +204,11 @@ function TermsPageContent() {
                 <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </main>
+      <PublicFooter />
     </div>
-  )
-}
-
-export default function TermsPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    }>
-      <TermsPageContent />
-    </Suspense>
   )
 }
