@@ -11,8 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.7 },
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
-    { url: `${baseUrl}/kyc-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
-    { url: `${baseUrl}/aml-policy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/compliance`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.5 },
   ]
 
   let blogPosts: MetadataRoute.Sitemap = []

@@ -1,5 +1,4 @@
 export const TRUSTED_BY_LOGOS = [
-  { src: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/bridgee.svg", alt: "Bridge" },
   { src: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/awss.svg", alt: "AWS" },
   { src: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/cursor.svg", alt: "Cursor" },
   { src: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/ms%20azure.svg", alt: "Microsoft Azure" },

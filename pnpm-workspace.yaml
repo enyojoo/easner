@@ -1,5 +1,0 @@
-packages:
-  - "packages/*"
-  - "website"
-  - "web"
-  - "mobile"

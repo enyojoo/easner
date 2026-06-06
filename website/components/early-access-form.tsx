@@ -637,7 +637,7 @@ export function EarlyAccessForm() {
             <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
               I agree to the{" "}
               <Link href="/terms" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
-                Terms
+                Terms of Service
               </Link>{" "}
               and{" "}
               <Link href="/privacy" className="text-easner-primary hover:text-easner-primary-600 hover:underline">

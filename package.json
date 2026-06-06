@@ -5,30 +5,18 @@
   "packageManager": "npm@10.9.3",
   "workspaces": [
     "packages/*",
-    "website",
-    "web"
+    "website"
   ],
   "scripts": {
-    "dev": "turbo run dev --filter=web",
+    "dev": "turbo run dev --filter=website",
     "dev:website": "turbo run dev --filter=website",
-    "dev:web": "turbo run dev --filter=web",
-    "dev:all": "turbo run dev --filter=website --filter=web",
     "build": "turbo run build",
     "build:website": "turbo run build --filter=website",
-    "build:web": "turbo run build --filter=web",
     "build:shared": "turbo run build --filter=@easner/shared",
     "lint": "turbo run lint",
-    "start:website": "turbo run start --filter=website",
-    "start:web": "turbo run start --filter=web"
+    "start:website": "turbo run start --filter=website"
   },
   "devDependencies": {
     "turbo": "^2.8.12"
-  },
-  "dependencies": {
-    "next": "^16.1.6"
-  },
-  "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
   }
 }
