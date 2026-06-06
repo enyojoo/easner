@@ -8,10 +8,22 @@ export const contactMetadata = {
 export const contactHero = {
   headline: "Let's talk",
   subhead:
-    "Whether you're opening an account, exploring APIs, or asking about coverage, book time with the Easner team.",
+    "Whether you're opening an account or exploring APIs, get in touch with the Easner team.",
+  emailPreface: "For new partnerships preferring to email,",
+  supportPreface: "For current users needing support,",
+  supportLinkLabel: "here",
 }
 
 export const contactBooking = {
   headline: "Book a consultation",
   emailNote: "Prefer email?",
+}
+
+export const contactSupport = {
+  anchor: "product-support",
+  headline: "Need product support?",
+  body: "If you already use Easner and need help with transfers, accounts, verification, or transactions, contact support directly instead of booking a consultation below.",
+  inAppLabel: "In-app support",
+  inAppText: "Live chat in the Easner Personal mobile app and Easner Business dashboard",
+  emailLabel: "Email support",
 }

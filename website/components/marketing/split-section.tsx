@@ -1,7 +1,9 @@
-import Link from "next/link"
+"use client"
+
 import type { ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MarketingLink } from "./marketing-link"
 import { VisualSlot } from "./visual-slot"
 import { StatusBadge } from "./status-badge"
 import { cn } from "@/lib/utils"
@@ -89,15 +91,10 @@ export function SplitSection({
                         : "h-12 rounded-full border-[#D9D4C7] bg-white/80 px-6 text-[#0F1110] hover:bg-white"
                     }
                   >
-                    <Link
-                      href={cta.href}
-                      target={cta.external && cta.href !== "#" ? "_blank" : undefined}
-                      rel={cta.external && cta.href !== "#" ? "noopener noreferrer" : undefined}
-                      onClick={cta.href === "#" ? (event) => event.preventDefault() : undefined}
-                    >
+                    <MarketingLink href={cta.href} external={cta.external}>
                       {cta.label}
                       {i === 0 && !cta.external && <ArrowRight className="h-4 w-4" />}
-                    </Link>
+                    </MarketingLink>
                   </Button>
                 ))}
               </div>

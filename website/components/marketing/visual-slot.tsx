@@ -56,7 +56,7 @@ export function VisualSlot({ assetId, alt, className, aspect = "feature" }: Visu
 
   const aspectClass =
     aspect === "fill"
-      ? "h-full min-h-[16rem] w-full sm:min-h-[18rem]"
+      ? "h-full min-h-[26rem] w-full sm:min-h-[28rem]"
       : aspect === "hero"
       ? "aspect-[16/10] md:aspect-[16/9]"
       : aspect === "square"

@@ -39,19 +39,24 @@ export function SolutionsByAudience() {
           ))}
         </div>
         <div className="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-2 lg:gap-12">
-          <div className="flex flex-col justify-center rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] p-6 sm:p-8">
+          <div className="flex min-h-[26rem] flex-col rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] p-6 sm:min-h-[28rem] sm:p-8">
             <h3 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-3xl">
               {persona.headline}
             </h3>
-            <p className="mt-4 text-lg leading-8 text-[#5F665F]">{persona.body}</p>
-            <PersonaCtas ctas={persona.ctas} className="mt-8" />
+            <p className="mt-4 flex-1 text-lg leading-8 text-[#5F665F]">{persona.body}</p>
+            <div className="mt-8 min-h-[3.25rem] shrink-0">
+              <PersonaCtas ctas={persona.ctas} />
+            </div>
           </div>
-          <VisualSlot
+          <div className="min-h-[26rem] sm:min-h-[28rem]">
+            <VisualSlot
               key={persona.visualSlot}
               assetId={persona.visualSlot}
               alt={persona.altText}
               aspect="fill"
+              className="h-full"
             />
+          </div>
         </div>
       </div>
     </section>

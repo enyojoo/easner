@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { CONTACT_EMAIL } from "@/lib/marketing/constants"
-import { contactHero } from "@/lib/marketing/content/contact"
+import { contactHero, contactSupport } from "@/lib/marketing/content/contact"
 
 export function ContactHero() {
   return (
@@ -19,9 +19,14 @@ export function ContactHero() {
         </h1>
         <p className="mt-5 text-base leading-8 text-[#5F665F] sm:text-lg">{contactHero.subhead}</p>
         <p className="mt-4 text-sm leading-6 text-[#6F756F]">
-          Prefer email?{" "}
+          {contactHero.emailPreface}{" "}
           <Link href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-[#007ACC] hover:underline">
             {CONTACT_EMAIL}
+          </Link>
+          <span className="mx-2 text-[#C8C2B6]">·</span>
+          {contactHero.supportPreface}{" "}
+          <Link href={`#${contactSupport.anchor}`} className="font-semibold text-[#007ACC] hover:underline">
+            {contactHero.supportLinkLabel}
           </Link>
         </p>
       </motion.div>

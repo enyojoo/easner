@@ -1,5 +1,12 @@
+import path from "path"
+import { fileURLToPath } from "url"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const monorepoRoot = path.join(__dirname, "..")
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: monorepoRoot,
   transpilePackages: ["@easner/shared"],
   compress: true,
   images: {
@@ -8,6 +15,7 @@ const nextConfig = {
   },
   reactStrictMode: true,
   turbopack: {
+    root: monorepoRoot,
     rules: {
       "*.svg": {
         loaders: ["@svgr/webpack"],

@@ -8,6 +8,7 @@ export const PLAY_STORE_URL = "#"
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"
+export const SUPPORT_EMAIL = "support@easner.com"
 export const LEGAL_EMAIL = "legal@easner.com"
 export const ACCESS_PATH = "/access"
 export const CONTACT_PATH = "/contact"

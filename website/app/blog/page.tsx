@@ -49,7 +49,6 @@ export default async function BlogPage({
   }
 
   const allPosts = await getPublishedPosts({ limit: 100 })
-  const featuredIds = new Set(allPosts.slice(0, 4).map((p) => p.id))
   const remainingPosts = allPosts.slice(4)
 
   const postsByTopic: Record<string, typeof allPosts> = {}

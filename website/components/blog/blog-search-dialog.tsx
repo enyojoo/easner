@@ -28,24 +28,18 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
     : posts
   const suggestions = filtered.slice(0, 10)
 
-  const openDialog = useCallback(() => {
+  const handleClose = useCallback(() => {
     setQuery("")
     setSelectedIndex(0)
-    inputRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    if (open) {
-      openDialog()
-    }
-  }, [open, openDialog])
+    onClose()
+  }, [onClose])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!open) return
       if (e.key === "Escape") {
         e.preventDefault()
-        onClose()
+        handleClose()
         return
       }
       if (e.key === "ArrowDown") {
@@ -61,12 +55,12 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
       if (e.key === "Enter" && suggestions[selectedIndex]) {
         e.preventDefault()
         router.push(`/blog/${suggestions[selectedIndex].slug}`)
-        onClose()
+        handleClose()
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [open, onClose, suggestions, selectedIndex, router])
+  }, [open, handleClose, suggestions, selectedIndex, router])
 
   useEffect(() => {
     listRef.current?.querySelector(`[data-index="${selectedIndex}"]`)?.scrollIntoView({
@@ -80,7 +74,7 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
     <>
       <div
         className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
       <div
@@ -95,7 +89,7 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close search"
           >
@@ -131,7 +125,7 @@ export function BlogSearchDialog({ posts, open, onClose }: BlogSearchDialogProps
                   key={post.id}
                   href={`/blog/${post.slug}`}
                   data-index={i}
-                  onClick={onClose}
+                  onClick={handleClose}
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                     i === selectedIndex
                       ? "bg-easner-primary text-white"

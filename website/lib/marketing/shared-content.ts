@@ -9,7 +9,7 @@ export const COMPLIANCE_STRIP = {
     "KYC/KYB onboarding built into the product experience",
     "AML and sanctions screening on customers and transactions",
     "Banking, wallet, and payment rails connected where enabled",
-    "Tiered access based on verification, jurisdiction, and product availability",
+    "Platform access based on verification, jurisdiction, and product availability",
   ],
 }
 
