@@ -16,19 +16,19 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="flex flex-col items-center gap-6 pt-8 w-full"
+      className="flex w-full flex-col items-center gap-6 rounded-[1.5rem] border border-[#E4DED1] bg-white/70 px-4 py-8 shadow-sm"
     >
-      <p className="text-base sm:text-lg text-gray-500 text-center">
-        Loved by 2K+ most ambitious individuals and entrepreneurs.
+      <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-[#6F756F]">
+        Trusted by ambitious individuals, businesses, and platforms.
       </p>
       {logoList.length > 0 && (
         <div className="relative w-full flex justify-center">
           {/* Framed viewport: 2 logos on mobile, 4 on tablet/laptop/large */}
           <div className="relative overflow-hidden max-w-[320px] sm:max-w-[640px]">
             {/* Left fade - narrow width, full fade strength */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-6 sm:w-4 bg-gradient-to-r from-white via-white/80 to-transparent" />
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-r from-white via-white/80 to-transparent sm:w-4" />
             {/* Right fade */}
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-6 sm:w-4 bg-gradient-to-l from-white via-white/80 to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-l from-white via-white/80 to-transparent sm:w-4" />
             {/* Visible area: ~4 logos (each ~140px) = 560px. Fixed duration for SSR hydration consistency. */}
             <div
               className="flex"

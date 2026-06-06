@@ -14,13 +14,13 @@ const unbounded = Unbounded({
 
 export const metadata: Metadata = {
   title: {
-    default: "Stablecoin Business Banking | Accounts, Cards & Invoicing - Easner",
+    default: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
     template: "%s - Easner",
   },
   description:
-    "Stablecoin banking for global businesses. API-first cross-border payment infrastructure with built-in KYC/AML. For individuals and businesses.",
+    "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs – banking-simple UX with compliance built in.",
   keywords:
-    "stablecoin banking, cross-border payments, instant money transfer, bank to bank transfer, international money transfer, US fintech, business banking, global payments",
+    "stablecoin banking infrastructure, cross-border payments, global business banking, international money transfer, business banking, global payments",
   formatDetection: { email: false, address: false, telephone: false },
   metadataBase: new URL("https://www.easner.com"),
   alternates: { canonical: "/" },
@@ -30,8 +30,9 @@ export const metadata: Metadata = {
     apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
-    title: "Stablecoin Business Banking | Accounts, Cards & Invoicing - Easner",
-    description: "API-first cross-border payment infrastructure for US and EU businesses.",
+    title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
+    description:
+      "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -47,8 +48,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Stablecoin Business Banking | Accounts, Cards & Invoicing - Easner",
-    description: "API-first cross-border payment infrastructure for US and EU businesses.",
+    title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
+    description:
+      "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
     creator: "@easnerbanking",
     images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png"],
   },

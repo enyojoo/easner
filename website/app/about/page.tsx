@@ -1,9 +1,11 @@
 'use client'
 
+import Link from "next/link"
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { PublicHeader } from '@/components/layout/public-header'
 import { PublicFooter } from '@/components/layout/public-footer'
+import { CONTACT_PATH } from '@/lib/marketing/constants'
 
 export default function AboutPage() {
   return (
@@ -24,10 +26,10 @@ export default function AboutPage() {
 
               <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
                 <p>
-                  Easner is building cross-border stablecoin banking for businesses and individuals. We believe money should move globally like SMS: instant, low-cost, and compliant.
+                  Easner is building cross-border stablecoin banking for businesses and individuals. We believe money should move globally with speed, clarity, and compliance built in.
                 </p>
                 <p>
-                  Our infrastructure combines stablecoin rails with built-in KYC/AML, licensed partner networks, and API-first design — so fintechs, businesses, and individuals can move money between the US, Europe, Africa, and Asia without the friction of traditional banking.
+                  Our infrastructure combines stablecoin rails, built-in KYC/AML, connected financial networks, and API-first design – so fintechs, businesses, and individuals can move money between the US, Europe, Africa, and Asia with less operational friction.
                 </p>
                 <p>
                   We are building toward institutional backing and are excited to partner with investors who share our vision for the future of global payments.
@@ -37,10 +39,11 @@ export default function AboutPage() {
               <div className="pt-8 border-t border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Contact</h2>
                 <p className="text-lg text-gray-600">
-                  Have questions? Reach us at{" "}
-                  <a href="mailto:hello@easner.com" className="text-easner-primary hover:underline font-medium">
-                    hello@easner.com
-                  </a>
+                  Have questions?{" "}
+                  <Link href={CONTACT_PATH} className="text-easner-primary hover:underline font-medium">
+                    Book a call with our team
+                  </Link>
+                  .
                 </p>
               </div>
 

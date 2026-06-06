@@ -1,25 +1,20 @@
-import type { LucideIcon } from "lucide-react"
-import {
-  Building2,
-  FileText,
-  Wallet,
-  CreditCard,
-  Landmark,
-  ReceiptText,
-  Coins,
-  Code,
-  ShoppingCart,
-  Briefcase,
-  HardHat,
-  User,
-  Heart,
-  Package,
-} from "lucide-react"
+export type NavIconName =
+  | "building"
+  | "file"
+  | "wallet"
+  | "card"
+  | "landmark"
+  | "receipt"
+  | "coins"
+  | "code"
+  | "briefcase"
+  | "user"
 
 export interface NavLink {
   label: string
   href: string
-  icon: LucideIcon
+  icon: NavIconName
+  description?: string
 }
 
 export interface NavSection {
@@ -29,32 +24,17 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    label: "Company",
-    items: [
-      { label: "About", href: "/about", icon: Building2 },
-      { label: "Blog", href: "/blog", icon: FileText },
-    ],
-  },
-  {
     label: "Products",
     items: [
-      { label: "Personal Banking", href: "/personal-banking", icon: Wallet },
-      { label: "Cards", href: "/cards", icon: CreditCard },
-      { label: "Business Banking", href: "/business-banking", icon: Landmark },
-      { label: "Invoicing", href: "/invoicing", icon: ReceiptText },
-      { label: "Stablecoin Payments", href: "/stablecoin", icon: Coins },
-      { label: "APIs", href: "/apis", icon: Code },
+      { label: "Personal Banking", href: "/personal", icon: "wallet", description: "Mobile banking for global earners" },
+      { label: "Business Banking", href: "/business", icon: "landmark", description: "Accounts, payouts, teams, reporting" },
+      { label: "Invoicing", href: "/invoicing", icon: "receipt", description: "Bank or stablecoin pay-in options" },
+      { label: "Cards", href: "/cards", icon: "card", description: "Spend controls built into Easner" },
     ],
   },
-  {
-    label: "Solutions",
-    items: [
-      { label: "E-commerce", href: "/ecommerce", icon: ShoppingCart },
-      { label: "Agencies", href: "/agencies", icon: Briefcase },
-      { label: "Contractors", href: "/contractors", icon: HardHat },
-      { label: "Freelancers", href: "/freelancers", icon: User },
-      { label: "Healthcare", href: "/healthcare", icon: Heart },
-      { label: "Wholesalers", href: "/wholesalers", icon: Package },
-    ],
-  },
+]
+
+export const NAV_LINKS: NavLink[] = [
+  { label: "Stablecoin", href: "/stablecoin", icon: "coins" },
+  { label: "Developers", href: "/apis", icon: "code" },
 ]

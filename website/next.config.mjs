@@ -7,9 +7,6 @@ const nextConfig = {
     formats: ["image/webp", "image/avif"],
   },
   reactStrictMode: true,
-  experimental: {
-    optimizePackageImports: ["lucide-react"],
-  },
   turbopack: {
     rules: {
       "*.svg": {
@@ -17,6 +14,13 @@ const nextConfig = {
         as: "*.js",
       },
     },
+  },
+  async redirects() {
+    return [
+      { source: "/personal-banking", destination: "/personal", permanent: true },
+      { source: "/business-banking", destination: "/business", permanent: true },
+      { source: "/kyc-policy", destination: "/compliance", permanent: true },
+    ]
   },
   async headers() {
     return [

@@ -1,225 +1,46 @@
-'use client'
+import type { Metadata } from "next"
+import { PublicHeader } from "@/components/layout/public-header"
+import { PublicFooter } from "@/components/layout/public-footer"
+import { TrustedBy } from "@/components/trusted-by"
+import { HeroSection } from "@/components/marketing/hero-section"
+import { WhyEasner } from "@/components/marketing/why-easner"
+import { ProductGrid } from "@/components/marketing/product-grid"
+import { SolutionsByAudience } from "@/components/marketing/solutions-by-audience"
+import { CorridorStory } from "@/components/marketing/corridor-story"
+import { ComplianceStrip } from "@/components/marketing/compliance-strip"
+import { CtaBand } from "@/components/marketing/cta-band"
+import { homeMetadata, homeCtaBand } from "@/lib/marketing/content/home"
 
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowRight, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import Image from 'next/image'
-import { PublicHeader } from '@/components/layout/public-header'
-import { PublicFooter } from '@/components/layout/public-footer'
-import { TrustedBy } from '@/components/trusted-by'
+export const metadata: Metadata = {
+  title: homeMetadata.title,
+  description: homeMetadata.description,
+  keywords: homeMetadata.keywords,
+  openGraph: {
+    title: homeMetadata.title,
+    description: homeMetadata.description,
+  },
+}
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F6F3EB] text-[#0F1110]">
       <PublicHeader />
-      <main
-        className="min-h-screen"
-        style={{ paddingTop: '4.5rem' }}
-      >
-        <Hero />
-        <EasnerForIndividuals />
-        <EasnerForBusiness />
-        <ComplianceSecurity />
+      <main className="relative overflow-hidden pt-[4.5rem]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(circle_at_18%_10%,rgba(0,122,204,0.12),transparent_32%),linear-gradient(180deg,#FFFFFF_0%,rgba(246,243,235,0)_75%)]" />
+        <div className="relative">
+          <HeroSection />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
+          <TrustedBy />
+        </div>
+        <WhyEasner />
+        <SolutionsByAudience />
+        <ProductGrid />
+        <CorridorStory />
+        <ComplianceStrip />
+        <CtaBand content={homeCtaBand} />
       </main>
       <PublicFooter />
     </div>
-  )
-}
-
-// ----------------------- Sections -----------------------
-
-function Hero() {
-  const router = useRouter()
-
-  return (
-    <section className="relative bg-white pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 lg:pt-16 lg:pb-16 overflow-hidden">
-      <div className="absolute inset-0 bg-easner-primary-50/10 pointer-events-none" style={{ clipPath: 'ellipse(80% 50% at 50% 0%)' }} />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-6 sm:space-y-8"
-        >
-          <div className="space-y-4 sm:space-y-6">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-gray-900 font-unbounded">
-              Move Money
-              <br />
-              <span className="text-easner-primary">Globally Like SMS</span>.
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-2xl mx-auto">
-              API-first cross-border payment infrastructure for US and EU businesses. Built-in KYC/AML, instant payouts, and treasury operations.
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-4">
-            <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-              Get Started <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </motion.div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-12 sm:mt-16 pb-6 sm:pb-8 md:pb-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex flex-col items-center"
-        >
-          <TrustedBy />
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-// Section 2: Easner for Individuals
-function EasnerForIndividuals() {
-  const router = useRouter()
-
-  return (
-    <section className="bg-slate-50 py-20 md:py-28">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="text-center lg:text-left flex flex-col items-center lg:items-start">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
-                Send money anywhere. Instantly.
-              </h2>
-              <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
-                No waiting days. Just low-cost, bank-to-bank transfers between the US, Europe, Africa, and Asia — making global payments instant.
-              </p>
-              <div className="flex justify-center lg:justify-start">
-                <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                  Get Started <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="relative overflow-hidden">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="relative w-full rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
-              >
-                <Image
-                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/ew1.png"
-                  alt="Easner Web App"
-                  width={1200}
-                  height={800}
-                  className="w-full h-auto"
-                  style={{ maxHeight: '500px', objectFit: 'contain' }}
-                  unoptimized
-                />
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// Section 3: Easner for Business
-function EasnerForBusiness() {
-  const router = useRouter()
-
-  return (
-    <section className="py-20 md:py-28 bg-white">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="relative overflow-hidden order-2 lg:order-1">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="relative w-full rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
-              >
-                <Image
-                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/eb1.png"
-                  alt="Easner Business Banking"
-                  width={1200}
-                  height={800}
-                  className="w-full h-auto"
-                  style={{ maxHeight: '500px', objectFit: 'contain' }}
-                  unoptimized
-                />
-              </motion.div>
-            </div>
-            <div className="order-1 lg:order-2 text-center lg:text-left flex flex-col items-center lg:items-start">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
-                Business banking without borders.
-              </h2>
-              <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
-                Manage accounts, cards, invoices, and cross-border payments from one dashboard. Automate payouts, FX, and treasury operations through the Easner API — with compliance, reconciliation, and transparency built in.
-              </p>
-              <div className="flex justify-center lg:justify-start">
-                <Button size="lg" className="gap-2 bg-easner-primary hover:bg-easner-primary-600" onClick={() => router.push("/access")}>
-                  Get Started <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// Section 4: Compliance & Security
-function ComplianceSecurity() {
-  const complianceFeatures = [
-    "Built-in KYC/KYB onboarding",
-    "AI-powered AML and sanctions checks",
-    "HSM-backed custody",
-    "GDPR-compliant data residency"
-  ]
-
-  return (
-    <section className="bg-slate-50 py-20 md:py-28">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 font-unbounded mb-6">
-                Compliance is built in, not added later.
-              </h2>
-              <p className="text-lg md:text-xl text-gray-500 leading-relaxed mb-8">
-                Easner embeds verification, AML, and encryption at the core of every transaction. Our partners move money globally with full confidence in security and oversight.
-              </p>
-              <ul className="space-y-3">
-                {complianceFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-easner-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-500">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative flex justify-center lg:justify-end">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-xl border-2 border-easner-primary"
-              >
-                <Image
-                  src="https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/security.svg"
-                  alt="Security Shield"
-                  width={600}
-                  height={600}
-                  className="w-full h-auto"
-                  unoptimized
-                />
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   )
 }

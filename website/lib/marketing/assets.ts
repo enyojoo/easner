@@ -1,0 +1,106 @@
+import type { StaticImageData } from "next/image"
+import { BRAND_BASE_URL } from "./constants"
+import freelancerPhoto from "@/assets/Freelancer.jpg"
+import smePhoto from "@/assets/Sme.jpg"
+import developerPhoto from "@/assets/Developer.jpg"
+
+type MarketingAsset = string | StaticImageData
+
+const INTERIM_FALLBACKS: Record<string, MarketingAsset> = {
+  "mkt-ui-business-dashboard": `${BRAND_BASE_URL}/eb1.png`,
+  "mkt-icon-compliance": `${BRAND_BASE_URL}/security.svg`,
+  "mkt-persona-diaspora": freelancerPhoto,
+  "mkt-persona-sme": smePhoto,
+  "mkt-persona-dev": developerPhoto,
+}
+
+const ASSET_OBJECT_POSITION: Record<string, string> = {
+  "mkt-persona-diaspora": "50% 38%",
+  "mkt-persona-sme": "50% 22%",
+  "mkt-persona-dev": "50% 42%",
+}
+
+export type MarketingVisualKind =
+  | "phone"
+  | "dashboard"
+  | "invoice"
+  | "api"
+  | "card"
+  | "map"
+  | "terminal"
+  | "qr"
+  | "compliance"
+  | "persona"
+  | "icon"
+
+const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
+  "mkt-hero-home-01": "dashboard",
+  "mkt-hero-personal-01": "phone",
+  "mkt-ui-personal-send": "phone",
+  "mkt-ui-personal-receive": "phone",
+  "mkt-ui-personal-recipients": "phone",
+  "mkt-thumb-personal": "icon",
+  "mkt-hero-business-01": "dashboard",
+  "mkt-ui-business-dashboard": "dashboard",
+  "mkt-ui-business-send": "dashboard",
+  "mkt-ui-business-accounts": "dashboard",
+  "mkt-thumb-business": "icon",
+  "mkt-hero-stablecoin-01": "dashboard",
+  "mkt-diagram-invisible-rails": "map",
+  "mkt-ui-stablecoin-receive": "dashboard",
+  "mkt-ui-terminal": "terminal",
+  "mkt-ui-qrpay": "qr",
+  "mkt-hero-invoicing-01": "invoice",
+  "mkt-ui-invoice-editor": "invoice",
+  "mkt-ui-invoice-payin": "invoice",
+  "mkt-hero-cards-01": "card",
+  "mkt-ui-cards-controls": "card",
+  "mkt-ui-cards-issue": "card",
+  "mkt-ui-cards-cardholders": "card",
+  "mkt-ui-cards-reporting": "card",
+  "mkt-hero-apis-01": "api",
+  "mkt-thumb-apis": "icon",
+  "mkt-thumb-stablecoin": "icon",
+  "mkt-thumb-invoicing": "icon",
+  "mkt-thumb-cards": "icon",
+  "mkt-icon-api-banking": "icon",
+  "mkt-icon-api-agency": "icon",
+  "mkt-icon-api-integration": "icon",
+  "mkt-map-corridors": "map",
+  "mkt-icon-compliance": "compliance",
+  "mkt-icon-security": "compliance",
+  "mkt-icon-pillar-ux": "icon",
+  "mkt-icon-pillar-cost": "icon",
+  "mkt-icon-pillar-compliance": "icon",
+  "mkt-icon-pillar-invisible": "icon",
+  "mkt-persona-diaspora": "persona",
+  "mkt-persona-sme": "persona",
+  "mkt-persona-dev": "persona",
+}
+
+const PERSONAL_MOBILE_SLOTS = new Set([
+  "mkt-hero-personal-01",
+  "mkt-ui-personal-send",
+  "mkt-ui-personal-receive",
+  "mkt-ui-personal-recipients",
+])
+
+export function getAssetUrl(assetId: string): MarketingAsset | null {
+  return INTERIM_FALLBACKS[assetId] ?? null
+}
+
+export function getAssetObjectPosition(assetId: string): string | undefined {
+  return ASSET_OBJECT_POSITION[assetId]
+}
+
+export function getVisualKind(assetId: string): MarketingVisualKind {
+  return VISUAL_KIND_BY_ASSET[assetId] ?? "icon"
+}
+
+export function isPersonalMobileSlot(assetId: string): boolean {
+  return PERSONAL_MOBILE_SLOTS.has(assetId)
+}
+
+export function isPlaceholderOnly(assetId: string): boolean {
+  return !INTERIM_FALLBACKS[assetId]
+}
