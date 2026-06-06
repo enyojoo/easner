@@ -1,6 +1,4 @@
 export { BRAND } from "./constants/brand"
-export { BLOG_TOPICS } from "./constants/blog-topics"
-export type { BlogTopicSlug } from "./constants/blog-topics"
 export { cn } from "./utils/cn"
 export { BrandLogo } from "./components/BrandLogo"
 export type { BrandLogoProps } from "./components/BrandLogo"

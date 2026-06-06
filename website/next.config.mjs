@@ -10,8 +10,14 @@ const nextConfig = {
   transpilePackages: ["@easner/shared"],
   compress: true,
   images: {
-    unoptimized: true,
     formats: ["image/webp", "image/avif"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "seeqjiebmrnolcyydewj.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
   },
   reactStrictMode: true,
   turbopack: {
@@ -28,19 +34,8 @@ const nextConfig = {
       { source: "/personal-banking", destination: "/personal", permanent: true },
       { source: "/business-banking", destination: "/business", permanent: true },
       { source: "/kyc-policy", destination: "/compliance", permanent: true },
-    ]
-  },
-  async headers() {
-    return [
-      {
-        source: "/_next/static/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
+      { source: "/blog", destination: "/", permanent: true },
+      { source: "/blog/:path*", destination: "/", permanent: true },
     ]
   },
   typescript: {

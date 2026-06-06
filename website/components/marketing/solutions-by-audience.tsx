@@ -48,14 +48,26 @@ export function SolutionsByAudience() {
               <PersonaCtas ctas={persona.ctas} />
             </div>
           </div>
-          <div className="min-h-[26rem] sm:min-h-[28rem]">
-            <VisualSlot
-              key={persona.visualSlot}
-              assetId={persona.visualSlot}
-              alt={persona.altText}
-              aspect="fill"
-              className="h-full"
-            />
+          <div className="relative min-h-[26rem] sm:min-h-[28rem]">
+            {solutionsPersonas.map((p, index) => (
+              <div
+                key={p.id}
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-300 ease-out",
+                  active === index ? "z-10 opacity-100" : "z-0 opacity-0"
+                )}
+                aria-hidden={active !== index}
+              >
+                <VisualSlot
+                  assetId={p.visualSlot}
+                  alt={p.altText}
+                  aspect="fill"
+                  className="h-full"
+                  priority={index === 0}
+                  preload
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -48,7 +48,6 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
                     width={140}
                     height={40}
                     className="h-10 w-auto max-w-[120px] object-contain object-center"
-                    unoptimized
                   />
                 </div>
               ))}

@@ -1,5 +1,5 @@
 import Image from "next/image"
-import type { ReactNode } from "react"
+import type { ReactNode, StaticImageData } from "react"
 import {
   ArrowRightLeft,
   Banknote,
@@ -29,6 +29,12 @@ interface VisualSlotProps {
   alt: string
   className?: string
   aspect?: "hero" | "feature" | "square" | "fill"
+  priority?: boolean
+  preload?: boolean
+}
+
+function isStaticImage(src: string | StaticImageData): src is StaticImageData {
+  return typeof src !== "string"
 }
 
 const iconByAsset = {
@@ -48,7 +54,14 @@ const iconByAsset = {
   "mkt-icon-security": LockKeyhole,
 } as const
 
-export function VisualSlot({ assetId, alt, className, aspect = "feature" }: VisualSlotProps) {
+export function VisualSlot({
+  assetId,
+  alt,
+  className,
+  aspect = "feature",
+  priority = false,
+  preload = false,
+}: VisualSlotProps) {
   const url = getAssetUrl(assetId)
   const showMockup = isPlaceholderOnly(assetId)
   const kind = getVisualKind(assetId)
@@ -83,7 +96,9 @@ export function VisualSlot({ assetId, alt, className, aspect = "feature" }: Visu
           className="object-cover"
           style={objectPosition ? { objectPosition } : undefined}
           sizes="(min-width: 1024px) 50vw, 100vw"
-          unoptimized
+          priority={priority}
+          loading={priority ? undefined : preload ? "eager" : "lazy"}
+          placeholder={isStaticImage(url) ? "blur" : undefined}
         />
       </div>
     )
