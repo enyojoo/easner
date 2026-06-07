@@ -39,7 +39,7 @@ interface StoreDownloadButtonsProps {
 }
 
 const storeLinkClass =
-  "inline-flex min-w-0 items-center gap-3 rounded-xl px-4 py-2.5 transition-opacity hover:opacity-90"
+  "inline-flex min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 transition-opacity hover:opacity-90 sm:gap-3 sm:px-4"
 
 function storeLinkProps(href: string) {
   const placeholder = href === "#"
@@ -56,7 +56,7 @@ export function StoreDownloadButtons({ className, layout = "row" }: StoreDownloa
   return (
     <div
       className={cn(
-        "gap-3",
+        "gap-2.5 sm:gap-3",
         layout === "grid"
           ? "grid grid-cols-2"
           : layout === "row"
@@ -70,11 +70,11 @@ export function StoreDownloadButtons({ className, layout = "row" }: StoreDownloa
         className={cn(
           storeLinkClass,
           "border border-[#0F1110] bg-[#0F1110] text-white",
-          layout === "grid" ? "w-full" : "min-w-[10.5rem]",
+          layout === "grid" ? "w-full" : "min-w-[9.75rem] sm:min-w-[10.5rem]",
           APP_STORE_URL === "#" && "cursor-default"
         )}
       >
-        <AppleIcon className="h-7 w-7 flex-shrink-0" />
+        <AppleIcon className="h-6 w-6 flex-shrink-0 sm:h-7 sm:w-7" />
         <span className="text-left leading-tight">
           <span className="block text-[10px] font-medium uppercase tracking-wide text-white/75">Download on</span>
           <span className="block text-sm font-semibold">App Store</span>
@@ -85,11 +85,11 @@ export function StoreDownloadButtons({ className, layout = "row" }: StoreDownloa
         className={cn(
           storeLinkClass,
           "border border-[#E4DED1] bg-white text-[#0F1110] hover:border-[#007ACC]/30",
-          layout === "grid" ? "w-full" : "min-w-[10.5rem]",
+          layout === "grid" ? "w-full" : "min-w-[9.75rem] sm:min-w-[10.5rem]",
           PLAY_STORE_URL === "#" && "cursor-default"
         )}
       >
-        <GooglePlayIcon className="h-7 w-[1.55rem] flex-shrink-0" />
+        <GooglePlayIcon className="h-6 w-[1.35rem] flex-shrink-0 sm:h-7 sm:w-[1.55rem]" />
         <span className="text-left leading-tight">
           <span className="block text-[10px] font-medium uppercase tracking-wide text-[#6F756F]">Get it on</span>
           <span className="block text-sm font-semibold">Google Play</span>

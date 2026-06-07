@@ -79,7 +79,9 @@ export function VisualSlot({
       : aspect === "card"
         ? "h-full w-full min-h-0"
       : aspect === "hero"
-      ? "aspect-[16/10] md:aspect-[16/9]"
+      ? kind === "phone"
+        ? "aspect-[4/5] sm:aspect-[16/10] md:aspect-[16/9]"
+        : "aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9]"
       : aspect === "square"
         ? "aspect-square"
         : kind === "map"
@@ -89,6 +91,13 @@ export function VisualSlot({
           : "aspect-[4/3]"
 
   if (!showMockup && url) {
+    const imageFitClass =
+      kind === "persona"
+        ? "object-cover"
+        : aspect === "fill" || aspect === "card"
+          ? "object-contain p-2 sm:p-3"
+          : "object-cover"
+
     return (
       <div
         className={cn(
@@ -102,7 +111,7 @@ export function VisualSlot({
           src={url}
           alt={alt}
           fill
-          className="object-cover"
+          className={imageFitClass}
           style={objectPosition ? { objectPosition } : undefined}
           sizes="(min-width: 1024px) 50vw, 100vw"
           priority={priority}
@@ -516,7 +525,7 @@ function DashboardMockup({ assetId: _assetId, compact, fill = false }: { assetId
               </div>
             ))}
           </div>
-          <div className={cn("p-4", compact ? "sm:p-4" : "sm:p-6")}>
+          <div className={cn("p-3 sm:p-4", compact ? "sm:p-4" : "md:p-6")}>
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">
@@ -530,7 +539,10 @@ function DashboardMockup({ assetId: _assetId, compact, fill = false }: { assetId
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="mt-4 rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2 text-xs font-semibold text-[#6F756F] sm:hidden">
+              USD, EUR, and NGN accounts active
+            </div>
+            <div className="hidden grid-cols-3 gap-2 sm:grid">
               {["USD", "EUR", "NGN"].map((currency, index) => (
                 <div key={currency} className="rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-2.5">
                   <div className="text-[10px] text-[#6F756F]">{currency}</div>
@@ -539,7 +551,7 @@ function DashboardMockup({ assetId: _assetId, compact, fill = false }: { assetId
                 </div>
               ))}
             </div>
-            <div className="mt-4 rounded-xl border border-[#E9E4D8] p-3">
+            <div className="mt-4 hidden rounded-xl border border-[#E9E4D8] p-3 sm:block">
               <div className="mb-3 text-xs font-semibold text-[#0F1110]">Recent activity</div>
               {["Invoice paid · $4,800", "Payout sent · $12,400", "Terminal collection · $128"].map((item, index) => (
                 <div key={item} className="mb-2 flex items-center gap-2 last:mb-0">
@@ -800,7 +812,7 @@ function StablecoinHeroMockup({ compact, fill = false }: { compact: boolean; fil
             Easner Business
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-[0.32fr_1fr]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[0.32fr_1fr]">
           <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
             <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110]" />
             {["Receive", "Send", "Terminal", "QR Pay"].map((item, index) => (
@@ -1676,7 +1688,7 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
             Easner Business
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-[0.32fr_1fr]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[0.32fr_1fr]">
           <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
             <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110]" />
             {["Accounts", "Payouts", "Cards", "Team"].map((item, index) => (
@@ -1699,7 +1711,7 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
             <div
               className={cn(
                 "relative mx-auto w-full max-w-md",
-                compact ? "grid grid-cols-1 gap-3" : "grid min-h-[9.5rem] grid-cols-2 gap-3 sm:min-h-[11rem] sm:gap-4"
+                compact ? "grid grid-cols-1 gap-3" : "grid min-h-[9.5rem] grid-cols-1 gap-3 sm:min-h-[11rem] sm:grid-cols-2 sm:gap-4"
               )}
             >
               {/* Virtual card */}

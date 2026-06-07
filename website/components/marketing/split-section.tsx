@@ -37,13 +37,13 @@ function SplitCtas({ ctas, h1 }: { ctas: Cta[]; h1?: boolean }) {
   }
 
   return (
-    <div className="mt-8 flex flex-wrap gap-3">
+    <div className="mt-8 flex flex-row flex-wrap gap-3">
       {ctas.map((cta, i) =>
         cta.action === "open-account" ? (
           <OpenAccountButton
             key={cta.label}
             showArrow={i === 0}
-            className="h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3]"
+            className="h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
           />
         ) : (
           <Button
@@ -53,8 +53,8 @@ function SplitCtas({ ctas, h1 }: { ctas: Cta[]; h1?: boolean }) {
             variant={i === 0 ? "default" : "outline"}
             className={
               i === 0
-                ? "h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3]"
-                : "h-12 rounded-full border-[#D9D4C7] bg-white/80 px-6 text-[#0F1110] hover:bg-white"
+                ? "h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
+                : "h-11 rounded-full border-[#D9D4C7] bg-white/80 px-5 text-sm text-[#0F1110] hover:bg-white sm:h-12 sm:px-6"
             }
           >
             <MarketingLink href={cta.href} external={cta.external}>
@@ -97,16 +97,16 @@ function CopyBlock({
       <HeadingTag
         className={cn(
           "font-unbounded font-semibold leading-[1.08] text-[#0F1110]",
-          h1 ? "text-4xl sm:text-5xl md:text-6xl" : "text-2xl sm:text-3xl"
+          h1 ? "text-[2rem] sm:text-5xl md:text-6xl" : "text-2xl sm:text-3xl"
         )}
       >
         {headline}
       </HeadingTag>
       {subhead && (
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-[#5F665F] sm:text-xl">{subhead}</p>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8 md:text-xl">{subhead}</p>
       )}
       {body && (
-        <p className={cn("max-w-2xl leading-8 text-[#5F665F]", subhead ? "mt-4" : "mt-5 text-lg")}>
+        <p className={cn("max-w-2xl leading-7 text-[#5F665F] sm:leading-8", subhead ? "mt-4" : "mt-5 text-base sm:text-lg")}>
           {body}
         </p>
       )}
@@ -152,7 +152,7 @@ export function SplitSection({
   const isContent = resolvedVariant === "content"
 
   return (
-    <section className={cn("bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12", h1 && "bg-transparent")}>
+    <section className={cn("bg-[#F6F3EB] pb-14 pt-7 md:pb-24 md:pt-12", h1 && "bg-transparent")}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           className={cn(
@@ -201,10 +201,10 @@ export function TextOnlySection({
     <section className="bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+          <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
             {headline}
           </h2>
-          {body && <p className="mt-5 text-lg leading-8 text-[#5F665F]">{body}</p>}
+          {body && <p className="mt-5 text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{body}</p>}
         </div>
       </div>
     </section>

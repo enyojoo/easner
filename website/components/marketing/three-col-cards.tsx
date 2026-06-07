@@ -1,9 +1,11 @@
 "use client"
 
+import { useLayoutEffect, useRef } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VisualSlot } from "./visual-slot"
+import { scrollToProductsWithPaintRetries } from "./product-anchor"
 import type { CardItem } from "@/lib/marketing/types"
 
 interface ThreeColCardsProps {
@@ -27,33 +29,58 @@ export function ThreeColCards({
   id,
   className,
 }: ThreeColCardsProps) {
+  const sectionRef = useRef<HTMLElement>(null)
   const gridClass =
     columns === 4
-      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      ? "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6"
       : columns === 2
-        ? "mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2"
-        : "grid grid-cols-1 md:grid-cols-3 gap-6"
+        ? "mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:gap-6"
+        : "grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3 lg:gap-6"
+
+  useLayoutEffect(() => {
+    if (!id) return
+
+    const scrollToHash = () => {
+      if (window.location.hash !== `#${id}`) return
+
+      if (id === "products") {
+        scrollToProductsWithPaintRetries()
+        return
+      }
+
+      sectionRef.current?.scrollIntoView({ block: "start", behavior: "auto" })
+    }
+
+    scrollToHash()
+    window.addEventListener("hashchange", scrollToHash)
+
+    return () => window.removeEventListener("hashchange", scrollToHash)
+  }, [id])
 
   return (
-    <section id={id} className={cn("bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12", className)}>
+    <section
+      ref={sectionRef}
+      id={id}
+      className={cn("bg-[#F6F3EB] scroll-mt-24 pb-14 pt-7 md:scroll-mt-28 md:pb-24 md:pt-12", className)}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {headline && (
-          <div className="mx-auto mb-12 max-w-3xl text-center lg:max-w-none">
+          <div className="mx-auto mb-9 max-w-3xl text-center sm:mb-12 lg:max-w-none">
             <h2
-              className={`font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl ${headlineClassName ?? ""}`}
+              className={`font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl ${headlineClassName ?? ""}`}
             >
               {headline}
             </h2>
-            {subhead && <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-[#5F665F]">{subhead}</p>}
+            {subhead && <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{subhead}</p>}
           </div>
         )}
         <div className={gridClass}>
           {items.map((item) => {
             const content = (
-              <Card className="group h-full overflow-hidden rounded-[1.5rem] border-[#E4DED1] bg-white/90 shadow-[0_12px_35px_rgba(15,17,16,0.05)] transition-all hover:-translate-y-1 hover:border-[#007ACC]/30 hover:shadow-[0_20px_55px_rgba(15,17,16,0.09)]">
+              <Card className="group h-full overflow-hidden rounded-[1.25rem] border-[#E4DED1] bg-white/90 shadow-[0_12px_35px_rgba(15,17,16,0.05)] transition-all hover:-translate-y-1 hover:border-[#007ACC]/30 hover:shadow-[0_20px_55px_rgba(15,17,16,0.09)] sm:rounded-[1.5rem]">
                 {showIcons && item.icon && (
-                  <div className="px-6 pt-6">
-                    <VisualSlot assetId={item.icon} alt={item.title} aspect="square" className="h-16 w-16 !aspect-square rounded-2xl shadow-none" />
+                  <div className="px-5 pt-5 sm:px-6 sm:pt-6">
+                    <VisualSlot assetId={item.icon} alt={item.title} aspect="square" className="h-14 w-14 !aspect-square rounded-2xl shadow-none sm:h-16 sm:w-16" />
                   </div>
                 )}
                 <CardHeader>

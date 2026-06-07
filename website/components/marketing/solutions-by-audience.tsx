@@ -1,78 +1,176 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
-  SPLIT_VISUAL_CONTAINER,
 } from "@/lib/marketing/layout-constants"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
 import { solutionsPersonas } from "@/lib/marketing/content/home"
 
 export function SolutionsByAudience() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const tabScrollTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const hashJumpTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const isTabScrollRef = useRef(false)
+  const isHashJumpRef = useRef(false)
   const [active, setActive] = useState(0)
+  const prefersReducedMotion = useReducedMotion()
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  })
   const persona = solutionsPersonas[active]
 
+  useEffect(() => {
+    const suspendForProductsHash = () => {
+      if (window.location.hash !== "#products") return
+
+      isHashJumpRef.current = true
+
+      if (hashJumpTimeoutRef.current) {
+        window.clearTimeout(hashJumpTimeoutRef.current)
+      }
+
+      hashJumpTimeoutRef.current = window.setTimeout(() => {
+        isHashJumpRef.current = false
+      }, 900)
+    }
+
+    suspendForProductsHash()
+    window.addEventListener("hashchange", suspendForProductsHash)
+
+    return () => {
+      window.removeEventListener("hashchange", suspendForProductsHash)
+
+      if (tabScrollTimeoutRef.current) {
+        window.clearTimeout(tabScrollTimeoutRef.current)
+      }
+
+      if (hashJumpTimeoutRef.current) {
+        window.clearTimeout(hashJumpTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (isTabScrollRef.current || isHashJumpRef.current) return
+
+    const nextIndex = Math.min(
+      solutionsPersonas.length - 1,
+      Math.max(0, Math.floor(latest * solutionsPersonas.length))
+    )
+
+    setActive((current) => (current === nextIndex ? current : nextIndex))
+  })
+
+  const handleTabClick = (index: number) => {
+    setActive(index)
+
+    if (!sectionRef.current) return
+
+    const sectionTop = sectionRef.current.getBoundingClientRect().top + window.scrollY
+    const scrollableDistance = sectionRef.current.offsetHeight - window.innerHeight
+    const segmentProgress = (index + 0.05) / solutionsPersonas.length
+    isTabScrollRef.current = true
+
+    if (tabScrollTimeoutRef.current) {
+      window.clearTimeout(tabScrollTimeoutRef.current)
+    }
+
+    window.scrollTo({
+      top: sectionTop + scrollableDistance * segmentProgress + 1,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    })
+
+    tabScrollTimeoutRef.current = window.setTimeout(
+      () => {
+        isTabScrollRef.current = false
+      },
+      prefersReducedMotion ? 0 : 700
+    )
+  }
+
   return (
-    <section className="bg-white pb-16 pt-8 md:pb-24 md:pt-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-10 max-w-3xl text-center">
-          <h2 className="font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
-            Built for how you move money
-          </h2>
-          <p className="mt-4 text-lg leading-8 text-[#5F665F]">
-            Pick the Easner surface that matches your work: mobile banking, business operations, or embedded infrastructure.
-          </p>
-        </div>
-        <div className="mb-10 flex flex-wrap justify-center gap-2">
-          {solutionsPersonas.map((p, index) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setActive(index)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                active === index
-                  ? "bg-[#0F1110] text-white"
-                  : "border border-[#E4DED1] bg-[#F8F6F0] text-[#5F665F] hover:border-[#007ACC]/30 hover:text-[#0F1110]"
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <div className={cn("grid grid-cols-1 items-stretch lg:grid-cols-2", SPLIT_GRID_GAP)}>
-          <div className={SPLIT_COPY_CARD}>
-            <h3 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-3xl">
-              {persona.headline}
-            </h3>
-            <p className="mt-4 flex-1 text-lg leading-8 text-[#5F665F]">{persona.body}</p>
-            <div className="mt-8 min-h-[3.25rem] shrink-0">
-              <PersonaCtas ctas={persona.ctas} />
-            </div>
+    <section ref={sectionRef} className="h-[285vh] bg-white">
+      <div className="max-w-7xl mx-auto sticky top-16 flex min-h-[calc(100vh-4rem)] items-center px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <div className="w-full">
+          <div className="mx-auto mb-5 hidden max-w-3xl text-center sm:mb-8 sm:block">
+            <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+              Built for how you move money
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
+              Pick the Easner surface that matches your work: mobile banking, business operations, or embedded infrastructure.
+            </p>
           </div>
-          <div className={SPLIT_VISUAL_CONTAINER}>
+          <div
+            className="mb-3 flex flex-wrap justify-center gap-2 sm:mb-8"
+            role="tablist"
+            aria-label="Ways to use Easner"
+          >
             {solutionsPersonas.map((p, index) => (
-              <div
+              <button
                 key={p.id}
+                id={`audience-tab-${p.id}`}
+                type="button"
+                role="tab"
+                aria-selected={active === index}
+                aria-controls={`audience-panel-${p.id}`}
+                onClick={() => handleTabClick(index)}
                 className={cn(
-                  "absolute inset-0 transition-opacity duration-300 ease-out",
-                  active === index ? "z-10 opacity-100" : "z-0 opacity-0"
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:py-2 sm:text-sm",
+                  active === index
+                    ? "bg-[#0F1110] text-white"
+                    : "border border-[#E4DED1] bg-[#F8F6F0] text-[#5F665F] hover:border-[#007ACC]/30 hover:text-[#0F1110]"
                 )}
-                aria-hidden={active !== index}
               >
-                <VisualSlot
-                  assetId={p.visualSlot}
-                  alt={p.altText}
-                  aspect="fill"
-                  className="h-full"
-                  priority={index === 0}
-                  preload
-                />
-              </div>
+                {p.label}
+              </button>
             ))}
+          </div>
+          <div className={cn("grid grid-cols-1 items-stretch gap-3 sm:gap-5 lg:grid-cols-2", SPLIT_GRID_GAP)}>
+            <motion.div
+              key={persona.id}
+              id={`audience-panel-${persona.id}`}
+              role="tabpanel"
+              aria-labelledby={`audience-tab-${persona.id}`}
+              className={cn(SPLIT_COPY_CARD, "min-h-[17.5rem] p-5 sm:min-h-[22rem] lg:min-h-[28rem]")}
+              initial={false}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: "easeOut" }}
+            >
+              <h3 className="font-unbounded text-xl font-semibold leading-tight text-[#0F1110] sm:text-3xl lg:text-[2rem]">
+                {persona.headline}
+              </h3>
+              <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>
+              <div className="mt-5 min-h-[3.25rem] shrink-0 sm:mt-8">
+                <PersonaCtas ctas={persona.ctas} />
+              </div>
+            </motion.div>
+            <div className="relative h-[14rem] overflow-hidden rounded-[1.5rem] sm:h-[20rem] sm:rounded-none md:h-[24rem] lg:h-[28rem]">
+              {solutionsPersonas.map((p, index) => (
+                <div
+                  key={p.id}
+                  className={cn(
+                    "absolute inset-0 transition-opacity duration-300 ease-out",
+                    active === index ? "z-10 opacity-100" : "z-0 opacity-0"
+                  )}
+                  aria-hidden={active !== index}
+                >
+                  <VisualSlot
+                    assetId={p.visualSlot}
+                    alt={p.altText}
+                    aspect="fill"
+                    className="h-full"
+                    priority={index === 0}
+                    preload
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

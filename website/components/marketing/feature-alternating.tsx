@@ -13,7 +13,7 @@ export function FeatureAlternating({ features, headline }: FeatureAlternatingPro
     <section className="bg-[#F6F3EB]">
       {headline && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 text-center">
-          <h2 className="font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">{headline}</h2>
+          <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">{headline}</h2>
         </div>
       )}
       {features.map((feature, index) =>
