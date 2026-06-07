@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { OpenAccountButton } from "@/components/marketing/open-account-dialog"
+import { OpenAccountButton, OpenAccountDialog } from "@/components/marketing/open-account-dialog"
 import { BrandLogo } from "@easner/shared"
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import { NAV_LINKS, NAV_SECTIONS, type NavIconName } from "@/lib/nav-config"
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [mobileExpanded, setMobileExpanded] = React.useState<Set<string>>(new Set())
+  const [accountDialogOpen, setAccountDialogOpen] = React.useState(false)
 
   React.useEffect(() => {
     if (mobileMenuOpen) {
@@ -112,7 +113,11 @@ export function PublicHeader() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <OpenAccountButton className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]" />
+            <OpenAccountButton
+              className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]"
+              dialogOpen={accountDialogOpen}
+              onDialogOpenChange={setAccountDialogOpen}
+            />
           </div>
 
           {/* Mobile menu button */}
@@ -190,12 +195,15 @@ export function PublicHeader() {
             <div className="flex-shrink-0 border-t border-[#E4DED1] bg-white px-4 pb-4 pt-4">
               <OpenAccountButton
                 className="w-full rounded-full bg-[#007ACC] text-white hover:bg-[#0062A3]"
+                dialogOpen={accountDialogOpen}
+                onDialogOpenChange={setAccountDialogOpen}
                 onPress={() => setMobileMenuOpen(false)}
               />
             </div>
           </div>
         )}
       </div>
+      <OpenAccountDialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen} />
     </header>
   )
 }

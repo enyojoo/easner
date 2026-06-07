@@ -118,10 +118,22 @@ interface OpenAccountButtonProps {
   className?: string
   showArrow?: boolean
   onPress?: () => void
+  /** Parent-controlled dialog; render `<OpenAccountDialog />` separately. */
+  dialogOpen?: boolean
+  onDialogOpenChange?: (open: boolean) => void
 }
 
-export function OpenAccountButton({ className, showArrow = false, onPress }: OpenAccountButtonProps) {
-  const [open, setOpen] = useState(false)
+export function OpenAccountButton({
+  className,
+  showArrow = false,
+  onPress,
+  dialogOpen,
+  onDialogOpenChange,
+}: OpenAccountButtonProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isControlled = onDialogOpenChange !== undefined
+  const open = isControlled ? (dialogOpen ?? false) : internalOpen
+  const setOpen = isControlled ? onDialogOpenChange : setInternalOpen
 
   return (
     <>
@@ -129,14 +141,14 @@ export function OpenAccountButton({ className, showArrow = false, onPress }: Ope
         type="button"
         className={className}
         onClick={() => {
-          onPress?.()
           setOpen(true)
+          onPress?.()
         }}
       >
         Open Account
         {showArrow && <ArrowRight className="h-4 w-4" />}
       </Button>
-      <OpenAccountDialog open={open} onOpenChange={setOpen} />
+      {!isControlled && <OpenAccountDialog open={open} onOpenChange={setOpen} />}
     </>
   )
 }
