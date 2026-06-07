@@ -1,21 +1,21 @@
 # Stablecoin Payments Infrastructure
 
 **Route:** `/stablecoin`  
-**Title:** Stablecoin Payments — Easner  
-**Meta description:** Stablecoin speed with banking screens. Invisible settlement infrastructure for Easner Personal and Business — receive, send, Terminal, and QR Pay where enabled.
+**Title:** Stablecoin Payments – Easner  
+**Meta description:** Stablecoin speed with banking screens. Invisible settlement infrastructure for Easner Personal and Business – receive, send, Terminal, and QR Pay where enabled.
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` — copy left, visual right  
+**Layout:** `split_50_50` – copy left, visual right  
 **Visual slot:** `mkt-hero-stablecoin-01`  
 **Alt text:** Easner dashboard showing bank and stablecoin payment options  
-**Design notes:** UI-forward composite — Receive Bank | Stablecoin tabs + dashboard chrome; **no coin imagery**
+**Design notes:** UI-forward composite – Receive Bank | Stablecoin tabs + dashboard chrome; **no coin imagery**
 
 **H1:** Stablecoin speed. Banking screens.
 
-**Subhead:** Easner makes stablecoin infrastructure invisible — users interact with familiar banking flows while settlement runs on efficient global rails where enabled. Available on Easner Personal and Easner Business, including Terminal and QR Pay collections.
+**Subhead:** Easner makes stablecoin infrastructure invisible – users interact with familiar banking flows while settlement runs on efficient global rails where enabled. Available on Easner Personal and Easner Business, including Terminal and QR Pay collections.
 
 **CTA primary:** Get Started → `/access`  
 **CTA secondary:** Contact sales → `hello@easner.com`
@@ -27,7 +27,7 @@
 **Layout:** centered text block  
 **Headline:** Settlement improved. UX and compliance lagged.
 
-**Body:** Stablecoins solved speed and cost for cross-border settlement — but most products still feel like crypto apps, lack business-ready compliance, or force users to manage wallets and chains directly. Businesses need banking-simple tools on top of modern rails.
+**Body:** Stablecoins solved speed and cost for cross-border settlement – but most products still feel like crypto apps, lack business-ready compliance, or force users to manage wallets and chains directly. Businesses need banking-simple tools on top of modern rails.
 
 ---
 
@@ -36,11 +36,11 @@
 **Layout:** `split_50_50`  
 **Visual slot:** `mkt-diagram-invisible-rails`  
 **Alt text:** Diagram comparing legacy 5-day bank transfer path with Easner stablecoin settlement flow  
-**Design notes:** Before/after timeline — legacy bank chain vs simplified Easner path; Easner blue; no token logos
+**Design notes:** Before/after timeline – legacy bank chain vs simplified Easner path; Easner blue; no token logos
 
 **Headline:** What users see vs what moves underneath
 
-**Body:** Your customers and team see amounts in familiar fiat terms, virtual account details, and clear payment status. Where enabled, Easner provisions stablecoin deposit addresses (USDC, EURC on supported networks) and wallet-initiated sends through approved corridors — primarily on Easner Business — using partner-managed infrastructure.
+**Body:** Your customers and team see amounts in familiar fiat terms, virtual account details, and clear payment status. Where enabled, Easner provisions stablecoin deposit addresses (USDC, EURC on supported networks) and wallet-initiated sends through approved corridors – primarily on Easner Business – using partner-managed infrastructure.
 
 **Bullets:**
 - Users are not asked to trade or speculate on crypto
@@ -49,7 +49,7 @@
 
 ---
 
-## Section 4: Receive — Bank or Stablecoin
+## Section 4: Receive – Bank or Stablecoin
 
 **Layout:** `split_40_60`  
 **Visual slot:** `mkt-ui-stablecoin-receive`  
@@ -63,12 +63,12 @@
 
 ## Section 5: Terminal
 
-**Layout:** `split_50_50` — alternate sides  
+**Layout:** `split_50_50` – alternate sides  
 **Visual slot:** `mkt-ui-terminal`  
 **Alt text:** Merchant using Easner Terminal for in-person payment  
 **Design notes:** Small business scene + Terminal UI inset; card-present / POS feel without issuer branding
 
-**Headline:** Terminal — collect in person, reconcile in Easner Business.
+**Headline:** Terminal – collect in person, reconcile in Easner Business.
 
 **Body:** Accept payments at your location with Easner Terminal where enabled. Payouts and reporting stay in your business dashboard alongside invoices and transfers.
 
@@ -81,9 +81,9 @@
 **Alt text:** Customer scanning QR code to pay a business via Easner  
 **Design notes:** QR code on counter or phone; payer scanning; clean retail context
 
-**Headline:** QR Pay — scan, pay, done.
+**Headline:** QR Pay – scan, pay, done.
 
-**Body:** Generate QR payments for quick collections — events, retail, or informal commerce — with funds routed through your Easner Business account and compliance controls.
+**Body:** Generate QR payments for quick collections – events, retail, or informal commerce – with funds routed through your Easner Business account and compliance controls.
 
 ---
 
@@ -107,7 +107,7 @@ Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 ## Section 9: Final CTA
 
 **Layout:** `cta_band`  
-**Headline:** Put stablecoin infrastructure to work — without showing your users a crypto app.  
+**Headline:** Put stablecoin infrastructure to work – without showing your users a crypto app.  
 **CTA:** Get Started → `/access` | Contact → `hello@easner.com`
 
 ---
@@ -133,4 +133,4 @@ No. Fiat rails remain available. Stablecoin is an efficiency layer where enabled
 Business collection tools for in-person and scan-to-pay flows, integrated with Easner Business reporting.
 
 **Who holds wallet keys?**  
-Wallet and key management are provided through infrastructure partners — not by Easner directly as a custodian.
+Wallet and key management are provided through infrastructure partners – not by Easner directly as a custodian.

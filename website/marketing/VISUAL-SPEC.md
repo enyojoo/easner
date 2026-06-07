@@ -2,13 +2,13 @@
 
 Last updated: June 6, 2026
 
-Art direction, layout patterns, and asset manifest for easner.com marketing pages. Aligns with [`docs/design-system.md`](../design-system.md): premium private banking, calm, global — not crypto-bro, not neon SaaS.
+Art direction, layout patterns, and asset manifest for easner.com marketing pages. Aligns with [`docs/design-system.md`](../design-system.md): premium private banking, calm, global – not crypto-bro, not neon SaaS.
 
 ---
 
 ## Art direction
 
-**Feel:** Trustworthy, human, executive — serious money movement with warmth.
+**Feel:** Trustworthy, human, executive – serious money movement with warmth.
 
 **Palette:** Easner primary blue, ivory/white canvas (Business web), cool-gray + white cards (Personal mobile). See design-system §2.0.
 
@@ -45,7 +45,7 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 | `compliance_split` | Copy left, shield/icon right | Compliance section |
 | `cta_band` | Full-width CTA strip before footer | Final conversion |
 
-**Mobile:** All splits stack vertically — copy first, visual below, unless visual is decorative background.
+**Mobile:** All splits stack vertically – copy first, visual below, unless visual is decorative background.
 
 ---
 
@@ -68,9 +68,9 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 **Naming:** `mkt-{page}-{section}-{variant}.{ext}`
 
 **Existing assets (interim):**
-- `brand/ew1.png` — replace with mobile-framed personal UI
-- `brand/eb1.png` — refresh as `mkt-ui-business-dashboard`
-- `brand/security.svg` — compliance section until `mkt-icon-compliance` exists
+- `brand/ew1.png` – replace with mobile-framed personal UI
+- `brand/eb1.png` – refresh as `mkt-ui-business-dashboard`
+- `brand/security.svg` – compliance section until `mkt-icon-compliance` exists
 
 ---
 
@@ -88,15 +88,15 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 ├─────────────────────────────────────────────────────────┤
 │  [TrustedBy logo strip]                                 │
 ├─────────────────────────────────────────────────────────┤
-│  Why Easner — 4 cards (three_col_cards → 2×2 mobile)  │
+│  Why Easner – 4 cards (three_col_cards → 2×2 mobile)  │
 ├─────────────────────────────────────────────────────────┤
-│  Products — Personal | Business | APIs (three_col_cards)│
+│  Products – Personal | Business | APIs (three_col_cards)│
 ├─────────────────────────────────────────────────────────┤
-│  Solutions — 3 tabs (tab_audience + persona photos)     │
+│  Solutions – 3 tabs (tab_audience + persona photos)     │
 ├─────────────────────────────────────────────────────────┤
-│  Corridors — copy | mkt-map-corridors (split_50_50)     │
+│  Corridors – copy | mkt-map-corridors (split_50_50)     │
 ├─────────────────────────────────────────────────────────┤
-│  Compliance — copy | icon (compliance_split)            │
+│  Compliance – copy | icon (compliance_split)            │
 ├─────────────────────────────────────────────────────────┤
 │  [PublicFooter + regulatory disclaimer]                 │
 └─────────────────────────────────────────────────────────┘

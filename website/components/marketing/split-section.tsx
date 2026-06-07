@@ -178,7 +178,7 @@ export function SplitSection({
                   assetId={visualSlot!}
                   alt={altText!}
                   aspect="fill"
-                  className="h-full"
+                  className="h-full rounded-none border-0 bg-transparent shadow-none"
                   priority={h1}
                 />
               )}

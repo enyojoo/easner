@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
+  SPLIT_VISUAL_CONTAINER,
 } from "@/lib/marketing/layout-constants"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
@@ -95,22 +96,24 @@ export function SolutionsByAudience() {
   }
 
   return (
-    <section ref={sectionRef} className="h-[285vh] bg-white">
-      <div className="max-w-7xl mx-auto sticky top-16 flex min-h-[calc(100vh-4rem)] items-center px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <div className="w-full">
-          <div className="mx-auto mb-5 hidden max-w-3xl text-center sm:mb-8 sm:block">
-            <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
-              Built for how you move money
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
-              Pick the Easner surface that matches your work: mobile banking, business operations, or embedded infrastructure.
-            </p>
-          </div>
-          <div
-            className="mb-3 flex flex-wrap justify-center gap-2 sm:mb-8"
-            role="tablist"
-            aria-label="Ways to use Easner"
-          >
+    <section className="bg-white">
+      <div className="mx-auto max-w-3xl px-4 pt-8 text-center sm:px-6 sm:pt-12 lg:px-8">
+        <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+          Built for how you move money
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
+          Pick the Easner surface that matches your work: mobile banking, business operations, or embedded infrastructure.
+        </p>
+      </div>
+
+      <div ref={sectionRef} className="h-[220vh] sm:h-[260vh] lg:h-[285vh]">
+        <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl sticky top-16 items-start px-4 py-4 sm:items-center sm:px-6 sm:py-5 lg:px-8">
+          <div className="w-full">
+            <div
+              className="mb-4 flex flex-wrap justify-center gap-2 sm:mb-8"
+              role="tablist"
+              aria-label="Ways to use Easner"
+            >
             {solutionsPersonas.map((p, index) => (
               <button
                 key={p.id}
@@ -130,8 +133,8 @@ export function SolutionsByAudience() {
                 {p.label}
               </button>
             ))}
-          </div>
-          <div className={cn("grid grid-cols-1 items-stretch gap-3 sm:gap-5 lg:grid-cols-2", SPLIT_GRID_GAP)}>
+            </div>
+            <div className={cn("grid grid-cols-1 items-stretch gap-3 sm:gap-5 lg:grid-cols-2", SPLIT_GRID_GAP)}>
             <motion.div
               key={persona.id}
               id={`audience-panel-${persona.id}`}
@@ -147,10 +150,10 @@ export function SolutionsByAudience() {
               </h3>
               <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>
               <div className="mt-5 min-h-[3.25rem] shrink-0 sm:mt-8">
-                <PersonaCtas ctas={persona.ctas} />
+                <PersonaCtas ctas={persona.ctas} storeLayout="grid" />
               </div>
             </motion.div>
-            <div className="relative h-[14rem] overflow-hidden rounded-[1.5rem] sm:h-[20rem] sm:rounded-none md:h-[24rem] lg:h-[28rem]">
+            <div className={SPLIT_VISUAL_CONTAINER}>
               {solutionsPersonas.map((p, index) => (
                 <div
                   key={p.id}
@@ -164,12 +167,13 @@ export function SolutionsByAudience() {
                     assetId={p.visualSlot}
                     alt={p.altText}
                     aspect="fill"
-                    className="h-full"
+                    className="h-full rounded-none border-0 bg-transparent shadow-none"
                     priority={index === 0}
                     preload
                   />
                 </div>
               ))}
+            </div>
             </div>
           </div>
         </div>

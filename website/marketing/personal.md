@@ -1,21 +1,21 @@
 # Personal Banking
 
 **Route:** `/personal`  
-**Title:** Personal Banking — Easner  
-**Meta description:** Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal — bank and stablecoin options where enabled.
+**Title:** Personal Banking – Easner  
+**Meta description:** Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal – bank and stablecoin options where enabled.
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` — copy left, visual right  
+**Layout:** `split_50_50` – copy left, visual right  
 **Visual slot:** `mkt-hero-personal-01`  
 **Alt text:** Freelancer using Easner Personal app to send money internationally  
 **Design notes:** Lifestyle scene (café, airport, or home office) with subject holding iPhone showing Easner app; natural light; diverse representation
 
 **H1:** Global banking in your pocket.
 
-**Subhead:** Easner Personal is your mobile app for sending, receiving, and managing money across global and African corridors — with bank transfers and stablecoin options where enabled, and compliance built in.
+**Subhead:** Easner Personal is your mobile app for sending, receiving, and managing money across global and African corridors – with bank transfers and stablecoin options where enabled, and compliance built in.
 
 **CTA primary:** Download on the App Store → `{APP_STORE_URL}`  
 **CTA secondary:** Get it on Google Play → `{PLAY_STORE_URL}`  
@@ -28,22 +28,22 @@
 **Layout:** centered text block  
 **Headline:** Formal rails are slow. Informal FX is risky.
 
-**Body:** Cross-border corridors can take days to settle and charge double-digit fees. Many people turn to informal traders — costly and unpredictable. Emerging markets need faster, compliant paths that still feel like banking.
+**Body:** Cross-border corridors can take days to settle and charge double-digit fees. Many people turn to informal traders – costly and unpredictable. Emerging markets need faster, compliant paths that still feel like banking.
 
-**Optional stat:** Some regions remain among the world's most expensive remittance corridors — fees can exceed 12% with multiple intermediaries.
+**Optional stat:** Some regions remain among the world's most expensive remittance corridors – fees can exceed 12% with multiple intermediaries.
 
 ---
 
 ## Section 3: Solution
 
-**Layout:** `split_50_50` — visual left, copy right  
+**Layout:** `split_50_50` – visual left, copy right  
 **Visual slot:** `mkt-ui-personal-receive`  
 **Alt text:** Easner Personal Receive screen showing Bank and Stablecoin options  
 **Design notes:** iPhone 15 frame, light theme, Receive tab with Bank | Stablecoin visible
 
 **Headline:** Banking-simple. Built for your life abroad.
 
-**Body:** Easner Personal gives you USD and EUR accounts, fast pay-in and pay-out, and stablecoin receive where enabled — without learning crypto. Verify once through hosted KYC, then send to recipients, use your Easner tag, and track everything in one app.
+**Body:** Easner Personal gives you USD and EUR accounts, fast pay-in and pay-out, and stablecoin receive where enabled – without learning crypto. Verify once through hosted KYC, then send to recipients, use your Easner tag, and track everything in one app.
 
 ---
 
@@ -59,7 +59,7 @@ Send by bank transfer, stablecoin, open banking, or mobile money **where enabled
 ### Receive money
 **Visual:** `mkt-ui-personal-receive`  
 **Alt text:** Easner Personal receive options  
-Get paid by virtual account details or stablecoin deposit address — choose Bank or Stablecoin on the Receive tab.
+Get paid by virtual account details or stablecoin deposit address – choose Bank or Stablecoin on the Receive tab.
 
 ### Recipients and Easner tag
 **Visual:** `mkt-ui-personal-recipients`  
@@ -67,7 +67,7 @@ Get paid by virtual account details or stablecoin deposit address — choose Ban
 Save recipients, send to Easner tags, and move money between people you trust.
 
 ### Security
-**Visual:** optional icon — `mkt-icon-security`  
+**Visual:** optional icon – `mkt-icon-security`  
 Multi-factor authentication, PIN, and biometric unlock where supported on your device.
 
 ---
@@ -75,7 +75,7 @@ Multi-factor authentication, PIN, and biometric unlock where supported on your d
 ## Section 5: Tier availability
 
 **Layout:** three-column tier cards (stack on mobile)  
-Use **Tier ladder — Easner Personal** from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
+Use **Tier ladder – Easner Personal** from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 
 ---
 
@@ -120,7 +120,7 @@ Individuals 18 or older in supported jurisdictions who want mobile global bankin
 No. Easner provides banking-simple screens. Stablecoin features use partner-managed infrastructure where enabled.
 
 **How long do transfers take?**  
-Processing times vary by corridor, partner, and compliance review — often minutes to hours, not guaranteed.
+Processing times vary by corridor, partner, and compliance review – often minutes to hours, not guaranteed.
 
 **Is Easner Personal available on web?**  
 Easner Personal is a mobile application. Businesses use Easner Business on the web.

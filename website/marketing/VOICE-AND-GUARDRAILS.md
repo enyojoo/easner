@@ -11,7 +11,7 @@ Marketing copy for easner.com must align with product reality and [`docs/legal/`
 | Layer | Approved copy |
 |-------|----------------|
 | **One-liner** | Stablecoin Banking Infrastructure for Global Businesses |
-| **Category** | Global money movement — accounts, payouts, collections, and developer APIs |
+| **Category** | Global money movement – accounts, payouts, collections, and developer APIs |
 | **Differentiator** | Stablecoins power settlement behind the scenes; Easner delivers banking-simple UX and built-in compliance |
 
 ---

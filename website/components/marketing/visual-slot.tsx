@@ -26,7 +26,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getAssetObjectPosition, getAssetUrl, getVisualKind, isPlaceholderOnly } from "@/lib/marketing/assets"
-import { HERO_VISUAL_HEIGHT } from "@/lib/marketing/layout-constants"
+import { HERO_VISUAL_HEIGHT, MOCKUP_CHROME_BAR, MOCKUP_DASHBOARD_GRID } from "@/lib/marketing/layout-constants"
 import { CorridorCoverageVisual } from "./corridor-coverage-visual"
 import { CurrencyBadge } from "./currency-badge"
 
@@ -73,15 +73,19 @@ export function VisualSlot({
   const kind = getVisualKind(assetId)
   const objectPosition = getAssetObjectPosition(assetId)
 
+  const isHero = aspect === "hero"
+  const fill = aspect === "fill" || isHero
+  const compact = aspect === "square" || aspect === "card"
+  const dense = aspect === "card"
+  const frameless = className?.includes("border-0")
+
   const aspectClass =
     aspect === "fill"
       ? "h-full w-full min-h-0"
       : aspect === "card"
         ? "h-full w-full min-h-0"
       : aspect === "hero"
-      ? kind === "phone"
-        ? "aspect-[4/5] sm:aspect-[16/10] md:aspect-[16/9]"
-        : "aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9]"
+        ? "h-full w-full min-h-0"
       : aspect === "square"
         ? "aspect-square"
         : kind === "map"
@@ -122,13 +126,9 @@ export function VisualSlot({
     )
   }
 
-  const compact = aspect === "square" || aspect === "card"
-  const fill = aspect === "fill"
-  const dense = aspect === "card"
-
   if (kind === "phone") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <PersonalMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -136,7 +136,7 @@ export function VisualSlot({
 
   if (kind === "dashboard") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <DashboardMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -144,7 +144,7 @@ export function VisualSlot({
 
   if (kind === "business") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <BusinessMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -152,7 +152,7 @@ export function VisualSlot({
 
   if (kind === "stablecoin") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <StablecoinMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -160,7 +160,7 @@ export function VisualSlot({
 
   if (kind === "invoice") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <InvoiceMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -168,7 +168,7 @@ export function VisualSlot({
 
   if (kind === "api") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <ApiMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -176,7 +176,7 @@ export function VisualSlot({
 
   if (kind === "card") {
     return (
-      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill}>
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <CardMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
@@ -254,6 +254,8 @@ function MockupFrame({
   children,
   dense = false,
   fill = false,
+  hero = false,
+  frameless = false,
 }: {
   alt: string
   aspectClass: string
@@ -261,31 +263,41 @@ function MockupFrame({
   children: ReactNode
   dense?: boolean
   fill?: boolean
+  hero?: boolean
+  frameless?: boolean
 }) {
+  const stretch = fill || hero
+
   return (
     <div
       className={cn(
-        "relative isolate overflow-hidden bg-[#F8F6F0]",
-        dense
-          ? "rounded-none border-0 shadow-none"
-          : "rounded-[1.75rem] border border-[#E4DED1] shadow-[0_24px_80px_rgba(15,17,16,0.12)]",
+        "relative isolate min-h-0 overflow-hidden bg-[#F8F6F0]",
+        frameless
+          ? "h-full rounded-none border-0 bg-transparent shadow-none"
+          : dense
+            ? "rounded-none border-0 shadow-none"
+            : "rounded-[1.5rem] border border-[#E4DED1] shadow-[0_24px_80px_rgba(15,17,16,0.12)] sm:rounded-[1.75rem]",
         aspectClass,
         className
       )}
       aria-label={alt}
     >
-      {dense ? (
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#F8F6F0_0%,#FFFFFF_100%)]" />
-      ) : (
-        <>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(0,122,204,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.95),rgba(246,243,235,0.75))]" />
-          <div className="absolute inset-x-8 top-8 h-px bg-gradient-to-r from-transparent via-[#007ACC]/25 to-transparent" />
-        </>
+      {!frameless && (
+        dense ? (
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,#F8F6F0_0%,#FFFFFF_100%)]" />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(0,122,204,0.14),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.95),rgba(246,243,235,0.75))]" />
+            {!stretch && (
+              <div className="absolute inset-x-8 top-8 hidden h-px bg-gradient-to-r from-transparent via-[#007ACC]/25 to-transparent sm:block" />
+            )}
+          </>
+        )
       )}
       <div
         className={cn(
-          "relative h-full w-full",
-          dense ? "p-1.5 sm:p-2" : fill ? "p-3 sm:p-4" : "p-5 sm:p-7"
+          "relative min-h-0 w-full",
+          stretch ? "flex h-full flex-col p-2 sm:p-3 md:p-4" : dense ? "h-full p-1.5 sm:p-2" : "h-full p-4 sm:p-6 md:p-7"
         )}
       >
         {children}
@@ -302,9 +314,9 @@ function mockupOuterClass(compact: boolean, fill = false) {
 function mockupPanelClass(compact: boolean, wide = false, fill = false) {
   const stretch = compact || fill
   return cn(
-    "overflow-hidden border bg-white",
+    "min-h-0 overflow-hidden border bg-white",
     stretch
-      ? "flex h-full w-full flex-col rounded-xl border-[#D9D4C7] bg-white shadow-sm"
+      ? "flex h-full w-full flex-col rounded-lg border-[#D9D4C7] bg-white shadow-sm sm:rounded-xl"
       : cn(
           "border-[#E4DED1] shadow-xl",
           wide ? "h-[88%] w-[94%] rounded-2xl border-[#D9D4C7]" : "h-[88%] w-[92%] rounded-3xl"
@@ -328,17 +340,21 @@ function PersonalMockup({ assetId, compact, fill = false }: { assetId: string; c
   return <PersonalHeroMockup compact={compact} fill={fill} />
 }
 
-function PersonalPhoneFrame({ compact, children }: { compact: boolean; children: ReactNode }) {
+function PersonalPhoneFrame({ compact, fill = false, children }: { compact: boolean; fill?: boolean; children: ReactNode }) {
+  const stretch = compact || fill
+
   return (
-    <div className={cn("flex h-full w-full", compact ? "items-stretch justify-center" : "items-center justify-center")}>
+    <div className={cn("flex h-full w-full min-h-0", stretch ? "items-stretch justify-center" : "items-center justify-center")}>
       <div
         className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-[2rem] border-[8px] border-[#0F1110] bg-[#0F1110] shadow-xl",
-          compact ? "mx-auto w-full max-w-[13rem]" : "h-[92%] w-[min(52%,15rem)] min-w-[10rem] max-h-[30rem]"
+          "relative flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] border-[7px] border-[#0F1110] bg-[#0F1110] shadow-xl sm:rounded-[2rem] sm:border-[8px]",
+          stretch
+            ? "mx-auto h-full w-full max-w-[12.5rem] min-[430px]:max-w-[13rem] sm:max-w-[15rem]"
+            : "h-[92%] w-[min(52%,15rem)] min-w-[10rem] max-h-[30rem]"
         )}
       >
-        <div className="absolute left-1/2 top-1.5 z-10 h-1 w-12 -translate-x-1/2 rounded-full bg-white/15" />
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.35rem] bg-[#F6F3EB] p-3">{children}</div>
+        <div className="absolute left-1/2 top-1.5 z-10 h-1 w-10 -translate-x-1/2 rounded-full bg-white/15 sm:w-12" />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.25rem] bg-[#F6F3EB] p-2.5 sm:rounded-[1.35rem] sm:p-3">{children}</div>
       </div>
     </div>
   )
@@ -353,11 +369,11 @@ function PersonalHeroMockup({ compact, fill = false }: { compact: boolean; fill?
 
   return (
     <div className={mockupOuterClass(compact, fill)}>
-      <PersonalPhoneFrame compact={compact || fill}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Easner Personal</div>
-            <div className="mt-0.5 text-lg font-semibold text-[#0F1110]">$8,420.18</div>
+            <div className="mt-0.5 text-base font-semibold text-[#0F1110] sm:text-lg">$8,420.18</div>
           </div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#007ACC] text-white">
             <Smartphone className="h-3.5 w-3.5" />
@@ -388,7 +404,7 @@ function PersonalHeroMockup({ compact, fill = false }: { compact: boolean; fill?
 function PersonalSendMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   return (
     <div className={mockupOuterClass(compact, fill)}>
-      <PersonalPhoneFrame compact={compact}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Send</div>
         <div className="mt-1 text-sm font-semibold text-[#0F1110]">Amara O.</div>
         <div className="mt-3 rounded-xl bg-[#0F1110] p-3 text-white">
@@ -411,7 +427,7 @@ function PersonalSendMockup({ compact, fill = false }: { compact: boolean; fill?
 function PersonalReceiveMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   return (
     <div className={mockupOuterClass(compact, fill)}>
-      <PersonalPhoneFrame compact={compact}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Receive</div>
         <div className="mt-1 text-sm font-semibold text-[#0F1110]">Get paid</div>
         <div className="mt-3 rounded-lg border border-[#E9E4D8] bg-white p-2.5">
@@ -442,7 +458,7 @@ function PersonalRecipientsMockup({ compact, fill = false }: { compact: boolean;
 
   return (
     <div className={mockupOuterClass(compact, fill)}>
-      <PersonalPhoneFrame compact={compact}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Recipients</div>
@@ -477,7 +493,7 @@ function PersonalSecurityMockup({ compact, fill = false }: { compact: boolean; f
 
   return (
     <div className={mockupOuterClass(compact, fill)}>
-      <PersonalPhoneFrame compact={compact}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Security</div>
         <div className="mt-1 text-sm font-semibold text-[#0F1110]">Account protection</div>
         <div className="mt-3 space-y-2">
@@ -499,25 +515,27 @@ function PersonalSecurityMockup({ compact, fill = false }: { compact: boolean; f
 }
 
 function DashboardMockup({ assetId: _assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
+  const activity = ["Invoice paid · $4,800", "Payout sent · $12,400", "Terminal collection · $128"]
+
   return (
     <div className={mockupOuterClass(compact, fill)}>
       <div className={mockupPanelClass(compact, true, fill)}>
-        <div className="flex h-10 items-center gap-2 border-b border-[#E9E4D8] bg-[#0F1110] px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/30" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <div className="ml-auto rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
             Easner Business
           </div>
         </div>
-        <div className="grid h-[calc(100%-2.5rem)] grid-cols-[0.34fr_1fr]">
-          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-4 sm:block">
-            <div className="mb-6 h-7 w-24 rounded-full bg-[#0F1110]" />
+        <div className={MOCKUP_DASHBOARD_GRID}>
+          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block sm:p-4">
+            <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110] sm:mb-6 sm:h-7 sm:w-24" />
             {["Accounts", "Payouts", "Invoices", "Team"].map((item, index) => (
               <div
                 key={item}
                 className={cn(
-                  "mb-2 rounded-xl px-3 py-2 text-xs",
+                  "mb-1.5 rounded-xl px-2.5 py-1.5 text-[11px] sm:mb-2 sm:px-3 sm:py-2 sm:text-xs",
                   index === 0 ? "bg-[#EAF5FD] text-[#007ACC]" : "text-[#6F756F]"
                 )}
               >
@@ -525,40 +543,39 @@ function DashboardMockup({ assetId: _assetId, compact, fill = false }: { assetId
               </div>
             ))}
           </div>
-          <div className={cn("p-3 sm:p-4", compact ? "sm:p-4" : "md:p-6")}>
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <div className="flex min-h-0 flex-col overflow-hidden p-3 sm:p-4 md:p-6">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F] sm:text-xs">
                   Business overview
                 </div>
-                <div className="mt-2 text-2xl font-semibold text-[#0F1110]">$184,920.40</div>
+                <div className="mt-1 text-xl font-semibold text-[#0F1110] sm:mt-2 sm:text-2xl">$184,920.40</div>
               </div>
               {!compact && (
-                <div className="rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">
+                <div className="hidden rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white sm:inline-flex">
                   Get Started
                 </div>
               )}
             </div>
-            <div className="mt-4 rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2 text-xs font-semibold text-[#6F756F] sm:hidden">
-              USD, EUR, and NGN accounts active
-            </div>
-            <div className="hidden grid-cols-3 gap-2 sm:grid">
+            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-2">
               {["USD", "EUR", "NGN"].map((currency, index) => (
-                <div key={currency} className="rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-2.5">
-                  <div className="text-[10px] text-[#6F756F]">{currency}</div>
-                  <div className="mt-1.5 h-2.5 w-14 rounded-full bg-[#0F1110]" />
-                  <div className={cn("mt-3 h-1 rounded-full", index === 0 ? "bg-[#007ACC]" : "bg-[#D9D4C7]")} />
+                <div key={currency} className="rounded-lg border border-[#E9E4D8] bg-[#F8F6F0] p-2 sm:rounded-xl sm:p-2.5">
+                  <div className="text-[9px] text-[#6F756F] sm:text-[10px]">{currency}</div>
+                  <div className="mt-1 h-2 w-10 rounded-full bg-[#0F1110] sm:mt-1.5 sm:h-2.5 sm:w-14" />
+                  <div className={cn("mt-2 h-1 rounded-full sm:mt-3", index === 0 ? "bg-[#007ACC]" : "bg-[#D9D4C7]")} />
                 </div>
               ))}
             </div>
-            <div className="mt-4 hidden rounded-xl border border-[#E9E4D8] p-3 sm:block">
-              <div className="mb-3 text-xs font-semibold text-[#0F1110]">Recent activity</div>
-              {["Invoice paid · $4,800", "Payout sent · $12,400", "Terminal collection · $128"].map((item, index) => (
-                <div key={item} className="mb-2 flex items-center gap-2 last:mb-0">
-                  <CheckCircle2 className={cn("h-3.5 w-3.5", index === 0 ? "text-[#0F8A5F]" : "text-[#007ACC]")} />
-                  <span className="text-[11px] text-[#6F756F]">{item}</span>
-                </div>
-              ))}
+            <div className="mt-3 min-h-0 flex-1 overflow-hidden sm:mt-4">
+              <div className="mb-2 text-[10px] font-semibold text-[#0F1110] sm:mb-3 sm:text-xs">Recent activity</div>
+              <div className="space-y-1.5 sm:space-y-2">
+                {(compact ? activity.slice(0, 2) : activity).map((item, index) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className={cn("h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5", index === 0 ? "text-[#0F8A5F]" : "text-[#007ACC]")} />
+                    <span className="truncate text-[10px] text-[#6F756F] sm:text-[11px]">{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -804,15 +821,15 @@ function StablecoinHeroMockup({ compact, fill = false }: { compact: boolean; fil
   return (
     <div className={mockupOuterClass(compact, fill)}>
       <div className={mockupPanelClass(compact, true, fill)}>
-        <div className="flex h-10 shrink-0 items-center gap-2 border-b border-[#E9E4D8] bg-[#0F1110] px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/30" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <div className="ml-auto rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
             Easner Business
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[0.32fr_1fr]">
+        <div className={MOCKUP_DASHBOARD_GRID}>
           <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
             <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110]" />
             {["Receive", "Send", "Terminal", "QR Pay"].map((item, index) => (
@@ -833,7 +850,7 @@ function StablecoinHeroMockup({ compact, fill = false }: { compact: boolean; fil
                 Recent settlement
               </div>
               <div className="space-y-2">
-                {(compact ? activity.slice(0, 3) : activity).map((item) => (
+                {(compact ? activity.slice(0, 2) : fill ? activity.slice(0, 3) : activity).map((item) => (
                   <div key={item.label} className="flex items-center justify-between gap-2 rounded-lg bg-[#F8F6F0] px-2.5 py-2.5">
                     <div className="min-w-0">
                       <div className="truncate text-[11px] font-semibold text-[#0F1110]">{item.label}</div>
@@ -1075,22 +1092,22 @@ function InvoiceOverviewMockup({ compact, fill = false }: { compact: boolean; fi
   return (
     <div className={mockupOuterClass(compact, fill)}>
       <div className={mockupPanelClass(compact, true, fill)}>
-        <div className="flex h-10 items-center gap-2 border-b border-[#E9E4D8] bg-[#0F1110] px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/30" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <div className="ml-auto rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
             Easner Business
           </div>
         </div>
-        <div className="grid h-[calc(100%-2.5rem)] grid-cols-[0.34fr_1fr]">
-          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-4 sm:block">
-            <div className="mb-6 h-7 w-24 rounded-full bg-[#0F1110]" />
+        <div className={MOCKUP_DASHBOARD_GRID}>
+          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block sm:p-4">
+            <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110] sm:mb-6 sm:h-7 sm:w-24" />
             {["Accounts", "Payouts", "Invoices", "Team"].map((item, index) => (
               <div
                 key={item}
                 className={cn(
-                  "mb-2 rounded-xl px-3 py-2 text-xs",
+                  "mb-1.5 rounded-xl px-2.5 py-1.5 text-[11px] sm:mb-2 sm:px-3 sm:py-2 sm:text-xs",
                   index === 2 ? "bg-[#EAF5FD] font-semibold text-[#007ACC]" : "text-[#6F756F]"
                 )}
               >
@@ -1098,51 +1115,47 @@ function InvoiceOverviewMockup({ compact, fill = false }: { compact: boolean; fi
               </div>
             ))}
           </div>
-          <div className={cn("p-4", compact ? "sm:p-4" : "sm:p-5")}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Invoices</div>
-                <div className="mt-1 text-xl font-semibold text-[#0F1110]">$12,400 outstanding</div>
+          <div className={cn("flex min-h-0 flex-col overflow-hidden p-3 sm:p-4", fill && "sm:p-5")}>
+            <div className="flex items-start justify-between gap-2 sm:gap-3">
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F] sm:text-xs">Invoices</div>
+                <div className="mt-1 truncate text-lg font-semibold text-[#0F1110] sm:text-xl">$12,400 outstanding</div>
               </div>
-              <div className="rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">New invoice</div>
+              <div className="shrink-0 rounded-full bg-[#007ACC] px-2.5 py-1 text-[10px] font-semibold text-white sm:px-3 sm:py-1.5 sm:text-xs">
+                New invoice
+              </div>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-2">
               {[
                 { label: "Open", value: "8" },
                 { label: "Paid (30d)", value: "14" },
                 { label: "Overdue", value: "1" },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-2.5">
-                  <div className="text-[10px] text-[#6F756F]">{stat.label}</div>
-                  <div className="mt-1 text-sm font-semibold text-[#0F1110]">{stat.value}</div>
+                <div key={stat.label} className="rounded-lg border border-[#E9E4D8] bg-[#F8F6F0] p-2 sm:rounded-xl sm:p-2.5">
+                  <div className="text-[9px] text-[#6F756F] sm:text-[10px]">{stat.label}</div>
+                  <div className="mt-1 text-xs font-semibold text-[#0F1110] sm:text-sm">{stat.value}</div>
                 </div>
               ))}
             </div>
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-hidden sm:mt-4 sm:space-y-2">
               {(compact ? invoices.slice(0, 2) : invoices).map((invoice) => (
                 <div
                   key={invoice.id}
-                  className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3"
+                  className="flex items-center justify-between rounded-lg border border-[#E9E4D8] bg-[#F8F6F0] p-2.5 sm:rounded-xl sm:p-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-semibold text-[#0F1110]">{invoice.client}</div>
-                    <div className="mt-0.5 text-[10px] text-[#6F756F]">{invoice.id}</div>
+                    <div className="truncate text-[11px] font-semibold text-[#0F1110] sm:text-xs">{invoice.client}</div>
+                    <div className="truncate text-[9px] text-[#6F756F] sm:text-[10px]">{invoice.id}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs font-semibold text-[#0F1110]">{invoice.amount}</div>
-                    <div className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold", invoice.tone)}>
+                  <div className="shrink-0 text-right">
+                    <div className="text-[11px] font-semibold text-[#0F1110] sm:text-xs">{invoice.amount}</div>
+                    <div className={cn("mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-semibold sm:mt-1 sm:px-2 sm:text-[10px]", invoice.tone)}>
                       {invoice.status}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            {!compact && (
-              <div className="mt-3 flex items-center gap-2 text-[10px] text-[#6F756F]">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#0F8A5F]" />
-                Bank and stablecoin pay-in tracked in one ledger
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -1444,15 +1457,15 @@ function ApiHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boo
   return (
     <div className={mockupOuterClass(compact, fill)}>
       <div className={cn(mockupPanelClass(compact, true, fill), "overflow-hidden bg-[#0F1110] p-0 text-white")}>
-        <div className="flex h-10 shrink-0 items-center gap-2 border-b border-white/10 px-4">
-          <Code2 className="h-4 w-4 text-[#3AA6F8]" />
-          <span className="text-xs font-medium text-white/60">api.easner.com</span>
-          <div className="ml-auto rounded-full bg-[#0F8A5F]/20 px-2.5 py-1 text-[10px] font-semibold text-[#7FE0B8]">
+        <div className="flex h-8 shrink-0 items-center gap-2 border-b border-white/10 px-3 sm:h-10 sm:px-4">
+          <Code2 className="h-3.5 w-3.5 text-[#3AA6F8] sm:h-4 sm:w-4" />
+          <span className="truncate text-[10px] font-medium text-white/60 sm:text-xs">api.easner.com</span>
+          <div className="ml-auto hidden rounded-full bg-[#0F8A5F]/20 px-2 py-0.5 text-[9px] font-semibold text-[#7FE0B8] min-[430px]:inline-flex sm:px-2.5 sm:text-[10px]">
             verification.status: approved
           </div>
         </div>
-        <div className={cn("grid min-h-0 flex-1 gap-4", compact ? "p-3" : "p-4 sm:grid-cols-[1.1fr_0.9fr] sm:p-5")}>
-          <div className="font-mono text-[11px] leading-6 text-white/85 sm:text-xs">
+        <div className={cn("grid min-h-0 flex-1 gap-3", fill ? "grid-cols-1 p-2.5 sm:grid-cols-[1.1fr_0.9fr] sm:gap-4 sm:p-4 md:p-5" : compact ? "p-3" : "p-4 sm:grid-cols-[1.1fr_0.9fr] sm:p-5")}>
+          <div className="min-h-0 overflow-hidden font-mono text-[10px] leading-5 text-white/85 min-[430px]:text-[11px] sm:text-xs sm:leading-6">
             <div>
               <span className="text-[#3AA6F8]">POST</span> /v1/customers
             </div>
@@ -1680,15 +1693,15 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
   return (
     <div className={mockupOuterClass(compact, fill)}>
       <div className={mockupPanelClass(compact, true, fill)}>
-        <div className="flex h-10 shrink-0 items-center gap-2 border-b border-[#E9E4D8] bg-[#0F1110] px-4">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/30" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[#F6F3EB]/20" />
-          <div className="ml-auto rounded-full bg-white/10 px-3 py-1 text-[10px] font-medium text-white/70">
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
             Easner Business
           </div>
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[0.32fr_1fr]">
+        <div className={MOCKUP_DASHBOARD_GRID}>
           <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
             <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110]" />
             {["Accounts", "Payouts", "Cards", "Team"].map((item, index) => (
@@ -1710,15 +1723,15 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
             </div>
             <div
               className={cn(
-                "relative mx-auto w-full max-w-md",
-                compact ? "grid grid-cols-1 gap-3" : "grid min-h-[9.5rem] grid-cols-1 gap-3 sm:min-h-[11rem] sm:grid-cols-2 sm:gap-4"
+                "relative mx-auto grid w-full min-h-0 flex-1 gap-2 sm:max-w-md sm:gap-4",
+                fill && !compact ? "grid-cols-2" : compact ? "grid-cols-1 gap-3" : "grid-cols-2 gap-3"
               )}
             >
               {/* Virtual card */}
               <div
                 className={cn(
-                  "relative flex flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#007ACC] via-[#0062A3] to-[#0A2540] p-3.5 text-white shadow-[0_16px_40px_rgba(0,122,204,0.28)] sm:rounded-[1.25rem] sm:p-4",
-                  !compact && "sm:-rotate-2 sm:translate-y-1"
+                  "relative flex min-h-[7.25rem] flex-col justify-between overflow-hidden rounded-xl bg-gradient-to-br from-[#007ACC] via-[#0062A3] to-[#0A2540] p-2.5 text-white shadow-[0_16px_40px_rgba(0,122,204,0.28)] sm:min-h-0 sm:rounded-[1.25rem] sm:p-4",
+                  !compact && "md:-rotate-2 md:translate-y-1"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -1748,8 +1761,8 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
               {/* Physical card */}
               <div
                 className={cn(
-                  "relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#2A2D2C] bg-[#0F1110] p-3.5 text-white shadow-[0_16px_40px_rgba(15,17,16,0.35)] sm:rounded-[1.25rem] sm:p-4",
-                  !compact && "sm:rotate-2 sm:-translate-y-1"
+                  "relative flex min-h-[7.5rem] flex-col justify-between overflow-hidden rounded-xl border border-[#2A2D2C] bg-[#0F1110] p-2.5 text-white shadow-[0_16px_40px_rgba(15,17,16,0.35)] sm:min-h-0 sm:rounded-[1.25rem] sm:p-4",
+                  !compact && "md:rotate-2 md:-translate-y-1"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">

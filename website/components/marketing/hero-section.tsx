@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
+import { SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
+import { cn } from "@/lib/utils"
 
 export function HeroSection() {
   useLayoutEffect(() => {
@@ -60,11 +62,13 @@ export function HeroSection() {
             </Button>
           </div>
         </motion.div>
-        <div className="relative z-10 mx-auto mt-10 max-w-6xl sm:mt-12">
+        <div className={cn("relative z-10 mx-auto mt-10 max-w-6xl sm:mt-12", SPLIT_VISUAL_CONTAINER)}>
           <VisualSlot
             assetId={homeHero.visualSlot}
             alt={homeHero.altText}
             aspect="hero"
+            className="h-full rounded-none border-0 bg-transparent shadow-none"
+            priority
           />
         </div>
       </div>

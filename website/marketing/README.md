@@ -18,7 +18,7 @@ Source of truth for easner.com marketing copy. Same workflow as [`docs/legal/`](
 | `/cards` | [`cards.md`](cards.md) | `app/cards/page.tsx` |
 | `/apis` | [`apis.md`](apis.md) | `app/apis/page.tsx` |
 
-**Related routes (optional):** `/terminal`, `/qr-pay` — sections inside `/stablecoin` per [`stablecoin.md`](stablecoin.md).
+**Related routes (optional):** `/terminal`, `/qr-pay` – sections inside `/stablecoin` per [`stablecoin.md`](stablecoin.md).
 
 ---
 
@@ -26,7 +26,7 @@ Source of truth for easner.com marketing copy. Same workflow as [`docs/legal/`](
 
 | File | Purpose |
 |------|---------|
-| [`VOICE-AND-GUARDRAILS.md`](VOICE-AND-GUARDRAILS.md) | Legal-aligned vocabulary — review before any copy change |
+| [`VOICE-AND-GUARDRAILS.md`](VOICE-AND-GUARDRAILS.md) | Legal-aligned vocabulary – review before any copy change |
 | [`MESSAGING-HIERARCHY.md`](MESSAGING-HIERARCHY.md) | One-liner, pillars, audiences, CTAs, SEO |
 | [`VISUAL-SPEC.md`](VISUAL-SPEC.md) | Layouts, asset IDs, shot list for design |
 | [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) | Footer, compliance strip, tier ladders, reusable blocks |
@@ -39,7 +39,7 @@ Source of truth for easner.com marketing copy. Same workflow as [`docs/legal/`](
 2. Each `## Section` maps to one React section component.
 3. Copy headline, subhead, body, bullets into JSX.
 4. Copy **Layout** and **Visual slot** into component comments for design/engineering.
-5. Pull footer and compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) — do not paraphrase.
+5. Pull footer and compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) – do not paraphrase.
 6. Run QA checklist below before publish.
 
 ### Placeholders to replace in website
@@ -114,7 +114,7 @@ Add components: `WhyEasner`, `ProductGrid`, `SolutionsByAudience`, `CorridorStor
 
 | Date | Change |
 |------|--------|
-| 2026-06-06 | Initial marketing content pack — 12 files, aligned with legal docs and product tier ladder |
+| 2026-06-06 | Initial marketing content pack – 12 files, aligned with legal docs and product tier ladder |
 
 ---
 

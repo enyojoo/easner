@@ -5,7 +5,7 @@ import { DEFAULT_CTA_BAND } from "../shared-content"
 export const homeMetadata = {
   title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
   description:
-    "Stablecoin banking infrastructure for global money movement. Accounts, payouts, invoicing, collections, cards, and APIs with banking-simple UX and compliance built in.",
+    "Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.",
   keywords: [
     "stablecoin banking infrastructure",
     "cross-border payments",
@@ -14,9 +14,9 @@ export const homeMetadata = {
 }
 
 export const homeHero = {
-  h1Lines: ["Global banking,", "Simplified for you."],
+  h1Lines: ["Global banking,", "Simplified."],
   subhead:
-    "Stablecoin-powered accounts, payouts, collections, cards, and APIs – banking-simple UX with compliance built in.",
+    "Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [
@@ -25,15 +25,17 @@ export const homeHero = {
   ] satisfies Cta[],
 }
 
+export const whyEasnerHeadline = "Why teams choose Easner"
+
 export const whyEasnerPillars: CardItem[] = [
   {
-    title: "Banking-simple UX",
+    title: "No crypto complexity",
     description:
-      "Users get familiar accounts, transfers, invoices, and dashboards – not crypto complexity.",
+      "Send, receive, invoice, and manage money in screens that feel like banking – not a trading app.",
     icon: "mkt-icon-pillar-ux",
   },
   {
-    title: "Lower-cost rails",
+    title: "Move more, spend less",
     description:
       "Modern settlement can reduce cross-border cost vs legacy paths – up to ~60% in supported flows.",
     icon: "mkt-icon-pillar-cost",
@@ -45,7 +47,7 @@ export const whyEasnerPillars: CardItem[] = [
     icon: "mkt-icon-pillar-compliance",
   },
   {
-    title: "Invisible infrastructure",
+    title: "Speed without the noise",
     description:
       "Stablecoin speed and global reach sit behind fiat-native screens.",
     icon: "mkt-icon-pillar-invisible",
@@ -57,7 +59,7 @@ export const solutionsPersonas = [
     id: "diaspora",
     label: "Freelancers, remote workers, and diaspora",
     headline: "Get paid globally. Keep more locally.",
-    body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal.",
+    body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking.",
     visualSlot: "mkt-persona-diaspora",
     altText: "Remote professional using Easner on mobile",
     ctas: [
@@ -69,7 +71,7 @@ export const solutionsPersonas = [
     id: "sme",
     label: "Cross-border SMEs and trade",
     headline: "Run global operations from one dashboard.",
-    body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business.",
+    body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking.",
     visualSlot: "mkt-persona-sme",
     altText: "Small business owner managing international payments",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }] satisfies Cta[],

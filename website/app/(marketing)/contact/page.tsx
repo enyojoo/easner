@@ -18,8 +18,8 @@ export default function ContactPage() {
   return (
     <>
       <ContactHero />
-      <section className="bg-[#F6F3EB] pb-16 pt-2 md:pb-24">
-        <div className="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+      <section className="bg-[#F6F3EB] pb-12 pt-0 sm:pb-16 md:pb-24">
+        <div className="mx-auto max-w-4xl space-y-4 px-4 sm:space-y-6 sm:px-6 lg:px-8">
           <ContactBooking />
           <ContactSupportNotice />
         </div>

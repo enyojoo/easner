@@ -1,21 +1,21 @@
 # Invoicing
 
 **Route:** `/invoicing`  
-**Title:** Invoicing — Easner  
+**Title:** Invoicing – Easner  
 **Meta description:** Invoice globally and get paid by bank or stablecoin. Professional B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in where enabled.
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` — copy left, visual right  
+**Layout:** `split_50_50` – copy left, visual right  
 **Visual slot:** `mkt-hero-invoicing-01`  
 **Alt text:** Business owner creating an international invoice in Easner Business  
 **Design notes:** SME at desk with invoice UI on laptop; professional, warm lighting
 
 **H1:** Invoice globally. Get paid by bank or stablecoin.
 
-**Subhead:** Create, send, and track invoices from Easner Business — let customers pay via virtual account details or stablecoin deposit address where enabled, with compliance and reconciliation built in.
+**Subhead:** Create, send, and track invoices from Easner Business – let customers pay via virtual account details or stablecoin deposit address where enabled, with compliance and reconciliation built in.
 
 **CTA primary:** Start invoicing → `/access`  
 **CTA secondary:** See Business banking → `/business`
@@ -39,7 +39,7 @@
 
 **Headline:** Professional invoices with flexible pay-in.
 
-**Body:** Generate branded invoices, share public payment links, and track status from your dashboard. Customers pay using methods you enable — bank transfer to your virtual account or stablecoin to an address on the invoice.
+**Body:** Generate branded invoices, share public payment links, and track status from your dashboard. Customers pay using methods you enable – bank transfer to your virtual account or stablecoin to an address on the invoice.
 
 ---
 
@@ -53,7 +53,7 @@
 Virtual account details on the invoice for USD, EUR, and other currencies where supported.
 
 ### Stablecoin pay-in
-USDC or EURC deposit address and memo where enabled — same invoice, customer choice.
+USDC or EURC deposit address and memo where enabled – same invoice, customer choice.
 
 ### Customer directory
 Save invoice recipients and payer references for repeat business.

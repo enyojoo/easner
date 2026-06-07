@@ -34,7 +34,7 @@ export function CorridorStory() {
               assetId={corridorContent.visualSlot}
               alt={corridorContent.altText}
               aspect="fill"
-              className="h-full"
+              className="h-full rounded-none border-0 bg-transparent shadow-none"
               preload
             />
           </div>

@@ -51,7 +51,7 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
   if (typeof document === "undefined") return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
       <button
         type="button"
         aria-label="Close dialog"
@@ -62,14 +62,14 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
         role="dialog"
         aria-modal="true"
         aria-labelledby="open-account-title"
-        className="relative z-10 w-full max-w-3xl overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)]"
+        className="relative z-10 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl flex-col overflow-hidden rounded-[1.25rem] border border-[#E4DED1] bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)] sm:max-h-[min(920px,calc(100dvh-2rem))] sm:rounded-[1.75rem]"
       >
-        <div className="flex items-start justify-between border-b border-[#E4DED1] px-6 py-5 sm:px-8">
-          <div className="flex-1 pr-4 text-left">
-            <h2 id="open-account-title" className="font-unbounded text-2xl font-semibold text-[#0F1110] sm:text-3xl">
+        <div className="flex shrink-0 items-start justify-between border-b border-[#E4DED1] px-4 py-4 sm:px-8 sm:py-5">
+          <div className="min-w-0 flex-1 pr-3 text-left sm:pr-4">
+            <h2 id="open-account-title" className="font-unbounded text-xl font-semibold leading-tight text-[#0F1110] sm:text-2xl md:text-3xl">
               Begin your experience
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[#5F665F] sm:text-base">
+            <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2 sm:text-base">
               Choose the Easner banking that fits your needs.
             </p>
           </div>
@@ -77,33 +77,35 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
             type="button"
             aria-label="Close"
             onClick={() => onOpenChange(false)}
-            className="rounded-full border border-[#E4DED1] p-2 text-[#5F665F] transition-colors hover:bg-[#F8F6F0] hover:text-[#0F1110]"
+            className="shrink-0 rounded-full border border-[#E4DED1] p-2 text-[#5F665F] transition-colors hover:bg-[#F8F6F0] hover:text-[#0F1110]"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="grid grid-cols-1 pb-8 md:grid-cols-2 sm:pb-10">
-          <div className="border-b border-[#E4DED1] p-6 sm:p-8 md:border-b-0 md:border-r">
-            <h3 className="font-unbounded text-lg font-semibold text-[#0F1110]">Personal Banking</h3>
-            <p className="mt-2 text-sm leading-6 text-[#5F665F]">
-              Download the mobile app for global banking.
-            </p>
-            <StoreDownloadButtons className="mt-6" layout="grid" />
-          </div>
-          <div className="p-6 sm:p-8">
-            <h3 className="font-unbounded text-lg font-semibold text-[#0F1110]">Business Banking</h3>
-            <p className="mt-2 text-sm leading-6 text-[#5F665F]">
-              Open a business account on the web dashboard.
-            </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-6 h-12 w-full rounded-full bg-[#007ACC] px-6 text-white hover:bg-[#0062A3] sm:w-auto"
-            >
-              <Link href={BUSINESS_SIGNUP_URL} target="_blank" rel="noopener noreferrer">
-                Open Business account
-              </Link>
-            </Button>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="border-b border-[#E4DED1] p-4 sm:p-8 md:border-b-0 md:border-r">
+              <h3 className="font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg">Personal Banking</h3>
+              <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
+                Download the mobile app for global banking.
+              </p>
+              <StoreDownloadButtons className="mt-4 sm:mt-6" layout="grid" />
+            </div>
+            <div className="p-4 sm:p-8">
+              <h3 className="font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg">Business Banking</h3>
+              <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
+                Open a business account on the web dashboard.
+              </p>
+              <Button
+                asChild
+                size="lg"
+                className="mt-4 h-11 w-full rounded-full bg-[#007ACC] px-5 text-sm text-white hover:bg-[#0062A3] sm:mt-6 sm:h-12 sm:w-auto sm:px-6"
+              >
+                <Link href={BUSINESS_SIGNUP_URL} target="_blank" rel="noopener noreferrer">
+                  Open Business account
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

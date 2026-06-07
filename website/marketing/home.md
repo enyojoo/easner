@@ -1,8 +1,8 @@
 # Home Page
 
 **Route:** `/`  
-**Title:** Easner — Stablecoin Banking Infrastructure for Global Businesses  
-**Meta description:** Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs — banking-simple UX with compliance built in.
+**Title:** Easner – Stablecoin Banking Infrastructure for Global Businesses  
+**Meta description:** Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs – banking-simple UX with compliance built in.
 
 ---
 
@@ -15,7 +15,7 @@
 
 **H1:** The speed of stablecoins. The simplicity of banking.
 
-**Subhead:** Easner is stablecoin banking infrastructure for global businesses — multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and developer APIs. Compliance and licensed partner rails are built in; stablecoin settlement works behind the scenes where enabled.
+**Subhead:** Easner is stablecoin banking infrastructure for global businesses – multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and developer APIs. Compliance and licensed partner rails are built in; stablecoin settlement works behind the scenes where enabled.
 
 **CTA primary:** Get Started → `/access`  
 **CTA secondary:** Explore products → `#products`
@@ -25,7 +25,7 @@
 ## Section 2: Trust strip
 
 **Layout:** logo strip (full width)  
-**Visual slot:** `TrustedBy` component — `mkt-trust-logos` if custom strip needed  
+**Visual slot:** `TrustedBy` component – `mkt-trust-logos` if custom strip needed  
 **Alt text:** Companies that trust Easner  
 **Design notes:** Grayscale logos, horizontal scroll on mobile; **no volume metric**
 
@@ -37,19 +37,19 @@
 **Visual slots:** `mkt-icon-pillar-ux`, `mkt-icon-pillar-cost`, `mkt-icon-pillar-compliance`, `mkt-icon-pillar-invisible`  
 **Section headline:** Why global businesses choose Easner
 
-### Card 1 — Banking-simple UX
+### Card 1 – Banking-simple UX
 **Icon:** `mkt-icon-pillar-ux`  
 Users want banking screens, not crypto complexity. Send, receive, invoice, and manage treasury in a familiar experience.
 
-### Card 2 — Lower-cost rails
+### Card 2 – Lower-cost rails
 **Icon:** `mkt-icon-pillar-cost`  
-Stablecoin settlement can reduce cross-border cost vs legacy corridors — up to ~60% in supported flows.
+Stablecoin settlement can reduce cross-border cost vs legacy corridors – up to ~60% in supported flows.
 
-### Card 3 — Compliance-ready
+### Card 3 – Compliance-ready
 **Icon:** `mkt-icon-pillar-compliance`  
 KYC/KYB, AML screening, limits, and transaction controls are built in from day one.
 
-### Card 4 — Invisible infrastructure
+### Card 4 – Invisible infrastructure
 **Icon:** `mkt-icon-pillar-invisible`  
 Stablecoin speed and global reach behind fiat-native interfaces where enabled.
 
@@ -73,32 +73,32 @@ Use product card grid from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 **Layout:** `tab_audience`  
 **Section headline:** Built for how you move money
 
-### Tab 1 — Freelancers, remote workers, and diaspora
+### Tab 1 – Freelancers, remote workers, and diaspora
 **Visual:** `mkt-persona-diaspora`  
 **Alt text:** Remote professional using Easner on mobile  
 **Headline:** Get paid globally. Keep more locally.  
-**Body:** Stop losing earnings to heavy fees and slow formal rails. Receive USD and EUR, move money home on faster paths, and skip risky informal FX — with Easner Personal.  
+**Body:** Stop losing earnings to heavy fees and slow formal rails. Receive USD and EUR, move money home on faster paths, and skip risky informal FX – with Easner Personal.  
 **CTA:** Download the app → App Store / Google Play
 
-### Tab 2 — Cross-border SMEs and trade
+### Tab 2 – Cross-border SMEs and trade
 **Visual:** `mkt-persona-sme`  
 **Alt text:** Small business owner managing international payments  
 **Headline:** Run global operations from one dashboard.  
-**Body:** Multi-currency accounts, payouts, invoicing, and collections for import/export, tuition, and supplier payments — with team controls and reporting on Easner Business.  
+**Body:** Multi-currency accounts, payouts, invoicing, and collections for import/export, tuition, and supplier payments – with team controls and reporting on Easner Business.  
 **CTA:** Open Business account → `/access`
 
-### Tab 3 — Developers and platforms
+### Tab 3 – Developers and platforms
 **Visual:** `mkt-persona-dev`  
 **Alt text:** Developer integrating payments API  
 **Headline:** Embed global rails without building compliance from scratch.  
-**Body:** Plug into KYC/KYB, accounts, payouts, wallet infrastructure, and collections through Easner APIs — ship faster, stay compliant.  
+**Body:** Plug into KYC/KYB, accounts, payouts, wallet infrastructure, and collections through Easner APIs – ship faster, stay compliant.  
 **CTA:** Talk to our team → `hello@easner.com`
 
 ---
 
 ## Section 6: Corridors
 
-**Layout:** `split_50_50` — copy left, map right (stack on mobile)  
+**Layout:** `split_50_50` – copy left, map right (stack on mobile)  
 **Visual slot:** `mkt-map-corridors`  
 **Alt text:** Map showing payment corridors between US, EU, and African markets  
 **Design notes:** Abstract curved routes; minimal flag clutter; Easner blue accents

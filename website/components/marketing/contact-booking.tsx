@@ -22,17 +22,17 @@ export function ContactBooking() {
   }, [])
 
   return (
-    <div className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
-      <div className="border-b border-[#E4DED1] px-6 py-5 text-center sm:px-8">
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] sm:text-3xl">
+    <div className="overflow-hidden rounded-2xl border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)] sm:rounded-[1.75rem]">
+      <div className="border-b border-[#E4DED1] px-4 py-4 text-center sm:px-8 sm:py-5">
+        <h2 className="text-balance font-unbounded text-xl font-semibold text-[#0F1110] sm:text-2xl md:text-3xl">
           {contactBooking.headline}
         </h2>
       </div>
-      <div className="min-h-[640px] p-4 sm:p-6">
+      <div className="min-h-[min(640px,calc(100dvh-12rem))] overflow-x-auto p-3 sm:min-h-[600px] sm:p-6">
         <Cal
           namespace={CAL_NAMESPACE}
           calLink={CAL_LINK}
-          style={{ width: "100%", height: "100%", minHeight: "600px", overflow: "auto" }}
+          style={{ width: "100%", height: "100%", minHeight: "520px", overflow: "auto" }}
           config={{ layout: "column_view", theme: "light" }}
         />
       </div>

@@ -1,5 +1,4 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const cardsContent: ProductPageContent = {
   metadata: {
@@ -19,10 +18,7 @@ export const cardsContent: ProductPageContent = {
       "Issue virtual and physical cards, set spend policies, manage cardholders, and see every transaction in the same ledger as your accounts and payouts.",
     visualSlot: "mkt-hero-cards-01",
     altText: "Easner virtual and physical payment cards in the Business dashboard",
-    ctas: [
-      { label: "Open Account", href: "#", action: "open-account" },
-      { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true },
-    ],
+    ctas: [{ label: "Open Account", href: "#", action: "open-account" }],
   },
   featuresLayout: "bento",
   features: [
@@ -93,9 +89,6 @@ export const cardsContent: ProductPageContent = {
   ctaBand: {
     headline: "Add cards to your Easner account",
     subhead: "Corporate cards on Business. Personal cards on the mobile app.",
-    ctas: [
-      { label: "Open Account", href: "#", action: "open-account" },
-      { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true },
-    ],
+    ctas: [{ label: "Open Account", href: "#", action: "open-account" }],
   },
 }

@@ -1,10 +1,10 @@
 import { ThreeColCards } from "./three-col-cards"
-import { whyEasnerPillars } from "@/lib/marketing/content/home"
+import { whyEasnerHeadline, whyEasnerPillars } from "@/lib/marketing/content/home"
 
 export function WhyEasner() {
   return (
     <ThreeColCards
-      headline="Why global businesses choose Easner"
+      headline={whyEasnerHeadline}
       items={whyEasnerPillars}
       columns={4}
       showIcons

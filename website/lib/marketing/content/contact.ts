@@ -9,7 +9,7 @@ export const contactHero = {
   headline: "Let's talk",
   subhead:
     "Whether you're opening an account or exploring APIs, get in touch with the Easner team.",
-  emailPreface: "For new partnerships preferring to email,",
+  emailPreface: "Prefer to email?",
   supportPreface: "For current users needing support,",
   supportLinkLabel: "here",
 }

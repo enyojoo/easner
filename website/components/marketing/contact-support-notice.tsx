@@ -7,24 +7,29 @@ export function ContactSupportNotice() {
   return (
     <div
       id={contactSupport.anchor}
-      className="scroll-mt-28 rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] p-6 sm:p-8"
+      className="scroll-mt-24 rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-4 sm:scroll-mt-28 sm:rounded-[1.75rem] sm:p-8"
     >
-      <div className="flex items-start gap-4">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[#E4DED1] bg-white text-[#007ACC]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-[#E4DED1] bg-white text-[#007ACC] sm:size-11">
           <MessageCircle className="size-5" strokeWidth={1.75} />
         </div>
-        <div className="min-w-0">
-          <h2 className="font-unbounded text-lg font-semibold text-[#0F1110] sm:text-xl">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-balance font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg md:text-xl">
             {contactSupport.headline}
           </h2>
-          <p className="mt-2 text-sm leading-7 text-[#5F665F] sm:text-base">{contactSupport.body}</p>
-          <ul className="mt-4 space-y-3 text-sm leading-7 text-[#5F665F] sm:text-base">
-            <li>
+          <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
+            {contactSupport.body}
+          </p>
+          <ul className="mt-3 space-y-2.5 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:space-y-3 sm:text-base sm:leading-7">
+            <li className="text-pretty">
               <strong className="text-[#0F1110]">{contactSupport.inAppLabel}:</strong> {contactSupport.inAppText}
             </li>
-            <li>
+            <li className="text-pretty">
               <strong className="text-[#0F1110]">{contactSupport.emailLabel}:</strong>{" "}
-              <Link href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-[#007ACC] hover:underline">
+              <Link
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
+              >
                 {SUPPORT_EMAIL}
               </Link>
             </li>

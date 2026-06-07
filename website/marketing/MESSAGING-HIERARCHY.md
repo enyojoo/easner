@@ -10,7 +10,7 @@ Single source for headlines, pillars, audiences, and CTAs. All page copy in `doc
 
 **One-liner:** Stablecoin Banking Infrastructure for Global Businesses
 
-**Elevator (2 sentences):** Easner gives businesses and individuals compliant, banking-simple tools for global money movement. Stablecoin infrastructure powers settlement behind the scenes — users get familiar accounts, payouts, and collections without crypto complexity.
+**Elevator (2 sentences):** Easner gives businesses and individuals compliant, banking-simple tools for global money movement. Stablecoin infrastructure powers settlement behind the scenes – users get familiar accounts, payouts, and collections without crypto complexity.
 
 **Deck anchor:** Stablecoins solved settlement; Easner solves UX, friction, and compliance.
 
@@ -20,8 +20,8 @@ Single source for headlines, pillars, audiences, and CTAs. All page copy in `doc
 
 | Pillar | Headline | Body |
 |--------|----------|------|
-| **Banking-simple UX** | No crypto complexity | Send, receive, invoice, and manage money in screens that feel like banking — not a trading app. |
-| **Lower-cost rails** | Move more, spend less | Stablecoin settlement can reduce cross-border cost vs legacy corridors — up to ~60% in supported flows. |
+| **Banking-simple UX** | No crypto complexity | Send, receive, invoice, and manage money in screens that feel like banking – not a trading app. |
+| **Lower-cost rails** | Move more, spend less | Stablecoin settlement can reduce cross-border cost vs legacy corridors – up to ~60% in supported flows. |
 | **Compliance-ready** | Built in from day one | KYC/KYB, AML screening, limits, and transaction controls are part of the Easner account flow. |
 | **Invisible infrastructure** | Speed without the noise | Stablecoin speed and global reach behind fiat-native experiences where enabled. |
 
@@ -70,9 +70,9 @@ Single source for headlines, pillars, audiences, and CTAs. All page copy in `doc
 
 ## Corridor narrative (softened)
 
-**Global source markets:** USA, EU, UK — USD, EUR, GBP where supported.
+**Global source markets:** USA, EU, UK – USD, EUR, GBP where supported.
 
-**African focus markets:** Nigeria, Ghana, Kenya, Rwanda, South Africa — local rails where enabled.
+**African focus markets:** Nigeria, Ghana, Kenya, Rwanda, South Africa – local rails where enabled.
 
 Always pair with: *Availability depends on verification, jurisdiction, currency, approval, and product enablement.*
 
@@ -92,7 +92,7 @@ Always pair with: *Availability depends on verification, jurisdiction, currency,
 
 ---
 
-## Problem stats (deck — use with care)
+## Problem stats (deck – use with care)
 
 | Stat | Source | Guardrail |
 |------|--------|-----------|

@@ -1,14 +1,14 @@
 # Cards
 
 **Route:** `/cards`  
-**Title:** Cards — Easner  
-**Meta description:** Corporate and personal cards for global businesses and individuals — when available. Spend controls and cardholder management on Easner.
+**Title:** Cards – Easner  
+**Meta description:** Corporate and personal cards for global businesses and individuals – when available. Spend controls and cardholder management on Easner.
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` — copy left, visual right  
+**Layout:** `split_50_50` – copy left, visual right  
 **Visual slot:** `mkt-hero-cards-01`  
 **Alt text:** Professional holding Easner-branded payment card  
 **Design notes:** Physical or virtual card in hand; clean desk; **no issuer or network branding** on card face; optional "Coming soon" badge overlay
@@ -17,7 +17,7 @@
 
 **H1:** Corporate and personal cards, when you're ready.
 
-**Subhead:** Issue virtual or physical cards for your team or yourself — with spend controls and cardholder management — through licensed card program partners when Tier 3 is approved for your organization.
+**Subhead:** Issue virtual or physical cards for your team or yourself – with spend controls and cardholder management – through licensed card program partners when Tier 3 is approved for your organization.
 
 **CTA primary:** Join waitlist → `/access`  
 **CTA secondary:** Open Business account → `/access`
@@ -29,7 +29,7 @@
 **Layout:** centered text block  
 **Headline:** Global operations need global spend.
 
-**Body:** Cross-border teams pay for software, travel, and suppliers with personal cards and ad-hoc reimbursements. Unified corporate cards with controls reduce leakage and simplify accounting — when tied to the same banking program you use for payouts.
+**Body:** Cross-border teams pay for software, travel, and suppliers with personal cards and ad-hoc reimbursements. Unified corporate cards with controls reduce leakage and simplify accounting – when tied to the same banking program you use for payouts.
 
 ---
 
@@ -41,7 +41,7 @@
 
 **Headline:** Cards on the same platform as your accounts and payouts.
 
-**Body:** Easner Tier 3 Cards connects card issuance to your existing KYC/KYB program — personal cards on Easner Personal and corporate cards on Easner Business when approved by partners.
+**Body:** Easner Tier 3 Cards connects card issuance to your existing KYC/KYB program – personal cards on Easner Personal and corporate cards on Easner Business when approved by partners.
 
 ---
 
@@ -102,7 +102,7 @@ Cards are Tier 3 and roll out when approved for your verification level and juri
 Cards are issued or facilitated by licensed card program partners, not by Easner directly.
 
 **Will there be personal and corporate cards?**  
-Yes — personal cards for Easner Personal and corporate cards for Easner Business when available.
+Yes – personal cards for Easner Personal and corporate cards for Easner Business when available.
 
 **Is credit required?**  
 Corporate and personal card products may be subject to partner underwriting and credit approval.

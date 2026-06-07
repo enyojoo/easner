@@ -39,11 +39,11 @@ Use on homepage and product pages above footer:
 
 **Section headline:** Compliance is built in, not added later.
 
-**Section subhead:** Verification, screening, limits, and transaction controls are part of the Easner account flow — so money movement can scale with confidence.
+**Section subhead:** Verification, screening, limits, and transaction controls are part of the Easner account flow – so money movement can scale with confidence.
 
 ---
 
-## Tier ladder — Easner Personal
+## Tier ladder – Easner Personal
 
 | Tier | Title | Description |
 |------|-------|-------------|
@@ -55,12 +55,12 @@ Use on homepage and product pages above footer:
 
 ---
 
-## Tier ladder — Easner Business
+## Tier ladder – Easner Business
 
 | Tier | Title | Description |
 |------|-------|-------------|
 | 1 | Global banking | USD and EUR bank accounts, pay-in and pay-out, and stablecoin flows, plus other currency accounts where supported for your organization. |
-| 2 | African banking | NGN and regional pay-in and pay-out for your business operations where we launch—local African banking for your organization. |
+| 2 | African banking | NGN and regional pay-in and pay-out for your business operations where we launch–local African banking for your organization. |
 | 3 | Cards | Your access to corporate debit/credit cards for your business needs, spend controls, and cardholder management when approved. |
 
 **Footnote:** Availability depends on verification, jurisdiction, approval, and product enablement.
@@ -73,13 +73,13 @@ Use on homepage and product pages above footer:
 **Link:** `/personal`  
 **Thumb:** `mkt-thumb-personal`  
 **Title:** Personal Banking  
-**Description:** Mobile app for individuals — send, receive, and manage money across global and African corridors where enabled.
+**Description:** Mobile app for individuals – send, receive, and manage money across global and African corridors where enabled.
 
 ### Easner Business
 **Link:** `/business`  
 **Thumb:** `mkt-thumb-business`  
 **Title:** Business Banking  
-**Description:** Web dashboard for organizations — accounts, payouts, invoicing, Terminal, QR Pay, and team access.
+**Description:** Web dashboard for organizations – accounts, payouts, invoicing, Terminal, QR Pay, and team access.
 
 ### Easner APIs
 **Link:** `/apis`  
@@ -107,11 +107,11 @@ Use on homepage and product pages above footer:
 
 ### Cross-border SME
 **Headline:** Run trade payments from one place.  
-**Body:** Multi-currency accounts, payouts, and invoicing for import/export, tuition, and supplier payments — with compliance built in.
+**Body:** Multi-currency accounts, payouts, and invoicing for import/export, tuition, and supplier payments – with compliance built in.
 
 ### Developer / platform
 **Headline:** Ship global payments without building compliance from scratch.  
-**Body:** Access KYC/KYB, accounts, payouts, and wallet infrastructure through Easner APIs — so you can focus on your product.
+**Body:** Access KYC/KYB, accounts, payouts, and wallet infrastructure through Easner APIs – so you can focus on your product.
 
 ---
 
@@ -126,5 +126,5 @@ Use on homepage and product pages above footer:
 ## CTA band template
 
 **Headline:** Ready to move money globally?  
-**Subhead:** Open an Easner Personal or Business account — or talk to us about API integration.  
+**Subhead:** Open an Easner Personal or Business account – or talk to us about API integration.  
 **Buttons:** Get Started → `/access` | Contact → `hello@easner.com`

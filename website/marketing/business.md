@@ -1,21 +1,21 @@
 # Business Banking
 
 **Route:** `/business`  
-**Title:** Business Banking — Easner  
-**Meta description:** Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access — with KYC/KYB and compliance built in.
+**Title:** Business Banking – Easner  
+**Meta description:** Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access – with KYC/KYB and compliance built in.
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` — copy left, visual right  
+**Layout:** `split_50_50` – copy left, visual right  
 **Visual slot:** `mkt-hero-business-01`  
 **Alt text:** Small business founder reviewing Easner Business dashboard  
 **Design notes:** SME owner at desk or retail counter; browser mockup showing dashboard alongside lifestyle scene
 
 **H1:** Business banking built for cross-border operations.
 
-**Subhead:** Easner Business is your web dashboard for organization onboarding, multi-currency accounts, payouts, team access, and collections — invoicing, Terminal, and QR Pay where enabled — with stablecoin and fiat rails behind a single compliance program.
+**Subhead:** Easner Business is your web dashboard for organization onboarding, multi-currency accounts, payouts, team access, and collections – invoicing, Terminal, and QR Pay where enabled – with stablecoin and fiat rails behind a single compliance program.
 
 **CTA primary:** Open Business account → `/access`  
 **CTA secondary:** See invoicing → `/invoicing`
@@ -27,13 +27,13 @@
 **Layout:** centered text block  
 **Headline:** Global trade shouldn't mean fragmented tools.
 
-**Body:** Cross-border SMEs juggle multiple banks, spreadsheets, and informal FX to pay suppliers, collect from customers, and manage treasury. High fees and slow settlement eat into margins — especially in corridors where formal rails underperform.
+**Body:** Cross-border SMEs juggle multiple banks, spreadsheets, and informal FX to pay suppliers, collect from customers, and manage treasury. High fees and slow settlement eat into margins – especially in corridors where formal rails underperform.
 
 ---
 
 ## Section 3: Solution
 
-**Layout:** `split_50_50` — visual left, copy right  
+**Layout:** `split_50_50` – visual left, copy right  
 **Visual slot:** `mkt-ui-business-dashboard`  
 **Alt text:** Easner Business dashboard with accounts and recent transactions  
 **Design notes:** Browser chrome, ivory Business canvas; show accounts + transaction list (interim: refresh `eb1.png`)
@@ -49,7 +49,7 @@
 **Layout:** alternating `split_40_60`
 
 ### Organization and KYB
-Hosted business verification, beneficial ownership, and authorized signatories — gates features by tier.
+Hosted business verification, beneficial ownership, and authorized signatories – gates features by tier.
 
 ### Multi-currency accounts
 **Visual:** `mkt-ui-business-accounts`  
@@ -57,13 +57,13 @@ USD, EUR, and other currencies where supported; virtual accounts and stablecoin 
 
 ### Send and payouts
 **Visual:** `mkt-ui-business-send`  
-Pay suppliers, contractors, and partners globally — bank, stablecoin, and regional rails where available.
+Pay suppliers, contractors, and partners globally – bank, stablecoin, and regional rails where available.
 
 ### Collections
 Cards linking to `/invoicing` and `/stablecoin`:
-- **Invoicing** — professional invoices with bank and stablecoin pay-in
-- **Terminal** — in-person collections
-- **QR Pay** — scan-to-pay
+- **Invoicing** – professional invoices with bank and stablecoin pay-in
+- **Terminal** – in-person collections
+- **QR Pay** – scan-to-pay
 
 ### Team and reporting
 Role-based access, customer directory, and transaction history for reconciliation.
@@ -72,7 +72,7 @@ Role-based access, customer directory, and transaction history for reconciliatio
 
 ## Section 5: Tier availability
 
-Use **Tier ladder — Easner Business** from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
+Use **Tier ladder – Easner Business** from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 
 ---
 

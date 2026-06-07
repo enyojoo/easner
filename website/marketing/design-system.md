@@ -1,6 +1,6 @@
 # Easner Design System
 
-> Modern private banking for global operators — one design system across web
+> Modern private banking for global operators – one design system across web
 > (Easner Business), admin (Easner Office), and mobile (Easner Personal).
 
 This document is the single source of truth for **tokens**, **primitives**,
@@ -13,18 +13,18 @@ keys and CSS variables from that table when extending the codebase.
 **Easner Office** (`office/`) follows this document as well: **`tokens.ts`**,
 **§2.0** palette roles, motion where applicable, and **`office/components/ui`**
 primitives aligned with §6.1. Admin tools may use light/dark theme switching;
-stay token-driven (§9.1)—do not introduce one-off hex outside the shared system.
+stay token-driven (§9.1)–do not introduce one-off hex outside the shared system.
 
 ### Customer theme scope (Easner Business + mobile)
 
 **Easner Business** (`business/`) and **Easner Personal** (`mobile/`) ship
 **light appearance only**. Design, implement, and QA customer-facing screens
-against light backgrounds and light semantic tokens—no user-facing dark mode,
+against light backgrounds and light semantic tokens–no user-facing dark mode,
 no reliance on dark-theme layouts for those apps. (Other packages or apps in
 the monorepo may still define dark tokens for shared CSS or tooling; product
 surfaces for Business and mobile stay light.)
 
-### Easner Business (web) vs Easner Personal (mobile) — customer UI identity
+### Easner Business (web) vs Easner Personal (mobile) – customer UI identity
 
 **Easner Business** customer UI **stays on the current web identity** documented
 in this file: Tailwind + `business/app/globals.css` semantic variables (**§2.2**),
@@ -46,13 +46,13 @@ reference for web.
 ## 1. Design principles
 
 1. **Premium private banking, not generic SaaS.** The product should feel
-   **trustworthy, global, calm, and executive** — serious money movement with
+   **trustworthy, global, calm, and executive** – serious money movement with
    **high clarity**. Restraint over exuberance: no rainbow gradients, no neon
    greens, no loud decorative chrome.
 2. **Controlled frosted UI (chrome only).** **Glassmorphism is not the main
-   look**—solid surfaces carry the brand; blur is accent chrome only (see §4.4).
+   look**–solid surfaces carry the brand; blur is accent chrome only (see §4.4).
    **Blur / backdrop frosted effects** are allowed where they improve **system
-   chrome**: modal and sheet scrims, sticky web headers, small overlays—always
+   chrome**: modal and sheet scrims, sticky web headers, small overlays–always
    **neutral-tinted** (ivory/graphite family via tokens), never primary-filled
    “glass plates.” **Easner Personal** uses a **solid** main tab bar (white +
    hairline); reserve blur for sheets and similar overlays. See §4.4. Do **not**
@@ -61,18 +61,18 @@ reference for web.
 3. **Black + ivory foundation; blue for intent.** Default UI lives on **soft
    ivory** (`#F6F3EB`) and **graphite** (`#0F1110`) neutrals. **Easner blue**
    (`#007ACC`) is for **actions, links, focus, active states, and chart
-   accents** — **never** for filling large backgrounds or wash-tinting whole
+   accents** – **never** for filling large backgrounds or wash-tinting whole
    screens. Avoid “SaaS blue overload” (screens that read as a blue product
    rather than a bank). Primary is **sparse**; neutrals carry almost all
    surface area.
-4. **Sans-first typography.** Use the app sans stack for all UI—including hero
-   balances and headlines—using **scale, weight, and letter-spacing** for
+4. **Sans-first typography.** Use the app sans stack for all UI–including hero
+   balances and headlines–using **scale, weight, and letter-spacing** for
    hierarchy. **Tabular numerals** for every monetary figure.
 5. **Monochrome by default; primary blue for brand actions; emerald for
    success.** `primary` / `#007ACC` drives CTAs, links, and focus rings.
-   **Hover** uses the dedicated hover blue (`#0062A3`) — not a random darker
+   **Hover** uses the dedicated hover blue (`#0062A3`) – not a random darker
    blue. Emerald stays for **success** (completed, verified, positive
-   outcomes). Red (“oxblood”) is used sparingly for destructive intent —
+   outcomes). Red (“oxblood”) is used sparingly for destructive intent –
    never decorative.
 6. **Spacious, tactile surfaces.** Generous padding, soft 16–28px radii,
    thin low-contrast borders (`border/60`), layered graphite shadows.
@@ -93,17 +93,17 @@ mobile, email, and PDF.
 
 | Role | Hex | Usage |
 | ---- | --- | ----- |
-| **Primary blue** | `#007ACC` | Primary buttons, text links, focus rings, key chart series, active nav — **sparingly** on large areas. |
+| **Primary blue** | `#007ACC` | Primary buttons, text links, focus rings, key chart series, active nav – **sparingly** on large areas. |
 | **Hover blue** | `#0062A3` | Hover states for primary controls and links (paired with primary blue). |
-| **Deep navy** | `#0A2540` | Executive emphasis: hero bands, headers, marketing moments, “institutional” contrast — **not** default body text on ivory (use `ink` / foreground tokens). |
+| **Deep navy** | `#0A2540` | Executive emphasis: hero bands, headers, marketing moments, “institutional” contrast – **not** default body text on ivory (use `ink` / foreground tokens). |
 | **Graphite black** | `#0F1110` | Premium cards, inverse pills, primary text on light surfaces when paired with ivory. |
 | **Soft ivory** | `#F6F3EB` | Default light canvas; warm, calm base. |
-| **Light tint** | `#EAF5FD` | Sparse cool highlights: selected rows, info callouts, subtle “blue air” behind content — **not** a second background for whole screens. |
+| **Light tint** | `#EAF5FD` | Sparse cool highlights: selected rows, info callouts, subtle “blue air” behind content – **not** a second background for whole screens. |
 | **Dark mode accent** | `#3AA6F8` | Shared-token accent for dark surfaces (e.g. tooling, Office, emails). **Not** used for Easner Business or mobile customer UI (light-only). |
 
 **Discipline:** If the UI feels “like a blue app,” you’ve used primary/tint
 too broadly. Reset to ivory/graphite chrome and reserve blue for actions and
-meaning. **Primary color must never paint large page or card backgrounds**—only
+meaning. **Primary color must never paint large page or card backgrounds**–only
 neutrals and, where specified, sparse light tint (`#EAF5FD`).
 
 ### 2.1 Raw brand tokens (`packages/shared/src/design/tokens.ts`)
@@ -126,8 +126,8 @@ Mobile mirrors these in `mobile/src/theme/colors.ts` (`brand`).
 | `primary`         | `#007ACC` | **Brand primary** (CTAs, links, ring) |
 | `primaryHover`    | `#0062A3` | Hover for primary controls (§2.0)     |
 | `primaryDeep`     | `#005A9E` | Pressed / dark end of primary ramp    |
-| `navy`            | `#0A2540` | Deep navy — executive emphasis (§2.0) |
-| `tintBlue`        | `#EAF5FD` | Light tint — sparse selection/info (§2.0) |
+| `navy`            | `#0A2540` | Deep navy – executive emphasis (§2.0) |
+| `tintBlue`        | `#EAF5FD` | Light tint – sparse selection/info (§2.0) |
 | `darkAccent`      | `#3AA6F8` | Shared-token accent for dark surfaces (Office, tooling, email). Not used for Easner Business or mobile UI. |
 | `darkPrimaryHover`| `#2B8FDC` | Paired accent for gradients on dark canvases where those surfaces exist (not customer Business/mobile). |
 | `emerald`         | `#0F8A5F` | **Success** / verified / positive     |
@@ -140,7 +140,7 @@ Mobile mirrors these in `mobile/src/theme/colors.ts` (`brand`).
 These are the Tailwind CSS variables exposed by `business/app/globals.css`
 and mirrored in `office/app/globals.css`. **Easner Business** implements and
 reviews customer UI against the **Light** column only. A **Dark** column may
-still exist in shared CSS for other apps or utilities—do not ship Easner
+still exist in shared CSS for other apps or utilities–do not ship Easner
 Business layouts against dark tokens.
 
 | CSS variable        | Light (HSL)       | Dark (HSL)        | Tailwind class                  |
@@ -161,12 +161,12 @@ Business layouts against dark tokens.
 **Rules for semantic usage:**
 
 * `primary` (blue): primary action on a surface, links, and focus ring;
-  active nav indicator. Do not use for generic “success” — use `success` /
+  active nav indicator. Do not use for generic “success” – use `success` /
   emerald. Do not paint whole cards or page backgrounds primary blue; use
   ivory/graphite and **light tint** (`#EAF5FD`) only where a cool highlight is
   needed.
 * **Hover:** interactive hover for primary should track **hover blue**
-  (`#0062A3`) once exposed as `--primary-hover` or equivalent — not an
+  (`#0062A3`) once exposed as `--primary-hover` or equivalent – not an
   arbitrary `primary/90`.
 * **Deep navy** (`#0A2540`): reserved for high-contrast brand moments, not
   default `text-foreground` on ivory (that remains ink/graphite via tokens).
@@ -174,12 +174,12 @@ Business layouts against dark tokens.
   semantics; ignore dark-column tokens for customer-facing screens in those
   apps.
 * `destructive` / oxblood: only for destructive confirmations and failed
-  status — **never** for debit amounts or expense categories.
+  status – **never** for debit amounts or expense categories.
 * `warning` / amber: pending states, soft warnings. Never a success or
   "in progress".
 * Neutrals (`muted`, `border`) carry all non-accent chrome.
 
-### 2.3 Mobile palette (`mobile/src/theme/colors.ts`) — **Easner Personal app identity**
+### 2.3 Mobile palette (`mobile/src/theme/colors.ts`) – **Easner Personal app identity**
 
 The mobile palette is **light-only** for customers: resolve UI with
 `useThemeColors()` even where optional dark keys exist for typings or future
@@ -192,12 +192,12 @@ brand blues and emerald** for actions and success.
 | Role | Typical token / value | Use |
 | ---- | -------------------- | --- |
 | **App canvas** | `semantic.background` (`#F4F5F7`) | Full-screen background behind scroll content; cool gray, not warm ivory. |
-| **Raised plate / card** | `frame.background` (`#FFFFFF`) + `frame.border` | `surfaceFrameStyle()` — section trays, list shells, form cards (`SectionCard`, profile blocks). |
+| **Raised plate / card** | `frame.background` (`#FFFFFF`) + `frame.border` | `surfaceFrameStyle()` – section trays, list shells, form cards (`SectionCard`, profile blocks). |
 | **Inset / muted field** | `frame` fill on read-only rows, `background.primary` on editable inputs | Profile view vs edit; OTP cells (`otpCodeBoxVisual`). |
-| **Primary** | `primary.main` `#007ACC` | CTAs, links, focus, key affordances — still **sparse** on large areas (§1–§2.0). |
-| **Hero gradient** | `primary.heroGradient` (`#007ACC` → `#0EA5E9`) | Dashboard balance hero and other **controlled** sky-blue moments — not a default page wash. |
+| **Primary** | `primary.main` `#007ACC` | CTAs, links, focus, key affordances – still **sparse** on large areas (§1–§2.0). |
+| **Hero gradient** | `primary.heroGradient` (`#007ACC` → `#0EA5E9`) | Dashboard balance hero and other **controlled** sky-blue moments – not a default page wash. |
 | **Text** | `text.primary` / `text.secondary` / `text.tertiary` | Slate-scale ink on light; use hierarchy + weight, not extra hues. |
-| **Destructive** | `error.*` / `semantic.destructive` | Failures, destructive actions, insufficient-balance emphasis — not decorative. |
+| **Destructive** | `error.*` / `semantic.destructive` | Failures, destructive actions, insufficient-balance emphasis – not decorative. |
 
 ```ts
 const palette = useThemeColors()
@@ -211,7 +211,7 @@ palette.text.primary
 palette.success.main          // e.g. #16A34A (mobile success ramp)
 ```
 
-Always consume the palette via `useThemeColors()` — do **not** import
+Always consume the palette via `useThemeColors()` – do **not** import
 `lightColors` / `darkColors` directly from components.
 
 **Relationship to Easner Business:** Web customer UI remains **§2.2** + ivory
@@ -223,14 +223,14 @@ neutrals where names align.
 
 ## 3. Typography
 
-Use **sans only** for Easner Business and mobile—no serif display face. Hierarchy
+Use **sans only** for Easner Business and mobile–no serif display face. Hierarchy
 comes from **type scale, weight, tracking, and color**, not a second family.
 
 ### 3.1 Stacks
 
 | Stack          | Role                                      | Where                         |
 | -------------- | ----------------------------------------- | ----------------------------- |
-| **Sans**       | All UI—navigation, body, hero money, titles | Web: Geist Sans via Tailwind `font-sans`. Mobile: Geist faces registered in `mobile/App.tsx`. |
+| **Sans**       | All UI–navigation, body, hero money, titles | Web: Geist Sans via Tailwind `font-sans`. Mobile: Geist faces registered in `mobile/App.tsx`. |
 | **Monospace**  | Code strings, wallet addresses            | Web: Geist Mono where needed  |
 
 Do not mix multiple sans families on the same surface (one loaded sans stack
@@ -253,11 +253,11 @@ All monetary numbers use `tabular-nums` (wired through
 
 ### 3.3 Mobile scale (`mobile/src/theme/typography.ts`)
 
-Use the exported `textStyles` / size tokens—hero balances and large amounts use
+Use the exported `textStyles` / size tokens–hero balances and large amounts use
 the **largest sans sizes** (e.g. `balanceDisplay`, display steps) with **bold or
 semibold** weights and tabular figures, not a separate font family. Align names
 in code over time with this doc (legacy token names may still say “serif” in
-identifiers—treat them as **large sans** roles).
+identifiers–treat them as **large sans** roles).
 
 **Auth & secondary flows:** `theme/authScreen.ts` defines **`screenTitle`**
 (display-class) for **sign-in / sign-up entry** only, and **`screenTitleCompact`**
@@ -332,24 +332,24 @@ Mobile: `shadows.sm` (4 px), `shadows.md` (12 px), `shadows.lg` (24 px) from
 
 **Glassmorphism is not the main look.** The product identity is grounded in **solid**
 canvases and cards (ivory/graphite tokens), typography, and restrained primary
-blue—not frosted blur as the dominant aesthetic. Frost and backdrop blur are
+blue–not frosted blur as the dominant aesthetic. Frost and backdrop blur are
 **supporting chrome** for system surfaces (tab bars, sheets, sticky headers,
 scrims, small overlays). They **do not** replace solid card bodies, balances,
 or compliance-heavy layouts.
 
-**Allowed** — token-backed, neutral frosted **chrome** only:
+**Allowed** – token-backed, neutral frosted **chrome** only:
 
 * **Easner Business:** translucent sticky headers (`backdrop-blur` + muted
   background), dialog and alert **scrims** (`backdrop-blur-sm` over graphite),
   chart tooltips and small overlays that keep content readable.
-* **Easner Personal (mobile):** the **main tab bar** is **solid** — white
+* **Easner Personal (mobile):** the **main tab bar** is **solid** – white
   (`semantic.card`) with a **hairline top border** and **no** backdrop blur
   (`AppNavigator` tab chrome). **`BlurView`** / `palette.glass.*` remain for
   **sheets** (`PremiumModalSheet`, alerts) and other **overlay chrome** where
   tokens already define glass; optional blur on narrow surfaces (e.g. card
   chrome) when consistent with tokens.
 
-**Not allowed** — decorative “glassmorphism” as the **main surface language**:
+**Not allowed** – decorative “glassmorphism” as the **main surface language**:
 full cards or full screens dominated by blur, neon edge glows, or **primary-tinted**
 frosted fields. **Legibility of money and compliance copy beats blur intensity.**
 
@@ -365,11 +365,11 @@ frosted fields. **Legibility of money and compliance copy beats blur intensity.*
 | `slow`   | 400 ms cubic-bezier        | Dialog enter/exit, sheet                  |
 | `slower` | 600 ms cubic-bezier        | Page transition, hero reveal              |
 
-Buttons nudge by `0.5px` on press (`active:translate-y-[0.5px]`) — the
+Buttons nudge by `0.5px` on press (`active:translate-y-[0.5px]`) – the
 only "physical" motion allowed on click.
 
 **Mobile (`mobile/src/theme/motion.ts`):** use the exported durations so RN
-matches the same intent — `sheetMs` (~250) with sheets and large surfaces,
+matches the same intent – `sheetMs` (~250) with sheets and large surfaces,
 `tapMs` for micro-interactions, `screenEnterMs` / `listRowEnterMs` for screen
 and list entrances. Prefer these constants over ad hoc timing values.
 
@@ -384,7 +384,7 @@ Ship tokens, motion (§5), and primitives consistently first on:
 * **Easner Business (web):** **Dashboard**, **Send money** (amount / key
   confirmation), **Transactions** list and row patterns.
 * **Easner Personal (mobile):** same flows plus **More**, **Profile / edit**,
-  **Auth / MFA / PIN**, and **transaction details** — these screens define the
+  **Auth / MFA / PIN**, and **transaction details** – these screens define the
   **cool-gray canvas + white `SectionCard` + sky hero** kit (**§2.3**, **§6.2**).
 
 Other screens should converge to the same bar over time.
@@ -397,44 +397,44 @@ All ship from `components/ui` on each app:
 | -------------- | -------------------------------------------------------------------------- | ----- |
 | `Button`       | `default`, `primary`, `secondary`, `destructive`, `outline`, `ghost`, `link` | `primary` = Easner blue; `default` = graphite. Sizes `sm / default / lg / icon / icon-sm`. |
 | `Card`         | `elevation: flat | soft | card | lift`                                     | Default `rounded-3xl border border-border/60 bg-card shadow-soft` |
-| `Input`        | —                                                                          | `h-12 rounded-2xl border-border/70` with subtle inset highlight |
+| `Input`        | –                                                                          | `h-12 rounded-2xl border-border/70` with subtle inset highlight |
 | `Badge`        | `neutral | emerald | amber | oxblood | slate | outline | solid`            | Emerald = success; amber = pending; oxblood = failed; slate = cancelled. |
 | `Alert`        | `default | info | success | warning | destructive`                        | Soft background + hairline border |
-| `Dialog`       | —                                                                          | `bg-graphite/60 backdrop-blur` overlay, `rounded-3xl` content |
-| `AlertDialog`  | —                                                                          | Matches Dialog |
-| `Table`        | —                                                                          | `h-12` rows, tabular figures, `hover:bg-muted/60` |
-| `Tooltip` / `Popover` (office) | —                                                          | `rounded-2xl border-border/60 shadow-card` |
-| `Avatar`       | —                                                                          | `rounded-full bg-muted ring-1 ring-border/60` |
-| `sonner`       | —                                                                          | Card-like toast: `rounded-2xl bg-card`; success styling uses emerald / `success` |
+| `Dialog`       | –                                                                          | `bg-graphite/60 backdrop-blur` overlay, `rounded-3xl` content |
+| `AlertDialog`  | –                                                                          | Matches Dialog |
+| `Table`        | –                                                                          | `h-12` rows, tabular figures, `hover:bg-muted/60` |
+| `Tooltip` / `Popover` (office) | –                                                          | `rounded-2xl border-border/60 shadow-card` |
+| `Avatar`       | –                                                                          | `rounded-full bg-muted ring-1 ring-border/60` |
+| `sonner`       | –                                                                          | Card-like toast: `rounded-2xl bg-card`; success styling uses emerald / `success` |
 
 ### 6.2 Mobile primitives (`mobile/src/components/*`)
 
 **Surfaces & layout**
 
-* **`theme/surfaceFrame.ts`** — `surfaceFrameStyle()` / `surfaceChromeCircleStyle()`
+* **`theme/surfaceFrame.ts`** – `surfaceFrameStyle()` / `surfaceChromeCircleStyle()`
   for **white framed plates** on the gray canvas (hairline `frame.border`,
   graphite shadow). **`surfaceChromeCircleStyle(..., 44)`** is the default
   **header back / icon** hit target (24 px icons inside).
-* **`ui/SectionCard.tsx`** — canonical **raised section card** (default radius
+* **`ui/SectionCard.tsx`** – canonical **raised section card** (default radius
   **`2xl`**, configurable shadow).
-* **`ui/Surface.tsx`** — themed inset / alternate card surface where a full
+* **`ui/Surface.tsx`** – themed inset / alternate card surface where a full
   `SectionCard` is not needed.
 
 **Controls & data**
 
-* **`ui/Button.tsx`** — primary / secondary / ghost / outline; corners use
+* **`ui/Button.tsx`** – primary / secondary / ghost / outline; corners use
   **`borderRadius.xl`** (16 px) for parity with inputs.
-* **`ui/TextField.tsx`** — tall field row, **`borderRadius.xl`**, mist/ink border.
-* **`ui/OtpCodeInput.tsx`** + **`theme/otpCodeBoxVisual.ts`** — six framed cells
+* **`ui/TextField.tsx`** – tall field row, **`borderRadius.xl`**, mist/ink border.
+* **`ui/OtpCodeInput.tsx`** + **`theme/otpCodeBoxVisual.ts`** – six framed cells
   (idle **1 px** `border.dark`, active/focus **primary**); shared sizing with
   auth screens.
-* **`ui/StatusPill.tsx`**, **`ui/FilterChip.tsx`** — status and filter affordances
+* **`ui/StatusPill.tsx`**, **`ui/FilterChip.tsx`** – status and filter affordances
   on Activity / details.
-* **`BottomButton.tsx`** — full-width primary CTA (primary intent).
+* **`BottomButton.tsx`** – full-width primary CTA (primary intent).
 
 **Premium layer**
 
-* `mobile/src/components/premium/` — `GlossyPrimaryButton`,
+* `mobile/src/components/premium/` – `GlossyPrimaryButton`,
   `SecondaryOutlineButton`, `PremiumModalSheet`, `PremiumSurface`, `GradientCard`,
   `ShimmerLoader`, `HapticButton`, etc. Use for high-touch flows; keep primary
   usage **sparse** (§1–§2).
@@ -448,17 +448,17 @@ All ship from `components/ui` on each app:
 
 Reference components live in:
 
-* `business/components/examples/` — `BalanceCard`, `TransactionRow`,
+* `business/components/examples/` – `BalanceCard`, `TransactionRow`,
   `TreasuryStatCard`, `FxConversionPanel`.
-* `mobile/src/components/examples/` — `PremiumWalletCard`, `BalanceCard`,
+* `mobile/src/components/examples/` – `PremiumWalletCard`, `BalanceCard`,
   `TransactionRow`, `TreasuryStatCard`, `FxConversionPanel`.
 
 They demonstrate:
 
-* **Hero balance** — large sans, tabular figures, 44 px web / ~48 px mobile hero scale.
-* **Positive delta** — typically success / emerald tone; no bright red for
+* **Hero balance** – large sans, tabular figures, 44 px web / ~48 px mobile hero scale.
+* **Positive delta** – typically success / emerald tone; no bright red for
   negative deltas.
-* **Wallet card** — graphite gradient only; accent color on wordmark only.
+* **Wallet card** – graphite gradient only; accent color on wordmark only.
   Physical vs virtual variant.
 
 ---
@@ -467,14 +467,14 @@ They demonstrate:
 
 Use `business/components/charts/chart-primitives.tsx` which wraps `recharts`:
 
-* `easnerChartColors` — monochrome palette; first series uses `chart-1`
+* `easnerChartColors` – monochrome palette; first series uses `chart-1`
   (primary blue) for the lead metric (balance, inflow).
-* `easnerChartAxisProps` — graphite axis, `tabular-nums` tick label.
-* `EasnerChartTooltip` — card-styled tooltip with hairline border.
-* `BalanceSparkline` — tone-aware sparkline (positive = emerald, flat/negative
+* `easnerChartAxisProps` – graphite axis, `tabular-nums` tick label.
+* `EasnerChartTooltip` – card-styled tooltip with hairline border.
+* `BalanceSparkline` – tone-aware sparkline (positive = emerald, flat/negative
   = graphite).
 
-Do not import colors directly — always pass the `easnerChart*` helpers.
+Do not import colors directly – always pass the `easnerChart*` helpers.
 
 ---
 
@@ -482,7 +482,7 @@ Do not import colors directly — always pass the `easnerChart*` helpers.
 
 ### 8.1 Transactional emails (`packages/server/lib`)
 
-* `generateBaseEmailTemplate` — ivory canvas, white card, bold sans title,
+* `generateBaseEmailTemplate` – ivory canvas, white card, bold sans title,
   primary blue CTA button (pill shape), graphite body copy.
 * Status badges are brand-mapped:
   * `status-pending`   → amber (`#FAF1DB`/`#8A6221`)
@@ -491,7 +491,7 @@ Do not import colors directly — always pass the `easnerChart*` helpers.
   * `status-failed`    → oxblood (`#F4E5E5`/`#5F2424`)
   * `status-cancelled` → slate (`#EFECE2`/`#6F756F`)
 * Dark-mode email variant (where supported) keeps primary blue CTA and graphite
-  surfaces—separate from Easner Business / mobile product scope.
+  surfaces–separate from Easner Business / mobile product scope.
 
 ### 8.2 PDF documents (`business/components/*-pdf-document.tsx`)
 
@@ -510,7 +510,7 @@ purple/indigo one.
 
 **Easner Office** uses the same design-system contracts as Business: import UI from
 `@/components/ui/*`, map semantics through shared CSS variables in
-`office/app/globals.css`, and extend behavior only via tokens—not parallel palette
+`office/app/globals.css`, and extend behavior only via tokens–not parallel palette
 forks. Office **may** switch light/dark theme per layout (e.g. `next-themes`);
 mapped variables must still trace to **§2.0** / `tokens.ts`.
 
@@ -558,7 +558,7 @@ const palette = useThemeColors()
 * **Easner Business** (`business/`): ship **light appearance only** for customer
   UI. Do not rely on `dark` class or dark semantic tokens for Business screens,
   even if shared CSS defines dark variables for other packages.
-* **Easner Personal** (`mobile/`): **light only**—no user-facing dark mode;
+* **Easner Personal** (`mobile/`): **light only**–no user-facing dark mode;
   `ThemePaletteProvider` and navigation chrome target light semantics.
 
 Other apps (e.g. **Easner Office**) may still use `next-themes` or equivalent
@@ -568,22 +568,22 @@ where configured; that does not change Business or mobile policy above.
 
 ## 10. Anti-patterns
 
-* ❌ **SaaS blue overload** — full-width blue sections, blue page backgrounds,
+* ❌ **SaaS blue overload** – full-width blue sections, blue page backgrounds,
   or blue-heavy marketing chrome. Reset to ivory/graphite; use primary blue
   and light tint sparingly.
-* ❌ Off-palette blues, indigo, or purple gradients — use tokenized primary
+* ❌ Off-palette blues, indigo, or purple gradients – use tokenized primary
   (`#007ACC`), hover (`#0062A3`), and §2.0 accents only.
-* ❌ Neon/spring green (`#00D632`, `#34D399`) — emerald `#0F8A5F` only.
-* ❌ `text-red-600` / bright `#EF4444` — use `text-destructive` or oxblood
+* ❌ Neon/spring green (`#00D632`, `#34D399`) – emerald `#0F8A5F` only.
+* ❌ `text-red-600` / bright `#EF4444` – use `text-destructive` or oxblood
   `#7A2E2E`.
-* ❌ Hardcoded hex values in components — always go through tokens,
+* ❌ Hardcoded hex values in components – always go through tokens,
   Tailwind CSS variables, or `useThemeColors()`.
-* ❌ **Decorative glassmorphism** — full-screen or dominant-card UI built from
+* ❌ **Decorative glassmorphism** – full-screen or dominant-card UI built from
   blur/frost instead of solid ivory/graphite surfaces; neon rim glows;
   primary-tinted frosted panels. Token frosted **chrome** is allowed (§4.4).
-* ❌ Colored shadows (`shadowColor: primary`) on mobile — shadows are always
+* ❌ Colored shadows (`shadowColor: primary`) on mobile – shadows are always
   graphite.
-* ❌ Mixing multiple sans families on one surface—use one loaded stack per app.
+* ❌ Mixing multiple sans families on one surface–use one loaded stack per app.
 
 ---
 
@@ -610,7 +610,7 @@ where configured; that does not change Business or mobile policy above.
 ### Linked design artifacts
 
 Keep **Figma libraries** (team-owned files) aligned with variable **names** from
-`tokens.ts` / §2.2—document internal links or file keys in your team wiki; this
+`tokens.ts` / §2.2–document internal links or file keys in your team wiki; this
 repo references behavior here, not embedded canvas URLs.
 
 ---
@@ -620,13 +620,13 @@ repo references behavior here, not embedded canvas URLs.
 ### Variable parity
 
 * **Color / spacing / radius / elevation** in Figma should mirror **`packages/shared/src/design/tokens.ts`** and web semantic names (§2.2) so designers and engineers share one vocabulary.
-* **Easner Business + Easner Personal (mobile)** frames use **light appearance only** (see **Theme scope** at the top of this document; §9.3)—no requirement to maintain dark-mode variants for customer product mocks.
+* **Easner Business + Easner Personal (mobile)** frames use **light appearance only** (see **Theme scope** at the top of this document; §9.3)–no requirement to maintain dark-mode variants for customer product mocks.
 
 ### Workflow
 
-1. **Library first** — extend variables before inventing one-off hex on frames.
-2. **Pilot screens** — compose §6.0 reference flows from components + tokens (Dashboard, Send, Transactions).
-3. **Implementation** — ship via **`business/components/ui/*`** and **`mobile/src/components/ui/*`** / **`premium/`**; avoid styles that violate §10.
+1. **Library first** – extend variables before inventing one-off hex on frames.
+2. **Pilot screens** – compose §6.0 reference flows from components + tokens (Dashboard, Send, Transactions).
+3. **Implementation** – ship via **`business/components/ui/*`** and **`mobile/src/components/ui/*`** / **`premium/`**; avoid styles that violate §10.
 
 ### Figma MCP skills (Cursor)
 
@@ -638,5 +638,5 @@ repo references behavior here, not embedded canvas URLs.
 | **`figma-code-connect`** | Optional: map key components (e.g. `Card`, `Button`, `PremiumSurface`, `GlossyPrimaryButton`, `PremiumModalSheet`) to Figma components for designer–dev parity. |
 | **`create_design_system_rules`** | Generates repo-aware prompts; keep **`docs/design-system.md`** authoritative when tokens change. |
 
-When in doubt, read the example components in each app first — they show
+When in doubt, read the example components in each app first – they show
 the intended composition of tokens.
