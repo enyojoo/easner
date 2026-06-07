@@ -13,9 +13,9 @@ export const businessContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Stablecoin banking",
+    h1: "Banking for global business.",
     subhead:
-      "Easner Business is your web dashboard for organization onboarding, multi-currency accounts, payouts, team access, and collections – invoicing, Terminal, and QR Pay.",
+      "Manage multi-currency accounts, payouts, team access, and collections across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-business-01",
     altText: "Small business founder reviewing Easner Business dashboard",
     ctas: [
