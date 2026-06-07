@@ -3,7 +3,7 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin Payments – Easner",
+    title: "Stablecoin Payments",
     description:
       "Stablecoin speed on Easner. Receive, send, Terminal, and QR Pay flows.",
     keywords: [

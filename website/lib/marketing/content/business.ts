@@ -3,7 +3,7 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
-    title: "Business Banking – Easner",
+    title: "Business Banking",
     description:
       "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access – with KYC/KYB and compliance built in.",
     keywords: [

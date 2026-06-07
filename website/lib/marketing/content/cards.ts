@@ -2,7 +2,7 @@ import type { ProductPageContent } from "../types"
 
 export const cardsContent: ProductPageContent = {
   metadata: {
-    title: "Cards – Easner",
+    title: "Cards",
     description:
       "Corporate and personal cards on Easner. Issue virtual and physical cards, set spend controls, manage cardholders, and reconcile card spend alongside accounts and payouts.",
     keywords: [

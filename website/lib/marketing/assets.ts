@@ -3,18 +3,29 @@ import { BRAND_BASE_URL } from "./constants"
 import freelancerPhoto from "@/assets/Freelancer.jpg"
 import smePhoto from "@/assets/Sme.jpg"
 import developerPhoto from "@/assets/Developer.jpg"
+import personalHeroPhoto from "@/assets/personalhero.png"
+import sendMoneyPhoto from "@/assets/sendmoney.png"
+import receiveMoneyPhoto from "@/assets/receivemoney.png"
+import easnerTagHandlePhoto from "@/assets/easetaghandle.png"
+import securityPhoto from "@/assets/security.png"
 
 type MarketingAsset = string | StaticImageData
 
 const INTERIM_FALLBACKS: Record<string, MarketingAsset> = {
   "mkt-ui-business-dashboard": `${BRAND_BASE_URL}/eb1.png`,
   "mkt-icon-compliance": `${BRAND_BASE_URL}/security.svg`,
+  "mkt-hero-personal-01": personalHeroPhoto,
+  "mkt-ui-personal-send": sendMoneyPhoto,
+  "mkt-ui-personal-receive": receiveMoneyPhoto,
+  "mkt-ui-personal-recipients": easnerTagHandlePhoto,
+  "mkt-ui-personal-security": securityPhoto,
   "mkt-persona-diaspora": freelancerPhoto,
   "mkt-persona-sme": smePhoto,
   "mkt-persona-dev": developerPhoto,
 }
 
 const ASSET_OBJECT_POSITION: Record<string, string> = {
+  "mkt-hero-personal-01": "50% 50%",
   "mkt-persona-diaspora": "50% 38%",
   "mkt-persona-sme": "50% 22%",
   "mkt-persona-dev": "50% 42%",
@@ -37,7 +48,7 @@ export type MarketingVisualKind =
 
 const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
   "mkt-hero-home-01": "dashboard",
-  "mkt-hero-personal-01": "phone",
+  "mkt-hero-personal-01": "persona",
   "mkt-ui-personal-send": "phone",
   "mkt-ui-personal-receive": "phone",
   "mkt-ui-personal-recipients": "phone",
@@ -108,6 +119,21 @@ export function getAssetUrl(assetId: string): MarketingAsset | null {
 
 export function getAssetObjectPosition(assetId: string): string | undefined {
   return ASSET_OBJECT_POSITION[assetId]
+}
+
+export function getAssetImageFit(assetId: string, kind: MarketingVisualKind, fill: boolean): "cover" | "contain" {
+  if (
+    assetId === "mkt-hero-personal-01" ||
+    assetId === "mkt-ui-personal-send" ||
+    assetId === "mkt-ui-personal-receive" ||
+    assetId === "mkt-ui-personal-recipients" ||
+    assetId === "mkt-ui-personal-security"
+  ) {
+    return "cover"
+  }
+  if (kind === "persona") return "contain"
+  if (fill) return "contain"
+  return "cover"
 }
 
 export function getVisualKind(assetId: string): MarketingVisualKind {

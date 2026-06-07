@@ -14,8 +14,8 @@ const unbounded = Unbounded({
 
 export const metadata: Metadata = {
   title: {
-    default: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
-    template: "%s - Easner",
+    default: "Easner – Stablecoin Banking for Global Businesses",
+    template: "%s – Easner",
   },
   description:
     "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs – banking-simple UX with compliance built in.",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
-    title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
+    title: "Easner – Stablecoin Banking for Global Businesses",
     description:
       "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
     url: "https://www.easner.com",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
+    title: "Easner – Stablecoin Banking for Global Businesses",
     description:
       "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
     creator: "@easnerbanking",

@@ -11,7 +11,9 @@ import { CtaBand } from "@/components/marketing/cta-band"
 import { homeMetadata, homeCtaBand } from "@/lib/marketing/content/home"
 
 export const metadata: Metadata = {
-  title: homeMetadata.title,
+  title: {
+    absolute: homeMetadata.title,
+  },
   description: homeMetadata.description,
   keywords: homeMetadata.keywords,
   openGraph: {

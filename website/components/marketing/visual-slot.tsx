@@ -25,7 +25,7 @@ import {
   WalletCards,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getAssetObjectPosition, getAssetUrl, getVisualKind, isPlaceholderOnly } from "@/lib/marketing/assets"
+import { getAssetImageFit, getAssetObjectPosition, getAssetUrl, getVisualKind, isPlaceholderOnly } from "@/lib/marketing/assets"
 import { HERO_VISUAL_HEIGHT, MOCKUP_CHROME_BAR, MOCKUP_DASHBOARD_GRID } from "@/lib/marketing/layout-constants"
 import { CorridorCoverageVisual } from "./corridor-coverage-visual"
 import { CurrencyBadge } from "./currency-badge"
@@ -90,17 +90,16 @@ export function VisualSlot({
         ? "aspect-square"
         : kind === "map"
           ? "aspect-[4/5] sm:aspect-[4/3]"
-          : kind === "persona"
-            ? "aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5]"
           : "aspect-[4/3]"
 
   if (!showMockup && url) {
+    const imageFit = getAssetImageFit(assetId, kind, fill)
     const imageFitClass =
-      kind === "persona"
+      imageFit === "cover"
         ? "object-cover"
-        : aspect === "fill" || aspect === "card"
-          ? "object-contain p-2 sm:p-3"
-          : "object-cover"
+        : kind === "persona"
+          ? "object-contain p-3 sm:p-4"
+          : "object-contain p-2 sm:p-3"
 
     return (
       <div

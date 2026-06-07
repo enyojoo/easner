@@ -1,4 +1,6 @@
 export const HERO_VISUAL_HEIGHT = "h-[23rem] min-[430px]:h-[24rem] sm:h-[25rem] md:h-[28rem]"
+export const PERSONA_VISUAL_CONTAINER =
+  "relative aspect-[4/3] w-full overflow-hidden rounded-[1.5rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_24px_80px_rgba(15,17,16,0.12)] sm:rounded-[1.75rem]"
 export const SPLIT_VISUAL_MIN_H = "min-h-[23rem] min-[430px]:min-h-[24rem] sm:min-h-[25rem] md:min-h-[28rem]"
 export const SPLIT_GRID_GAP = "gap-7 sm:gap-8 lg:gap-12"
 export const SPLIT_COPY_CARD =

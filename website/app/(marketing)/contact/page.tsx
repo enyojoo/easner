@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   description: contactMetadata.description,
   keywords: contactMetadata.keywords,
   openGraph: {
-    title: contactMetadata.title,
     description: contactMetadata.description,
   },
 }

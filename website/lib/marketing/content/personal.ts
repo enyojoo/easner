@@ -8,7 +8,7 @@ const storeCtas = [
 
 export const personalContent: ProductPageContent = {
   metadata: {
-    title: "Personal Banking – Easner",
+    title: "Personal Banking",
     description:
       "Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal.",
     keywords: [
@@ -42,9 +42,9 @@ export const personalContent: ProductPageContent = {
       altText: "Easner Personal receive options",
     },
     {
-      title: "Recipients and Easner tag",
+      title: "Recipients and Easetag",
       description:
-        "Save people you pay often and send to Easner tags without re-entering details every time.",
+        "Save people you pay often and send to Easetags without re-entering details every time.",
       visualSlot: "mkt-ui-personal-recipients",
       altText: "Easner Personal recipients and Easner tag",
     },

@@ -3,7 +3,7 @@ import { CONTACT_PATH } from "../constants"
 
 export const apisContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin API Infrastructure – Easner",
+    title: "Stablecoin API Infrastructure",
     description:
       "Embed compliant global money rails in your app. Easner APIs for KYC/KYB, accounts, pay-in, FX quotes, payouts, collections, and webhooks.",
     keywords: [

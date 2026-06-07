@@ -3,7 +3,7 @@ import { APP_STORE_URL, BUSINESS_SIGNUP_URL, CONTACT_PATH, PLAY_STORE_URL } from
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
-  title: "Easner – Stablecoin Banking Infrastructure for Global Businesses",
+  title: "Easner – Stablecoin Banking for Global Businesses",
   description:
     "Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.",
   keywords: [

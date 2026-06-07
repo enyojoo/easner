@@ -40,6 +40,7 @@ export function FeatureBento({ features, headline, subhead, className }: Feature
                     alt={feature.altText ?? feature.title}
                     aspect="card"
                     className="h-full rounded-none border-0 shadow-none"
+                    preload
                   />
                 </div>
               )}

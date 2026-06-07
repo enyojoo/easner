@@ -1,5 +1,5 @@
 export const contactMetadata = {
-  title: "Contact Easner – Talk to our team",
+  title: "Talk to our team",
   description:
     "Book a call with Easner to discuss personal banking, business accounts, APIs, coverage, or partnership opportunities.",
   keywords: ["contact Easner", "book a demo", "Easner sales", "Easner API consultation"],

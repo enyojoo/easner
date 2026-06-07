@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { TermsPolicyPage } from "@/components/legal/terms-content"
 
 export const metadata: Metadata = {
-  title: "Terms of Service – Easner",
+  title: "Terms of Service",
   description: "Terms of Service for Easner Personal, Easner Business, and related financial technology services.",
 }
 

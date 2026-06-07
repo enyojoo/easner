@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import {
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
-  SPLIT_VISUAL_CONTAINER,
+  PERSONA_VISUAL_CONTAINER,
 } from "@/lib/marketing/layout-constants"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
@@ -153,7 +153,7 @@ export function SolutionsByAudience() {
                 <PersonaCtas ctas={persona.ctas} storeLayout="grid" />
               </div>
             </motion.div>
-            <div className={SPLIT_VISUAL_CONTAINER}>
+            <div className={PERSONA_VISUAL_CONTAINER}>
               {solutionsPersonas.map((p, index) => (
                 <div
                   key={p.id}
