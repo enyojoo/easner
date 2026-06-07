@@ -20,7 +20,7 @@ export const personalContent: ProductPageContent = {
   hero: {
     h1: "Global banking in your pocket.",
     subhead:
-      "Easner is your mobile banking app for sending, receiving, and managing money across global and African corridors – bank transfers and stablecoin in one place, with KYC and compliance built in.",
+      "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",
     altText: "Freelancer using Easner Personal app to send money internationally",
     ctas: storeCtas,
