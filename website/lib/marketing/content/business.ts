@@ -13,7 +13,7 @@ export const businessContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Banking for global business.",
+    h1: "Global banking for business.",
     subhead:
       "Manage multi-currency accounts, payouts, team access, and collections across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-business-01",
