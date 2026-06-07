@@ -37,14 +37,6 @@ export const metadata: Metadata = {
     siteName: "Easner",
     locale: "en_US",
     type: "website",
-    images: [
-      {
-        url: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png",
-        width: 1200,
-        height: 630,
-        alt: "Easner - Global Money Transfer Platform",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -52,7 +44,6 @@ export const metadata: Metadata = {
     description:
       "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
     creator: "@easnerbanking",
-    images: ["https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/easner%20seo%20cover.png"],
   },
   robots: { index: true, follow: true },
 }

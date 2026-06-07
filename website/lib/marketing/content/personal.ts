@@ -18,7 +18,7 @@ export const personalContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Global banking in your pocket.",
+    h1: "Global banking in your pocket",
     subhead:
       "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",

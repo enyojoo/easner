@@ -13,7 +13,7 @@ export const stablecoinContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Stablecoin speed.",
+    h1: "Stablecoin speed",
     subhead:
       "Run receive, send, Terminal, and QR Pay on rails your team already understands – stablecoin settlement with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-stablecoin-01",
