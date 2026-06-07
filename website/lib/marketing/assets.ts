@@ -121,18 +121,11 @@ export function getAssetObjectPosition(assetId: string): string | undefined {
   return ASSET_OBJECT_POSITION[assetId]
 }
 
-export function getAssetImageFit(assetId: string, kind: MarketingVisualKind, fill: boolean): "cover" | "contain" {
-  if (
-    assetId === "mkt-hero-personal-01" ||
-    assetId === "mkt-ui-personal-send" ||
-    assetId === "mkt-ui-personal-receive" ||
-    assetId === "mkt-ui-personal-recipients" ||
-    assetId === "mkt-ui-personal-security"
-  ) {
-    return "cover"
-  }
-  if (kind === "persona") return "contain"
-  if (fill) return "contain"
+export function getAssetImageFit(
+  _assetId: string,
+  _kind: MarketingVisualKind,
+  _fill: boolean
+): "cover" | "contain" {
   return "cover"
 }
 

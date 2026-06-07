@@ -94,12 +94,7 @@ export function VisualSlot({
 
   if (!showMockup && url) {
     const imageFit = getAssetImageFit(assetId, kind, fill)
-    const imageFitClass =
-      imageFit === "cover"
-        ? "object-cover"
-        : kind === "persona"
-          ? "object-contain p-3 sm:p-4"
-          : "object-contain p-2 sm:p-3"
+    const imageFitClass = imageFit === "cover" ? "object-cover" : "object-contain p-2 sm:p-3"
 
     return (
       <div
