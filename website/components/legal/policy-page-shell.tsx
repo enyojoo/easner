@@ -10,7 +10,15 @@ export function PolicyLink({ href, children }: { href: string; children: React.R
   )
 }
 
-export function PolicyPageShell({ title, children }: { title: string; children: React.ReactNode }) {
+export function PolicyPageShell({
+  title,
+  lastUpdated = POLICY_LAST_UPDATED,
+  children,
+}: {
+  title: string
+  lastUpdated?: string
+  children: React.ReactNode
+}) {
   return (
     <section className="pb-16 pt-10 md:pb-24 md:pt-14">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -22,7 +30,7 @@ export function PolicyPageShell({ title, children }: { title: string; children: 
             </header>
             <div className="space-y-10 px-6 py-8 sm:px-10 sm:py-10">{children}</div>
             <footer className="border-t border-[#E4DED1] px-6 py-6 sm:px-10">
-              <p className="text-sm text-[#6F756F]">Last updated: {POLICY_LAST_UPDATED}</p>
+              <p className="text-sm text-[#6F756F]">Last updated: {lastUpdated}</p>
             </footer>
           </article>
         </div>

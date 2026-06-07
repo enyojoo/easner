@@ -2,7 +2,7 @@ import { PolicyContactBlock, PolicyLink, PolicyPageShell, PolicyTable } from "@/
 
 export function PrivacyPolicyPage() {
   return (
-    <PolicyPageShell title="Privacy Policy">
+    <PolicyPageShell title="Privacy Policy" lastUpdated="June 8, 2026">
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">1. Introduction</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -35,39 +35,74 @@ export function PrivacyPolicyPage() {
           <strong>You provide:</strong>
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
-          <li>Account and profile details (name, email, phone, country, credentials, Easner tag)</li>
+          <li>
+            Account and profile details (name, email, phone, country, credentials, <strong>EASETAG</strong> @handle,
+            profile photo)
+          </li>
           <li>
             Identity and business verification data (government ID, date of birth, address, tax identifiers, business
             registration, beneficial ownership, selfies or liveness where required)
           </li>
           <li>
             Financial and transaction data (accounts, payment instructions, amounts, currencies, counterparties, source of
-            funds)
+            funds, payment or transfer notes)
           </li>
           <li>
             Recipients, customers, and collections data (invoice recipients, Terminal and QR Pay payer references, wallet
             addresses)
           </li>
-          <li>Support communications (email, phone, in-app live chat)</li>
+          <li>Support communications (email, phone, in-app live chat, including voice messages you choose to send)</li>
+          <li>Files you upload (for example transfer receipts or compliance documents)</li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>We collect automatically:</strong>
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
-          <li>Device, app, and usage data (IP address, logs, feature usage, crash reports)</li>
-          <li>Security signals (authentication events, fraud indicators)</li>
-          <li>Approximate location from IP or device settings where used for security or compliance</li>
+          <li>
+            Device, app, and usage data (IP address, device model and OS, app version, locale, logs, feature usage, screen
+            and product analytics events, session timestamps, deep links opened in the app)
+          </li>
+          <li>
+            Security and diagnostic data (authentication events, fraud indicators, error and crash reports, performance
+            signals where logged)
+          </li>
+          <li>Approximate location from IP or device region where used for security, fraud prevention, or compliance</li>
+          <li>
+            Account-linked product analytics to understand how the Services are used and to improve them — this may be
+            associated with your user account; we do not use it for cross-app or cross-website advertising
+          </li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>Mobile app permissions (where you grant them):</strong>
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Camera</strong> – when you capture government ID or selfie/liveness images for verification
+            <strong>Camera</strong> — government ID, selfie/liveness for verification, or photos you choose to capture
+            in-app
           </li>
           <li>
-            <strong>Push notifications</strong> – device tokens and delivery metadata for account and security alerts you
+            <strong>Photo library</strong> — profile avatar or attachments you select
+          </li>
+          <li>
+            <strong>Microphone</strong> — voice messages in live chat when you choose to record audio
+          </li>
+          <li>
+            <strong>Push notifications</strong> — device tokens and delivery metadata for account and security alerts you
             enable
+          </li>
+          <li>
+            <strong>Face ID or biometric unlock</strong> — processed on your device to unlock the app; Easner does not
+            receive or store your biometric templates
+          </li>
+        </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Sign-in services (where you use them):</strong>
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>
+            <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong> — we receive authentication
+            tokens and basic profile fields (such as name and email) as permitted by those providers and your choices.
+            Their privacy policies govern data they collect independently.
           </li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
@@ -82,12 +117,19 @@ export function PrivacyPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>Wallet and blockchain:</strong>
         </p>
-        <ul className="list-disc pl-6 space-y-2 text-[#5F665F]">
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
             Deposit addresses, memos, token types, balances, transaction hashes, and related metadata where wallet or
             stablecoin features are enabled
           </li>
         </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Mobile app — data we do not collect:</strong>
+        </p>
+        <p className="text-[#5F665F] leading-relaxed">
+          The Easner mobile app does not read your device address book, email or SMS inboxes, or precise GPS location, and
+          does not collect browsing or search history for advertising.
+        </p>
       </section>
 
       <section>
@@ -101,9 +143,12 @@ export function PrivacyPolicyPage() {
           <li>Meet legal and regulatory obligations (KYC, KYB, AML, sanctions)</li>
           <li>Communicate about your account and service updates</li>
           <li>Provide support and enforce our Terms and policies</li>
+          <li>Measure product performance and diagnose errors through analytics and logging tools</li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed">
-          We may use aggregated or de-identified data for analytics. We do not sell personal information.
+          We may use aggregated or de-identified data where appropriate. We <strong>do not sell</strong> personal
+          information and <strong>do not use</strong> personal information for cross-context behavioral advertising or
+          tracking you across third-party apps and websites for ads.
         </p>
       </section>
 
@@ -155,18 +200,31 @@ export function PrivacyPolicyPage() {
             ["Yellowcard", "African payout corridors (where Tier 2 banking is launched)"],
           ]}
         />
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2 mt-6">Technology and support service providers</h3>
+        <p className="text-[#5F665F] leading-relaxed mb-4">We also use service providers under contract, including:</p>
+        <PolicyTable
+          headers={["Provider", "Role"]}
+          rows={[
+            ["Supabase", "Authentication, database, and session storage"],
+            ["PostHog", "Product analytics, feature usage, and error or diagnostic events"],
+            ["Intercom", "In-app customer support and live chat"],
+          ]}
+        />
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          When you use <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong>, those companies
+          process authentication data under their own privacy policies.
+        </p>
         <p className="text-[#5F665F] leading-relaxed">
-          We also use service providers for hosting, email, analytics, and customer support. Additional partners may be
-          disclosed when you enable a specific feature or during onboarding. Partner lists may change as our Services
-          evolve; material changes will be reflected in this policy.
+          Additional partners and providers may be disclosed when you enable a specific feature or during onboarding.
+          Partner and provider lists may change as our Services evolve; material changes will be reflected in this policy.
         </p>
       </section>
 
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">6. Security</h2>
         <p className="text-[#5F665F] leading-relaxed">
-          We use technical and organizational measures – including encryption in transit and at rest where appropriate,
-          access controls, and monitoring – designed to protect personal information. No system is perfectly secure. You
+          We use technical and organizational measures — including encryption in transit and at rest where appropriate,
+          access controls, and monitoring — designed to protect personal information. No system is perfectly secure. You
           are responsible for safeguarding your devices and credentials.
         </p>
       </section>
@@ -201,7 +259,8 @@ export function PrivacyPolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">California residents (CCPA / CPRA)</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We collect the categories described in Section 2 for the business purposes in Section 3.{" "}
-          <strong>We do not sell personal information</strong> or share it for cross-context behavioral advertising.
+          <strong>We do not sell personal information</strong> or share it for cross-context behavioral advertising. This
+          includes data processed through product analytics tools that may be linked to your account.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           You may have rights to know, access, correct, and delete personal information, and to limit use of sensitive
@@ -275,7 +334,7 @@ export function PrivacyPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           The regulatory treatment of digital assets <strong>varies by jurisdiction</strong>.
         </p>
-        <p className="text-[#5F665F] leading-relaxed mb-4">
+        <p className="text-[#5F665F] leading-relaxed">
           Digital assets are <strong>not bank deposits</strong> and are not FDIC insured. Transactions may be irreversible.
         </p>
       </section>
