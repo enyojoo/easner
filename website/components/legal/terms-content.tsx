@@ -2,12 +2,13 @@ import { PolicyContactBlock, PolicyLink, PolicyPageShell } from "@/components/le
 
 export function TermsPolicyPage() {
   return (
-    <PolicyPageShell title="Terms of Service">
+    <PolicyPageShell title="Terms of Service" lastUpdated="June 8, 2026">
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">1. Acceptance of Terms</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          By accessing or using Easner&apos;s website, <strong>Easner Personal</strong> (mobile application),{" "}
-          <strong>Easner Business</strong> (web dashboard), or related services (collectively, the{" "}
+          By accessing or using Easner&apos;s website, <strong>Easner Mobile</strong> (mobile application for{" "}
+          <strong>Easner Personal Banking</strong>), <strong>Easner Business</strong> (web dashboard for{" "}
+          <strong>Easner Business Banking</strong>), or related services (collectively, the{" "}
           <strong>&quot;Services&quot;</strong>), you agree to these Terms of Service (<strong>&quot;Terms&quot;</strong>
           ). If you do not agree, do not use the Services.
         </p>
@@ -24,7 +25,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">2. Electronic Communications and E-Sign</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          You consent to receive account, transaction, security, and legal notices electronically – including by email,
+          You consent to receive account, transaction, security, and legal notices electronically — including by email,
           in-app messages, and SMS where we use text messaging for service communications.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -45,10 +46,12 @@ export function TermsPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">We offer:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Easner Personal</strong> – consumer banking and payments through our mobile app
+            <strong>Easner Mobile</strong> (<strong>Easner Personal Banking</strong>) — consumer banking and payments
+            through our mobile app
           </li>
           <li>
-            <strong>Easner Business</strong> – business banking, payouts, and collections through our web dashboard
+            <strong>Easner Business</strong> (<strong>Easner Business Banking</strong>) — business banking, payouts,
+            and collections through our web dashboard
           </li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -61,14 +64,14 @@ export function TermsPolicyPage() {
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Tier 1 – Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in
+            <strong>Tier 1 — Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in
             and pay-out, and stablecoin flows
           </li>
           <li>
-            <strong>Tier 2 – African banking:</strong> NGN and regional pay-in and pay-out where we launch
+            <strong>Tier 2 — African banking:</strong> NGN and regional pay-in and pay-out where we launch
           </li>
           <li>
-            <strong>Tier 3 – Cards:</strong> Personal or corporate cards, spend controls, and cardholder management when
+            <strong>Tier 3 — Cards:</strong> Personal or corporate cards, spend controls, and cardholder management when
             approved
           </li>
         </ul>
@@ -83,15 +86,15 @@ export function TermsPolicyPage() {
 
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">4. The Services</h2>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Personal</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Mobile (Easner Personal Banking)</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           For individuals, the Services may include account registration, identity verification, sending and receiving
-          money, currency accounts and conversion, virtual account and stablecoin receive options, recipients, Easner
-          tag transfers, open banking and mobile money flows where enabled, transaction history, and security features
-          such as multi-factor authentication and biometric unlock where supported. Intended for consumers{" "}
+          money, currency accounts and conversion, virtual account and stablecoin receive options, recipients, EASETAG
+          transfers, open banking and mobile money flows where enabled, transaction history, and security features such as
+          multi-factor authentication and biometric unlock where supported. Intended for consumers{" "}
           <strong>18 or older</strong> in supported jurisdictions.
         </p>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Business</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Business (Easner Business Banking)</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           For businesses, the Services may include organization onboarding, team access controls, payouts,
           multi-currency accounts, <strong>collections</strong> (invoicing, payment terminal, and QR Pay where enabled),
@@ -114,8 +117,7 @@ export function TermsPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Where enabled, wallet and stablecoin features may be supported through infrastructure partners. This can include
           stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through
-          approved corridors on <strong>Easner Personal</strong> and <strong>Easner Business</strong>, where enabled, and
-          balance visibility tied to
+          approved corridors (primarily on <strong>Easner Business</strong>), and balance visibility tied to
           partner-managed infrastructure.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -192,7 +194,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Payments, Settlement, and Reversals</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Once you confirm a transaction, it may be <strong>final and irreversible</strong> after processing – especially
+          Once you confirm a transaction, it may be <strong>final and irreversible</strong> after processing — especially
           on blockchain networks and certain partner settlement rails.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -314,10 +316,10 @@ export function TermsPolicyPage() {
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Arbitration:</strong> Disputes not resolved informally shall be settled by <strong>binding
-          arbitration</strong> administered by the <strong>AAA</strong> under Consumer Arbitration Rules (Easner Personal
-          individuals) or Commercial Arbitration Rules (Easner Business and commercial use). Seat:{" "}
-          <strong>Wilmington, Delaware</strong>, or remote by agreement. The <strong>Federal Arbitration Act</strong>{" "}
-          applies.
+          arbitration</strong> administered by the <strong>AAA</strong> under Consumer Arbitration Rules (individual users
+          of Easner Mobile / Easner Personal Banking) or Commercial Arbitration Rules (Easner Business / Easner Business
+          Banking and commercial use). Seat: <strong>Wilmington, Delaware</strong>, or remote by agreement. The{" "}
+          <strong>Federal Arbitration Act</strong> applies.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Class and jury waiver:</strong> Disputes proceed <strong>only on an individual basis</strong> to the

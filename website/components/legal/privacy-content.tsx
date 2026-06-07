@@ -13,10 +13,10 @@ export function PrivacyPolicyPage() {
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>www.easner.com</li>
           <li>
-            <strong>Easner Personal</strong> (mobile application)
+            <strong>Easner Mobile</strong> (mobile application for <strong>Easner Personal Banking</strong>)
           </li>
           <li>
-            <strong>Easner Business</strong> (web dashboard)
+            <strong>Easner Business</strong> (web dashboard for <strong>Easner Business Banking</strong>)
           </li>
           <li>Public invoice and payment experiences we host for business users</li>
           <li>Related support and communications channels</li>
