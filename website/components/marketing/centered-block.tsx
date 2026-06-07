@@ -1,3 +1,5 @@
+"use client"
+
 interface CenteredBlockProps {
   headline: string
   body: string

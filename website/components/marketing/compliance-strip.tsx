@@ -1,3 +1,5 @@
+"use client"
+
 import { ShieldCheck } from "lucide-react"
 import { COMPLIANCE_STRIP } from "@/lib/marketing/shared-content"
 

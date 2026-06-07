@@ -1,6 +1,10 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { OpenAccountButton } from "./open-account-dialog"
+import { PersonaCtas } from "./persona-ctas"
 import type { CtaBandContent } from "@/lib/marketing/types"
 
 interface CtaBandProps {
@@ -27,30 +31,44 @@ export function CtaBand({ content }: CtaBandProps) {
           {content.subhead && (
             <p className="mx-auto max-w-3xl text-lg leading-8 text-[#5F665F] md:text-xl">{content.subhead}</p>
           )}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            {content.ctas.map((cta, i) => (
-              <Button
-                key={cta.label}
-                asChild
-                size="lg"
-                variant={i === 0 ? "default" : "outline"}
-                className={
-                  i === 0
-                    ? "h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.2)] hover:bg-[#0062A3]"
-                    : "h-12 rounded-full border-[#D9D4C7] bg-white px-6 text-[#0F1110] hover:bg-[#F8F6F0]"
-                }
-              >
-                <Link
-                  href={cta.href}
-                  target={cta.external ? "_blank" : undefined}
-                  rel={cta.external ? "noopener noreferrer" : undefined}
-                >
-                  {cta.label}
-                  {i === 0 && !cta.external && <ArrowRight className="h-4 w-4" />}
-                </Link>
-              </Button>
-            ))}
-          </div>
+          {content.ctas.some((cta) => cta.store) ? (
+            <div className="mx-auto mt-8 flex max-w-md justify-center">
+              <PersonaCtas ctas={content.ctas} storeLayout="grid" className="w-full" />
+            </div>
+          ) : (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {content.ctas.map((cta, i) =>
+                cta.action === "open-account" ? (
+                  <OpenAccountButton
+                    key={cta.label}
+                    showArrow
+                    className="h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.2)] hover:bg-[#0062A3]"
+                  />
+                ) : (
+                  <Button
+                    key={cta.label}
+                    asChild
+                    size="lg"
+                    variant={i === 0 ? "default" : "outline"}
+                    className={
+                      i === 0
+                        ? "h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.2)] hover:bg-[#0062A3]"
+                        : "h-12 rounded-full border-[#D9D4C7] bg-white px-6 text-[#0F1110] hover:bg-[#F8F6F0]"
+                    }
+                  >
+                    <Link
+                      href={cta.href}
+                      target={cta.external ? "_blank" : undefined}
+                      rel={cta.external ? "noopener noreferrer" : undefined}
+                    >
+                      {cta.label}
+                      {i === 0 && !cta.external && <ArrowRight className="h-4 w-4" />}
+                    </Link>
+                  </Button>
+                )
+              )}
+            </div>
+          )}
         </div>
       </div>
     </section>

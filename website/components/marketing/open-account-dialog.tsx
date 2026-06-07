@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,28 @@ interface OpenAccountDialogProps {
 }
 
 export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps) {
+  useLayoutEffect(() => {
+    if (!open) return
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    const { body, documentElement: html } = document
+    const prevBodyOverflow = body.style.overflow
+    const prevBodyPaddingRight = body.style.paddingRight
+    const prevHtmlOverflow = html.style.overflow
+
+    html.style.overflow = "hidden"
+    body.style.overflow = "hidden"
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow
+      body.style.overflow = prevBodyOverflow
+      body.style.paddingRight = prevBodyPaddingRight
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
 
@@ -20,29 +43,15 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
       if (event.key === "Escape") onOpenChange(false)
     }
 
-    const scrollY = window.scrollY
-    document.body.style.position = "fixed"
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.left = "0"
-    document.body.style.right = "0"
-    document.body.style.overflow = "hidden"
     window.addEventListener("keydown", onKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown)
-      document.body.style.position = ""
-      document.body.style.top = ""
-      document.body.style.left = ""
-      document.body.style.right = ""
-      document.body.style.overflow = ""
-      window.scrollTo(0, scrollY)
-    }
+    return () => window.removeEventListener("keydown", onKeyDown)
   }, [open, onOpenChange])
 
   if (!open) return null
+  if (typeof document === "undefined") return null
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close dialog"
@@ -98,21 +107,30 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
 interface OpenAccountButtonProps {
   className?: string
   showArrow?: boolean
+  onPress?: () => void
 }
 
-export function OpenAccountButton({ className, showArrow = false }: OpenAccountButtonProps) {
+export function OpenAccountButton({ className, showArrow = false, onPress }: OpenAccountButtonProps) {
   const [open, setOpen] = useState(false)
 
   return (
     <>
-      <Button type="button" className={className} onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        className={className}
+        onClick={() => {
+          onPress?.()
+          setOpen(true)
+        }}
+      >
         Open Account
         {showArrow && <ArrowRight className="h-4 w-4" />}
       </Button>

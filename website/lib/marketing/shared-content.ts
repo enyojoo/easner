@@ -1,5 +1,5 @@
 import type { CardItem, CtaBandContent } from "./types"
-import { ACCESS_PATH, CONTACT_PATH } from "./constants"
+import { CONTACT_PATH } from "./constants"
 
 export const COMPLIANCE_STRIP = {
   headline: "Compliance is built in, not added later.",
@@ -8,8 +8,8 @@ export const COMPLIANCE_STRIP = {
   bullets: [
     "KYC/KYB onboarding built into the product experience",
     "AML and sanctions screening on customers and transactions",
-    "Banking, wallet, and payment rails connected where enabled",
-    "Platform access based on verification, jurisdiction, and product availability",
+    "Banking, wallet, and payment rails connected",
+    "Access based on verification, jurisdiction, and product availability",
   ],
 }
 
@@ -18,7 +18,7 @@ export const DEFAULT_CTA_BAND: CtaBandContent = {
   subhead:
     "Open an Easner account, or talk to us about building on Easner APIs.",
   ctas: [
-    { label: "Get Started", href: ACCESS_PATH },
+    { label: "Open Account", href: "#", action: "open-account" },
     { label: "Contact", href: CONTACT_PATH },
   ],
 }
@@ -27,7 +27,7 @@ export const PERSONAL_TIERS: CardItem[] = [
   {
     title: "Global banking",
     description:
-      "USD and EUR account details, pay-in and pay-out, and stablecoin flows where enabled.",
+      "USD and EUR account details, pay-in and pay-out, and stablecoin flows.",
   },
   {
     title: "African banking",
@@ -89,7 +89,7 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Stablecoin",
     description:
-      "Stablecoin speed with banking screens – receive, send, Terminal, and QR Pay where enabled.",
+      "Stablecoin speed with banking screens – receive, send, Terminal, and QR Pay.",
     link: "/stablecoin",
     icon: "mkt-thumb-stablecoin",
   },

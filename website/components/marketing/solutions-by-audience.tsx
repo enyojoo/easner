@@ -2,6 +2,11 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import {
+  SPLIT_COPY_CARD,
+  SPLIT_GRID_GAP,
+  SPLIT_VISUAL_CONTAINER,
+} from "@/lib/marketing/layout-constants"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
 import { solutionsPersonas } from "@/lib/marketing/content/home"
@@ -38,8 +43,8 @@ export function SolutionsByAudience() {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-2 lg:gap-12">
-          <div className="flex min-h-[26rem] flex-col rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] p-6 sm:min-h-[28rem] sm:p-8">
+        <div className={cn("grid grid-cols-1 items-stretch lg:grid-cols-2", SPLIT_GRID_GAP)}>
+          <div className={SPLIT_COPY_CARD}>
             <h3 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-3xl">
               {persona.headline}
             </h3>
@@ -48,7 +53,7 @@ export function SolutionsByAudience() {
               <PersonaCtas ctas={persona.ctas} />
             </div>
           </div>
-          <div className="relative min-h-[26rem] sm:min-h-[28rem]">
+          <div className={SPLIT_VISUAL_CONTAINER}>
             {solutionsPersonas.map((p, index) => (
               <div
                 key={p.id}

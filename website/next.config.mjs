@@ -29,15 +29,6 @@ const nextConfig = {
       },
     },
   },
-  async redirects() {
-    return [
-      { source: "/personal-banking", destination: "/personal", permanent: true },
-      { source: "/business-banking", destination: "/business", permanent: true },
-      { source: "/kyc-policy", destination: "/compliance", permanent: true },
-      { source: "/blog", destination: "/", permanent: true },
-      { source: "/blog/:path*", destination: "/", permanent: true },
-    ]
-  },
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -1,5 +1,5 @@
 import type { ProductPageContent } from "../types"
-import { ACCESS_PATH } from "../constants"
+import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
@@ -13,25 +13,22 @@ export const businessContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Business banking built on Stablecoin",
+    h1: "Stablecoin banking",
     subhead:
-      "Easner Business gives organizations one web control center for onboarding, accounts, payouts, team access, reporting, and collections – including invoicing, Terminal, and QR Pay where enabled.",
+      "Easner Business is your web dashboard for organization onboarding, multi-currency accounts, payouts, team access, and collections – invoicing, Terminal, and QR Pay.",
     visualSlot: "mkt-hero-business-01",
     altText: "Small business founder reviewing Easner Business dashboard",
     ctas: [
-      { label: "Open Business account", href: ACCESS_PATH },
+      { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true },
       { label: "See invoicing", href: "/invoicing" },
     ],
   },
-  problem: {
-    headline: "Global trade shouldn't mean fragmented tools.",
-    body: "Cross-border SMEs juggle bank portals, spreadsheets, informal FX, and manual reconciliation to pay suppliers, collect from customers, and manage treasury. Slow settlement and unclear fees can quietly eat into every deal.",
-  },
+  featuresLayout: "bento",
   features: [
     {
       title: "Multi-currency accounts",
       description:
-        "USD, EUR, and other supported currencies, with virtual account details and stablecoin flows where enabled.",
+        "Stablecoin powered accounts with pay-in via virtual account details and stablecoin flows.",
       visualSlot: "mkt-ui-business-accounts",
       altText: "Easner Business multi-currency accounts",
     },
@@ -45,60 +42,56 @@ export const businessContent: ProductPageContent = {
     {
       title: "Collections",
       description:
-        "Create invoices, collect in person with Terminal, and offer QR Pay where enabled – all connected to your business dashboard.",
+        "Invoice customers, collect in person with Terminal, and offer QR Pay – all connected to your business dashboard.",
+      visualSlot: "mkt-ui-business-collections",
+      altText: "Easner Business invoicing, Terminal, and QR Pay collections",
     },
     {
       title: "Team and reporting",
       description:
         "Role-based access, customer records, transaction history, and clean reporting for finance operations.",
+      visualSlot: "mkt-ui-business-team",
+      altText: "Easner Business team and reporting dashboard",
     },
   ],
+  useCasesHeadline: "Built for cross-border operators",
+  useCasesSubhead:
+    "Easner Business for SMEs that pay suppliers, collect from customers, and run finance ops across borders from one dashboard.",
   useCases: [
     {
-      title: "Import / export",
+      title: "Global trade operators",
       description:
-        "Pay international suppliers and collect from buyers with clear audit trails.",
+        "Pay international suppliers and collect from buyers with virtual accounts, payouts, and audit-ready reporting.",
     },
     {
-      title: "Tuition and services",
+      title: "Import and export",
       description:
-        "Invoice overseas clients; accept bank or stablecoin pay-in on one invoice.",
+        "Move money across corridors for procurement and sales without juggling multiple bank portals and spreadsheets.",
     },
     {
-      title: "Distributed teams",
+      title: "Faith and nonprofit organizations",
       description:
-        "Payout contractors across corridors from a single business account.",
+        "Collect diaspora donations and mission support from abroad, then pay field teams and partners across borders – by bank or stablecoin, with one ledger your finance team can audit.",
+    },
+    {
+      title: "OTC and remittance agents",
+      description:
+        "Collect client pay-in by bank or stablecoin, execute corridor payouts, and reconcile every transaction in one ledger.",
+    },
+    {
+      title: "Agencies and consultancies",
+      description:
+        "Manage client invoicing, supplier payouts, and team permissions without separate tools for each workflow.",
+    },
+    {
+      title: "Software and SaaS",
+      description:
+        "Hold USD or EUR balances, pay global vendors, and collect from international customers where Easner is enabled.",
     },
   ],
   ctaBand: {
-    headline: "Open your Easner Business account.",
+    headline: "Open your Easner Business account",
     subhead: "Accounts, payouts, collections, and team controls for cross-border operators.",
-    ctas: [{ label: "Get Started", href: ACCESS_PATH }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
   },
-  faq: [
-    {
-      question: "Who can use Easner Business?",
-      answer:
-        "Registered businesses in supported jurisdictions that complete organization KYB.",
-    },
-    {
-      question: "Can I invite team members?",
-      answer: "Yes. Account owners control who can access the organization dashboard.",
-    },
-    {
-      question: "Does Easner Business include invoicing?",
-      answer:
-        "Yes. See our Invoicing page. Terminal and QR Pay are part of our stablecoin collections infrastructure.",
-    },
-    {
-      question: "Are stablecoin features required?",
-      answer:
-        "No. Use fiat rails where available. Stablecoin pay-in and wallet features are optional where enabled.",
-    },
-    {
-      question: "How are fees structured?",
-      answer:
-        "Fees and FX may apply by product and corridor. Amounts are shown before you confirm transactions.",
-    },
-  ],
 }

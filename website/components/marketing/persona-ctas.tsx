@@ -9,13 +9,14 @@ import type { Cta } from "@/lib/marketing/types"
 interface PersonaCtasProps {
   ctas: Cta[]
   className?: string
+  storeLayout?: "row" | "column" | "grid"
 }
 
-export function PersonaCtas({ ctas, className }: PersonaCtasProps) {
+export function PersonaCtas({ ctas, className, storeLayout = "row" }: PersonaCtasProps) {
   const hasStoreCtas = ctas.some((cta) => cta.store)
 
   if (hasStoreCtas) {
-    return <StoreDownloadButtons className={className} />
+    return <StoreDownloadButtons className={className} layout={storeLayout} />
   }
 
   return (

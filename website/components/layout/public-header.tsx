@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { OpenAccountButton } from "@/components/marketing/open-account-dialog"
 import { BrandLogo } from "@easner/shared"
 import {
   DropdownMenu,
@@ -112,11 +112,7 @@ export function PublicHeader() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/access">
-              <Button className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]">
-                Get Started
-              </Button>
-            </Link>
+            <OpenAccountButton className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]" />
           </div>
 
           {/* Mobile menu button */}
@@ -192,11 +188,10 @@ export function PublicHeader() {
               </div>
             </nav>
             <div className="flex-shrink-0 border-t border-[#E4DED1] bg-white px-4 pb-4 pt-4">
-              <Link href="/access" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full rounded-full bg-[#007ACC] text-white hover:bg-[#0062A3]">
-                  Get Started
-                </Button>
-              </Link>
+              <OpenAccountButton
+                className="w-full rounded-full bg-[#007ACC] text-white hover:bg-[#0062A3]"
+                onPress={() => setMobileMenuOpen(false)}
+              />
             </div>
           </div>
         )}

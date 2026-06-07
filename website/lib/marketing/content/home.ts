@@ -15,9 +15,10 @@ export const homeMetadata = {
 
 export const homeHero = {
   h1Lines: ["Global banking,", "Simplified for you."],
-  subhead: "Stablecoin-powered accounts, cards, payouts, collections and APIs.",
+  subhead:
+    "Stablecoin-powered accounts, payouts, collections, cards, and APIs – banking-simple UX with compliance built in.",
   visualSlot: "mkt-hero-home-01",
-  altText: "Business professional reviewing global payments on laptop and Easner mobile app",
+  altText: "Easner Business dashboard overview",
   ctas: [
     { label: "Open Account", href: "#", action: "open-account" },
     { label: "Explore products", href: "#products" },
@@ -46,7 +47,7 @@ export const whyEasnerPillars: CardItem[] = [
   {
     title: "Invisible infrastructure",
     description:
-      "Stablecoin speed and global reach sit behind fiat-native screens where enabled.",
+      "Stablecoin speed and global reach sit behind fiat-native screens.",
     icon: "mkt-icon-pillar-invisible",
   },
 ]
@@ -56,7 +57,7 @@ export const solutionsPersonas = [
     id: "diaspora",
     label: "Freelancers, remote workers, and diaspora",
     headline: "Get paid globally. Keep more locally.",
-    body: "Receive in supported global currencies, move money home on faster paths where available, and keep a clean record of every transfer with Easner Personal Banking.",
+    body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal.",
     visualSlot: "mkt-persona-diaspora",
     altText: "Remote professional using Easner on mobile",
     ctas: [
@@ -68,7 +69,7 @@ export const solutionsPersonas = [
     id: "sme",
     label: "Cross-border SMEs and trade",
     headline: "Run global operations from one dashboard.",
-    body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking.",
+    body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business.",
     visualSlot: "mkt-persona-sme",
     altText: "Small business owner managing international payments",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }] satisfies Cta[],
@@ -88,10 +89,11 @@ export const solutionsPersonas = [
 
 export const corridorContent = {
   headline: "Expanding where global business meets emerging markets",
-  body: "Hold USD, EUR, and GBP from global markets, then pay out locally across Africa and the region – for salaries, supplier payments, and cross-border trade, where Easner is enabled.",
+  body: "Hold USD, EUR, and GBP from global markets, then pay out locally across Africa and the region – for salaries, supplier payments, and cross-border trade.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText: "Map showing payment corridors between US, EU, and African markets",
+  ctas: [{ label: "Open Account", href: "#", action: "open-account" }] satisfies Cta[],
 }
 
 export const homeCtaBand = DEFAULT_CTA_BAND
@@ -105,7 +107,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Do I need to understand crypto to use Easner?",
     answer:
-      "No. Easner is designed around banking-simple screens. Stablecoin infrastructure may power settlement behind the scenes where enabled.",
+      "No. Easner is designed around banking-simple screens. Stablecoin infrastructure may power settlement behind the scenes.",
   },
   {
     question: "What products does Easner offer?",

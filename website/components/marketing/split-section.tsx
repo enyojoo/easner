@@ -4,9 +4,16 @@ import type { ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MarketingLink } from "./marketing-link"
+import { OpenAccountButton } from "./open-account-dialog"
+import { PersonaCtas } from "./persona-ctas"
 import { VisualSlot } from "./visual-slot"
 import { StatusBadge } from "./status-badge"
 import { cn } from "@/lib/utils"
+import {
+  SPLIT_COPY_CARD,
+  SPLIT_GRID_GAP,
+  SPLIT_VISUAL_CONTAINER,
+} from "@/lib/marketing/layout-constants"
 import type { Cta } from "@/lib/marketing/types"
 
 interface SplitSectionProps {
@@ -21,7 +28,109 @@ interface SplitSectionProps {
   ctas?: Cta[]
   h1?: boolean
   subhead?: string
-  narrow?: boolean
+  variant?: "hero" | "content"
+}
+
+function SplitCtas({ ctas, h1 }: { ctas: Cta[]; h1?: boolean }) {
+  if (ctas.some((cta) => cta.store)) {
+    return <PersonaCtas ctas={ctas} className="mt-8 max-w-md" storeLayout={h1 ? "grid" : "row"} />
+  }
+
+  return (
+    <div className="mt-8 flex flex-wrap gap-3">
+      {ctas.map((cta, i) =>
+        cta.action === "open-account" ? (
+          <OpenAccountButton
+            key={cta.label}
+            showArrow={i === 0}
+            className="h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3]"
+          />
+        ) : (
+          <Button
+            key={cta.label}
+            asChild
+            size="lg"
+            variant={i === 0 ? "default" : "outline"}
+            className={
+              i === 0
+                ? "h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3]"
+                : "h-12 rounded-full border-[#D9D4C7] bg-white/80 px-6 text-[#0F1110] hover:bg-white"
+            }
+          >
+            <MarketingLink href={cta.href} external={cta.external}>
+              {cta.label}
+              {i === 0 && !cta.external && cta.action !== "open-account" && (
+                <ArrowRight className="h-4 w-4" />
+              )}
+            </MarketingLink>
+          </Button>
+        )
+      )}
+    </div>
+  )
+}
+
+function CopyBlock({
+  headline,
+  subhead,
+  body,
+  bullets,
+  badge,
+  ctas,
+  h1,
+  boxed,
+}: {
+  headline: string
+  subhead?: string
+  body?: string
+  bullets?: string[]
+  badge?: string
+  ctas?: Cta[]
+  h1?: boolean
+  boxed: boolean
+}) {
+  const HeadingTag = h1 ? "h1" : "h2"
+
+  const content = (
+    <>
+      {badge && <StatusBadge label={badge} className="mb-4" />}
+      <HeadingTag
+        className={cn(
+          "font-unbounded font-semibold leading-[1.08] text-[#0F1110]",
+          h1 ? "text-4xl sm:text-5xl md:text-6xl" : "text-2xl sm:text-3xl"
+        )}
+      >
+        {headline}
+      </HeadingTag>
+      {subhead && (
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-[#5F665F] sm:text-xl">{subhead}</p>
+      )}
+      {body && (
+        <p className={cn("max-w-2xl leading-8 text-[#5F665F]", subhead ? "mt-4" : "mt-5 text-lg")}>
+          {body}
+        </p>
+      )}
+      {bullets && bullets.length > 0 && (
+        <ul className="mt-7 space-y-3">
+          {bullets.map((bullet) => (
+            <li key={bullet} className="flex items-start gap-3 text-[#3D443E]">
+              <span className="mt-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#EAF5FD]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#007ACC]" />
+              </span>
+              <span>{bullet}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {ctas && ctas.length > 0 && <SplitCtas ctas={ctas} h1={h1} />}
+    </>
+  )
+
+  if (boxed) {
+    return <div className={SPLIT_COPY_CARD}>{content}</div>
+  }
+
+  return <div>{content}</div>
 }
 
 export function SplitSection({
@@ -36,77 +145,66 @@ export function SplitSection({
   ctas,
   h1 = false,
   subhead,
-  narrow = false,
+  variant,
 }: SplitSectionProps) {
-  const HeadingTag = h1 ? "h1" : "h2"
+  const resolvedVariant = variant ?? (h1 ? "hero" : "content")
+  const hasVisual = !!(visual || (visualSlot && altText))
+  const isContent = resolvedVariant === "content"
 
   return (
-    <section className={cn("bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12", h1 ? "bg-transparent" : "")}>
+    <section className={cn("bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12", h1 && "bg-transparent")}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className={`grid grid-cols-1 gap-10 lg:gap-16 ${
-            narrow ? "lg:grid-cols-5" : "lg:grid-cols-2"
-          } ${h1 ? "items-center" : "items-start"} ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}
+          className={cn(
+            "grid grid-cols-1 lg:grid-cols-2",
+            isContent ? cn(SPLIT_GRID_GAP, "items-stretch") : "items-center gap-10 lg:gap-16",
+            reverse && "lg:[&>*:first-child]:order-2"
+          )}
         >
-          <div className={cn(narrow ? "lg:col-span-2" : "", h1 ? "" : "lg:pt-6")}>
-            {badge && <StatusBadge label={badge} className="mb-4" />}
-            <HeadingTag
-              className={`font-unbounded font-semibold text-[#0F1110] leading-[1.08] ${
-                h1 ? "text-4xl sm:text-5xl md:text-6xl" : "text-3xl sm:text-4xl"
-              }`}
-            >
-              {headline}
-            </HeadingTag>
-            {subhead && (
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#5F665F] sm:text-xl">{subhead}</p>
-            )}
-            {body && (
-              <p className={`max-w-2xl text-[#5F665F] leading-8 ${subhead ? "mt-4" : "mt-5 text-lg"}`}>
-                {body}
-              </p>
-            )}
-            {bullets && bullets.length > 0 && (
-              <ul className="mt-7 space-y-3">
-                {bullets.map((bullet) => (
-                  <li key={bullet} className="flex items-start gap-3 text-[#3D443E]">
-                    <span className="mt-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#EAF5FD]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#007ACC]" />
-                    </span>
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {ctas && ctas.length > 0 && (
-              <div className="mt-8 flex flex-wrap gap-3">
-                {ctas.map((cta, i) => (
-                  <Button
-                    key={cta.label}
-                    asChild
-                    size="lg"
-                    variant={i === 0 ? "default" : "outline"}
-                    className={
-                      i === 0
-                        ? "h-12 rounded-full bg-[#007ACC] px-6 text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3]"
-                        : "h-12 rounded-full border-[#D9D4C7] bg-white/80 px-6 text-[#0F1110] hover:bg-white"
-                    }
-                  >
-                    <MarketingLink href={cta.href} external={cta.external}>
-                      {cta.label}
-                      {i === 0 && !cta.external && <ArrowRight className="h-4 w-4" />}
-                    </MarketingLink>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-          {(visual || (visualSlot && altText)) && (
-            <div className={narrow ? "lg:col-span-3" : ""}>
+          <CopyBlock
+            headline={headline}
+            subhead={subhead}
+            body={body}
+            bullets={bullets}
+            badge={badge}
+            ctas={ctas}
+            h1={h1}
+            boxed={isContent && hasVisual}
+          />
+          {hasVisual && (
+            <div className={SPLIT_VISUAL_CONTAINER}>
               {visual ?? (
-                <VisualSlot assetId={visualSlot!} alt={altText!} aspect={h1 ? "hero" : "feature"} />
+                <VisualSlot
+                  assetId={visualSlot!}
+                  alt={altText!}
+                  aspect="fill"
+                  className="h-full"
+                  priority={h1}
+                />
               )}
             </div>
           )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function TextOnlySection({
+  headline,
+  body,
+}: {
+  headline: string
+  body?: string
+}) {
+  return (
+    <section className="bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+            {headline}
+          </h2>
+          {body && <p className="mt-5 text-lg leading-8 text-[#5F665F]">{body}</p>}
         </div>
       </div>
     </section>

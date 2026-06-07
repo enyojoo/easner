@@ -23,6 +23,8 @@ const ASSET_OBJECT_POSITION: Record<string, string> = {
 export type MarketingVisualKind =
   | "phone"
   | "dashboard"
+  | "business"
+  | "stablecoin"
   | "invoice"
   | "api"
   | "card"
@@ -39,26 +41,40 @@ const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
   "mkt-ui-personal-send": "phone",
   "mkt-ui-personal-receive": "phone",
   "mkt-ui-personal-recipients": "phone",
+  "mkt-ui-personal-security": "phone",
   "mkt-thumb-personal": "icon",
   "mkt-hero-business-01": "dashboard",
   "mkt-ui-business-dashboard": "dashboard",
-  "mkt-ui-business-send": "dashboard",
-  "mkt-ui-business-accounts": "dashboard",
+  "mkt-ui-business-send": "business",
+  "mkt-ui-business-accounts": "business",
+  "mkt-ui-business-team": "business",
+  "mkt-ui-business-collections": "business",
   "mkt-thumb-business": "icon",
-  "mkt-hero-stablecoin-01": "dashboard",
+  "mkt-hero-stablecoin-01": "stablecoin",
   "mkt-diagram-invisible-rails": "map",
-  "mkt-ui-stablecoin-receive": "dashboard",
+  "mkt-ui-stablecoin-receive": "stablecoin",
+  "mkt-ui-stablecoin-send": "stablecoin",
+  "mkt-ui-stablecoin-terminal": "stablecoin",
+  "mkt-ui-stablecoin-qrpay": "stablecoin",
   "mkt-ui-terminal": "terminal",
   "mkt-ui-qrpay": "qr",
   "mkt-hero-invoicing-01": "invoice",
   "mkt-ui-invoice-editor": "invoice",
   "mkt-ui-invoice-payin": "invoice",
+  "mkt-ui-invoice-bank-payin": "invoice",
+  "mkt-ui-invoice-stablecoin-payin": "invoice",
+  "mkt-ui-invoice-customers": "invoice",
   "mkt-hero-cards-01": "card",
   "mkt-ui-cards-controls": "card",
   "mkt-ui-cards-issue": "card",
   "mkt-ui-cards-cardholders": "card",
   "mkt-ui-cards-reporting": "card",
   "mkt-hero-apis-01": "api",
+  "mkt-ui-api-identity": "api",
+  "mkt-ui-api-payin": "api",
+  "mkt-ui-api-payouts": "api",
+  "mkt-ui-api-webhooks": "api",
+  "mkt-ui-api-dev-panel": "api",
   "mkt-thumb-apis": "icon",
   "mkt-thumb-stablecoin": "icon",
   "mkt-thumb-invoicing": "icon",
@@ -83,6 +99,7 @@ const PERSONAL_MOBILE_SLOTS = new Set([
   "mkt-ui-personal-send",
   "mkt-ui-personal-receive",
   "mkt-ui-personal-recipients",
+  "mkt-ui-personal-security",
 ])
 
 export function getAssetUrl(assetId: string): MarketingAsset | null {

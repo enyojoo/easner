@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { MarketingPageShell } from "@/components/marketing/marketing-page-shell"
 
 export const POLICY_LAST_UPDATED = "June 6, 2026"
 
@@ -13,8 +12,7 @@ export function PolicyLink({ href, children }: { href: string; children: React.R
 
 export function PolicyPageShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <MarketingPageShell>
-      <section className="pb-16 pt-10 md:pb-24 md:pt-14">
+    <section className="pb-16 pt-10 md:pb-24 md:pt-14">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <article className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
             <header className="border-b border-[#E4DED1] px-6 py-8 sm:px-10">
@@ -29,7 +27,6 @@ export function PolicyPageShell({ title, children }: { title: string; children: 
           </article>
         </div>
       </section>
-    </MarketingPageShell>
   )
 }
 

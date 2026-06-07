@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build --webpack",
-    "dev": "next dev --port 3000 --webpack",
+    "dev": "next dev --port 3000",
     "lint": "eslint .",
     "start": "next start --port 3000"
   },
@@ -23,16 +23,16 @@
     "next": "^16.2.7",
     "nucleo-flags": "^1.1.3",
     "posthog-js": "latest",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "tailwind-merge": "^2.5.5",
     "tw-animate-css": "1.3.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.2.7",
     "postcss": "^8.5",

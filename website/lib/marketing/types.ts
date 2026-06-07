@@ -11,9 +11,12 @@ export interface FaqItem {
   answer: string
 }
 
+import type { FeatureDescriptionPart } from "./currency-assets"
+
 export interface Feature {
   title: string
   description: string
+  descriptionParts?: FeatureDescriptionPart[]
   visualSlot?: string
   altText?: string
 }
@@ -61,15 +64,28 @@ export interface CtaBandContent {
   ctas: Cta[]
 }
 
+export interface IntegrationStep {
+  title: string
+  description: string
+}
+
 export interface ProductPageContent {
   metadata: PageMetadata
   hero: HeroContent
-  problem: ProblemContent
+  problem?: ProblemContent
   solution?: SolutionContent
   features?: Feature[]
+  featuresLayout?: "alternating" | "bento"
+  featuresHeadline?: string
+  featuresSubhead?: string
   extraSections?: SolutionContent[]
+  integrationSteps?: IntegrationStep[]
+  integrationStepsHeadline?: string
+  integrationStepsFootnote?: string
   tiers?: "personal" | "business"
   useCases?: CardItem[]
+  useCasesHeadline?: string
+  useCasesSubhead?: string
   tierNote?: string
   statusBanner?: string
   commercialModels?: CardItem[]

@@ -33,20 +33,24 @@ const corridorMarkets: MarketBadge[] = [
 
 interface CorridorCoverageVisualProps {
   className?: string
+  "aria-label"?: string
 }
 
-export function CorridorCoverageVisual({ className }: CorridorCoverageVisualProps) {
+export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: CorridorCoverageVisualProps) {
   return (
     <div
       className={cn(
         "relative overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_24px_80px_rgba(15,17,16,0.12)]",
         className
       )}
-      aria-label="Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Ghana, Kenya, Rwanda, South Africa, and more to come"
+      aria-label={
+        ariaLabel ??
+        "Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Ghana, Kenya, Rwanda, South Africa, and more to come"
+      }
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(0,122,204,0.12),transparent_34%),radial-gradient(circle_at_82%_88%,rgba(15,138,95,0.10),transparent_32%)]" />
-      <div className="relative p-5 sm:p-6">
-        <div className="relative overflow-hidden rounded-2xl border border-[#E9E4D8] bg-white/75 p-4 shadow-inner sm:p-5">
+      <div className="relative flex h-full flex-col p-5 sm:p-6">
+        <div className="relative flex flex-1 flex-col justify-center overflow-hidden rounded-2xl border border-[#E9E4D8] bg-white/75 p-4 shadow-inner sm:p-5">
           <div className="pointer-events-none absolute inset-0 opacity-60">
             <div className="absolute left-[14%] top-[22%] h-2 w-2 rounded-full bg-[#007ACC]" />
             <div className="absolute right-[18%] bottom-[20%] h-2 w-2 rounded-full bg-[#0F8A5F]" />
