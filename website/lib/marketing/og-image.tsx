@@ -2,7 +2,6 @@ import { readFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { ImageResponse } from "next/og"
-import { renderOgHeroVisual } from "@/lib/marketing/og-hero-visual"
 
 export const OG_SIZE = { width: 1200, height: 630 } as const
 export const OG_CONTENT_TYPE = "image/png"
@@ -19,7 +18,6 @@ const monorepoRoot = join(websiteDir, "..")
 export interface OgImageContent {
   headline: string | string[]
   subhead?: string
-  visualSlot?: string
 }
 
 async function loadBundledFont(packagePath: string) {
@@ -54,18 +52,18 @@ function normalizeHeadline(headline: string | string[]) {
   return Array.isArray(headline) ? headline : [headline]
 }
 
-export async function createOgImage({ headline, subhead, visualSlot }: OgImageContent) {
-  const [unbounded, inter, logoSrc, heroVisual] = await Promise.all([
+export async function createOgImage({ headline, subhead }: OgImageContent) {
+  const [unbounded, inter, logoSrc] = await Promise.all([
     loadBundledFont("@fontsource/unbounded/files/unbounded-latin-600-normal.woff"),
     loadBundledFont("@fontsource/inter/files/inter-latin-400-normal.woff"),
     loadEasnerLogoDataUrl(),
-    visualSlot ? renderOgHeroVisual(visualSlot) : null,
   ])
 
-  const logoHeight = 40
+  const logoHeight = 44
   const logoWidth = Math.round(logoHeight * (2295 / 500))
+
   const headlineLines = normalizeHeadline(headline)
-  const subheadText = subhead ? truncate(subhead, 110) : null
+  const subheadText = subhead ? truncate(subhead, 130) : null
 
   return new ImageResponse(
     (
@@ -94,8 +92,7 @@ export async function createOgImage({ headline, subhead, visualSlot }: OgImageCo
             flexDirection: "column",
             width: "100%",
             height: "100%",
-            padding: "48px 56px",
-            gap: 32,
+            padding: "56px 72px",
           }}
         >
           <img
@@ -114,44 +111,41 @@ export async function createOgImage({ headline, subhead, visualSlot }: OgImageCo
             style={{
               display: "flex",
               flex: 1,
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 40,
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 24,
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 20, maxWidth: 620 }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                {headlineLines.map((line) => (
-                  <div
-                    key={line}
-                    style={{
-                      fontFamily: "Unbounded",
-                      fontSize: headlineLines.length > 1 ? 52 : 56,
-                      fontWeight: 600,
-                      lineHeight: 1.05,
-                      letterSpacing: "-0.03em",
-                      color: COLORS.ink,
-                    }}
-                  >
-                    {line}
-                  </div>
-                ))}
-              </div>
-              {subheadText ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {headlineLines.map((line) => (
                 <div
+                  key={line}
                   style={{
-                    fontFamily: "Inter",
-                    fontSize: 24,
-                    lineHeight: 1.45,
-                    color: COLORS.muted,
+                    fontFamily: "Unbounded",
+                    fontSize: headlineLines.length > 1 ? 68 : 72,
+                    fontWeight: 600,
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.03em",
+                    color: COLORS.ink,
                   }}
                 >
-                  {subheadText}
+                  {line}
                 </div>
-              ) : null}
+              ))}
             </div>
-
-            {heroVisual}
+            {subheadText ? (
+              <div
+                style={{
+                  fontFamily: "Inter",
+                  fontSize: 28,
+                  lineHeight: 1.45,
+                  color: COLORS.muted,
+                  maxWidth: 920,
+                }}
+              >
+                {subheadText}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -9,6 +9,5 @@ export default async function Image() {
   return createOgImage({
     headline: stablecoinContent.hero.h1,
     subhead: stablecoinContent.hero.subhead,
-    visualSlot: stablecoinContent.hero.visualSlot,
   })
 }
