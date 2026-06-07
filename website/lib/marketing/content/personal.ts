@@ -58,7 +58,7 @@ export const personalContent: ProductPageContent = {
   ],
   useCasesHeadline: "Built for life across borders",
   useCasesSubhead:
-    "Easner Personal for people who earn, send, and spend globally – without juggling informal FX or multiple banking apps.",
+    "Easner banking is for people who earn, send, and spend globally. You don't need to juggle multiple apps again.",
   useCases: [
     {
       title: "Diaspora remittances",
