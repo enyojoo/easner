@@ -10,8 +10,10 @@ const COLORS = {
   canvas: "#F6F3EB",
   ink: "#0F1110",
   muted: "#5F665F",
-  accent: "#007ACC",
 } as const
+
+const OG_BACKGROUND =
+  "radial-gradient(circle at 14% 8%, rgba(0,122,204,0.16), transparent 40%), radial-gradient(circle at 92% 88%, rgba(0,122,204,0.07), transparent 44%), linear-gradient(180deg, #FAFCFE 0%, #F6F3EB 68%)"
 
 const websiteDir = join(dirname(fileURLToPath(import.meta.url)), "../..")
 const monorepoRoot = join(websiteDir, "..")
@@ -38,6 +40,12 @@ async function loadBundledFont(packagePath: string) {
   throw new Error(`Font not found: ${packagePath}`)
 }
 
+async function loadEasnerLogoDataUrl() {
+  const logoPath = join(websiteDir, "assets/easner-logo.png")
+  const logo = await readFile(logoPath)
+  return `data:image/png;base64,${logo.toString("base64")}`
+}
+
 function truncate(text: string, maxLength: number) {
   if (text.length <= maxLength) return text
   return `${text.slice(0, maxLength - 1).trimEnd()}…`
@@ -48,10 +56,14 @@ function normalizeHeadline(headline: string | string[]) {
 }
 
 export async function createOgImage({ headline, subhead }: OgImageContent) {
-  const [unbounded, inter] = await Promise.all([
+  const [unbounded, inter, logoSrc] = await Promise.all([
     loadBundledFont("@fontsource/unbounded/files/unbounded-latin-600-normal.woff"),
     loadBundledFont("@fontsource/inter/files/inter-latin-400-normal.woff"),
+    loadEasnerLogoDataUrl(),
   ])
+
+  const logoHeight = 44
+  const logoWidth = Math.round(logoHeight * (2295 / 500))
 
   const headlineLines = normalizeHeadline(headline)
   const subheadText = subhead ? truncate(subhead, 130) : null
@@ -72,8 +84,7 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
           style={{
             position: "absolute",
             inset: 0,
-            background:
-              "radial-gradient(circle at 18% 10%, rgba(0,122,204,0.12), transparent 32%), linear-gradient(180deg, #FFFFFF 0%, rgba(246,243,235,0) 75%)",
+            background: OG_BACKGROUND,
           }}
         />
         <div
@@ -87,27 +98,17 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
             padding: "56px 72px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: 999,
-                background: COLORS.accent,
-              }}
-            />
-            <div
-              style={{
-                fontFamily: "Unbounded",
-                fontSize: 28,
-                fontWeight: 600,
-                color: COLORS.ink,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Easner
-            </div>
-          </div>
+          <img
+            src={logoSrc}
+            alt="Easner"
+            width={logoWidth}
+            height={logoHeight}
+            style={{
+              height: logoHeight,
+              width: logoWidth,
+              objectFit: "contain",
+            }}
+          />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
