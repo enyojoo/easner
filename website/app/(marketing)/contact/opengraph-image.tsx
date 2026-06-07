@@ -1,5 +1,6 @@
 import { createOgImage, OG_CONTENT_TYPE, OG_SIZE } from "@/lib/marketing/og-image"
 import { contactHero } from "@/lib/marketing/content/contact"
+import { homeHero } from "@/lib/marketing/content/home"
 
 export const alt = "Contact the Easner team"
 export const size = OG_SIZE
@@ -9,5 +10,6 @@ export default async function Image() {
   return createOgImage({
     headline: contactHero.headline,
     subhead: contactHero.subhead,
+    visualSlot: homeHero.visualSlot,
   })
 }

@@ -9,5 +9,6 @@ export default async function Image() {
   return createOgImage({
     headline: businessContent.hero.h1,
     subhead: businessContent.hero.subhead,
+    visualSlot: businessContent.hero.visualSlot,
   })
 }
