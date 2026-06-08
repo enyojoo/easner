@@ -121,6 +121,9 @@ yarn-error.*
 # vercel
 .vercel
 
+# Marketing docs (local reference only; live source is lib/marketing/)
+website/marketing/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
