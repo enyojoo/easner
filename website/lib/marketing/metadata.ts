@@ -25,8 +25,10 @@ export function marketingMetadata({
       description: metadata.description,
     },
     twitter: {
+      card: "summary_large_image",
       title: ogTitle,
       description: metadata.description,
+      creator: "@easnerbanking",
     },
   }
 }
