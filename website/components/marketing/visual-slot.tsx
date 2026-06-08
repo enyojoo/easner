@@ -366,7 +366,7 @@ function PersonalHeroMockup({ compact, fill = false }: { compact: boolean; fill?
       <PersonalPhoneFrame compact={compact || fill} fill={fill}>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Easner Personal</div>
+            <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Easner Mobile</div>
             <div className="mt-0.5 text-base font-semibold text-[#0F1110] sm:text-lg">$8,420.18</div>
           </div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#007ACC] text-white">
@@ -456,7 +456,7 @@ function PersonalRecipientsMockup({ compact, fill = false }: { compact: boolean;
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Recipients</div>
-            <div className="mt-1 text-sm font-semibold text-[#0F1110]">Easner tags</div>
+            <div className="mt-1 text-sm font-semibold text-[#0F1110]">EASETAG</div>
           </div>
           <UserRoundPlus className="h-4 w-4 text-[#007ACC]" />
         </div>

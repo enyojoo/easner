@@ -7,6 +7,7 @@ export const contentType = OG_CONTENT_TYPE
 export default async function Image() {
   return createOgImage({
     headline: "Terms of Service",
-    subhead: "Terms of Service for Easner Personal, Easner Business, and related financial technology services.",
+    subhead:
+      "Terms of Service for Easner Mobile (Easner Personal Banking), Easner Business (Easner Business Banking), and related services.",
   })
 }

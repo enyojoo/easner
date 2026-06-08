@@ -22,7 +22,7 @@ export const personalContent: ProductPageContent = {
     subhead:
       "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",
-    altText: "Freelancer using Easner Personal app to send money internationally",
+    altText: "Freelancer using Easner Mobile app to send money internationally",
     ctas: storeCtas,
   },
   featuresLayout: "bento",
@@ -32,28 +32,28 @@ export const personalContent: ProductPageContent = {
       description:
         "Pay across supported corridors by bank, stablecoin, open banking, or mobile money – fees and rates shown before you confirm.",
       visualSlot: "mkt-ui-personal-send",
-      altText: "Easner Personal send money screen",
+      altText: "Easner Mobile send money screen",
     },
     {
       title: "Receive money",
       description:
         "Get paid by account details or stablecoin deposit address – one Receive flow with clear pay-in instructions.",
       visualSlot: "mkt-ui-personal-receive",
-      altText: "Easner Personal receive options",
+      altText: "Easner Mobile receive options",
     },
     {
-      title: "Recipients and Easetag",
+      title: "Recipients and EASETAG",
       description:
         "Save people you pay often and send to Easetags without re-entering details every time.",
       visualSlot: "mkt-ui-personal-recipients",
-      altText: "Easner Personal recipients and Easner tag",
+      altText: "Easner Mobile recipients and EASETAG",
     },
     {
       title: "Security",
       description:
         "Protect your account with multi-factor authentication, PIN, and biometric unlock on your device.",
       visualSlot: "mkt-ui-personal-security",
-      altText: "Easner Personal security settings",
+      altText: "Easner Mobile security settings",
     },
   ],
   useCasesHeadline: "Built for life across borders",
@@ -88,7 +88,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Families abroad",
       description:
-        "Support relatives back home with repeat transfers, Easner tags, and a clear record of every payment.",
+        "Support relatives back home with repeat transfers, EASETAG, and a clear record of every payment.",
     },
   ],
   ctaBand: {

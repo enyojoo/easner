@@ -1,8 +1,8 @@
 # Messaging Hierarchy
 
-Last updated: June 6, 2026
+Last updated: June 8, 2026
 
-Single source for headlines, pillars, audiences, and CTAs. All page copy in `docs/marketing/` derives from this file.
+Headlines, pillars, audiences, and CTAs aligned with the **live website** ([`lib/marketing/content/`](../lib/marketing/content/)). When this file and the site differ, the site wins.
 
 ---
 
@@ -10,20 +10,26 @@ Single source for headlines, pillars, audiences, and CTAs. All page copy in `doc
 
 **One-liner:** Stablecoin Banking Infrastructure for Global Businesses
 
-**Elevator (2 sentences):** Easner gives businesses and individuals compliant, banking-simple tools for global money movement. Stablecoin infrastructure powers settlement behind the scenes – users get familiar accounts, payouts, and collections without crypto complexity.
+**Home title (live):** Easner – Stablecoin Banking for Global Businesses
+
+**Home description (live):** Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.
+
+**Elevator (2 sentences):** Easner gives businesses and individuals compliant, banking-simple tools for global money movement. Stablecoin infrastructure powers settlement behind the scenes — users get familiar accounts, payouts, and collections without crypto complexity.
 
 **Deck anchor:** Stablecoins solved settlement; Easner solves UX, friction, and compliance.
 
 ---
 
-## Four pillars
+## Four pillars (homepage)
+
+Live source: `whyEasnerPillars` in [`home.ts`](../lib/marketing/content/home.ts). Section headline: **Why teams choose Easner**
 
 | Pillar | Headline | Body |
 |--------|----------|------|
 | **Banking-simple UX** | No crypto complexity | Send, receive, invoice, and manage money in screens that feel like banking – not a trading app. |
-| **Lower-cost rails** | Move more, spend less | Stablecoin settlement can reduce cross-border cost vs legacy corridors – up to ~60% in supported flows. |
-| **Compliance-ready** | Built in from day one | KYC/KYB, AML screening, limits, and transaction controls are part of the Easner account flow. |
-| **Invisible infrastructure** | Speed without the noise | Stablecoin speed and global reach behind fiat-native experiences where enabled. |
+| **Lower-cost rails** | Move more, spend less | Modern settlement can reduce cross-border cost vs legacy paths – up to ~60% in supported flows. |
+| **Compliance-ready** | Built in from day one | KYC/KYB, AML screening, limits, and transaction controls are built in from day one. |
+| **Invisible infrastructure** | Speed without the noise | Stablecoin speed and global reach sit behind fiat-native screens. |
 
 ---
 
@@ -31,54 +37,52 @@ Single source for headlines, pillars, audiences, and CTAs. All page copy in `doc
 
 | Audience | One-liner | Primary product | Page |
 |----------|-----------|-----------------|------|
-| **Freelancers, remote workers, diaspora** | Get paid globally. Keep more locally. | Easner Personal | `/personal` |
-| **Cross-border SMEs and trade** | Run global operations from one dashboard. | Easner Business | `/business` |
-| **Developers and platforms** | Embed compliant global money rails. | Easner APIs | `/apis` |
+| **Freelancers, remote workers, diaspora** | Get paid globally. Keep more locally. | Easner Personal Banking · Easner Mobile | `/personal` |
+| **Cross-border SMEs and trade** | Run global operations from one dashboard. | Easner Business Banking · Easner Business | `/business` |
+| **Developers and platforms** | Embed global rails without building compliance. | Easner APIs | `/apis` |
 
 ---
 
-## Product messages
+## Product messages (live hero headlines)
 
-| Product | Route | Hero headline |
-|---------|-------|---------------|
-| Home | `/` | The speed of stablecoins. The simplicity of banking. |
-| Personal Banking | `/personal` | Global banking in your pocket. |
-| Business Banking | `/business` | Business banking built for cross-border operations. |
-| Stablecoin Payments | `/stablecoin` | Stablecoin speed. Banking screens. |
-| Invoicing | `/invoicing` | Invoice globally. Get paid by bank or stablecoin. |
-| Cards | `/cards` | Corporate and personal cards, when you're ready. |
-| APIs | `/apis` | Embed compliant global money rails in your app. |
+| Product | Route | Hero headline (live) |
+|---------|-------|----------------------|
+| Home | `/` | Global banking, Simplified. |
+| Personal Banking | `/personal` | Global banking in your pocket |
+| Business Banking | `/business` | Global banking for business |
+| Stablecoin Payments | `/stablecoin` | Stablecoin speed |
+| Invoicing | `/invoicing` | Invoice globally and get paid |
+| Cards | `/cards` | Cards for payment |
+| APIs | `/apis` | Compliant rails in your product |
 
 ---
 
-## CTA matrix (segmented)
+## CTA matrix (live)
 
 | Page / audience | Primary CTA | Destination |
 |-----------------|-------------|-------------|
-| Home | Get Started | `/access` |
-| Home (secondary) | Explore products | `#products` anchor |
-| Personal | Download the app | App Store / Google Play URLs |
-| Personal (fallback) | Get Started | `/access` |
-| Business | Open Business account | `/access` |
-| Stablecoin | Get Started | `/access` |
-| Stablecoin (enterprise) | Contact sales | `hello@easner.com` |
-| Invoicing | Start invoicing | `/access` |
-| Cards | Join waitlist | `/access` or waitlist form |
-| APIs | Talk to our team | `hello@easner.com` |
+| Home | Open Account | `#` (open-account action) |
+| Home (secondary) | Explore products | `#products` |
+| Personal | App Store / Google Play | `{APP_STORE_URL}` / `{PLAY_STORE_URL}` |
+| Business | Open Business account | `{BUSINESS_SIGNUP_URL}` (external) |
+| Business (secondary) | See invoicing | `/invoicing` |
+| Stablecoin | Open Business account | `{BUSINESS_SIGNUP_URL}` (external) |
+| Invoicing | Start invoicing | `{BUSINESS_SIGNUP_URL}` (external) |
+| Cards | Open Account | `#` (open-account action) |
+| APIs | Talk to our team | `/contact` |
 
 ---
 
-## Corridor narrative (softened)
+## Corridor narrative (homepage)
 
-**Global source markets:** USA, EU, UK – USD, EUR, GBP where supported.
+**Headline (live):** Expanding where global business meets emerging markets  
+**Body (live):** Hold USD, EUR, and GBP from global markets, then pay out locally across Africa and the region – for salaries, supplier payments, and cross-border trade.
 
-**African focus markets:** Nigeria, Ghana, Kenya, Rwanda, South Africa – local rails where enabled.
-
-Always pair with: *Availability depends on verification, jurisdiction, currency, approval, and product enablement.*
+Always pair corridor claims with: *Availability depends on verification, jurisdiction, and partner enablement.*
 
 ---
 
-## SEO keywords (per route)
+## SEO keywords (live metadata)
 
 | Route | Primary keywords |
 |-------|------------------|
@@ -87,12 +91,12 @@ Always pair with: *Availability depends on verification, jurisdiction, currency,
 | `/business` | business banking cross-border, SME global payments, multi-currency business account |
 | `/stablecoin` | stablecoin payments infrastructure, USDC business payments, invisible stablecoin |
 | `/invoicing` | international invoicing, invoice stablecoin pay-in, global B2B collections |
-| `/cards` | corporate cards global business, spend controls |
+| `/cards` | corporate cards global business, virtual cards SME, spend controls, business expense cards |
 | `/apis` | stablecoin API, embedded payments API, fintech infrastructure API |
 
 ---
 
-## Problem stats (deck – use with care)
+## Problem stats (deck — use with care)
 
 | Stat | Source | Guardrail |
 |------|--------|-----------|

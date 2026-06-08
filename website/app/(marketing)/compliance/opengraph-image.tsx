@@ -8,6 +8,6 @@ export default async function Image() {
   return createOgImage({
     headline: "KYC/KYB and AML Policy",
     subhead:
-      "Easner's know-your-customer, know-your-business, and anti-money laundering policy for Easner Personal and Easner Business.",
+      "Easner's know-your-customer, know-your-business, and anti-money laundering policy for Easner Mobile (Easner Personal Banking) and Easner Business (Easner Business Banking).",
   })
 }

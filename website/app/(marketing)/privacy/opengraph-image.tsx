@@ -8,6 +8,6 @@ export default async function Image() {
   return createOgImage({
     headline: "Privacy Policy",
     subhead:
-      "How Easner Group, Inc. collects, uses, shares, and protects information across Easner Personal, Easner Business, and easner.com.",
+      "How Easner Group, Inc. collects, uses, shares, and protects information across Easner Mobile (Easner Personal Banking), Easner Business (Easner Business Banking), and easner.com.",
   })
 }

@@ -1,111 +1,69 @@
 # Cards
 
 **Route:** `/cards`  
-**Title:** Cards – Easner  
-**Meta description:** Corporate and personal cards for global businesses and individuals – when available. Spend controls and cardholder management on Easner.
+**Title:** Cards — Easner  
+**Meta description:** Corporate and personal cards on Easner. Issue virtual and physical cards, set spend controls, manage cardholders, and reconcile card spend alongside accounts and payouts.  
+**Keywords:** corporate cards global business, virtual cards SME, spend controls, business expense cards
+
+**Live source:** [`lib/marketing/content/cards.ts`](../lib/marketing/content/cards.ts)
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` – copy left, visual right  
-**Visual slot:** `mkt-hero-cards-01`  
-**Alt text:** Professional holding Easner-branded payment card  
-**Design notes:** Physical or virtual card in hand; clean desk; **no issuer or network branding** on card face; optional "Coming soon" badge overlay
-
-**Badge:** When available
-
-**H1:** Corporate and personal cards, when you're ready.
-
-**Subhead:** Issue virtual or physical cards for your team or yourself – with spend controls and cardholder management – through licensed card program partners when Tier 3 is approved for your organization.
-
-**CTA primary:** Join waitlist → `/access`  
-**CTA secondary:** Open Business account → `/access`
-
----
-
-## Section 2: Problem
-
-**Layout:** centered text block  
-**Headline:** Global operations need global spend.
-
-**Body:** Cross-border teams pay for software, travel, and suppliers with personal cards and ad-hoc reimbursements. Unified corporate cards with controls reduce leakage and simplify accounting – when tied to the same banking program you use for payouts.
-
----
-
-## Section 3: Solution
-
 **Layout:** `split_50_50`  
-**Visual slot:** `mkt-ui-cards-controls` (future mock)  
-**Alt text:** Card spend controls dashboard mockup  
+**Visual slot:** `mkt-hero-cards-01`  
+**Alt text:** Easner virtual and physical payment cards in the Business dashboard
 
-**Headline:** Cards on the same platform as your accounts and payouts.
+**H1:** Cards for payment
 
-**Body:** Easner Tier 3 Cards connects card issuance to your existing KYC/KYB program – personal cards on Easner Personal and corporate cards on Easner Business when approved by partners.
+**Subhead:** Issue virtual and physical cards, set spend policies, manage cardholders, and see every transaction in the same ledger as your accounts and payouts.
 
----
-
-## Section 4: Features (when available)
-
-| Feature | Description |
-|---------|-------------|
-| **Virtual and physical cards** | Issue to team members or yourself subject to partner underwriting |
-| **Spend controls** | Limits and policies by cardholder or team |
-| **Cardholder management** | Add, freeze, and retire cards from the dashboard |
-| **Unified reporting** | Card spend alongside account and payout activity |
+**CTA:** Open Account → `#` (open-account action)
 
 ---
 
-## Section 5: Tier note
+## Section 2: Features (bento)
 
-Cards are **Tier 3** on both Personal and Business. Requires approved KYC/KYB (Tier 1) plus separate partner approval. Corporate and personal card products, when available, are issued by a third-party issuer and subject to credit approval.
-
-Use tier ladder from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## Section 6: Status
-
-**Layout:** callout banner  
-**Copy:** Cards are integrating with licensed card program partners. Join waitlist or open an account to be notified when cards are available for your profile and jurisdiction.
-
-**Do not use:** "Apply now", issuer names, or live availability claims until product launch.
+| Feature | Visual | Description |
+|---------|--------|-------------|
+| **Virtual and physical cards** | `mkt-ui-cards-issue` | Issue virtual cards for instant access or ship physical cards to cardholders – from Easner Business or Easner Personal. |
+| **Spend controls** | `mkt-ui-cards-controls` | Set monthly limits, merchant rules, and team policies by cardholder – so global spend stays inside guardrails finance can audit. |
+| **Cardholder management** | `mkt-ui-cards-cardholders` | Add cardholders, assign cards, freeze spend, and retire cards from the dashboard – no separate card portal. |
+| **Unified reporting** | `mkt-ui-cards-reporting` | Card purchases alongside payouts, collections, and account activity – one ledger for finance and ops. |
 
 ---
 
-## Section 7: Compliance strip
+## Section 3: Use cases
+
+**Headline:** Built for global spend  
+**Subhead:** Easner cards for teams and individuals that pay across borders and need clear visibility into who spent what.
+
+| Use case | Description |
+|----------|-------------|
+| **Cross-border teams** | Give distributed staff cards for software, travel, and suppliers – with limits instead of personal reimbursements. |
+| **Software and SaaS** | Issue virtual cards for subscriptions and vendor spend, then reconcile alongside payouts in Easner Business. |
+| **Travel and field ops** | Equip sales and operations teams with physical cards and travel policies finance can monitor in one dashboard. |
+| **Agencies and consultancies** | Separate client project spend from firm overhead with cardholders, limits, and reporting tied to your business account. |
+| **Freelancers and remote workers** | Use a personal Easner card for global online spend while keeping send, receive, and card activity in one mobile account. |
+| **Import and export operators** | Cover supplier deposits, logistics, and trade expenses from the same platform you use for international payouts. |
+
+---
+
+## Section 4: Compliance strip
 
 Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 
 ---
 
-## Section 8: Final CTA
+## Section 5: Final CTA
 
-**Layout:** `cta_band`  
-**Headline:** Be first in line for Easner cards.  
-**CTA:** Join waitlist → `/access`
+**Headline:** Add cards to your Easner account  
+**Subhead:** Corporate cards on Business. Personal cards on the mobile app.  
+**CTA:** Open Account → `#` (open-account action)
 
 ---
 
 ## Footer
 
 Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## FAQ
-
-**Are cards available today?**  
-Cards are Tier 3 and roll out when approved for your verification level and jurisdiction. Check back or join the waitlist.
-
-**Who issues the cards?**  
-Cards are issued or facilitated by licensed card program partners, not by Easner directly.
-
-**Will there be personal and corporate cards?**  
-Yes – personal cards for Easner Personal and corporate cards for Easner Business when available.
-
-**Is credit required?**  
-Corporate and personal card products may be subject to partner underwriting and credit approval.
-
-**Can I use cards before Tier 3 launches?**  
-Use accounts, payouts, and invoicing on Tier 1 and Tier 2 while cards are in rollout.

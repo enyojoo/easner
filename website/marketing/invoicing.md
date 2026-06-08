@@ -1,116 +1,70 @@
 # Invoicing
 
 **Route:** `/invoicing`  
-**Title:** Invoicing – Easner  
-**Meta description:** Invoice globally and get paid by bank or stablecoin. Professional B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in where enabled.
+**Title:** Invoicing — Easner  
+**Meta description:** Invoice globally and get paid by bank or stablecoin. Professional B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in.  
+**Keywords:** international invoicing, invoice stablecoin pay-in, global B2B collections
+
+**Live source:** [`lib/marketing/content/invoicing.ts`](../lib/marketing/content/invoicing.ts)
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` – copy left, visual right  
+**Layout:** `split_50_50`  
 **Visual slot:** `mkt-hero-invoicing-01`  
-**Alt text:** Business owner creating an international invoice in Easner Business  
-**Design notes:** SME at desk with invoice UI on laptop; professional, warm lighting
+**Alt text:** Business owner creating an international invoice in Easner Business
 
-**H1:** Invoice globally. Get paid by bank or stablecoin.
+**H1:** Invoice globally and get paid
 
-**Subhead:** Create, send, and track invoices from Easner Business – let customers pay via virtual account details or stablecoin deposit address where enabled, with compliance and reconciliation built in.
+**Subhead:** Create, send, and track invoices from Easner Business. Customers can pay with account details or a stablecoin deposit address, while your dashboard keeps status and reconciliation in one place.
 
-**CTA primary:** Start invoicing → `/access`  
+**CTA primary:** Start invoicing → `{BUSINESS_SIGNUP_URL}` (external)  
 **CTA secondary:** See Business banking → `/business`
 
 ---
 
-## Section 2: Problem
+## Section 2: Features (bento)
 
-**Layout:** centered text block  
-**Headline:** International invoices shouldn't mean payment chaos.
-
-**Body:** Cross-border B2B payments often involve unclear instructions, slow settlement, and manual matching. Customers want simple pay-in options; you want one ledger and audit trail.
-
----
-
-## Section 3: Solution
-
-**Layout:** `split_50_50`  
-**Visual slot:** `mkt-ui-invoice-editor`  
-**Alt text:** Easner invoice creation screen  
-
-**Headline:** Professional invoices with flexible pay-in.
-
-**Body:** Generate branded invoices, share public payment links, and track status from your dashboard. Customers pay using methods you enable – bank transfer to your virtual account or stablecoin to an address on the invoice.
+| Feature | Visual | Description |
+|---------|--------|-------------|
+| **Create and send invoices** | `mkt-ui-invoice-editor` | Generate branded invoices, add line items, and share hosted payment links from Easner Business. |
+| **Bank pay-in** | `mkt-ui-invoice-bank-payin` | Account details on the invoice for USD, EUR, and other currencies where supported. |
+| **Stablecoin pay-in** | `mkt-ui-invoice-stablecoin-payin` | USDC or EURC deposit address and memo – same invoice, clearer customer choice. |
+| **Customer directory** | `mkt-ui-invoice-customers` | Save invoice recipients, payer references, and repeat payment context for cleaner collections. |
 
 ---
 
-## Section 4: Pay-in methods
+## Section 3: Use cases
 
-**Layout:** `split_40_60`  
-**Visual slot:** `mkt-ui-invoice-payin`  
-**Alt text:** Invoice payment page showing bank details and stablecoin address  
-
-### Bank pay-in
-Virtual account details on the invoice for USD, EUR, and other currencies where supported.
-
-### Stablecoin pay-in
-USDC or EURC deposit address and memo where enabled – same invoice, customer choice.
-
-### Customer directory
-Save invoice recipients and payer references for repeat business.
-
----
-
-## Section 5: Use cases
+**Headline:** Built for cross-border collections  
+**Subhead:** Easner Business invoicing for teams that bill internationally and need one ledger for bank and stablecoin pay-in.
 
 | Use case | Description |
 |----------|-------------|
-| **Tuition and education** | Invoice families and institutions across borders with clear payment instructions. |
-| **Import / export services** | Bill international clients in their preferred funding method. |
-| **Agencies and consultancies** | Retainer and project invoices with status tracking. |
+| **Tuition and education** | Invoice families and institutions abroad with clear bank or stablecoin pay-in instructions on one hosted link. |
+| **Global trade operators** | Bill overseas buyers with virtual account details or stablecoin pay-in – one link, one reference. |
+| **Agencies and consultancies** | Send retainer and project invoices, track status, and save repeat clients in your customer directory. |
+| **Software and SaaS** | Bill customers in USD or EUR across borders; share a payment link and track collections without a separate billing stack. |
+| **Professional services** | Law, accounting, and advisory firms collecting cross-border fees with payer references finance can reconcile. |
+| **Marketplaces and platforms** | Invoice international partners, sellers, or wholesale buyers from one dashboard with bank or stablecoin pay-in. |
 
 ---
 
-## Section 6: Tier note
-
-Invoicing and virtual account pay-in require approved organization KYB (Tier 1 Global banking). Stablecoin pay-in on invoices requires enabled wallet features. See tier ladder in [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## Section 7: Compliance strip
+## Section 4: Compliance strip
 
 Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 
-**Note for business users:** You are typically the controller of your customer data on invoices; Easner processes payer information to deliver collections and compliance functions.
-
 ---
 
-## Section 8: Final CTA
+## Section 5: Final CTA
 
-**Layout:** `cta_band`  
-**Headline:** Send your next international invoice from Easner Business.  
-**CTA:** Get Started → `/access`
+**Headline:** Invoice from Easner Business today  
+**Subhead:** One invoice flow for bank pay-in, stablecoin pay-in, status tracking, and reconciliation.  
+**CTA:** Start invoicing → `{BUSINESS_SIGNUP_URL}` (external)
 
 ---
 
 ## Footer
 
 Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## FAQ
-
-**Is invoicing available on Easner Personal?**  
-Invoicing is a Easner Business feature on the web dashboard.
-
-**Can payers use only bank transfer?**  
-Yes. Stablecoin pay-in is optional where enabled.
-
-**Are invoice pages public?**  
-Customers receive a hosted payment experience to complete pay-in.
-
-**How do fees work?**  
-Fees and FX may apply to underlying payment rails. Display pricing on your invoice; Easner shows applicable transaction fees before confirmation in the dashboard.
-
-**Do I need separate tools for QR or in-person pay?**  
-For scan-to-pay and Terminal collections, see [Stablecoin Payments](/stablecoin).

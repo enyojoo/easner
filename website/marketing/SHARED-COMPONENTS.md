@@ -1,16 +1,16 @@
 # Shared Components
 
-Last updated: June 6, 2026
+Last updated: June 8, 2026
 
-Reusable copy blocks for easner.com pages. Paste into React components or website CMS.
+Reusable copy blocks for easner.com pages. **Live source:** [`lib/marketing/shared-content.ts`](../lib/marketing/shared-content.ts) and [`components/layout/public-footer.tsx`](../components/layout/public-footer.tsx).
 
 ---
 
 ## Regulatory footer disclaimer
 
-Use verbatim on every public page (matches [easner.com/business-banking](https://www.easner.com/business-banking)):
+Use verbatim on every public page via `REGULATORY_FOOTER_PARAGRAPHS`:
 
-> Easner Group, Inc. ("Easner") is a financial technology company, not a bank or investment adviser. Banking, payment, verification, and card services available through Easner Personal (mobile app) and Easner Business (web dashboard) are provided by licensed partners. Easner does not provide investment, legal, tax, or financial advice.
+> Easner Group, Inc. ("Easner") is a financial technology company, not a bank or investment adviser. Banking, payment, verification, and card services available through Easner Mobile (Easner Personal Banking) and Easner Business (Easner Business Banking) are provided by licensed partners. Easner does not provide investment, legal, tax, or financial advice.
 >
 > Easner is not FDIC-insured and does not hold customer deposits. Banking services are provided by third-party banking partners, not by Easner.
 >
@@ -22,20 +22,20 @@ Use verbatim on every public page (matches [easner.com/business-banking](https:/
 >
 > Use of the Easner platform is subject to the Terms of Service, Privacy Policy, and KYC/KYB and AML Policy, which include limitations of liability, a class action waiver, and mandatory arbitration.
 
-**Footer links:** Terms of Service · Privacy Policy · KYC/KYB and AML Policy (label "Compliance" ok)
+**Footer links:** Terms of Service · Privacy Policy · KYC/KYB and AML Policy (nav label "Compliance" ok → `/compliance`)
 
-**Contact line:** Have questions? Email us at hello@easner.com or legal@easner.com for legal and compliance matters.
+**Contact line:** Have questions? [Contact us](/contact).
 
 ---
 
 ## Compliance strip (4 bullets)
 
-Use on homepage and product pages above footer:
+Use on homepage and product pages above footer (`COMPLIANCE_STRIP`):
 
 - KYC/KYB onboarding built into the product experience
 - AML and sanctions screening on customers and transactions
-- Banking, wallet, and payment rails connected where enabled
-- Tiered access based on verification, jurisdiction, and product availability
+- Banking, wallet, and payment rails connected
+- Access based on verification, jurisdiction, and product availability
 
 **Section headline:** Compliance is built in, not added later.
 
@@ -43,24 +43,28 @@ Use on homepage and product pages above footer:
 
 ---
 
-## Tier ladder – Easner Personal
+## Tier ladder — Easner Personal Banking
+
+Live constants: `PERSONAL_TIERS` in [`shared-content.ts`](../lib/marketing/shared-content.ts). Not currently rendered on `/personal`.
 
 | Tier | Title | Description |
 |------|-------|-------------|
-| 1 | Global banking | USD and EUR bank accounts, pay-in and pay-out, and stablecoin flows. |
+| 1 | Global banking | USD and EUR account details, pay-in and pay-out, and stablecoin flows. |
 | 2 | African banking | NGN and regional pay-in and pay-out in local markets where we launch. |
 | 3 | Cards | Your access to personal debit/credit cards for your online and physical payments. |
 
-**Footnote:** Availability depends on verification, jurisdiction, approval, and product enablement.
+**Footnote (`TIER_FOOTNOTE`):** Availability depends on verification, jurisdiction, approval, and product enablement.
 
 ---
 
-## Tier ladder – Easner Business
+## Tier ladder — Easner Business Banking
+
+Live constants: `BUSINESS_TIERS` in [`shared-content.ts`](../lib/marketing/shared-content.ts). Not currently rendered on `/business`.
 
 | Tier | Title | Description |
 |------|-------|-------------|
-| 1 | Global banking | USD and EUR bank accounts, pay-in and pay-out, and stablecoin flows, plus other currency accounts where supported for your organization. |
-| 2 | African banking | NGN and regional pay-in and pay-out for your business operations where we launch–local African banking for your organization. |
+| 1 | Global banking | USD and EUR account details, pay-in and pay-out, and stablecoin flows, plus other currencies where supported for your organization. |
+| 2 | African banking | NGN and regional pay-in and pay-out for your business operations where we launch – local African banking for your organization. |
 | 3 | Cards | Your access to corporate debit/credit cards for your business needs, spend controls, and cardholder management when approved. |
 
 **Footnote:** Availability depends on verification, jurisdiction, approval, and product enablement.
@@ -69,49 +73,51 @@ Use on homepage and product pages above footer:
 
 ## Product card grid (homepage)
 
-### Easner Personal
+Live constants: `PRODUCT_CARDS` + `SECONDARY_PRODUCT_CARDS` in [`shared-content.ts`](../lib/marketing/shared-content.ts).
+
+### Personal Banking
 **Link:** `/personal`  
 **Thumb:** `mkt-thumb-personal`  
 **Title:** Personal Banking  
-**Description:** Mobile app for individuals – send, receive, and manage money across global and African corridors where enabled.
+**Description:** Mobile banking for global earners – receive, send, and manage money across supported corridors.
 
-### Easner Business
+### Business Banking
 **Link:** `/business`  
 **Thumb:** `mkt-thumb-business`  
 **Title:** Business Banking  
-**Description:** Web dashboard for organizations – accounts, payouts, invoicing, Terminal, QR Pay, and team access.
+**Description:** A web control center for accounts, payouts, invoicing, Terminal, QR Pay, teams, and reporting.
 
-### Easner APIs
+### Developer APIs
 **Link:** `/apis`  
 **Thumb:** `mkt-thumb-apis`  
 **Title:** Developer APIs  
-**Description:** Embed compliant accounts, payouts, wallets, and collections in your own product.
+**Description:** Embed accounts, payouts, wallets, collections, and compliance-ready workflows in your product.
 
-**Secondary links:** [Stablecoin](/stablecoin) · [Invoicing](/invoicing) · [Cards](/cards)
+**Secondary cards:** Stablecoin · Invoicing · Cards (see `SECONDARY_PRODUCT_CARDS`)
 
 ---
 
-## Persona card template
+## Persona cards (homepage solutions)
 
-```markdown
-**Persona:** [Name]
-**Headline:** [One-liner]
-**Body:** [2 sentences]
-**Visual:** mkt-persona-[id]
-**CTA:** [label] → [url]
-```
+Live source: `solutionsPersonas` in [`lib/marketing/content/home.ts`](../lib/marketing/content/home.ts).
 
-### Diaspora / freelancer
+### Freelancers, remote workers, and diaspora
 **Headline:** Get paid globally. Keep more locally.  
-**Body:** Receive in USD or EUR, move money home on fast rails, and avoid costly informal FX loops. Easner Personal puts global banking in your pocket.
+**Body:** Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking.  
+**Visual:** `mkt-persona-diaspora`  
+**CTAs:** App Store, Google Play
 
-### Cross-border SME
-**Headline:** Run trade payments from one place.  
-**Body:** Multi-currency accounts, payouts, and invoicing for import/export, tuition, and supplier payments – with compliance built in.
+### Cross-border SMEs and trade
+**Headline:** Run global operations from one dashboard.  
+**Body:** Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking.  
+**Visual:** `mkt-persona-sme`  
+**CTA:** Open Business account
 
-### Developer / platform
-**Headline:** Ship global payments without building compliance from scratch.  
-**Body:** Access KYC/KYB, accounts, payouts, and wallet infrastructure through Easner APIs – so you can focus on your product.
+### Developers and platforms
+**Headline:** Embed global rails without building compliance.  
+**Body:** Build with Easner APIs for verification, accounts, payouts, wallets, and collections, then focus your roadmap on the customer experience.  
+**Visual:** `mkt-persona-dev`  
+**CTA:** Talk to our team → `/contact`
 
 ---
 
@@ -125,6 +131,8 @@ Use on homepage and product pages above footer:
 
 ## CTA band template
 
+Live source: `DEFAULT_CTA_BAND` in [`shared-content.ts`](../lib/marketing/shared-content.ts).
+
 **Headline:** Ready to move money globally?  
-**Subhead:** Open an Easner Personal or Business account – or talk to us about API integration.  
-**Buttons:** Get Started → `/access` | Contact → `hello@easner.com`
+**Subhead:** Open an Easner account, or talk to us about building on Easner APIs.  
+**Buttons:** Open Account → `#` (open-account action) | Contact → `/contact`

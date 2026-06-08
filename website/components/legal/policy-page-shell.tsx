@@ -67,7 +67,7 @@ export function PolicyContactBlock({ department }: { department?: string }) {
         <br />
         <strong className="text-[#0F1110]">Phone:</strong> +1 628 228 6083
         <br />
-        <strong className="text-[#0F1110]">In-app support:</strong> Live chat in the Easner mobile app and Business
+        <strong className="text-[#0F1110]">In-app support:</strong> Live chat in the Easner Mobile app and Easner Business
         dashboard
         <br />
         <strong className="text-[#0F1110]">Website:</strong> www.easner.com

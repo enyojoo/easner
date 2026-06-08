@@ -1,90 +1,91 @@
 # Developer APIs
 
 **Route:** `/apis`  
-**Title:** Stablecoin API Infrastructure – Easner  
-**Meta description:** Embed compliant global money rails in your app. Easner APIs for KYC/KYB, accounts, payouts, wallets, and collections – stablecoin banking infrastructure for developers and platforms.
+**Title:** Stablecoin API Infrastructure — Easner  
+**Meta description:** Embed compliant global money rails in your app. Easner APIs for KYC/KYB, accounts, pay-in, FX quotes, payouts, collections, and webhooks.  
+**Keywords:** stablecoin API, embedded payments API, fintech infrastructure API
+
+**Live source:** [`lib/marketing/content/apis.ts`](../lib/marketing/content/apis.ts)
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` – copy left, visual right  
+**Layout:** `split_50_50`  
 **Visual slot:** `mkt-hero-apis-01`  
-**Alt text:** Developer reviewing Easner API documentation on dual monitors  
-**Design notes:** Developer at workstation; subtle code/API diagram overlay; diverse representation; no crypto memes
+**Alt text:** Developer reviewing Easner API documentation on dual monitors
 
-**H1:** Embed compliant global money rails in your app.
+**H1:** Compliant rails in your product
 
-**Subhead:** Easner APIs give fintechs, marketplaces, and platforms access to KYC/KYB, multi-currency accounts, payouts, wallet infrastructure, and collections – the same stablecoin banking stack that powers Easner Personal and Business.
+**Subhead:** Easner APIs give fintechs, marketplaces, and platforms the same stablecoin banking stack behind Easner Personal and Business – verification, accounts, pay-in, payouts, collections, and webhooks with compliance built in.
 
-**CTA primary:** Talk to our team → `hello@easner.com`  
-**CTA secondary:** Get Started → `/access`
+**CTA:** Talk to our team → `/contact`
 
 ---
 
-## Section 2: Problem
+## Section 2: Integration steps
 
-**Layout:** centered text block  
-**Headline:** Building global payments from scratch is slow and risky.
+**Headline:** From first API call to live money movement
 
-**Body:** Compliance, partner contracts, wallet infrastructure, and corridor coverage take years to assemble. Your product roadmap cannot wait for a full banking stack – but cutting corners on KYC/AML is not an option.
-
----
-
-## Section 3: Solution
-
-**Layout:** centered + capability grid  
-**Headline:** Plug into infrastructure that's already integrated.
-
-**Body:** Easner offers API and agency models on top of a live stablecoin banking stack – hosted verification, fiat and stablecoin flows, and business collections patterns you can embed or white-label.
+1. **Onboard your platform** — Get API credentials and sandbox access with our team.
+2. **Verify end users** — Embed hosted KYC/KYB or sync verification status for individuals and businesses.
+3. **Fund and collect** — Provision accounts, virtual pay-in details, and stablecoin deposit addresses.
+4. **Pay out and reconcile** — Quote FX, send payouts, and reconcile with webhooks and reporting APIs.
 
 ---
 
-## Section 4: Three commercial models
+## Section 3: Features (bento)
 
-**Layout:** `three_col_cards`  
-**Section headline:** Choose how you partner with Easner
+**Headline:** What you can build on  
+**Subhead:** Identity, accounts, money movement, and platform tooling – one integration surface for embedded banking.
 
-### Banking model
-**Icon:** `mkt-icon-api-banking`  
-For platforms that route end-user banking and payments through Easner with FX spread and transaction fees on supported flows.
-
-### Agency / white-label model
-**Icon:** `mkt-icon-api-agency`  
-Implementation fee for branded setup, monthly infrastructure maintenance, and processing fee on transaction volume – for organizations embedding Easner as their banking layer.
-
-### API integration model
-**Icon:** `mkt-icon-api-integration`  
-Monthly platform access and API fees on volume – for developers building custom experiences on Easner rails.
-
-**Note:** Commercial terms are customized. Contact `hello@easner.com` for pricing.
+| Feature | Visual | Description |
+|---------|--------|-------------|
+| **Hosted KYC/KYB** | `mkt-ui-api-identity` | Run identity and business verification inside your onboarding – create customers, link accounts, and keep verification status in sync. |
+| **Accounts and pay-in** | `mkt-ui-api-payin` | Issue multi-currency account details, virtual bank pay-in, and stablecoin deposit addresses from one API. |
+| **Payouts and FX** | `mkt-ui-api-payouts` | Quote cross-border payouts before you confirm – global and regional corridors with clear rates and status. |
+| **Webhooks and events** | `mkt-ui-api-webhooks` | Get real-time signals for verification, pay-in, payouts, limits, and screening – signed payloads your backend can verify. |
 
 ---
 
-## Section 5: API capabilities
+## Section 4: Developer experience
 
-**Layout:** two-column feature grid
+**Headline:** Built for developers who ship  
+**Body:** Authenticated REST APIs, signed webhooks, and a developer workspace for keys, events, and logs – provisioned during commercial onboarding.
 
-| Capability | Description |
-|------------|-------------|
-| **Hosted KYC/KYB** | Identity and business verification flows for your users |
-| **Accounts** | Multi-currency virtual accounts where supported |
-| **Payouts** | Global and regional pay-out corridors where enabled |
-| **Wallet infrastructure** | Deposit addresses and wallet-initiated sends where enabled |
-| **Collections** | Invoicing, Terminal, and QR Pay patterns for merchants |
-| **Cards** | Card program integration when Tier 3 is available |
-| **Compliance webhooks** | Verification status, limits, and screening outcomes |
+**Bullets:**
+- Scoped API keys for server-to-server calls
+- Sandbox for verification, pay-in, payout, and webhook flows
+- Signed webhook payloads for backend verification
+
+**Visual slot:** `mkt-ui-api-dev-panel`
 
 ---
 
-## Section 6: Who it's for
+## Section 5: Commercial models
 
-| Segment | Example use |
-|---------|-------------|
-| **Fintech apps** | Neobank, remittance, or payroll products on Easner rails |
-| **Marketplaces** | Seller payouts and buyer pay-in across borders |
-| **SME platforms** | Embedded accounts and invoicing for your customers |
-| **Agencies** | White-label banking for a vertical or corridor |
+| Model | Description |
+|-------|-------------|
+| **Agency / white-label** | Branded setup, infrastructure maintenance, and volume-based processing – embed Easner as your banking layer. |
+| **API integration** | Platform access and API fees on volume – for teams building custom experiences on Easner rails. |
+
+Commercial terms are customized. Contact us for pricing.
+
+---
+
+## Section 6: Use cases
+
+**Headline:** Built for platforms that move money  
+**Subhead:** Easner APIs for products that need embedded accounts, cross-border pay-in and payout, and compliance without building a banking stack from scratch.
+
+| Use case | Description |
+|----------|-------------|
+| **Fintech apps** | Launch neobank, remittance, or payroll products on Easner rails with verification and money movement in one integration. |
+| **Marketplaces** | Pay sellers and collect from buyers across borders – one ledger for platform pay-in and corridor payouts. |
+| **SME platforms** | Give your customers embedded accounts, invoicing, and collections without standing up separate payment infrastructure. |
+| **Agencies** | White-label banking for a vertical or corridor – branded setup on Easner with agency commercial terms. |
+| **Global trade platforms** | Provision accounts and payouts for buyers and suppliers moving money internationally from your product. |
+| **Remittance and payroll** | Quote FX, route corridor payouts, and reconcile pay-in and disbursement flows with webhooks and reporting APIs. |
 
 ---
 
@@ -92,37 +93,16 @@ Monthly platform access and API fees on volume – for developers building custo
 
 Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
 
-**Additional line:** API consumers must comply with Easner Terms, Privacy Policy, and KYC/KYB and AML Policy; end-user partner terms may apply at onboarding.
-
 ---
 
 ## Section 8: Final CTA
 
-**Layout:** `cta_band`  
-**Headline:** Build on stablecoin banking infrastructure – without starting from zero.  
-**CTA:** Contact `hello@easner.com`
+**Headline:** Don't start from zero. Build with us.  
+**Subhead:** Talk to Easner about API access, agency models, and embedded global money movement.  
+**CTA:** Talk to our team → `/contact`
 
 ---
 
 ## Footer
 
 Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## FAQ
-
-**Is there public API documentation?**  
-Contact `hello@easner.com` for integration discussions and documentation access.
-
-**Do you offer sandbox environments?**  
-Provided as part of commercial onboarding – ask our team.
-
-**Can I white-label Easner?**  
-Yes, through our agency model. Terms are customized per partnership.
-
-**Which partners power the stack?**  
-Regulated and infrastructure partners are disclosed in our Privacy Policy. Product UI remains Easner-branded.
-
-**Do I need a money services license to use Easner APIs?**  
-Your regulatory obligations depend on your business model and jurisdiction. Easner provides technology and partner integrations; counsel should review your use case.

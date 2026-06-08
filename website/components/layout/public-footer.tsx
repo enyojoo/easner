@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Linkedin } from "lucide-react"
 import { CONTACT_PATH } from "@/lib/marketing/constants"
+import { REGULATORY_FOOTER_PARAGRAPHS } from "@/lib/marketing/shared-content"
 
 export function PublicFooter() {
   return (
@@ -67,26 +68,9 @@ export function PublicFooter() {
           </div>
           <div className="pt-4 border-t border-gray-200">
             <div className="text-xs text-gray-400 text-center sm:text-left max-w-4xl mx-auto space-y-3 leading-relaxed">
-              <p>
-                Easner Group, Inc. (&quot;Easner&quot;) is a financial technology company, not a bank or
-                investment adviser. Banking, payment, verification, and card services available through
-                Easner Personal (mobile app) and Easner Business (web dashboard) are provided by licensed
-                partners. Easner does not provide investment, legal, tax, or financial advice.
-              </p>
-              <p>
-                Easner is not FDIC-insured and does not hold customer deposits. Banking services are
-                provided by third-party banking partners, not by Easner.
-              </p>
-              <p>
-                Where enabled, stablecoin and wallet features are supported through infrastructure
-                partners and may operate on public blockchains. Digital assets are not legal tender, are
-                not backed by a government, and are not FDIC-insured or protected by SIPC. Blockchain
-                transactions may be public and irreversible.
-              </p>
-              <p>
-                Corporate and personal card products, when available, are issued by a third-party issuer
-                and are subject to credit approval.
-              </p>
+              {REGULATORY_FOOTER_PARAGRAPHS.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
           </div>
         </div>

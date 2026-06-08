@@ -1,129 +1,87 @@
 # Personal Banking
 
 **Route:** `/personal`  
-**Title:** Personal Banking – Easner  
-**Meta description:** Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal – bank and stablecoin options where enabled.
+**Title:** Personal Banking — Easner  
+**Meta description:** Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal.  
+**Keywords:** personal international transfers, diaspora banking app, global mobile banking
+
+**Live source:** [`lib/marketing/content/personal.ts`](../lib/marketing/content/personal.ts)
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `split_50_50` – copy left, visual right  
+**Layout:** `split_50_50` — copy left, visual right  
 **Visual slot:** `mkt-hero-personal-01`  
-**Alt text:** Freelancer using Easner Personal app to send money internationally  
-**Design notes:** Lifestyle scene (café, airport, or home office) with subject holding iPhone showing Easner app; natural light; diverse representation
+**Alt text:** Freelancer using Easner Mobile app to send money internationally
 
-**H1:** Global banking in your pocket.
+**H1:** Global banking in your pocket
 
-**Subhead:** Easner Personal is your mobile app for sending, receiving, and managing money across global and African corridors – with bank transfers and stablecoin options where enabled, and compliance built in.
+**Subhead:** Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.
 
-**CTA primary:** Download on the App Store → `{APP_STORE_URL}`  
-**CTA secondary:** Get it on Google Play → `{PLAY_STORE_URL}`  
-**CTA fallback:** Get Started → `/access`
+**CTA primary:** App Store → `{APP_STORE_URL}`  
+**CTA secondary:** Google Play → `{PLAY_STORE_URL}`
 
 ---
 
-## Section 2: Problem
+## Section 2: Features (bento)
 
-**Layout:** centered text block  
-**Headline:** Formal rails are slow. Informal FX is risky.
-
-**Body:** Cross-border corridors can take days to settle and charge double-digit fees. Many people turn to informal traders – costly and unpredictable. Emerging markets need faster, compliant paths that still feel like banking.
-
-**Optional stat:** Some regions remain among the world's most expensive remittance corridors – fees can exceed 12% with multiple intermediaries.
-
----
-
-## Section 3: Solution
-
-**Layout:** `split_50_50` – visual left, copy right  
-**Visual slot:** `mkt-ui-personal-receive`  
-**Alt text:** Easner Personal Receive screen showing Bank and Stablecoin options  
-**Design notes:** iPhone 15 frame, light theme, Receive tab with Bank | Stablecoin visible
-
-**Headline:** Banking-simple. Built for your life abroad.
-
-**Body:** Easner Personal gives you USD and EUR accounts, fast pay-in and pay-out, and stablecoin receive where enabled – without learning crypto. Verify once through hosted KYC, then send to recipients, use your Easner tag, and track everything in one app.
-
----
-
-## Section 4: Features
-
-**Layout:** alternating `split_40_60`
+**Layout:** `bento`
 
 ### Send money
 **Visual:** `mkt-ui-personal-send`  
-**Alt text:** Easner Personal send money screen  
-Send by bank transfer, stablecoin, open banking, or mobile money **where enabled**. See fees and rates before you confirm.
+**Alt text:** Easner Mobile send money screen  
+Pay across supported corridors by bank, stablecoin, open banking, or mobile money – fees and rates shown before you confirm.
 
 ### Receive money
 **Visual:** `mkt-ui-personal-receive`  
-**Alt text:** Easner Personal receive options  
-Get paid by virtual account details or stablecoin deposit address – choose Bank or Stablecoin on the Receive tab.
+**Alt text:** Easner Mobile receive options  
+Get paid by account details or stablecoin deposit address – one Receive flow with clear pay-in instructions.
 
-### Recipients and Easner tag
+### Recipients and EASETAG
 **Visual:** `mkt-ui-personal-recipients`  
-**Alt text:** Easner Personal recipients and Easner tag  
-Save recipients, send to Easner tags, and move money between people you trust.
+**Alt text:** Easner Mobile recipients and EASETAG  
+Save people you pay often and send to Easetags without re-entering details every time.
 
 ### Security
-**Visual:** optional icon – `mkt-icon-security`  
-Multi-factor authentication, PIN, and biometric unlock where supported on your device.
+**Visual:** `mkt-ui-personal-security`  
+**Alt text:** Easner Mobile security settings  
+Protect your account with multi-factor authentication, PIN, and biometric unlock on your device.
 
 ---
 
-## Section 5: Tier availability
+## Section 3: Use cases
 
-**Layout:** three-column tier cards (stack on mobile)  
-Use **Tier ladder – Easner Personal** from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## Section 6: Use cases
-
-**Layout:** `three_col_cards`
+**Layout:** `three_col_cards`  
+**Headline:** Built for life across borders  
+**Subhead:** Easner banking is for people who earn, send, and spend globally. You don't need to juggle multiple apps again.
 
 | Use case | Description |
 |----------|-------------|
-| **Diaspora remittances** | Send support home on faster rails than legacy bank wires where available. |
-| **Freelancers and remote workers** | Invoice abroad, receive USD/EUR, convert and payout on your schedule. |
-| **Students and families** | Pay tuition and living expenses across borders with clear tracking. |
+| **Diaspora remittances** | Send support home on faster paths than legacy bank wires – with clear fees and status in the app. |
+| **Freelancers and remote workers** | Get paid in USD or EUR, hold balances, and pay out on your schedule from one mobile account. |
+| **Students and families** | Cover tuition and living expenses across borders with tracked transfers and saved recipients. |
+| **Expats** | Manage money between your host country and home – send, receive, and review activity in one place. |
+| **Cross-border gig workers** | Collect client pay-in globally and move earnings to local accounts or mobile money when you need to. |
+| **Families abroad** | Support relatives back home with repeat transfers, EASETAG, and a clear record of every payment. |
 
 ---
 
-## Section 7: Compliance strip
+## Section 4: Compliance strip
 
-Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
+Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) (live: [`COMPLIANCE_STRIP`](../lib/marketing/shared-content.ts)).
 
 ---
 
-## Section 8: Final CTA
+## Section 5: Final CTA
 
 **Layout:** `cta_band`  
-**Headline:** Take Easner Personal with you.  
-**CTA:** Download the app → App Store / Google Play
+**Headline:** Take Easner banking with you.  
+**Subhead:** Download the app and start banking globally from your phone.  
+**CTA:** App Store / Google Play → `{APP_STORE_URL}` / `{PLAY_STORE_URL}`
 
 ---
 
 ## Footer
 
-Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## FAQ
-
-**Who is Easner Personal for?**  
-Individuals 18 or older in supported jurisdictions who want mobile global banking and payments.
-
-**Do I need a crypto wallet?**  
-No. Easner provides banking-simple screens. Stablecoin features use partner-managed infrastructure where enabled.
-
-**How long do transfers take?**  
-Processing times vary by corridor, partner, and compliance review – often minutes to hours, not guaranteed.
-
-**Is Easner Personal available on web?**  
-Easner Personal is a mobile application. Businesses use Easner Business on the web.
-
-**What is Tier 2 African banking?**  
-NGN and regional pay-in and pay-out where we launch, subject to additional eligibility beyond Tier 1.
+Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) (live: [`REGULATORY_FOOTER_PARAGRAPHS`](../lib/marketing/shared-content.ts)).

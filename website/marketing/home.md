@@ -1,154 +1,106 @@
 # Home Page
 
 **Route:** `/`  
-**Title:** Easner – Stablecoin Banking Infrastructure for Global Businesses  
-**Meta description:** Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs – banking-simple UX with compliance built in.
+**Title:** Easner – Stablecoin Banking for Global Businesses  
+**Meta description:** Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.  
+**Keywords:** stablecoin banking infrastructure, cross-border payments, global business banking
+
+**Live source:** [`lib/marketing/content/home.ts`](../lib/marketing/content/home.ts)
 
 ---
 
 ## Section 1: Hero
 
-**Layout:** `center_hero` + `device_float`  
+**Layout:** `center_hero`  
 **Visual slot:** `mkt-hero-home-01`  
-**Alt text:** Business professional reviewing global payments on laptop and Easner mobile app  
-**Design notes:** Warm office or co-working scene; floating iPhone (Personal home) and browser window (Business dashboard) with soft shadow; no crypto imagery
+**Alt text:** Easner Business dashboard overview
 
-**H1:** The speed of stablecoins. The simplicity of banking.
+**H1:** Global banking, Simplified.
 
-**Subhead:** Easner is stablecoin banking infrastructure for global businesses – multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and developer APIs. Compliance and licensed partner rails are built in; stablecoin settlement works behind the scenes where enabled.
+**Subhead:** Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.
 
-**CTA primary:** Get Started → `/access`  
+**CTA primary:** Open Account → `#` (open-account action)  
 **CTA secondary:** Explore products → `#products`
 
 ---
 
 ## Section 2: Trust strip
 
-**Layout:** logo strip (full width)  
-**Visual slot:** `TrustedBy` component – `mkt-trust-logos` if custom strip needed  
-**Alt text:** Companies that trust Easner  
-**Design notes:** Grayscale logos, horizontal scroll on mobile; **no volume metric**
+**Layout:** `TrustedBy` component
 
 ---
 
 ## Section 3: Why Easner
 
-**Layout:** `three_col_cards` (2×2 on mobile)  
-**Visual slots:** `mkt-icon-pillar-ux`, `mkt-icon-pillar-cost`, `mkt-icon-pillar-compliance`, `mkt-icon-pillar-invisible`  
-**Section headline:** Why global businesses choose Easner
+**Layout:** `three_col_cards`  
+**Section headline:** Why teams choose Easner
 
-### Card 1 – Banking-simple UX
-**Icon:** `mkt-icon-pillar-ux`  
-Users want banking screens, not crypto complexity. Send, receive, invoice, and manage treasury in a familiar experience.
-
-### Card 2 – Lower-cost rails
-**Icon:** `mkt-icon-pillar-cost`  
-Stablecoin settlement can reduce cross-border cost vs legacy corridors – up to ~60% in supported flows.
-
-### Card 3 – Compliance-ready
-**Icon:** `mkt-icon-pillar-compliance`  
-KYC/KYB, AML screening, limits, and transaction controls are built in from day one.
-
-### Card 4 – Invisible infrastructure
-**Icon:** `mkt-icon-pillar-invisible`  
-Stablecoin speed and global reach behind fiat-native interfaces where enabled.
+| Pillar | Icon | Body |
+|--------|------|------|
+| **No crypto complexity** | `mkt-icon-pillar-ux` | Send, receive, invoice, and manage money in screens that feel like banking – not a trading app. |
+| **Move more, spend less** | `mkt-icon-pillar-cost` | Modern settlement can reduce cross-border cost vs legacy paths – up to ~60% in supported flows. |
+| **Compliance-ready** | `mkt-icon-pillar-compliance` | KYC/KYB, AML screening, limits, and transaction controls are built in from day one. |
+| **Speed without the noise** | `mkt-icon-pillar-invisible` | Stablecoin speed and global reach sit behind fiat-native screens. |
 
 ---
 
-## Section 4: Products
+## Section 4: Product grid
 
-**Layout:** `three_col_cards` + secondary link row  
-**Visual slots:** `mkt-thumb-personal`, `mkt-thumb-business`, `mkt-thumb-apis`  
-**Section ID:** `products`  
-**Section headline:** One infrastructure. Three ways to build.
-
-Use product card grid from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
-**Secondary links:** Stablecoin → `/stablecoin` · Invoicing → `/invoicing` · Cards → `/cards`
+Use product cards from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md) (live: [`PRODUCT_CARDS`](../lib/marketing/shared-content.ts), [`SECONDARY_PRODUCT_CARDS`](../lib/marketing/shared-content.ts)).
 
 ---
 
 ## Section 5: Solutions by audience
 
-**Layout:** `tab_audience`  
-**Section headline:** Built for how you move money
+| Audience | Headline | Body | CTAs |
+|----------|----------|------|------|
+| Freelancers, remote workers, and diaspora | Get paid globally. Keep more locally. | Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking. | App Store, Google Play |
+| Cross-border SMEs and trade | Run global operations from one dashboard. | Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking. | Open Business account |
+| Developers and platforms | Embed global rails without building compliance. | Build with Easner APIs for verification, accounts, payouts, wallets, and collections, then focus your roadmap on the customer experience. | Talk to our team → `/contact` |
 
-### Tab 1 – Freelancers, remote workers, and diaspora
-**Visual:** `mkt-persona-diaspora`  
-**Alt text:** Remote professional using Easner on mobile  
-**Headline:** Get paid globally. Keep more locally.  
-**Body:** Stop losing earnings to heavy fees and slow formal rails. Receive USD and EUR, move money home on faster paths, and skip risky informal FX – with Easner Personal.  
-**CTA:** Download the app → App Store / Google Play
-
-### Tab 2 – Cross-border SMEs and trade
-**Visual:** `mkt-persona-sme`  
-**Alt text:** Small business owner managing international payments  
-**Headline:** Run global operations from one dashboard.  
-**Body:** Multi-currency accounts, payouts, invoicing, and collections for import/export, tuition, and supplier payments – with team controls and reporting on Easner Business.  
-**CTA:** Open Business account → `/access`
-
-### Tab 3 – Developers and platforms
-**Visual:** `mkt-persona-dev`  
-**Alt text:** Developer integrating payments API  
-**Headline:** Embed global rails without building compliance from scratch.  
-**Body:** Plug into KYC/KYB, accounts, payouts, wallet infrastructure, and collections through Easner APIs – ship faster, stay compliant.  
-**CTA:** Talk to our team → `hello@easner.com`
+**Visual slots:** `mkt-persona-diaspora`, `mkt-persona-sme`, `mkt-persona-dev`
 
 ---
 
 ## Section 6: Corridors
 
-**Layout:** `split_50_50` – copy left, map right (stack on mobile)  
+**Headline:** Expanding where global business meets emerging markets  
+**Body:** Hold USD, EUR, and GBP from global markets, then pay out locally across Africa and the region – for salaries, supplier payments, and cross-border trade.  
 **Visual slot:** `mkt-map-corridors`  
 **Alt text:** Map showing payment corridors between US, EU, and African markets  
-**Design notes:** Abstract curved routes; minimal flag clutter; Easner blue accents
-
-**Headline:** Expanding where global business meets emerging markets
-
-**Body:** Easner is built for corridors where global earning, trade, tuition, and supplier payments meet African and regional rails. Start with supported global currencies like USD, EUR, and GBP, then route into enabled local markets as coverage expands.
-
-**Coverage note:** Availability depends on verification, jurisdiction, currency, and product enablement.
+**CTA:** Open Account → `#` (open-account action)
 
 ---
 
-## Section 7: Compliance
-
-**Layout:** `compliance_split`  
-**Visual slot:** `mkt-icon-compliance` (interim: `brand/security.svg`)  
-**Alt text:** Security and compliance shield illustration
+## Section 7: Compliance strip
 
 Use compliance strip from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
-**Links:** [Terms](/terms) · [Privacy](/privacy) · [KYC/KYB and AML Policy](/compliance)
 
 ---
 
 ## Section 8: Final CTA
 
 **Layout:** `cta_band`  
-Use CTA band from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
+**Headline:** Ready to move money globally?  
+**Subhead:** Open an Easner account, or talk to us about building on Easner APIs.  
+**CTA primary:** Open Account → `#` (open-account action)  
+**CTA secondary:** Contact → `/contact`
+
+---
+
+## FAQ (defined in code, not rendered on homepage)
+
+| Question | Answer |
+|----------|--------|
+| Is Easner a bank? | No. Easner is a financial technology company. Regulated banking, payment, and verification services are provided by licensed partners. |
+| Do I need to understand crypto to use Easner? | No. Easner is designed around banking-simple screens. Stablecoin infrastructure may power settlement behind the scenes. |
+| What products does Easner offer? | Easner Personal (mobile app for individuals), Easner Business (web dashboard for organizations), and Easner APIs for developers and platforms. |
+| Are fees zero? | Fees and exchange rates may apply depending on product and corridor. Applicable fees are shown before you confirm a transaction. |
+| Which countries are supported? | Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details. |
 
 ---
 
 ## Footer
 
-Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).
-
----
-
-## FAQ
-
-**Is Easner a bank?**  
-No. Easner is a financial technology company. Regulated banking, payment, and verification services are provided by licensed partners.
-
-**Do I need to understand crypto to use Easner?**  
-No. Easner is designed as banking-simple UX. Stablecoin infrastructure may power settlement behind the scenes where enabled.
-
-**What products does Easner offer?**  
-Easner Personal (mobile app for individuals), Easner Business (web dashboard for organizations), and Easner APIs for developers and platforms.
-
-**Are fees zero?**  
-Fees and exchange rates may apply depending on product and corridor. Applicable fees are shown before you confirm a transaction.
-
-**Which countries are supported?**  
-Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details.
+Use regulatory footer disclaimer from [`SHARED-COMPONENTS.md`](SHARED-COMPONENTS.md).  
+**Links:** [Terms](/terms) · [Privacy](/privacy) · [KYC/KYB and AML Policy](/compliance)

@@ -1,14 +1,14 @@
 # Visual Specification
 
-Last updated: June 6, 2026
+Last updated: June 8, 2026
 
-Art direction, layout patterns, and asset manifest for easner.com marketing pages. Aligns with [`docs/design-system.md`](../design-system.md): premium private banking, calm, global – not crypto-bro, not neon SaaS.
+Art direction, layout patterns, and asset manifest for easner.com marketing pages. Aligns with [`design-system.md`](design-system.md): premium private banking, calm, global — not crypto-bro, not neon SaaS.
 
 ---
 
 ## Art direction
 
-**Feel:** Trustworthy, human, executive – serious money movement with warmth.
+**Feel:** Trustworthy, human, executive — serious money movement with warmth.
 
 **Palette:** Easner primary blue, ivory/white canvas (Business web), cool-gray + white cards (Personal mobile). See design-system §2.0.
 
@@ -26,8 +26,8 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 - Issuer branding on card imagery
 
 **Product truth:**
-- **Easner Personal** → iPhone mockups only
-- **Easner Business** → browser/dashboard mockups only
+- **Easner Mobile** (delivers Easner Personal Banking) → iPhone mockups only; mock chrome labels use **Easner Mobile** and **EASETAG**
+- **Easner Business** (delivers Easner Business Banking) → browser / dashboard mockups only
 - Never show web app for Personal or phone-only for Business dashboard heroes
 
 ---
@@ -45,7 +45,7 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 | `compliance_split` | Copy left, shield/icon right | Compliance section |
 | `cta_band` | Full-width CTA strip before footer | Final conversion |
 
-**Mobile:** All splits stack vertically – copy first, visual below, unless visual is decorative background.
+**Mobile:** All splits stack vertically — copy first, visual below, unless visual is decorative background.
 
 ---
 
@@ -68,9 +68,9 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 **Naming:** `mkt-{page}-{section}-{variant}.{ext}`
 
 **Existing assets (interim):**
-- `brand/ew1.png` – replace with mobile-framed personal UI
-- `brand/eb1.png` – refresh as `mkt-ui-business-dashboard`
-- `brand/security.svg` – compliance section until `mkt-icon-compliance` exists
+- `brand/ew1.png` — replace with mobile-framed personal UI
+- `brand/eb1.png` — refresh as `mkt-ui-business-dashboard`
+- `brand/security.svg` — compliance section until `mkt-icon-compliance` exists
 
 ---
 
@@ -88,15 +88,15 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 ├─────────────────────────────────────────────────────────┤
 │  [TrustedBy logo strip]                                 │
 ├─────────────────────────────────────────────────────────┤
-│  Why Easner – 4 cards (three_col_cards → 2×2 mobile)  │
+│  Why Easner — 4 cards (three_col_cards → 2×2 mobile)  │
 ├─────────────────────────────────────────────────────────┤
-│  Products – Personal | Business | APIs (three_col_cards)│
+│  Products — Personal | Business | APIs (three_col_cards)│
 ├─────────────────────────────────────────────────────────┤
-│  Solutions – 3 tabs (tab_audience + persona photos)     │
+│  Solutions — 3 tabs (tab_audience + persona photos)     │
 ├─────────────────────────────────────────────────────────┤
-│  Corridors – copy | mkt-map-corridors (split_50_50)     │
+│  Corridors — copy | mkt-map-corridors (split_50_50)     │
 ├─────────────────────────────────────────────────────────┤
-│  Compliance – copy | icon (compliance_split)            │
+│  Compliance — copy | icon (compliance_split)            │
 ├─────────────────────────────────────────────────────────┤
 │  [PublicFooter + regulatory disclaimer]                 │
 └─────────────────────────────────────────────────────────┘
@@ -114,7 +114,7 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 | `stablecoin.md` | `mkt-hero-stablecoin-01` | `mkt-ui-stablecoin-receive`, `mkt-ui-terminal`, `mkt-ui-qrpay`, `mkt-diagram-invisible-rails` |
 | `invoicing.md` | `mkt-hero-invoicing-01` | `mkt-ui-invoice-editor`, `mkt-ui-invoice-payin` |
 | `cards.md` | `mkt-hero-cards-01` | `mkt-ui-cards-controls` (future mock) |
-| `apis.md` | `mkt-hero-apis-01` | `mkt-icon-api-banking`, `mkt-icon-api-agency`, `mkt-icon-api-integration` |
+| `apis.md` | `mkt-hero-apis-01` | `mkt-icon-api-banking`, `mkt-icon-api-agency`, `mkt-icon-api-integration`, `mkt-diagram-api-integration-flow`, `mkt-ui-api-dev-panel` |
 
 ---
 
@@ -138,7 +138,7 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 | `mkt-hero-personal-01` | personal | hero | **Needed** | Diaspora/freelancer + phone |
 | `mkt-ui-personal-send` | personal | features | **Needed** | Send flow screenshot |
 | `mkt-ui-personal-receive` | personal | features | **Needed** | Bank \| Stablecoin receive tabs |
-| `mkt-ui-personal-recipients` | personal | features | **Needed** | Recipients list |
+| `mkt-ui-personal-recipients` | personal | features | **Needed** | Recipients list; label **EASETAG** in mock UI |
 | `mkt-hero-business-01` | business | hero | **Needed** | SME + dashboard composite |
 | `mkt-ui-business-dashboard` | business | features | Interim | Refresh from `eb1.png` |
 | `mkt-ui-business-send` | business | features | **Needed** | Send/payout UI |
@@ -157,6 +157,8 @@ Art direction, layout patterns, and asset manifest for easner.com marketing page
 | `mkt-icon-api-banking` | apis | models | **Needed** | Banking model icon |
 | `mkt-icon-api-agency` | apis | models | **Needed** | Agency model icon |
 | `mkt-icon-api-integration` | apis | models | **Needed** | API integration icon |
+| `mkt-diagram-api-integration-flow` | apis | integration | **Needed** | 4-step Onboard → Verify → Fund → Move money |
+| `mkt-ui-api-dev-panel` | apis | developer | **Needed** | API keys + webhooks + events mock |
 
 ---
 
