@@ -36,13 +36,14 @@ interface BetaDownloadButtonsProps {
 const betaLinkClass =
   "inline-flex min-h-12 min-w-0 w-full items-center justify-center gap-2.5 rounded-xl px-3 py-3 transition-opacity hover:opacity-90 sm:min-h-0 sm:gap-3 sm:px-4 sm:py-2.5"
 
-function betaLinkProps(href: string) {
+function betaLinkProps(href: string, { newTab = true }: { newTab?: boolean } = {}) {
   const placeholder = href === "#"
+  const external = !placeholder && newTab
   return {
     href,
     onClick: placeholder ? (event: MouseEvent) => event.preventDefault() : undefined,
-    target: placeholder ? undefined : ("_blank" as const),
-    rel: placeholder ? undefined : "noopener noreferrer",
+    target: external ? ("_blank" as const) : undefined,
+    rel: external ? "noopener noreferrer" : undefined,
     "aria-disabled": placeholder ? true : undefined,
   }
 }
@@ -78,7 +79,7 @@ export function BetaDownloadButtons({ className, layout = "row" }: BetaDownloadB
         </span>
       </Link>
       <Link
-        {...betaLinkProps(ANDROID_APK_URL)}
+        {...betaLinkProps(ANDROID_APK_URL, { newTab: false })}
         className={cn(
           betaLinkClass,
           "border border-[#E4DED1] bg-white text-[#0F1110] hover:border-[#007ACC]/30",
