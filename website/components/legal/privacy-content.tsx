@@ -19,13 +19,21 @@ export function PrivacyPolicyPage() {
             <strong>Easner Business</strong> (web dashboard for <strong>Easner Business Banking</strong>)
           </li>
           <li>Public invoice and payment experiences we host for business users</li>
+          <li>
+            <strong>Easner for Partners</strong> commercial inquiries and onboarding (Agency Model and Developer Model)
+          </li>
+          <li>
+            Partner-operated branded experiences and API integrations where Easner processes data as described below
+          </li>
           <li>Related support and communications channels</li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed">
           Easner is a financial technology company. We work with <strong>licensed partners</strong> to deliver banking
-          and payment services described in our Terms of Service. This policy covers <strong>account holders</strong> and,
-          where noted, <strong>business customers and payers</strong> whose data business users submit through collections
-          tools.
+          and payment services described in our Terms of Service. This policy covers <strong>account holders</strong>,{" "}
+          <strong>Easner for Partners participants</strong>, and, where noted, <strong>business customers and payers</strong>{" "}
+          whose data business users submit through collections tools, or <strong>end users whose data a partner submits</strong>{" "}
+          through Easner APIs or branded flows (where Easner acts as a processor or service provider to the partner for
+          those submissions).
         </p>
       </section>
 
@@ -55,6 +63,24 @@ export function PrivacyPolicyPage() {
           <li>Files you upload (for example transfer receipts or compliance documents)</li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Easner for Partners and platform integrations:</strong>
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>
+            Commercial onboarding (entity details, beneficial owners, program description, corridors, expected volumes,
+            compliance questionnaires)
+          </li>
+          <li>
+            Technical integration (API credential metadata, webhook URLs, IP allowlists, sandbox and production
+            environment configuration)
+          </li>
+          <li>
+            Partner-submitted end-user data (verification payloads, transaction instructions, beneficiary details when
+            the partner uses Easner rails for its customers)
+          </li>
+          <li>Support and implementation communications</li>
+        </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>We collect automatically:</strong>
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
@@ -68,8 +94,11 @@ export function PrivacyPolicyPage() {
           </li>
           <li>Approximate location from IP or device region where used for security, fraud prevention, or compliance</li>
           <li>
-            Account-linked product analytics to understand how the Services are used and to improve them — this may be
+            Account-linked product analytics to understand how the Services are used and to improve them – this may be
             associated with your user account; we do not use it for cross-app or cross-website advertising
+          </li>
+          <li>
+            API usage logs, webhook delivery logs, error rates, and security events for integrated platforms
           </li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
@@ -77,21 +106,21 @@ export function PrivacyPolicyPage() {
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Camera</strong> — government ID, selfie/liveness for verification, or photos you choose to capture
+            <strong>Camera</strong> – government ID, selfie/liveness for verification, or photos you choose to capture
             in-app
           </li>
           <li>
-            <strong>Photo library</strong> — profile avatar or attachments you select
+            <strong>Photo library</strong> – profile avatar or attachments you select
           </li>
           <li>
-            <strong>Microphone</strong> — voice messages in live chat when you choose to record audio
+            <strong>Microphone</strong> – voice messages in live chat when you choose to record audio
           </li>
           <li>
-            <strong>Push notifications</strong> — device tokens and delivery metadata for account and security alerts you
+            <strong>Push notifications</strong> – device tokens and delivery metadata for account and security alerts you
             enable
           </li>
           <li>
-            <strong>Face ID or biometric unlock</strong> — processed on your device to unlock the app; Easner does not
+            <strong>Face ID or biometric unlock</strong> – processed on your device to unlock the app; Easner does not
             receive or store your biometric templates
           </li>
         </ul>
@@ -100,7 +129,7 @@ export function PrivacyPolicyPage() {
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong> — we receive authentication
+            <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong> – we receive authentication
             tokens and basic profile fields (such as name and email) as permitted by those providers and your choices.
             Their privacy policies govern data they collect independently.
           </li>
@@ -124,7 +153,7 @@ export function PrivacyPolicyPage() {
           </li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed mb-2">
-          <strong>Mobile app — data we do not collect:</strong>
+          <strong>Mobile app – data we do not collect:</strong>
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           The Easner mobile app does not read your device address book, email or SMS inboxes, or precise GPS location, and
@@ -167,6 +196,12 @@ export function PrivacyPolicyPage() {
           <li>In connection with a merger, acquisition, or asset sale, subject to safeguards</li>
           <li>With regulators and law enforcement as required</li>
         </ul>
+        <p className="text-[#5F665F] leading-relaxed mt-4">
+          For <strong>Easner for Partners</strong>, Easner acts as a <strong>controller</strong> for the commercial
+          relationship and may act as a <strong>processor</strong> for end-user data a partner submits, per the partner
+          agreement and applicable law. Partners may have independent obligations to their end users and should publish
+          their own privacy notices where required.
+        </p>
       </section>
 
       <section>
@@ -223,8 +258,8 @@ export function PrivacyPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">6. Security</h2>
         <p className="text-[#5F665F] leading-relaxed">
-          We use technical and organizational measures — including encryption in transit and at rest where appropriate,
-          access controls, and monitoring — designed to protect personal information. No system is perfectly secure. You
+          We use technical and organizational measures – including encryption in transit and at rest where appropriate,
+          access controls, and monitoring – designed to protect personal information. No system is perfectly secure. You
           are responsible for safeguarding your devices and credentials.
         </p>
       </section>

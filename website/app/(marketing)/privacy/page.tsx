@@ -5,7 +5,7 @@ export const metadata = marketingMetadata({
   metadata: {
     title: "Privacy Policy",
     description:
-      "How Easner Group, Inc. collects, uses, shares, and protects information across Easner Mobile, Easner Business, and easner.com.",
+      "How Easner Group, Inc. collects, uses, shares, and protects information across Easner Mobile, Easner Business, Easner for Partners, and easner.com.",
   },
 })
 

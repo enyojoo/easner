@@ -5,7 +5,7 @@ export const metadata = marketingMetadata({
   metadata: {
     title: "Terms of Service",
     description:
-      "Terms of Service for Easner Mobile (Easner Personal Banking), Easner Business (Easner Business Banking), and related services. Easner is a fintech company, not a bank.",
+      "Terms of Service for Easner Mobile (Easner Personal Banking), Easner Business (Easner Business Banking), Easner for Partners, and related services. Easner is a fintech company, not a bank.",
   },
 })
 

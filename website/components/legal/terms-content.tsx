@@ -8,13 +8,21 @@ export function TermsPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           By accessing or using Easner&apos;s website, <strong>Easner Mobile</strong> (mobile application for{" "}
           <strong>Easner Personal Banking</strong>), <strong>Easner Business</strong> (web dashboard for{" "}
-          <strong>Easner Business Banking</strong>), or related services (collectively, the{" "}
+          <strong>Easner Business Banking</strong>), <strong>Easner for Partners</strong> (commercial partner program
+          materials, sandbox or API credentials, branded deployments, or other program features made available under a
+          commercial relationship with Easner), or related services (collectively, the{" "}
           <strong>&quot;Services&quot;</strong>), you agree to these Terms of Service (<strong>&quot;Terms&quot;</strong>
           ). If you do not agree, do not use the Services.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           If you use the Services on behalf of a business, you represent that you have authority to bind that entity.{" "}
           <strong>&quot;You&quot;</strong> includes that entity and its authorized users.
+        </p>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          Self-serve use of <strong>Easner Mobile</strong> and <strong>Easner Business</strong> is governed by these
+          Terms. <strong>Easner for Partners</strong> engagements may also require a{" "}
+          <strong>separate written commercial agreement</strong> (order form, MSA, or similar). If there is a conflict,
+          the signed commercial agreement controls for that engagement; these Terms still apply where not superseded.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           Your use of the Services is also subject to our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and{" "}
@@ -25,7 +33,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">2. Electronic Communications and E-Sign</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          You consent to receive account, transaction, security, and legal notices electronically — including by email,
+          You consent to receive account, transaction, security, and legal notices electronically – including by email,
           in-app messages, and SMS where we use text messaging for service communications.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -46,14 +54,24 @@ export function TermsPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">We offer:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Easner Mobile</strong> (<strong>Easner Personal Banking</strong>) — consumer banking and payments
+            <strong>Easner Mobile</strong> (<strong>Easner Personal Banking</strong>) – consumer banking and payments
             through our mobile app
           </li>
           <li>
-            <strong>Easner Business</strong> (<strong>Easner Business Banking</strong>) — business banking, payouts,
+            <strong>Easner Business</strong> (<strong>Easner Business Banking</strong>) – business banking, payouts,
             and collections through our web dashboard
           </li>
+          <li>
+            <strong>Easner for Partners</strong> – commercial programs for qualified organizations, including the{" "}
+            <strong>Agency Model</strong> (branded OTC, money transfer, and faith-based or nonprofit network products on
+            Easner infrastructure) and the <strong>Developer Model</strong> (API, webhooks, and embedded integrations
+            to Easner rails)
+          </li>
         </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          <strong>Easner for Partners</strong> is not self-serve account opening. Access is subject to commercial
+          onboarding and approval.
+        </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Depending on your verification status, location, and product tier, the Services may include multi-currency
           accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails,
@@ -64,14 +82,14 @@ export function TermsPolicyPage() {
         </p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Tier 1 — Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in
+            <strong>Tier 1 – Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in
             and pay-out, and stablecoin flows
           </li>
           <li>
-            <strong>Tier 2 — African banking:</strong> NGN and regional pay-in and pay-out where we launch
+            <strong>Tier 2 – African banking:</strong> NGN and regional pay-in and pay-out where we launch
           </li>
           <li>
-            <strong>Tier 3 — Cards:</strong> Personal or corporate cards, spend controls, and cardholder management when
+            <strong>Tier 3 – Cards:</strong> Personal or corporate cards, spend controls, and cardholder management when
             approved
           </li>
         </ul>
@@ -99,6 +117,43 @@ export function TermsPolicyPage() {
           For businesses, the Services may include organization onboarding, team access controls, payouts,
           multi-currency accounts, <strong>collections</strong>{" "}(invoicing, payment terminal, and QR Pay where enabled),
           customer directory, and reporting. The account owner is responsible for authorized users&apos; actions.
+        </p>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner for Partners</h3>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Agency Model:</strong>
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>
+            Branded customer-facing experiences (portals, flows, or co-branded UI) operated by the partner entity
+          </li>
+          <li>
+            Compliance, corridor, and operational support provided by Easner as described in the commercial agreement
+          </li>
+          <li>
+            The partner remains responsible for its brand, end-user communications, and lawful use of the deployment
+          </li>
+        </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Developer Model:</strong>
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>
+            REST/API access, webhooks, and sandbox and production credentials after commercial onboarding
+          </li>
+          <li>
+            The partner builds its own product UX; Easner provides rails, verification hooks, and compliance integration
+            points
+          </li>
+          <li>
+            The partner is responsible for securing API keys, lawful collection of end-user data, and passing required
+            KYC/KYB where the partner onboards its own customers
+          </li>
+        </ul>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          End users of a partner&apos;s branded product or API integration may be subject to{" "}
+          <strong>partner terms</strong> in addition to Easner and provider disclosures presented at transaction time.
+          Regulated money movement still flows through <strong>licensed partners</strong>; Easner provides technology and
+          program management.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Partner-provided financial services</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -169,6 +224,17 @@ export function TermsPolicyPage() {
           <strong>Business users</strong> must maintain accurate ownership and signatory information, control team
           access, and use collections features in compliance with applicable law.
         </p>
+        <p className="text-[#5F665F] leading-relaxed mb-2">
+          <strong>Easner for Partners participants</strong> must:
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>Maintain accurate program and entity information and authorized integrators</li>
+          <li>Not misrepresent Easner as the bank or regulated provider</li>
+          <li>
+            For the Developer Model: protect credentials, respect rate limits, and comply with API use restrictions in the
+            commercial agreement
+          </li>
+        </ul>
         <p className="text-[#5F665F] leading-relaxed">
           We share information with partners and service providers only as needed to deliver the Services. We do not sell
           your personal information.
@@ -194,7 +260,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Payments, Settlement, and Reversals</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Once you confirm a transaction, it may be <strong>final and irreversible</strong> after processing — especially
+          Once you confirm a transaction, it may be <strong>final and irreversible</strong> after processing – especially
           on blockchain networks and certain partner settlement rails.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -337,8 +403,9 @@ export function TermsPolicyPage() {
           seek <strong>injunctive relief</strong> for unauthorized use or intellectual property abuse.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
-          <strong>Partner disputes:</strong>{" "}Claims arising solely from a partner&apos;s regulated services may be subject
-          to that partner&apos;s dispute process.
+          <strong>Partner disputes:</strong>{" "}Claims arising solely from a licensed partner&apos;s regulated services may be
+          subject to that partner&apos;s dispute process. Disputes with Easner relating to{" "}
+          <strong>Easner for Partners</strong> are handled under these Terms and any signed commercial agreement.
         </p>
       </section>
 

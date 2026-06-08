@@ -45,8 +45,9 @@ export function CompliancePolicyPage() {
           &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;) maintains a compliance program covering
           know-your-customer (<strong>KYC</strong>), know-your-business (<strong>KYB</strong>), and anti-money
           laundering (<strong>AML</strong>) obligations across <strong>Easner Mobile</strong> (
-          <strong>Easner Personal Banking</strong>) and <strong>Easner Business</strong> (
-          <strong>Easner Business Banking</strong>).
+          <strong>Easner Personal Banking</strong>), <strong>Easner Business</strong> (
+          <strong>Easner Business Banking</strong>), and <strong>Easner for Partners</strong> (Agency Model and
+          Developer Model).
         </p>
         <p className="text-[#5F665F] leading-relaxed mt-4">
           Easner is a financial technology company. Banking, payment, verification, and related regulated services
@@ -72,7 +73,7 @@ export function CompliancePolicyPage() {
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>AML</strong> comprises the laws, regulations, and controls designed to prevent money laundering,
-          terrorist financing, fraud, and other financial crime — including customer due diligence, sanctions
+          terrorist financing, fraud, and other financial crime – including customer due diligence, sanctions
           screening, transaction monitoring, recordkeeping, and reporting to authorities.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
@@ -84,8 +85,8 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">3. Supported Jurisdictions</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Access to Tier 1 global banking — including identity verification, virtual accounts, and fiat pay-in and
-          pay-out — depends on <strong>licensed partner</strong> eligibility rules and Easner product availability.
+          Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and
+          pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability.
           Countries offered at registration may reflect our current rollout.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Eligibility principles</h3>
@@ -132,6 +133,10 @@ export function CompliancePolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mt-4">
           Partner jurisdiction policies may change. We update our practices when material changes apply.
         </p>
+        <p className="text-[#5F665F] leading-relaxed mt-4">
+          <strong>Easner for Partners</strong> is available by invitation and commercial approval only. It is not
+          subject to the same self-serve jurisdiction list as Easner Mobile or Easner Business.
+        </p>
       </section>
 
       <section>
@@ -154,7 +159,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">5. Information We Collect</h2>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">
-          Annex A — Individual users (Easner Mobile / Easner Personal Banking)
+          Annex A – Individual users (Easner Mobile / Easner Personal Banking)
         </h3>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Full legal name, date of birth, nationality, and residential address</li>
@@ -165,7 +170,7 @@ export function CompliancePolicyPage() {
           <li>Verification status and related compliance metadata</li>
         </ul>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">
-          Annex B — Business users (Easner Business / Easner Business Banking)
+          Annex B – Business users (Easner Business / Easner Business Banking)
         </h3>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Legal name, registration number, jurisdiction, and business address</li>
@@ -177,6 +182,24 @@ export function CompliancePolicyPage() {
           <li>Authorized signatories and their identity verification</li>
           <li>Source of funds, expected volumes, and operational details</li>
           <li>Team members with access to the business account, where required for access control</li>
+        </ul>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">
+          Annex C – Easner for Partners program participants
+        </h3>
+        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+          <li>
+            Program operator legal entity, licensing or registration (where relevant for OTC/MTA or MSB-adjacent
+            activity), and jurisdictions of operation
+          </li>
+          <li>Beneficial owners, directors, and compliance officers</li>
+          <li>
+            Branded program scope (corridors, customer types, faith or nonprofit network structure where applicable)
+          </li>
+          <li>Agent, branch, or sub-participant structures for Agency deployments</li>
+          <li>API integration and operational details for Developer deployments</li>
+          <li>
+            Enhanced due diligence artifacts for higher-risk program types (volume, corridors, nested onboarding)
+          </li>
         </ul>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Document standards</h3>
         <p className="text-[#5F665F] leading-relaxed">
@@ -209,27 +232,27 @@ export function CompliancePolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">Easner&apos;s AML framework includes:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
-            <strong>Customer Due Diligence (CDD)</strong> — KYC/KYB before regulated services are used
+            <strong>Customer Due Diligence (CDD)</strong> – KYC/KYB before regulated services are used
           </li>
           <li>
-            <strong>Enhanced Due Diligence (EDD)</strong> — for PEPs, high-risk geographies, unusual activity, or
+            <strong>Enhanced Due Diligence (EDD)</strong> – for PEPs, high-risk geographies, unusual activity, or
             complex structures
           </li>
           <li>
-            <strong>Sanctions screening</strong> — of customers, beneficiaries, and transactions
+            <strong>Sanctions screening</strong> – of customers, beneficiaries, and transactions
           </li>
           <li>
-            <strong>Transaction monitoring</strong> — across fiat, stablecoin, and wallet activity where enabled
+            <strong>Transaction monitoring</strong> – across fiat, stablecoin, and wallet activity where enabled
           </li>
           <li>
-            <strong>Suspicious activity reporting</strong> — to relevant authorities when required
+            <strong>Suspicious activity reporting</strong> – to relevant authorities when required
           </li>
           <li>
-            <strong>Recordkeeping</strong> — typically <strong>5 to 7 years</strong> after account closure or last
+            <strong>Recordkeeping</strong> – typically <strong>5 to 7 years</strong> after account closure or last
             activity, or longer where mandated
           </li>
           <li>
-            <strong>Training and governance</strong> — for personnel with compliance responsibilities, in coordination
+            <strong>Training and governance</strong> – for personnel with compliance responsibilities, in coordination
             with licensed partners
           </li>
         </ul>
@@ -240,8 +263,10 @@ export function CompliancePolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Transaction monitoring</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We and our partners review activity for indicators such as unusual size or frequency, structuring,
-          inconsistent use versus profile, high-risk corridors, sanctions exposure, and — for business users — patterns
-          inconsistent with invoicing, Terminal, or QR Pay activity.
+          inconsistent use versus profile, high-risk corridors, sanctions exposure, and – for business users – patterns
+          inconsistent with invoicing, Terminal, or QR Pay activity – and, for <strong>Easner for Partners</strong>{" "}
+          program activity, volumes inconsistent with an approved program profile, unauthorized corridors, or end-user
+          patterns suggesting the partner is not performing required verification.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We may pause, decline, or request information about transactions pending compliance review.
@@ -250,7 +275,7 @@ export function CompliancePolicyPage() {
         <p className="text-[#5F665F] leading-relaxed">
           Where we or a partner identify potentially suspicious activity, a <strong>Suspicious Activity Report</strong>{" "}
           or equivalent filing may be made to the appropriate authority. <strong>We cannot inform you</strong>{" "}when such
-          a report is filed or an investigation is underway — this is required by law to prevent &quot;tipping
+          a report is filed or an investigation is underway – this is required by law to prevent &quot;tipping
           off.&quot;
         </p>
       </section>
@@ -261,17 +286,17 @@ export function CompliancePolicyPage() {
           headers={["Tier", "Description", "Typical requirement"]}
           rows={[
             [
-              "Tier 1 — Global banking",
+              "Tier 1 – Global banking",
               "USD/EUR accounts, pay-in/pay-out, stablecoin flows (and other currencies where enabled)",
               "Approved KYC or KYB",
             ],
             [
-              "Tier 2 — African banking",
+              "Tier 2 – African banking",
               "NGN and regional rails where launched",
               "Tier 1 plus additional eligibility",
             ],
             [
-              "Tier 3 — Cards",
+              "Tier 3 – Cards",
               "Personal or corporate cards when available",
               "Separate partner approval",
             ],
