@@ -73,26 +73,11 @@ export function TermsPolicyPage() {
           onboarding and approval.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Depending on your verification status, location, and product tier, the Services may include multi-currency
+          Depending on your verification status, location, and product approval, the Services may include multi-currency
           accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails,
-          invoicing and merchant collection tools, and card products when available.
+          invoicing and merchant collection tools, global and African banking where launched, and card products when
+          available.
         </p>
-        <p className="text-[#5F665F] leading-relaxed mb-4">
-          <strong>Service tiers:</strong>
-        </p>
-        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
-          <li>
-            <strong>Tier 1 – Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in
-            and pay-out, and stablecoin flows
-          </li>
-          <li>
-            <strong>Tier 2 – African banking:</strong> NGN and regional pay-in and pay-out where we launch
-          </li>
-          <li>
-            <strong>Tier 3 – Cards:</strong> Personal or corporate cards, spend controls, and cardholder management when
-            approved
-          </li>
-        </ul>
         <p className="text-[#5F665F] leading-relaxed">
           <strong>Important:</strong> Easner is a <strong>financial technology company, not a bank</strong>. Banking,
           payment, verification, and card services made available through the Services are provided by{" "}
@@ -170,10 +155,11 @@ export function TermsPolicyPage() {
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Digital asset and wallet services</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Where enabled, wallet and stablecoin features may be supported through infrastructure partners. This can include
-          stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through
-          approved corridors (primarily on <strong>Easner Business</strong>), and balance visibility tied to
-          partner-managed infrastructure.
+          Where enabled, wallet and stablecoin features may be supported through infrastructure partners on{" "}
+          <strong>Easner Mobile</strong> and <strong>Easner Business</strong>. This can include stablecoin deposit
+          addresses (for example USDC or EURC on supported networks), wallet-initiated sends through approved corridors,
+          and balance visibility tied to partner-managed infrastructure. On <strong>Easner Business</strong>, stablecoin
+          pay-in may also be available through invoicing, Terminal, and QR Pay where enabled.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Digital asset balances are <strong>not bank deposits</strong> and are not FDIC insured. Blockchain transactions
@@ -181,7 +167,7 @@ export function TermsPolicyPage() {
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Cards</h3>
         <p className="text-[#5F665F] leading-relaxed">
-          When Tier 3 cards are offered, they will be issued or facilitated by a <strong>licensed card program
+          When cards are offered, they will be issued or facilitated by a <strong>licensed card program
           partner</strong> under a separate cardholder or program agreement, subject to partner underwriting and
           jurisdiction.
         </p>
@@ -205,7 +191,7 @@ export function TermsPolicyPage() {
         </ul>
         <p className="text-[#5F665F] leading-relaxed">
           We may refuse, suspend, or close accounts that do not meet eligibility or compliance standards. Sanctions
-          screening applies to all users regardless of country. Currency, corridor, and tier availability depend on
+          screening applies to all users regardless of country. Currency, corridor, and feature availability depend on
           partners and your verification status.
         </p>
       </section>
@@ -279,7 +265,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">9. Compliance, Limits, and Holds</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Transaction limits, feature access, and corridor availability depend on verification tier, destination,
+          Transaction limits, feature access, and corridor availability depend on verification level, destination,
           partner rules, and your risk profile. We and our partners may delay, hold, decline, or request additional
           information to meet KYC, KYB, AML, and sanctions obligations. See our{" "}
           <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>.

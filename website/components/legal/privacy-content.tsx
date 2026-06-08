@@ -232,7 +232,7 @@ export function PrivacyPolicyPage() {
               "Wallet and key-management infrastructure, deposit addresses, and transaction signing",
             ],
             ["LI.FI", "Transaction routing and execution for permitted wallet sends (where enabled)"],
-            ["Yellowcard", "African payout corridors (where Tier 2 banking is launched)"],
+            ["Yellowcard", "African payout corridors (where launched)"],
           ]}
         />
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2 mt-6">Technology and support service providers</h3>

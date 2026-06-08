@@ -85,8 +85,8 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">3. Supported Jurisdictions</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and
-          pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability.
+          Access to global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out –
+          depends on <strong>licensed partner</strong> eligibility rules and Easner product availability.
           Countries offered at registration may reflect our current rollout.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Eligibility principles</h3>
@@ -127,8 +127,8 @@ export function CompliancePolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Other jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed">
           If your country is not listed above, you may be eligible subject to partner approval, successful
-          verification, sanctions screening, and Easner feature availability. <strong>Tier 2 (African banking)</strong>{" "}
-          and other products may impose additional limits when launched.
+          verification, sanctions screening, and Easner feature availability. <strong>African banking</strong> and other
+          products may impose additional limits when launched.
         </p>
         <p className="text-[#5F665F] leading-relaxed mt-4">
           Partner jurisdiction policies may change. We update our practices when material changes apply.
@@ -220,7 +220,7 @@ export function CompliancePolicyPage() {
           <li>Automated and, where needed, manual review is performed.</li>
           <li>Sanctions, PEP, and adverse media screening is conducted.</li>
           <li>You receive an outcome: approved, pending, rejected, or a request for more information.</li>
-          <li>Upon approval, eligible accounts, payment rails, and features are provisioned by tier.</li>
+          <li>Upon approval, eligible accounts, payment rails, and features are provisioned based on your verification outcome and product eligibility.</li>
         </ol>
         <p className="text-[#5F665F] leading-relaxed mt-4">
           Most verifications complete within <strong>1–3 business days</strong>. Complex cases may take longer.
@@ -281,22 +281,22 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Tier Entitlements</h2>
+        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Product Entitlements</h2>
         <PolicyTable
-          headers={["Tier", "Description", "Typical requirement"]}
+          headers={["Product", "Description", "Typical requirement"]}
           rows={[
             [
-              "Tier 1 – Global banking",
+              "Global banking",
               "USD/EUR accounts, pay-in/pay-out, stablecoin flows (and other currencies where enabled)",
               "Approved KYC or KYB",
             ],
             [
-              "Tier 2 – African banking",
+              "African banking",
               "NGN and regional rails where launched",
-              "Tier 1 plus additional eligibility",
+              "Approved KYC or KYB plus additional eligibility",
             ],
             [
-              "Tier 3 – Cards",
+              "Cards",
               "Personal or corporate cards when available",
               "Separate partner approval",
             ],
@@ -307,7 +307,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">9. Verification Outcomes and Limits</h2>
         <p className="text-[#5F665F] leading-relaxed mb-2">
-          <strong>Approved:</strong> You may use Services within your tier, limits, and partner availability.
+          <strong>Approved:</strong> You may use Services within your approved products, limits, and partner availability.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>Pending:</strong> Some features may be restricted until review completes.
