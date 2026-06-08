@@ -3,9 +3,9 @@ import { CONTACT_PATH } from "../constants"
 
 export const developersContent: ProductPageContent = {
   metadata: {
-    title: "Developers | Embedded Payments API & Global Money Rails",
+    title: "Developers | Embedded Payments API",
     description:
-      "Embed compliant global money rails via API. KYC/KYB, accounts, pay-in, FX quotes, payouts, collections, and webhooks – compliance built in.",
+      "Embed compliant global money rails via API. KYC/KYB, accounts, pay-in, payouts, collections, and webhooks with compliance built in.",
     keywords: [
       "stablecoin API",
       "embedded payments API",

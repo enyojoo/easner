@@ -4,7 +4,7 @@ import { DEFAULT_CTA_BAND } from "../shared-content"
 export const homeMetadata = {
   title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
   description:
-    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
+    "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
   keywords: [
     "stablecoin banking infrastructure",
     "cross-border payments",

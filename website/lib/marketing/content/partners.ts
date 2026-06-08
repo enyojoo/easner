@@ -3,9 +3,9 @@ import { CONTACT_PATH } from "../constants"
 
 export const partnersContent: ProductPageContent = {
   metadata: {
-    title: "Partners | White-Label OTC & Money Transfer Programs",
+    title: "Partners | White-Label OTC Programs",
     description:
-      "Launch branded cross-border products with Easner for Partners – OTC, remittance, and faith-based & nonprofit networks. Agency Model with compliance, corridors, and operational support.",
+      "Launch branded cross-border products with Easner for Partners. OTC, remittance, and faith-based networks with compliance and operational support.",
     keywords: [
       "white-label remittance",
       "OTC money transfer",

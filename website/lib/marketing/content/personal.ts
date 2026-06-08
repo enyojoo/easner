@@ -8,9 +8,9 @@ const storeCtas = [
 
 export const personalContent: ProductPageContent = {
   metadata: {
-    title: "Personal Banking | Global Send, Receive & Diaspora App",
+    title: "Personal Banking | Global Money App",
     description:
-      "Send and receive money across US, EU, and African corridors with Easner Mobile. Global banking in your hand for freelancers, diaspora, and remote workers.",
+      "Send and receive across US, EU, and African corridors with Easner Mobile. Global banking for freelancers, diaspora, and remote workers.",
     keywords: [
       "personal international transfers",
       "diaspora banking app",

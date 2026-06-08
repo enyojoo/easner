@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const cardsContent: ProductPageContent = {
   metadata: {
-    title: "Business Cards | Virtual & Physical Cards, Spend Controls",
+    title: "Business Cards | Virtual & Physical",
     description:
-      "Corporate and personal cards on Easner. Issue virtual and physical cards, set spend controls, manage cardholders, and reconcile spend with accounts and payouts.",
+      "Issue virtual and physical cards on Easner. Set spend controls, manage cardholders, and reconcile spend with accounts and payouts.",
     keywords: [
       "corporate cards global business",
       "virtual cards SME",

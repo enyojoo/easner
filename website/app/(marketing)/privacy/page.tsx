@@ -7,6 +7,7 @@ export const metadata = marketingMetadata({
     description:
       "How Easner Group, Inc. collects, uses, shares, and protects information across Easner Mobile, Easner Business, Easner for Partners, and easner.com.",
   },
+  path: "/privacy",
 })
 
 export default function PrivacyPage() {

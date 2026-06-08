@@ -3,8 +3,18 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { ImageResponse } from "next/og"
 
-export const OG_SIZE = { width: 1200, height: 630 } as const
+const OG_BASE_SIZE = { width: 1200, height: 630 } as const
+const OG_SCALE = 2
+
+export const OG_SIZE = {
+  width: OG_BASE_SIZE.width * OG_SCALE,
+  height: OG_BASE_SIZE.height * OG_SCALE,
+} as const
 export const OG_CONTENT_TYPE = "image/png"
+
+function scale(px: number) {
+  return px * OG_SCALE
+}
 
 const COLORS = {
   canvas: "#F6F3EB",
@@ -59,7 +69,7 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
     loadEasnerLogoDataUrl(),
   ])
 
-  const logoHeight = 44
+  const logoHeight = scale(44)
   const logoWidth = Math.round(logoHeight * (2295 / 500))
 
   const headlineLines = normalizeHeadline(headline)
@@ -92,7 +102,7 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
             flexDirection: "column",
             width: "100%",
             height: "100%",
-            padding: "56px 72px",
+            padding: `${scale(56)}px ${scale(72)}px`,
           }}
         >
           <img
@@ -113,16 +123,16 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
               flex: 1,
               flexDirection: "column",
               justifyContent: "center",
-              gap: 24,
+              gap: scale(24),
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: scale(4) }}>
               {headlineLines.map((line) => (
                 <div
                   key={line}
                   style={{
                     fontFamily: "Unbounded",
-                    fontSize: headlineLines.length > 1 ? 68 : 72,
+                    fontSize: scale(headlineLines.length > 1 ? 68 : 72),
                     fontWeight: 600,
                     lineHeight: 1.05,
                     letterSpacing: "-0.03em",
@@ -137,10 +147,10 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
               <div
                 style={{
                   fontFamily: "Inter",
-                  fontSize: 28,
+                  fontSize: scale(28),
                   lineHeight: 1.45,
                   color: COLORS.muted,
-                  maxWidth: 920,
+                  maxWidth: scale(920),
                 }}
               >
                 {subheadText}

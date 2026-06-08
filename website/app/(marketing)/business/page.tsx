@@ -2,7 +2,7 @@ import { ProductPageSections } from "@/components/marketing/product-page-section
 import { businessContent } from "@/lib/marketing/content/business"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata = marketingMetadata({ metadata: businessContent.metadata })
+export const metadata = marketingMetadata({ metadata: businessContent.metadata, path: "/business" })
 
 export default function BusinessPage() {
   return <ProductPageSections content={businessContent} />

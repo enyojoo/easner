@@ -13,6 +13,7 @@ import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata: Metadata = marketingMetadata({
   metadata: homeMetadata,
+  path: "/",
   titleAbsolute: homeMetadata.title,
 })
 

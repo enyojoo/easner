@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const invoicingContent: ProductPageContent = {
   metadata: {
-    title: "Invoicing | Global B2B Collections by Bank or Stablecoin",
+    title: "Invoicing | Global B2B Collections",
     description:
-      "Invoice globally and get paid by bank or stablecoin. Professional B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in.",
+      "Invoice globally and get paid by bank or stablecoin. B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in.",
     keywords: [
       "international invoicing",
       "invoice stablecoin pay-in",

@@ -4,7 +4,7 @@ import { ContactSupportNotice } from "@/components/marketing/contact-support-not
 import { contactMetadata } from "@/lib/marketing/content/contact"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata = marketingMetadata({ metadata: contactMetadata })
+export const metadata = marketingMetadata({ metadata: contactMetadata, path: "/contact" })
 
 export default function ContactPage() {
   return (

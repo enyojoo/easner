@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin Payments | Receive, Send, Terminal & QR Pay",
+    title: "Stablecoin | Receive, Send & QR Pay",
     description:
-      "Stablecoin speed with familiar banking screens on Easner Business. Receive, send, Terminal, and QR Pay – cross-border collections with compliance built in.",
+      "Stablecoin speed with familiar banking screens on Easner Business. Receive, send, Terminal, and QR Pay with compliance built in.",
     keywords: [
       "stablecoin payments infrastructure",
       "USDC business payments",

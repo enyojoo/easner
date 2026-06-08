@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
-    title: "Business Banking | Multi-Currency Accounts & Cross-Border Payouts",
+    title: "Business Banking | Multi-Currency & Payouts",
     description:
-      "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access – with KYC/KYB built in.",
+      "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, and team access with KYC/KYB built in.",
     keywords: [
       "business banking cross-border",
       "SME global payments",

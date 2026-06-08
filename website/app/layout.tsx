@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     template: "%s – Easner",
   },
   description:
-    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
+    "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
   keywords:
     "stablecoin banking infrastructure, cross-border payments, global business banking, Africa cross-border payments, diaspora banking, white-label remittance",
   formatDetection: { email: false, address: false, telephone: false },
+  applicationName: "Easner",
   metadataBase: new URL("https://www.easner.com"),
-  alternates: { canonical: "/" },
   icons: {
     icon: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
     shortcut: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     description:
-      "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
+      "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -40,9 +40,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@easnerbanking",
     title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     description:
-      "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
+      "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
     creator: "@easnerbanking",
   },
   robots: { index: true, follow: true },
