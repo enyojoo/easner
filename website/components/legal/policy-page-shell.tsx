@@ -38,11 +38,17 @@ export function PolicyPageShell({
   )
 }
 
-export function PolicyContactBlock() {
+export function PolicyContactBlock({ department }: { department?: string }) {
   return (
     <div className="mt-4 rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-5 text-sm leading-7 text-[#5F665F] sm:text-base">
       <p>
         <strong className="text-[#0F1110]">Easner Group, Inc.</strong>
+        {department ? (
+          <>
+            <br />
+            {department}
+          </>
+        ) : null}
         <br />
         584 Castro St, Suite 4092
         <br />
