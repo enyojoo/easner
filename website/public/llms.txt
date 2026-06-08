@@ -1,0 +1,31 @@
+# Easner
+
+> Cross-border banking, payouts, collections, cards, and stablecoin rails for businesses, individuals, and partners. Easner is a fintech company, not a bank.
+
+## Overview
+
+- [Home](https://www.easner.com/): Stablecoin-powered accounts, payouts, collections, cards, and partner programs
+- [Contact](https://www.easner.com/contact): Sales, demos, and partnership inquiries
+
+## Products
+
+- [Business Banking](https://www.easner.com/business): Multi-currency accounts, payouts, invoicing, and team access for cross-border operators
+- [Personal Banking](https://www.easner.com/personal): Global send and receive via Easner Mobile for freelancers, diaspora, and remote workers
+- [Stablecoin](https://www.easner.com/stablecoin): Receive, send, Terminal, and QR Pay with familiar banking screens
+- [Invoicing](https://www.easner.com/invoicing): Global B2B invoicing with bank or stablecoin pay-in
+- [Cards](https://www.easner.com/cards): Virtual and physical cards with spend controls on one ledger
+
+## Programs
+
+- [Partners](https://www.easner.com/partners): White-label OTC and remittance programs via the Agency Model
+- [Developers](https://www.easner.com/developers): Embedded payments API for KYC/KYB, accounts, pay-in, payouts, and webhooks
+
+## Legal
+
+- [Terms of Service](https://www.easner.com/terms): Terms for Easner Mobile, Easner Business, Easner for Partners, and related services
+- [Privacy Policy](https://www.easner.com/privacy): How Easner collects, uses, shares, and protects information
+- [KYC/KYB and AML Policy](https://www.easner.com/compliance): Verification, screening, and transaction controls
+
+## Optional
+
+- [Sitemap](https://www.easner.com/sitemap.xml): Full list of public pages
