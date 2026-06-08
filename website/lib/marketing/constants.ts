@@ -5,6 +5,16 @@ export const MARKETING_ASSET_BASE = `${BRAND_BASE_URL}/marketing`
 
 export const APP_STORE_URL = "#"
 export const PLAY_STORE_URL = "#"
+
+export const DOWNLOAD_PATH = "/download"
+
+export const TESTFLIGHT_URL =
+  process.env.NEXT_PUBLIC_TESTFLIGHT_URL ??
+  "https://testflight.apple.com/join/UHP5WvF7"
+
+export const ANDROID_APK_URL =
+  process.env.NEXT_PUBLIC_ANDROID_APK_URL ??
+  "https://kixymrjsupzkxokujmwu.supabase.co/storage/v1/object/public/brand/Easner%20Beta.apk"
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"
