@@ -249,7 +249,7 @@ export function CompliancePolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Suspicious activity reporting</h3>
         <p className="text-[#5F665F] leading-relaxed">
           Where we or a partner identify potentially suspicious activity, a <strong>Suspicious Activity Report</strong>{" "}
-          or equivalent filing may be made to the appropriate authority. <strong>We cannot inform you</strong> when such
+          or equivalent filing may be made to the appropriate authority. <strong>We cannot inform you</strong>{" "}when such
           a report is filed or an investigation is underway — this is required by law to prevent &quot;tipping
           off.&quot;
         </p>

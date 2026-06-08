@@ -14,13 +14,13 @@ const unbounded = Unbounded({
 
 export const metadata: Metadata = {
   title: {
-    default: "Easner – Stablecoin Banking for Global Businesses",
+    default: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     template: "%s – Easner",
   },
   description:
-    "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs – banking-simple UX with compliance built in.",
+    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
   keywords:
-    "stablecoin banking infrastructure, cross-border payments, global business banking, international money transfer, business banking, global payments",
+    "stablecoin banking infrastructure, cross-border payments, global business banking, Africa cross-border payments, diaspora banking, white-label remittance",
   formatDetection: { email: false, address: false, telephone: false },
   metadataBase: new URL("https://www.easner.com"),
   alternates: { canonical: "/" },
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
     apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
   },
   openGraph: {
-    title: "Easner – Stablecoin Banking for Global Businesses",
+    title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     description:
-      "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
+      "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Easner – Stablecoin Banking for Global Businesses",
+    title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     description:
-      "Compliant global money movement for businesses and individuals. Multi-currency accounts, payouts, invoicing, stablecoin rails, and APIs.",
+      "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
     creator: "@easnerbanking",
   },
   robots: { index: true, follow: true },

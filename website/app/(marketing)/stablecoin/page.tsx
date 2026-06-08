@@ -1,12 +1,8 @@
-import type { Metadata } from "next"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
+import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata: Metadata = {
-  title: stablecoinContent.metadata.title,
-  description: stablecoinContent.metadata.description,
-  keywords: stablecoinContent.metadata.keywords,
-}
+export const metadata = marketingMetadata({ metadata: stablecoinContent.metadata })
 
 export default function StablecoinPage() {
   return <ProductPageSections content={stablecoinContent} />

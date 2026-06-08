@@ -1,17 +1,10 @@
-import type { Metadata } from "next"
 import { ContactHero } from "@/components/marketing/contact-hero"
 import { ContactBooking } from "@/components/marketing/contact-booking"
 import { ContactSupportNotice } from "@/components/marketing/contact-support-notice"
 import { contactMetadata } from "@/lib/marketing/content/contact"
+import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata: Metadata = {
-  title: contactMetadata.title,
-  description: contactMetadata.description,
-  keywords: contactMetadata.keywords,
-  openGraph: {
-    description: contactMetadata.description,
-  },
-}
+export const metadata = marketingMetadata({ metadata: contactMetadata })
 
 export default function ContactPage() {
   return (

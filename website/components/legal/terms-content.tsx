@@ -97,7 +97,7 @@ export function TermsPolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Business (Easner Business Banking)</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           For businesses, the Services may include organization onboarding, team access controls, payouts,
-          multi-currency accounts, <strong>collections</strong> (invoicing, payment terminal, and QR Pay where enabled),
+          multi-currency accounts, <strong>collections</strong>{" "}(invoicing, payment terminal, and QR Pay where enabled),
           customer directory, and reporting. The account owner is responsible for authorized users&apos; actions.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Partner-provided financial services</h3>
@@ -337,7 +337,7 @@ export function TermsPolicyPage() {
           seek <strong>injunctive relief</strong> for unauthorized use or intellectual property abuse.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
-          <strong>Partner disputes:</strong> Claims arising solely from a partner&apos;s regulated services may be subject
+          <strong>Partner disputes:</strong>{" "}Claims arising solely from a partner&apos;s regulated services may be subject
           to that partner&apos;s dispute process.
         </p>
       </section>

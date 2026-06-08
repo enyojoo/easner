@@ -1,30 +1,36 @@
 import type { ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
 
-export const apisContent: ProductPageContent = {
+export const developersContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin API Infrastructure",
+    title: "Developers | Embedded Payments API & Global Money Rails",
     description:
-      "Embed compliant global money rails in your app. Easner APIs for KYC/KYB, accounts, pay-in, FX quotes, payouts, collections, and webhooks.",
+      "Embed compliant global money rails via API. KYC/KYB, accounts, pay-in, FX quotes, payouts, collections, and webhooks – compliance built in.",
     keywords: [
       "stablecoin API",
       "embedded payments API",
       "fintech infrastructure API",
+      "embedded finance API",
+      "cross-border payout API",
+      "remittance API",
     ],
   },
   hero: {
     h1: "Compliant rails in your product",
     subhead:
-      "Easner APIs give fintechs, marketplaces, and platforms the same stablecoin banking stack behind Easner Personal and Business – verification, accounts, pay-in, payouts, collections, and webhooks with compliance built in.",
+      "The Developer Model gives fintechs, marketplaces, and platforms API access to Easner's stablecoin banking stack – verification, accounts, pay-in, payouts, collections, and webhooks with compliance built in.",
     visualSlot: "mkt-hero-apis-01",
     altText: "Developer reviewing Easner API documentation on dual monitors",
-    ctas: [{ label: "Talk to our team", href: CONTACT_PATH }],
+    ctas: [
+      { label: "Talk to our team", href: CONTACT_PATH },
+      { label: "Agency Model", href: "/partners" },
+    ],
   },
   integrationStepsHeadline: "From first API call to live money movement",
   integrationSteps: [
     {
       title: "Onboard your platform",
-      description: "Get API credentials and sandbox access with our team.",
+      description: "Get API credentials and sandbox access during commercial onboarding with our team.",
     },
     {
       title: "Verify end users",
@@ -76,33 +82,19 @@ export const apisContent: ProductPageContent = {
   extraSections: [
     {
       headline: "Built for developers who ship",
-      body: "Authenticated REST APIs, signed webhooks, and a developer workspace for keys, events, and logs – provisioned during commercial onboarding.",
+      body: "Authenticated REST APIs, signed webhooks, and a developer workspace for keys, events, and logs – sandbox and API reference provided during commercial onboarding. After onboarding, access the in-app developer workspace in Easner Business at /developers.",
       bullets: [
         "Scoped API keys for server-to-server calls",
         "Sandbox for verification, pay-in, payout, and webhook flows",
         "Signed webhook payloads for backend verification",
       ],
       visualSlot: "mkt-ui-api-dev-panel",
-      altText: "Easner developer panel showing API keys, webhook configuration, and event log",
-    },
-  ],
-  commercialModels: [
-    {
-      title: "Agency / white-label",
-      description:
-        "Branded setup, infrastructure maintenance, and volume-based processing – embed Easner as your banking layer.",
-      icon: "mkt-icon-api-agency",
-    },
-    {
-      title: "API integration",
-      description:
-        "Platform access and API fees on volume – for teams building custom experiences on Easner rails.",
-      icon: "mkt-icon-api-integration",
+      altText: "Easner developer workspace showing API keys, webhooks, and event logs",
     },
   ],
   useCasesHeadline: "Built for platforms that move money",
   useCasesSubhead:
-    "Easner APIs for products that need embedded accounts, cross-border pay-in and payout, and compliance without building a banking stack from scratch.",
+    "Develop products that need embedded accounts, cross-border pay-in and payout, and compliance without building a banking stack from scratch.",
   useCases: [
     {
       title: "Fintech apps",
@@ -112,17 +104,12 @@ export const apisContent: ProductPageContent = {
     {
       title: "Marketplaces",
       description:
-        "Pay sellers and collect from buyers across borders – one ledger for platform pay-in and corridor payouts.",
+        "Pay sellers and collect from buyers across borders – one ledger for platform pay-in and corridor payouts with our API integration.",
     },
     {
       title: "SME platforms",
       description:
         "Give your customers embedded accounts, invoicing, and collections without standing up separate payment infrastructure.",
-    },
-    {
-      title: "Agencies",
-      description:
-        "White-label banking for a vertical or corridor – branded setup on Easner with agency commercial terms.",
     },
     {
       title: "Global trade platforms",
@@ -134,10 +121,15 @@ export const apisContent: ProductPageContent = {
       description:
         "Quote FX, route corridor payouts, and reconcile pay-in and disbursement flows with webhooks and reporting APIs.",
     },
+    {
+      title: "Embedded finance providers",
+      description:
+        "Ship accounts, verification, and cross-border pay-in and payout inside your product – compliance and webhooks built in.",
+    },
   ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",
-    subhead: "Talk to Easner about API access, agency models, and embedded global money movement.",
+    subhead: "Talk to Easner about the Developer Model and embedded global money movement.",
     ctas: [{ label: "Talk to our team", href: CONTACT_PATH }],
   },
 }

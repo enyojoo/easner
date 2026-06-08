@@ -9,18 +9,12 @@ import { CorridorStory } from "@/components/marketing/corridor-story"
 import { ComplianceStrip } from "@/components/marketing/compliance-strip"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { homeMetadata, homeCtaBand } from "@/lib/marketing/content/home"
+import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata: Metadata = {
-  title: {
-    absolute: homeMetadata.title,
-  },
-  description: homeMetadata.description,
-  keywords: homeMetadata.keywords,
-  openGraph: {
-    title: homeMetadata.title,
-    description: homeMetadata.description,
-  },
-}
+export const metadata: Metadata = marketingMetadata({
+  metadata: homeMetadata,
+  titleAbsolute: homeMetadata.title,
+})
 
 export default function HomePage() {
   return (

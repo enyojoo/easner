@@ -287,7 +287,7 @@ export function PrivacyPolicyPage() {
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           For account holder data, <strong>Easner Group, Inc.</strong> is the controller. For invoice or payer data
-          submitted by business users, Easner typically acts as a <strong>processor</strong> on the business user&apos;s
+          submitted by business users, Easner typically acts as a <strong>processor</strong>{" "}on the business user&apos;s
           behalf.
         </p>
       </section>

@@ -1,22 +1,24 @@
 import type { CardItem, Cta, FaqItem } from "../types"
-import { APP_STORE_URL, BUSINESS_SIGNUP_URL, CONTACT_PATH, PLAY_STORE_URL } from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
-  title: "Easner – Stablecoin Banking for Global Businesses",
+  title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
   description:
-    "Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.",
+    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is a fintech company, not a bank.",
   keywords: [
     "stablecoin banking infrastructure",
     "cross-border payments",
     "global business banking",
+    "Africa cross-border payments",
+    "diaspora banking",
+    "white-label remittance",
   ],
 }
 
 export const homeHero = {
   h1Lines: ["Global banking,", "Simplified."],
   subhead:
-    "Stablecoin-powered accounts, payouts, collections, cards, and APIs. Familiar banking screens with compliance built in.",
+    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Hold USD and EUR, pay out across Africa and global corridors. Familiar banking screens with compliance built in.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [
@@ -62,10 +64,7 @@ export const solutionsPersonas = [
     body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking.",
     visualSlot: "mkt-persona-diaspora",
     altText: "Remote professional using Easner on mobile",
-    ctas: [
-      { label: "App Store", href: APP_STORE_URL, store: "app-store" },
-      { label: "Google Play", href: PLAY_STORE_URL, store: "google-play" },
-    ] satisfies Cta[],
+    ctas: [{ label: "Explore Personal Banking", href: "/personal" }] satisfies Cta[],
   },
   {
     id: "sme",
@@ -74,18 +73,25 @@ export const solutionsPersonas = [
     body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking.",
     visualSlot: "mkt-persona-sme",
     altText: "Small business owner managing international payments",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }] satisfies Cta[],
+    ctas: [{ label: "Explore Business Banking", href: "/business" }] satisfies Cta[],
+  },
+  {
+    id: "otc",
+    label: "OTC and money transfer agents",
+    headline: "Compliant transfers under your brand.",
+    body: "Run OTC and money transfer flows on Easner infrastructure under the hood. Move away from undocumented transactions with a built-in compliance and a full audit trail on transfers.",
+    visualSlot: "mkt-persona-otc",
+    altText: "Money transfer agent at service counter",
+    ctas: [{ label: "Explore Partners", href: "/partners" }] satisfies Cta[],
   },
   {
     id: "dev",
     label: "Developers and platforms",
-    headline: "Embed global rails without building compliance.",
-    body: "Build with Easner APIs for verification, accounts, payouts, wallets, and collections, then focus your roadmap on the customer experience.",
+    headline: "Embed global rails. Compliance included.",
+    body: "Build with Easner's embedded payments API for verification, accounts, payouts, wallets, and collections, then focus your roadmap on the customer experience.",
     visualSlot: "mkt-persona-dev",
     altText: "Developer integrating payments API",
-    ctas: [
-      { label: "Talk to our team", href: CONTACT_PATH },
-    ] satisfies Cta[],
+    ctas: [{ label: "Explore Developers", href: "/developers" }] satisfies Cta[],
   },
 ]
 
@@ -109,12 +115,12 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Do I need to understand crypto to use Easner?",
     answer:
-      "No. Easner is designed around banking-simple screens. Stablecoin infrastructure may power settlement behind the scenes.",
+      "No. Easner is designed around familiar banking screens. Stablecoin infrastructure may power settlement behind the scenes.",
   },
   {
     question: "What products does Easner offer?",
     answer:
-      "Easner Personal (mobile app for individuals), Easner Business (web dashboard for organizations), and Easner APIs for developers and platforms.",
+      "Easner Personal Banking (Easner Mobile), Easner Business Banking (Easner Business), and Easner for Partners (Agency Model and Developer Model).",
   },
   {
     question: "Are fees zero?",

@@ -8,13 +8,16 @@ const storeCtas = [
 
 export const personalContent: ProductPageContent = {
   metadata: {
-    title: "Personal Banking",
+    title: "Personal Banking | Global Send, Receive & Diaspora App",
     description:
-      "Global banking in your pocket. Send and receive money across US, EU, and African corridors with Easner Personal.",
+      "Send and receive money across US, EU, and African corridors with Easner Mobile. Global banking in your pocket for freelancers, diaspora, and remote workers.",
     keywords: [
       "personal international transfers",
       "diaspora banking app",
       "global mobile banking",
+      "send money to Africa",
+      "international money transfer app",
+      "freelancer global payments",
     ],
   },
   hero: {
@@ -78,7 +81,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Expats",
       description:
-        "Manage money between your host country and home – send, receive, and review activity in one place.",
+        "Manage money between your host country and home – send, receive, and spend money in one place.",
     },
     {
       title: "Cross-border gig workers",

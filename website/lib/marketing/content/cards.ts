@@ -1,31 +1,34 @@
 import type { ProductPageContent } from "../types"
+import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const cardsContent: ProductPageContent = {
   metadata: {
-    title: "Cards",
+    title: "Business Cards | Virtual & Physical Cards, Spend Controls",
     description:
-      "Corporate and personal cards on Easner. Issue virtual and physical cards, set spend controls, manage cardholders, and reconcile card spend alongside accounts and payouts.",
+      "Corporate and personal cards on Easner. Issue virtual and physical cards, set spend controls, manage cardholders, and reconcile spend with accounts and payouts.",
     keywords: [
       "corporate cards global business",
       "virtual cards SME",
       "spend controls",
       "business expense cards",
+      "global corporate cards",
+      "virtual cards cross-border",
     ],
   },
   hero: {
-    h1: "Cards for payment",
+    h1: "Virtual and physical cards, one ledger",
     subhead:
-      "Issue virtual and physical cards, set spend policies, manage cardholders, and see every transaction in the same ledger as your accounts and payouts.",
+      "Issue cards on Easner Business or Easner Mobile. Set spend controls, manage cardholders, and see every purchase in the same ledger as your accounts and payouts.",
     visualSlot: "mkt-hero-cards-01",
     altText: "Easner virtual and physical payment cards in the Business dashboard",
-    ctas: [{ label: "Open Account", href: "#", action: "open-account" }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
   },
   featuresLayout: "bento",
   features: [
     {
       title: "Virtual and physical cards",
       description:
-        "Issue virtual cards for instant access or ship physical cards to cardholders – from Easner Business or Easner Personal.",
+        "Issue virtual cards when available or ship physical cards to cardholders – from Easner Business or Easner Mobile.",
       visualSlot: "mkt-ui-cards-issue",
       altText: "Easner issue card flow with virtual and physical options",
     },
@@ -88,7 +91,7 @@ export const cardsContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Add cards to your Easner account",
-    subhead: "Corporate cards on Business. Personal cards on the mobile app.",
-    ctas: [{ label: "Open Account", href: "#", action: "open-account" }],
+    subhead: "Corporate cards on Easner Business. Personal cards on Easner Mobile.",
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
   },
 }

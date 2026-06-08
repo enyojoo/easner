@@ -3,6 +3,7 @@ import { BRAND_BASE_URL } from "./constants"
 import freelancerPhoto from "@/assets/Freelancer.jpg"
 import smePhoto from "@/assets/Sme.jpg"
 import developerPhoto from "@/assets/Developer.jpg"
+import otcAgentPhoto from "@/assets/otcagent.jpg"
 import personalHeroPhoto from "@/assets/personalhero.png"
 import sendMoneyPhoto from "@/assets/sendmoney.png"
 import receiveMoneyPhoto from "@/assets/receivemoney.png"
@@ -22,6 +23,7 @@ const INTERIM_FALLBACKS: Record<string, MarketingAsset> = {
   "mkt-persona-diaspora": freelancerPhoto,
   "mkt-persona-sme": smePhoto,
   "mkt-persona-dev": developerPhoto,
+  "mkt-persona-otc": otcAgentPhoto,
 }
 
 const ASSET_OBJECT_POSITION: Record<string, string> = {
@@ -29,6 +31,7 @@ const ASSET_OBJECT_POSITION: Record<string, string> = {
   "mkt-persona-diaspora": "50% 38%",
   "mkt-persona-sme": "50% 22%",
   "mkt-persona-dev": "50% 42%",
+  "mkt-persona-otc": "50% 35%",
 }
 
 export type MarketingVisualKind =
@@ -44,6 +47,7 @@ export type MarketingVisualKind =
   | "qr"
   | "compliance"
   | "persona"
+  | "partners"
   | "icon"
 
 const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
@@ -86,6 +90,13 @@ const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
   "mkt-ui-api-payouts": "api",
   "mkt-ui-api-webhooks": "api",
   "mkt-ui-api-dev-panel": "api",
+  "mkt-hero-partners-01": "partners",
+  "mkt-ui-partners-branded": "partners",
+  "mkt-ui-partners-compliance": "partners",
+  "mkt-ui-partners-rails": "partners",
+  "mkt-ui-partners-operations": "partners",
+  "mkt-ui-partners-agency": "partners",
+  "mkt-ui-partners-faith": "partners",
   "mkt-thumb-apis": "icon",
   "mkt-thumb-stablecoin": "icon",
   "mkt-thumb-invoicing": "icon",
@@ -103,6 +114,9 @@ const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
   "mkt-persona-diaspora": "persona",
   "mkt-persona-sme": "persona",
   "mkt-persona-dev": "persona",
+  "mkt-persona-otc": "persona",
+  "mkt-hero-developers-01": "api",
+  "mkt-thumb-partners": "icon",
 }
 
 const PERSONAL_MOBILE_SLOTS = new Set([

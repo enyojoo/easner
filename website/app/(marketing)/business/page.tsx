@@ -1,12 +1,8 @@
-import type { Metadata } from "next"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { businessContent } from "@/lib/marketing/content/business"
+import { marketingMetadata } from "@/lib/marketing/metadata"
 
-export const metadata: Metadata = {
-  title: businessContent.metadata.title,
-  description: businessContent.metadata.description,
-  keywords: businessContent.metadata.keywords,
-}
+export const metadata = marketingMetadata({ metadata: businessContent.metadata })
 
 export default function BusinessPage() {
   return <ProductPageSections content={businessContent} />

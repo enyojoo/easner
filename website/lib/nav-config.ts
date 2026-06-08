@@ -36,5 +36,6 @@ export const NAV_SECTIONS: NavSection[] = [
 
 export const NAV_LINKS: NavLink[] = [
   { label: "Stablecoin", href: "/stablecoin", icon: "coins" },
-  { label: "Developers", href: "/apis", icon: "code" },
+  { label: "Partners", href: "/partners", icon: "briefcase" },
+  { label: "Developers", href: "/developers", icon: "code" },
 ]

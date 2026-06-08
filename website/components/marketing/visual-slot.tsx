@@ -5,6 +5,7 @@ import type { ReactNode } from "react"
 import {
   ArrowRightLeft,
   Banknote,
+  Briefcase,
   CheckCircle2,
   Clock3,
   Code2,
@@ -12,6 +13,7 @@ import {
   CreditCard,
   FileText,
   Globe2,
+  HandHeart,
   Landmark,
   LockKeyhole,
   QrCode,
@@ -51,6 +53,7 @@ const iconByAsset = {
   "mkt-thumb-personal": Smartphone,
   "mkt-thumb-business": Landmark,
   "mkt-thumb-apis": Code2,
+  "mkt-thumb-partners": Briefcase,
   "mkt-thumb-stablecoin": ArrowRightLeft,
   "mkt-thumb-invoicing": ReceiptText,
   "mkt-thumb-cards": CreditCard,
@@ -164,6 +167,14 @@ export function VisualSlot({
     return (
       <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <ApiMockup assetId={assetId} compact={compact} fill={fill} />
+      </MockupFrame>
+    )
+  }
+
+  if (kind === "partners") {
+    return (
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
+        <PartnersMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
   }
@@ -1662,6 +1673,341 @@ function ApiDevPanelMockup({ compact, fill = false }: { compact: boolean; fill?:
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersMockup({ assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
+  if (assetId.includes("faith")) {
+    return <PartnersFaithMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("agency")) {
+    return <PartnersAgencyMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("compliance")) {
+    return <PartnersComplianceMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("rails")) {
+    return <PartnersRailsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("operations")) {
+    return <PartnersOperationsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("branded")) {
+    return <PartnersBrandedMockup compact={compact} fill={fill} />
+  }
+  return <PartnersHeroMockup compact={compact} fill={fill} />
+}
+
+function PartnersHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const transactions = [
+    { ref: "TXN-4821", corridor: "USD → NGN", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+    { ref: "TXN-4819", corridor: "EUR → GHS", status: "Screening", tone: "text-[#B45309] bg-[#FEF3C7]" },
+    { ref: "TXN-4816", corridor: "GBP → KES", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, true, fill), "overflow-hidden p-0")}>
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
+            Acme Remittance · Partner portal
+          </div>
+        </div>
+        <div className={MOCKUP_DASHBOARD_GRID}>
+          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#007ACC] text-[10px] font-bold text-white">
+                AR
+              </div>
+              <div className="text-[11px] font-semibold text-[#0F1110]">Acme Remittance</div>
+            </div>
+            {["Counter", "Transactions", "Compliance", "Reports"].map((item, index) => (
+              <div
+                key={item}
+                className={cn(
+                  "mb-1.5 rounded-xl px-2.5 py-2 text-[11px]",
+                  index === 0 ? "bg-[#EAF5FD] font-semibold text-[#007ACC]" : "text-[#6F756F]"
+                )}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+          <div className={cn("flex min-h-0 flex-col p-3 sm:p-4", fill && "overflow-hidden")}>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">OTC counter</div>
+                <div className="mt-0.5 text-sm font-semibold text-[#0F1110] sm:text-base">Today&apos;s transfers</div>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-[#E8F7F0] px-2 py-1 text-[10px] font-semibold text-[#0F8A5F]">
+                <ShieldCheck className="h-3 w-3" />
+                Compliant
+              </div>
+            </div>
+            <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-hidden">
+              {(compact ? transactions.slice(0, 2) : transactions).map((txn) => (
+                <div key={txn.ref} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-white px-3 py-2.5">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#0F1110]">{txn.ref}</div>
+                    <div className="text-[10px] text-[#6F756F]">{txn.corridor}</div>
+                  </div>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", txn.tone)}>{txn.status}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-auto rounded-xl border border-[#BFE3FA] bg-[#EAF5FD] px-3 py-2 text-[10px] text-[#0A2540]">
+              Powered by Easner · audit trail on every transfer
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersBrandedMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-3" : "p-4")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Branded deployment</div>
+            <div className="mt-1 text-sm font-semibold text-[#0F1110]">Your name, your customers</div>
+          </div>
+          <Briefcase className="h-5 w-5 text-[#007ACC]" />
+        </div>
+        <div className="mt-3 rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Partner brand</div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#007ACC] text-xs font-bold text-white">
+              YB
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#0F1110]">YourBrand Remittance</div>
+              <div className="text-[10px] text-[#6F756F]">portal.yourbrand.com</div>
+            </div>
+          </div>
+        </div>
+        {!compact && (
+          <div className="mt-2.5 flex items-center gap-2 rounded-xl bg-[#E8F7F0] px-3 py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#0F8A5F]" />
+            <span className="text-[11px] font-medium text-[#0F8A5F]">Live on Easner infrastructure</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PartnersComplianceMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const checks = [
+    { label: "KYC verified", status: "Pass" },
+    { label: "AML screening", status: "Pass" },
+    { label: "Sanctions check", status: "Pass" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), "overflow-hidden p-0")}>
+        <div className="flex h-9 items-center justify-between bg-[#0F1110] px-3.5">
+          <span className="text-[10px] font-semibold text-white/80">Compliance queue</span>
+          <ShieldCheck className="h-4 w-4 text-[#3AA6F8]" />
+        </div>
+        <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-4")}>
+          <div className="text-sm font-semibold text-[#0F1110]">TXN-4821 · audit trail</div>
+          <div className="mt-3 space-y-2">
+            {(compact ? checks.slice(0, 2) : checks).map((check) => (
+              <div key={check.label} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2">
+                <span className="text-[11px] font-medium text-[#0F1110]">{check.label}</span>
+                <span className="rounded-full bg-[#E8F7F0] px-2 py-0.5 text-[10px] font-semibold text-[#0F8A5F]">
+                  {check.status}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-auto rounded-xl border border-[#BFE3FA] bg-[#EAF5FD] px-3 py-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#007ACC]">Full audit trail</div>
+            <div className="mt-1 text-[11px] text-[#0A2540]">Every transfer documented and reviewable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersRailsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const corridors = [
+    { route: "USD → NGN", volume: "$124k" },
+    { route: "EUR → GHS", volume: "€86k" },
+    { route: "GBP → KES", volume: "£42k" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-3" : "p-4")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Global rails</div>
+            <div className="mt-1 text-sm font-semibold text-[#0F1110]">Corridor connectivity</div>
+          </div>
+          <Globe2 className="h-5 w-5 text-[#007ACC]" />
+        </div>
+        <div className="mt-3 space-y-2">
+          {(compact ? corridors.slice(0, 2) : corridors).map((corridor) => (
+            <div key={corridor.route} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="h-3.5 w-3.5 text-[#007ACC]" />
+                <span className="text-[11px] font-semibold text-[#0F1110]">{corridor.route}</span>
+              </div>
+              <span className="text-[10px] font-medium text-[#6F756F]">{corridor.volume}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersOperationsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const systems = [
+    { name: "Infrastructure", status: "Healthy" },
+    { name: "Provider connectivity", status: "Active" },
+    { name: "Partner support", status: "On call" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-3" : "p-4")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Operations</div>
+            <div className="mt-1 text-sm font-semibold text-[#0F1110]">Ongoing partner support</div>
+          </div>
+          <Clock3 className="h-5 w-5 text-[#007ACC]" />
+        </div>
+        <div className="mt-3 space-y-2">
+          {(compact ? systems.slice(0, 2) : systems).map((system) => (
+            <div key={system.name} className="flex items-center justify-between rounded-xl bg-[#F8F6F0] px-3 py-2.5">
+              <span className="text-[11px] font-medium text-[#0F1110]">{system.name}</span>
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#0F8A5F]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#0F8A5F]" />
+                {system.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersFaithMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const gifts = [
+    { label: "Diaspora offering", corridor: "USD → NGN", amount: "$12,400", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+    { label: "Mission support", corridor: "EUR → KES", amount: "€8,200", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+    { label: "Branch payout", corridor: "GBP → GHS", amount: "£3,600", status: "Processing", tone: "text-[#B45309] bg-[#FEF3C7]" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, true, fill), "overflow-hidden p-0")}>
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
+            Grace Network · Giving portal
+          </div>
+        </div>
+        <div className={MOCKUP_DASHBOARD_GRID}>
+          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#6B4E9B] text-[10px] font-bold text-white">
+                GN
+              </div>
+              <div className="text-[11px] font-semibold text-[#0F1110]">Grace Network</div>
+            </div>
+            {["Diaspora giving", "Mission payouts", "Branches", "Compliance"].map((item, index) => (
+              <div
+                key={item}
+                className={cn(
+                  "mb-1.5 rounded-xl px-2.5 py-2 text-[11px]",
+                  index === 0 ? "bg-[#F3EEFB] font-semibold text-[#6B4E9B]" : "text-[#6F756F]"
+                )}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+          <div className={cn("flex min-h-0 flex-col p-3 sm:p-4", fill && "overflow-hidden")}>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Diaspora giving</div>
+                <div className="mt-0.5 text-sm font-semibold text-[#0F1110] sm:text-base">This month</div>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-[#F3EEFB] px-2 py-1 text-[10px] font-semibold text-[#6B4E9B]">
+                <HandHeart className="h-3 w-3" />
+                Branded
+              </div>
+            </div>
+            <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-hidden">
+              {(compact ? gifts.slice(0, 2) : gifts).map((gift) => (
+                <div key={gift.label} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-white px-3 py-2.5">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#0F1110]">{gift.label}</div>
+                    <div className="text-[10px] text-[#6F756F]">
+                      {gift.corridor} · {gift.amount}
+                    </div>
+                  </div>
+                  <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", gift.tone)}>{gift.status}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-auto rounded-xl border border-[#E9D8F5] bg-[#F3EEFB] px-3 py-2 text-[10px] text-[#4A3568]">
+              Your organization&apos;s name · audit trail on every transfer
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PartnersAgencyMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const layers = [
+    { label: "Your brand & customers", tone: "border-[#007ACC] bg-[#EAF5FD] text-[#007ACC]" },
+    { label: "Easner orchestration & compliance", tone: "border-[#E9E4D8] bg-[#F8F6F0] text-[#0F1110]" },
+    { label: "Banking, wallet & payout rails", tone: "border-[#0F1110] bg-[#0F1110] text-white" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, true, fill), compact ? "p-3" : "p-4")}>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Agency Model</div>
+        <div className="mt-1 text-sm font-semibold text-[#0F1110] sm:text-base">Branded layer on Easner</div>
+        <div className="mt-4 space-y-2.5">
+          {layers.map((layer, index) => (
+            <div key={layer.label} className="relative">
+              <div className={cn("rounded-xl border px-3 py-3 text-center text-[11px] font-semibold sm:text-xs", layer.tone)}>
+                {layer.label}
+              </div>
+              {index < layers.length - 1 && (
+                <div className="mx-auto my-1 h-3 w-px bg-[#D9D4C7]" aria-hidden />
+              )}
+            </div>
+          ))}
+        </div>
+        {!compact && (
+          <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[#6F756F]">
+            <Users2 className="h-3.5 w-3.5" />
+            Full-stack deployment · not a DIY integration
+          </div>
+        )}
       </div>
     </div>
   )

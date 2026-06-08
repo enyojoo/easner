@@ -25,7 +25,7 @@ export const COMPLIANCE_STRIP = {
 export const DEFAULT_CTA_BAND: CtaBandContent = {
   headline: "Ready to move money globally?",
   subhead:
-    "Open an Easner account, or talk to us about building on Easner APIs.",
+    "Open an Easner account, or talk to us about Easner for Partners.",
   ctas: [
     { label: "Open Account", href: "#", action: "open-account" },
     { label: "Contact", href: CONTACT_PATH },
@@ -86,11 +86,11 @@ export const PRODUCT_CARDS: CardItem[] = [
     icon: "mkt-thumb-business",
   },
   {
-    title: "Developer APIs",
+    title: "OTC & Remittance",
     description:
-      "Embed accounts, payouts, wallets, collections, and compliance-ready workflows in your product.",
-    link: "/apis",
-    icon: "mkt-thumb-apis",
+      "Launch branded cross-border products with compliance, corridors, and operational support.",
+    link: "/partners",
+    icon: "mkt-thumb-partners",
   },
 ]
 
@@ -112,7 +112,7 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Cards",
     description:
-      "Corporate and personal cards with spend controls, cardholder management, and reporting built in",
+      "Corporate and personal cards with spend controls, cardholder management, and reporting built in.",
     link: "/cards",
     icon: "mkt-thumb-cards",
   },

@@ -3,19 +3,21 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin Payments",
+    title: "Stablecoin Payments | Receive, Send, Terminal & QR Pay",
     description:
-      "Stablecoin speed on Easner. Receive, send, Terminal, and QR Pay flows.",
+      "Stablecoin speed with familiar banking screens on Easner Business. Receive, send, Terminal, and QR Pay – cross-border collections with compliance built in.",
     keywords: [
       "stablecoin payments infrastructure",
       "USDC business payments",
       "invisible stablecoin",
+      "USDC business account",
+      "stablecoin invoicing",
     ],
   },
   hero: {
-    h1: "Stablecoin speed",
+    h1: "Faster cross-border settlement",
     subhead:
-      "Run receive, send, Terminal, and QR Pay on rails your team already understands – stablecoin settlement with KYC/KYB and compliance built in.",
+      "Run receive, send, Terminal, and QR Pay on rails your team already understands – USDC and EURC settlement with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-stablecoin-01",
     altText: "Easner Business dashboard showing stablecoin settlement activity",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
@@ -46,22 +48,22 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Corridor sends",
       description:
-        "Send crypto to any wallet on supported networks without complexities, with live quotes, clear status, and signing flows.",
+        "Send to supported wallets on approved networks with live quotes, clear status, and signing flows.",
       visualSlot: "mkt-ui-stablecoin-send",
       altText: "Easner Business wallet send flow",
     },
   ],
-  useCasesHeadline: "Built for modern settlement",
+  useCasesHeadline: "Where faster settlement matters",
   useCasesSubhead:
     "Stablecoin infrastructure for teams that need faster cross-border pay-in and payout without exposing users to crypto complexity.",
   useCases: [
     {
       title: "Cross-border SMEs",
       description:
-        "Settle supplier payments and customer collections on faster rails while finance keeps bank-simple screens and audit trails.",
+        "Settle supplier payments and customer collections on faster rails while finance keeps familiar banking screens and audit trails.",
     },
     {
-      title: "OTC and remittance agents",
+      title: "Remittance settlement",
       description:
         "Route client pay-in and corridor payouts through stablecoin settlement, with one ledger for reconciliation.",
     },
@@ -73,7 +75,7 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Marketplaces and platforms",
       description:
-        "Offer banking-style receive and payout experiences while stablecoin settlement runs behind the scenes.",
+        "Collect from buyers and pay sellers across borders with familiar pay-in and payout flows – one ledger for platform settlement and reconciliation.",
     },
     {
       title: "Import and export",
@@ -81,14 +83,14 @@ export const stablecoinContent: ProductPageContent = {
         "Reduce settlement lag on international deals with compliant stablecoin rails alongside traditional bank pay-in.",
     },
     {
-      title: "Agencies and consultancies",
+      title: "Software and SaaS",
       description:
-        "Collect from international clients and pay global vendors from one Business account with optional stablecoin paths.",
+        "Collect global customer payments with stablecoin pay-in, Terminal, and QR Pay – familiar banking screens for finance, faster settlement.",
     },
   ],
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",
-    subhead: "Banking-simple receive, send, Terminal, and QR Pay flows – without showing your users a crypto app.",
+    subhead: "Receive, send, Terminal, and QR Pay in familiar banking screens – without showing your users a crypto app.",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
   },
 }

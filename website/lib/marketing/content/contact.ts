@@ -1,14 +1,14 @@
 export const contactMetadata = {
-  title: "Talk to our team",
+  title: "Talk to Our Team | Sales, Demos & Partnership Inquiries",
   description:
-    "Book a call with Easner to discuss personal banking, business accounts, APIs, coverage, or partnership opportunities.",
+    "Book a call with Easner to discuss personal banking, business accounts, Easner for Partners, coverage, or partnership opportunities.",
   keywords: ["contact Easner", "book a demo", "Easner sales", "Easner API consultation"],
 }
 
 export const contactHero = {
   headline: "Let's talk",
   subhead:
-    "Whether you're opening an account or exploring APIs, get in touch with the Easner team.",
+    "Whether you're opening an account or exploring Easner for Partners or embedded money rails, get in touch with the Easner team.",
   emailPreface: "Prefer to email?",
   supportPreface: "For current users needing support,",
   supportLinkLabel: "here",

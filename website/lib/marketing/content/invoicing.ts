@@ -3,13 +3,15 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const invoicingContent: ProductPageContent = {
   metadata: {
-    title: "Invoicing",
+    title: "Invoicing | Global B2B Collections by Bank or Stablecoin",
     description:
       "Invoice globally and get paid by bank or stablecoin. Professional B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in.",
     keywords: [
       "international invoicing",
       "invoice stablecoin pay-in",
       "global B2B collections",
+      "cross-border invoice payment",
+      "B2B collections Africa",
     ],
   },
   hero: {
@@ -66,39 +68,39 @@ export const invoicingContent: ProductPageContent = {
       altText: "Easner invoice customer directory",
     },
   ],
-  useCasesHeadline: "Built for cross-border collections",
+  useCasesHeadline: "Who invoices on Easner Business",
   useCasesSubhead:
-    "Easner Business invoicing for teams that bill internationally and need one ledger for bank and stablecoin pay-in.",
+    "Teams that bill internationally and need one ledger for bank and stablecoin collections.",
   useCases: [
     {
       title: "Tuition and education",
       description:
-        "Invoice families and institutions abroad with clear bank or stablecoin pay-in instructions on one hosted link.",
+        "Collect tuition and fees from families abroad with bank or stablecoin pay-in on one hosted invoice link.",
     },
     {
       title: "Global trade operators",
       description:
-        "Bill overseas buyers with virtual account details or stablecoin pay-in – one link, one reference.",
+        "Bill overseas buyers and track collections with virtual account details or stablecoin pay-in.",
     },
     {
       title: "Agencies and consultancies",
       description:
-        "Send retainer and project invoices, track status, and save repeat clients in your customer directory.",
+        "Send retainer and project invoices, track payment status, and save repeat clients for faster collections.",
     },
     {
       title: "Software and SaaS",
       description:
-        "Bill customers in USD or EUR across borders; share a payment link and track collections without a separate billing stack.",
+        "Bill customers in USD or EUR across borders; share a payment link and track collections.",
     },
     {
       title: "Professional services",
       description:
-        "Law, accounting, and advisory firms collecting cross-border fees with payer references finance can reconcile.",
+        "Collect cross-border fees from clients with payer references your finance team can reconcile.",
     },
     {
       title: "Marketplaces and platforms",
       description:
-        "Invoice international partners, sellers, or wholesale buyers from one dashboard with bank or stablecoin pay-in.",
+        "Invoice international partners or wholesale buyers and collect by bank or stablecoin.",
     },
   ],
   ctaBand: {

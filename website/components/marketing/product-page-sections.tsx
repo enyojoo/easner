@@ -12,6 +12,7 @@ import { ThreeColCards } from "./three-col-cards"
 import { IntegrationSteps } from "./integration-steps"
 import { ComplianceStrip } from "./compliance-strip"
 import { CtaBand } from "./cta-band"
+import { FaqSection } from "./faq-section"
 
 interface ProductPageSectionsProps {
   content: ProductPageContent
@@ -122,6 +123,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
           </div>
         </div>
       )}
+      {content.faq && <FaqSection items={content.faq} />}
       <ComplianceStrip note={content.complianceNote} />
       <CtaBand content={content.ctaBand} />
     </>

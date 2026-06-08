@@ -102,7 +102,7 @@ export function SolutionsByAudience() {
           Built for how you move money
         </h2>
         <p className="mt-3 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
-          Pick the Easner surface that matches your work: mobile banking, business operations, or embedded infrastructure.
+          Pick the Easner surface that matches your work: personal banking, business operations, partner programs, or embedded infrastructure.
         </p>
       </div>
 

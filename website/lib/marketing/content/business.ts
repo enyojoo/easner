@@ -3,19 +3,22 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
-    title: "Business Banking",
+    title: "Business Banking | Multi-Currency Accounts & Cross-Border Payouts",
     description:
-      "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access – with KYC/KYB and compliance built in.",
+      "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, Terminal, QR Pay, and team access – with KYC/KYB built in.",
     keywords: [
       "business banking cross-border",
       "SME global payments",
       "multi-currency business account",
+      "pay African suppliers",
+      "cross-border payroll",
+      "multi-currency SME account",
     ],
   },
   hero: {
     h1: "Global banking for business",
     subhead:
-      "Manage multi-currency accounts, payouts, team access, and collections across global and African corridors. Stablecoin speed behind familiar banking.",
+      "One dashboard for accounts, payouts, and collections across global and African corridors – with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-business-01",
     altText: "Small business founder reviewing Easner Business dashboard",
     ctas: [
@@ -54,9 +57,9 @@ export const businessContent: ProductPageContent = {
       altText: "Easner Business team and reporting dashboard",
     },
   ],
-  useCasesHeadline: "Built for cross-border operators",
+  useCasesHeadline: "Who runs finance on Easner Business",
   useCasesSubhead:
-    "Easner Business for SMEs that pay suppliers, collect from customers, and run finance ops across borders from one dashboard.",
+    "SMEs that pay suppliers, collect from customers, and run finance ops across borders from one dashboard.",
   useCases: [
     {
       title: "Global trade operators",
@@ -71,12 +74,12 @@ export const businessContent: ProductPageContent = {
     {
       title: "Faith and nonprofit organizations",
       description:
-        "Collect diaspora donations and mission support from abroad, then pay field teams and partners across borders – by bank or stablecoin, with one ledger your finance team can audit.",
+        "Collect diaspora donations and mission support from abroad, then pay field teams and partners across borders – from one Easner Business account.",
     },
     {
-      title: "OTC and remittance agents",
+      title: "Cross-border payroll",
       description:
-        "Collect client pay-in by bank or stablecoin, execute corridor payouts, and reconcile every transaction in one ledger.",
+        "Pay contractors and employees in supported corridors with clear fees, status tracking, and reconciliation in one ledger.",
     },
     {
       title: "Agencies and consultancies",
