@@ -10,7 +10,7 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Personal Banking | Global Send, Receive & Diaspora App",
     description:
-      "Send and receive money across US, EU, and African corridors with Easner Mobile. Global banking in your pocket for freelancers, diaspora, and remote workers.",
+      "Send and receive money across US, EU, and African corridors with Easner Mobile. Global banking in your hand for freelancers, diaspora, and remote workers.",
     keywords: [
       "personal international transfers",
       "diaspora banking app",
@@ -21,7 +21,7 @@ export const personalContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Global banking in your pocket",
+    h1: "Global banking in your hand",
     subhead:
       "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",
