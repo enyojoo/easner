@@ -6,6 +6,7 @@ export const homeMetadata = {
   description:
     "Stablecoin payment infrastructure for emerging markets. Accounts, payouts, collections, cards & partner programs. Africa & global corridors. Compliance built in.",
   keywords: [
+    "stablecoin payments",
     "stablecoin payment infrastructure",
     "stablecoin banking infrastructure",
     "emerging markets payments",

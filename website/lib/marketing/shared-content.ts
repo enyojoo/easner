@@ -96,7 +96,7 @@ export const PRODUCT_CARDS: CardItem[] = [
 
 export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
-    title: "Stablecoin",
+    title: "Stablecoin Payments",
     description:
       "Stablecoin speed with banking screens – receive, send, Terminal, and QR Pay.",
     link: "/stablecoin",
