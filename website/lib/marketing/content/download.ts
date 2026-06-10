@@ -1,12 +1,12 @@
 export const downloadMetadata = {
-  title: "Download Easner Mobile (Beta)",
+  title: "Download Easner Banking (Beta)",
   description:
-    "Install Easner Mobile beta on iOS via TestFlight or download the Android APK. Early access for beta testers.",
-  keywords: ["Easner beta", "Easner Mobile download", "TestFlight", "Android APK", "Easner app"],
+    "Install Easner Banking beta on iOS via TestFlight or download the Android APK. Early access for beta testers.",
+  keywords: ["Easner beta", "Easner Banking download", "TestFlight", "Android APK", "Easner app"],
 }
 
 export const downloadHero = {
-  headline: "Get Easner Mobile (Beta)",
+  headline: "Get Easner Banking (Beta)",
   subhead: "Early access for beta testers. Install on your phone below.",
 }
 
@@ -17,7 +17,7 @@ export const downloadCard = {
       label: "iOS",
       steps: [
         "Tap TestFlight and accept the invite if prompted",
-        "Install Easner Mobile from TestFlight",
+        "Install Easner Banking from TestFlight",
         "Open the app and sign in",
       ],
     },
@@ -26,7 +26,7 @@ export const downloadCard = {
       steps: [
         "Tap Android APK to download the file",
         "Allow install from your browser if prompted",
-        "Open Easner Mobile after install",
+        "Open Easner Banking after install",
       ],
     },
   },
