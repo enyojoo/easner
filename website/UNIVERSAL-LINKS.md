@@ -1,14 +1,20 @@
-# Universal Links & App Links (easner.com)
+# Universal Links & App Links
 
-Serves Apple Universal Links and Android App Links for **Easner Mobile** (`com.easner.mobile`).
+> **Moved to `app.easner.com`** — consumer app web + mobile deep links now live on the app subdomain, not marketing `easner.com`. See `easnerbanking/docs/mobile/APP-EASNER-COM.md`.
 
-## Endpoints
+## Legacy `easner.com` routes in this repo
+
+This marketing site still serves `/.well-known/*` on **easner.com** apex for backward compatibility until all installs use `app.easner.com`. New builds register `applinks:app.easner.com` only.
+
+`middleware.ts` redirects `/user` and `/user/*` → `https://app.easner.com{path}`.
+
+## Endpoints (legacy apex — optional sunset)
 
 | URL | Purpose |
 |-----|---------|
-| `/.well-known/apple-app-site-association` | Apple Universal Links (primary) |
+| `/.well-known/apple-app-site-association` | Apple Universal Links (legacy apex) |
 | `/apple-app-site-association` | Apple legacy path (same JSON) |
-| `/.well-known/assetlinks.json` | Android App Links |
+| `/.well-known/assetlinks.json` | Android App Links (legacy apex) |
 
 ## Environment variables (Vercel → Project → Settings → Environment Variables)
 
@@ -17,21 +23,15 @@ Serves Apple Universal Links and Android App Links for **Easner Mobile** (`com.e
 | `APPLE_TEAM_ID` | `AB12CD34EF` | [Apple Developer](https://developer.apple.com/account) → Membership → **Team ID** (10 characters) |
 | `ANDROID_SHA256_CERT_FINGERPRINTS` | `AA:BB:...` | Google Play Console → App signing, or `eas credentials -p android` (comma-separated for multiple) |
 
-After changing `APPLE_TEAM_ID`, redeploy the website. No code change is required.
-
 ## Apex domain (`easner.com` vs `www.easner.com`)
 
-The mobile app entitlement is `applinks:easner.com` (apex, not `www`). Apple fetches AASA from:
-
-`https://easner.com/.well-known/apple-app-site-association`
-
-That URL must return **HTTP 200** and valid JSON on the **apex host** — not a 301 to `www.easner.com`.
+If you keep legacy apex AASA, Azure Front Door must forward `/.well-known/*` on `easner.com` **without** redirecting to `www` first. See prior AFD rule notes below.
 
 ### Azure Front Door (where the redirect actually happens)
 
-`easner.com` is fronted by **Azure Front Door**, not Vercel domain settings. Today, apex requests (including `/.well-known/*`) are 301-redirected to `www` at the edge (`x-azure-ref` in response headers) before they reach the Next.js app.
+`easner.com` is fronted by **Azure Front Door**. Apex requests (including `/.well-known/*`) may be 301-redirected to `www` at the edge before they reach Vercel.
 
-**Required AFD change:** add a **higher-priority** rule (or dedicated route) so these paths on `easner.com` are **forwarded to the Vercel origin without a redirect**:
+**Required AFD change (legacy only):** higher-priority rule so these paths on `easner.com` are **forwarded to the Vercel origin without a redirect**:
 
 | Path |
 |------|
@@ -39,31 +39,17 @@ That URL must return **HTTP 200** and valid JSON on the **apex host** — not a 
 | `/.well-known/assetlinks.json` |
 | `/apple-app-site-association` |
 
-Keep the existing apex → `www` redirect for all other paths (marketing pages).
+## Primary verification host: `app.easner.com`
 
-Example rule-set layout (order matters — well-known rules first):
+Deploy the Expo web project (`easnerbanking/mobile`) to Vercel with domain `app.easner.com`. That deployment serves:
 
-1. **Route / rule (priority 1)** — host `easner.com`, path matches the three URLs above → forward to website origin (Vercel), preserve host `easner.com`.
-2. **Route / rule (priority 2)** — host `easner.com`, path `/*` → 301 redirect to `https://www.easner.com{path}`.
-
-In the Azure portal: Front Door profile → **Rule sets** (or per-route rules) → match on **Request URI** path + **Host** header → action **Route configuration** (not URL redirect) for the well-known paths.
-
-The Next.js routes in this repo serve the JSON once the request reaches Vercel. AFD must not strip or rewrite those paths.
-
-### What this repo does *not* control
-
-Vercel `vercel.json` cannot fix apex Universal Links if Azure Front Door redirects first. No Vercel Domains redirect setting is involved — configure the exception in **Azure Front Door**.
-
-## Verify after deploy + AFD rule
+- Expo web (`expo export --platform web`)
+- `/.well-known/apple-app-site-association`
+- `/.well-known/assetlinks.json`
 
 ```bash
-# Must be 200 on easner.com — no Location: www.easner.com
-curl -sS -D - "https://easner.com/.well-known/apple-app-site-association" | head -20
-curl -sS "https://easner.com/.well-known/apple-app-site-association" | jq .
-curl -sS -o /dev/null -w "%{http_code}\n" "https://easner.com/apple-app-site-association"
-
-# Marketing redirect should still work
-curl -sS -I "https://easner.com/" | grep -i '^location:'
+curl -sS -D - "https://app.easner.com/.well-known/apple-app-site-association" | head -20
+curl -sS "https://app.easner.com/.well-known/assetlinks.json" | jq .
 ```
 
-Apple validator: https://search.developer.apple.com/appsearch-validation-tool/ — domain `easner.com`, app ID `com.easner.mobile`.
+Apple validator: https://search.developer.apple.com/appsearch-validation-tool/ — domain `app.easner.com`, app ID `com.easner.mobile`.
