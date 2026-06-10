@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
-import { SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
+import { MARKETING_HERO_TITLE, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
 
@@ -33,17 +33,17 @@ export function HeroSection() {
           className="mx-auto max-w-7xl text-center"
         >
           <div className="space-y-5">
-            <h1 className="mx-auto w-full font-unbounded text-[2rem] font-semibold leading-[1.08] text-[#0F1110] sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className={cn("mx-auto w-full font-unbounded font-semibold text-[#0F1110]", MARKETING_HERO_TITLE)}>
               {homeHero.h1Lines.map((line, index) => (
                 <span
                   key={line}
-                  className={index === 1 ? "block text-[#007ACC] lg:whitespace-nowrap" : "block lg:whitespace-nowrap"}
+                  className={index === 1 ? "block whitespace-nowrap text-[#007ACC]" : "block whitespace-nowrap"}
                 >
                   {line}
                 </span>
               ))}
             </h1>
-            <p className="mx-auto max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg">
+            <p className="mx-auto max-w-2xl text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7 md:text-lg">
               {homeHero.subhead}
             </p>
           </div>

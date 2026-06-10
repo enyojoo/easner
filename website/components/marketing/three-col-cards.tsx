@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VisualSlot } from "./visual-slot"
 import { scrollToProductsWithPaintRetries } from "./product-anchor"
+import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import type { CardItem } from "@/lib/marketing/types"
 
 interface ThreeColCardsProps {
@@ -67,7 +68,7 @@ export function ThreeColCards({
         {headline && (
           <div className="mx-auto mb-9 max-w-3xl text-center sm:mb-12 lg:max-w-none">
             <h2
-              className={`font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl ${headlineClassName ?? ""}`}
+              className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS, headlineClassName)}
             >
               {headline}
             </h2>

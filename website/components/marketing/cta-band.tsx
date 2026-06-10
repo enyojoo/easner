@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PersonaCtas } from "./persona-ctas"
 import type { CtaBandContent } from "@/lib/marketing/types"
+import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
+import { cn } from "@/lib/utils"
 
 interface CtaBandProps {
   content: CtaBandContent
@@ -25,7 +27,7 @@ export function CtaBand({ content }: CtaBandProps) {
       />
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="mx-auto max-w-5xl rounded-[1.5rem] border border-[#E4DED1] bg-white/85 px-5 py-10 text-center shadow-[0_18px_60px_rgba(15,17,16,0.08)] backdrop-blur sm:rounded-[2rem] sm:px-10 md:py-16">
-          <h2 className="mb-5 font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-3xl md:mb-6 md:text-4xl">
+          <h2 className={cn("mb-5 font-unbounded font-semibold text-[#0F1110] md:mb-6", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
             {content.headline}
           </h2>
           {content.subhead && (

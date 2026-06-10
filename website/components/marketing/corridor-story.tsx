@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_HEADING_CAPS,
+  MARKETING_SUBSECTION_TITLE,
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
   SPLIT_VISUAL_CONTAINER,
@@ -16,7 +18,7 @@ export function CorridorStory() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className={cn("grid grid-cols-1 items-stretch lg:grid-cols-2", SPLIT_GRID_GAP)}>
           <div className={SPLIT_COPY_CARD}>
-            <h3 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-3xl">
+            <h3 className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
               {corridorContent.headline}
             </h3>
             <p className="mt-4 flex-1 text-lg leading-8 text-[#5F665F]">{corridorContent.body}</p>

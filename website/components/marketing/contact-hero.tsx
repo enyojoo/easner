@@ -4,6 +4,8 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { CONTACT_EMAIL } from "@/lib/marketing/constants"
 import { contactHero, contactSupport } from "@/lib/marketing/content/contact"
+import { MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { cn } from "@/lib/utils"
 
 export function ContactHero() {
   return (
@@ -14,7 +16,7 @@ export function ContactHero() {
         transition={{ duration: 0.5 }}
         className="mx-auto max-w-3xl text-center"
       >
-        <h1 className="text-balance font-unbounded text-[1.75rem] font-semibold leading-tight text-[#0F1110] sm:text-4xl md:text-5xl">
+        <h1 className={cn("text-balance font-unbounded font-semibold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
           {contactHero.headline}
         </h1>
         <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">

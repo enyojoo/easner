@@ -6,6 +6,8 @@ import {
   PERSONAL_TIERS,
   TIER_FOOTNOTE,
 } from "@/lib/marketing/shared-content"
+import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { cn } from "@/lib/utils"
 
 interface TierLadderProps {
   variant: "personal" | "business"
@@ -17,7 +19,7 @@ export function TierLadder({ variant }: TierLadderProps) {
   return (
     <section className="bg-white pb-16 pt-8 md:pb-24 md:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-12 text-center font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+        <h2 className={cn("mb-12 text-center font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
           Tier availability
         </h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

@@ -135,7 +135,8 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
                     fontSize: scale(headlineLines.length > 1 ? 68 : 72),
                     fontWeight: 600,
                     lineHeight: 1.05,
-                    letterSpacing: "-0.03em",
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
                     color: COLORS.ink,
                   }}
                 >

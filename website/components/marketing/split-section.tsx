@@ -10,6 +10,10 @@ import { VisualSlot } from "./visual-slot"
 import { StatusBadge } from "./status-badge"
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_HEADING_CAPS,
+  MARKETING_PAGE_HERO_TITLE,
+  MARKETING_SECTION_TITLE,
+  MARKETING_SUBSECTION_TITLE,
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
   SPLIT_VISUAL_CONTAINER,
@@ -96,8 +100,8 @@ function CopyBlock({
       {badge && <StatusBadge label={badge} className="mb-4" />}
       <HeadingTag
         className={cn(
-          "font-unbounded font-semibold leading-[1.08] text-[#0F1110]",
-          h1 ? "text-[2rem] sm:text-5xl md:text-6xl" : "text-2xl sm:text-3xl"
+          "font-unbounded font-semibold text-[#0F1110]",
+          h1 ? MARKETING_PAGE_HERO_TITLE : cn(MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)
         )}
       >
         {headline}
@@ -157,7 +161,7 @@ export function SplitSection({
         <div
           className={cn(
             "grid grid-cols-1 lg:grid-cols-2",
-            isContent ? cn(SPLIT_GRID_GAP, "items-stretch") : "items-center gap-10 lg:gap-16",
+            isContent ? cn(SPLIT_GRID_GAP, "items-stretch") : "items-start gap-10 lg:gap-16",
             reverse && "lg:[&>*:first-child]:order-2"
           )}
         >
@@ -201,7 +205,7 @@ export function TextOnlySection({
     <section className="bg-[#F6F3EB] pb-16 pt-8 md:pb-24 md:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+          <h2 className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
             {headline}
           </h2>
           {body && <p className="mt-5 text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{body}</p>}

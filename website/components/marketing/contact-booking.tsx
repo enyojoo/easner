@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import Cal, { getCalApi } from "@calcom/embed-react"
 import { CAL_LINK, CAL_NAMESPACE } from "@/lib/marketing/constants"
 import { contactBooking } from "@/lib/marketing/content/contact"
+import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
+import { cn } from "@/lib/utils"
 
 export function ContactBooking() {
   useEffect(() => {
@@ -24,7 +26,7 @@ export function ContactBooking() {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)] sm:rounded-[1.75rem]">
       <div className="border-b border-[#E4DED1] px-4 py-4 text-center sm:px-8 sm:py-5">
-        <h2 className="text-balance font-unbounded text-xl font-semibold text-[#0F1110] sm:text-2xl md:text-3xl">
+        <h2 className={cn("text-balance font-unbounded font-semibold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
           {contactBooking.headline}
         </h2>
       </div>

@@ -7,6 +7,8 @@ import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StoreDownloadButtons } from "./store-download-buttons"
 import { BUSINESS_SIGNUP_URL } from "@/lib/marketing/constants"
+import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
+import { cn } from "@/lib/utils"
 
 interface OpenAccountDialogProps {
   open: boolean
@@ -66,7 +68,7 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
       >
         <div className="flex shrink-0 items-start justify-between border-b border-[#E4DED1] px-4 py-4 sm:px-8 sm:py-5">
           <div className="min-w-0 flex-1 pr-3 text-left sm:pr-4">
-            <h2 id="open-account-title" className="font-unbounded text-xl font-semibold leading-tight text-[#0F1110] sm:text-2xl md:text-3xl">
+            <h2 id="open-account-title" className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
               Begin your experience
             </h2>
             <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2 sm:text-base">

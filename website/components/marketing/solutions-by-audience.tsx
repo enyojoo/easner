@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_HEADING_CAPS,
+  MARKETING_SECTION_TITLE,
+  MARKETING_SUBSECTION_TITLE,
   SPLIT_COPY_CARD,
   SPLIT_GRID_GAP,
   PERSONA_VISUAL_CONTAINER,
@@ -97,13 +100,21 @@ export function SolutionsByAudience() {
 
   return (
     <section className="bg-white">
-      <div className="mx-auto max-w-3xl px-4 pt-8 text-center sm:px-6 sm:pt-12 lg:px-8">
-        <h2 className="font-unbounded text-2xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
-          Built for how you move money
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
-          Pick the Easner surface that matches your work: personal banking, business operations, partner programs, or embedded infrastructure.
-        </p>
+      <div className="mx-auto px-4 pt-8 text-center sm:px-6 sm:pt-12 lg:px-8">
+        <div className="mx-auto max-w-3xl lg:max-w-none">
+          <h2
+            className={cn(
+              "font-unbounded font-semibold text-[#0F1110] lg:whitespace-nowrap",
+              MARKETING_SECTION_TITLE,
+              MARKETING_HEADING_CAPS
+            )}
+          >
+            Built for how you move money
+          </h2>
+          <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
+            Pick the Easner surface that matches your work: personal banking, business operations, partner programs, or embedded infrastructure.
+          </p>
+        </div>
       </div>
 
       <div ref={sectionRef} className="h-[220vh] sm:h-[260vh] lg:h-[285vh]">
@@ -145,7 +156,7 @@ export function SolutionsByAudience() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: "easeOut" }}
             >
-              <h3 className="font-unbounded text-xl font-semibold leading-tight text-[#0F1110] sm:text-3xl lg:text-[2rem]">
+              <h3 className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
                 {persona.headline}
               </h3>
               <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>
