@@ -64,7 +64,7 @@ function normalizeHeadline(headline: string | string[]) {
 
 export async function createOgImage({ headline, subhead }: OgImageContent) {
   const [unbounded, inter, logoSrc] = await Promise.all([
-    loadBundledFont("@fontsource/unbounded/files/unbounded-latin-600-normal.woff"),
+    loadBundledFont("@fontsource/unbounded/files/unbounded-latin-700-normal.woff"),
     loadBundledFont("@fontsource/inter/files/inter-latin-400-normal.woff"),
     loadEasnerLogoDataUrl(),
   ])
@@ -133,7 +133,7 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
                   style={{
                     fontFamily: "Unbounded",
                     fontSize: scale(headlineLines.length > 1 ? 68 : 72),
-                    fontWeight: 600,
+                    fontWeight: 700,
                     lineHeight: 1.05,
                     letterSpacing: "0.04em",
                     textTransform: "uppercase",
@@ -164,7 +164,7 @@ export async function createOgImage({ headline, subhead }: OgImageContent) {
     {
       ...OG_SIZE,
       fonts: [
-        { name: "Unbounded", data: unbounded, weight: 600, style: "normal" },
+        { name: "Unbounded", data: unbounded, weight: 700, style: "normal" },
         { name: "Inter", data: inter, weight: 400, style: "normal" },
       ],
     }

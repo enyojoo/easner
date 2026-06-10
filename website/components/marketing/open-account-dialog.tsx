@@ -68,7 +68,7 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
       >
         <div className="flex shrink-0 items-start justify-between border-b border-[#E4DED1] px-4 py-4 sm:px-8 sm:py-5">
           <div className="min-w-0 flex-1 pr-3 text-left sm:pr-4">
-            <h2 id="open-account-title" className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
+            <h2 id="open-account-title" className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
               Begin your experience
             </h2>
             <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2 sm:text-base">
@@ -87,14 +87,14 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-1 md:grid-cols-2">
             <div className="border-b border-[#E4DED1] p-4 sm:p-8 md:border-b-0 md:border-r">
-              <h3 className="font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg">Personal Banking</h3>
+              <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Personal Banking</h3>
               <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
                 Download the mobile app for global banking.
               </p>
               <StoreDownloadButtons className="mt-4 sm:mt-6" layout="grid" />
             </div>
             <div className="p-4 sm:p-8">
-              <h3 className="font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg">Business Banking</h3>
+              <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Business Banking</h3>
               <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
                 Open a business account on the web dashboard.
               </p>

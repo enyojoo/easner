@@ -104,7 +104,7 @@ export function SolutionsByAudience() {
         <div className="mx-auto max-w-3xl lg:max-w-none">
           <h2
             className={cn(
-              "font-unbounded font-semibold text-[#0F1110] lg:whitespace-nowrap",
+              "font-unbounded font-bold text-[#0F1110] lg:whitespace-nowrap",
               MARKETING_SECTION_TITLE,
               MARKETING_HEADING_CAPS
             )}
@@ -156,7 +156,7 @@ export function SolutionsByAudience() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: "easeOut" }}
             >
-              <h3 className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
+              <h3 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
                 {persona.headline}
               </h3>
               <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>

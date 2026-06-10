@@ -19,7 +19,7 @@ export function TierLadder({ variant }: TierLadderProps) {
   return (
     <section className="bg-white pb-16 pt-8 md:pb-24 md:pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className={cn("mb-12 text-center font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+        <h2 className={cn("mb-12 text-center font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
           Tier availability
         </h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

@@ -18,7 +18,7 @@ export function FaqSection({ items }: FaqSectionProps) {
   return (
     <section className="py-16 md:py-24 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className={cn("mb-12 text-center font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+        <h2 className={cn("mb-12 text-center font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
           Frequently asked questions
         </h2>
         <div className="space-y-3">

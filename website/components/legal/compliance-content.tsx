@@ -39,7 +39,7 @@ export function CompliancePolicyPage() {
   return (
     <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="June 8, 2026">
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">1. Overview</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Overview</h2>
         <p className="text-[#5F665F] leading-relaxed">
           <strong>Easner Group, Inc.</strong> (&quot;<strong>Easner</strong>,&quot; &quot;<strong>we</strong>,&quot;
           &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;) maintains a compliance program covering
@@ -63,7 +63,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">2. Know Your Customer and Know Your Business</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">2. Know Your Customer and Know Your Business</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>KYC</strong> is the process of verifying the identity of individual users.
         </p>
@@ -83,7 +83,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">3. Supported Jurisdictions</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">3. Supported Jurisdictions</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Access to global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out –
           depends on <strong>licensed partner</strong> eligibility rules and Easner product availability.
@@ -140,7 +140,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">4. When We Verify</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">4. When We Verify</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">We conduct KYC/KYB when:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F]">
           <li>You register for an account or before regulated features are enabled</li>
@@ -157,7 +157,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">5. Information We Collect</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">5. Information We Collect</h2>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">
           Annex A – Individual users (Easner Mobile / Easner Personal Banking)
         </h3>
@@ -210,7 +210,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">6. Verification Process</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">6. Verification Process</h2>
         <ol className="list-decimal pl-6 space-y-2 text-[#5F665F]">
           <li>You create an Easner account.</li>
           <li>
@@ -228,7 +228,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">7. Our AML Program</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">7. Our AML Program</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">Easner&apos;s AML framework includes:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>
@@ -281,7 +281,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Product Entitlements</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">8. Product Entitlements</h2>
         <PolicyTable
           headers={["Product", "Description", "Typical requirement"]}
           rows={[
@@ -305,7 +305,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">9. Verification Outcomes and Limits</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">9. Verification Outcomes and Limits</h2>
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>Approved:</strong> You may use Services within your approved products, limits, and partner availability.
         </p>
@@ -323,7 +323,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">10. Your Responsibilities</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">10. Your Responsibilities</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">You must:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F]">
           <li>Provide accurate, complete, and current information</li>
@@ -338,7 +338,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">11. Your Rights</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">11. Your Rights</h2>
         <p className="text-[#5F665F] leading-relaxed">
           You may access verification status in the app or dashboard, request correction of inaccurate information
           (subject to regulatory limits), and contact us about the verification process. Some rights are limited by AML
@@ -354,7 +354,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">12. Sharing and Security</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">12. Sharing and Security</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We share KYC/KYB and compliance information with <strong>licensed partners</strong>, infrastructure providers,
           regulators, law enforcement, and other institutions where permitted by law and necessary to provide or
@@ -368,7 +368,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">13. Changes to This Policy</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">13. Changes to This Policy</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We may update this policy as regulations, partners, or our Services evolve. Material changes will be posted
           with an updated &quot;Last updated&quot; date.
@@ -376,7 +376,7 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">14. Contact Us</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">14. Contact Us</h2>
         <PolicyContactBlock department="Compliance Department" />
       </section>
     </PolicyPageShell>

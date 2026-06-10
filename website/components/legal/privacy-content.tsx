@@ -4,7 +4,7 @@ export function PrivacyPolicyPage() {
   return (
     <PolicyPageShell title="Privacy Policy" lastUpdated="June 8, 2026">
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">1. Introduction</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Introduction</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           This Privacy Policy explains how <strong>Easner Group, Inc.</strong> (&quot;<strong>Easner</strong>,&quot;
           &quot;<strong>we</strong>,&quot; &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;) collects,
@@ -38,7 +38,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">2. Information We Collect</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">2. Information We Collect</h2>
         <p className="text-[#5F665F] leading-relaxed mb-2">
           <strong>You provide:</strong>
         </p>
@@ -162,7 +162,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">3. How We Use Information</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">3. How We Use Information</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">We use information to:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Provide, operate, and improve the Services</li>
@@ -182,7 +182,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">4. How We Share Information</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">4. How We Share Information</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">We may share information:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F]">
           <li>With your direction or consent</li>
@@ -205,7 +205,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">5. Service Providers and Partners</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">5. Service Providers and Partners</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We engage partners who process data on our behalf or under their own regulatory obligations, including providers
           of hosted KYC/KYB, virtual accounts, fiat payments, wallet infrastructure, transaction routing, and regional
@@ -256,7 +256,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">6. Security</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">6. Security</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We use technical and organizational measures – including encryption in transit and at rest where appropriate,
           access controls, and monitoring – designed to protect personal information. No system is perfectly secure. You
@@ -265,7 +265,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">7. Retention</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">7. Retention</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We retain information as long as needed to provide the Services and meet legal obligations. Financial services
           recordkeeping often requires <strong>5 to 7 years</strong> or longer after account closure or last activity.
@@ -274,7 +274,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Your Rights</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">8. Your Rights</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Depending on where you live, you may have rights to access, correct, delete, restrict, or port your information,
           or object to certain processing. Financial regulations may limit some requests.
@@ -328,7 +328,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">9. Cookies</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">9. Cookies</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We use cookies and similar technologies on our website and dashboard for authentication, preferences, security,
           and analytics. You can manage cookies in browser settings; disabling them may affect functionality. Where
@@ -337,7 +337,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">10. International Transfers</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">10. International Transfers</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We are headquartered in the United States. Information may be processed in the U.S. and other countries where we
           or partners operate, with appropriate safeguards where required.
@@ -345,7 +345,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">11. Children</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">11. Children</h2>
         <p className="text-[#5F665F] leading-relaxed">
           The Services are not directed to anyone under <strong>18</strong>. We do not knowingly collect children&apos;s
           personal information.
@@ -353,7 +353,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">12. Digital Assets</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">12. Digital Assets</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Where enabled, we may provision stablecoin capabilities such as <strong>USDC</strong> and <strong>EURC</strong> on
           supported networks.
@@ -375,7 +375,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">13. Business Customers and Payers</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">13. Business Customers and Payers</h2>
         <p className="text-[#5F665F] leading-relaxed">
           Business users may submit customer or payer information for invoicing and collections. You represent that you have
           a lawful basis to provide that data. Business users are typically controllers of their customer relationships;
@@ -384,7 +384,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">14. Compliance</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">14. Compliance</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We and our partners are subject to KYC, KYB, AML, and sanctions requirements. See our{" "}
           <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>.
@@ -392,7 +392,7 @@ export function PrivacyPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">15. Changes and Contact</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">15. Changes and Contact</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We may update this policy by posting a revised version with an updated &quot;Last updated&quot; date. Material
           changes may receive additional notice where required.

@@ -68,7 +68,7 @@ export function ThreeColCards({
         {headline && (
           <div className="mx-auto mb-9 max-w-3xl text-center sm:mb-12 lg:max-w-none">
             <h2
-              className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS, headlineClassName)}
+              className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS, headlineClassName)}
             >
               {headline}
             </h2>

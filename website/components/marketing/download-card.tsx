@@ -20,7 +20,7 @@ export function DownloadCard() {
               <Download className="size-5" strokeWidth={1.75} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-balance font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg md:text-xl">
+              <h2 className="text-balance font-unbounded text-base font-bold text-[#0F1110] sm:text-lg md:text-xl">
                 {downloadCard.installHints.headline}
               </h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-6">
@@ -55,7 +55,7 @@ export function DownloadCard() {
 
         <div className="rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-4 sm:rounded-[1.75rem] sm:p-8">
           <div className="min-w-0 flex-1">
-            <h2 className="text-balance font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg md:text-xl">
+            <h2 className="text-balance font-unbounded text-base font-bold text-[#0F1110] sm:text-lg md:text-xl">
               {downloadSupport.headline}
             </h2>
             <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">

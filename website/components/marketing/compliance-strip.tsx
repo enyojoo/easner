@@ -15,7 +15,7 @@ export function ComplianceStrip({ note }: ComplianceStripProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div>
-            <h2 className={cn("font-unbounded font-semibold text-white", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+            <h2 className={cn("font-unbounded font-bold text-white", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
               {COMPLIANCE_STRIP.headline}
             </h2>
             <p className="mt-4 text-lg leading-8 text-white/68">{COMPLIANCE_STRIP.subhead}</p>

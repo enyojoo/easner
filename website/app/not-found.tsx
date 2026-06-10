@@ -11,7 +11,7 @@ export default function NotFound() {
       <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 pt-[4.5rem] pb-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-lg text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#6F756F]">404</p>
-          <h1 className="mt-4 font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+          <h1 className="mt-4 font-unbounded text-3xl font-bold leading-tight text-[#0F1110] sm:text-4xl">
             Page not found
           </h1>
           <p className="mt-4 text-lg leading-8 text-[#5F665F]">

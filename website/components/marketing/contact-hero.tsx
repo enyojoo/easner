@@ -16,7 +16,7 @@ export function ContactHero() {
         transition={{ duration: 0.5 }}
         className="mx-auto max-w-3xl text-center"
       >
-        <h1 className={cn("text-balance font-unbounded font-semibold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
+        <h1 className={cn("text-balance font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
           {contactHero.headline}
         </h1>
         <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">

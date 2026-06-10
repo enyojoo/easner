@@ -4,7 +4,7 @@ export function TermsPolicyPage() {
   return (
     <PolicyPageShell title="Terms of Service" lastUpdated="June 8, 2026">
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">1. Acceptance of Terms</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Acceptance of Terms</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           By accessing or using Easner&apos;s website, <strong>Easner Mobile</strong> (mobile application for{" "}
           <strong>Easner Personal Banking</strong>), <strong>Easner Business</strong> (web dashboard for{" "}
@@ -31,7 +31,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">2. Electronic Communications and E-Sign</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">2. Electronic Communications and E-Sign</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           You consent to receive account, transaction, security, and legal notices electronically – including by email,
           in-app messages, and SMS where we use text messaging for service communications.
@@ -46,7 +46,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">3. About Easner</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">3. About Easner</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Easner Group, Inc.</strong> is a Delaware C-corporation that builds financial technology for global
           money movement.
@@ -88,7 +88,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">4. The Services</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">4. The Services</h2>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Mobile (Easner Personal Banking)</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           For individuals, the Services may include account registration, identity verification, sending and receiving
@@ -174,7 +174,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">5. Eligibility</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">5. Eligibility</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">To use the Services you must:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Be at least <strong>18 years old</strong></li>
@@ -197,7 +197,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">6. Your Responsibilities</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">6. Your Responsibilities</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">You agree to:</p>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Provide accurate, complete, and current information</li>
@@ -228,7 +228,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">7. Fees and Exchange Rates</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">7. Fees and Exchange Rates</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Fees, charges, and exchange rates may apply</strong> depending on product, corridor, currency pair,
           and partner costs. Applicable fees and rates are <strong>shown before you confirm</strong> a transaction unless
@@ -244,7 +244,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">8. Payments, Settlement, and Reversals</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">8. Payments, Settlement, and Reversals</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Once you confirm a transaction, it may be <strong>final and irreversible</strong> after processing – especially
           on blockchain networks and certain partner settlement rails.
@@ -263,7 +263,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">9. Compliance, Limits, and Holds</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">9. Compliance, Limits, and Holds</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Transaction limits, feature access, and corridor availability depend on verification level, destination,
           partner rules, and your risk profile. We and our partners may delay, hold, decline, or request additional
@@ -277,7 +277,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">10. Availability</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">10. Availability</h2>
         <p className="text-[#5F665F] leading-relaxed">
           Services vary by jurisdiction and depend on partner capabilities, maintenance, and network conditions.
           Processing times are estimates, not guarantees. Preview or beta features may change or be withdrawn.
@@ -285,7 +285,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">11. Privacy</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">11. Privacy</h2>
         <p className="text-[#5F665F] leading-relaxed">
           Our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> describes how we collect, use, and protect personal
           information. By using the Services, you consent to those practices and to processing required by partners for
@@ -294,7 +294,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">12. Prohibited Use</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">12. Prohibited Use</h2>
         <p className="text-[#5F665F] leading-relaxed">
           You may not use the Services to violate law, evade sanctions, launder money, finance terrorism, commit fraud,
           structure transactions to avoid monitoring, act as an unauthorized money transmitter, submit false information,
@@ -306,7 +306,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">13. Disclaimers</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">13. Disclaimers</h2>
         <p className="text-[#5F665F] leading-relaxed">
           THE SERVICES ARE PROVIDED <strong>&quot;AS IS&quot;</strong> AND <strong>&quot;AS AVAILABLE&quot;</strong> TO
           THE MAXIMUM EXTENT PERMITTED BY LAW.
@@ -319,7 +319,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">14. Limitation of Liability</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">14. Limitation of Liability</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           TO THE MAXIMUM EXTENT PERMITTED BY LAW, EASNER AND ITS AFFILIATES SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL,
           SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR LOST PROFITS, DATA, USE, OR GOODWILL, ARISING FROM YOUR USE OF
@@ -337,7 +337,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">15. Termination</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">15. Termination</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required
           by law or a partner. You may stop using the Services at any time. Surviving provisions include fees owed, dispute
@@ -346,7 +346,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">16. Changes</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">16. Changes</h2>
         <p className="text-[#5F665F] leading-relaxed">
           We may modify these Terms. Material changes will receive at least <strong>30 days&apos; notice</strong> before
           taking effect. Continued use after the effective date constitutes acceptance.
@@ -354,7 +354,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">17. Governing Law and Disputes</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">17. Governing Law and Disputes</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Governing law:</strong> State of Delaware, USA, without regard to conflict-of-law rules, except where
           mandatory consumer protections in your country apply.
@@ -396,7 +396,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">18. General Provisions</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">18. General Provisions</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           <strong>Entire agreement:</strong> These Terms, together with the incorporated{" "}
           <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and{" "}
@@ -420,7 +420,7 @@ export function TermsPolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-unbounded text-2xl font-semibold text-[#0F1110] mb-4">19. Contact</h2>
+        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">19. Contact</h2>
         <PolicyContactBlock />
       </section>
     </PolicyPageShell>

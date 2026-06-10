@@ -17,7 +17,7 @@ export function IntegrationSteps({ headline, steps, footnote, className }: Integ
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {headline && (
           <div className="mx-auto mb-10 max-w-3xl text-center md:mb-12 lg:max-w-none lg:text-left">
-            <h2 className={cn("font-unbounded font-semibold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+            <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
               {headline}
             </h2>
           </div>
@@ -31,7 +31,7 @@ export function IntegrationSteps({ headline, steps, footnote, className }: Integ
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#007ACC] text-sm font-bold text-white">
                 {index + 1}
               </div>
-              <h3 className={cn("mt-4 font-unbounded font-semibold leading-snug text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
+              <h3 className={cn("mt-4 font-unbounded font-bold leading-snug text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
                 {step.title}
               </h3>
               <p className="mt-3 flex-1 text-sm leading-7 text-[#5F665F]">{step.description}</p>

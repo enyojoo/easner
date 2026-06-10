@@ -24,7 +24,7 @@ export function PolicyPageShell({
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <article className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
             <header className="border-b border-[#E4DED1] px-6 py-8 sm:px-10">
-              <h1 className="font-unbounded text-3xl font-semibold leading-tight text-[#0F1110] sm:text-4xl">
+              <h1 className="font-unbounded text-3xl font-bold leading-tight text-[#0F1110] sm:text-4xl">
                 {title}
               </h1>
             </header>

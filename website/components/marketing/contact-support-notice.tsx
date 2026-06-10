@@ -14,7 +14,7 @@ export function ContactSupportNotice() {
           <MessageCircle className="size-5" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-balance font-unbounded text-base font-semibold text-[#0F1110] sm:text-lg md:text-xl">
+          <h2 className="text-balance font-unbounded text-base font-bold text-[#0F1110] sm:text-lg md:text-xl">
             {contactSupport.headline}
           </h2>
           <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
