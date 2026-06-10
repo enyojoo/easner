@@ -3,7 +3,7 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin | Receive, Send & QR Pay",
+    title: "Stablecoin Payments | Receive, Send & QR Pay",
     description:
       "Stablecoin speed with familiar banking screens on Easner Business. Receive, send, Terminal, and QR Pay with compliance built in.",
     keywords: [
@@ -15,7 +15,7 @@ export const stablecoinContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Faster cross-border settlement",
+    h1: "Stablecoin payments",
     subhead:
       "Run receive, send, Terminal, and QR Pay on rails your team already understands – USDC and EURC settlement with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-stablecoin-01",
