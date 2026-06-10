@@ -4,21 +4,26 @@ import { DEFAULT_CTA_BAND } from "../shared-content"
 export const homeMetadata = {
   title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
   description:
-    "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
+    "Stablecoin payment infrastructure for emerging markets. Accounts, payouts, collections, cards & partner programs. Africa & global corridors. Compliance built in.",
   keywords: [
+    "stablecoin payment infrastructure",
     "stablecoin banking infrastructure",
+    "emerging markets payments",
     "cross-border payments",
-    "global business banking",
     "Africa cross-border payments",
+    "Africa payment infrastructure",
+    "global business banking",
     "diaspora banking",
     "white-label remittance",
+    "stablecoin payouts",
+    "payment collections",
   ],
 }
 
 export const homeHero = {
-  h1Lines: ["Global banking,", "Simplified."],
+  h1Lines: ["Global Money Flow", "Simplified with Ease"],
   subhead:
-    "Stablecoin-powered accounts, payouts, collections, cards, and partner programs. Hold USD and EUR, pay out across Africa and global corridors. Familiar banking screens with compliance built in.",
+    "Stablecoin payment infrastructure for emerging markets. Accounts, payouts, collections, cards, and partner programs across Africa and global corridors. Familiar banking screens with compliance built in.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [
