@@ -33,7 +33,7 @@ export function HeroSection() {
           className="mx-auto max-w-7xl text-center"
         >
           <div className="space-y-5">
-            <h1 className={cn("mx-auto w-full font-unbounded font-semibold text-[#0F1110]", MARKETING_HERO_TITLE)}>
+            <h1 className={cn("mx-auto w-full font-unbounded font-bold text-[#0F1110]", MARKETING_HERO_TITLE)}>
               {homeHero.h1Lines.map((line, index) => (
                 <span
                   key={line}
