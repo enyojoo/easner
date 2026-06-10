@@ -8,9 +8,7 @@ export const PLAY_STORE_URL = "#"
 
 export const DOWNLOAD_PATH = "/download"
 
-export const TESTFLIGHT_URL =
-  process.env.NEXT_PUBLIC_TESTFLIGHT_URL ??
-  "https://testflight.apple.com/join/UHP5WvF7"
+export const TESTFLIGHT_URL = "https://testflight.apple.com/join/UHP5WvF7"
 
 export const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ??
