@@ -12,7 +12,7 @@ export const TESTFLIGHT_URL = "https://testflight.apple.com/join/UHP5WvF7"
 
 export const ANDROID_APK_URL =
   process.env.NEXT_PUBLIC_ANDROID_APK_URL ??
-  "https://github.com/enyojoo/easner/releases/latest/download/Easner-Beta.apk"
+  "https://pub-d041d6e13f2e4945b68cab165e047cc8.r2.dev/easner.apk"
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"
