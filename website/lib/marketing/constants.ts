@@ -24,4 +24,4 @@ export const ACCESS_PATH = "/access"
 export const API_DOCS_MAILTO = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("API documentation")}`
 
 export const CAL_NAMESPACE = "15min"
-export const CAL_LINK = "enyosam/15min"
+export const CAL_LINK = "enyo-easner/15min"
