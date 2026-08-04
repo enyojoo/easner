@@ -23,7 +23,7 @@ export const aboutHero = {
 }
 
 export const aboutMission = {
-  headline: "Built for the corridors legacy rails serve worst",
+  headline: "Built for corridors legacy rails serve worst",
   paragraphs: [
     "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money into an emerging market sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
     "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to a digital dollar into functioning local financial utility.",
@@ -45,12 +45,6 @@ export const aboutPillars: CardItem[] = [
     description:
       "USDC/EURC speed behind fiat-native send, receive, invoice, and manage-money flows.",
     link: "/stablecoin",
-  },
-  {
-    title: "Compliance by design",
-    description:
-      "KYC/KYB, AML screening, limits, and partner-licensed banking, payment, verification, and card services.",
-    link: "/compliance",
   },
 ]
 
@@ -91,7 +85,7 @@ export const aboutFounders: Founder[] = [
 
 export const aboutTrust = {
   headline: "Trust, by design",
-  body: "Easner Group, Inc. is a financial technology company, not a bank. Banking, payment, verification, and card services are provided by licensed partners. We build the product experience, compliance flows, and stablecoin settlement layer that connects global money to local utility.",
+  body: "Easner is a financial technology company, not a bank. Banking, payment, verification, and card services are provided by licensed partners. We built the software and compliance layer that makes global money work locally – accounts, payouts, and settlement on familiar banking screens.",
   bullets: [
     "KYC/KYB onboarding built into the product",
     "AML and sanctions screening",

@@ -27,7 +27,7 @@ export default function AboutPage() {
         founders={aboutFounders}
       />
       <AboutMissionSection />
-      <ThreeColCards headline={aboutPillarsHeadline} items={aboutPillars} columns={3} />
+      <ThreeColCards headline={aboutPillarsHeadline} items={aboutPillars} columns={2} />
       <AboutTrustSection />
       <CtaBand content={aboutCtaBand} />
     </>
