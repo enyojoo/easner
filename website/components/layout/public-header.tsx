@@ -10,7 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { NAV_LINKS, NAV_SECTIONS, type NavIconName } from "@/lib/nav-config"
+import {
+  NAV_LEADING_LINKS,
+  NAV_LINKS,
+  NAV_SECTIONS,
+  NAV_TRAILING_LINKS,
+  type NavIconName,
+} from "@/lib/nav-config"
 
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
@@ -60,8 +66,17 @@ export function PublicHeader() {
             <BrandLogo size="sm" className="h-7" />
           </Link>
 
-          {/* Desktop nav */}
+          {/* Desktop nav: Home, About → Products → rest → Contact */}
           <nav className="hidden md:flex items-center gap-1">
+            {NAV_LEADING_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+              >
+                {item.label}
+              </Link>
+            ))}
             {NAV_SECTIONS.map((section) => (
               <DropdownMenu key={section.label}>
                 <DropdownMenuTrigger className="flex items-center gap-1 rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-[#F8F6F0] data-[state=open]:text-[#007ACC]">
@@ -69,7 +84,7 @@ export function PublicHeader() {
                   <ChevronDownIcon className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  align="start"
+                  align="center"
                   sideOffset={4}
                   onCloseAutoFocus={(e) => e.preventDefault()}
                   className="w-[min(36rem,90vw)] rounded-2xl border border-[#E4DED1] bg-white p-2 shadow-2xl"
@@ -110,6 +125,15 @@ export function PublicHeader() {
                 {item.label}
               </Link>
             ))}
+            {NAV_TRAILING_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
@@ -136,6 +160,17 @@ export function PublicHeader() {
           <div className="md:hidden flex flex-col max-h-[calc(100dvh-4rem)] overflow-hidden border-t border-[#E4DED1]">
             <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4">
               <div className="flex flex-col gap-1">
+                {NAV_LEADING_LINKS.map((item) => (
+                  <div key={item.href} className="border-b border-[#E9E4D8]">
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                    >
+                      {item.label}
+                    </Link>
+                  </div>
+                ))}
                 {NAV_SECTIONS.map((section) => {
                   const isExpanded = mobileExpanded.has(section.label)
                   return (
@@ -180,6 +215,17 @@ export function PublicHeader() {
                   )
                 })}
                 {NAV_LINKS.map((item) => (
+                  <div key={item.href} className="border-b border-[#E9E4D8]">
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                    >
+                      {item.label}
+                    </Link>
+                  </div>
+                ))}
+                {NAV_TRAILING_LINKS.map((item) => (
                   <div key={item.href} className="border-b border-[#E9E4D8] last:border-b-0">
                     <Link
                       href={item.href}

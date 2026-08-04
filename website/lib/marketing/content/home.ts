@@ -24,7 +24,7 @@ export const homeMetadata = {
 export const homeHero = {
   h1Lines: ["Global Money Flow", "Simplified with Ease"],
   subhead:
-    "Stablecoin payment infrastructure for emerging markets. Accounts, payouts, collections, cards, and partner programs across Africa and global corridors. Familiar banking screens with compliance built in.",
+    "Stablecoin payment infrastructure for emerging markets. Multi-currency accounts, payouts, collections, cards, and whitelabeling across Africa, Asia, LATAM, and global corridors.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [

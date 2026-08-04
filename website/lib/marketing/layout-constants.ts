@@ -4,10 +4,10 @@ export const MARKETING_HEADING_CAPS = "uppercase tracking-[0.04em]"
 /** Home page hero (h1). Sized to keep two-line home hero on narrow viewports in uppercase. */
 export const MARKETING_HERO_TITLE =
   "uppercase text-[1.25rem] min-[390px]:text-[1.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.08] tracking-[0.02em] sm:tracking-[0.04em]"
-/** Product and inner-page hero (h1) — one step below home hero */
+/** Product and inner-page hero (h1) – one step below home hero */
 export const MARKETING_PAGE_HERO_TITLE =
   "uppercase text-[1.125rem] min-[390px]:text-[1.25rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.08] tracking-[0.02em] sm:tracking-[0.04em]"
-/** Primary section headings (h2) — one step below hero at each breakpoint */
+/** Primary section headings (h2) – one step below hero at each breakpoint */
 export const MARKETING_SECTION_TITLE = "text-base sm:text-2xl md:text-3xl lg:text-4xl leading-tight"
 /** In-section headings (h3): persona cards, corridor story, bento features, etc. */
 export const MARKETING_SUBSECTION_TITLE = "text-base sm:text-xl md:text-2xl leading-tight"

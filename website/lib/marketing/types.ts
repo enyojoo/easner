@@ -1,3 +1,6 @@
+import type { StaticImageData } from "next/image"
+import type { FeatureDescriptionPart } from "./currency-assets"
+
 export interface Cta {
   label: string
   href: string
@@ -6,12 +9,20 @@ export interface Cta {
   action?: "open-account"
 }
 
+export interface Founder {
+  name: string
+  title: string
+  tagline: string
+  bio: string[]
+  image: StaticImageData
+  linkedin: string
+  x?: string
+}
+
 export interface FaqItem {
   question: string
   answer: string
 }
-
-import type { FeatureDescriptionPart } from "./currency-assets"
 
 export interface Feature {
   title: string

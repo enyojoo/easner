@@ -38,6 +38,12 @@ export function PublicFooter() {
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2 sm:space-x-0">
               <Link
+                href="/about"
+                className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
+              >
+                About
+              </Link>
+              <Link
                 href="/terms"
                 className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
               >

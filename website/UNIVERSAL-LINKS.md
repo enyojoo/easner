@@ -1,6 +1,6 @@
 # Universal Links & App Links
 
-> **Moved to `app.easner.com`** — consumer app web + mobile deep links now live on the app subdomain, not marketing `easner.com`. See `easnerbanking/docs/mobile/APP-EASNER-COM.md`.
+> **Moved to `app.easner.com`** – consumer app web + mobile deep links now live on the app subdomain, not marketing `easner.com`. See `easnerbanking/docs/mobile/APP-EASNER-COM.md`.
 
 ## Legacy `easner.com` routes in this repo
 
@@ -8,7 +8,7 @@ This marketing site still serves `/.well-known/*` on **easner.com** apex for bac
 
 `middleware.ts` redirects `/user` and `/user/*` → `https://app.easner.com{path}`.
 
-## Endpoints (legacy apex — optional sunset)
+## Endpoints (legacy apex – optional sunset)
 
 | URL | Purpose |
 |-----|---------|
@@ -52,4 +52,4 @@ curl -sS -D - "https://app.easner.com/.well-known/apple-app-site-association" | 
 curl -sS "https://app.easner.com/.well-known/assetlinks.json" | jq .
 ```
 
-Apple validator: https://search.developer.apple.com/appsearch-validation-tool/ — domain `app.easner.com`, app ID `com.easner.mobile`.
+Apple validator: https://search.developer.apple.com/appsearch-validation-tool/ – domain `app.easner.com`, app ID `com.easner.mobile`.
