@@ -24,7 +24,7 @@ function XIcon({ className }: { className?: string }) {
 
 function SocialLinks({ founder, className }: { founder: Founder; className?: string }) {
   return (
-    <div className={cn("flex min-h-10 items-center gap-3", className)}>
+    <div className={cn("flex min-h-10 items-center justify-end gap-3", className)}>
       <a
         href={founder.linkedin}
         target="_blank"
@@ -34,7 +34,7 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
       >
         <Linkedin className="h-4 w-4" />
       </a>
-      {founder.x ? (
+      {founder.x && (
         <a
           href={founder.x}
           target="_blank"
@@ -44,8 +44,6 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
         >
           <XIcon className="h-4 w-4" />
         </a>
-      ) : (
-        <span className="inline-flex h-10 w-10" aria-hidden="true" />
       )}
     </div>
   )
@@ -168,7 +166,7 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
         <p className="mt-1 text-sm font-medium text-[#6F756F]">{founder.title}</p>
         <p className="mt-3 min-h-[3rem] text-sm font-semibold leading-6 text-[#007ACC]">{founder.tagline}</p>
         <p className="mt-4 line-clamp-3 min-h-[5.25rem] text-sm leading-7 text-[#5F665F]">{founder.summary}</p>
-        <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+        <div className="mt-auto flex items-center gap-3 pt-6">
           <button
             type="button"
             onClick={onReadBio}
@@ -176,7 +174,7 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
           >
             Read bio
           </button>
-          <SocialLinks founder={founder} />
+          <SocialLinks founder={founder} className="ml-auto" />
         </div>
       </div>
     </article>
