@@ -20,9 +20,6 @@ export function AboutHero() {
         <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">
           {aboutHero.subhead}
         </p>
-        <p className="mt-4 text-pretty text-sm font-semibold leading-6 text-[#3D443E] sm:mt-5 sm:text-base sm:leading-7">
-          {aboutHero.microLine}
-        </p>
       </motion.div>
     </section>
   )

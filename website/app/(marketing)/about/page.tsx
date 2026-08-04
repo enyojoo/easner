@@ -12,8 +12,6 @@ import {
   aboutMetadata,
   aboutPillars,
   aboutPillarsHeadline,
-  aboutPrinciples,
-  aboutPrinciplesHeadline,
 } from "@/lib/marketing/content/about"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
@@ -23,14 +21,13 @@ export default function AboutPage() {
   return (
     <>
       <AboutHero />
-      <AboutMissionSection />
-      <ThreeColCards headline={aboutPillarsHeadline} items={aboutPillars} columns={3} />
       <FoundersSection
         headline={aboutFoundersHeadline}
         subhead={aboutFoundersSubhead}
         founders={aboutFounders}
       />
-      <ThreeColCards headline={aboutPrinciplesHeadline} items={aboutPrinciples} columns={4} />
+      <AboutMissionSection />
+      <ThreeColCards headline={aboutPillarsHeadline} items={aboutPillars} columns={3} />
       <AboutTrustSection />
       <CtaBand content={aboutCtaBand} />
     </>

@@ -20,7 +20,6 @@ export const aboutHero = {
   headline: "Making global money work locally",
   subhead:
     "Easner is a financial technology company building stablecoin-powered banking and payment infrastructure for individuals and businesses across emerging and underserved markets – where legacy rails are slowest and costliest.",
-  microLine: "Familiar banking screens. Stablecoin speed behind the scenes. No crypto complexity.",
 }
 
 export const aboutMission = {
@@ -55,7 +54,7 @@ export const aboutPillars: CardItem[] = [
   },
 ]
 
-export const aboutFoundersHeadline = "Meet the founders"
+export const aboutFoundersHeadline = "Who's building this"
 
 export const aboutFoundersSubhead =
   "Easner was founded in 2025 to make cross-border money practical for the people and businesses legacy infrastructure leaves behind."
@@ -87,31 +86,6 @@ export const aboutFounders: Founder[] = [
     image: founderEnyoPhoto,
     linkedin: "https://www.linkedin.com/in/enyosam/",
     x: "https://x.com/enyosaam",
-  },
-]
-
-export const aboutPrinciplesHeadline = "How we build"
-
-export const aboutPrinciples: CardItem[] = [
-  {
-    title: "Last mile first",
-    description:
-      "Settlement speed means nothing if local payout doesn’t work. We optimize where cost and access actually break.",
-  },
-  {
-    title: "Invisible rails",
-    description:
-      "Stablecoin infrastructure stays behind familiar banking screens – no crypto complexity for users.",
-  },
-  {
-    title: "Compliance from day one",
-    description:
-      "Verification, screening, and controls are product features, not afterthoughts.",
-  },
-  {
-    title: "Outcomes over narrative",
-    description:
-      "High standards, low theatrics. We ship real payment flows and measure what matters.",
   },
 ]
 

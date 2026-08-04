@@ -197,13 +197,11 @@ export function FoundersSection({ headline, subhead, founders }: FoundersSection
             {subhead}
           </p>
         </div>
-        <div className="mx-auto grid max-w-5xl grid-cols-1 items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
-          {founders.map((founder) => (
-            <FounderCard
-              key={founder.name}
-              founder={founder}
-              onReadBio={() => setActiveFounder(founder)}
-            />
+        <div className="mx-auto grid max-w-md grid-cols-1 items-stretch gap-6 sm:max-w-lg md:max-w-3xl md:grid-cols-2 md:gap-6 lg:max-w-7xl lg:grid-cols-4 lg:gap-8">
+          {founders.map((founder, index) => (
+            <div key={founder.name} className={cn("h-full", index === 0 && "lg:col-start-2")}>
+              <FounderCard founder={founder} onReadBio={() => setActiveFounder(founder)} />
+            </div>
           ))}
         </div>
       </div>
