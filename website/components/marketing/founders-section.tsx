@@ -155,17 +155,16 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
           alt={`${founder.name}, ${founder.title}`}
           fill
           className="object-cover object-top"
-          sizes="(max-width: 1024px) 100vw, 40vw"
+          sizes="(max-width: 768px) 100vw, 28rem"
           priority
         />
       </div>
-      <div className="flex flex-1 flex-col p-5 sm:p-7">
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
         <h3 className="font-unbounded text-lg font-bold leading-snug text-[#0F1110] sm:text-xl">
           {founder.name}
         </h3>
         <p className="mt-1 text-sm font-medium text-[#6F756F]">{founder.title}</p>
-        <p className="mt-3 min-h-[3rem] text-sm font-semibold leading-6 text-[#007ACC]">{founder.tagline}</p>
-        <p className="mt-4 line-clamp-3 min-h-[5.25rem] text-sm leading-7 text-[#5F665F]">{founder.summary}</p>
+        <p className="mt-3 text-sm font-semibold leading-6 text-[#007ACC]">{founder.tagline}</p>
         <div className="mt-auto flex items-center gap-3 pt-6">
           <button
             type="button"
@@ -195,11 +194,13 @@ export function FoundersSection({ headline, subhead, founders }: FoundersSection
             {subhead}
           </p>
         </div>
-        <div className="mx-auto grid max-w-md grid-cols-1 items-stretch gap-6 sm:max-w-lg md:max-w-3xl md:grid-cols-2 md:gap-6 lg:max-w-7xl lg:grid-cols-4 lg:gap-8">
-          {founders.map((founder, index) => (
-            <div key={founder.name} className={cn("h-full", index === 0 && "lg:col-start-2")}>
-              <FounderCard founder={founder} onReadBio={() => setActiveFounder(founder)} />
-            </div>
+        <div className="mx-auto grid max-w-sm grid-cols-1 items-stretch gap-6 sm:max-w-md md:max-w-4xl md:grid-cols-2 md:gap-6 lg:gap-8">
+          {founders.map((founder) => (
+            <FounderCard
+              key={founder.name}
+              founder={founder}
+              onReadBio={() => setActiveFounder(founder)}
+            />
           ))}
         </div>
       </div>
