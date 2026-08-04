@@ -65,6 +65,8 @@ export const aboutFounders: Founder[] = [
     name: "Christian Levan",
     title: "Co-founder & CEO",
     tagline: "Making global money work locally in the Global South.",
+    summary:
+      "Focused on the last mile of global money – turning a digital dollar into real local financial utility across emerging markets.",
     bio: [
       "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure for emerging and underserved markets – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout rails. His focus is the last mile: turning a digital dollar into real local financial utility.",
       "Before Easner, he drove growth at venture-backed and private-market companies, with earlier grounding as a financial advisor at Morgan Stanley and Merrill Lynch. He also serves as an enlisted Reconnaissance Marine in the U.S. Marine Corps Reserve – bringing discipline, discretion, and outcomes-over-narrative to how Easner is built.",
@@ -75,11 +77,12 @@ export const aboutFounders: Founder[] = [
   {
     name: "Enyo Sam",
     title: "Founder & CTO",
-    tagline: "Building secure financial infrastructure that makes stablecoins practical.",
+    tagline: "Building secure financial infrastructure with stablecoins",
+    summary:
+      "Leads product and technical vision – stablecoin infrastructure, engineering, and secure rails for compliant cross-border payments worldwide.",
     bio: [
-      "Enyo is Founder and CTO of Easner, a stablecoin-powered banking and payments platform expanding access to global financial services across emerging and underserved markets.",
-      "Since founding Easner in 2025, he has led technical architecture, stablecoin payment infrastructure, and partner integrations – validating market demand through early real-world payment flows. He focuses on product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable cross-border payments.",
-      "His background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
+      "Enyo is Founder and CTO of Easner, building stablecoin-powered banking and payment infrastructure for emerging and underserved markets – technical architecture, stablecoin settlement, partner integrations, and secure cross-border rails. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
+      "Since founding Easner in 2025, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
     ],
     image: founderEnyoPhoto,
     linkedin: "https://www.linkedin.com/in/enyosam/",

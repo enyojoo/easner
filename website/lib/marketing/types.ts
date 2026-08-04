@@ -13,6 +13,9 @@ export interface Founder {
   name: string
   title: string
   tagline: string
+  /** Short blurb shown on the card (keep length matched across founders). */
+  summary: string
+  /** Full bio shown in the read-more dialog. */
   bio: string[]
   image: StaticImageData
   linkedin: string
