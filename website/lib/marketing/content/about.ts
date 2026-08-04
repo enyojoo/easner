@@ -4,7 +4,7 @@ import { CONTACT_PATH } from "../constants"
 import type { CardItem, CtaBandContent, Founder } from "../types"
 
 export const aboutMetadata = {
-  title: "About Easner | Founders, Mission & Global Payment Infrastructure",
+  title: "About Us | Founders, Mission & Global Payments",
   description:
     "Meet the Easner founders and learn how we're building stablecoin-powered banking and payments for emerging markets – accounts, payouts, collections, and local rails.",
   keywords: [
