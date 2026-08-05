@@ -68,7 +68,7 @@ export const aboutFounders: Founder[] = [
   {
     name: "Enyo Sam",
     title: "Founder & CTO",
-    tagline: "Building secure financial infrastructure with stablecoins",
+    tagline: "Building secure financial infrastructure with stablecoins.",
     bio: [
       "Enyo is Founder and CTO of Easner, building stablecoin-powered banking and payment infrastructure for emerging and underserved markets – technical architecture, stablecoin settlement, partner integrations, and secure cross-border rails. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
       "Since founding Easner in 2025, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
