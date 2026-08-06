@@ -3,9 +3,9 @@ import { CONTACT_PATH } from "../constants"
 
 export const partnersContent: ProductPageContent = {
   metadata: {
-    title: "Partners | White-Label OTC Programs",
+    title: "Partners | Branded Cross-Border Programs",
     description:
-      "Launch branded cross-border products on Easner for Partners – global money movement infrastructure with compliance, local payout connectivity, and operational support for OTC, remittance, and platform partners.",
+      "Launch branded cross-border products on Easner for Partners – global money movement infrastructure with compliance, local payout connectivity, and operational support. Built for remittance operators, OTC partners, platforms, and faith-based networks.",
     keywords: [
       "white-label remittance",
       "OTC money transfer",
@@ -24,9 +24,9 @@ export const partnersContent: ProductPageContent = {
   hero: {
     h1: "Your brand on Easner rails",
     subhead:
-      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, provider orchestration, and ongoing operational support for qualified OTC partners, platforms, and faith-based and nonprofit networks.",
+      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, and provider orchestration with ongoing operational support. Built for qualified partners, including remittance operators, OTC networks, platforms, and faith-based organizations.",
     visualSlot: "mkt-hero-partners-01",
-    altText: "Branded partner portal showing OTC transactions and compliance status on Easner infrastructure",
+    altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH },
       { label: "Developer Model", href: "/developers" },

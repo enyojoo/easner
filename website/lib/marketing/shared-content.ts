@@ -86,7 +86,7 @@ export const PRODUCT_CARDS: CardItem[] = [
     icon: "mkt-thumb-business",
   },
   {
-    title: "OTC & Remittance",
+    title: "Whitelabel programs",
     description:
       "Launch branded cross-border products with compliance, corridors, and operational support.",
     link: "/partners",

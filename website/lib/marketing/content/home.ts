@@ -92,11 +92,11 @@ export const solutionsPersonas = [
   },
   {
     id: "otc",
-    label: "OTC and money transfer agents",
+    label: "Partner programs & branded payouts",
     headline: "Compliant transfers under your brand.",
-    body: "Run OTC and money transfer flows on Easner infrastructure under the hood. Move away from undocumented transactions with a built-in compliance and a full audit trail on transfers.",
+    body: "Launch branded cross-border products on Easner infrastructure – with compliance, corridor connectivity, and a full audit trail on every transfer.",
     visualSlot: "mkt-persona-otc",
-    altText: "Money transfer agent at service counter",
+    altText: "Partner operator managing branded cross-border transfers",
     ctas: [{ label: "Explore Partners", href: "/partners" }] satisfies Cta[],
   },
   {

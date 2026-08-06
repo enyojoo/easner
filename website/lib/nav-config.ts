@@ -37,7 +37,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Cards", href: "/cards", icon: "card", description: "Spend controls built into Easner" },
       { label: "Invoicing", href: "/invoicing", icon: "receipt", description: "Bank or stablecoin pay-in options" },
       { label: "Stablecoin", href: "/stablecoin", icon: "coins", description: "Stablecoin speed with banking screens" },
-      { label: "Whitelabel", href: "/partners", icon: "briefcase", description: "Branded remittance and OTC programs" },
+      { label: "Whitelabel", href: "/partners", icon: "briefcase", description: "Branded cross-border and partner programs" },
     ],
   },
 ]

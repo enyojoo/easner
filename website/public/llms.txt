@@ -18,7 +18,7 @@ Easner connects global and local financial rails – so businesses and individua
 - [Stablecoin Payments](https://www.easner.com/stablecoin): Stablecoin speed with familiar banking screens – receive, send, Terminal, and QR Pay
 - [Invoicing](https://www.easner.com/invoicing): Global B2B invoicing with bank or stablecoin pay-in
 - [Cards](https://www.easner.com/cards): Virtual and physical cards with spend controls on one ledger
-- [Partners](https://www.easner.com/partners): White-label cross-border programs via the Agency Model – compliance and local payout connectivity included
+- [Partners](https://www.easner.com/partners): Branded cross-border programs via the Agency Model – compliance, corridors, and local payout connectivity for remittance, OTC, and platform partners
 - [Developers](https://www.easner.com/developers): Embedded payments API for KYC/KYB, accounts, pay-in, payouts to supported local markets, and webhooks
 
 ## Corridor coverage

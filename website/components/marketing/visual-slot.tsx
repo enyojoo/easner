@@ -1741,7 +1741,7 @@ function PartnersHeroMockup({ compact, fill = false }: { compact: boolean; fill?
           <div className={cn("flex min-h-0 flex-col p-3 sm:p-4", fill && "overflow-hidden")}>
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">OTC counter</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Transfers</div>
                 <div className="mt-0.5 text-sm font-semibold text-[#0F1110] sm:text-base">Today&apos;s transfers</div>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-[#E8F7F0] px-2 py-1 text-[10px] font-semibold text-[#0F8A5F]">
