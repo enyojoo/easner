@@ -11,8 +11,6 @@ export const contactHero = {
     "Whether you're opening an account or exploring Easner for Partners or embedded money rails, get in touch with the Easner team.",
   prospectPreface: "New to Easner?",
   prospectLinkLabel: "Book a consultation",
-  customerPreface: "Already a customer?",
-  customerLinkLabel: "Get support",
   emailPreface: "Prefer to email?",
 }
 
