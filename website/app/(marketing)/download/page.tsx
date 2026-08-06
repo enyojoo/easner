@@ -7,7 +7,7 @@ import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata: Metadata = {
   ...marketingMetadata({ metadata: downloadMetadata, path: DOWNLOAD_PATH }),
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
 }
 
 export default function DownloadPage() {

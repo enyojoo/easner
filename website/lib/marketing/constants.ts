@@ -1,18 +1,20 @@
+import { resolveMobileAppStoreUrls } from "@easner/shared"
+import { APP_LINK_URL as CANONICAL_APP_LINK_URL } from "@/lib/download-routing"
+
 export const BRAND_BASE_URL =
   "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand"
 
 export const MARKETING_ASSET_BASE = `${BRAND_BASE_URL}/marketing`
 
-export const APP_STORE_URL = "#"
-export const PLAY_STORE_URL = "#"
+const storeUrls = resolveMobileAppStoreUrls(process.env)
 
+export const APP_STORE_URL = storeUrls.appStore
+export const PLAY_STORE_URL = storeUrls.playStore
+export const ANDROID_APK_URL = storeUrls.androidApk
+
+export const APP_LINK_URL = CANONICAL_APP_LINK_URL
 export const DOWNLOAD_PATH = "/download"
 
-export const TESTFLIGHT_URL = "https://testflight.apple.com/join/UHP5WvF7"
-
-export const ANDROID_APK_URL =
-  process.env.NEXT_PUBLIC_ANDROID_APK_URL ??
-  "https://github.com/enyojoo/easner/releases/latest/download/Easner-Beta.apk"
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"

@@ -5,7 +5,7 @@ export interface Cta {
   label: string
   href: string
   external?: boolean
-  store?: "app-store" | "google-play"
+  store?: "download" | "app-store" | "google-play"
   action?: "open-account"
 }
 

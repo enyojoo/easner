@@ -1,9 +1,8 @@
 import type { ProductPageContent } from "../types"
-import { APP_STORE_URL, PLAY_STORE_URL } from "../constants"
+import { APP_LINK_URL } from "../constants"
 
-const storeCtas = [
-  { label: "App Store", href: APP_STORE_URL, store: "app-store" as const },
-  { label: "Google Play", href: PLAY_STORE_URL, store: "google-play" as const },
+const downloadCta = [
+  { label: "Download the App", href: APP_LINK_URL, store: "download" as const },
 ]
 
 export const personalContent: ProductPageContent = {
@@ -26,7 +25,7 @@ export const personalContent: ProductPageContent = {
       "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",
     altText: "Freelancer using Easner Mobile app to send money internationally",
-    ctas: storeCtas,
+    ctas: downloadCta,
   },
   featuresLayout: "bento",
   features: [
@@ -97,6 +96,6 @@ export const personalContent: ProductPageContent = {
   ctaBand: {
     headline: "Take Easner banking with you.",
     subhead: "Download the app and start banking globally from your phone.",
-    ctas: storeCtas,
+    ctas: downloadCta,
   },
 }

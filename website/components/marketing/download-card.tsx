@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Download } from "lucide-react"
-import { BetaDownloadButtons } from "./beta-download-buttons"
+import { DownloadEmailForm } from "./download-email-form"
+import { DownloadQr } from "./download-qr"
 import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
 import { downloadCard, downloadSupport } from "@/lib/marketing/content/download"
 
@@ -9,8 +10,15 @@ export function DownloadCard() {
     <section className="bg-[#F6F3EB] pb-12 pt-0 sm:pb-16 md:pb-24">
       <div className="mx-auto max-w-4xl space-y-4 px-4 sm:space-y-6 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-[#E4DED1] bg-white/85 px-4 py-8 text-center shadow-[0_18px_60px_rgba(15,17,16,0.08)] backdrop-blur sm:rounded-[2rem] sm:px-10 sm:py-10 md:py-14">
-          <div className="mx-auto w-full max-w-lg">
-            <BetaDownloadButtons layout="grid" className="w-full" />
+          <p className="text-sm font-medium text-[#6F756F] sm:text-[15px]">{downloadCard.qrLabel}</p>
+          <div className="mt-4 flex justify-center sm:mt-5">
+            <DownloadQr size={188} />
+          </div>
+          <p className="mt-6 text-[13px] leading-5 text-[#6F756F] sm:text-sm">
+            {downloadCard.emailDivider}
+          </p>
+          <div className="mx-auto mt-3 w-full max-w-md">
+            <DownloadEmailForm src="download-page" />
           </div>
         </div>
 

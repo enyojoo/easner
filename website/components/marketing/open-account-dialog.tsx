@@ -5,7 +5,7 @@ import { createPortal } from "react-dom"
 import Link from "next/link"
 import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { StoreDownloadButtons } from "./store-download-buttons"
+import { DownloadAppButton } from "./download-app-button"
 import { BUSINESS_SIGNUP_URL } from "@/lib/marketing/constants"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
@@ -91,7 +91,7 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
               <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
                 Download the mobile app for global banking.
               </p>
-              <StoreDownloadButtons className="mt-4 sm:mt-6" layout="grid" />
+              <DownloadAppButton className="mt-4 w-full sm:mt-6" surface="open-account" />
             </div>
             <div className="p-4 sm:p-8">
               <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Business Banking</h3>

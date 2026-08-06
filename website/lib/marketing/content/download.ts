@@ -1,23 +1,31 @@
 export const downloadMetadata = {
-  title: "Download Easner Banking (Beta)",
+  title: "Download Easner Banking",
   description:
-    "Install Easner Banking beta on iOS via TestFlight or download the Android APK. Early access for beta testers.",
-  keywords: ["Easner beta", "Easner Banking download", "TestFlight", "Android APK", "Easner app"],
+    "Download the Easner app for iPhone or Android. Scan the QR code or get a download link by email.",
+  keywords: [
+    "Easner download",
+    "Easner Banking app",
+    "App Store",
+    "Android APK",
+    "Easner app",
+  ],
 }
 
 export const downloadHero = {
-  headline: "Get Easner Banking (Beta)",
-  subhead: "Early access for beta testers. Install on your phone below.",
+  headline: "Download Easner Banking",
+  subhead: "Scan the QR code with your phone, or get a download link by email.",
 }
 
 export const downloadCard = {
+  qrLabel: "Scan to download",
+  emailDivider: "— or get a download link via email —",
   installHints: {
     headline: "How to install",
     ios: {
       label: "iOS",
       steps: [
-        "Tap TestFlight and accept the invite if prompted",
-        "Install Easner Banking from TestFlight",
+        "Open the App Store from the link or QR code",
+        "Tap Get to install Easner Banking",
         "Open the app and sign in",
       ],
     },
@@ -34,6 +42,6 @@ export const downloadCard = {
 
 export const downloadSupport = {
   headline: "Need help installing?",
-  body: "If you run into issues with TestFlight or the APK install, contact support and we'll help you get set up.",
+  body: "If you run into issues installing the app, contact support and we'll help you get set up.",
   emailLabel: "Email support",
 }

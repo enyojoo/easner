@@ -3,20 +3,21 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { StoreDownloadButtons } from "./store-download-buttons"
+import { DownloadAppButton } from "./download-app-button"
 import type { Cta } from "@/lib/marketing/types"
 
 interface PersonaCtasProps {
   ctas: Cta[]
   className?: string
   storeLayout?: "row" | "column" | "grid"
+  surface?: string
 }
 
-export function PersonaCtas({ ctas, className, storeLayout = "grid" }: PersonaCtasProps) {
+export function PersonaCtas({ ctas, className, surface = "persona" }: PersonaCtasProps) {
   const hasStoreCtas = ctas.some((cta) => cta.store)
 
   if (hasStoreCtas) {
-    return <StoreDownloadButtons className={className} layout={storeLayout} />
+    return <DownloadAppButton className={className} surface={surface} />
   }
 
   return (
