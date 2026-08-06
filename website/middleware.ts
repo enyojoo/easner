@@ -9,9 +9,9 @@ import {
   isMobilePlatform,
   parsePlatformOverride,
 } from "@/lib/download-routing"
-import { redirectAppPathOnMainSite, resolveShortLinkResponse } from "@/lib/short-link-redirect"
+import { resolveAppPathResponse, resolveShortLinkResponse } from "@/lib/short-link-redirect"
 
-/** Smart download routing for link.easner.com/app and www /download. */
+/** Smart download routing for /app, link.easner.com, and /download. */
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const host = getRequestHostname(request)
@@ -20,13 +20,12 @@ export function middleware(request: NextRequest) {
   const platform = platformOverride ?? detectPlatform(ua)
   const src = searchParams.get("src")
 
+  const appPathResponse = resolveAppPathResponse(request)
+  if (appPathResponse) return appPathResponse
+
   // link.easner.com — only / and /app; everything else → www home
   const shortLinkResponse = resolveShortLinkResponse(request)
   if (shortLinkResponse) return shortLinkResponse
-
-  // www.easner.com/app (no page) → home
-  const mainSiteAppResponse = redirectAppPathOnMainSite(request)
-  if (mainSiteAppResponse) return mainSiteAppResponse
 
   // www / apex /download smart routing
   if (pathname === "/download") {

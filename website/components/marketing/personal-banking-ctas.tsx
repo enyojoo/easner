@@ -20,7 +20,7 @@ export function PersonalBankingCtas({
   const showWebApp = platform === "desktop"
 
   return (
-    <div className={cn("flex flex-row flex-wrap items-center gap-3", className)}>
+    <div className={cn("inline-flex flex-nowrap items-center gap-3", className)}>
       <DownloadAppButton variant={downloadVariant} surface={surface} />
       {showWebApp ? <UseWebAppButton surface={surface} /> : null}
     </div>

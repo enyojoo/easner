@@ -28,7 +28,7 @@ export function UseWebAppButton({ className, surface = "cta" }: UseWebAppButtonP
       )}
     >
       <Monitor className="size-[1.15rem] shrink-0" strokeWidth={2} aria-hidden />
-      <span>Use Web App</span>
+      <span>Web App</span>
     </Link>
   )
 }

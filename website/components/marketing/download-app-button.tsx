@@ -66,7 +66,7 @@ export function DownloadAppButton({
         )}
       >
         <StoreBadgeIcons />
-        <span>Download the App</span>
+        <span>Download</span>
       </button>
       <DownloadAppDialog
         open={open}

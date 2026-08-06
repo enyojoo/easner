@@ -2,7 +2,7 @@ import type { ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
 
 const downloadCta = [
-  { label: "Download the App", href: APP_LINK_URL, store: "download" as const },
+  { label: "Download", href: APP_LINK_URL, store: "download" as const },
 ]
 
 export const personalContent: ProductPageContent = {
