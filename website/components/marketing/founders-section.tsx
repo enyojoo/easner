@@ -169,7 +169,7 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
           <button
             type="button"
             onClick={onReadBio}
-            className="text-sm font-semibold text-[#007ACC] transition-colors hover:text-[#0062A3] hover:underline"
+            className="text-sm font-semibold text-[#0F1110] underline underline-offset-2 transition-opacity hover:opacity-80"
           >
             Read bio
           </button>

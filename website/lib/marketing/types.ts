@@ -53,6 +53,8 @@ export interface HeroContent {
   altText: string
   badge?: string
   ctas: Cta[]
+  /** Shown above download / web-app CTAs when present. */
+  ctaDescription?: string
 }
 
 export interface ProblemContent {

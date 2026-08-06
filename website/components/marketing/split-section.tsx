@@ -32,12 +32,27 @@ interface SplitSectionProps {
   ctas?: Cta[]
   h1?: boolean
   subhead?: string
+  ctaDescription?: string
   variant?: "hero" | "content"
 }
 
-function SplitCtas({ ctas, h1 }: { ctas: Cta[]; h1?: boolean }) {
+function SplitCtas({
+  ctas,
+  h1,
+  ctaDescription,
+}: {
+  ctas: Cta[]
+  h1?: boolean
+  ctaDescription?: string
+}) {
   if (ctas.some((cta) => cta.store)) {
-    return <PersonaCtas ctas={ctas} className="mt-8 max-w-md" storeLayout={h1 ? "grid" : "row"} />
+    return (
+      <PersonaCtas
+        ctas={ctas}
+        className="mt-8 max-w-md"
+        description={ctaDescription}
+      />
+    )
   }
 
   return (
@@ -83,6 +98,7 @@ function CopyBlock({
   ctas,
   h1,
   boxed,
+  ctaDescription,
 }: {
   headline: string
   subhead?: string
@@ -92,6 +108,7 @@ function CopyBlock({
   ctas?: Cta[]
   h1?: boolean
   boxed: boolean
+  ctaDescription?: string
 }) {
   const HeadingTag = h1 ? "h1" : "h2"
 
@@ -126,7 +143,9 @@ function CopyBlock({
           ))}
         </ul>
       )}
-      {ctas && ctas.length > 0 && <SplitCtas ctas={ctas} h1={h1} />}
+      {ctas && ctas.length > 0 && (
+        <SplitCtas ctas={ctas} h1={h1} ctaDescription={ctaDescription} />
+      )}
     </>
   )
 
@@ -150,6 +169,7 @@ export function SplitSection({
   h1 = false,
   subhead,
   variant,
+  ctaDescription,
 }: SplitSectionProps) {
   const resolvedVariant = variant ?? (h1 ? "hero" : "content")
   const hasVisual = !!(visual || (visualSlot && altText))
@@ -174,6 +194,7 @@ export function SplitSection({
             ctas={ctas}
             h1={h1}
             boxed={isContent && hasVisual}
+            ctaDescription={ctaDescription}
           />
           {hasVisual && (
             <div className={SPLIT_VISUAL_CONTAINER}>

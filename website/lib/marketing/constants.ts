@@ -18,6 +18,15 @@ export const DOWNLOAD_PATH = "/download"
 export const PERSONAL_WEB_APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://app.easner.com"
 
+export const PERSONAL_BANKING_CTA_DESCRIPTION =
+  "Download the mobile app or use the web app for global banking."
+
+export const PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE =
+  "Download the mobile app for global banking."
+
+export const BUSINESS_BANKING_CTA_DESCRIPTION =
+  "Open a business account on the web dashboard."
+
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"

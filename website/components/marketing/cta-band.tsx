@@ -35,7 +35,7 @@ export function CtaBand({ content }: CtaBandProps) {
           )}
           {content.ctas.some((cta) => cta.store) ? (
             <div className="mx-auto mt-8 flex max-w-md justify-center">
-              <PersonaCtas ctas={content.ctas} storeLayout="grid" className="w-full" />
+              <PersonaCtas ctas={content.ctas} className="w-full" align="center" />
             </div>
           ) : (
             <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">

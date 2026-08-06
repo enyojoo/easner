@@ -95,7 +95,6 @@ export const personalContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Take Easner banking with you.",
-    subhead: "Download the app or use the web app on your computer.",
     ctas: downloadCta,
   },
 }

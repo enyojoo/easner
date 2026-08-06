@@ -21,7 +21,7 @@ export function DownloadCard() {
             <DownloadEmailForm src="download-page" />
           </div>
           <div className="mt-6 flex justify-center">
-            <PersonalBankingCtas surface="download-page" />
+            <PersonalBankingCtas surface="download-page" align="center" />
           </div>
         </div>
 

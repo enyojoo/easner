@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useDownloadPlatform } from "@/hooks/use-download-platform"
+import { useShowWebAppCta, usePersonalBankingCtaDescription } from "@/hooks/use-download-platform"
 import { DownloadAppButton } from "./download-app-button"
 import { UseWebAppButton } from "./use-web-app-button"
 
@@ -9,20 +9,63 @@ interface PersonalBankingCtasProps {
   className?: string
   surface?: string
   downloadVariant?: "primary" | "dark" | "outline"
+  /** Override copy; `false` hides. Default: dynamic desktop/mobile copy. */
+  description?: string | false
+  compact?: boolean
+  /** Center CTAs on mobile; use "center" for footer-style bands. */
+  align?: "start" | "center" | "responsive"
 }
 
 export function PersonalBankingCtas({
   className,
   surface = "persona",
   downloadVariant = "primary",
+  description,
+  compact = false,
+  align = "responsive",
 }: PersonalBankingCtasProps) {
-  const platform = useDownloadPlatform()
-  const showWebApp = platform === "desktop"
+  const showWebApp = useShowWebAppCta()
+  const dynamicDescription = usePersonalBankingCtaDescription()
+  const resolvedDescription =
+    description === false ? null : (description ?? dynamicDescription)
+
+  const descriptionAlign =
+    align === "center"
+      ? "text-center"
+      : align === "start"
+        ? "text-left"
+        : "text-center md:text-left"
+
+  const rowAlign =
+    align === "center"
+      ? "justify-center"
+      : align === "start"
+        ? "justify-start"
+        : "justify-center md:justify-start"
 
   return (
-    <div className={cn("inline-flex flex-nowrap items-center gap-3", className)}>
-      <DownloadAppButton variant={downloadVariant} surface={surface} />
-      {showWebApp ? <UseWebAppButton surface={surface} /> : null}
+    <div className={cn("w-full min-w-0", className)}>
+      {resolvedDescription ? (
+        <p
+          className={cn(
+            "text-sm leading-6 text-[#5F665F]",
+            descriptionAlign,
+            compact ? "mb-3" : "mb-4"
+          )}
+        >
+          {resolvedDescription}
+        </p>
+      ) : null}
+      <div
+        className={cn(
+          "flex min-w-0 flex-nowrap items-center",
+          rowAlign,
+          compact ? "gap-2" : "gap-3"
+        )}
+      >
+        <DownloadAppButton variant={downloadVariant} surface={surface} compact={compact} />
+        {showWebApp ? <UseWebAppButton surface={surface} compact={compact} /> : null}
+      </div>
     </div>
   )
 }

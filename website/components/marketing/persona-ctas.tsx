@@ -11,13 +11,31 @@ interface PersonaCtasProps {
   className?: string
   storeLayout?: "row" | "column" | "grid"
   surface?: string
+  description?: string | false
+  compact?: boolean
+  align?: "start" | "center" | "responsive"
 }
 
-export function PersonaCtas({ ctas, className, surface = "persona" }: PersonaCtasProps) {
+export function PersonaCtas({
+  ctas,
+  className,
+  surface = "persona",
+  description,
+  compact = false,
+  align,
+}: PersonaCtasProps) {
   const hasStoreCtas = ctas.some((cta) => cta.store)
 
   if (hasStoreCtas) {
-    return <PersonalBankingCtas className={className} surface={surface} />
+    return (
+      <PersonalBankingCtas
+        className={className}
+        surface={surface}
+        description={description}
+        compact={compact}
+        align={align}
+      />
+    )
   }
 
   return (
