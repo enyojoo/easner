@@ -148,7 +148,7 @@ export function DownloadAppDialog({
           )}
 
           <p className="mt-6 text-[13px] leading-5 text-[#6F756F] sm:text-sm">
-            — or get a download link via email —
+            – or get a download link via email –
           </p>
 
           <DownloadEmailForm className="mt-3" src={src} />

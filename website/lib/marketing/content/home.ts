@@ -4,6 +4,7 @@ import {
   EASNER_AUDIENCE_B,
   EASNER_CANONICAL_DEFINITION,
   EASNER_CANONICAL_DEFINITION_SHORT,
+  EASNER_CORRIDOR_COVERAGE_FAQ,
 } from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
@@ -114,7 +115,8 @@ export const corridorContent = {
   body: "Hold USD, EUR, and GBP, then pay out locally across supported markets – for salaries, supplier payments, and cross-border trade.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
-  altText: "Map showing payment corridors between US, EU, UK, and supported local markets",
+  altText:
+    "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and Kenya",
   ctas: [{ label: "Open Account", href: "#", action: "open-account" }] satisfies Cta[],
 }
 
@@ -151,7 +153,6 @@ export const homeFaq: FaqItem[] = [
   },
   {
     question: "Which countries are supported?",
-    answer:
-      "Easner connects US, EU, and UK rails to supported local markets including Nigeria, Ghana, Kenya, Rwanda, and South Africa, with more corridors in progress. Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details.",
+    answer: EASNER_CORRIDOR_COVERAGE_FAQ,
   },
 ]

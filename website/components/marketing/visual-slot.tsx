@@ -618,7 +618,7 @@ function BusinessAccountsMockup({ compact, fill = false }: { compact: boolean; f
         <div className="rounded-2xl bg-[#0F1110] p-4 text-white">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Total balance</div>
           <div className="mt-1 text-xl font-semibold">$184,920.40</div>
-          <div className="mt-1 text-[10px] text-white/45">USD, EUR, and NGN</div>
+          <div className="mt-1 text-[10px] text-white/45">USD, EUR, and local currencies</div>
         </div>
         <div className="mt-3 space-y-2">
           {(compact ? accounts.slice(0, 2) : accounts).map((account, index) => (
@@ -1703,8 +1703,8 @@ function PartnersMockup({ assetId, compact, fill = false }: { assetId: string; c
 function PartnersHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   const transactions = [
     { ref: "TXN-4821", corridor: "USD → NGN", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
-    { ref: "TXN-4819", corridor: "EUR → GHS", status: "Screening", tone: "text-[#B45309] bg-[#FEF3C7]" },
-    { ref: "TXN-4816", corridor: "GBP → KES", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+    { ref: "TXN-4819", corridor: "USD → MXN", status: "Screening", tone: "text-[#B45309] bg-[#FEF3C7]" },
+    { ref: "TXN-4816", corridor: "USD → PHP", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
   ]
 
   return (
@@ -1843,8 +1843,8 @@ function PartnersComplianceMockup({ compact, fill = false }: { compact: boolean;
 function PartnersRailsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   const corridors = [
     { route: "USD → NGN", volume: "$124k" },
-    { route: "EUR → GHS", volume: "€86k" },
-    { route: "GBP → KES", volume: "£42k" },
+    { route: "USD → MXN", volume: "$86k" },
+    { route: "EUR → INR", volume: "€42k" },
   ]
 
   return (
@@ -1909,8 +1909,8 @@ function PartnersOperationsMockup({ compact, fill = false }: { compact: boolean;
 function PartnersFaithMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   const gifts = [
     { label: "Diaspora offering", corridor: "USD → NGN", amount: "$12,400", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
-    { label: "Mission support", corridor: "EUR → KES", amount: "€8,200", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
-    { label: "Branch payout", corridor: "GBP → GHS", amount: "£3,600", status: "Processing", tone: "text-[#B45309] bg-[#FEF3C7]" },
+    { label: "Mission support", corridor: "USD → PHP", amount: "$8,200", status: "Cleared", tone: "text-[#0F8A5F] bg-[#E8F7F0]" },
+    { label: "Branch payout", corridor: "USD → MXN", amount: "$3,600", status: "Processing", tone: "text-[#B45309] bg-[#FEF3C7]" },
   ]
 
   return (

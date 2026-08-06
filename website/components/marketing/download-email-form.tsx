@@ -72,7 +72,7 @@ export function DownloadEmailForm({ className, src, onSuccess }: DownloadEmailFo
   if (status === "success") {
     return (
       <p className={cn("text-center text-sm leading-6 text-[#3D403D]", className)} role="status">
-        Check your inbox — we sent your download link.
+        Check your inbox – we sent your download link.
       </p>
     )
   }

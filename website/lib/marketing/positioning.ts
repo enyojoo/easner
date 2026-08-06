@@ -23,7 +23,13 @@ export const EASNER_PRODUCT_BUSINESS = "Easner Business Banking"
 export const EASNER_PRODUCT_PARTNERS = "Easner for Partners"
 
 export const EASNER_SUPPORTED_LOCAL_MARKETS =
-  "Nigeria, Ghana, Kenya, Rwanda, South Africa, and more as we expand"
+  "Nigeria, Mexico, Philippines, India, Kenya, and more as we expand"
+
+export const EASNER_CORRIDOR_VISUAL_ARIA_LABEL =
+  "Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Mexico, Philippines, India, Kenya, and more to come"
+
+export const EASNER_CORRIDOR_COVERAGE_FAQ =
+  "Easner connects US, EU, and UK rails to supported local markets across Africa, Latin America, and Asia-Pacific – including Nigeria, Mexico, Philippines, India, and Kenya, with more corridors in progress. Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details."
 
 /** Primary SEO keywords (hero/meta). */
 export const EASNER_PRIMARY_KEYWORDS = [

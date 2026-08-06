@@ -18,7 +18,7 @@ export const downloadHero = {
 
 export const downloadCard = {
   qrLabel: "Scan to download",
-  emailDivider: "— or get a download link via email —",
+  emailDivider: "– or get a download link via email –",
 }
 
 export const downloadSupport = {

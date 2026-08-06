@@ -2,15 +2,16 @@ import type { ComponentType } from "react"
 import { Globe2 } from "lucide-react"
 import {
   IconEurope,
-  IconGhana,
+  IconIndia,
   IconKenya,
+  IconMexico,
   IconNigeria,
-  IconRwanda,
-  IconSouthAfrica,
+  IconPhilippines,
   IconUnitedKingdom,
   IconUnitedStates,
   type IconProps,
 } from "nucleo-flags"
+import { EASNER_CORRIDOR_VISUAL_ARIA_LABEL } from "@/lib/marketing/positioning"
 import { cn } from "@/lib/utils"
 
 type FlagIcon = ComponentType<IconProps>
@@ -24,10 +25,10 @@ const corridorMarkets: MarketBadge[] = [
   { label: "Europe", Flag: IconEurope, accent: "from-[#EEF0FF] to-white" },
   { label: "United Kingdom", Flag: IconUnitedKingdom, accent: "from-[#F3F0E8] to-white" },
   { label: "Nigeria", Flag: IconNigeria, accent: "from-[#E8F7F0] to-white" },
-  { label: "Ghana", Flag: IconGhana, accent: "from-[#FFF8E8] to-white" },
-  { label: "Kenya", Flag: IconKenya, accent: "from-[#FFF4E8] to-white" },
-  { label: "Rwanda", Flag: IconRwanda, accent: "from-[#FCEEF3] to-white" },
-  { label: "South Africa", Flag: IconSouthAfrica, accent: "from-[#EEF6FF] to-white" },
+  { label: "Mexico", Flag: IconMexico, accent: "from-[#E8F4EC] to-white" },
+  { label: "Philippines", Flag: IconPhilippines, accent: "from-[#FCEEF3] to-white" },
+  { label: "India", Flag: IconIndia, accent: "from-[#FFF4E8] to-white" },
+  { label: "Kenya", Flag: IconKenya, accent: "from-[#FFF8E8] to-white" },
   { label: "More markets", soon: true, accent: "from-[#F8F6F0] to-white" },
 ]
 
@@ -43,10 +44,7 @@ export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: C
         "relative overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_24px_80px_rgba(15,17,16,0.12)]",
         className
       )}
-      aria-label={
-        ariaLabel ??
-        "Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Ghana, Kenya, Rwanda, South Africa, and more to come"
-      }
+      aria-label={ariaLabel ?? EASNER_CORRIDOR_VISUAL_ARIA_LABEL}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(0,122,204,0.12),transparent_34%),radial-gradient(circle_at_82%_88%,rgba(15,138,95,0.10),transparent_32%)]" />
       <div className="relative flex h-full flex-col p-5 sm:p-6">

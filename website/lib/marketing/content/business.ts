@@ -1,5 +1,5 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL } from "../constants"
+import { BUSINESS_SIGNUP_URL, EASNER_SUPPORTED_LOCAL_MARKETS } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
@@ -65,8 +65,7 @@ export const businessContent: ProductPageContent = {
   useCases: [
     {
       title: "Pay into local markets",
-      description:
-        "US, EU, and UK companies pay contractors and suppliers in Nigeria, Ghana, Kenya, and other supported corridors – with clear fees, status tracking, and one ledger.",
+      description: `US, EU, and UK companies pay contractors and suppliers in ${EASNER_SUPPORTED_LOCAL_MARKETS} – with clear fees, status tracking, and one ledger.`,
     },
     {
       title: "Global trade operators",
