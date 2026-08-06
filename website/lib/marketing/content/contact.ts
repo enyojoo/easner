@@ -23,7 +23,8 @@ export const contactSupport = {
   anchor: "product-support",
   headline: "Need product support?",
   body: "If you already use Easner and need help with transfers, accounts, verification, or transactions, contact support directly instead of booking a consultation below.",
-  inAppLabel: "In-app support",
-  inAppText: "Live chat in the Easner Mobile app and Easner Business dashboard",
+  chatLabel: "Chat with us",
+  inAppLabel: "Live chat",
+  inAppText: "On easner.com, the Easner Mobile app, and Easner Business dashboard",
   emailLabel: "Email support",
 }

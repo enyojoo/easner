@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Linkedin } from "lucide-react"
+import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
 import { CONTACT_PATH } from "@/lib/marketing/constants"
 import { REGULATORY_FOOTER_PARAGRAPHS } from "@/lib/marketing/shared-content"
 
@@ -68,7 +69,11 @@ export function PublicFooter() {
               Have questions?{" "}
               <Link href={CONTACT_PATH} className="text-easner-primary hover:underline">
                 Contact us
-              </Link>
+              </Link>{" "}
+              or{" "}
+              <SupportChatTrigger variant="link" className="text-xs sm:text-sm">
+                chat with support
+              </SupportChatTrigger>
               .
             </p>
           </div>

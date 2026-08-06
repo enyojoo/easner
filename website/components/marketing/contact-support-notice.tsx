@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { MessageCircle } from "lucide-react"
+import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
 import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
 import { contactSupport } from "@/lib/marketing/content/contact"
 
@@ -20,7 +21,10 @@ export function ContactSupportNotice() {
           <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
             {contactSupport.body}
           </p>
-          <ul className="mt-3 space-y-2.5 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:space-y-3 sm:text-base sm:leading-7">
+          <div className="mt-4 sm:mt-5">
+            <SupportChatTrigger className="w-full sm:w-auto">{contactSupport.chatLabel}</SupportChatTrigger>
+          </div>
+          <ul className="mt-4 space-y-2.5 text-sm leading-6 text-[#5F665F] sm:mt-5 sm:space-y-3 sm:text-base sm:leading-7">
             <li className="text-pretty">
               <strong className="text-[#0F1110]">{contactSupport.inAppLabel}:</strong> {contactSupport.inAppText}
             </li>
