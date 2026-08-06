@@ -1,7 +1,7 @@
 import { createOgImage, OG_CONTENT_TYPE, OG_SIZE } from "@/lib/marketing/og-image"
 import { downloadHero } from "@/lib/marketing/content/download"
 
-export const alt = "Download Easner Banking Beta"
+export const alt = "Download Easner Banking"
 export const size = OG_SIZE
 export const contentType = OG_CONTENT_TYPE
 

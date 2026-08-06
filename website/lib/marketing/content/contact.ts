@@ -23,7 +23,7 @@ export const contactBooking = {
 export const contactSupport = {
   anchor: "product-support",
   headline: "Already using Easner?",
-  body: "For help with transfers, accounts, verification, or transactions, reach support directly — this page is for sales and partnership conversations.",
+  body: "For help with transfers, accounts, verification, or transactions, reach support directly – this page is for sales and partnership conversations.",
   chatLabel: "Chat with us",
   emailPreface: "Prefer email?",
   alsoAvailable: "Also available in the Easner app and Business dashboard.",

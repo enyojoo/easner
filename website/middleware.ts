@@ -1,66 +1,11 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { captureDownloadRedirect } from "@/lib/download-analytics"
-import {
-  appendSearchParams,
-  detectPlatform,
-  getDownloadDestination,
-  getRequestHostname,
-  isMobilePlatform,
-  parsePlatformOverride,
-} from "@/lib/download-routing"
-import { resolveAppPathResponse, resolveShortLinkResponse } from "@/lib/short-link-redirect"
+import { resolveAppPathResponse } from "@/lib/short-link-redirect"
 
-/** Smart download routing for /app, link.easner.com, and /download. */
+/** Smart download routing for /app. */
 export function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl
-  const host = getRequestHostname(request)
-  const ua = request.headers.get("user-agent")
-  const platformOverride = parsePlatformOverride(searchParams.get("platform"))
-  const platform = platformOverride ?? detectPlatform(ua)
-  const src = searchParams.get("src")
-
   const appPathResponse = resolveAppPathResponse(request)
   if (appPathResponse) return appPathResponse
-
-  // link.easner.com — only / and /app; everything else → www home
-  const shortLinkResponse = resolveShortLinkResponse(request)
-  if (shortLinkResponse) return shortLinkResponse
-
-  // www / apex /download smart routing
-  if (pathname === "/download") {
-    // Explicit platform from email fallback links
-    if (platformOverride === "ios" || platformOverride === "android") {
-      const destination = getDownloadDestination(platformOverride)
-      if (destination) {
-        const target = appendSearchParams(destination, searchParams)
-        void captureDownloadRedirect({
-          platform: platformOverride,
-          destination: target,
-          src,
-          entry_host: host,
-          entry_path: pathname,
-        })
-        return NextResponse.redirect(target, 302)
-      }
-    }
-
-    // Mobile visitors → store/APK directly (preserves query)
-    if (isMobilePlatform(platform) && !platformOverride) {
-      const destination = getDownloadDestination(platform)
-      if (destination) {
-        const target = appendSearchParams(destination, searchParams)
-        void captureDownloadRedirect({
-          platform,
-          destination: target,
-          src,
-          entry_host: host,
-          entry_path: pathname,
-        })
-        return NextResponse.redirect(target, 302)
-      }
-    }
-  }
 
   return NextResponse.next()
 }

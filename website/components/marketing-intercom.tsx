@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect } from "react"
-import Intercom, { update } from "@intercom/messenger-js-sdk"
+import Intercom, { onHide, update } from "@intercom/messenger-js-sdk"
 import {
   intercomAppId,
   intercomRegion,
   INTERCOM_MOBILE_MEDIA_QUERY,
+  restoreIntercomScrollPosition,
   shouldHideIntercomLauncher,
 } from "@/lib/intercom-messenger"
 
@@ -23,6 +24,10 @@ export function MarketingIntercom() {
       app_id: appId,
       region: intercomRegion(),
       hide_default_launcher: shouldHideIntercomLauncher(),
+    })
+
+    onHide(() => {
+      restoreIntercomScrollPosition()
     })
 
     const media = window.matchMedia(INTERCOM_MOBILE_MEDIA_QUERY)

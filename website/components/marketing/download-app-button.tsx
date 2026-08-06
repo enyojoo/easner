@@ -14,7 +14,7 @@ interface DownloadAppButtonProps {
   src?: string
   surface?: string
   compact?: boolean
-  /** When true, always open the dialog (for use on /download desktop landing). */
+  /** When true, always open the dialog instead of redirecting on mobile. */
   forceDialog?: boolean
 }
 

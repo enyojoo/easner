@@ -3,9 +3,11 @@ import { resolveMobileAppStoreUrls } from "@easner/shared"
 export type DownloadPlatform = "ios" | "android" | "desktop"
 
 export const APP_LINK_URL =
-  process.env.NEXT_PUBLIC_APP_LINK_URL ?? "https://link.easner.com/app"
+  process.env.NEXT_PUBLIC_APP_LINK_URL ?? "https://www.easner.com/app"
 
-export const DOWNLOAD_LANDING_URL = "https://www.easner.com/download"
+export const APP_LINK_PATH = "/app"
+
+export const DOWNLOAD_LANDING_URL = "https://www.easner.com/app"
 
 export const MARKETING_SITE_URL = "https://www.easner.com"
 
@@ -13,20 +15,15 @@ export const APP_DOWNLOAD_API_URL =
   process.env.NEXT_PUBLIC_APP_DOWNLOAD_API_URL ??
   "https://api.easner.com/api/marketing/app-download-link"
 
-const LINK_HOSTS = new Set([
-  "link.easner.com",
-  "link.localhost",
-  ...(process.env.NEXT_PUBLIC_APP_LINK_HOST
-    ? [process.env.NEXT_PUBLIC_APP_LINK_HOST.replace(/:\d+$/, "").toLowerCase()]
-    : []),
-])
+const LINK_PREVIEW_CRAWLER =
+  /facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|discordbot|googlebot|bingpreview|applebot|embedly|pinterest|vkshare|redditbot/i
 
-export function isAppLinkHost(host: string): boolean {
-  const hostname = host.split(":")[0]?.toLowerCase() ?? ""
-  return LINK_HOSTS.has(hostname)
+/** Social / chat link-preview bots — must receive HTML+OG, not an instant 302. */
+export function isLinkPreviewCrawler(userAgent: string | null | undefined): boolean {
+  return LINK_PREVIEW_CRAWLER.test((userAgent ?? "").toLowerCase())
 }
 
-/** Prefer forwarded host — AFD often rewrites Host to the origin (www). */
+/** Prefer forwarded host — AFD may rewrite Host to the origin (www). */
 export function getRequestHostname(request: {
   headers: Headers
   nextUrl?: { host: string }
@@ -38,13 +35,6 @@ export function getRequestHostname(request: {
   }
   const host = request.headers.get("host") ?? request.nextUrl?.host ?? ""
   return host.split(":")[0]?.toLowerCase() ?? ""
-}
-
-export function isAppLinkRequest(request: {
-  headers: Headers
-  nextUrl?: { host: string }
-}): boolean {
-  return isAppLinkHost(getRequestHostname(request))
 }
 
 export function normalizePathname(pathname: string): string {

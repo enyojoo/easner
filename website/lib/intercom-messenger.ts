@@ -1,12 +1,37 @@
 import { show } from "@intercom/messenger-js-sdk"
 import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
 
-/** Matches Tailwind `md` — launcher hidden below this width. */
+/** Matches Tailwind `md` – launcher hidden below this width. */
 export const INTERCOM_MOBILE_MEDIA_QUERY = "(max-width: 767px)"
+
+let pendingMobileScrollRestore: number | null = null
 
 export function shouldHideIntercomLauncher(): boolean {
   if (typeof window === "undefined") return true
   return window.matchMedia(INTERCOM_MOBILE_MEDIA_QUERY).matches
+}
+
+export function markIntercomScrollPosition(): void {
+  if (typeof window === "undefined" || !shouldHideIntercomLauncher()) return
+  pendingMobileScrollRestore = window.scrollY
+}
+
+export function restoreIntercomScrollPosition(): void {
+  if (pendingMobileScrollRestore === null) return
+
+  const scrollY = pendingMobileScrollRestore
+  pendingMobileScrollRestore = null
+
+  const restore = () => {
+    window.scrollTo({ top: scrollY, left: 0, behavior: "auto" })
+  }
+
+  restore()
+  requestAnimationFrame(() => {
+    restore()
+    requestAnimationFrame(restore)
+  })
+  window.setTimeout(restore, 0)
 }
 
 export function intercomAppId(): string {
@@ -37,6 +62,7 @@ export function openMarketingSupport(): void {
   }
 
   try {
+    markIntercomScrollPosition()
     show()
   } catch {
     window.location.href = `mailto:${SUPPORT_EMAIL}`
