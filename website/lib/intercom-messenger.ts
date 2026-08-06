@@ -1,5 +1,4 @@
 import { show } from "@intercom/messenger-js-sdk"
-import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
 
 /** Matches Tailwind `md` – launcher hidden below this width. */
 export const INTERCOM_MOBILE_MEDIA_QUERY = "(max-width: 767px)"
@@ -54,17 +53,14 @@ export function isIntercomConfigured(): boolean {
 }
 
 export function openMarketingSupport(): void {
-  if (typeof window === "undefined") return
-
-  if (!isIntercomConfigured()) {
-    window.location.href = `mailto:${SUPPORT_EMAIL}`
-    return
-  }
+  if (typeof window === "undefined" || !isIntercomConfigured()) return
 
   try {
     markIntercomScrollPosition()
     show()
   } catch {
-    window.location.href = `mailto:${SUPPORT_EMAIL}`
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[Intercom] Failed to open messenger")
+    }
   }
 }

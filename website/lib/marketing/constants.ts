@@ -24,6 +24,10 @@ export const PERSONAL_BANKING_CTA_DESCRIPTION =
 export const PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE =
   "Download the mobile app for global banking."
 
+/** Download landing already shows QR + email — desktop CTAs are web-app only. */
+export const PERSONAL_BANKING_CTA_DESCRIPTION_WEB_APP_ONLY =
+  "Use the web app for global banking."
+
 export const OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION =
   "Download the mobile app or use the web app."
 

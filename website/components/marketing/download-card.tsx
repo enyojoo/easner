@@ -1,8 +1,7 @@
-import Link from "next/link"
 import { PersonalBankingCtas } from "./personal-banking-ctas"
 import { DownloadEmailForm } from "./download-email-form"
 import { DownloadQr } from "./download-qr"
-import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
+import { SupportChatTrigger } from "./support-chat-trigger"
 import { downloadCard, downloadSupport } from "@/lib/marketing/content/download"
 
 export function DownloadCard() {
@@ -21,7 +20,7 @@ export function DownloadCard() {
             <DownloadEmailForm src="download-page" />
           </div>
           <div className="mt-6 flex justify-center">
-            <PersonalBankingCtas surface="download-page" align="center" />
+            <PersonalBankingCtas surface="download-page" align="center" webAppOnly />
           </div>
         </div>
 
@@ -33,15 +32,9 @@ export function DownloadCard() {
             <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
               {downloadSupport.body}
             </p>
-            <p className="mt-3 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-base sm:leading-7">
-              <strong className="text-[#0F1110]">{downloadSupport.emailLabel}:</strong>{" "}
-              <Link
-                href={`mailto:${SUPPORT_EMAIL}`}
-                className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
-              >
-                {SUPPORT_EMAIL}
-              </Link>
-            </p>
+            <div className="mt-4 sm:mt-5">
+              <SupportChatTrigger className="w-full sm:w-auto">{downloadSupport.chatLabel}</SupportChatTrigger>
+            </div>
           </div>
         </div>
       </div>

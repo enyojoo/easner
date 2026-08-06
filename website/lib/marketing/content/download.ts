@@ -24,5 +24,5 @@ export const downloadCard = {
 export const downloadSupport = {
   headline: "Need help installing?",
   body: "If you run into issues installing the app, contact support and we'll help you get set up.",
-  emailLabel: "Email support",
+  chatLabel: "Chat with us",
 }

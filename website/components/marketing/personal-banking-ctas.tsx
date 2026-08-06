@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { PERSONAL_BANKING_CTA_DESCRIPTION_WEB_APP_ONLY } from "@/lib/marketing/constants"
 import { useShowWebAppCta, usePersonalBankingCtaDescription } from "@/hooks/use-download-platform"
 import { DownloadAppButton } from "./download-app-button"
 import { UseWebAppButton } from "./use-web-app-button"
@@ -15,6 +16,8 @@ interface PersonalBankingCtasProps {
   /** Center CTAs on mobile; use "center" for footer-style bands. */
   align?: "start" | "center" | "responsive"
   descriptionVariant?: "default" | "open-account"
+  /** Download page: QR/email already present — hide download button, web app only. */
+  webAppOnly?: boolean
 }
 
 export function PersonalBankingCtas({
@@ -25,11 +28,17 @@ export function PersonalBankingCtas({
   compact = false,
   align = "responsive",
   descriptionVariant = "default",
+  webAppOnly = false,
 }: PersonalBankingCtasProps) {
   const showWebApp = useShowWebAppCta()
   const dynamicDescription = usePersonalBankingCtaDescription(descriptionVariant)
   const resolvedDescription =
-    description === false ? null : (description ?? dynamicDescription)
+    description === false
+      ? null
+      : description ??
+        (webAppOnly
+          ? PERSONAL_BANKING_CTA_DESCRIPTION_WEB_APP_ONLY
+          : dynamicDescription)
 
   // `responsive` matches split layouts (`lg:grid-cols-2`): center while stacked, left beside visual.
   const descriptionAlign =
@@ -66,8 +75,12 @@ export function PersonalBankingCtas({
           compact ? "gap-2" : "gap-3"
         )}
       >
-        <DownloadAppButton variant={downloadVariant} surface={surface} compact={compact} />
-        {showWebApp ? <UseWebAppButton surface={surface} compact={compact} /> : null}
+        {!webAppOnly ? (
+          <DownloadAppButton variant={downloadVariant} surface={surface} compact={compact} />
+        ) : null}
+        {webAppOnly || showWebApp ? (
+          <UseWebAppButton surface={surface} compact={compact} />
+        ) : null}
       </div>
     </div>
   )
