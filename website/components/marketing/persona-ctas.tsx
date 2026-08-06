@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { DownloadAppButton } from "./download-app-button"
+import { PersonalBankingCtas } from "./personal-banking-ctas"
 import type { Cta } from "@/lib/marketing/types"
 
 interface PersonaCtasProps {
@@ -17,7 +17,7 @@ export function PersonaCtas({ ctas, className, surface = "persona" }: PersonaCta
   const hasStoreCtas = ctas.some((cta) => cta.store)
 
   if (hasStoreCtas) {
-    return <DownloadAppButton className={className} surface={surface} />
+    return <PersonalBankingCtas className={className} surface={surface} />
   }
 
   return (

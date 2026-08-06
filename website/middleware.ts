@@ -5,12 +5,12 @@ import {
   APP_LINK_URL,
   appendSearchParams,
   detectPlatform,
-  DOWNLOAD_LANDING_URL,
   getDownloadDestination,
   isAppLinkHost,
   isMobilePlatform,
   parsePlatformOverride,
 } from "@/lib/download-routing"
+import { redirectAppPathOnMainSite, resolveShortLinkResponse } from "@/lib/short-link-redirect"
 
 const APP_ORIGIN = "https://app.easner.com"
 
@@ -31,38 +31,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(`${APP_ORIGIN}${pathname}${request.nextUrl.search}`, 308)
   }
 
-  // Short link host: link.easner.com/app
-  if (isAppLinkHost(host) && (pathname === "/app" || pathname === "/")) {
-    if (isMobilePlatform(platform)) {
-      const destination = getDownloadDestination(platform)
-      if (destination) {
-        const target = appendSearchParams(destination, searchParams)
-        const response = NextResponse.redirect(target, 302)
-        // Fire analytics without blocking (best-effort on edge)
-        void captureDownloadRedirect({
-          platform,
-          destination: target,
-          src,
-          entry_host: host,
-          entry_path: pathname,
-        })
-        return response
-      }
-    }
-    // Desktop (or unknown): branded landing
-    const landing = new URL(DOWNLOAD_LANDING_URL)
-    for (const [key, value] of searchParams.entries()) {
-      landing.searchParams.set(key, value)
-    }
-    void captureDownloadRedirect({
-      platform: "desktop",
-      destination: landing.toString(),
-      src,
-      entry_host: host,
-      entry_path: pathname,
-    })
-    return NextResponse.redirect(landing, 302)
-  }
+  // link.easner.com — /app smart routing; / and other paths → www
+  const shortLinkResponse = resolveShortLinkResponse(request)
+  if (shortLinkResponse) return shortLinkResponse
+
+  // www.easner.com/app (no page) → home
+  const mainSiteAppResponse = redirectAppPathOnMainSite(request)
+  if (mainSiteAppResponse) return mainSiteAppResponse
 
   // www / apex /download smart routing
   if (pathname === "/download") {

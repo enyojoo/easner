@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Download } from "lucide-react"
+import { PersonalBankingCtas } from "./personal-banking-ctas"
 import { DownloadEmailForm } from "./download-email-form"
 import { DownloadQr } from "./download-qr"
 import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
@@ -20,44 +20,8 @@ export function DownloadCard() {
           <div className="mx-auto mt-3 w-full max-w-md">
             <DownloadEmailForm src="download-page" />
           </div>
-        </div>
-
-        <div className="rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-4 sm:rounded-[1.75rem] sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-[#E4DED1] bg-white text-[#007ACC] sm:size-11">
-              <Download className="size-5" strokeWidth={1.75} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-balance font-unbounded text-base font-bold text-[#0F1110] sm:text-lg md:text-xl">
-                {downloadCard.installHints.headline}
-              </h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 sm:gap-6">
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0F1110] sm:text-base">
-                    {downloadCard.installHints.ios.label}
-                  </h3>
-                  <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
-                    {downloadCard.installHints.ios.steps.map((step) => (
-                      <li key={step} className="text-pretty">
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0F1110] sm:text-base">
-                    {downloadCard.installHints.android.label}
-                  </h3>
-                  <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
-                    {downloadCard.installHints.android.steps.map((step) => (
-                      <li key={step} className="text-pretty">
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-            </div>
+          <div className="mt-6 flex justify-center">
+            <PersonalBankingCtas surface="download-page" />
           </div>
         </div>
 

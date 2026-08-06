@@ -15,6 +15,9 @@ export const ANDROID_APK_URL = storeUrls.androidApk
 export const APP_LINK_URL = CANONICAL_APP_LINK_URL
 export const DOWNLOAD_PATH = "/download"
 
+export const PERSONAL_WEB_APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://app.easner.com"
+
 export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
 
 export const CONTACT_EMAIL = "hello@easner.com"

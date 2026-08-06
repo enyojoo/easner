@@ -7,6 +7,8 @@ export const APP_LINK_URL =
 
 export const DOWNLOAD_LANDING_URL = "https://www.easner.com/download"
 
+export const MARKETING_SITE_URL = "https://www.easner.com"
+
 export const APP_DOWNLOAD_API_URL =
   process.env.NEXT_PUBLIC_APP_DOWNLOAD_API_URL ??
   "https://api.easner.com/api/marketing/app-download-link"

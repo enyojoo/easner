@@ -5,7 +5,7 @@ import { createPortal } from "react-dom"
 import Link from "next/link"
 import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { DownloadAppButton } from "./download-app-button"
+import { PersonalBankingCtas } from "./personal-banking-ctas"
 import { BUSINESS_SIGNUP_URL } from "@/lib/marketing/constants"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
@@ -89,9 +89,9 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
             <div className="border-b border-[#E4DED1] p-4 sm:p-8 md:border-b-0 md:border-r">
               <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Personal Banking</h3>
               <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2">
-                Download the mobile app for global banking.
+                Download the mobile app or use the web app for global banking.
               </p>
-              <DownloadAppButton className="mt-4 w-full sm:mt-6" surface="open-account" />
+              <PersonalBankingCtas className="mt-4 sm:mt-6" surface="open-account" />
             </div>
             <div className="p-4 sm:p-8">
               <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Business Banking</h3>

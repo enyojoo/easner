@@ -14,13 +14,14 @@ Onelink-style routing for Easner Banking installs.
 
 | Entry | Device | Result |
 |-------|--------|--------|
+| `link.easner.com` | Any | 302 → `https://www.easner.com` |
 | `link.easner.com/app` | iOS | 302 → App Store |
 | `link.easner.com/app` | Android | 302 → APK (or Play Store when env set) |
 | `link.easner.com/app` | Desktop | 302 → `www.easner.com/download` |
 | `/download` | Mobile | 302 → `link.easner.com/app` |
 | `/download?platform=ios\|android` | Any | 302 → store/APK (email fallbacks) |
 
-Routing is implemented in [`middleware.ts`](middleware.ts) — the `Host` header must reach Vercel as `link.easner.com` (not rewritten to `www`).
+Routing lives in [`middleware.ts`](middleware.ts) plus a fallback [`app/app/route.ts`](app/app/route.ts). The `Host` header must reach Vercel as `link.easner.com` (not rewritten to `www`).
 
 ## Infrastructure
 
@@ -84,8 +85,13 @@ When Play Store launches, replace `EASNER_PLAY_STORE_URL` with the Play Store UR
 
 ### Verify after DNS + AFD propagate
 
+Requires **deploying** the latest website code (middleware + `/app` route handler).
+
 ```bash
-# Short link → store (use a mobile UA or real phone)
+# Apex short-link host → marketing site
+curl -sI "https://link.easner.com/" | grep -i location
+
+# Short link → store (mobile UA)
 curl -sI -A "iPhone" "https://link.easner.com/app" | grep -i location
 
 # Desktop short link → /download
@@ -94,6 +100,14 @@ curl -sI -A "Mozilla/5.0 (Macintosh)" "https://link.easner.com/app" | grep -i lo
 # Email fallback
 curl -sI "https://www.easner.com/download?platform=ios" | grep -i location
 ```
+
+### Troubleshooting `link.easner.com/app` returns 404
+
+1. **Deploy** — push/build the website so [`middleware.ts`](middleware.ts) and [`app/app/route.ts`](app/app/route.ts) are live.
+2. **Vercel domain** — Project → Settings → Domains → add `link.easner.com` (DNS is already CNAME to Front Door; Vercel must accept the host).
+3. **Azure Front Door** — Route `link.easner.com/*` to the same Vercel origin as `www`; **do not** rewrite `Host` to `www.easner.com` (middleware keys off `Host: link.easner.com`).
+4. **Do not** redirect `link.easner.com` → `www` at the AFD layer (only the app redirects `/` → www in code).
+5. After deploy, purge AFD/Vercel cache if you still see a stale 404.
 
 ### Preview email (easnerbanking repo)
 

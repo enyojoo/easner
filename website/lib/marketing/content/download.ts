@@ -19,25 +19,6 @@ export const downloadHero = {
 export const downloadCard = {
   qrLabel: "Scan to download",
   emailDivider: "— or get a download link via email —",
-  installHints: {
-    headline: "How to install",
-    ios: {
-      label: "iOS",
-      steps: [
-        "Open the App Store from the link or QR code",
-        "Tap Get to install Easner Banking",
-        "Open the app and sign in",
-      ],
-    },
-    android: {
-      label: "Android",
-      steps: [
-        "Tap Android APK to download the file",
-        "Allow install from your browser if prompted",
-        "Open Easner Banking after install",
-      ],
-    },
-  },
 }
 
 export const downloadSupport = {
