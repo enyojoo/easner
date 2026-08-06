@@ -26,6 +26,34 @@ export function isAppLinkHost(host: string): boolean {
   return LINK_HOSTS.has(hostname)
 }
 
+/** Prefer forwarded host — AFD often rewrites Host to the origin (www). */
+export function getRequestHostname(request: {
+  headers: Headers
+  nextUrl?: { host: string }
+}): string {
+  const forwarded =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("x-original-host")
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim().split(":")[0]?.toLowerCase() ?? ""
+  }
+  const host = request.headers.get("host") ?? request.nextUrl?.host ?? ""
+  return host.split(":")[0]?.toLowerCase() ?? ""
+}
+
+export function isAppLinkRequest(request: {
+  headers: Headers
+  nextUrl?: { host: string }
+}): boolean {
+  return isAppLinkHost(getRequestHostname(request))
+}
+
+export function normalizePathname(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1)
+  }
+  return pathname
+}
+
 export function detectPlatform(userAgent: string | null | undefined): DownloadPlatform {
   const ua = (userAgent ?? "").toLowerCase()
   if (/iphone|ipad|ipod/.test(ua)) return "ios"

@@ -19,6 +19,8 @@ export function UseWebAppButton({ className, surface = "cta" }: UseWebAppButtonP
   return (
     <Link
       href={PERSONAL_WEB_APP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={handleClick}
       className={cn(
         "inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full border border-[#E9E4D8] bg-white px-5 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:border-[#007ACC]/30 sm:min-h-[3rem] sm:px-6 sm:text-[15px]",

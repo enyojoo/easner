@@ -158,6 +158,8 @@ export function DownloadAppDialog({
               Prefer not to install?{" "}
               <Link
                 href={PERSONAL_WEB_APP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => posthog.capture("web_app_click", { surface: `${surface}-dialog` })}
                 className="font-semibold text-[#007ACC] hover:underline"
               >

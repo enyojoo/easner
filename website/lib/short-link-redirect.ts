@@ -6,20 +6,23 @@ import {
   detectPlatform,
   DOWNLOAD_LANDING_URL,
   getDownloadDestination,
-  isAppLinkHost,
+  getRequestHostname,
+  isAppLinkRequest,
   isMobilePlatform,
   MARKETING_SITE_URL,
+  normalizePathname,
   parsePlatformOverride,
 } from "@/lib/download-routing"
 
-/** Smart redirect for link.easner.com/app (shared by middleware + route handler). */
+/** Smart redirect for link.easner.com (only `/` and `/app` are public). */
 export function resolveShortLinkResponse(request: NextRequest): NextResponse | null {
-  const host = request.headers.get("host") ?? request.nextUrl.host
-  if (!isAppLinkHost(host)) return null
+  if (!isAppLinkRequest(request)) return null
 
-  const { pathname, searchParams } = request.nextUrl
+  const host = getRequestHostname(request)
+  const pathname = normalizePathname(request.nextUrl.pathname)
+  const { searchParams } = request.nextUrl
 
-  // link.easner.com without /app → main marketing site
+  // Only /app is a short link; any other path → www home
   if (pathname !== "/app") {
     return NextResponse.redirect(MARKETING_SITE_URL, 302)
   }
@@ -60,8 +63,7 @@ export function resolveShortLinkResponse(request: NextRequest): NextResponse | n
 
 /** Non-link hosts hitting /app → marketing home (no orphan /app page). */
 export function redirectAppPathOnMainSite(request: NextRequest): NextResponse | null {
-  const host = request.headers.get("host") ?? request.nextUrl.host
-  if (isAppLinkHost(host)) return null
-  if (request.nextUrl.pathname !== "/app") return null
+  if (isAppLinkRequest(request)) return null
+  if (normalizePathname(request.nextUrl.pathname) !== "/app") return null
   return NextResponse.redirect(MARKETING_SITE_URL, 302)
 }

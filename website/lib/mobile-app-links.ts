@@ -14,10 +14,6 @@ export function buildAppleAppSiteAssociation(teamId: string) {
                 "Supabase OAuth / magic link return (AuthContext handles; do not open in Safari)",
             },
             {
-              "/": "/user/*",
-              comment: "Legacy deep-link paths mapped in mobile DeepLinkService",
-            },
-            {
               "/": "*",
               exclude: true,
               comment: "Marketing pages stay in browser unless we add explicit paths later",

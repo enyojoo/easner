@@ -6,8 +6,6 @@
 
 This marketing site still serves `/.well-known/*` on **easner.com** apex for backward compatibility until all installs use `app.easner.com`. New builds register `applinks:app.easner.com` only.
 
-`middleware.ts` redirects `/user` and `/user/*` → `https://app.easner.com{path}`.
-
 ## Endpoints (legacy apex – optional sunset)
 
 | URL | Purpose |

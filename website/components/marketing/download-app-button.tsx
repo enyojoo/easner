@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useDownloadPlatform } from "@/hooks/use-download-platform"
-import { APP_LINK_URL, buildAppLinkUrl, isMobilePlatform } from "@/lib/download-routing"
+import { getDownloadDestination, isMobilePlatform } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
 import { DownloadAppDialog } from "./download-app-dialog"
 import { StoreBadgeIcons } from "./store-icons"
@@ -29,16 +29,16 @@ export function DownloadAppButton({
 
   function handleClick() {
     if (!forceDialog && isMobilePlatform(platform)) {
-      const params = new URLSearchParams()
-      if (src) params.set("src", src)
-      const href = params.size > 0 ? buildAppLinkUrl(params) : APP_LINK_URL
-      posthog.capture("download_click", {
-        surface,
-        platform,
-        action: "redirect",
-      })
-      window.location.href = href
-      return
+      const destination = getDownloadDestination(platform)
+      if (destination) {
+        posthog.capture("download_click", {
+          surface,
+          platform,
+          action: "redirect",
+        })
+        window.location.href = destination
+        return
+      }
     }
 
     posthog.capture("download_click", {

@@ -2,36 +2,25 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { captureDownloadRedirect } from "@/lib/download-analytics"
 import {
-  APP_LINK_URL,
   appendSearchParams,
   detectPlatform,
   getDownloadDestination,
-  isAppLinkHost,
+  getRequestHostname,
   isMobilePlatform,
   parsePlatformOverride,
 } from "@/lib/download-routing"
 import { redirectAppPathOnMainSite, resolveShortLinkResponse } from "@/lib/short-link-redirect"
 
-const APP_ORIGIN = "https://app.easner.com"
-
-/**
- * Legacy mobile deep links used easner.com/user/* before app.easner.com.
- * Smart download routing for link.easner.com/app and /download.
- */
+/** Smart download routing for link.easner.com/app and www /download. */
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
-  const host = request.headers.get("host") ?? request.nextUrl.host
+  const host = getRequestHostname(request)
   const ua = request.headers.get("user-agent")
   const platformOverride = parsePlatformOverride(searchParams.get("platform"))
   const platform = platformOverride ?? detectPlatform(ua)
   const src = searchParams.get("src")
 
-  // Legacy deep links
-  if (pathname === "/user" || pathname.startsWith("/user/")) {
-    return NextResponse.redirect(`${APP_ORIGIN}${pathname}${request.nextUrl.search}`, 308)
-  }
-
-  // link.easner.com — /app smart routing; / and other paths → www
+  // link.easner.com — only / and /app; everything else → www home
   const shortLinkResponse = resolveShortLinkResponse(request)
   if (shortLinkResponse) return shortLinkResponse
 
@@ -57,20 +46,20 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    // Mobile visitors → short link (preserves query)
+    // Mobile visitors → store/APK directly (preserves query)
     if (isMobilePlatform(platform) && !platformOverride) {
-      const appLink = new URL(APP_LINK_URL)
-      for (const [key, value] of searchParams.entries()) {
-        appLink.searchParams.set(key, value)
+      const destination = getDownloadDestination(platform)
+      if (destination) {
+        const target = appendSearchParams(destination, searchParams)
+        void captureDownloadRedirect({
+          platform,
+          destination: target,
+          src,
+          entry_host: host,
+          entry_path: pathname,
+        })
+        return NextResponse.redirect(target, 302)
       }
-      void captureDownloadRedirect({
-        platform,
-        destination: appLink.toString(),
-        src,
-        entry_host: host,
-        entry_path: pathname,
-      })
-      return NextResponse.redirect(appLink, 302)
     }
   }
 
@@ -78,5 +67,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/user", "/user/:path*", "/download", "/app", "/"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 }

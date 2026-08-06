@@ -18,10 +18,10 @@ Onelink-style routing for Easner Banking installs.
 | `link.easner.com/app` | iOS | 302 → App Store |
 | `link.easner.com/app` | Android | 302 → APK (or Play Store when env set) |
 | `link.easner.com/app` | Desktop | 302 → `www.easner.com/download` |
-| `/download` | Mobile | 302 → `link.easner.com/app` |
+| `/download` | Mobile | 302 → App Store / APK |
 | `/download?platform=ios\|android` | Any | 302 → store/APK (email fallbacks) |
 
-Routing lives in [`middleware.ts`](middleware.ts) plus a fallback [`app/app/route.ts`](app/app/route.ts). The `Host` header must reach Vercel as `link.easner.com` (not rewritten to `www`).
+Routing lives in [`middleware.ts`](middleware.ts) plus a fallback [`app/app/route.ts`](app/app/route.ts). Short-link routing keys off `X-Forwarded-Host` (or `Host`) — Azure Front Door must forward the original host (`link.easner.com`), not rewrite it to `www`. Only **`/`** and **`/app`** are public on the short-link host.
 
 ## Infrastructure
 
@@ -88,7 +88,7 @@ When Play Store launches, replace `EASNER_PLAY_STORE_URL` with the Play Store UR
 Requires **deploying** the latest website code (middleware + `/app` route handler).
 
 ```bash
-# Apex short-link host → marketing site
+# Short-link host root → www
 curl -sI "https://link.easner.com/" | grep -i location
 
 # Short link → store (mobile UA)
@@ -105,7 +105,7 @@ curl -sI "https://www.easner.com/download?platform=ios" | grep -i location
 
 1. **Deploy** — push/build the website so [`middleware.ts`](middleware.ts) and [`app/app/route.ts`](app/app/route.ts) are live.
 2. **Vercel domain** — Project → Settings → Domains → add `link.easner.com` (DNS is already CNAME to Front Door; Vercel must accept the host).
-3. **Azure Front Door** — Route `link.easner.com/*` to the same Vercel origin as `www`; **do not** rewrite `Host` to `www.easner.com` (middleware keys off `Host: link.easner.com`).
+3. **Azure Front Door** — Route `link.easner.com/*` to the same Vercel origin as `www`; preserve **`X-Forwarded-Host: link.easner.com`** (or forward `Host` unchanged). If `/app` 302s to `www.easner.com/` instead of a store, the edge is rewriting the host.
 4. **Do not** redirect `link.easner.com` → `www` at the AFD layer (only the app redirects `/` → www in code).
 5. After deploy, purge AFD/Vercel cache if you still see a stale 404.
 
