@@ -13,7 +13,7 @@ Easner connects global and local financial rails – so businesses and individua
 
 ## Products
 
-- [Personal Banking](https://www.easner.com/personal): Global personal banking via Easner Mobile – send, receive, and manage money across US, EU, UK, and supported local corridors
+- [Personal Banking](https://www.easner.com/personal): Easner Mobile – mobile banking for global money; send, receive, and manage funds in global and local currencies via bank transfers and stablecoin
 - [Business Banking](https://www.easner.com/business): Cross-border business banking – multi-currency accounts, payouts, invoicing, and team access for global and local operators
 - [Stablecoin Payments](https://www.easner.com/stablecoin): Stablecoin speed with familiar banking screens – receive, send, Terminal, and QR Pay
 - [Invoicing](https://www.easner.com/invoicing): Global B2B invoicing with bank or stablecoin pay-in

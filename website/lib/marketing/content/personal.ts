@@ -1,5 +1,6 @@
 import type { ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
+import { APP_STORE_PERSONAL_SUMMARY } from "./app-store"
 
 const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const },
@@ -8,8 +9,7 @@ const downloadCta = [
 export const personalContent: ProductPageContent = {
   metadata: {
     title: "Personal Banking | Global Money App",
-    description:
-      "Global personal banking with Easner Mobile – send, receive, and manage money across US, EU, UK, and supported local corridors. Built for global earners, freelancers, and remote workers.",
+    description: APP_STORE_PERSONAL_SUMMARY,
     keywords: [
       "global mobile banking",
       "multi-currency personal account",

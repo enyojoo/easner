@@ -32,6 +32,19 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Link",
+            value: '</llms.txt>; rel="alternate"; type="text/plain"; title="LLMs.txt"',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
