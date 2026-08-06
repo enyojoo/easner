@@ -5,20 +5,22 @@ export const businessContent: ProductPageContent = {
   metadata: {
     title: "Business Banking | Multi-Currency & Payouts",
     description:
-      "Cross-border business banking on one dashboard. Multi-currency accounts, payouts, invoicing, and team access with KYC/KYB built in.",
+      "Cross-border business banking on one dashboard – multi-currency accounts, payouts, invoicing, and team access. Operate internationally or pay teams in supported local markets, with KYC/KYB built in.",
     keywords: [
+      "cross-border B2B payouts",
+      "pay international suppliers",
+      "multi-currency business account",
       "business banking cross-border",
       "SME global payments",
-      "multi-currency business account",
-      "pay African suppliers",
       "cross-border payroll",
       "multi-currency SME account",
+      "pay suppliers in Nigeria",
     ],
   },
   hero: {
     h1: "Global banking for business",
     subhead:
-      "One dashboard for accounts, payouts, and collections across global and African corridors – with KYC/KYB and compliance built in.",
+      "One dashboard for accounts, payouts, and collections across global and local corridors – whether you operate internationally or pay teams in supported markets, with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-business-01",
     altText: "Small business founder reviewing Easner Business dashboard",
     ctas: [
@@ -59,8 +61,13 @@ export const businessContent: ProductPageContent = {
   ],
   useCasesHeadline: "Who runs finance on Easner Business",
   useCasesSubhead:
-    "SMEs that pay suppliers, collect from customers, and run finance ops across borders from one dashboard.",
+    "Local-market operators running global ops and US, EU, and UK companies paying suppliers and teams in supported corridors – all from one dashboard.",
   useCases: [
+    {
+      title: "Pay into local markets",
+      description:
+        "US, EU, and UK companies pay contractors and suppliers in Nigeria, Ghana, Kenya, and other supported corridors – with clear fees, status tracking, and one ledger.",
+    },
     {
       title: "Global trade operators",
       description:

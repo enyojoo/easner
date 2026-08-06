@@ -11,7 +11,7 @@ export const invoicingContent: ProductPageContent = {
       "invoice stablecoin pay-in",
       "global B2B collections",
       "cross-border invoice payment",
-      "B2B collections Africa",
+      "B2B collections emerging markets",
     ],
   },
   hero: {

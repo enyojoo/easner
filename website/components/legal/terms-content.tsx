@@ -75,7 +75,7 @@ export function TermsPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Depending on your verification status, location, and product approval, the Services may include multi-currency
           accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails,
-          invoicing and merchant collection tools, global and African banking where launched, and card products when
+          invoicing and merchant collection tools, global and local/regional banking where launched, and card products when
           available.
         </p>
         <p className="text-[#5F665F] leading-relaxed">

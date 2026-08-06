@@ -14,6 +14,7 @@ interface PersonalBankingCtasProps {
   compact?: boolean
   /** Center CTAs on mobile; use "center" for footer-style bands. */
   align?: "start" | "center" | "responsive"
+  descriptionVariant?: "default" | "open-account"
 }
 
 export function PersonalBankingCtas({
@@ -23,25 +24,27 @@ export function PersonalBankingCtas({
   description,
   compact = false,
   align = "responsive",
+  descriptionVariant = "default",
 }: PersonalBankingCtasProps) {
   const showWebApp = useShowWebAppCta()
-  const dynamicDescription = usePersonalBankingCtaDescription()
+  const dynamicDescription = usePersonalBankingCtaDescription(descriptionVariant)
   const resolvedDescription =
     description === false ? null : (description ?? dynamicDescription)
 
+  // `responsive` matches split layouts (`lg:grid-cols-2`): center while stacked, left beside visual.
   const descriptionAlign =
     align === "center"
       ? "text-center"
       : align === "start"
         ? "text-left"
-        : "text-center md:text-left"
+        : "text-center lg:text-left"
 
   const rowAlign =
     align === "center"
       ? "justify-center"
       : align === "start"
         ? "justify-start"
-        : "justify-center md:justify-start"
+        : "justify-center lg:justify-start"
 
   return (
     <div className={cn("w-full min-w-0", className)}>

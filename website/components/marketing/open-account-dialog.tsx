@@ -93,6 +93,7 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
                 surface="open-account"
                 compact
                 align="start"
+                descriptionVariant="open-account"
               />
             </div>
             <div className="p-4 sm:p-8">

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import {
+  OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION,
+  OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION_MOBILE,
   PERSONAL_BANKING_CTA_DESCRIPTION,
   PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE,
 } from "@/lib/marketing/constants"
@@ -30,16 +32,25 @@ export function useShowWebAppCta(): boolean {
 }
 
 /** CTA helper copy — mobile-first until mount, then matches visible actions. */
-export function usePersonalBankingCtaDescription(): string {
-  const [description, setDescription] = useState(PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE)
+export function usePersonalBankingCtaDescription(
+  variant: "default" | "open-account" = "default"
+): string {
+  const desktopCopy =
+    variant === "open-account"
+      ? OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION
+      : PERSONAL_BANKING_CTA_DESCRIPTION
+  const mobileCopy =
+    variant === "open-account"
+      ? OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION_MOBILE
+      : PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE
+
+  const [description, setDescription] = useState(mobileCopy)
 
   useEffect(() => {
     setDescription(
-      detectPlatform(navigator.userAgent) === "desktop"
-        ? PERSONAL_BANKING_CTA_DESCRIPTION
-        : PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE
+      detectPlatform(navigator.userAgent) === "desktop" ? desktopCopy : mobileCopy
     )
-  }, [])
+  }, [desktopCopy, mobileCopy])
 
   return description
 }

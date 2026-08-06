@@ -1,10 +1,17 @@
 import type { ReactNode } from "react"
+import Script from "next/script"
 import { PublicHeader } from "@/components/layout/public-header"
 import { PublicFooter } from "@/components/layout/public-footer"
+import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#F6F3EB] text-[#0F1110]">
+      <Script
+        id="easner-organization-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript([organizationJsonLd(), websiteJsonLd()])}
+      />
       <PublicHeader />
       <main className="relative overflow-x-clip pt-16">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_18%_10%,rgba(0,122,204,0.12),transparent_32%),linear-gradient(180deg,#FFFFFF_0%,rgba(246,243,235,0)_75%)]" />

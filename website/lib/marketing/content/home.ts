@@ -1,19 +1,27 @@
 import type { CardItem, Cta, FaqItem } from "../types"
+import {
+  EASNER_AUDIENCE_A,
+  EASNER_AUDIENCE_B,
+  EASNER_CANONICAL_DEFINITION,
+  EASNER_CANONICAL_DEFINITION_SHORT,
+} from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
   title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
-  description:
-    "Stablecoin payment infrastructure for emerging markets. Accounts, payouts, collections, cards & partner programs. Africa & global corridors. Compliance built in.",
+  description: EASNER_CANONICAL_DEFINITION_SHORT,
   keywords: [
-    "stablecoin payments",
-    "stablecoin payment infrastructure",
+    "global cross-border payments",
+    "international business banking",
+    "cross-border B2B payouts",
+    "multi-currency business account",
     "stablecoin banking infrastructure",
+    "stablecoin payment infrastructure",
+    "pay suppliers internationally",
+    "global business banking",
     "emerging markets payments",
     "cross-border payments",
     "Africa cross-border payments",
-    "Africa payment infrastructure",
-    "global business banking",
     "diaspora banking",
     "white-label remittance",
     "stablecoin payouts",
@@ -24,7 +32,7 @@ export const homeMetadata = {
 export const homeHero = {
   h1Lines: ["Global Money Flow", "Simplified with Ease"],
   subhead:
-    "Stablecoin payment infrastructure for emerging markets. Multi-currency accounts, payouts, collections, cards, and whitelabeling across Africa, Asia, LATAM, and global corridors.",
+    "Stablecoin payment infrastructure for global business. Multi-currency accounts, payouts, collections, cards, and partner programs – connecting US, EU, and UK rails to supported local markets.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [
@@ -65,7 +73,7 @@ export const whyEasnerPillars: CardItem[] = [
 export const solutionsPersonas = [
   {
     id: "diaspora",
-    label: "Freelancers, remote workers, and diaspora",
+    label: "Freelancers, remote workers, and global earners",
     headline: "Get paid globally. Keep more locally.",
     body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking.",
     visualSlot: "mkt-persona-diaspora",
@@ -102,17 +110,25 @@ export const solutionsPersonas = [
 ]
 
 export const corridorContent = {
-  headline: "Expanding where global business meets emerging markets",
-  body: "Hold USD, EUR, and GBP from global markets, then pay out locally across Africa and the region – for salaries, supplier payments, and cross-border trade.",
+  headline: "Expanding where global business meets local markets",
+  body: "Hold USD, EUR, and GBP, then pay out locally across supported markets – for salaries, supplier payments, and cross-border trade.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
-  altText: "Map showing payment corridors between US, EU, and African markets",
+  altText: "Map showing payment corridors between US, EU, UK, and supported local markets",
   ctas: [{ label: "Open Account", href: "#", action: "open-account" }] satisfies Cta[],
 }
 
 export const homeCtaBand = DEFAULT_CTA_BAND
 
 export const homeFaq: FaqItem[] = [
+  {
+    question: "What is Easner?",
+    answer: EASNER_CANONICAL_DEFINITION,
+  },
+  {
+    question: "Who is Easner for?",
+    answer: `${EASNER_AUDIENCE_A} ${EASNER_AUDIENCE_B}`,
+  },
   {
     question: "Is Easner a bank?",
     answer:
@@ -136,6 +152,6 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Which countries are supported?",
     answer:
-      "Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details.",
+      "Easner connects US, EU, and UK rails to supported local markets including Nigeria, Ghana, Kenya, Rwanda, and South Africa, with more corridors in progress. Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details.",
   },
 ]

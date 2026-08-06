@@ -38,25 +38,30 @@ interface SplitSectionProps {
 
 function SplitCtas({
   ctas,
-  h1,
+  isHero,
   ctaDescription,
 }: {
   ctas: Cta[]
-  h1?: boolean
+  isHero?: boolean
   ctaDescription?: string
 }) {
   if (ctas.some((cta) => cta.store)) {
     return (
       <PersonaCtas
         ctas={ctas}
-        className="mt-8 max-w-md"
+        className={cn("mt-8 max-w-md", isHero && "mx-auto lg:mx-0")}
         description={ctaDescription}
       />
     )
   }
 
   return (
-    <div className="mt-8 flex flex-row flex-wrap gap-3">
+    <div
+      className={cn(
+        "mt-8 flex flex-row flex-wrap gap-3",
+        isHero && "justify-center lg:justify-start"
+      )}
+    >
       {ctas.map((cta, i) =>
         cta.action === "open-account" ? (
           <OpenAccountButton
@@ -98,6 +103,7 @@ function CopyBlock({
   ctas,
   h1,
   boxed,
+  isHero,
   ctaDescription,
 }: {
   headline: string
@@ -108,6 +114,7 @@ function CopyBlock({
   ctas?: Cta[]
   h1?: boolean
   boxed: boolean
+  isHero?: boolean
   ctaDescription?: string
 }) {
   const HeadingTag = h1 ? "h1" : "h2"
@@ -124,7 +131,14 @@ function CopyBlock({
         {headline}
       </HeadingTag>
       {subhead && (
-        <p className="mt-5 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8 md:text-xl">{subhead}</p>
+        <p
+          className={cn(
+            "mt-5 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8 md:text-xl",
+            isHero && "mx-auto lg:mx-0"
+          )}
+        >
+          {subhead}
+        </p>
       )}
       {body && (
         <p className={cn("max-w-2xl leading-7 text-[#5F665F] sm:leading-8", subhead ? "mt-4" : "mt-5 text-base sm:text-lg")}>
@@ -144,7 +158,7 @@ function CopyBlock({
         </ul>
       )}
       {ctas && ctas.length > 0 && (
-        <SplitCtas ctas={ctas} h1={h1} ctaDescription={ctaDescription} />
+        <SplitCtas ctas={ctas} isHero={isHero} ctaDescription={ctaDescription} />
       )}
     </>
   )
@@ -153,7 +167,9 @@ function CopyBlock({
     return <div className={SPLIT_COPY_CARD}>{content}</div>
   }
 
-  return <div>{content}</div>
+  return (
+    <div className={cn(isHero && "text-center lg:text-left")}>{content}</div>
+  )
 }
 
 export function SplitSection({
@@ -194,6 +210,7 @@ export function SplitSection({
             ctas={ctas}
             h1={h1}
             boxed={isContent && hasVisual}
+            isHero={!isContent}
             ctaDescription={ctaDescription}
           />
           {hasVisual && (

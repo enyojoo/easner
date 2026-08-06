@@ -9,20 +9,22 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Personal Banking | Global Money App",
     description:
-      "Send and receive across US, EU, and African corridors with Easner Mobile. Global banking for freelancers, diaspora, and remote workers.",
+      "Global personal banking with Easner Mobile – send, receive, and manage money across US, EU, UK, and supported local corridors. Built for global earners, freelancers, and remote workers.",
     keywords: [
-      "personal international transfers",
-      "diaspora banking app",
       "global mobile banking",
-      "send money to Africa",
-      "international money transfer app",
+      "multi-currency personal account",
+      "cross-border personal payments",
+      "personal international transfers",
       "freelancer global payments",
+      "diaspora banking app",
+      "international money transfer app",
+      "send money to Nigeria",
     ],
   },
   hero: {
-    h1: "Global banking in your hand",
+    h1: "Bank globally with Ease",
     subhead:
-      "Receive, send, and manage money across global and African corridors. Stablecoin speed behind familiar banking.",
+      "Receive, send, and manage money across international corridors. Stablecoin speed behind familiar banking.",
     visualSlot: "mkt-hero-personal-01",
     altText: "Freelancer using Easner Mobile app to send money internationally",
     ctas: downloadCta,
@@ -60,17 +62,17 @@ export const personalContent: ProductPageContent = {
   ],
   useCasesHeadline: "Built for life across borders",
   useCasesSubhead:
-    "Easner banking is for people who earn, send, and spend globally. You don't need to juggle multiple apps again.",
+    "Easner banking is for people who earn, send, and spend globally – whether you operate from Lagos, London, or anywhere in between.",
   useCases: [
-    {
-      title: "Diaspora remittances",
-      description:
-        "Send support home on faster paths than legacy bank wires – with clear fees and status in the app.",
-    },
     {
       title: "Freelancers and remote workers",
       description:
         "Get paid in USD or EUR, hold balances, and pay out on your schedule from one mobile account.",
+    },
+    {
+      title: "Diaspora remittances",
+      description:
+        "Send support home on faster paths than legacy bank wires – with clear fees and status in the app.",
     },
     {
       title: "Students and families",

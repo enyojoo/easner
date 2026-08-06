@@ -39,8 +39,8 @@ export const PERSONAL_TIERS: CardItem[] = [
       "USD and EUR account details, pay-in and pay-out, and stablecoin flows.",
   },
   {
-    title: "African banking",
-    description: "NGN and regional pay-in and pay-out in local markets where we launch.",
+    title: "Local & regional banking",
+    description: "NGN and regional pay-in and pay-out in supported local markets where we launch.",
   },
   {
     title: "Cards",
@@ -56,9 +56,9 @@ export const BUSINESS_TIERS: CardItem[] = [
       "USD and EUR account details, pay-in and pay-out, and stablecoin flows, plus other currencies where supported for your organization.",
   },
   {
-    title: "African banking",
+    title: "Local & regional banking",
     description:
-      "NGN and regional pay-in and pay-out for your business operations where we launch – local African banking for your organization.",
+      "NGN and regional pay-in and pay-out for your business operations where we launch – local and regional rails for your organization.",
   },
   {
     title: "Cards",
@@ -74,14 +74,14 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Personal Banking",
     description:
-      "Mobile banking for global earners – receive, send, and manage money across supported corridors.",
+      "Global personal banking for earners across borders – receive, send, and manage money on supported international corridors.",
     link: "/personal",
     icon: "mkt-thumb-personal",
   },
   {
     title: "Business Banking",
     description:
-      "A web control center for accounts, payouts, invoicing, Terminal, QR Pay, teams, and reporting.",
+      "Cross-border business banking – accounts, payouts, invoicing, Terminal, QR Pay, teams, and reporting from one dashboard.",
     link: "/business",
     icon: "mkt-thumb-business",
   },

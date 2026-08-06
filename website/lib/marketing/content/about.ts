@@ -1,31 +1,31 @@
 import founderChristianPhoto from "@/assets/founder-christian.png"
 import founderEnyoPhoto from "@/assets/founder-enyo.png"
-import { CONTACT_PATH } from "../constants"
+import { CONTACT_PATH, EASNER_CANONICAL_DEFINITION_SHORT } from "../constants"
 import type { CardItem, CtaBandContent, Founder } from "../types"
 
 export const aboutMetadata = {
   title: "About Us | Founders, Mission & Global Payments",
-  description:
-    "Meet the Easner founders and learn how we're building stablecoin-powered banking and payments for emerging markets – accounts, payouts, collections, and local rails.",
+  description: `Meet the Easner founders. ${EASNER_CANONICAL_DEFINITION_SHORT}`,
   keywords: [
     "Easner founders",
     "Easner company",
     "stablecoin payment infrastructure",
-    "cross-border payments Africa",
-    "fintech emerging markets",
+    "global cross-border payments",
+    "international business banking",
+    "fintech cross-border infrastructure",
   ],
 }
 
 export const aboutHero = {
   headline: "Making global money work locally",
   subhead:
-    "Easner is a financial technology company building stablecoin-powered banking and payment infrastructure for individuals and businesses across emerging and underserved markets – where legacy rails are slowest and costliest.",
+    "Easner is a financial technology company building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – for individuals and businesses where legacy cross-border paths are slowest and costliest.",
 }
 
 export const aboutMission = {
   headline: "Built for corridors legacy rails serve worst",
   paragraphs: [
-    "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money into an emerging market sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
+    "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money across borders sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
     "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to a digital dollar into functioning local financial utility.",
   ],
   emphasis: "Cost is won or lost at the off-ramp.",
@@ -37,7 +37,7 @@ export const aboutPillars: CardItem[] = [
   {
     title: "Accounts & money movement",
     description:
-      "USD, EUR, and GBP accounts, payouts, and collections – for freelancers, diaspora, SMEs, and partners.",
+      "USD, EUR, and GBP accounts, payouts, and collections – for global earners, freelancers, SMEs, and partners.",
     link: "/personal",
   },
   {
@@ -57,9 +57,9 @@ export const aboutFounders: Founder[] = [
   {
     name: "Christian Levan",
     title: "Co-founder & CEO",
-    tagline: "Making global money work locally in the Global South.",
+    tagline: "Connecting global and local financial rails.",
     bio: [
-      "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure for emerging and underserved markets – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout rails. His focus is the last mile: turning a digital dollar into real local financial utility.",
+      "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning a digital dollar into real local financial utility.",
       "Before Easner, he drove growth at venture-backed and private-market companies, with earlier grounding as a financial advisor at Morgan Stanley and Merrill Lynch. He also serves as an enlisted Reconnaissance Marine in the U.S. Marine Corps Reserve – bringing discipline, discretion, and outcomes-over-narrative to how Easner is built.",
     ],
     image: founderChristianPhoto,
@@ -70,7 +70,7 @@ export const aboutFounders: Founder[] = [
     title: "Founder & CTO",
     tagline: "Building secure financial infrastructure with stablecoins.",
     bio: [
-      "Enyo is Founder and CTO of Easner, building stablecoin-powered banking and payment infrastructure for emerging and underserved markets – technical architecture, stablecoin settlement, partner integrations, and secure cross-border rails. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
+      "Enyo is Founder and CTO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – technical architecture, stablecoin settlement, partner integrations, and secure cross-border coverage. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
       "Since founding Easner in 2025, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
     ],
     image: founderEnyoPhoto,

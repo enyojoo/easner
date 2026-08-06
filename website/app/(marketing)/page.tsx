@@ -7,9 +7,11 @@ import { ProductGrid } from "@/components/marketing/product-grid"
 import { SolutionsByAudience } from "@/components/marketing/solutions-by-audience"
 import { CorridorStory } from "@/components/marketing/corridor-story"
 import { ComplianceStrip } from "@/components/marketing/compliance-strip"
+import { FaqSection } from "@/components/marketing/faq-section"
 import { CtaBand } from "@/components/marketing/cta-band"
-import { homeMetadata, homeCtaBand } from "@/lib/marketing/content/home"
+import { homeMetadata, homeCtaBand, homeFaq } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
+import { faqPageJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata: Metadata = marketingMetadata({
   metadata: homeMetadata,
@@ -20,6 +22,11 @@ export const metadata: Metadata = marketingMetadata({
 export default function HomePage() {
   return (
     <>
+      <Script
+        id="easner-home-faq-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(faqPageJsonLd(homeFaq))}
+      />
       <Script id="products-hash-scroll" strategy="beforeInteractive">
         {`
           (function () {
@@ -63,6 +70,7 @@ export default function HomePage() {
       <ProductGrid />
       <CorridorStory />
       <ComplianceStrip />
+      <FaqSection items={homeFaq} />
       <CtaBand content={homeCtaBand} />
     </>
   )

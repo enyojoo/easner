@@ -5,20 +5,21 @@ export const developersContent: ProductPageContent = {
   metadata: {
     title: "Developers | Embedded Payments API",
     description:
-      "Embed compliant global money rails via API. KYC/KYB, accounts, pay-in, payouts, collections, and webhooks with compliance built in.",
+      "Embed compliant global money rails via API – KYC/KYB, accounts, pay-in, payouts to supported local markets, collections, and webhooks with compliance built in.",
     keywords: [
       "stablecoin API",
       "embedded payments API",
       "fintech infrastructure API",
       "embedded finance API",
       "cross-border payout API",
+      "embedded payouts API",
       "remittance API",
     ],
   },
   hero: {
     h1: "Compliant rails in your product",
     subhead:
-      "The Developer Model gives fintechs, marketplaces, and platforms API access to Easner's stablecoin banking stack – verification, accounts, pay-in, payouts, collections, and webhooks with compliance built in.",
+      "The Developer Model gives fintechs, marketplaces, and platforms API access to Easner's stablecoin banking stack – verification, accounts, pay-in, payouts to supported local markets, collections, and webhooks with compliance built in.",
     visualSlot: "mkt-hero-apis-01",
     altText: "Developer reviewing Easner API documentation on dual monitors",
     ctas: [

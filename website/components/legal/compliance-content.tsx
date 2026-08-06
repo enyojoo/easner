@@ -127,7 +127,7 @@ export function CompliancePolicyPage() {
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Other jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed">
           If your country is not listed above, you may be eligible subject to partner approval, successful
-          verification, sanctions screening, and Easner feature availability. <strong>African banking</strong> and other
+          verification, sanctions screening, and Easner feature availability. <strong>Local & regional banking</strong> and other
           products may impose additional limits when launched.
         </p>
         <p className="text-[#5F665F] leading-relaxed mt-4">
@@ -291,7 +291,7 @@ export function CompliancePolicyPage() {
               "Approved KYC or KYB",
             ],
             [
-              "African banking",
+              "Local & regional banking",
               "NGN and regional rails where launched",
               "Approved KYC or KYB plus additional eligibility",
             ],

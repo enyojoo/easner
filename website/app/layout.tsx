@@ -4,6 +4,7 @@ import { Unbounded } from "next/font/google"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { PostHogProvider } from "@/components/posthog-provider"
+import { EASNER_CANONICAL_DEFINITION_SHORT } from "@/lib/marketing/constants"
 import "./globals.css"
 
 const unbounded = Unbounded({
@@ -17,10 +18,9 @@ export const metadata: Metadata = {
     default: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     template: "%s – Easner",
   },
-  description:
-    "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
+  description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
   keywords:
-    "stablecoin banking infrastructure, cross-border payments, global business banking, Africa cross-border payments, diaspora banking, white-label remittance",
+    "global cross-border payments, international business banking, cross-border B2B payouts, stablecoin banking infrastructure, multi-currency business account, pay suppliers internationally, diaspora banking, white-label remittance",
   formatDetection: { email: false, address: false, telephone: false },
   applicationName: "Easner",
   metadataBase: new URL("https://www.easner.com"),
@@ -31,8 +31,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
-    description:
-      "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
+    description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -42,8 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@easnerbanking",
     title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
-    description:
-      "Stablecoin accounts, payouts, collections, cards, and partner programs. Familiar banking screens with compliance built in. Easner is not a bank.",
+    description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
     creator: "@easnerbanking",
   },
   robots: { index: true, follow: true },

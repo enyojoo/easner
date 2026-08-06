@@ -5,7 +5,7 @@ export const partnersContent: ProductPageContent = {
   metadata: {
     title: "Partners | White-Label OTC Programs",
     description:
-      "Launch branded cross-border products with Easner for Partners. OTC, remittance, and faith-based networks with compliance and operational support.",
+      "Launch branded cross-border products on Easner for Partners – global money movement infrastructure with compliance, local payout connectivity, and operational support for OTC, remittance, and platform partners.",
     keywords: [
       "white-label remittance",
       "OTC money transfer",
@@ -14,6 +14,8 @@ export const partnersContent: ProductPageContent = {
       "white-label money transfer",
       "OTC compliance platform",
       "agent banking platform",
+      "embedded payouts API",
+      "emerging markets partner infrastructure",
       "faith-based remittance",
       "church diaspora giving",
       "nonprofit cross-border payouts",
@@ -22,7 +24,7 @@ export const partnersContent: ProductPageContent = {
   hero: {
     h1: "Your brand on Easner rails",
     subhead:
-      "We enable qualified OTC and money transfer partners, and faith-based and nonprofit networks, to launch branded financial products through our Agency Model. A full-stack deployment running on Easner infrastructure with compliance, provider connectivity, and ongoing operational support.",
+      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, provider orchestration, and ongoing operational support for qualified OTC partners, platforms, and faith-based and nonprofit networks.",
     visualSlot: "mkt-hero-partners-01",
     altText: "Branded partner portal showing OTC transactions and compliance status on Easner infrastructure",
     ctas: [

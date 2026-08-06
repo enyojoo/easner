@@ -5,7 +5,7 @@ export const stablecoinContent: ProductPageContent = {
   metadata: {
     title: "Stablecoin Payments | Receive, Send & QR Pay",
     description:
-      "Stablecoin speed with familiar banking screens on Easner Business. Receive, send, Terminal, and QR Pay with compliance built in.",
+      "Stablecoin speed with familiar banking screens on Easner Business – receive, send, Terminal, and QR Pay for global cross-border money movement with compliance built in.",
     keywords: [
       "stablecoin payments",
       "stablecoin payments infrastructure",
