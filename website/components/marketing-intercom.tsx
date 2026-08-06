@@ -1,8 +1,13 @@
 "use client"
 
 import { useEffect } from "react"
-import Intercom from "@intercom/messenger-js-sdk"
-import { intercomAppId, intercomRegion } from "@/lib/intercom-messenger"
+import Intercom, { update } from "@intercom/messenger-js-sdk"
+import {
+  intercomAppId,
+  intercomRegion,
+  INTERCOM_MOBILE_MEDIA_QUERY,
+  shouldHideIntercomLauncher,
+} from "@/lib/intercom-messenger"
 
 export function MarketingIntercom() {
   useEffect(() => {
@@ -17,7 +22,16 @@ export function MarketingIntercom() {
     Intercom({
       app_id: appId,
       region: intercomRegion(),
+      hide_default_launcher: shouldHideIntercomLauncher(),
     })
+
+    const media = window.matchMedia(INTERCOM_MOBILE_MEDIA_QUERY)
+    const syncLauncherVisibility = () => {
+      update({ hide_default_launcher: media.matches })
+    }
+
+    media.addEventListener("change", syncLauncherVisibility)
+    return () => media.removeEventListener("change", syncLauncherVisibility)
   }, [])
 
   return null

@@ -21,23 +21,21 @@ export function ContactSupportNotice() {
           <p className="mt-2 text-pretty text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7">
             {contactSupport.body}
           </p>
-          <div className="mt-4 sm:mt-5">
+          <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <SupportChatTrigger className="w-full sm:w-auto">{contactSupport.chatLabel}</SupportChatTrigger>
-          </div>
-          <ul className="mt-4 space-y-2.5 text-sm leading-6 text-[#5F665F] sm:mt-5 sm:space-y-3 sm:text-base sm:leading-7">
-            <li className="text-pretty">
-              <strong className="text-[#0F1110]">{contactSupport.inAppLabel}:</strong> {contactSupport.inAppText}
-            </li>
-            <li className="text-pretty">
-              <strong className="text-[#0F1110]">{contactSupport.emailLabel}:</strong>{" "}
+            <p className="text-sm leading-6 text-[#6F756F] sm:text-base">
+              {contactSupport.emailPreface}{" "}
               <Link
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
               >
                 {SUPPORT_EMAIL}
               </Link>
-            </li>
-          </ul>
+            </p>
+          </div>
+          <p className="mt-3 text-pretty text-xs leading-5 text-[#6F756F] sm:text-sm sm:leading-6">
+            {contactSupport.alsoAvailable}
+          </p>
         </div>
       </div>
     </div>

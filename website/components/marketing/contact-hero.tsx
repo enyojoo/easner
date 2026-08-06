@@ -2,9 +2,8 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
 import { CONTACT_EMAIL } from "@/lib/marketing/constants"
-import { contactHero, contactSupport } from "@/lib/marketing/content/contact"
+import { contactBooking, contactHero, contactSupport } from "@/lib/marketing/content/contact"
 import { MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
@@ -23,26 +22,34 @@ export function ContactHero() {
         <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">
           {contactHero.subhead}
         </p>
-        <div className="mt-6 flex justify-center sm:mt-8">
-          <SupportChatTrigger>{contactSupport.chatLabel}</SupportChatTrigger>
-        </div>
-        <div className="mt-4 flex flex-col gap-3 text-center text-sm leading-6 text-[#6F756F] sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-2 sm:gap-y-1">
+        <div className="mt-5 space-y-2 text-sm leading-6 text-[#6F756F] sm:mt-6 sm:text-base sm:leading-7">
           <p className="text-pretty">
+            <strong className="font-semibold text-[#3D403D]">{contactHero.prospectPreface}</strong>{" "}
+            <Link
+              href={`#${contactBooking.anchor}`}
+              className="font-semibold text-[#007ACC] hover:underline"
+            >
+              {contactHero.prospectLinkLabel}
+            </Link>
+            .
+          </p>
+          <p className="text-pretty">
+            <strong className="font-semibold text-[#3D403D]">{contactHero.customerPreface}</strong>{" "}
+            <Link
+              href={`#${contactSupport.anchor}`}
+              className="font-semibold text-[#007ACC] hover:underline"
+            >
+              {contactHero.customerLinkLabel}
+            </Link>
+            .
+          </p>
+          <p className="text-pretty pt-1">
             {contactHero.emailPreface}{" "}
             <Link
               href={`mailto:${CONTACT_EMAIL}`}
               className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
             >
               {CONTACT_EMAIL}
-            </Link>
-          </p>
-          <span aria-hidden="true" className="hidden text-[#C8C2B6] sm:inline">
-            ·
-          </span>
-          <p className="text-pretty">
-            {contactHero.supportPreface}{" "}
-            <Link href={`#${contactSupport.anchor}`} className="font-semibold text-[#007ACC] hover:underline">
-              {contactHero.supportLinkLabel}
             </Link>
           </p>
         </div>

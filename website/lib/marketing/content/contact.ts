@@ -9,22 +9,24 @@ export const contactHero = {
   headline: "Let's talk",
   subhead:
     "Whether you're opening an account or exploring Easner for Partners or embedded money rails, get in touch with the Easner team.",
+  prospectPreface: "New to Easner?",
+  prospectLinkLabel: "Book a consultation",
+  customerPreface: "Already a customer?",
+  customerLinkLabel: "Get support",
   emailPreface: "Prefer to email?",
-  supportPreface: "For current users needing support,",
-  supportLinkLabel: "here",
 }
 
 export const contactBooking = {
+  anchor: "book-consultation",
   headline: "Book a consultation",
   emailNote: "Prefer email?",
 }
 
 export const contactSupport = {
   anchor: "product-support",
-  headline: "Need product support?",
-  body: "If you already use Easner and need help with transfers, accounts, verification, or transactions, contact support directly instead of booking a consultation below.",
+  headline: "Already using Easner?",
+  body: "For help with transfers, accounts, verification, or transactions, reach support directly — this page is for sales and partnership conversations.",
   chatLabel: "Chat with us",
-  inAppLabel: "Live chat",
-  inAppText: "On easner.com, the Easner Mobile app, and Easner Business dashboard",
-  emailLabel: "Email support",
+  emailPreface: "Prefer email?",
+  alsoAvailable: "Also available in the Easner app and Business dashboard.",
 }
