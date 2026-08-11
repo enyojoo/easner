@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
 
 export const POLICY_LAST_UPDATED = "August 12, 2026"
 
@@ -38,17 +39,11 @@ export function PolicyPageShell({
   )
 }
 
-export function PolicyContactBlock({ department }: { department?: string }) {
+export function PolicyContactBlock() {
   return (
     <div className="mt-4 rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-5 text-sm leading-7 text-[#5F665F] sm:text-base">
       <p>
         <strong className="text-[#0F1110]">Easner Group, Inc.</strong>
-        {department ? (
-          <>
-            <br />
-            {department}
-          </>
-        ) : null}
         <br />
         584 Castro St, Suite 4092
         <br />
@@ -60,15 +55,13 @@ export function PolicyContactBlock({ department }: { department?: string }) {
           legal@easner.com
         </a>
         <br />
-        <strong className="text-[#0F1110]">Email (support):</strong>{" "}
+        <strong className="text-[#0F1110]">For Support:</strong>{" "}
+        <SupportChatTrigger variant="link">Live Chat</SupportChatTrigger> or email{" "}
         <a href="mailto:support@easner.com" className="font-semibold text-[#007ACC] hover:underline">
           support@easner.com
         </a>
         <br />
         <strong className="text-[#0F1110]">Phone:</strong> +1 628 228 6083
-        <br />
-        <strong className="text-[#0F1110]">In-app support:</strong> Live chat in the Easner Mobile app and Easner Business
-        dashboard
         <br />
         <strong className="text-[#0F1110]">Website:</strong> www.easner.com
       </p>

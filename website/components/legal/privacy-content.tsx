@@ -268,6 +268,9 @@ export function PrivacyPolicyPage() {
 
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">15. Changes and Contact</h2>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          We may update this policy by posting a revised version with an updated “Last updated” date. Material changes may receive additional notice where required.
+        </p>
         <PolicyContactBlock />
       </section>
 

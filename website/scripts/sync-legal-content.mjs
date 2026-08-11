@@ -140,10 +140,6 @@ ${rowsStr}
         />`
 }
 
-function isContactSection(title) {
-  return /contact/i.test(title)
-}
-
 function parseMarkdown(md, options = {}) {
   const { stopAtSection = null } = options
   const lines = md.split("\n")
@@ -257,32 +253,72 @@ function parseMarkdown(md, options = {}) {
   return { title, lastUpdated, sections }
 }
 
+function isEasnerContactParagraph(text) {
+  const trimmed = text.trim()
+  if (
+    trimmed.startsWith("**Email (legal and compliance):**") ||
+    trimmed.startsWith("**For Support:**") ||
+    trimmed.startsWith("**Phone:**") ||
+    trimmed.startsWith("**Website:**")
+  ) {
+    return true
+  }
+
+  // Contact header includes the mailing address; intro paragraphs only name the company.
+  return trimmed.startsWith("**Easner Group, Inc.**") && trimmed.includes("584 Castro St")
+}
+
 function renderBlocks(blocks) {
-  const rendered = blocks.map((block, index) => {
+  const rendered = []
+  let index = 0
+
+  while (index < blocks.length) {
+    const block = blocks[index]
+
+    if (block.type === "p" && isEasnerContactParagraph(block.text)) {
+      rendered.push("        <PolicyContactBlock />")
+      while (index < blocks.length && blocks[index].type === "p" && isEasnerContactParagraph(blocks[index].text)) {
+        index++
+      }
+      continue
+    }
+
     const isLast = index === blocks.length - 1
     const paraClass = isLast ? "text-[#5F665F] leading-relaxed" : "text-[#5F665F] leading-relaxed mb-4"
 
     switch (block.type) {
       case "h1":
-        return `        <h1 className="font-unbounded text-3xl font-bold text-[#0F1110] mb-4 mt-8">${block.text}</h1>`
+        rendered.push(
+          `        <h1 className="font-unbounded text-3xl font-bold text-[#0F1110] mb-4 mt-8">${block.text}</h1>`
+        )
+        break
       case "h3":
-        return `        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">${inlineToJsx(block.text)}</h3>`
+        rendered.push(
+          `        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">${inlineToJsx(block.text)}</h3>`
+        )
+        break
       case "p":
-        return paragraphJsx(block.text, paraClass)
+        rendered.push(paragraphJsx(block.text, paraClass))
+        break
       case "ul":
-        return `        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
+        rendered.push(`        <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
 ${block.items.map((item) => `          <li>${inlineToJsx(item)}</li>`).join("\n")}
-        </ul>`
+        </ul>`)
+        break
       case "ol":
-        return `        <ol className="list-decimal pl-6 space-y-2 text-[#5F665F] mb-4">
+        rendered.push(`        <ol className="list-decimal pl-6 space-y-2 text-[#5F665F] mb-4">
 ${block.items.map((item) => `          <li>${inlineToJsx(item)}</li>`).join("\n")}
-        </ol>`
+        </ol>`)
+        break
       case "table":
-        return tableJsx(block.table)
+        rendered.push(tableJsx(block.table))
+        break
       default:
-        return ""
+        break
     }
-  })
+
+    index++
+  }
 
   return rendered.filter(Boolean).join("\n")
 }
@@ -293,19 +329,12 @@ function collectUsesPolicyLink(content) {
 
 function renderPolicyComponent(exportName, parsed, extraImports = "", extraSections = "") {
   const sectionsJsx = parsed.sections
-    .map((section) => {
-      if (isContactSection(section.title)) {
-        return `      <section>
-        <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">${section.title}</h2>
-        <PolicyContactBlock />
-      </section>`
-      }
-
-      return `      <section>
+    .map(
+      (section) => `      <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">${section.title}</h2>
 ${renderBlocks(section.blocks)}
       </section>`
-    })
+    )
     .join("\n\n")
 
   const body = `${sectionsJsx}\n${extraSections}`
@@ -451,11 +480,6 @@ function main() {
   fs.writeFileSync(path.join(CONTENT_DIR, "lightspark-grid-terms.md"), lightsparkMd)
   fs.writeFileSync(path.join(OUT_DIR, "lightspark-grid-terms-content.tsx"), renderLightsparkComponent(lightsparkMd))
   fs.writeFileSync(path.join(OUT_DIR, "terms-content.tsx"), renderTermsComponent(termsMd))
-
-  const shellPath = path.join(OUT_DIR, "policy-page-shell.tsx")
-  let shell = fs.readFileSync(shellPath, "utf8")
-  shell = shell.replace(/export const POLICY_LAST_UPDATED = "[^"]+"/, `export const POLICY_LAST_UPDATED = "August 12, 2026"`)
-  fs.writeFileSync(shellPath, shell)
 
   console.log("Synced legal content from easnerbanking/docs/legal")
 }
