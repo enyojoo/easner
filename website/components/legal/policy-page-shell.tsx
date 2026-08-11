@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-export const POLICY_LAST_UPDATED = "June 6, 2026"
+export const POLICY_LAST_UPDATED = "August 12, 2026"
 
 export function PolicyLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -76,6 +76,23 @@ export function PolicyContactBlock({ department }: { department?: string }) {
   )
 }
 
+function renderTableCell(cell: string) {
+  const parts = cell.split(/(\*\*[^*]+\*\*)/g).filter(Boolean)
+  if (parts.length === 1 && !parts[0].includes("**")) {
+    return cell
+  }
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={index} className="text-[#0F1110]">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+    return <span key={index}>{part}</span>
+  })
+}
+
 export function PolicyTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <div className="my-4 overflow-x-auto rounded-2xl border border-[#E4DED1]">
@@ -97,7 +114,7 @@ export function PolicyTable({ headers, rows }: { headers: string[]; rows: string
             <tr key={i} className="border-b border-[#E4DED1] last:border-b-0">
               {row.map((cell, j) => (
                 <td key={j} className="px-4 py-3 align-top">
-                  {cell}
+                  {renderTableCell(cell)}
                 </td>
               ))}
             </tr>
