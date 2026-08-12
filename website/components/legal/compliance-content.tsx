@@ -134,11 +134,8 @@ export function CompliancePolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
         </p>
-        <p className="text-[#5F665F] leading-relaxed mb-4">
-          Partner jurisdiction policies may change. We update our practices when material changes apply.
-        </p>
         <p className="text-[#5F665F] leading-relaxed">
-          Source of truth in product code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
+          Partner jurisdiction policies may change. We update our practices when material changes apply.
         </p>
       </section>
 

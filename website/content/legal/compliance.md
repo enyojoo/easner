@@ -121,8 +121,6 @@ If your country is not listed above for the product you are using, you may be el
 
 Partner jurisdiction policies may change. We update our practices when material changes apply.
 
-Source of truth in product code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
-
 ---
 
 ## 4. When We Verify
