@@ -9,8 +9,8 @@ Last updated: August 12, 2026
 This Privacy Policy explains how **Easner Group, Inc.** (“**Easner**,” “**we**,” “**us**,” or “**our**”) collects, uses, shares, and protects information when you use:
 
 - www.easner.com
-- **Easner Mobile** (mobile application for **Easner Personal Banking**)
-- **Easner Business** (web dashboard for **Easner Business Banking**)
+- **Easner Personal Banking** (via our mobile app)
+- **Easner Business Banking** (via our web dashboard)
 - Public invoice and payment experiences we host for business users (including card checkout where enabled)
 - Related support and communications channels
 
@@ -110,8 +110,8 @@ Depending on your product, jurisdiction, and features enabled, we work with part
 
 | Partner | Role |
 |---------|------|
-| **Lightspark Payments, LLC (Grid)** | Licensed money transmission for eligible Business flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193 |
-| **Noah US, Inc. (and Noah-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including many **Easner Mobile** flows today |
+| **Lightspark Payments, LLC (Grid)** | Licensed money transmission for eligible Easner Business Banking flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193 |
+| **Noah US, Inc. (and Noah-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including many **Easner Personal Banking** flows today |
 | **Sumsub** | Identity verification technology used in certain hosted KYB/KYC experiences |
 | **Stripe** | Online card payments on invoices via Stripe Connect; Connected Account onboarding and settlement |
 | **Turnkey** | Wallet and key-management infrastructure, deposit addresses, and transaction signing (self-custody model – see Section 12) |

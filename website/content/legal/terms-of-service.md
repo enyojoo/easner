@@ -6,7 +6,7 @@ Last updated: August 12, 2026
 
 ## 1. Acceptance of Terms
 
-By accessing or using Easner’s website, **Easner Mobile** (mobile application for **Easner Personal Banking**), **Easner Business** (web dashboard for **Easner Business Banking**), or related services (collectively, the **“Services”**), you agree to these Terms of Service (**“Terms”**). If you do not agree, do not use the Services.
+By accessing or using Easner’s website, **Easner Personal Banking** (via our mobile app), **Easner Business Banking** (via our web dashboard), or related services (collectively, the **“Services”**), you agree to these Terms of Service (**“Terms”**). If you do not agree, do not use the Services.
 
 If you use the Services on behalf of a business, you represent that you have authority to bind that entity. **“You”** includes that entity and its authorized users.
 
@@ -30,8 +30,8 @@ You are responsible for keeping your contact information current so we can reach
 
 We offer:
 
-- **Easner Mobile** (**Easner Personal Banking**) – consumer banking and payments through our mobile app
-- **Easner Business** (**Easner Business Banking**) – business banking, payouts, payroll, collections, and online payments through our web dashboard
+- **Easner Personal Banking** – consumer banking and payments through our mobile app
+- **Easner Business Banking** – business banking, payouts, payroll, collections, and online payments through our web dashboard
 
 Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products when available.
 
@@ -39,7 +39,7 @@ Depending on your verification status, location, and product availability, the S
 
 - **Tier 1 – Global banking:** USD and EUR accounts (and other currencies where enabled), pay-in and pay-out, regional corridors where launched, and stablecoin flows
 - **Tier 2 – Cards:** Personal or business cards, spend controls, and cardholder management **when approved and launched** (not generally available today)
-- **Tier 3 – Online payments (Business):** Accept card payments on invoices via our payments partner, with settlement to your Easner balance when enabled
+- **Tier 3 – Online payments (Business Banking):** Accept card payments on invoices via our payments partner, with settlement to your Easner balance when enabled
 
 Cross-border and local pay-in/pay-out corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered as part of Tier 1 for eligible global users and jurisdictions. Corridor availability depends on partners and destination – not a separate regional banking account product unless we expressly launch one.
 
@@ -49,13 +49,13 @@ Cross-border and local pay-in/pay-out corridors (for example mobile money or loc
 
 ## 4. The Services
 
-### Easner Mobile (Easner Personal Banking)
+### Easner Personal Banking
 
 For individuals, the Services may include account registration, identity verification, sending and receiving money, currency accounts and conversion, virtual account and stablecoin receive options, recipients, **EASETAG** transfers, mobile-money and local corridor flows where enabled, payroll receiving where invited by an employer, transaction history, and security features such as multi-factor authentication and biometric unlock where supported. Intended for consumers **18 or older** in supported jurisdictions.
 
 Card products shown in the app may be labeled coming soon and are **not** available until we launch Tier 2 cards with a licensed partner.
 
-### Easner Business (Easner Business Banking)
+### Easner Business Banking
 
 For businesses, the Services may include organization onboarding, team access controls, multi-currency accounts, fund-balance and payouts (including cross-border corridors where enabled), **payroll** (people, runs, and disbursements), **collections** (invoicing, payment Terminal, and QR Pay where enabled), **online payments** (card acceptance on invoices via Stripe Connect where enabled), customer directory, wallet and stablecoin sends where enabled, and reporting. The account owner is responsible for authorized users’ actions.
 
@@ -67,7 +67,7 @@ When you use partner-provided services, you may need to accept **separate partne
 
 **Lightspark Grid.** When you use **Lightspark money-transmission services** through Easner (including certain Business KYB, virtual account, fund, payout, or cross-border flows when Grid is enabled for your account), the **Lightspark Grid End User Terms** in **Section 20** below also apply and form part of your agreement for those regulated services. **Lightspark Payments, LLC** (NMLS ID 2429193) is the licensed money transmitter on those transactions.
 
-**Noah.** When you use **Noah money-transmission and related payment services** through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Noah is enabled for your account – including many **Easner Mobile** flows today), Noah’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. **Noah US, Inc.** (NMLS ID 2696057) is a licensed money transmitter for applicable U.S. money-transmission services. Noah-group entities in other jurisdictions (for example Canada MSB registration and EU/Lithuania VASP registration) may provide services under their local licenses. Those terms govern the regulated services Noah provides.
+**Noah.** When you use **Noah money-transmission and related payment services** through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Noah is enabled for your account – including many **Easner Personal Banking** flows today), Noah’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. **Noah US, Inc.** (NMLS ID 2696057) is a licensed money transmitter for applicable U.S. money-transmission services. Noah-group entities in other jurisdictions (for example Canada MSB registration and EU/Lithuania VASP registration) may provide services under their local licenses. Those terms govern the regulated services Noah provides.
 
 **Yellowcard.** When you use **Yellowcard** corridor services through Easner (including local fund-balance, mobile-money, and cross-border pay-in/pay-out where Yellowcard is enabled for your account), Yellowcard’s partner terms and privacy notices presented during onboarding or in the payment flow also apply and form part of your agreement for those regulated services. Yellowcard is the licensed payments / money-movement partner on those corridor transactions. Those terms govern the regulated services Yellowcard provides.
 
@@ -75,7 +75,7 @@ When you use partner-provided services, you may need to accept **separate partne
 
 ### Online payments and Stripe Connect (Business)
 
-Where enabled, Easner Business may let you accept **card payments on invoices** through **Stripe Connect**. Funds are processed by Stripe and, when settlement succeeds, credited toward your eligible Easner balance subject to Stripe and Easner timing, fees, holds, and compliance reviews.
+Where enabled, Easner Business Banking may let you accept **card payments on invoices** through **Stripe Connect**. Funds are processed by Stripe and, when settlement succeeds, credited toward your eligible Easner balance subject to Stripe and Easner timing, fees, holds, and compliance reviews.
 
 By enabling online payments you represent that:
 
@@ -87,11 +87,11 @@ Easner may suspend online payments, withhold settlement, or require additional i
 
 ### Payroll (Business and invited employees)
 
-Where enabled, businesses may run payroll and disburse wages or contractor payments to eligible recipients (including employees invited to receive via Easner Mobile). You are solely responsible for employment classification, wage-and-hour compliance, tax withholding and reporting, and accurate payroll instructions. Easner does not act as your employer of record or tax advisor.
+Where enabled, businesses may run payroll and disburse wages or contractor payments to eligible recipients (including employees invited to receive via Easner Personal Banking). You are solely responsible for employment classification, wage-and-hour compliance, tax withholding and reporting, and accurate payroll instructions. Easner does not act as your employer of record or tax advisor.
 
 ### Digital asset and wallet services
 
-Where enabled, wallet and stablecoin features may be supported through infrastructure partners (including Turnkey for key management and signing, and approved bridge or routing partners for certain wallet sends). This can include stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through approved corridors (primarily on **Easner Business**), Terminal and QR Pay collections denominated in supported assets, and balance visibility tied to partner-managed infrastructure.
+Where enabled, wallet and stablecoin features may be supported through infrastructure partners (including Turnkey for key management and signing, and approved bridge or routing partners for certain wallet sends). This can include stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through approved corridors (primarily on **Easner Business Banking**), Terminal and QR Pay collections denominated in supported assets, and balance visibility tied to partner-managed infrastructure.
 
 Digital asset balances are **not bank deposits** and are not FDIC insured. Blockchain transactions may be public and irreversible. You are responsible for correct addresses, memos, and recipient details.
 
@@ -229,7 +229,7 @@ We may modify these Terms. Material changes will receive at least **30 days’ n
 
 **Informal resolution:** Contact **legal@easner.com** and allow **60 days** to resolve disputes in good faith before arbitration or court action.
 
-**Arbitration:** Disputes not resolved informally shall be settled by **binding arbitration** administered by the **AAA** under Consumer Arbitration Rules (individual users of Easner Mobile / Easner Personal Banking) or Commercial Arbitration Rules (Easner Business / Easner Business Banking and commercial use). Seat: **Wilmington, Delaware**, or remote by agreement. The **Federal Arbitration Act** applies.
+**Arbitration:** Disputes not resolved informally shall be settled by **binding arbitration** administered by the **AAA** under Consumer Arbitration Rules (individual users of Easner Personal Banking) or Commercial Arbitration Rules (Easner Business Banking and commercial use). Seat: **Wilmington, Delaware**, or remote by agreement. The **Federal Arbitration Act** applies.
 
 **Class and jury waiver:** Disputes proceed **only on an individual basis** to the extent permitted by law. You and Easner waive jury trial for covered disputes.
 
