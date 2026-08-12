@@ -115,8 +115,6 @@ We do not onboard Personal Banking users located in, or ordinarily resident in:
 | Yemen | YE |
 | Zimbabwe | ZW |
 
-Product notes: **Kenya (KE)** is blocked on Easner Business Banking but may be available on Easner Personal Banking. **United Kingdom (GB)** remains available on Easner Business Banking and is blocked on Easner Personal Banking. **Ukraine (UA)** is blocked on Easner Personal Banking as a whole; occupied territories listed above remain excluded on Easner Business Banking as sub-national regions.
-
 ### Other jurisdictions
 
 If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.

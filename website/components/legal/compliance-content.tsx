@@ -130,9 +130,6 @@ export function CompliancePolicyPage() {
             ["Zimbabwe", "ZW"]
           ]}
         />
-        <p className="text-[#5F665F] leading-relaxed mb-4">
-          Product notes: <strong>Kenya (KE)</strong> is blocked on Easner Business Banking but may be available on Easner Personal Banking. <strong>United Kingdom (GB)</strong> remains available on Easner Business Banking and is blocked on Easner Personal Banking. <strong>Ukraine (UA)</strong> is blocked on Easner Personal Banking as a whole; occupied territories listed above remain excluded on Easner Business Banking as sub-national regions.
-        </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Other jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
