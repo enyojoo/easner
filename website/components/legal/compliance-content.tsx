@@ -7,7 +7,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Overview</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          <strong>Easner Group, Inc.</strong> (“<strong>Easner</strong>,” “<strong>we</strong>,” “<strong>us</strong>,” or “<strong>our</strong>”) maintains a compliance program covering know-your-customer (<strong>KYC</strong>), know-your-business (<strong>KYB</strong>), and anti-money laundering (<strong>AML</strong>) obligations across <strong>Easner Mobile</strong> (<strong>Easner Personal Banking</strong>) and <strong>Easner Business</strong> (<strong>Easner Business Banking</strong>).
+          <strong>Easner Group, Inc.</strong> (“<strong>Easner</strong>,” “<strong>we</strong>,” “<strong>us</strong>,” or “<strong>our</strong>”) maintains a compliance program covering know-your-customer (<strong>KYC</strong>), know-your-business (<strong>KYB</strong>), and anti-money laundering (<strong>AML</strong>) obligations across <strong>Easner Personal Banking</strong> and <strong>Easner Business Banking</strong>.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
           Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by <strong>licensed partners</strong>. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
@@ -39,7 +39,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">3. Supported Jurisdictions</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability. Countries offered at registration may reflect our current rollout.
+          Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability. <strong>Easner Business Banking</strong> and <strong>Easner Personal Banking</strong> apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Eligibility principles</h3>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
@@ -47,68 +47,101 @@ export function CompliancePolicyPage() {
           <li>All users and transactions are screened against applicable <strong>sanctions and watchlists</strong> (including OFAC, UN, EU, and UK). A match may block onboarding or payments regardless of country.</li>
           <li>Partners may require <strong>Enhanced Due Diligence</strong> for higher-risk profiles or jurisdictions.</li>
         </ul>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Prohibited jurisdictions</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Business Banking – hard-blocked jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          We do not onboard or provide Services to persons or businesses located in, ordinarily resident in, or organized under the laws of:
+          We do not onboard businesses located in, ordinarily resident in, or organized under the laws of:
         </p>
         <PolicyTable
           headers={["Jurisdiction", "ISO"]}
           rows={[
+            ["Afghanistan", "AF"],
+            ["Belarus", "BY"],
+            ["Bhutan", "BT"],
+            ["Burundi", "BI"],
+            ["Congo (Democratic Republic of the)", "CD"],
             ["Cuba", "CU"],
+            ["Gaza Strip / West Bank (Palestinian Territories)", "PS"],
+            ["Guinea-Bissau", "GW"],
+            ["Haiti", "HT"],
             ["Iran", "IR"],
+            ["Iraq", "IQ"],
+            ["Kenya", "KE"],
+            ["Kosovo", "XK"],
+            ["Lebanon", "LB"],
+            ["Libya", "LY"],
+            ["Mozambique", "MZ"],
             ["Myanmar", "MM"],
             ["North Korea (Democratic People's Republic of Korea)", "KP"],
-            ["Syria", "SY"]
+            ["Pakistan", "PK"],
+            ["Qatar", "QA"],
+            ["Russia", "RU"],
+            ["Somalia", "SO"],
+            ["South Sudan", "SS"],
+            ["Sudan", "SD"],
+            ["Syria", "SY"],
+            ["Venezuela", "VE"],
+            ["Yemen", "YE"],
+            ["Zimbabwe", "ZW"]
           ]}
         />
         <p className="text-[#5F665F] leading-relaxed mb-4">
           We also do not provide Services in <strong>Crimea, Sevastopol, Donetsk, Kherson, Luhansk, or Zaporizhzhia</strong> (sub-national regions; not selectable as standalone countries in registration).
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          These jurisdictions are excluded from Easner Business signup and KYB country pickers. Code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
+          These jurisdictions are excluded from Easner Business Banking signup and KYB country pickers.
         </p>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Controlled jurisdictions</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Easner Personal Banking – hard-blocked jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          We do not onboard users or businesses in the following jurisdictions except under specially approved partner programs (not generally available through Easner):
+          We do not onboard Personal Banking users located in, or ordinarily resident in:
         </p>
         <PolicyTable
           headers={["Jurisdiction", "ISO"]}
           rows={[
             ["Afghanistan", "AF"],
-            ["Algeria", "DZ"],
-            ["Bangladesh", "BD"],
+            ["Burkina Faso", "BF"],
             ["Belarus", "BY"],
-            ["China", "CN"],
             ["Congo (Democratic Republic of the)", "CD"],
-            ["Gaza Strip / West Bank (Palestinian Territories)", "PS"],
+            ["Central African Republic", "CF"],
+            ["Cuba", "CU"],
+            ["United Kingdom", "GB"],
+            ["Guinea-Bissau", "GW"],
             ["Haiti", "HT"],
             ["Iraq", "IQ"],
+            ["Iran", "IR"],
+            ["North Korea (Democratic People's Republic of Korea)", "KP"],
             ["Lebanon", "LB"],
             ["Libya", "LY"],
-            ["Morocco", "MA"],
+            ["Mali", "ML"],
+            ["Myanmar", "MM"],
             ["Mozambique", "MZ"],
-            ["Nepal", "NP"],
             ["Nicaragua", "NI"],
-            ["North Macedonia", "MK"],
-            ["Qatar", "QA"],
+            ["Panama", "PA"],
             ["Pakistan", "PK"],
+            ["Palestinian Territory", "PS"],
             ["Russia", "RU"],
+            ["Sudan", "SD"],
             ["Somalia", "SO"],
             ["South Sudan", "SS"],
-            ["Sudan", "SD"],
+            ["Syria", "SY"],
+            ["Ukraine", "UA"],
             ["Venezuela", "VE"],
-            ["Yemen", "YE"]
+            ["Vanuatu", "VU"],
+            ["Yemen", "YE"],
+            ["Zimbabwe", "ZW"]
           ]}
         />
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          These jurisdictions are excluded from Easner Business signup and KYB country pickers unless explicitly enabled via an internal jurisdiction policy update.
+          Product notes: <strong>Kenya (KE)</strong> is blocked on Easner Business Banking but may be available on Easner Personal Banking. <strong>United Kingdom (GB)</strong> remains available on Easner Business Banking and is blocked on Easner Personal Banking. <strong>Ukraine (UA)</strong> is blocked on Easner Personal Banking as a whole; occupied territories listed above remain excluded on Easner Business Banking as sub-national regions.
         </p>
         <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Other jurisdictions</h3>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          If your country is not listed above, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
+          If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
+        </p>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          Partner jurisdiction policies may change. We update our practices when material changes apply.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
-          Partner jurisdiction policies may change. We update our practices when material changes apply.
+          Source of truth in product code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
         </p>
       </section>
 
@@ -132,7 +165,7 @@ export function CompliancePolicyPage() {
 
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">5. Information We Collect</h2>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Annex A – Individual users (Easner Mobile / Easner Personal Banking)</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Annex A – Individual users (Easner Personal Banking)</h3>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Full legal name, date of birth, nationality, and residential address</li>
           <li>Government-issued photo ID and proof of address where required</li>
@@ -141,7 +174,7 @@ export function CompliancePolicyPage() {
           <li>Selfie or liveness data where required for fraud prevention</li>
           <li>Verification status and related compliance metadata</li>
         </ul>
-        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Annex B – Business users (Easner Business / Easner Business Banking)</h3>
+        <h3 className="text-lg font-semibold text-[#0F1110] mb-2">Annex B – Business users (Easner Business Banking)</h3>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Legal name, registration number, jurisdiction, and business address</li>
           <li>Business website and customer-facing contact details where required for KYB</li>
@@ -165,8 +198,8 @@ export function CompliancePolicyPage() {
           <li>You complete <strong>hosted verification</strong> with a licensed partner:</li>
         </ol>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
-          <li><strong>Easner Mobile (individuals):</strong> <strong>Noah</strong> KYC (in-app or browser).</li>
-          <li><strong>Easner Business:</strong> <strong>Lightspark Grid</strong> KYB.</li>
+          <li><strong>Easner Personal Banking (individuals):</strong> <strong>Noah</strong> KYC (in-app or browser).</li>
+          <li><strong>Easner Business Banking:</strong> <strong>Lightspark Grid</strong> KYB.</li>
         </ul>
         <ol className="list-decimal pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Automated and, where needed, manual review is performed.</li>
@@ -219,7 +252,7 @@ export function CompliancePolicyPage() {
           rows={[
             ["**Tier 1 – Global banking**", "USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows", "Approved KYC or KYB"],
             ["**Tier 2 – Cards**", "Personal or business cards when available", "Separate partner approval; **not generally live today**"],
-            ["**Tier 3 – Online payments (Business)**", "Accept card payments on invoices via Stripe Connect; settlement to Easner balance", "Approved KYB plus Stripe Connected Account onboarding"]
+            ["**Tier 3 – Online payments (Business Banking)**", "Accept card payments on invoices via Stripe Connect; settlement to Easner balance", "Approved KYB plus Stripe Connected Account onboarding"]
           ]}
         />
         <p className="text-[#5F665F] leading-relaxed">

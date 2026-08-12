@@ -6,7 +6,7 @@ Last updated: August 12, 2026
 
 ## 1. Overview
 
-**Easner Group, Inc.** (“**Easner**,” “**we**,” “**us**,” or “**our**”) maintains a compliance program covering know-your-customer (**KYC**), know-your-business (**KYB**), and anti-money laundering (**AML**) obligations across **Easner Mobile** (**Easner Personal Banking**) and **Easner Business** (**Easner Business Banking**).
+**Easner Group, Inc.** (“**Easner**,” “**we**,” “**us**,” or “**our**”) maintains a compliance program covering know-your-customer (**KYC**), know-your-business (**KYB**), and anti-money laundering (**AML**) obligations across **Easner Personal Banking** and **Easner Business Banking**.
 
 Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by **licensed partners**. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
 
@@ -30,7 +30,7 @@ Together, these programs help protect Easner, our partners, our users, and the i
 
 ## 3. Supported Jurisdictions
 
-Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on **licensed partner** eligibility rules and Easner product availability. Countries offered at registration may reflect our current rollout.
+Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on **licensed partner** eligibility rules and Easner product availability. **Easner Business Banking** and **Easner Personal Banking** apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
 
 ### Eligibility principles
 
@@ -38,60 +38,92 @@ Access to Tier 1 global banking – including identity verification, virtual acc
 - All users and transactions are screened against applicable **sanctions and watchlists** (including OFAC, UN, EU, and UK). A match may block onboarding or payments regardless of country.
 - Partners may require **Enhanced Due Diligence** for higher-risk profiles or jurisdictions.
 
-### Prohibited jurisdictions
+### Easner Business Banking – hard-blocked jurisdictions
 
-We do not onboard or provide Services to persons or businesses located in, ordinarily resident in, or organized under the laws of:
-
-| Jurisdiction | ISO |
-|----------------|-----|
-| Cuba | CU |
-| Iran | IR |
-| Myanmar | MM |
-| North Korea (Democratic People's Republic of Korea) | KP |
-| Syria | SY |
-
-We also do not provide Services in **Crimea, Sevastopol, Donetsk, Kherson, Luhansk, or Zaporizhzhia** (sub-national regions; not selectable as standalone countries in registration).
-
-These jurisdictions are excluded from Easner Business signup and KYB country pickers. Code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
-
-### Controlled jurisdictions
-
-We do not onboard users or businesses in the following jurisdictions except under specially approved partner programs (not generally available through Easner):
+We do not onboard businesses located in, ordinarily resident in, or organized under the laws of:
 
 | Jurisdiction | ISO |
 |----------------|-----|
 | Afghanistan | AF |
-| Algeria | DZ |
-| Bangladesh | BD |
 | Belarus | BY |
-| China | CN |
+| Bhutan | BT |
+| Burundi | BI |
 | Congo (Democratic Republic of the) | CD |
+| Cuba | CU |
 | Gaza Strip / West Bank (Palestinian Territories) | PS |
+| Guinea-Bissau | GW |
 | Haiti | HT |
+| Iran | IR |
 | Iraq | IQ |
+| Kenya | KE |
+| Kosovo | XK |
 | Lebanon | LB |
 | Libya | LY |
-| Morocco | MA |
 | Mozambique | MZ |
-| Nepal | NP |
-| Nicaragua | NI |
-| North Macedonia | MK |
-| Qatar | QA |
+| Myanmar | MM |
+| North Korea (Democratic People's Republic of Korea) | KP |
 | Pakistan | PK |
+| Qatar | QA |
 | Russia | RU |
 | Somalia | SO |
 | South Sudan | SS |
 | Sudan | SD |
+| Syria | SY |
 | Venezuela | VE |
 | Yemen | YE |
+| Zimbabwe | ZW |
 
-These jurisdictions are excluded from Easner Business signup and KYB country pickers unless explicitly enabled via an internal jurisdiction policy update.
+We also do not provide Services in **Crimea, Sevastopol, Donetsk, Kherson, Luhansk, or Zaporizhzhia** (sub-national regions; not selectable as standalone countries in registration).
+
+These jurisdictions are excluded from Easner Business Banking signup and KYB country pickers.
+
+### Easner Personal Banking – hard-blocked jurisdictions
+
+We do not onboard Personal Banking users located in, or ordinarily resident in:
+
+| Jurisdiction | ISO |
+|----------------|-----|
+| Afghanistan | AF |
+| Burkina Faso | BF |
+| Belarus | BY |
+| Congo (Democratic Republic of the) | CD |
+| Central African Republic | CF |
+| Cuba | CU |
+| United Kingdom | GB |
+| Guinea-Bissau | GW |
+| Haiti | HT |
+| Iraq | IQ |
+| Iran | IR |
+| North Korea (Democratic People's Republic of Korea) | KP |
+| Lebanon | LB |
+| Libya | LY |
+| Mali | ML |
+| Myanmar | MM |
+| Mozambique | MZ |
+| Nicaragua | NI |
+| Panama | PA |
+| Pakistan | PK |
+| Palestinian Territory | PS |
+| Russia | RU |
+| Sudan | SD |
+| Somalia | SO |
+| South Sudan | SS |
+| Syria | SY |
+| Ukraine | UA |
+| Venezuela | VE |
+| Vanuatu | VU |
+| Yemen | YE |
+| Zimbabwe | ZW |
+
+Product notes: **Kenya (KE)** is blocked on Easner Business Banking but may be available on Easner Personal Banking. **United Kingdom (GB)** remains available on Easner Business Banking and is blocked on Easner Personal Banking. **Ukraine (UA)** is blocked on Easner Personal Banking as a whole; occupied territories listed above remain excluded on Easner Business Banking as sub-national regions.
 
 ### Other jurisdictions
 
-If your country is not listed above, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
+If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
 
 Partner jurisdiction policies may change. We update our practices when material changes apply.
+
+Source of truth in product code: `packages/shared/src/jurisdiction-blocked-countries.ts`.
 
 ---
 
@@ -112,7 +144,7 @@ You may need to accept **partner terms** presented during hosted verification be
 
 ## 5. Information We Collect
 
-### Annex A – Individual users (Easner Mobile / Easner Personal Banking)
+### Annex A – Individual users (Easner Personal Banking)
 
 - Full legal name, date of birth, nationality, and residential address
 - Government-issued photo ID and proof of address where required
@@ -121,7 +153,7 @@ You may need to accept **partner terms** presented during hosted verification be
 - Selfie or liveness data where required for fraud prevention
 - Verification status and related compliance metadata
 
-### Annex B – Business users (Easner Business / Easner Business Banking)
+### Annex B – Business users (Easner Business Banking)
 
 - Legal name, registration number, jurisdiction, and business address
 - Business website and customer-facing contact details where required for KYB
@@ -142,8 +174,8 @@ Identity documents must be valid, legible, and match account information. Addres
 
 1. You create an Easner account.
 2. You complete **hosted verification** with a licensed partner:
-   - **Easner Mobile (individuals):** **Noah** KYC (in-app or browser).
-   - **Easner Business:** **Lightspark Grid** KYB.
+   - **Easner Personal Banking (individuals):** **Noah** KYC (in-app or browser).
+   - **Easner Business Banking:** **Lightspark Grid** KYB.
 3. Automated and, where needed, manual review is performed.
 4. Sanctions, PEP, and adverse media screening is conducted.
 5. You receive an outcome: approved, pending, rejected, or a request for more information.
@@ -187,7 +219,7 @@ Where we or a partner identify potentially suspicious activity, a **Suspicious A
 |------|-------------|---------------------|
 | **Tier 1 – Global banking** | USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows | Approved KYC or KYB |
 | **Tier 2 – Cards** | Personal or business cards when available | Separate partner approval; **not generally live today** |
-| **Tier 3 – Online payments (Business)** | Accept card payments on invoices via Stripe Connect; settlement to Easner balance | Approved KYB plus Stripe Connected Account onboarding |
+| **Tier 3 – Online payments (Business Banking)** | Accept card payments on invoices via Stripe Connect; settlement to Easner balance | Approved KYB plus Stripe Connected Account onboarding |
 
 Cross-border and local pay-in/pay-out corridors (for example via Yellowcard mobile-money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible Tier 1 global users and jurisdictions. They are a corridor capability under Tier 1, not a separate regional banking account tier, unless we expressly launch one.
 
