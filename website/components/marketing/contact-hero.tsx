@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { motion } from "framer-motion"
+import { MarketingLink } from "@/components/marketing/marketing-link"
 import { CONTACT_EMAIL } from "@/lib/marketing/constants"
 import { contactBooking, contactHero } from "@/lib/marketing/content/contact"
 import { MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
@@ -25,12 +25,14 @@ export function ContactHero() {
         <div className="mt-4 flex flex-col gap-3 text-center text-sm leading-6 text-[#6F756F] sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-2 sm:gap-y-1">
           <p className="text-pretty">
             <strong className="font-semibold text-[#3D403D]">{contactHero.prospectPreface}</strong>{" "}
-            <Link
+            <MarketingLink
               href={`#${contactBooking.anchor}`}
+              analyticsLocation="contact_hero_booking"
+              ctaLabel={contactHero.prospectLinkLabel}
               className="font-semibold text-[#007ACC] hover:underline"
             >
               {contactHero.prospectLinkLabel}
-            </Link>
+            </MarketingLink>
             .
           </p>
           <span aria-hidden="true" className="hidden text-[#C8C2B6] sm:inline">
@@ -38,12 +40,14 @@ export function ContactHero() {
           </span>
           <p className="text-pretty">
             {contactHero.emailPreface}{" "}
-            <Link
+            <MarketingLink
               href={`mailto:${CONTACT_EMAIL}`}
+              analyticsLocation="contact_hero_email"
+              ctaLabel={CONTACT_EMAIL}
               className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
             >
               {CONTACT_EMAIL}
-            </Link>
+            </MarketingLink>
           </p>
         </div>
       </motion.div>

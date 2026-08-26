@@ -96,7 +96,7 @@ export const aboutCtaBand: CtaBandContent = {
   headline: "Ready to move money globally?",
   subhead: "Open an Easner account, or talk to us about partnerships.",
   ctas: [
-    { label: "Open Account", href: "#", action: "open-account" },
-    { label: "Contact", href: CONTACT_PATH },
+    { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "about_cta_band" },
+    { label: "Contact", href: CONTACT_PATH, analyticsLocation: "about_cta_band_contact" },
   ],
 }

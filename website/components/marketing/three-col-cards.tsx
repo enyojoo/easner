@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VisualSlot } from "./visual-slot"
 import { scrollToProductsWithPaintRetries } from "./product-anchor"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import type { CardItem } from "@/lib/marketing/types"
 
@@ -18,6 +19,7 @@ interface ThreeColCardsProps {
   showIcons?: boolean
   id?: string
   className?: string
+  analyticsSection?: string
 }
 
 export function ThreeColCards({
@@ -29,6 +31,7 @@ export function ThreeColCards({
   showIcons = false,
   id,
   className,
+  analyticsSection,
 }: ThreeColCardsProps) {
   const sectionRef = useRef<HTMLElement>(null)
   const gridClass =
@@ -94,8 +97,25 @@ export function ThreeColCards({
             )
 
             if (item.link) {
+              const analyticsLocation = analyticsSection
+                ? `${analyticsSection}_${item.link.replace(/^\//, "").replace(/\//g, "_") || "home"}`
+                : undefined
+
               return (
-                <Link key={item.title} href={item.link} className="block h-full">
+                <Link
+                  key={item.title}
+                  href={item.link}
+                  className="block h-full"
+                  onClick={() => {
+                    if (!analyticsLocation) return
+                    captureCtaClicked({
+                      cta_location: analyticsLocation,
+                      cta_label: item.title,
+                      destination: item.link,
+                      destination_type: "internal",
+                    })
+                  }}
+                >
                   {content}
                 </Link>
               )

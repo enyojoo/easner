@@ -1,6 +1,9 @@
-import Link from "next/link"
+"use client"
+
 import { Linkedin } from "lucide-react"
 import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
+import { MarketingLink } from "@/components/marketing/marketing-link"
+import { trackLinkClick } from "@/lib/marketing/analytics"
 import { REGULATORY_FOOTER_PARAGRAPHS } from "@/lib/marketing/shared-content"
 
 export function PublicFooter() {
@@ -20,6 +23,11 @@ export function PublicFooter() {
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-easner-primary transition-colors"
                   aria-label="X (Twitter)"
+                  onClick={() =>
+                    trackLinkClick("footer_social_x", "X", "https://x.com/easnerbanking", {
+                      external: true,
+                    })
+                  }
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -31,36 +39,50 @@ export function PublicFooter() {
                   rel="noopener noreferrer"
                   className="text-gray-500 hover:text-easner-primary transition-colors"
                   aria-label="LinkedIn"
+                  onClick={() =>
+                    trackLinkClick(
+                      "footer_social_linkedin",
+                      "LinkedIn",
+                      "https://www.linkedin.com/company/easner/",
+                      { external: true }
+                    )
+                  }
                 >
                   <Linkedin className="h-4 w-4" />
                 </a>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-6 gap-y-2 sm:space-x-0">
-              <Link
+              <MarketingLink
                 href="/terms"
+                analyticsLocation="footer_terms"
+                ctaLabel="Terms of Service"
                 className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
               >
                 Terms of Service
-              </Link>
-              <Link
+              </MarketingLink>
+              <MarketingLink
                 href="/privacy"
+                analyticsLocation="footer_privacy"
+                ctaLabel="Privacy Policy"
                 className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
               >
                 Privacy Policy
-              </Link>
-              <Link
+              </MarketingLink>
+              <MarketingLink
                 href="/compliance"
+                analyticsLocation="footer_compliance"
+                ctaLabel="Compliance"
                 className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
               >
                 Compliance
-              </Link>
+              </MarketingLink>
             </div>
           </div>
           <div className="text-center sm:text-left text-xs sm:text-sm text-gray-500 mb-4">
             <p>
               Have questions?{" "}
-              <SupportChatTrigger variant="link" className="text-xs sm:text-sm">
+              <SupportChatTrigger variant="link" className="text-xs sm:text-sm" analyticsLocation="footer_support_chat">
                 Chat with us
               </SupportChatTrigger>
               .

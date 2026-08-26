@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { captureNavClick } from "@/lib/marketing/analytics"
 import {
   NAV_LEADING_LINKS,
   NAV_LINKS,
@@ -58,11 +59,15 @@ export function PublicHeader() {
     })
   }
 
+  const trackNavClick = (label: string, href: string) => {
+    captureNavClick(label, href)
+  }
+
   return (
     <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#E4DED1]/80 bg-white/[0.82] shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center" onClick={() => trackNavClick("Logo", "/")}>
             <BrandLogo size="sm" className="h-7" />
           </Link>
 
@@ -72,6 +77,7 @@ export function PublicHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => trackNavClick(item.label, item.href)}
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
               >
                 {item.label}
@@ -95,6 +101,7 @@ export function PublicHeader() {
                         <DropdownMenuItem key={item.href} asChild>
                           <Link
                             href={item.href}
+                            onClick={() => trackNavClick(item.label, item.href)}
                             className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-3 text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
                           >
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F6F0] text-[#007ACC]">
@@ -120,6 +127,7 @@ export function PublicHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => trackNavClick(item.label, item.href)}
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
               >
                 {item.label}
@@ -129,6 +137,7 @@ export function PublicHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => trackNavClick(item.label, item.href)}
                 className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
               >
                 {item.label}
@@ -138,6 +147,7 @@ export function PublicHeader() {
 
           <div className="hidden md:flex items-center gap-3">
             <OpenAccountButton
+              ctaLocation="nav_cta"
               className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]"
               dialogOpen={accountDialogOpen}
               onDialogOpenChange={setAccountDialogOpen}
@@ -164,7 +174,10 @@ export function PublicHeader() {
                   <div key={item.href} className="border-b border-[#E9E4D8]">
                     <Link
                       href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        trackNavClick(item.label, item.href)
+                        setMobileMenuOpen(false)
+                      }}
                       className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
                     >
                       {item.label}
@@ -192,7 +205,10 @@ export function PublicHeader() {
                               <Link
                                 key={item.href}
                                 href={item.href}
-                                onClick={() => setMobileMenuOpen(false)}
+                                onClick={() => {
+                        trackNavClick(item.label, item.href)
+                        setMobileMenuOpen(false)
+                      }}
                                 className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
                               >
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F8F6F0] text-[#007ACC]">
@@ -218,7 +234,10 @@ export function PublicHeader() {
                   <div key={item.href} className="border-b border-[#E9E4D8]">
                     <Link
                       href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        trackNavClick(item.label, item.href)
+                        setMobileMenuOpen(false)
+                      }}
                       className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
                     >
                       {item.label}
@@ -229,7 +248,10 @@ export function PublicHeader() {
                   <div key={item.href} className="border-b border-[#E9E4D8] last:border-b-0">
                     <Link
                       href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        trackNavClick(item.label, item.href)
+                        setMobileMenuOpen(false)
+                      }}
                       className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
                     >
                       {item.label}
@@ -240,6 +262,7 @@ export function PublicHeader() {
             </nav>
             <div className="flex-shrink-0 border-t border-[#E4DED1] bg-white px-4 pb-4 pt-4">
               <OpenAccountButton
+                ctaLocation="nav_cta"
                 className="w-full rounded-full bg-[#007ACC] text-white hover:bg-[#0062A3]"
                 dialogOpen={accountDialogOpen}
                 onDialogOpenChange={setAccountDialogOpen}
@@ -249,7 +272,11 @@ export function PublicHeader() {
           </div>
         )}
       </div>
-      <OpenAccountDialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen} />
+      <OpenAccountDialog
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+        ctaLocation="nav_cta"
+      />
     </header>
   )
 }

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PersonalBankingCtas } from "./personal-banking-ctas"
+import { MarketingLink } from "./marketing-link"
 import type { Cta } from "@/lib/marketing/types"
 
 interface PersonaCtasProps {
@@ -30,7 +31,7 @@ export function PersonaCtas({
     return (
       <PersonalBankingCtas
         className={className}
-        surface={surface}
+        surface={ctas.find((cta) => cta.analyticsLocation)?.analyticsLocation ?? surface}
         description={description}
         compact={compact}
         align={align}
@@ -52,13 +53,14 @@ export function PersonaCtas({
               : "h-11 rounded-full border-[#D9D4C7] bg-white px-5 text-sm text-[#0F1110] hover:bg-white sm:h-12 sm:px-6"
           }
         >
-          <Link
+          <MarketingLink
             href={cta.href}
-            target={cta.external ? "_blank" : undefined}
-            rel={cta.external ? "noopener noreferrer" : undefined}
+            external={cta.external}
+            analyticsLocation={cta.analyticsLocation}
+            ctaLabel={cta.label}
           >
             {cta.label}
-          </Link>
+          </MarketingLink>
         </Button>
       ))}
     </div>

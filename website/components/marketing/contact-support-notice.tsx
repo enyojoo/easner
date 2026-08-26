@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { MessageCircle } from "lucide-react"
 import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
+import { MarketingLink } from "@/components/marketing/marketing-link"
 import { SUPPORT_EMAIL } from "@/lib/marketing/constants"
 import { contactSupport } from "@/lib/marketing/content/contact"
 
@@ -22,15 +22,19 @@ export function ContactSupportNotice() {
             {contactSupport.body}
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-            <SupportChatTrigger className="w-full sm:w-auto">{contactSupport.chatLabel}</SupportChatTrigger>
+            <SupportChatTrigger className="w-full sm:w-auto" analyticsLocation="contact_support_chat">
+              {contactSupport.chatLabel}
+            </SupportChatTrigger>
             <p className="text-sm leading-6 text-[#6F756F] sm:text-base">
               {contactSupport.emailPreface}{" "}
-              <Link
+              <MarketingLink
                 href={`mailto:${SUPPORT_EMAIL}`}
+                analyticsLocation="contact_support_email"
+                ctaLabel={SUPPORT_EMAIL}
                 className="break-all font-semibold text-[#007ACC] hover:underline sm:break-normal"
               >
                 {SUPPORT_EMAIL}
-              </Link>
+              </MarketingLink>
             </p>
           </div>
           <p className="mt-3 text-pretty text-xs leading-5 text-[#6F756F] sm:text-sm sm:leading-6">

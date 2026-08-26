@@ -21,7 +21,7 @@ export const stablecoinContent: ProductPageContent = {
       "Run receive, send, Terminal, and QR Pay on rails your team already understands – USDC and EURC settlement with KYC/KYB and compliance built in.",
     visualSlot: "mkt-hero-stablecoin-01",
     altText: "Easner Business dashboard showing stablecoin settlement activity",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_hero" }],
   },
   featuresLayout: "bento",
   features: [
@@ -92,6 +92,6 @@ export const stablecoinContent: ProductPageContent = {
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",
     subhead: "Receive, send, Terminal, and QR Pay in familiar banking screens – without showing your users a crypto app.",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_cta_band" }],
   },
 }

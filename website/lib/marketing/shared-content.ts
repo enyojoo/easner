@@ -27,8 +27,8 @@ export const DEFAULT_CTA_BAND: CtaBandContent = {
   subhead:
     "Open an Easner account, or talk to us about Easner for Partners.",
   ctas: [
-    { label: "Open Account", href: "#", action: "open-account" },
-    { label: "Contact", href: CONTACT_PATH },
+    { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_cta_band" },
+    { label: "Contact", href: CONTACT_PATH, analyticsLocation: "homepage_cta_band_contact" },
   ],
 }
 

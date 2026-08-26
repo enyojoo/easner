@@ -3,20 +3,30 @@
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { initPostHog, posthog } from "@/lib/posthog"
+import {
+  captureMarketingPageViewed,
+  getMarketingPageName,
+  setupBusinessSignupLinkTagging,
+} from "@/lib/marketing/analytics"
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   useEffect(() => {
     initPostHog()
+    return setupBusinessSignupLinkTagging()
   }, [])
 
   useEffect(() => {
-    if (typeof window !== "undefined" && pathname) {
-      posthog.capture("$pageview", {
-        $current_url: window.location.href,
-      })
-    }
+    if (typeof window === "undefined" || !pathname) return
+
+    posthog.capture("$pageview", {
+      $current_url: window.location.href,
+      page_path: pathname,
+      page_name: getMarketingPageName(pathname),
+    })
+
+    captureMarketingPageViewed(pathname)
   }, [pathname])
 
   return <>{children}</>

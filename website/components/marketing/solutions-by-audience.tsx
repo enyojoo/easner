@@ -11,6 +11,7 @@ import {
   SPLIT_GRID_GAP,
   PERSONA_VISUAL_CONTAINER,
 } from "@/lib/marketing/layout-constants"
+import { capturePersonaTabSelected } from "@/lib/marketing/analytics"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
 import { solutionsPersonas } from "@/lib/marketing/content/home"
@@ -72,6 +73,8 @@ export function SolutionsByAudience() {
   })
 
   const handleTabClick = (index: number) => {
+    const persona = solutionsPersonas[index]
+    capturePersonaTabSelected(persona.id, persona.label)
     setActive(index)
 
     if (!sectionRef.current) return
@@ -161,7 +164,11 @@ export function SolutionsByAudience() {
               </h3>
               <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>
               <div className="mt-5 min-h-[3.25rem] shrink-0 sm:mt-8">
-                <PersonaCtas ctas={persona.ctas} storeLayout="grid" />
+                <PersonaCtas
+                  ctas={persona.ctas}
+                  storeLayout="grid"
+                  surface={`homepage_persona_${persona.id}`}
+                />
               </div>
             </motion.div>
             <div className={PERSONA_VISUAL_CONTAINER}>

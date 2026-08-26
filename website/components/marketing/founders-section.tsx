@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import Image from "next/image"
 import { Linkedin, X } from "lucide-react"
 import type { Founder } from "@/lib/marketing/types"
+import { captureCtaClicked, trackLinkClick } from "@/lib/marketing/analytics"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +13,10 @@ interface FoundersSectionProps {
   headline: string
   subhead: string
   founders: Founder[]
+}
+
+function founderSlug(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
 }
 
 function XIcon({ className }: { className?: string }) {
@@ -23,6 +28,8 @@ function XIcon({ className }: { className?: string }) {
 }
 
 function SocialLinks({ founder, className }: { founder: Founder; className?: string }) {
+  const slug = founderSlug(founder.name)
+
   return (
     <div className={cn("flex min-h-10 items-center justify-end gap-3", className)}>
       <a
@@ -31,6 +38,11 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
         rel="noopener noreferrer"
         className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4DED1] bg-white text-[#3D443E] transition-colors hover:border-[#007ACC]/40 hover:text-[#007ACC]"
         aria-label={`${founder.name} on LinkedIn`}
+        onClick={() =>
+          trackLinkClick(`about_founder_linkedin_${slug}`, "LinkedIn", founder.linkedin, {
+            external: true,
+          })
+        }
       >
         <Linkedin className="h-4 w-4" />
       </a>
@@ -41,6 +53,9 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
           rel="noopener noreferrer"
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4DED1] bg-white text-[#3D443E] transition-colors hover:border-[#007ACC]/40 hover:text-[#007ACC]"
           aria-label={`${founder.name} on X`}
+          onClick={() =>
+            trackLinkClick(`about_founder_x_${slug}`, "X", founder.x!, { external: true })
+          }
         >
           <XIcon className="h-4 w-4" />
         </a>
@@ -147,6 +162,8 @@ function FounderBioDialog({
 }
 
 function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () => void }) {
+  const slug = founderSlug(founder.name)
+
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_12px_35px_rgba(15,17,16,0.05)] transition-all hover:-translate-y-1 hover:border-[#007ACC]/30 hover:shadow-[0_20px_55px_rgba(15,17,16,0.09)] sm:rounded-[1.75rem]">
       <div className="relative aspect-square w-full shrink-0 overflow-hidden border-b border-[#E4DED1] bg-[#EDE8DC]">
@@ -168,7 +185,15 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
         <div className="mt-auto flex items-center gap-3 pt-6">
           <button
             type="button"
-            onClick={onReadBio}
+            onClick={() => {
+              captureCtaClicked({
+                cta_location: `about_founder_read_bio_${slug}`,
+                cta_label: "Read bio",
+                destination: "founder_bio_dialog",
+                destination_type: "dialog",
+              })
+              onReadBio()
+            }}
             className="text-sm font-semibold text-[#0F1110] underline underline-offset-2 transition-opacity hover:opacity-80"
           >
             Read bio

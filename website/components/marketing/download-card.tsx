@@ -17,7 +17,7 @@ export function DownloadCard() {
             {downloadCard.emailDivider}
           </p>
           <div className="mx-auto mt-3 w-full max-w-md">
-            <DownloadEmailForm src="download-page" />
+            <DownloadEmailForm src="download-page" analyticsLocation="download_page_email" />
           </div>
           <div className="mt-6 flex justify-center">
             <PersonalBankingCtas surface="download-page" align="center" webAppOnly />
@@ -33,7 +33,9 @@ export function DownloadCard() {
               {downloadSupport.body}
             </p>
             <div className="mt-4 sm:mt-5">
-              <SupportChatTrigger className="w-full sm:w-auto">{downloadSupport.chatLabel}</SupportChatTrigger>
+              <SupportChatTrigger className="w-full sm:w-auto" analyticsLocation="download_page_support_chat">
+                {downloadSupport.chatLabel}
+              </SupportChatTrigger>
             </div>
           </div>
         </div>

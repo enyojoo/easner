@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
+import { captureFaqExpanded } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import type { FaqItem } from "@/lib/marketing/types"
@@ -27,7 +28,13 @@ export function FaqSection({ items }: FaqSectionProps) {
               <button
                 type="button"
                 className="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-white/60"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                onClick={() => {
+                  const nextIndex = openIndex === index ? null : index
+                  if (nextIndex !== null) {
+                    captureFaqExpanded(item.question, index)
+                  }
+                  setOpenIndex(nextIndex)
+                }}
                 aria-expanded={openIndex === index}
               >
                 <span className="pr-4 font-semibold text-[#0F1110]">{item.question}</span>

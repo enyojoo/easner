@@ -28,8 +28,8 @@ export const partnersContent: ProductPageContent = {
     visualSlot: "mkt-hero-partners-01",
     altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
     ctas: [
-      { label: "Talk to our team", href: CONTACT_PATH },
-      { label: "Developer Model", href: "/developers" },
+      { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "partners_hero_contact" },
+      { label: "Developer Model", href: "/developers", analyticsLocation: "partners_hero_developers" },
     ],
   },
   integrationStepsHeadline: "From first conversation to live operations",
@@ -130,6 +130,6 @@ export const partnersContent: ProductPageContent = {
     headline: "Ready to launch under your brand?",
     subhead:
       "Talk to Easner about the Agency Model, KYB/KYC, and getting set up in your customized name.",
-    ctas: [{ label: "Talk to our team", href: CONTACT_PATH }],
+    ctas: [{ label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "partners_cta_band" }],
   },
 }

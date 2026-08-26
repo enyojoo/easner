@@ -2,20 +2,22 @@
 
 import { useEffect, useLayoutEffect, useState } from "react"
 import { createPortal } from "react-dom"
-import Link from "next/link"
 import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PersonalBankingCtas } from "./personal-banking-ctas"
-import { BUSINESS_SIGNUP_URL, BUSINESS_BANKING_CTA_DESCRIPTION } from "@/lib/marketing/constants"
+import { BusinessSignupLink } from "./business-signup-link"
+import { BUSINESS_BANKING_CTA_DESCRIPTION } from "@/lib/marketing/constants"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 
 interface OpenAccountDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  ctaLocation?: string
 }
 
-export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps) {
+export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccountDialogProps) {
   useLayoutEffect(() => {
     if (!open) return
 
@@ -104,9 +106,9 @@ export function OpenAccountDialog({ open, onOpenChange }: OpenAccountDialogProps
                   asChild
                   className="inline-flex h-10 shrink-0 rounded-full bg-[#007ACC] px-3.5 text-[13px] font-semibold text-white hover:bg-[#0062A3] sm:text-sm"
                 >
-                  <Link href={BUSINESS_SIGNUP_URL} target="_blank" rel="noopener noreferrer">
+                  <BusinessSignupLink campaign={ctaLocation ?? "open_account_dialog"}>
                     Open Business account
-                  </Link>
+                  </BusinessSignupLink>
                 </Button>
               </div>
             </div>
@@ -122,6 +124,8 @@ interface OpenAccountButtonProps {
   className?: string
   showArrow?: boolean
   onPress?: () => void
+  /** UTM campaign / analytics location for the business signup link in the dialog. */
+  ctaLocation?: string
   /** Parent-controlled dialog; render `<OpenAccountDialog />` separately. */
   dialogOpen?: boolean
   onDialogOpenChange?: (open: boolean) => void
@@ -131,6 +135,7 @@ export function OpenAccountButton({
   className,
   showArrow = false,
   onPress,
+  ctaLocation,
   dialogOpen,
   onDialogOpenChange,
 }: OpenAccountButtonProps) {
@@ -145,6 +150,14 @@ export function OpenAccountButton({
         type="button"
         className={className}
         onClick={() => {
+          if (ctaLocation) {
+            captureCtaClicked({
+              cta_location: ctaLocation,
+              cta_label: "Open Account",
+              destination: "open_account_dialog",
+              destination_type: "dialog",
+            })
+          }
           setOpen(true)
           onPress?.()
         }}
@@ -152,7 +165,9 @@ export function OpenAccountButton({
         Open Account
         {showArrow && <ArrowRight className="h-4 w-4" />}
       </Button>
-      {!isControlled && <OpenAccountDialog open={open} onOpenChange={setOpen} />}
+      {!isControlled && (
+        <OpenAccountDialog open={open} onOpenChange={setOpen} ctaLocation={ctaLocation} />
+      )}
     </>
   )
 }

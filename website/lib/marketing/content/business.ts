@@ -24,8 +24,8 @@ export const businessContent: ProductPageContent = {
     visualSlot: "mkt-hero-business-01",
     altText: "Small business founder reviewing Easner Business dashboard",
     ctas: [
-      { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true },
-      { label: "See invoicing", href: "/invoicing" },
+      { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_hero" },
+      { label: "See invoicing", href: "/invoicing", analyticsLocation: "business_hero_invoicing" },
     ],
   },
   featuresLayout: "bento",
@@ -101,6 +101,6 @@ export const businessContent: ProductPageContent = {
   ctaBand: {
     headline: "Open your Easner Business account",
     subhead: "Accounts, payouts, collections, and team controls for cross-border operators.",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_cta_band" }],
   },
 }

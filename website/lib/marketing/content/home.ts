@@ -37,7 +37,7 @@ export const homeHero = {
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business dashboard overview",
   ctas: [
-    { label: "Open Account", href: "#", action: "open-account" },
+    { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_hero" },
     { label: "Explore products", href: "#products" },
   ] satisfies Cta[],
 }
@@ -79,7 +79,7 @@ export const solutionsPersonas = [
     body: "Receive in supported global currencies, move money home on faster paths, and keep a clean record of every transfer with Easner Personal Banking.",
     visualSlot: "mkt-persona-diaspora",
     altText: "Remote professional using Easner on mobile",
-    ctas: [{ label: "Explore Personal Banking", href: "/personal" }] satisfies Cta[],
+    ctas: [{ label: "Explore Personal Banking", href: "/personal", analyticsLocation: "homepage_persona_diaspora" }] satisfies Cta[],
   },
   {
     id: "sme",
@@ -88,7 +88,7 @@ export const solutionsPersonas = [
     body: "Manage accounts, payouts, invoicing, collections, team access, and reporting for import/export, supplier, and contractor payments with Easner Business Banking.",
     visualSlot: "mkt-persona-sme",
     altText: "Small business owner managing international payments",
-    ctas: [{ label: "Explore Business Banking", href: "/business" }] satisfies Cta[],
+    ctas: [{ label: "Explore Business Banking", href: "/business", analyticsLocation: "homepage_persona_sme" }] satisfies Cta[],
   },
   {
     id: "otc",
@@ -97,7 +97,7 @@ export const solutionsPersonas = [
     body: "Launch branded cross-border products on Easner infrastructure – with compliance, corridor connectivity, and a full audit trail on every transfer.",
     visualSlot: "mkt-persona-otc",
     altText: "Partner operator managing branded cross-border transfers",
-    ctas: [{ label: "Explore Partners", href: "/partners" }] satisfies Cta[],
+    ctas: [{ label: "Explore Partners", href: "/partners", analyticsLocation: "homepage_persona_otc" }] satisfies Cta[],
   },
   {
     id: "dev",
@@ -106,7 +106,7 @@ export const solutionsPersonas = [
     body: "Build with Easner's embedded payments API for verification, accounts, payouts, wallets, and collections, then focus your roadmap on the customer experience.",
     visualSlot: "mkt-persona-dev",
     altText: "Developer integrating payments API",
-    ctas: [{ label: "Explore Developers", href: "/developers" }] satisfies Cta[],
+    ctas: [{ label: "Explore Developers", href: "/developers", analyticsLocation: "homepage_persona_dev" }] satisfies Cta[],
   },
 ]
 
@@ -117,7 +117,7 @@ export const corridorContent = {
   visualSlot: "mkt-map-corridors",
   altText:
     "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and Kenya",
-  ctas: [{ label: "Open Account", href: "#", action: "open-account" }] satisfies Cta[],
+  ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_corridor" }] satisfies Cta[],
 }
 
 export const homeCtaBand = DEFAULT_CTA_BAND

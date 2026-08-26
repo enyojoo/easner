@@ -1,8 +1,8 @@
 "use client"
 
-import Link from "next/link"
 import type { ProductPageContent } from "@/lib/marketing/types"
 import { CONTACT_PATH } from "@/lib/marketing/constants"
+import { MarketingLink } from "./marketing-link"
 import { SplitSection } from "./split-section"
 import { CenteredBlock } from "./centered-block"
 import { FeatureAlternating } from "./feature-alternating"
@@ -100,9 +100,14 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
       {content.commercialModels && (
         <div className="mx-auto max-w-3xl px-4 pb-8 text-center text-sm text-[#5F665F] sm:px-6 lg:px-8">
           Commercial terms are customized.{" "}
-          <Link href={CONTACT_PATH} className="font-semibold text-[#007ACC] hover:underline">
+          <MarketingLink
+            href={CONTACT_PATH}
+            analyticsLocation="developers_pricing_contact"
+            ctaLabel="Contact us"
+            className="font-semibold text-[#007ACC] hover:underline"
+          >
             Contact us
-          </Link>{" "}
+          </MarketingLink>{" "}
           for pricing.
         </div>
       )}

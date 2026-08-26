@@ -10,6 +10,7 @@ import { DownloadQr } from "./download-qr"
 import { APP_STORE_URL, ANDROID_APK_URL, PERSONAL_WEB_APP_URL } from "@/lib/marketing/constants"
 import { APP_LINK_URL, isMobilePlatform, type DownloadPlatform } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 import { AppleStoreIcon, AndroidStoreIcon } from "./store-icons"
 
@@ -122,6 +123,15 @@ export function DownloadAppDialog({
                 href={APP_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  posthog.capture("download_click", { surface: `${surface}-dialog`, platform: "ios", action: "app_store" })
+                  captureCtaClicked({
+                    cta_location: `${surface}-dialog_app_store`,
+                    cta_label: "App Store",
+                    destination: APP_STORE_URL,
+                    destination_type: "download",
+                  })
+                }}
                 className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-[#0F1110] bg-[#0F1110] px-4 py-3 text-white transition-opacity hover:opacity-90"
               >
                 <AppleStoreIcon className="size-6 text-white" />
@@ -134,6 +144,15 @@ export function DownloadAppDialog({
               </Link>
               <Link
                 href={ANDROID_APK_URL}
+                onClick={() => {
+                  posthog.capture("download_click", { surface: `${surface}-dialog`, platform: "android", action: "apk" })
+                  captureCtaClicked({
+                    cta_location: `${surface}-dialog_android_apk`,
+                    cta_label: "Android APK",
+                    destination: ANDROID_APK_URL,
+                    destination_type: "download",
+                  })
+                }}
                 className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-[#E9E4D8] bg-white px-4 py-3 text-[#0F1110] transition-colors hover:border-[#007ACC]/30"
               >
                 <AndroidStoreIcon />
@@ -151,7 +170,7 @@ export function DownloadAppDialog({
             – or get a download link via email –
           </p>
 
-          <DownloadEmailForm className="mt-3" src={src} />
+          <DownloadEmailForm className="mt-3" src={src} analyticsLocation={`${surface}-dialog_email`} />
 
           {showQr ? (
             <p className="mt-5 text-sm leading-6 text-[#6F756F]">
@@ -160,7 +179,15 @@ export function DownloadAppDialog({
                 href={PERSONAL_WEB_APP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => posthog.capture("web_app_click", { surface: `${surface}-dialog` })}
+                onClick={() => {
+                  posthog.capture("web_app_click", { surface: `${surface}-dialog` })
+                  captureCtaClicked({
+                    cta_location: `${surface}-dialog_web_app`,
+                    cta_label: "Use the web app",
+                    destination: PERSONAL_WEB_APP_URL,
+                    destination_type: "personal_app",
+                  })
+                }}
                 className="font-semibold text-[#007ACC] hover:underline"
               >
                 Use the web app

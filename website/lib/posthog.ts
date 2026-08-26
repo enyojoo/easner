@@ -1,6 +1,7 @@
 "use client"
 
 import posthog from "posthog-js"
+import { registerTrafficSource } from "@/lib/marketing/traffic-source"
 
 export function initPostHog() {
   if (typeof window !== "undefined") {
@@ -10,11 +11,14 @@ export function initPostHog() {
     if (posthogKey && posthogHost) {
       posthog.init(posthogKey, {
         api_host: posthogHost,
+        // Manual $pageview on route change (PostHogProvider) — required for App Router SPA nav.
         capture_pageview: false,
         capture_pageleave: true,
-        cross_subdomain_cookie: false,
+        persistence: "localStorage+cookie",
+        cross_subdomain_cookie: true,
         secure_cookie: true,
         loaded: () => {
+          registerTrafficSource()
           if (process.env.NODE_ENV === "development") {
             console.log("PostHog loaded")
           }

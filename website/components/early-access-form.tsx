@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle, Loader2, Send, ChevronDown, Search } from "lucide-react"
-import Link from "next/link"
+import { captureCtaClicked, captureFormSubmitted } from "@/lib/marketing/analytics"
+import { MarketingLink } from "@/components/marketing/marketing-link"
+import { posthog } from "@/lib/posthog"
 
 interface EarlyAccessFormData {
   email: string
@@ -351,6 +353,14 @@ export function EarlyAccessForm() {
       }
 
       setIsSubmitted(true)
+      posthog.capture("early_access_submitted")
+      captureFormSubmitted("early_access")
+      captureCtaClicked({
+        cta_location: "early_access_form",
+        cta_label: "Request early access",
+        destination: "early_access_api",
+        destination_type: "external",
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
     } finally {
@@ -407,11 +417,11 @@ export function EarlyAccessForm() {
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
           <p className="text-gray-600 mb-2">We've received your request. We'll review your application and send you an invitation to join Easner soon.</p>
           <p className="text-sm text-gray-500 mb-6">You'll receive an email at <strong>{formData.email}</strong> with next steps.</p>
-          <Link href="/">
+          <MarketingLink href="/" analyticsLocation="early_access_go_home" ctaLabel="Go Home">
             <Button className="w-full bg-easner-primary hover:bg-easner-primary-600 text-white shadow-lg hover:shadow-xl transition-all duration-200">
               Go Home
             </Button>
-          </Link>
+          </MarketingLink>
         </CardContent>
       </Card>
     )
@@ -636,13 +646,23 @@ export function EarlyAccessForm() {
             />
             <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
               I agree to the{" "}
-              <Link href="/terms" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
+              <MarketingLink
+                href="/terms"
+                analyticsLocation="early_access_terms"
+                ctaLabel="Terms of Service"
+                className="text-easner-primary hover:text-easner-primary-600 hover:underline"
+              >
                 Terms of Service
-              </Link>{" "}
+              </MarketingLink>{" "}
               and{" "}
-              <Link href="/privacy" className="text-easner-primary hover:text-easner-primary-600 hover:underline">
+              <MarketingLink
+                href="/privacy"
+                analyticsLocation="early_access_privacy"
+                ctaLabel="Privacy Policy"
+                className="text-easner-primary hover:text-easner-primary-600 hover:underline"
+              >
                 Privacy Policy
-              </Link>
+              </MarketingLink>
             </Label>
           </div>
 

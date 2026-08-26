@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Monitor } from "lucide-react"
 import { PERSONAL_WEB_APP_URL } from "@/lib/marketing/constants"
 import { posthog } from "@/lib/posthog"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 
 interface UseWebAppButtonProps {
@@ -15,6 +16,12 @@ interface UseWebAppButtonProps {
 export function UseWebAppButton({ className, surface = "cta", compact = false }: UseWebAppButtonProps) {
   function handleClick() {
     posthog.capture("web_app_click", { surface })
+    captureCtaClicked({
+      cta_location: surface,
+      cta_label: "Web App",
+      destination: PERSONAL_WEB_APP_URL,
+      destination_type: "personal_app",
+    })
   }
 
   return (

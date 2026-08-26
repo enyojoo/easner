@@ -3,7 +3,7 @@ import { APP_LINK_URL } from "../constants"
 import { APP_STORE_PERSONAL_SUMMARY } from "./app-store"
 
 const downloadCta = [
-  { label: "Download", href: APP_LINK_URL, store: "download" as const },
+  { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
 ]
 
 export const personalContent: ProductPageContent = {
@@ -97,6 +97,6 @@ export const personalContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Take Easner banking with you.",
-    ctas: downloadCta,
+    ctas: [{ ...downloadCta[0], analyticsLocation: "personal_cta_band" }],
   },
 }

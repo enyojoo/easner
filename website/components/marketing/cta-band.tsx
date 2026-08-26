@@ -1,9 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { OpenAccountButton } from "./open-account-dialog"
+import { MarketingLink } from "./marketing-link"
 import { PersonaCtas } from "./persona-ctas"
 import type { CtaBandContent } from "@/lib/marketing/types"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
@@ -43,6 +43,7 @@ export function CtaBand({ content }: CtaBandProps) {
                 cta.action === "open-account" ? (
                   <OpenAccountButton
                     key={cta.label}
+                    ctaLocation={cta.analyticsLocation}
                     showArrow
                     className="h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.2)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
                   />
@@ -58,14 +59,15 @@ export function CtaBand({ content }: CtaBandProps) {
                         : "h-11 rounded-full border-[#D9D4C7] bg-white px-5 text-sm text-[#0F1110] hover:bg-[#F8F6F0] sm:h-12 sm:px-6"
                     }
                   >
-                    <Link
+                    <MarketingLink
                       href={cta.href}
-                      target={cta.external ? "_blank" : undefined}
-                      rel={cta.external ? "noopener noreferrer" : undefined}
+                      external={cta.external}
+                      analyticsLocation={cta.analyticsLocation}
+                      ctaLabel={cta.label}
                     >
                       {cta.label}
                       {i === 0 && !cta.external && <ArrowRight className="h-4 w-4" />}
-                    </Link>
+                    </MarketingLink>
                   </Button>
                 )
               )}

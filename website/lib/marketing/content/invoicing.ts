@@ -21,8 +21,8 @@ export const invoicingContent: ProductPageContent = {
     visualSlot: "mkt-hero-invoicing-01",
     altText: "Business owner creating an international invoice in Easner Business",
     ctas: [
-      { label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true },
-      { label: "See Business banking", href: "/business" },
+      { label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "invoicing_hero" },
+      { label: "See Business banking", href: "/business", analyticsLocation: "invoicing_hero_business" },
     ],
   },
   featuresLayout: "bento",
@@ -106,6 +106,6 @@ export const invoicingContent: ProductPageContent = {
   ctaBand: {
     headline: "Invoice from Easner Business today",
     subhead: "One invoice flow for bank pay-in, stablecoin pay-in, status tracking, and reconciliation.",
-    ctas: [{ label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "invoicing_cta_band" }],
   },
 }

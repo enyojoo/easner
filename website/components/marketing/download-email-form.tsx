@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { APP_DOWNLOAD_API_URL } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
+import { captureCtaClicked, captureFormSubmitted } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -11,12 +12,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 interface DownloadEmailFormProps {
   className?: string
   src?: string
+  analyticsLocation?: string
   onSuccess?: () => void
 }
 
 type FormStatus = "idle" | "loading" | "success" | "error"
 
-export function DownloadEmailForm({ className, src, onSuccess }: DownloadEmailFormProps) {
+export function DownloadEmailForm({ className, src, analyticsLocation, onSuccess }: DownloadEmailFormProps) {
   const [email, setEmail] = useState("")
   const [status, setStatus] = useState<FormStatus>("idle")
   const [error, setError] = useState<string | null>(null)
@@ -56,7 +58,15 @@ export function DownloadEmailForm({ className, src, onSuccess }: DownloadEmailFo
 
       if (data.ok) {
         setStatus("success")
+        const location = analyticsLocation ?? (src ? `${src}_download_email` : "download_email")
         posthog.capture("download_link_email_sent", { src: src ?? null })
+        captureFormSubmitted("download_link_email", { src: src ?? null })
+        captureCtaClicked({
+          cta_location: location,
+          cta_label: "Send download link",
+          destination: "download_link_email",
+          destination_type: "download",
+        })
         onSuccess?.()
         return
       }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { useDownloadPlatform } from "@/hooks/use-download-platform"
 import { getDownloadDestination, detectPlatform, isMobilePlatform } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { DownloadAppDialog } from "./download-app-dialog"
 import { StoreBadgeIcons } from "./store-icons"
 
@@ -40,6 +41,12 @@ export function DownloadAppButton({
           platform,
           action: "redirect",
         })
+        captureCtaClicked({
+          cta_location: surface,
+          cta_label: "Download",
+          destination,
+          destination_type: "download",
+        })
         window.location.href = destination
         return
       }
@@ -49,6 +56,12 @@ export function DownloadAppButton({
       surface,
       platform,
       action: "open_dialog",
+    })
+    captureCtaClicked({
+      cta_location: surface,
+      cta_label: "Download",
+      destination: "download_dialog",
+      destination_type: "dialog",
     })
     setOpen(true)
   }

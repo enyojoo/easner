@@ -25,6 +25,7 @@ export function CorridorStory() {
             {corridorContent.ctas && corridorContent.ctas.length > 0 && (
               <div className="mt-8 min-h-[3.25rem] shrink-0">
                 <OpenAccountButton
+                  ctaLocation="homepage_corridor"
                   showArrow
                   className="h-12 rounded-full bg-[#007ACC] px-6 text-white hover:bg-[#0062A3]"
                 />

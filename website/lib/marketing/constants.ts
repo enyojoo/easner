@@ -37,7 +37,7 @@ export const OPEN_ACCOUNT_PERSONAL_CTA_DESCRIPTION_MOBILE =
 export const BUSINESS_BANKING_CTA_DESCRIPTION =
   "Open a business account on the web dashboard."
 
-export const BUSINESS_SIGNUP_URL = "https://business.easner.com/auth/signup"
+export { BUSINESS_SIGNUP_BASE as BUSINESS_SIGNUP_URL } from "./business-signup-url"
 
 export const CONTACT_EMAIL = "hello@easner.com"
 export const SUPPORT_EMAIL = "support@easner.com"

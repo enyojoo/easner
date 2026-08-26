@@ -1,7 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { MarketingLink } from "@/components/marketing/marketing-link"
 import { aboutTrust } from "@/lib/marketing/content/about"
 import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
@@ -26,13 +26,15 @@ export function AboutTrustSection() {
               </li>
             ))}
           </ul>
-          <Link
+          <MarketingLink
             href={aboutTrust.learnMoreHref}
+            analyticsLocation="about_trust_compliance"
+            ctaLabel={aboutTrust.learnMoreLabel}
             className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#007ACC] transition-colors hover:text-[#0062A3]"
           >
             {aboutTrust.learnMoreLabel}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </MarketingLink>
         </div>
       </div>
     </section>

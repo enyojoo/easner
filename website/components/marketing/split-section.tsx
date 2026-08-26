@@ -51,6 +51,7 @@ function SplitCtas({
         ctas={ctas}
         className={cn("mt-8 max-w-md", isHero && "mx-auto lg:mx-0")}
         description={ctaDescription}
+        surface={ctas.find((cta) => cta.analyticsLocation)?.analyticsLocation ?? "product_hero"}
       />
     )
   }
@@ -66,6 +67,7 @@ function SplitCtas({
         cta.action === "open-account" ? (
           <OpenAccountButton
             key={cta.label}
+            ctaLocation={cta.analyticsLocation}
             showArrow={i === 0}
             className="h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.18)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
           />
@@ -81,7 +83,7 @@ function SplitCtas({
                 : "h-11 rounded-full border-[#D9D4C7] bg-white/80 px-5 text-sm text-[#0F1110] hover:bg-white sm:h-12 sm:px-6"
             }
           >
-            <MarketingLink href={cta.href} external={cta.external}>
+            <MarketingLink href={cta.href} external={cta.external} analyticsLocation={cta.analyticsLocation} ctaLabel={cta.label}>
               {cta.label}
               {i === 0 && !cta.external && cta.action !== "open-account" && (
                 <ArrowRight className="h-4 w-4" />

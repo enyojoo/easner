@@ -21,7 +21,7 @@ export const cardsContent: ProductPageContent = {
       "Issue cards on Easner Business or Easner Mobile. Set spend controls, manage cardholders, and see every purchase in the same ledger as your accounts and payouts.",
     visualSlot: "mkt-hero-cards-01",
     altText: "Easner virtual and physical payment cards in the Business dashboard",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "cards_hero" }],
   },
   featuresLayout: "bento",
   features: [
@@ -92,6 +92,6 @@ export const cardsContent: ProductPageContent = {
   ctaBand: {
     headline: "Add cards to your Easner account",
     subhead: "Corporate cards on Easner Business. Personal cards on Easner Mobile.",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true }],
+    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "cards_cta_band" }],
   },
 }

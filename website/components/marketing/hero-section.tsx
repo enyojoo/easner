@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
+import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { MARKETING_HERO_TITLE, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
@@ -18,6 +19,12 @@ export function HeroSection() {
   }, [])
 
   const handleProductsClick = () => {
+    captureCtaClicked({
+      cta_location: "homepage_hero_explore_products",
+      cta_label: homeHero.ctas[1].label,
+      destination: "#products",
+      destination_type: "anchor",
+    })
     window.history.pushState(null, "", PRODUCTS_HASH)
     window.dispatchEvent(new HashChangeEvent("hashchange"))
     scrollToProductsWithPaintRetries()
@@ -49,6 +56,7 @@ export function HeroSection() {
           </div>
           <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">
             <OpenAccountButton
+              ctaLocation="homepage_hero"
               showArrow
               className="h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.22)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
             />

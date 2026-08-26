@@ -1,8 +1,6 @@
-import Link from "next/link"
 import { PublicHeader } from "@/components/layout/public-header"
 import { PublicFooter } from "@/components/layout/public-footer"
-import { Button } from "@/components/ui/button"
-import { CONTACT_PATH } from "@/lib/marketing/constants"
+import { NotFoundActions } from "@/components/marketing/not-found-actions"
 
 export default function NotFound() {
   return (
@@ -17,18 +15,7 @@ export default function NotFound() {
           <p className="mt-4 text-lg leading-8 text-[#5F665F]">
             The page you are looking for does not exist or may have moved.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button asChild className="h-12 rounded-full bg-[#007ACC] px-6 text-white hover:bg-[#0062A3]">
-              <Link href="/">Back to home</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-12 rounded-full border-[#D9D4C7] bg-white px-6 text-[#0F1110] hover:bg-white"
-            >
-              <Link href={CONTACT_PATH}>Contact us</Link>
-            </Button>
-          </div>
+          <NotFoundActions />
         </div>
       </main>
       <PublicFooter />

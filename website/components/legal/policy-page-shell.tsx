@@ -1,13 +1,27 @@
-import Link from "next/link"
+"use client"
+
+import type { ReactNode } from "react"
 import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
+import { MarketingLink } from "@/components/marketing/marketing-link"
+import { trackLinkClick } from "@/lib/marketing/analytics"
 
 export const POLICY_LAST_UPDATED = "August 12, 2026"
 
-export function PolicyLink({ href, children }: { href: string; children: React.ReactNode }) {
+export function PolicyLink({
+  href,
+  children,
+  analyticsLocation,
+}: {
+  href: string
+  children: ReactNode
+  analyticsLocation?: string
+}) {
+  const resolvedLocation = analyticsLocation ?? `legal_link_${href.replace(/^\//, "") || "home"}`
+
   return (
-    <Link href={href} className="font-semibold text-[#007ACC] hover:underline">
+    <MarketingLink href={href} analyticsLocation={resolvedLocation} className="font-semibold text-[#007ACC] hover:underline">
       {children}
-    </Link>
+    </MarketingLink>
   )
 }
 
@@ -22,20 +36,20 @@ export function PolicyPageShell({
 }) {
   return (
     <section className="pb-16 pt-10 md:pb-24 md:pt-14">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <article className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
-            <header className="border-b border-[#E4DED1] px-6 py-8 sm:px-10">
-              <h1 className="font-unbounded text-3xl font-bold leading-tight text-[#0F1110] sm:text-4xl">
-                {title}
-              </h1>
-            </header>
-            <div className="space-y-10 px-6 py-8 sm:px-10 sm:py-10">{children}</div>
-            <footer className="border-t border-[#E4DED1] px-6 py-6 sm:px-10">
-              <p className="text-sm text-[#6F756F]">Last updated: {lastUpdated}</p>
-            </footer>
-          </article>
-        </div>
-      </section>
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <article className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
+          <header className="border-b border-[#E4DED1] px-6 py-8 sm:px-10">
+            <h1 className="font-unbounded text-3xl font-bold leading-tight text-[#0F1110] sm:text-4xl">
+              {title}
+            </h1>
+          </header>
+          <div className="space-y-10 px-6 py-8 sm:px-10 sm:py-10">{children}</div>
+          <footer className="border-t border-[#E4DED1] px-6 py-6 sm:px-10">
+            <p className="text-sm text-[#6F756F]">Last updated: {lastUpdated}</p>
+          </footer>
+        </article>
+      </div>
+    </section>
   )
 }
 
@@ -51,15 +65,28 @@ export function PolicyContactBlock() {
         <br />
         <br />
         <strong className="text-[#0F1110]">Email (legal and compliance):</strong>{" "}
-        <a href="mailto:legal@easner.com" className="font-semibold text-[#007ACC] hover:underline">
+        <MarketingLink
+          href="mailto:legal@easner.com"
+          analyticsLocation="legal_contact_email"
+          ctaLabel="legal@easner.com"
+          className="font-semibold text-[#007ACC] hover:underline"
+        >
           legal@easner.com
-        </a>
+        </MarketingLink>
         <br />
         <strong className="text-[#0F1110]">For Support:</strong>{" "}
-        <SupportChatTrigger variant="link">Live Chat</SupportChatTrigger> or email{" "}
-        <a href="mailto:support@easner.com" className="font-semibold text-[#007ACC] hover:underline">
+        <SupportChatTrigger variant="link" analyticsLocation="legal_support_chat">
+          Live Chat
+        </SupportChatTrigger>{" "}
+        or email{" "}
+        <MarketingLink
+          href="mailto:support@easner.com"
+          analyticsLocation="legal_support_email"
+          ctaLabel="support@easner.com"
+          className="font-semibold text-[#007ACC] hover:underline"
+        >
           support@easner.com
-        </a>
+        </MarketingLink>
         <br />
         <strong className="text-[#0F1110]">Phone:</strong> +1 628 228 6083
         <br />
@@ -115,5 +142,27 @@ export function PolicyTable({ headers, rows }: { headers: string[]; rows: string
         </tbody>
       </table>
     </div>
+  )
+}
+
+export function PolicyExternalLink({
+  href,
+  children,
+  analyticsLocation,
+}: {
+  href: string
+  children: ReactNode
+  analyticsLocation: string
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-semibold text-[#007ACC] hover:underline"
+      onClick={() => trackLinkClick(analyticsLocation, href, href, { external: true })}
+    >
+      {children}
+    </a>
   )
 }

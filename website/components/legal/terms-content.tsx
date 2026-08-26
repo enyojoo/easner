@@ -1,5 +1,5 @@
 import { LightsparkGridTermsContent } from "@/components/legal/lightspark-grid-terms-content"
-import { PolicyContactBlock, PolicyLink, PolicyPageShell } from "@/components/legal/policy-page-shell"
+import { PolicyContactBlock, PolicyExternalLink, PolicyLink, PolicyPageShell } from "@/components/legal/policy-page-shell"
 
 
 export function TermsPolicyPage() {
@@ -325,7 +325,14 @@ export function TermsPolicyPage() {
       <section id="lightspark-money-transmission">
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">20. Lightspark Grid End User Terms</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) through Easner (the Platform), you also agree to the full Lightspark Grid End User Terms below. Easner presents these terms as part of this combined document so that accepting Easner’s Terms includes accepting Lightspark’s End User Terms for those services. The current Lightspark-hosted copy is also available at <a href="https://www.lightspark.com/legal/grid/enduserterms" className="font-semibold text-[#007ACC] hover:underline" target="_blank" rel="noopener noreferrer">https://www.lightspark.com/legal/grid/enduserterms</a>. In the event Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and Easner will update this Section 20 accordingly.
+          When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) through Easner (the Platform), you also agree to the full Lightspark Grid End User Terms below. Easner presents these terms as part of this combined document so that accepting Easner’s Terms includes accepting Lightspark’s End User Terms for those services. The current Lightspark-hosted copy is also available at{" "}
+          <PolicyExternalLink
+            href="https://www.lightspark.com/legal/grid/enduserterms"
+            analyticsLocation="legal_lightspark_terms"
+          >
+            https://www.lightspark.com/legal/grid/enduserterms
+          </PolicyExternalLink>
+          . In the event Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and Easner will update this Section 20 accordingly.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           <strong>Source:</strong> Lightspark Grid End User Terms (as published by Lightspark). Reproduced below in full for combined acceptance.

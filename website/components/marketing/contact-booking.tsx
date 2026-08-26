@@ -1,16 +1,21 @@
 "use client"
 
 import { useEffect } from "react"
-import Cal, { getCalApi } from "@calcom/embed-react"
+import Cal, { getCalApi, type EmbedEvent } from "@calcom/embed-react"
 import { CAL_LINK, CAL_NAMESPACE } from "@/lib/marketing/constants"
 import { contactBooking } from "@/lib/marketing/content/contact"
+import { captureBookingCompleted } from "@/lib/marketing/analytics"
 import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 export function ContactBooking() {
   useEffect(() => {
-    ;(async () => {
+    let cancelled = false
+
+    const setupCal = async () => {
       const cal = await getCalApi({ namespace: CAL_NAMESPACE })
+      if (cancelled) return
+
       cal("ui", {
         theme: "light",
         cssVarsPerTheme: {
@@ -20,7 +25,30 @@ export function ContactBooking() {
         hideEventTypeDetails: true,
         layout: "month_view",
       })
-    })()
+
+      const onBookingSuccess = (event: EmbedEvent<"bookingSuccessfulV2">) => {
+        const data = event.detail.data
+        captureBookingCompleted({
+          uid: data.uid,
+          title: data.title,
+          startTime: data.startTime,
+          eventTypeId: data.eventTypeId,
+        })
+      }
+
+      cal("on", { action: "bookingSuccessfulV2", callback: onBookingSuccess })
+
+      return () => {
+        cal("off", { action: "bookingSuccessfulV2", callback: onBookingSuccess })
+      }
+    }
+
+    const cleanupPromise = setupCal()
+
+    return () => {
+      cancelled = true
+      void cleanupPromise.then((cleanup) => cleanup?.())
+    }
   }, [])
 
   return (

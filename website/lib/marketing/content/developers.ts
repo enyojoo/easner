@@ -23,8 +23,8 @@ export const developersContent: ProductPageContent = {
     visualSlot: "mkt-hero-apis-01",
     altText: "Developer reviewing Easner API documentation on dual monitors",
     ctas: [
-      { label: "Talk to our team", href: CONTACT_PATH },
-      { label: "Agency Model", href: "/partners" },
+      { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
+      { label: "Agency Model", href: "/partners", analyticsLocation: "developers_hero_partners" },
     ],
   },
   integrationStepsHeadline: "From first API call to live money movement",
@@ -131,6 +131,6 @@ export const developersContent: ProductPageContent = {
   ctaBand: {
     headline: "Don't start from zero. Build with us.",
     subhead: "Talk to Easner about the Developer Model and embedded global money movement.",
-    ctas: [{ label: "Talk to our team", href: CONTACT_PATH }],
+    ctas: [{ label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_cta_band" }],
   },
 }
