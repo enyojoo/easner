@@ -3,31 +3,35 @@
 import type { ComponentProps, MouseEvent, ReactNode } from "react"
 import Link from "next/link"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { buildBusinessSignupUrl } from "@/lib/marketing/business-signup-url"
 import { registerOutboundAttribution } from "@/lib/marketing/outbound-attribution"
+import { buildPersonalAppUrl } from "@/lib/marketing/personal-app-url"
+import { posthog } from "@/lib/posthog"
 
-interface BusinessSignupLinkProps extends Omit<ComponentProps<typeof Link>, "href"> {
+interface PersonalAppLinkProps extends Omit<ComponentProps<typeof Link>, "href"> {
   campaign: string
   ctaLabel?: string
+  href?: string
   children: ReactNode
 }
 
-export function BusinessSignupLink({
+export function PersonalAppLink({
   campaign,
   ctaLabel,
+  href: hrefProp,
   children,
   onClick,
   ...props
-}: BusinessSignupLinkProps) {
-  const href = buildBusinessSignupUrl(campaign)
+}: PersonalAppLinkProps) {
+  const href = buildPersonalAppUrl(hrefProp)
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    registerOutboundAttribution(campaign, "business")
+    registerOutboundAttribution(campaign, "personal")
+    posthog.capture("web_app_click", { surface: campaign })
     captureCtaClicked({
       cta_location: campaign,
       cta_label: ctaLabel ?? (typeof children === "string" ? children : undefined),
-      destination: "business.easner.com/auth/signup",
-      destination_type: "business_signup",
+      destination: "app.easner.com",
+      destination_type: "personal_app",
     })
     onClick?.(event)
   }

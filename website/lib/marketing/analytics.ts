@@ -1,5 +1,6 @@
 import { posthog } from "@/lib/posthog"
-import { appendPostHogDistinctId, isBusinessEasnerUrl } from "./business-signup-url"
+import { isBusinessEasnerUrl } from "./business-signup-url"
+import { isPersonalEasnerUrl } from "./personal-app-url"
 
 export type CtaDestinationType =
   | "internal"
@@ -54,7 +55,7 @@ export function inferDestinationType(
   if (href.startsWith("mailto:")) return "mailto"
   if (href.startsWith("#")) return "anchor"
   if (isBusinessEasnerUrl(href)) return "business_signup"
-  if (href.includes("app.easner.com")) return "personal_app"
+  if (isPersonalEasnerUrl(href)) return "personal_app"
   if (href.includes("/app") || href.includes("apps.apple.com") || href.includes("play.google.com")) {
     return "download"
   }
@@ -196,24 +197,4 @@ function slugify(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_|_$/g, "")
-}
-
-export function tagLinkWithPhId(anchor: HTMLAnchorElement) {
-  const distinctId = posthog.get_distinct_id?.()
-  if (!distinctId) return
-  anchor.href = appendPostHogDistinctId(anchor.href, distinctId)
-}
-
-export function setupBusinessSignupLinkTagging() {
-  if (typeof document === "undefined") return () => {}
-
-  const onClick = (event: MouseEvent) => {
-    const anchor = (event.target as Element | null)?.closest?.(
-      'a[href*="business.easner.com"]'
-    ) as HTMLAnchorElement | null
-    if (anchor) tagLinkWithPhId(anchor)
-  }
-
-  document.addEventListener("click", onClick, true)
-  return () => document.removeEventListener("click", onClick, true)
 }

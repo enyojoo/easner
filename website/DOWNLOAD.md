@@ -20,7 +20,7 @@ One URL for app installs: **`https://www.easner.com/app`**
 | `/app` | Link-preview bots | 200 HTML + Open Graph |
 | `/app?platform=ios\|android` | Any | 302 → store/APK (email fallbacks) |
 
-Routing lives in [`middleware.ts`](middleware.ts) and [`app/(marketing)/app/page.tsx`](app/(marketing)/app/page.tsx).
+Routing lives in [`proxy.ts`](proxy.ts) and [`app/(marketing)/app/page.tsx`](app/(marketing)/app/page.tsx).
 
 ## Vercel (website project)
 

@@ -11,30 +11,12 @@ export function isBusinessEasnerUrl(href: string): boolean {
   }
 }
 
-export function buildBusinessSignupUrl(
-  campaign: string,
-  options?: { source?: string; medium?: string }
-): string {
-  const url = new URL(BUSINESS_SIGNUP_BASE)
-  url.searchParams.set("utm_source", options?.source ?? "easner_website")
-  url.searchParams.set("utm_medium", options?.medium ?? "referral")
-  url.searchParams.set("utm_campaign", campaign)
-  return url.toString()
+/** Clean signup URL — attribution is passed via PostHog + `.easner.com` cookie, not query params. */
+export function buildBusinessSignupUrl(_campaign?: string): string {
+  return BUSINESS_SIGNUP_BASE
 }
 
-export function appendPostHogDistinctId(href: string, distinctId?: string | null): string {
-  if (!distinctId) return href
-
-  const url = new URL(href)
-  url.searchParams.set("__ph_id", distinctId)
-  return url.toString()
-}
-
-export function resolveBusinessSignupHref(
-  href: string,
-  campaign?: string,
-  options?: { source?: string; medium?: string }
-): string {
-  if (!campaign || !isBusinessEasnerUrl(href)) return href
-  return buildBusinessSignupUrl(campaign, options)
+export function resolveBusinessSignupHref(href: string, _campaign?: string): string {
+  if (!isBusinessEasnerUrl(href)) return href
+  return buildBusinessSignupUrl()
 }

@@ -7,7 +7,8 @@ import { X } from "lucide-react"
 import { BrandLogo } from "@easner/shared"
 import { DownloadEmailForm } from "./download-email-form"
 import { DownloadQr } from "./download-qr"
-import { APP_STORE_URL, ANDROID_APK_URL, PERSONAL_WEB_APP_URL } from "@/lib/marketing/constants"
+import { PersonalAppLink } from "./personal-app-link"
+import { APP_STORE_URL, ANDROID_APK_URL } from "@/lib/marketing/constants"
 import { APP_LINK_URL, isMobilePlatform, type DownloadPlatform } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
@@ -175,23 +176,13 @@ export function DownloadAppDialog({
           {showQr ? (
             <p className="mt-5 text-sm leading-6 text-[#6F756F]">
               Prefer not to install?{" "}
-              <Link
-                href={PERSONAL_WEB_APP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  posthog.capture("web_app_click", { surface: `${surface}-dialog` })
-                  captureCtaClicked({
-                    cta_location: `${surface}-dialog_web_app`,
-                    cta_label: "Use the web app",
-                    destination: PERSONAL_WEB_APP_URL,
-                    destination_type: "personal_app",
-                  })
-                }}
+              <PersonalAppLink
+                campaign={`${surface}-dialog_web_app`}
+                ctaLabel="Use the web app"
                 className="font-semibold text-[#007ACC] hover:underline"
               >
                 Use the web app
-              </Link>
+              </PersonalAppLink>
             </p>
           ) : null}
         </div>

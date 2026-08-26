@@ -1,5 +1,5 @@
 /**
- * Fire-and-forget PostHog capture from middleware (Edge-compatible).
+ * Fire-and-forget PostHog capture from proxy (Edge-compatible).
  * Never include PII (email addresses).
  */
 export async function captureDownloadRedirect(properties: {
@@ -25,7 +25,7 @@ export async function captureDownloadRedirect(properties: {
         properties: {
           ...properties,
           distinct_id: `anon_${properties.entry_host}`,
-          $lib: "easner-website-middleware",
+          $lib: "easner-website-proxy",
         },
         timestamp: new Date().toISOString(),
       }),

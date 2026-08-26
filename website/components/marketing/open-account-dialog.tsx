@@ -124,7 +124,7 @@ interface OpenAccountButtonProps {
   className?: string
   showArrow?: boolean
   onPress?: () => void
-  /** UTM campaign / analytics location for the business signup link in the dialog. */
+  /** Analytics location for outbound attribution (PostHog + cookie, not URL params). */
   ctaLocation?: string
   /** Parent-controlled dialog; render `<OpenAccountDialog />` separately. */
   dialogOpen?: boolean

@@ -7,7 +7,7 @@ export interface Cta {
   external?: boolean
   store?: "download" | "app-store" | "google-play"
   action?: "open-account"
-  /** PostHog cta_location; also used as utm_campaign on business signup links. */
+  /** PostHog cta_location; registers outbound attribution for app/business destinations. */
   analyticsLocation?: string
 }
 

@@ -1,10 +1,7 @@
 "use client"
 
-import Link from "next/link"
 import { Monitor } from "lucide-react"
-import { PERSONAL_WEB_APP_URL } from "@/lib/marketing/constants"
-import { posthog } from "@/lib/posthog"
-import { captureCtaClicked } from "@/lib/marketing/analytics"
+import { PersonalAppLink } from "./personal-app-link"
 import { cn } from "@/lib/utils"
 
 interface UseWebAppButtonProps {
@@ -14,22 +11,10 @@ interface UseWebAppButtonProps {
 }
 
 export function UseWebAppButton({ className, surface = "cta", compact = false }: UseWebAppButtonProps) {
-  function handleClick() {
-    posthog.capture("web_app_click", { surface })
-    captureCtaClicked({
-      cta_location: surface,
-      cta_label: "Web App",
-      destination: PERSONAL_WEB_APP_URL,
-      destination_type: "personal_app",
-    })
-  }
-
   return (
-    <Link
-      href={PERSONAL_WEB_APP_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={handleClick}
+    <PersonalAppLink
+      campaign={surface}
+      ctaLabel="Web App"
       className={cn(
         "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-[#E9E4D8] bg-white font-semibold text-[#0F1110] transition-colors hover:border-[#007ACC]/30",
         compact
@@ -44,6 +29,6 @@ export function UseWebAppButton({ className, surface = "cta", compact = false }:
         aria-hidden
       />
       <span className="whitespace-nowrap">Web App</span>
-    </Link>
+    </PersonalAppLink>
   )
 }

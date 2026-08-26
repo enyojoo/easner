@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { resolveAppPathResponse } from "@/lib/short-link-redirect"
 
 /** Smart download routing for /app. */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const appPathResponse = resolveAppPathResponse(request)
   if (appPathResponse) return appPathResponse
 
