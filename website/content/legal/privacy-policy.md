@@ -144,13 +144,15 @@ We use technical and organizational measures – including encryption in transit
 
 ## 7. Retention
 
-We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Partners (including Lightspark, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes.
+We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Partners (including Lightspark, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our [Delete Account](/delete-account) page.
 
 ---
 
 ## 8. Your Rights
 
 Depending on where you live, you may have rights to access, correct, delete, restrict, or port your information, or object to certain processing. Financial regulations may limit some requests.
+
+**Easner Personal Banking** users can close their account in the mobile app. See our [Delete Account](/delete-account) page for in-app steps, the 7-day grace period, what data we delete or retain, and how to request deletion if you cannot access the app. Business account closure may require additional steps.
 
 Contact **legal@easner.com**, **support@easner.com**, or in-app live chat. If a partner holds verification or payment data, contact us first and we will coordinate where appropriate.
 

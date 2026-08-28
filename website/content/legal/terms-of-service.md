@@ -213,7 +213,11 @@ REGULATED SERVICES ARE PERFORMED BY THIRD-PARTY PARTNERS. EASNER IS NOT LIABLE F
 
 ## 15. Termination
 
-We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time. Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
+We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time.
+
+**Easner Personal Banking** users can close their account in the mobile app as described on our [Delete Account](/delete-account) page, including a 7-day grace period during which signing in cancels the pending closure. If you cannot access the app, email **support@easner.com** or **legal@easner.com**. Business account closure may require additional steps (for example settling balances, payroll, or open invoices).
+
+Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
 
 ---
 

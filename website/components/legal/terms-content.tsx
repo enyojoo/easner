@@ -265,8 +265,14 @@ export function TermsPolicyPage() {
 
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">15. Termination</h2>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time.
+        </p>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          <strong>Easner Personal Banking</strong> users can close their account in the mobile app as described on our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page, including a 7-day grace period during which signing in cancels the pending closure. If you cannot access the app, email <strong>support@easner.com</strong> or <strong>legal@easner.com</strong>. Business account closure may require additional steps (for example settling balances, payroll, or open invoices).
+        </p>
         <p className="text-[#5F665F] leading-relaxed">
-          We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time. Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
+          Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
         </p>
       </section>
 

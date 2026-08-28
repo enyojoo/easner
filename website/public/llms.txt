@@ -42,6 +42,7 @@ Easner connects US, EU, and UK rails to supported local markets across Africa, L
 
 - [Terms of Service](https://www.easner.com/terms): Terms for Easner Mobile, Easner Business, Easner for Partners, and related services
 - [Privacy Policy](https://www.easner.com/privacy): How Easner collects, uses, shares, and protects information
+- [Delete Account](https://www.easner.com/delete-account): How to delete an Easner Personal Banking account and what data is deleted or retained
 - [KYC/KYB and AML Policy](https://www.easner.com/compliance): Verification, screening, and transaction controls
 
 ## Optional

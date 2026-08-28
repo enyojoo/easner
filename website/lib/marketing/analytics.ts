@@ -27,6 +27,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/app": "download",
   "/compliance": "compliance",
   "/privacy": "privacy",
+  "/delete-account": "delete_account",
   "/terms": "terms",
   "/access": "access",
   "/pricing": "pricing",

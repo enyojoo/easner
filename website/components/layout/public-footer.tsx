@@ -56,10 +56,10 @@ export function PublicFooter() {
               <MarketingLink
                 href="/terms"
                 analyticsLocation="footer_terms"
-                ctaLabel="Terms of Service"
+                ctaLabel="Terms"
                 className="text-xs sm:text-sm text-gray-500 hover:text-easner-primary transition-colors"
               >
-                Terms of Service
+                Terms
               </MarketingLink>
               <MarketingLink
                 href="/privacy"

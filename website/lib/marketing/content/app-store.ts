@@ -55,7 +55,7 @@ export const APP_STORE_PERSONAL_IMPORTANT_DISCLAIMER =
   "Easner Group, Inc. is a financial technology company, not a bank. Banking and related services are provided by regulated partners. Easner is not FDIC-insured and does not hold customer deposits. Stablecoin and wallet features may operate on public blockchains. Digital assets are not legal tender and are not FDIC-insured or SIPC-protected. Blockchain transactions may be public and irreversible. Card products, when available, are subject to issuer approval. Fees and FX may apply. Processing times vary by corridor and review. Some features depend on verification status, jurisdiction, and product availability."
 
 export const APP_STORE_PERSONAL_LEGAL_FOOTER =
-  "Legals: easner.com/terms · easner.com/privacy · easner.com/compliance"
+  "Legals: easner.com/terms · easner.com/privacy · easner.com/delete-account · easner.com/compliance"
 
 export const APP_STORE_PERSONAL_SUPPORT_FOOTER = `Questions? easner.com/contact or ${SUPPORT_EMAIL}`
 

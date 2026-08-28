@@ -18,6 +18,7 @@ const POLICY_LINKS = {
   "Privacy Policy": "/privacy",
   "KYC/KYB and AML Policy": "/compliance",
   "Terms of Service": "/terms",
+  "Delete Account": "/delete-account",
 }
 
 function jsxText(text) {
@@ -30,7 +31,7 @@ function jsxText(text) {
 
 function tokenizeInline(text) {
   const pattern =
-    /(\*\*(?:Privacy Policy|KYC\/KYB and AML Policy|Terms of Service)\*\*|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)|legal@easner\.com|support@easner\.com)/g
+    /(\*\*(?:Privacy Policy|KYC\/KYB and AML Policy|Terms of Service|Delete Account)\*\*|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)|legal@easner\.com|support@easner\.com)/g
   const tokens = []
   let last = 0
   let match
@@ -46,6 +47,8 @@ function tokenizeInline(text) {
       tokens.push({ type: "policy", label: "KYC/KYB and AML Policy", href: "/compliance" })
     } else if (raw === "**Terms of Service**") {
       tokens.push({ type: "policy", label: "Terms of Service", href: "/terms" })
+    } else if (raw === "**Delete Account**") {
+      tokens.push({ type: "policy", label: "Delete Account", href: "/delete-account" })
     } else if (raw.startsWith("**")) {
       tokens.push({ type: "bold", value: raw.slice(2, -2) })
     } else if (raw.startsWith("[")) {
