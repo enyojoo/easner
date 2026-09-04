@@ -1,6 +1,5 @@
 import type { ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
-import { APP_STORE_PERSONAL_SUMMARY } from "./app-store"
 
 const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
@@ -9,7 +8,8 @@ const downloadCta = [
 export const personalContent: ProductPageContent = {
   metadata: {
     title: "Personal Banking | Global Money App",
-    description: APP_STORE_PERSONAL_SUMMARY,
+    description:
+      "Mobile banking for global money – send, receive, and manage funds in global and local currencies. Bank transfers and stablecoin.",
     keywords: [
       "global mobile banking",
       "multi-currency personal account",

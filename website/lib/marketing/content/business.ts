@@ -5,7 +5,7 @@ export const businessContent: ProductPageContent = {
   metadata: {
     title: "Business Banking | Multi-Currency & Payouts",
     description:
-      "Cross-border business banking on one dashboard – multi-currency accounts, payouts, invoicing, and team access. Operate internationally or pay teams in supported local markets, with KYC/KYB built in.",
+      "Cross-border business banking on one dashboard – multi-currency accounts, payouts, invoicing, and team access, with KYC/KYB built in.",
     keywords: [
       "cross-border B2B payouts",
       "pay international suppliers",
@@ -47,9 +47,9 @@ export const businessContent: ProductPageContent = {
     {
       title: "Collections",
       description:
-        "Invoice customers, collect in person with Terminal, and offer QR Pay – all connected to your business dashboard.",
+        "Invoice customers, embed Checkout on your site, share a Payment Link, collect in person with Terminal, or offer QR Pay – all connected to your business dashboard.",
       visualSlot: "mkt-ui-business-collections",
-      altText: "Easner Business invoicing, Terminal, and QR Pay collections",
+      altText: "Easner Business invoicing, Checkout, Payment Links, Terminal, and QR Pay collections",
     },
     {
       title: "Team and reporting",
@@ -84,8 +84,8 @@ export const businessContent: ProductPageContent = {
     },
     {
       title: "Cross-border payroll",
-      description:
-        "Pay contractors and employees in supported corridors with clear fees, status tracking, and reconciliation in one ledger.",
+      description: "Run payroll for contractors and employees from the same account – approvals, pay stubs, and reconciliation.",
+      link: "/payroll",
     },
     {
       title: "Agencies and consultancies",
@@ -96,6 +96,16 @@ export const businessContent: ProductPageContent = {
       title: "Software and SaaS",
       description:
         "Hold USD or EUR balances, pay global vendors, and collect from international customers where Easner is enabled.",
+    },
+    {
+      title: "Selling on your own website",
+      description: "Embed Checkout for one-time, subscription, and custom payments, with Easner as the merchant on record.",
+      link: "/checkout",
+    },
+    {
+      title: "No website yet",
+      description: "Share a Payment Link and get paid today – no website or code needed.",
+      link: "/payment-links",
     },
   ],
   ctaBand: {

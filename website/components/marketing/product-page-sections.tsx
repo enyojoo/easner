@@ -52,6 +52,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
       )}
       {content.integrationSteps && content.integrationSteps.length > 0 && (
         <IntegrationSteps
+          id="integration"
           headline={content.integrationStepsHeadline}
           steps={content.integrationSteps}
           footnote={content.integrationStepsFootnote}
@@ -59,6 +60,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
       )}
       {content.features && content.features.length > 0 && content.featuresLayout === "bento" && (
         <FeatureBento
+          id="features"
           features={content.features}
           headline={content.featuresHeadline}
           subhead={content.featuresSubhead}

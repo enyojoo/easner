@@ -48,6 +48,9 @@ export type MarketingVisualKind =
   | "compliance"
   | "persona"
   | "partners"
+  | "checkout"
+  | "payroll"
+  | "paylinks"
   | "icon"
 
 const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
@@ -117,6 +120,23 @@ const VISUAL_KIND_BY_ASSET: Record<string, MarketingVisualKind> = {
   "mkt-persona-otc": "persona",
   "mkt-hero-developers-01": "api",
   "mkt-thumb-partners": "icon",
+  "mkt-thumb-checkout": "icon",
+  "mkt-hero-checkout-01": "checkout",
+  "mkt-ui-checkout-hosted": "checkout",
+  "mkt-ui-checkout-methods": "checkout",
+  "mkt-ui-checkout-ledger": "checkout",
+  "mkt-thumb-paylinks": "icon",
+  "mkt-hero-paylinks-01": "paylinks",
+  "mkt-ui-paylinks-create": "paylinks",
+  "mkt-ui-paylinks-share": "paylinks",
+  "mkt-ui-paylinks-stats": "paylinks",
+  "mkt-ui-paylinks-ledger": "paylinks",
+  "mkt-thumb-payroll": "icon",
+  "mkt-hero-payroll-01": "payroll",
+  "mkt-ui-payroll-approvals": "payroll",
+  "mkt-ui-payroll-stubs": "payroll",
+  "mkt-ui-payroll-mobile": "payroll",
+  "mkt-ui-payroll-reconcile": "payroll",
 }
 
 const PERSONAL_MOBILE_SLOTS = new Set([

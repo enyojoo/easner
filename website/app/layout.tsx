@@ -25,11 +25,7 @@ export const metadata: Metadata = {
   formatDetection: { email: false, address: false, telephone: false },
   applicationName: "Easner",
   metadataBase: new URL("https://www.easner.com"),
-  icons: {
-    icon: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
-    shortcut: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
-    apple: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
-  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
     description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,

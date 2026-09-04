@@ -32,7 +32,7 @@ export function TierLadder({ variant }: TierLadderProps) {
                 <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[#007ACC]">
                   Tier {index + 1}
                 </span>
-                <CardTitle className="text-lg font-semibold text-[#0F1110]">{tier.title}</CardTitle>
+                <CardTitle className="text-base font-semibold text-[#0F1110] sm:text-lg">{tier.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm leading-7 text-[#5F665F]">{tier.description}</p>

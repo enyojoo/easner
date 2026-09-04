@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { downloadHero } from "@/lib/marketing/content/download"
-import { MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 export function DownloadHero() {
@@ -17,7 +17,7 @@ export function DownloadHero() {
         <h1 className={cn("text-balance font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
           {downloadHero.headline}
         </h1>
-        <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">
+        <p className={cn("mt-4 text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
           {downloadHero.subhead}
         </p>
       </motion.div>

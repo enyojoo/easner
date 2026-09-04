@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { MarketingLink } from "@/components/marketing/marketing-link"
 import { CONTACT_EMAIL } from "@/lib/marketing/constants"
 import { contactBooking, contactHero } from "@/lib/marketing/content/contact"
-import { MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 export function ContactHero() {
@@ -19,7 +19,7 @@ export function ContactHero() {
         <h1 className={cn("text-balance font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
           {contactHero.headline}
         </h1>
-        <p className="mt-4 text-pretty text-[0.9375rem] leading-7 text-[#5F665F] sm:mt-5 sm:text-lg sm:leading-8">
+        <p className={cn("mt-4 text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
           {contactHero.subhead}
         </p>
         <div className="mt-4 flex flex-col gap-3 text-center text-sm leading-6 text-[#6F756F] sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-2 sm:gap-y-1">

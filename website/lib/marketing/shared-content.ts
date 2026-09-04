@@ -86,6 +86,20 @@ export const PRODUCT_CARDS: CardItem[] = [
     icon: "mkt-thumb-business",
   },
   {
+    title: "Checkout",
+    description:
+      "Embed checkout on your own website – one-time, subscription, and custom payments, with Easner as the merchant on record.",
+    link: "/checkout",
+    icon: "mkt-thumb-checkout",
+  },
+  {
+    title: "Payment Links",
+    description:
+      "Get paid with a shareable link – no website or code needed, one-time or recurring.",
+    link: "/payment-links",
+    icon: "mkt-thumb-paylinks",
+  },
+  {
     title: "Whitelabel programs",
     description:
       "Launch branded cross-border products with compliance, corridors, and operational support.",
@@ -108,6 +122,13 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
       "Invoice globally and get paid by bank or stablecoin – with status and reconciliation in one dashboard.",
     link: "/invoicing",
     icon: "mkt-thumb-invoicing",
+  },
+  {
+    title: "Payroll",
+    description:
+      "Pay contractors and employees in supported corridors – approvals, pay stubs, and reconciliation in one ledger.",
+    link: "/payroll",
+    icon: "mkt-thumb-payroll",
   },
   {
     title: "Cards",

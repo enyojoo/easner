@@ -7,7 +7,7 @@ import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { MARKETING_HERO_TITLE, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_HERO_TITLE, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
 
@@ -50,7 +50,7 @@ export function HeroSection() {
                 </span>
               ))}
             </h1>
-            <p className="mx-auto max-w-2xl text-sm leading-6 text-[#5F665F] sm:text-base sm:leading-7 md:text-lg">
+            <p className={cn("mx-auto max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT)}>
               {homeHero.subhead}
             </p>
           </div>

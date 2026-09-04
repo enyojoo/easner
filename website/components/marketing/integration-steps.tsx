@@ -9,11 +9,12 @@ interface IntegrationStepsProps {
   steps: IntegrationStep[]
   footnote?: string
   className?: string
+  id?: string
 }
 
-export function IntegrationSteps({ headline, steps, footnote, className }: IntegrationStepsProps) {
+export function IntegrationSteps({ headline, steps, footnote, className, id }: IntegrationStepsProps) {
   return (
-    <section className={cn("bg-white pb-16 pt-8 md:pb-24 md:pt-12", className)}>
+    <section id={id} className={cn("scroll-mt-24 bg-white pb-16 pt-8 md:pb-24 md:pt-12", className)}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {headline && (
           <div className="mx-auto mb-10 max-w-3xl text-center md:mb-12 lg:max-w-none lg:text-left">
@@ -31,7 +32,15 @@ export function IntegrationSteps({ headline, steps, footnote, className }: Integ
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#007ACC] text-sm font-bold text-white">
                 {index + 1}
               </div>
-              <h3 className={cn("mt-4 font-unbounded font-bold leading-snug text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
+              <h3
+                className={cn(
+                  "mt-4 font-unbounded font-bold leading-snug text-[#0F1110]",
+                  MARKETING_SUBSECTION_TITLE,
+                  MARKETING_HEADING_CAPS,
+                  // Narrow 4-column layout at lg+ — cap growth below the general subsection scale to avoid clipping single-word titles.
+                  "lg:text-2xl xl:text-2xl"
+                )}
+              >
                 {step.title}
               </h3>
               <p className="mt-3 flex-1 text-sm leading-7 text-[#5F665F]">{step.description}</p>

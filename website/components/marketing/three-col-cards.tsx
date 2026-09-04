@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VisualSlot } from "./visual-slot"
 import { scrollToProductsWithPaintRetries } from "./product-anchor"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import type { CardItem } from "@/lib/marketing/types"
 
 interface ThreeColCardsProps {
@@ -75,7 +75,7 @@ export function ThreeColCards({
             >
               {headline}
             </h2>
-            {subhead && <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{subhead}</p>}
+            {subhead && <p className={cn("mx-auto mt-4 max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT)}>{subhead}</p>}
           </div>
         )}
         <div className={gridClass}>
@@ -88,7 +88,7 @@ export function ThreeColCards({
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold leading-snug text-[#0F1110]">{item.title}</CardTitle>
+                  <CardTitle className="text-base font-semibold leading-snug text-[#0F1110] sm:text-lg">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-7 text-[#5F665F]">{item.description}</p>

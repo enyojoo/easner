@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Linkedin, X } from "lucide-react"
 import type { Founder } from "@/lib/marketing/types"
 import { captureCtaClicked, trackLinkClick } from "@/lib/marketing/analytics"
-import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 interface FoundersSectionProps {
@@ -215,7 +215,7 @@ export function FoundersSection({ headline, subhead, founders }: FoundersSection
           <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
             {headline}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">
+          <p className={cn("mx-auto mt-4 max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT)}>
             {subhead}
           </p>
         </div>

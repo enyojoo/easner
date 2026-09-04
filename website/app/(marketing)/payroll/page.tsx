@@ -1,31 +1,31 @@
 import Script from "next/script"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
-import { businessContent } from "@/lib/marketing/content/business"
+import { payrollContent } from "@/lib/marketing/content/payroll"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
-export const metadata = marketingMetadata({ metadata: businessContent.metadata, path: "/business" })
+export const metadata = marketingMetadata({ metadata: payrollContent.metadata, path: "/payroll" })
 
-export default function BusinessPage() {
+export default function PayrollPage() {
   return (
     <>
       <Script
-        id="easner-business-jsonld"
+        id="easner-payroll-jsonld"
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({
-            name: "Easner Business Banking",
-            description: businessContent.metadata.description,
-            path: "/business",
-            serviceType: "Cross-border business banking",
+            name: "Easner Payroll",
+            description: payrollContent.metadata.description,
+            path: "/payroll",
+            serviceType: "Cross-border payroll for contractors and employees",
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            { name: "Business Banking", path: "/business" },
+            { name: "Payroll", path: "/payroll" },
           ]),
         ])}
       />
-      <ProductPageSections content={businessContent} />
+      <ProductPageSections content={payrollContent} />
     </>
   )
 }

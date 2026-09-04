@@ -40,6 +40,48 @@ export function websiteJsonLd() {
   }
 }
 
+interface FinancialServiceInput {
+  name: string
+  description: string
+  path: string
+  serviceType: string
+}
+
+export function financialServiceJsonLd({ name, description, path, serviceType }: FinancialServiceInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FinancialService",
+    name,
+    description,
+    url: `${SITE_URL}${path}`,
+    serviceType,
+    areaServed: ["US", "EU", "GB"],
+    provider: {
+      "@type": "Organization",
+      name: "Easner",
+      url: SITE_URL,
+    },
+  }
+}
+
+interface BreadcrumbSegment {
+  name: string
+  path: string
+}
+
+export function breadcrumbJsonLd(segments: BreadcrumbSegment[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: segments.map((segment, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: segment.name,
+      item: `${SITE_URL}${segment.path}`,
+    })),
+  }
+}
+
 export function faqPageJsonLd(items: FaqItem[]) {
   return {
     "@context": "https://schema.org",

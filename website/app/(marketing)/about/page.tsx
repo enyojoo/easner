@@ -1,3 +1,4 @@
+import Script from "next/script"
 import { AboutHero } from "@/components/marketing/about-hero"
 import { AboutMissionSection } from "@/components/marketing/about-mission-section"
 import { AboutTrustSection } from "@/components/marketing/about-trust-section"
@@ -14,12 +15,23 @@ import {
   aboutPillarsHeadline,
 } from "@/lib/marketing/content/about"
 import { marketingMetadata } from "@/lib/marketing/metadata"
+import { breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: aboutMetadata, path: "/about" })
 
 export default function AboutPage() {
   return (
     <>
+      <Script
+        id="easner-about-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "About", path: "/about" },
+          ])
+        )}
+      />
       <AboutHero />
       <FoundersSection
         headline={aboutFoundersHeadline}
@@ -27,7 +39,12 @@ export default function AboutPage() {
         founders={aboutFounders}
       />
       <AboutMissionSection />
-      <ThreeColCards headline={aboutPillarsHeadline} items={aboutPillars} columns={2} />
+      <ThreeColCards
+        headline={aboutPillarsHeadline}
+        headlineClassName="lg:whitespace-nowrap lg:text-2xl xl:text-3xl"
+        items={aboutPillars}
+        columns={2}
+      />
       <AboutTrustSection />
       <CtaBand content={aboutCtaBand} />
     </>

@@ -5,7 +5,7 @@ export const partnersContent: ProductPageContent = {
   metadata: {
     title: "Partners | Branded Cross-Border Programs",
     description:
-      "Launch branded cross-border products on Easner for Partners – global money movement infrastructure with compliance, local payout connectivity, and operational support. Built for remittance operators, OTC partners, platforms, and faith-based networks.",
+      "Launch branded cross-border products on Easner for Partners – compliance, local payout connectivity, and operational support built in.",
     keywords: [
       "white-label remittance",
       "OTC money transfer",

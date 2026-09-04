@@ -3,7 +3,7 @@
 import { ArrowRight } from "lucide-react"
 import { MarketingLink } from "@/components/marketing/marketing-link"
 import { aboutTrust } from "@/lib/marketing/content/about"
-import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 export function AboutTrustSection() {
@@ -14,7 +14,7 @@ export function AboutTrustSection() {
           <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
             {aboutTrust.headline}
           </h2>
-          <p className="mt-5 text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{aboutTrust.body}</p>
+          <p className={cn("mt-5 text-[#5F665F]", MARKETING_BODY_TEXT)}>{aboutTrust.body}</p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {aboutTrust.bullets.map((bullet) => (
               <li

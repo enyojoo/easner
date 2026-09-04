@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_BODY_TEXT,
   MARKETING_HEADING_CAPS,
   MARKETING_SUBSECTION_TITLE,
   SPLIT_COPY_CARD,
@@ -21,7 +22,7 @@ export function CorridorStory() {
             <h3 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
               {corridorContent.headline}
             </h3>
-            <p className="mt-4 flex-1 text-lg leading-8 text-[#5F665F]">{corridorContent.body}</p>
+            <p className={cn("mt-4 flex-1 text-[#5F665F]", MARKETING_BODY_TEXT)}>{corridorContent.body}</p>
             {corridorContent.ctas && corridorContent.ctas.length > 0 && (
               <div className="mt-8 min-h-[3.25rem] shrink-0">
                 <OpenAccountButton

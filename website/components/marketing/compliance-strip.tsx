@@ -2,7 +2,7 @@
 
 import { ShieldCheck } from "lucide-react"
 import { COMPLIANCE_STRIP } from "@/lib/marketing/shared-content"
-import { MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 interface ComplianceStripProps {
@@ -18,7 +18,7 @@ export function ComplianceStrip({ note }: ComplianceStripProps) {
             <h2 className={cn("font-unbounded font-bold text-white", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
               {COMPLIANCE_STRIP.headline}
             </h2>
-            <p className="mt-4 text-lg leading-8 text-white/68">{COMPLIANCE_STRIP.subhead}</p>
+            <p className={cn("mt-4 text-white/68", MARKETING_BODY_TEXT)}>{COMPLIANCE_STRIP.subhead}</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {COMPLIANCE_STRIP.bullets.map((bullet) => (
                 <li key={bullet} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.07] p-4 text-sm leading-6 text-white/78">

@@ -27,7 +27,7 @@ export function FaqSection({ items }: FaqSectionProps) {
             <div key={item.question} className="overflow-hidden rounded-2xl border border-[#E4DED1] bg-[#F8F6F0]">
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-6 py-5 text-left transition-colors hover:bg-white/60"
+                className="flex w-full items-center justify-between px-4 py-4 text-left transition-colors hover:bg-white/60 sm:px-6 sm:py-5"
                 onClick={() => {
                   const nextIndex = openIndex === index ? null : index
                   if (nextIndex !== null) {
@@ -37,7 +37,12 @@ export function FaqSection({ items }: FaqSectionProps) {
                 }}
                 aria-expanded={openIndex === index}
               >
-                <span className="pr-4 font-semibold text-[#0F1110]">{item.question}</span>
+                <span
+                  title={item.question}
+                  className="min-w-0 flex-1 truncate pr-4 text-sm font-semibold text-[#0F1110] sm:text-base"
+                >
+                  {item.question}
+                </span>
                 <ChevronDown
                   className={cn(
                     "h-5 w-5 flex-shrink-0 text-[#6F756F] transition-transform",

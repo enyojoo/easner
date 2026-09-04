@@ -390,6 +390,36 @@ function NavIcon({ name, className }: { name: NavIconName; className?: string })
     )
   }
 
+  if (name === "cart") {
+    return (
+      <svg {...common}>
+        <path {...stroke} d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20 8H6" />
+        <circle {...stroke} cx="9" cy="20" r="1" />
+        <circle {...stroke} cx="17" cy="20" r="1" />
+      </svg>
+    )
+  }
+
+  if (name === "users") {
+    return (
+      <svg {...common}>
+        <circle {...stroke} cx="9" cy="8" r="3" />
+        <path {...stroke} d="M3 20a6 6 0 0 1 12 0" />
+        <path {...stroke} d="M15 6.5a3 3 0 0 1 0 5.8M21 20a5.5 5.5 0 0 0-4.5-6.4" />
+      </svg>
+    )
+  }
+
+  if (name === "link") {
+    return (
+      <svg {...common}>
+        <path {...stroke} d="M9 15l6-6" />
+        <path {...stroke} d="M11 6l1.5-1.5a3.54 3.54 0 0 1 5 5L16 11" />
+        <path {...stroke} d="M13 18l-1.5 1.5a3.54 3.54 0 0 1-5-5L8 13" />
+      </svg>
+    )
+  }
+
   return (
     <svg {...common}>
       <path {...stroke} d="M4 10l8-5 8 5M6 10v8M10 10v8M14 10v8M18 10v8M4 20h16" />

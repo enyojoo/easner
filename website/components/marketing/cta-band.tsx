@@ -6,7 +6,7 @@ import { OpenAccountButton } from "./open-account-dialog"
 import { MarketingLink } from "./marketing-link"
 import { PersonaCtas } from "./persona-ctas"
 import type { CtaBandContent } from "@/lib/marketing/types"
-import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 interface CtaBandProps {
@@ -31,7 +31,7 @@ export function CtaBand({ content }: CtaBandProps) {
             {content.headline}
           </h2>
           {content.subhead && (
-            <p className="mx-auto max-w-3xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8 md:text-xl">{content.subhead}</p>
+            <p className={cn("mx-auto max-w-3xl text-[#5F665F]", MARKETING_BODY_TEXT)}>{content.subhead}</p>
           )}
           {content.ctas.some((cta) => cta.store) ? (
             <div className="mx-auto mt-8 flex max-w-md justify-center">

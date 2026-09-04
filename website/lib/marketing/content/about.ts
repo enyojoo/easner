@@ -1,11 +1,12 @@
 import founderChristianPhoto from "@/assets/founder-christian.png"
 import founderEnyoPhoto from "@/assets/founder-enyo.png"
-import { CONTACT_PATH, EASNER_CANONICAL_DEFINITION_SHORT } from "../constants"
+import { CONTACT_PATH } from "../constants"
 import type { CardItem, CtaBandContent, Founder } from "../types"
 
 export const aboutMetadata = {
   title: "About Us | Founders, Mission & Global Payments",
-  description: `Meet the Easner founders. ${EASNER_CANONICAL_DEFINITION_SHORT}`,
+  description:
+    "Meet the founders building Easner's stablecoin-powered banking infrastructure for cross-border money movement.",
   keywords: [
     "Easner founders",
     "Easner company",
@@ -26,7 +27,7 @@ export const aboutMission = {
   headline: "Built for corridors legacy rails serve worst",
   paragraphs: [
     "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money across borders sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
-    "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to a digital dollar into functioning local financial utility.",
+    "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to stablecoins into functioning local financial utility.",
   ],
   emphasis: "Cost is won or lost at the off-ramp.",
 }
@@ -59,7 +60,7 @@ export const aboutFounders: Founder[] = [
     title: "Co-founder & CEO",
     tagline: "Connecting global and local financial rails.",
     bio: [
-      "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning a digital dollar into real local financial utility.",
+      "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning stablecoin settlement into real local financial utility.",
       "Before Easner, he drove growth at venture-backed and private-market companies, with earlier grounding as a financial advisor at Morgan Stanley and Merrill Lynch. He also serves as an enlisted Reconnaissance Marine in the U.S. Marine Corps Reserve – bringing discipline, discretion, and outcomes-over-narrative to how Easner is built.",
     ],
     image: founderChristianPhoto,

@@ -7,23 +7,29 @@ import {
   Banknote,
   Briefcase,
   CheckCircle2,
+  ClipboardCheck,
   Clock3,
   Code2,
   Copy,
   CreditCard,
+  Download,
   FileText,
   Globe2,
   HandHeart,
   Landmark,
+  Link2,
   LockKeyhole,
   QrCode,
   ReceiptText,
+  Repeat,
   Send,
   ShieldCheck,
+  ShoppingCart,
   Smartphone,
   SquareTerminal,
   UserRoundPlus,
   Users2,
+  Wallet,
   WalletCards,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -57,6 +63,9 @@ const iconByAsset = {
   "mkt-thumb-stablecoin": ArrowRightLeft,
   "mkt-thumb-invoicing": ReceiptText,
   "mkt-thumb-cards": CreditCard,
+  "mkt-thumb-checkout": ShoppingCart,
+  "mkt-thumb-paylinks": Link2,
+  "mkt-thumb-payroll": Users2,
   "mkt-icon-api-banking": Landmark,
   "mkt-icon-api-agency": Users2,
   "mkt-icon-api-integration": Code2,
@@ -183,6 +192,30 @@ export function VisualSlot({
     return (
       <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
         <CardMockup assetId={assetId} compact={compact} fill={fill} />
+      </MockupFrame>
+    )
+  }
+
+  if (kind === "checkout") {
+    return (
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
+        <CheckoutMockup assetId={assetId} compact={compact} fill={fill} />
+      </MockupFrame>
+    )
+  }
+
+  if (kind === "payroll") {
+    return (
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
+        <PayrollMockup assetId={assetId} compact={compact} fill={fill} />
+      </MockupFrame>
+    )
+  }
+
+  if (kind === "paylinks") {
+    return (
+      <MockupFrame alt={alt} aspectClass={aspectClass} className={className} dense={dense} fill={fill} hero={isHero} frameless={frameless}>
+        <PayLinksMockup assetId={assetId} compact={compact} fill={fill} />
       </MockupFrame>
     )
   }
@@ -2082,7 +2115,7 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
                     <div className="mt-1 text-sm font-semibold sm:text-base">Easner</div>
                   </div>
                   <div className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-medium text-white/85 sm:text-[10px]">
-                    Active
+                    Preview
                   </div>
                 </div>
                 <div className="mt-4 sm:mt-6">
@@ -2113,7 +2146,7 @@ function CardHeroMockup({ compact, fill = false }: { compact: boolean; fill?: bo
                     <div className="mt-1 text-sm font-semibold sm:text-base">Easner</div>
                   </div>
                   <div className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-medium text-white/75 sm:text-[10px]">
-                    Shipped
+                    Preview
                   </div>
                 </div>
                 <div className="mt-4 sm:mt-6">
@@ -2372,6 +2405,536 @@ function CardReportingMockup({ compact, fill = false }: { compact: boolean; fill
             Card, payout, and collection activity in one export-ready ledger
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function CheckoutMockup({ assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
+  if (assetId.includes("hosted")) {
+    return <CheckoutHostedMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("methods")) {
+    return <CheckoutMethodsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("ledger")) {
+    return <CheckoutLedgerMockup compact={compact} fill={fill} />
+  }
+  return <CheckoutHeroMockup compact={compact} fill={fill} />
+}
+
+function CheckoutHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={mockupPanelClass(compact, true, fill)}>
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
+            checkout.easner.com
+          </div>
+        </div>
+        <div className={cn("flex min-h-0 flex-1 items-center justify-center bg-[#F8F6F0] p-4 sm:p-6", fill && "overflow-hidden")}>
+          <div className="w-full max-w-[15rem] rounded-2xl border border-[#E9E4D8] bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold text-[#0F1110]">Nova Analytics Pro</div>
+              <ShoppingCart className="h-4 w-4 text-[#007ACC]" />
+            </div>
+            <div className="mt-1 text-[10px] text-[#6F756F]">Billed monthly</div>
+            <div className="mt-3 text-2xl font-semibold text-[#0F1110]">$49.00</div>
+            {!compact && (
+              <div className="mt-3 flex gap-1.5">
+                <CreditCard className="h-4 w-4 text-[#6F756F]" />
+                <Landmark className="h-4 w-4 text-[#6F756F]" />
+                <Wallet className="h-4 w-4 text-[#6F756F]" />
+              </div>
+            )}
+            <div className="mt-4 rounded-xl bg-[#007ACC] py-2.5 text-center text-[11px] font-semibold text-white">
+              Pay $49.00
+            </div>
+            <div className="mt-2 text-center text-[9px] text-[#6F756F]">Easner is the merchant on record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CheckoutHostedMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Hosted checkout</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Nova Analytics Pro</div>
+          </div>
+          <ShoppingCart className="h-6 w-6 text-[#007ACC]" />
+        </div>
+        <div className="mt-4 rounded-2xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Amount due</div>
+          <div className="mt-1 flex items-end justify-between">
+            <span className="text-2xl font-semibold text-[#0F1110]">$49.00</span>
+            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#6F756F]">Monthly</span>
+          </div>
+        </div>
+        {!compact && (
+          <div className="mt-3 flex gap-2">
+            <div className="flex items-center gap-1.5 rounded-full bg-[#F8F6F0] px-3 py-1.5 text-[10px] font-semibold text-[#6F756F]">
+              <CreditCard className="h-3.5 w-3.5" /> Card
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-[#F8F6F0] px-3 py-1.5 text-[10px] font-semibold text-[#6F756F]">
+              <Landmark className="h-3.5 w-3.5" /> Bank
+            </div>
+          </div>
+        )}
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-[#EAF5FD] px-3 py-2.5">
+          <span className="text-[11px] text-[#0A2540]">Fee shown before confirm</span>
+          <div className="rounded-lg bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">Pay</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CheckoutMethodsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const methods = [
+    { label: "Card", icon: CreditCard },
+    { label: "Bank", icon: Landmark },
+    { label: "Apple / Google Pay", icon: Wallet },
+    { label: "Stablecoin", icon: ArrowRightLeft },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Payment methods</div>
+        <div className="mt-1 text-lg font-semibold text-[#0F1110]">Accepted at checkout</div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {(compact ? methods.slice(0, 2) : methods).map((method, index) => (
+            <div
+              key={method.label}
+              className={cn(
+                "flex items-center gap-2 rounded-xl border p-2.5",
+                index === 0 ? "border-[#BFE3FA] bg-[#EAF5FD]" : "border-[#E9E4D8] bg-[#F8F6F0]"
+              )}
+            >
+              <method.icon className={cn("h-4 w-4", index === 0 ? "text-[#007ACC]" : "text-[#6F756F]")} />
+              <span className="text-[10px] font-semibold text-[#0F1110]">{method.label}</span>
+            </div>
+          ))}
+        </div>
+        {!compact && (
+          <div className="mt-3 rounded-xl bg-[#0F1110] p-3 text-center text-[11px] text-white/80">
+            One checkout for global customers
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function CheckoutLedgerMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const activity = [
+    { label: "Checkout · Nova Analytics Pro", amount: "+$49.00", icon: ShoppingCart },
+    { label: "Subscription renewal", amount: "+$49.00", icon: Repeat },
+    { label: "Checkout · Onboarding fee", amount: "+$250.00", icon: CreditCard },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">One ledger</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Checkout activity</div>
+          </div>
+          <ReceiptText className="h-6 w-6 text-[#007ACC]" />
+        </div>
+        <div className="mt-4 space-y-2">
+          {(compact ? activity.slice(0, 2) : activity).map((item) => (
+            <div key={item.label} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-2.5">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#EAF5FD] text-[#007ACC]">
+                  <item.icon className="h-3.5 w-3.5" />
+                </div>
+                <span className="truncate text-xs font-semibold text-[#0F1110]">{item.label}</span>
+              </div>
+              <span className="shrink-0 text-xs font-semibold text-[#0F8A5F]">{item.amount}</span>
+            </div>
+          ))}
+        </div>
+        {!compact && (
+          <div className="mt-3 flex items-center gap-2 text-[10px] text-[#6F756F]">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#0F8A5F]" />
+            Reconciles with invoices, payouts, and card activity
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PayrollMockup({ assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
+  if (assetId.includes("approvals")) {
+    return <PayrollApprovalsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("stubs")) {
+    return <PayrollStubsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("mobile")) {
+    return <PayrollMobileMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("reconcile")) {
+    return <PayrollReconcileMockup compact={compact} fill={fill} />
+  }
+  return <PayrollHeroMockup compact={compact} fill={fill} />
+}
+
+function PayrollHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={mockupPanelClass(compact, true, fill)}>
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
+            Easner Business
+          </div>
+        </div>
+        <div className={MOCKUP_DASHBOARD_GRID}>
+          <div className="hidden border-r border-[#E9E4D8] bg-[#F8F6F0] p-3 sm:block">
+            <div className="mb-4 h-6 w-20 rounded-full bg-[#0F1110]" />
+            {["Payroll", "Payees", "Runs", "Reports"].map((item, index) => (
+              <div
+                key={item}
+                className={cn(
+                  "mb-1.5 rounded-xl px-2.5 py-2 text-[11px]",
+                  index === 0 ? "bg-[#EAF5FD] font-semibold text-[#007ACC]" : "text-[#6F756F]"
+                )}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+          <div className={cn("flex min-h-0 flex-col justify-center p-3 sm:p-5", fill && "overflow-hidden")}>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Next pay run</div>
+            <div className="mt-1 text-xl font-semibold text-[#0F1110] sm:text-2xl">$28,400.00</div>
+            <div className="mt-1 text-[10px] text-[#6F756F]">12 payees · Runs on Sep 30</div>
+            {!compact && (
+              <div className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">
+                Run payroll
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayrollApprovalsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Pending approval</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Payroll run · Sep 30</div>
+          </div>
+          <ClipboardCheck className="h-6 w-6 text-[#007ACC]" />
+        </div>
+        <div className="mt-4 rounded-2xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Total</span>
+            <span className="text-sm font-semibold text-[#0F1110]">$28,400.00</span>
+          </div>
+          <div className="mt-1 text-[10px] text-[#6F756F]">Requested by Amara O. · Finance</div>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <div className="flex-1 rounded-xl bg-[#0F1110] py-2 text-center text-[11px] font-semibold text-white">Approve</div>
+          <div className="flex-1 rounded-xl border border-[#E9E4D8] bg-white py-2 text-center text-[11px] font-semibold text-[#6F756F]">
+            Reject
+          </div>
+        </div>
+        {!compact && (
+          <div className="mt-3 flex items-center gap-2 text-[10px] text-[#6F756F]">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#0F8A5F]" />
+            Maker-checker approval before funds move
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PayrollStubsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), "overflow-hidden p-0")}>
+        <div className="flex h-9 shrink-0 items-center justify-between bg-[#0F1110] px-3.5">
+          <span className="text-[10px] font-semibold text-white/80">Pay stub</span>
+          <FileText className="h-4 w-4 text-white/60" />
+        </div>
+        <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-4")}>
+          <div className="text-sm font-semibold text-[#0F1110]">Amara O.</div>
+          <div className="text-[10px] text-[#6F756F]">Pay period · Sep 1–30</div>
+          <div className="mt-3 space-y-1.5">
+            {[
+              { label: "Gross pay", value: "$5,200.00" },
+              { label: "Deductions", value: "-$0.00" },
+            ].map((row) => (
+              <div key={row.label} className="flex items-center justify-between text-[11px]">
+                <span className="text-[#6F756F]">{row.label}</span>
+                <span className="font-medium text-[#0F1110]">{row.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between rounded-lg bg-[#F8F6F0] px-2.5 py-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Net pay</span>
+            <span className="text-sm font-semibold text-[#0F1110]">$5,200.00</span>
+          </div>
+          <div className="mt-auto flex items-center gap-2 rounded-xl border border-[#E9E4D8] bg-white px-3 py-2">
+            <Download className="h-3.5 w-3.5 text-[#007ACC]" />
+            <span className="text-[11px] font-medium text-[#007ACC]">Download pay stub</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayrollMobileMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <PersonalPhoneFrame compact={compact || fill} fill={fill}>
+        <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Payroll</div>
+        <div className="mt-1 text-sm font-semibold text-[#0F1110]">You're connected</div>
+        <div className="mt-3 rounded-xl border border-[#E9E4D8] bg-white p-2.5">
+          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Employer</div>
+          <div className="mt-1 text-[11px] font-medium text-[#0F1110]">Meridian Labs Ltd</div>
+        </div>
+        <div className="mt-2 rounded-xl border border-[#E9E4D8] bg-white p-2.5">
+          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Receive to</div>
+          <div className="mt-1 text-[11px] font-medium text-[#0F1110]">USD account ·••• 9012</div>
+        </div>
+        {!compact && (
+          <div className="mt-auto flex items-center gap-2 rounded-xl border border-[#E8F7F0] bg-[#F0FBF6] px-3 py-2">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#0F8A5F]" />
+            <span className="text-[11px] font-medium text-[#0F8A5F]">Last pay stub · Sep 30</span>
+          </div>
+        )}
+      </PersonalPhoneFrame>
+    </div>
+  )
+}
+
+function PayrollReconcileMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const activity = [
+    { label: "Payroll · Amara O.", amount: "-$5,200.00" },
+    { label: "Payroll · James K.", amount: "-$4,800.00" },
+    { label: "Invoice paid · INV-1042", amount: "+$4,800.00" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="rounded-2xl bg-[#0F1110] p-4 text-white">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Total balance</div>
+          <div className="mt-1 text-xl font-semibold">$184,920.40</div>
+          <div className="mt-1 text-[10px] text-white/45">Payroll settles with your other activity</div>
+        </div>
+        <div className="mt-3 space-y-2">
+          {(compact ? activity.slice(0, 2) : activity).map((item) => (
+            <div key={item.label} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2.5">
+              <span className="truncate text-[11px] font-medium text-[#0F1110]">{item.label}</span>
+              <span
+                className={cn(
+                  "shrink-0 text-[11px] font-semibold",
+                  item.amount.startsWith("+") ? "text-[#0F8A5F]" : "text-[#0F1110]"
+                )}
+              >
+                {item.amount}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayLinksMockup({ assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
+  if (assetId.includes("create")) {
+    return <PayLinksCreateMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("share")) {
+    return <PayLinksShareMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("stats")) {
+    return <PayLinksStatsMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("ledger")) {
+    return <PayLinksLedgerMockup compact={compact} fill={fill} />
+  }
+  return <PayLinksHeroMockup compact={compact} fill={fill} />
+}
+
+function PayLinksHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={mockupPanelClass(compact, true, fill)}>
+        <div className={MOCKUP_CHROME_BAR}>
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/30 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <span className="h-2 w-2 rounded-full bg-[#F6F3EB]/20 sm:h-2.5 sm:w-2.5" />
+          <div className="ml-auto rounded-full bg-white/10 px-2.5 py-0.5 text-[9px] font-medium text-white/70 sm:px-3 sm:py-1 sm:text-[10px]">
+            pay.easner.com/@amara
+          </div>
+        </div>
+        <div className={cn("flex min-h-0 flex-1 items-center justify-center bg-[#F8F6F0] p-4 sm:p-6", fill && "overflow-hidden")}>
+          <div className="w-full max-w-[15rem] rounded-2xl border border-[#E9E4D8] bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-semibold text-[#0F1110]">Consulting retainer</div>
+              <Link2 className="h-4 w-4 text-[#007ACC]" />
+            </div>
+            <div className="mt-1 text-[10px] text-[#6F756F]">Requested by Amara O.</div>
+            <div className="mt-3 text-2xl font-semibold text-[#0F1110]">$500.00</div>
+            <div className="mt-4 rounded-xl bg-[#007ACC] py-2.5 text-center text-[11px] font-semibold text-white">
+              Pay $500.00
+            </div>
+            <div className="mt-2 text-center text-[9px] text-[#6F756F]">Easner is the merchant on record</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayLinksCreateMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">New payment link</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Consulting retainer</div>
+          </div>
+          <Link2 className="h-6 w-6 text-[#007ACC]" />
+        </div>
+        <div className="mt-4 flex gap-2">
+          <div className="rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">One-time</div>
+          <div className="rounded-full bg-[#F8F6F0] px-3 py-1.5 text-xs font-semibold text-[#6F756F]">Recurring</div>
+        </div>
+        <div className="mt-3 rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Amount</div>
+          <div className="mt-1 flex items-end justify-between">
+            <span className="text-xl font-semibold text-[#0F1110]">$500.00</span>
+            <CurrencyBadge code="USD" labelClassName="text-xs" />
+          </div>
+        </div>
+        {!compact && (
+          <div className="mt-3 rounded-xl border border-[#E9E4D8] bg-white p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Link name</div>
+            <div className="mt-0.5 text-xs font-medium text-[#0F1110]">Consulting retainer</div>
+          </div>
+        )}
+        <div className="mt-3 rounded-xl bg-[#0F1110] py-2.5 text-center text-[11px] font-semibold text-white">
+          Create link
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayLinksShareMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Share this link</div>
+        <div className="mt-1 text-lg font-semibold text-[#0F1110]">No website needed</div>
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <span className="truncate font-mono text-[11px] text-[#0F1110]">pay.easner.com/@amara/retainer</span>
+          <Copy className="h-3.5 w-3.5 shrink-0 text-[#007ACC]" />
+        </div>
+        {!compact && (
+          <div className="mt-3 flex gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F0] text-[#6F756F]">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F0] text-[#6F756F]">
+              <Smartphone className="h-4 w-4" />
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F8F6F0] text-[#6F756F]">
+              <Globe2 className="h-4 w-4" />
+            </div>
+          </div>
+        )}
+        <div className="mt-3 flex items-center gap-2 text-[10px] text-[#6F756F]">
+          <CheckCircle2 className="h-3.5 w-3.5 text-[#0F8A5F]" />
+          Ready to share by email, chat, or social
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PayLinksStatsMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Consulting retainer</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Active link</div>
+          </div>
+          <div className="rounded-full bg-[#E8F7F0] px-2.5 py-1 text-[10px] font-semibold text-[#0F8A5F]">Open</div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Payments</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">6</div>
+          </div>
+          <div className="rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Collected</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">$3,000</div>
+          </div>
+        </div>
+        {!compact && (
+          <div className="mt-3 rounded-xl border border-dashed border-[#D9D4C7] bg-white p-2.5 text-center text-[11px] text-[#6F756F]">
+            Stays open until you close it
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PayLinksLedgerMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  const activity = [
+    { label: "Payment link · Consulting retainer", amount: "+$500.00" },
+    { label: "Payment link · Onboarding fee", amount: "+$250.00" },
+    { label: "Invoice paid · INV-1042", amount: "+$4,800.00" },
+  ]
+
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="rounded-2xl bg-[#0F1110] p-4 text-white">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Total balance</div>
+          <div className="mt-1 text-xl font-semibold">$184,920.40</div>
+          <div className="mt-1 text-[10px] text-white/45">Payment links settle with your other activity</div>
+        </div>
+        <div className="mt-3 space-y-2">
+          {(compact ? activity.slice(0, 2) : activity).map((item) => (
+            <div key={item.label} className="flex items-center justify-between rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-3 py-2.5">
+              <span className="truncate text-[11px] font-medium text-[#0F1110]">{item.label}</span>
+              <span className="shrink-0 text-[11px] font-semibold text-[#0F8A5F]">{item.amount}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

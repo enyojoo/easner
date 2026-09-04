@@ -6,7 +6,7 @@ import { downloadMetadata } from "@/lib/marketing/content/download"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata: Metadata = {
-  ...marketingMetadata({ metadata: downloadMetadata, path: APP_LINK_PATH }),
+  ...marketingMetadata({ metadata: downloadMetadata, path: APP_LINK_PATH, titleAbsolute: downloadMetadata.title }),
   robots: { index: true, follow: true },
 }
 

@@ -30,7 +30,7 @@ export const invoicingContent: ProductPageContent = {
     {
       title: "Create and send invoices",
       description:
-        "Generate branded invoices, add line items, and share hosted payment links from Easner Business.",
+        "Generate branded invoices, add line items, and share a hosted invoice page customers can pay directly.",
       visualSlot: "mkt-ui-invoice-editor",
       altText: "Easner invoice creation screen",
     },
@@ -90,7 +90,7 @@ export const invoicingContent: ProductPageContent = {
     {
       title: "Software and SaaS",
       description:
-        "Bill customers in USD or EUR across borders; share a payment link and track collections.",
+        "Bill customers in USD or EUR across borders, with status tracking and reconciliation on every invoice.",
     },
     {
       title: "Professional services",
@@ -101,6 +101,13 @@ export const invoicingContent: ProductPageContent = {
       title: "Marketplaces and platforms",
       description:
         "Invoice international partners or wholesale buyers and collect by bank or stablecoin.",
+    },
+  ],
+  faq: [
+    {
+      question: "Invoicing vs. Checkout vs. Payment Links?",
+      answer:
+        "Invoicing is for itemized bills to a named customer, with line items and payer records. Easner Payment Links is a no-code shareable page for quick one-time or recurring payments – no invoice needed. Easner Checkout is for embedding payments directly on your own website. All three settle in the same Easner Business ledger.",
     },
   ],
   ctaBand: {

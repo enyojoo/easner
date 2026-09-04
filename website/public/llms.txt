@@ -16,9 +16,12 @@ Easner connects global and local financial rails – so businesses and individua
 - [Download Easner Banking](https://www.easner.com/app): Smart app link – iOS App Store or Google Play
 - [Personal Banking](https://www.easner.com/personal): Easner Mobile – mobile banking for global money; send, receive, and manage funds in global and local currencies via bank transfers and stablecoin
 - [Business Banking](https://www.easner.com/business): Cross-border business banking – multi-currency accounts, payouts, invoicing, and team access for global and local operators
+- [Checkout](https://www.easner.com/checkout): Embed checkout on your own website – one-time, subscription, and custom payments, with Easner as the merchant on record
+- [Payment Links](https://www.easner.com/payment-links): No-code, shareable payment links – get paid without a website, one-time or recurring
+- [Payroll](https://www.easner.com/payroll): Cross-border payroll with maker-checker approvals, pay stubs, and payee self-service via Easner Mobile
 - [Stablecoin Payments](https://www.easner.com/stablecoin): Stablecoin speed with familiar banking screens – receive, send, Terminal, and QR Pay
 - [Invoicing](https://www.easner.com/invoicing): Global B2B invoicing with bank or stablecoin pay-in
-- [Cards](https://www.easner.com/cards): Virtual and physical cards with spend controls on one ledger
+- [Cards](https://www.easner.com/cards): Virtual and physical cards with spend controls on one ledger, rolling out in phases
 - [Partners](https://www.easner.com/partners): Branded cross-border programs via the Agency Model – compliance, corridors, and local payout connectivity for remittance, OTC, and platform partners
 - [Developers](https://www.easner.com/developers): Embedded payments API for KYC/KYB, accounts, pay-in, payouts to supported local markets, and webhooks
 
@@ -29,6 +32,7 @@ Easner connects US, EU, and UK rails to supported local markets across Africa, L
 ## Key differentiators
 
 - Stablecoin-powered settlement behind familiar banking screens – not a crypto trading product
+- Easner is the merchant on record for Checkout and Payment Links – businesses collect online payments without their own payment processor account
 - KYC/KYB, AML screening, limits, and transaction controls built in
 - Personal banking (Easner Mobile), business banking (Easner Business), and partner programs (Easner for Partners)
 

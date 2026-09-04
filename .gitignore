@@ -124,6 +124,9 @@ yarn-error.*
 # Marketing docs (local reference only; live source is lib/marketing/)
 website/marketing/
 
+# Claude Code session-local runtime state
+.claude/*.lock
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

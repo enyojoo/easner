@@ -10,6 +10,7 @@ import { VisualSlot } from "./visual-slot"
 import { StatusBadge } from "./status-badge"
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_BODY_TEXT,
   MARKETING_HEADING_CAPS,
   MARKETING_PAGE_HERO_TITLE,
   MARKETING_SECTION_TITLE,
@@ -135,7 +136,8 @@ function CopyBlock({
       {subhead && (
         <p
           className={cn(
-            "mt-5 max-w-2xl text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8 md:text-xl",
+            "mt-5 max-w-2xl text-[#5F665F]",
+            MARKETING_BODY_TEXT,
             isHero && "mx-auto lg:mx-0"
           )}
         >
@@ -143,7 +145,7 @@ function CopyBlock({
         </p>
       )}
       {body && (
-        <p className={cn("max-w-2xl leading-7 text-[#5F665F] sm:leading-8", subhead ? "mt-4" : "mt-5 text-base sm:text-lg")}>
+        <p className={cn("max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT, subhead ? "mt-4" : "mt-5")}>
           {body}
         </p>
       )}
@@ -248,7 +250,7 @@ export function TextOnlySection({
           <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
             {headline}
           </h2>
-          {body && <p className="mt-5 text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{body}</p>}
+          {body && <p className={cn("mt-5 text-[#5F665F]", MARKETING_BODY_TEXT)}>{body}</p>}
         </div>
       </div>
     </section>

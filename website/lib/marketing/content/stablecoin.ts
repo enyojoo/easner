@@ -5,7 +5,7 @@ export const stablecoinContent: ProductPageContent = {
   metadata: {
     title: "Stablecoin Payments | Receive, Send & QR Pay",
     description:
-      "Stablecoin speed with familiar banking screens on Easner Business – receive, send, Terminal, and QR Pay for global cross-border money movement with compliance built in.",
+      "Stablecoin speed with familiar banking screens on Easner Business – receive, send, Terminal, and QR Pay, with compliance built in.",
     keywords: [
       "stablecoin payments",
       "stablecoin payments infrastructure",
@@ -94,4 +94,6 @@ export const stablecoinContent: ProductPageContent = {
     subhead: "Receive, send, Terminal, and QR Pay in familiar banking screens – without showing your users a crypto app.",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_cta_band" }],
   },
+  complianceNote:
+    "Stablecoin receive, send, Terminal, and QR Pay run through the same verification and screening as the rest of your Easner Business account.",
 }

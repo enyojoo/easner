@@ -5,7 +5,7 @@ export const developersContent: ProductPageContent = {
   metadata: {
     title: "Developers | Embedded Payments API",
     description:
-      "Embed compliant global money rails via API – KYC/KYB, accounts, pay-in, payouts to supported local markets, collections, and webhooks with compliance built in.",
+      "Embed compliant global money rails via API – KYC/KYB, accounts, pay-in, payouts, collections, and webhooks.",
     keywords: [
       "stablecoin API",
       "embedded payments API",

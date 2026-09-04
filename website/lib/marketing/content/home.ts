@@ -66,7 +66,7 @@ export const whyEasnerPillars: CardItem[] = [
   {
     title: "Speed without the noise",
     description:
-      "Stablecoin speed and global reach sit behind fiat-native screens.",
+      "Blockchain speed and global reach, working quietly behind familiar banking screens.",
     icon: "mkt-icon-pillar-invisible",
   },
 ]
@@ -144,7 +144,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "What products does Easner offer?",
     answer:
-      "Easner Personal Banking (Easner Mobile), Easner Business Banking (Easner Business), and Easner for Partners (Agency Model and Developer Model).",
+      "Easner Personal Banking (Easner Mobile), Easner Business Banking (Easner Business) including Checkout, Payment Links, and Payroll, and Easner for Partners (Agency Model and Developer Model).",
   },
   {
     question: "Are fees zero?",

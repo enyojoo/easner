@@ -9,6 +9,9 @@ export type NavIconName =
   | "code"
   | "briefcase"
   | "user"
+  | "cart"
+  | "users"
+  | "link"
 
 export interface NavLink {
   label: string
@@ -34,18 +37,20 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Personal Banking", href: "/personal", icon: "wallet", description: "Mobile banking for global earners" },
       { label: "Business Banking", href: "/business", icon: "landmark", description: "Accounts, payouts, teams, reporting" },
-      { label: "Cards", href: "/cards", icon: "card", description: "Spend controls built into Easner" },
+      { label: "Checkout", href: "/checkout", icon: "cart", description: "Embed checkout on your own website" },
+      { label: "Payment Links", href: "/payment-links", icon: "link", description: "Get paid with a link – no website needed" },
+      { label: "Whitelabel", href: "/partners", icon: "briefcase", description: "Branded cross-border and partner programs" },
+      { label: "Payroll", href: "/payroll", icon: "users", description: "Cross-border payroll with approvals built in" },
       { label: "Invoicing", href: "/invoicing", icon: "receipt", description: "Bank or stablecoin pay-in options" },
       { label: "Stablecoin", href: "/stablecoin", icon: "coins", description: "Stablecoin speed with banking screens" },
-      { label: "Whitelabel", href: "/partners", icon: "briefcase", description: "Branded cross-border and partner programs" },
+      { label: "Cards", href: "/cards", icon: "card", description: "Spend controls, when available on your account" },
+      { label: "Developers", href: "/developers", icon: "code", description: "Compliant rails in your product" },
     ],
   },
 ]
 
 /** Mid nav links after Products */
-export const NAV_LINKS: NavLink[] = [
-  { label: "Developers", href: "/developers", icon: "code" },
-]
+export const NAV_LINKS: NavLink[] = []
 
 /** Contact – rendered last */
 export const NAV_TRAILING_LINKS: NavLink[] = [

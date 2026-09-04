@@ -3,7 +3,7 @@
 import { VisualSlot } from "./visual-slot"
 import { FeatureDescription } from "./feature-description"
 import type { Feature } from "@/lib/marketing/types"
-import { BENTO_VISUAL_HEIGHT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE, MARKETING_SUBSECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { BENTO_VISUAL_HEIGHT, MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE, MARKETING_SUBSECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 
 interface FeatureBentoProps {
@@ -11,11 +11,12 @@ interface FeatureBentoProps {
   headline?: string
   subhead?: string
   className?: string
+  id?: string
 }
 
-export function FeatureBento({ features, headline, subhead, className }: FeatureBentoProps) {
+export function FeatureBento({ features, headline, subhead, className, id }: FeatureBentoProps) {
   return (
-    <section className={cn("bg-[#F6F3EB] pb-14 pt-7 md:pb-24 md:pt-12", className)}>
+    <section id={id} className={cn("scroll-mt-24 bg-[#F6F3EB] pb-14 pt-7 md:pb-24 md:pt-12", className)}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {(headline || subhead) && (
           <div className="mx-auto mb-10 max-w-3xl text-center md:mb-12 lg:max-w-none lg:text-left">
@@ -24,7 +25,7 @@ export function FeatureBento({ features, headline, subhead, className }: Feature
                 {headline}
               </h2>
             )}
-            {subhead && <p className="mt-4 text-base leading-7 text-[#5F665F] sm:text-lg sm:leading-8">{subhead}</p>}
+            {subhead && <p className={cn("mt-4 text-[#5F665F]", MARKETING_BODY_TEXT)}>{subhead}</p>}
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-8">

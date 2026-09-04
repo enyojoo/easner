@@ -4,7 +4,7 @@ export const EASNER_CANONICAL_DEFINITION =
   "Easner is stablecoin-powered banking and payment infrastructure for global cross-border money movement – personal and business accounts, payouts, collections, cards, and partner APIs – connecting US, EU, and UK rails to supported local markets worldwide, with compliance built in."
 
 export const EASNER_CANONICAL_DEFINITION_SHORT =
-  "Stablecoin-powered banking and payment infrastructure for global cross-border money movement – accounts, payouts, collections, cards, and partner APIs connecting US, EU, and UK rails to supported local markets, with compliance built in."
+  "Stablecoin-powered banking infrastructure for cross-border money movement – accounts, payouts, collections, and cards, with compliance built in."
 
 export const EASNER_ONE_LINE_THESIS =
   "Easner connects global and local financial rails – so businesses and individuals can collect, pay, and manage money across borders from one platform."

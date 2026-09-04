@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion"
 import { cn } from "@/lib/utils"
 import {
+  MARKETING_BODY_TEXT,
   MARKETING_HEADING_CAPS,
   MARKETING_SECTION_TITLE,
   MARKETING_SUBSECTION_TITLE,
@@ -114,7 +115,7 @@ export function SolutionsByAudience() {
           >
             Built for how you move money
           </h2>
-          <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">
+          <p className={cn("mx-auto mt-3 max-w-3xl text-[#5F665F] sm:mt-4", MARKETING_BODY_TEXT)}>
             Pick the Easner surface that matches your work: personal banking, business operations, partner programs, or embedded infrastructure.
           </p>
         </div>
@@ -162,7 +163,7 @@ export function SolutionsByAudience() {
               <h3 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
                 {persona.headline}
               </h3>
-              <p className="mt-3 flex-1 text-sm leading-6 text-[#5F665F] sm:mt-4 sm:text-lg sm:leading-8">{persona.body}</p>
+              <p className={cn("mt-3 flex-1 text-[#5F665F] sm:mt-4", MARKETING_BODY_TEXT)}>{persona.body}</p>
               <div className="mt-5 min-h-[3.25rem] shrink-0 sm:mt-8">
                 <PersonaCtas
                   ctas={persona.ctas}
