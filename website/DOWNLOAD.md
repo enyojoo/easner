@@ -6,7 +6,7 @@ One URL for app installs: **`https://www.easner.com/app`**
 
 | URL | Role |
 |-----|------|
-| `https://www.easner.com/app` | Canonical link — mobile → store/APK; desktop → download landing |
+| `https://www.easner.com/app` | Canonical link — mobile → store; desktop → download landing |
 | `https://easner.com/app` | Apex alias → `www.easner.com/app` |
 | `https://api.easner.com/api/marketing/app-download-link` | Send download-link email (`appDownloadLink` template) |
 
@@ -15,10 +15,10 @@ One URL for app installs: **`https://www.easner.com/app`**
 | Entry | Device | Result |
 |-------|--------|--------|
 | `/app` | iOS | 302 → App Store |
-| `/app` | Android | 302 → APK (or Play Store when env set) |
+| `/app` | Android | 302 → Play Store |
 | `/app` | Desktop | Download page (QR + email form) |
 | `/app` | Link-preview bots | 200 HTML + Open Graph |
-| `/app?platform=ios\|android` | Any | 302 → store/APK (email fallbacks) |
+| `/app?platform=ios\|android` | Any | 302 → App Store / Play Store (email fallbacks) |
 
 Routing lives in [`proxy.ts`](proxy.ts) and [`app/(marketing)/app/page.tsx`](app/(marketing)/app/page.tsx).
 
@@ -26,6 +26,7 @@ Routing lives in [`proxy.ts`](proxy.ts) and [`app/(marketing)/app/page.tsx`](app
 
 ```env
 EASNER_APP_STORE_URL=https://apps.apple.com/us/app/easner/id6762069433
+EASNER_PLAY_STORE_URL=https://play.google.com/store/apps/details?id=com.easner.android
 NEXT_PUBLIC_APP_LINK_URL=https://www.easner.com/app
 NEXT_PUBLIC_APP_DOWNLOAD_API_URL=https://api.easner.com/api/marketing/app-download-link
 ```
@@ -34,7 +35,7 @@ NEXT_PUBLIC_APP_DOWNLOAD_API_URL=https://api.easner.com/api/marketing/app-downlo
 
 ```env
 EASNER_APP_STORE_URL=https://apps.apple.com/us/app/easner/id6762069433
-EASNER_PLAY_STORE_URL=https://github.com/enyojoo/easner/releases/latest/download/Easner-Beta.apk
+EASNER_PLAY_STORE_URL=https://play.google.com/store/apps/details?id=com.easner.android
 EASNER_DOWNLOAD_PAGE_URL=https://www.easner.com/app
 ```
 

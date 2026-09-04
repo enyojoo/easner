@@ -8,12 +8,12 @@ import { BrandLogo } from "@easner/shared"
 import { DownloadEmailForm } from "./download-email-form"
 import { DownloadQr } from "./download-qr"
 import { PersonalAppLink } from "./personal-app-link"
-import { APP_STORE_URL, ANDROID_APK_URL } from "@/lib/marketing/constants"
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/marketing/constants"
 import { APP_LINK_URL, isMobilePlatform, type DownloadPlatform } from "@/lib/download-routing"
 import { posthog } from "@/lib/posthog"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
-import { AppleStoreIcon, AndroidStoreIcon } from "./store-icons"
+import { AppleStoreIcon, PlayStoreIcon } from "./store-icons"
 
 interface DownloadAppDialogProps {
   open: boolean
@@ -144,24 +144,30 @@ export function DownloadAppDialog({
                 </span>
               </Link>
               <Link
-                href={ANDROID_APK_URL}
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => {
-                  posthog.capture("download_click", { surface: `${surface}-dialog`, platform: "android", action: "apk" })
+                  posthog.capture("download_click", {
+                    surface: `${surface}-dialog`,
+                    platform: "android",
+                    action: "play_store",
+                  })
                   captureCtaClicked({
-                    cta_location: `${surface}-dialog_android_apk`,
-                    cta_label: "Android APK",
-                    destination: ANDROID_APK_URL,
+                    cta_location: `${surface}-dialog_play_store`,
+                    cta_label: "Google Play",
+                    destination: PLAY_STORE_URL,
                     destination_type: "download",
                   })
                 }}
                 className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-[#E9E4D8] bg-white px-4 py-3 text-[#0F1110] transition-colors hover:border-[#007ACC]/30"
               >
-                <AndroidStoreIcon />
+                <PlayStoreIcon />
                 <span className="text-left leading-tight">
                   <span className="block text-[10px] font-medium uppercase tracking-wide text-[#6F756F]">
-                    Download
+                    Get it on
                   </span>
-                  <span className="block text-sm font-semibold">Android APK</span>
+                  <span className="block text-sm font-semibold">Google Play</span>
                 </span>
               </Link>
             </div>

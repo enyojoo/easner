@@ -63,4 +63,4 @@ Play Console requires a public URL (no app login) that explains how to delete an
 
 - Lead with **global / cross-border** positioning; diaspora is a use case, not the primary identity.
 - Keep en-dashes (`–`) in customer-facing copy; avoid em-dashes (`—`).
-- When Play Store is live, set `EASNER_PLAY_STORE_URL` per [`DOWNLOAD.md`](DOWNLOAD.md).
+- Play Store URL defaults to `https://play.google.com/store/apps/details?id=com.easner.android`; override with `EASNER_PLAY_STORE_URL` per [`DOWNLOAD.md`](DOWNLOAD.md).

@@ -6,7 +6,7 @@ export const downloadMetadata = {
     "Easner download",
     "Easner Banking app",
     "App Store",
-    "Android APK",
+    "Google Play",
     "Easner app",
   ],
 }

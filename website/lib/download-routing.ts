@@ -66,7 +66,7 @@ export function getStoreUrls() {
   return resolveMobileAppStoreUrls(process.env)
 }
 
-/** Destination for a mobile platform (App Store or APK/Play). */
+/** Destination for a mobile platform (App Store or Play Store). */
 export function getDownloadDestination(platform: DownloadPlatform): string | null {
   const urls = getStoreUrls()
   if (platform === "ios") return urls.appStore
