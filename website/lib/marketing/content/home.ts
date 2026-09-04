@@ -46,9 +46,9 @@ export const whyEasnerHeadline = "Why teams choose Easner"
 
 export const whyEasnerPillars: CardItem[] = [
   {
-    title: "No crypto complexity",
+    title: "Bank with Ease",
     description:
-      "Send, receive, invoice, and manage money in screens that feel like banking – not a trading app.",
+      "Send, receive, invoice, and manage money and stablecoins on banking screens built for global use.",
     icon: "mkt-icon-pillar-ux",
   },
   {
