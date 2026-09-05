@@ -9,7 +9,7 @@ import {
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
-  title: "Easner | Global Banking, Payments & Multi-Currency Accounts",
+  title: "Easner | Global Banking, Payments & Stablecoin Rails",
   description:
     "Personal and business banking with multi-currency accounts, customer payments, cards, and global payouts. Manage everyday money and business finances with Easner.",
   keywords: [
