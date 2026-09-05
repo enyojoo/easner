@@ -3,9 +3,9 @@ import { CONTACT_PATH } from "../constants"
 
 export const partnersContent: ProductPageContent = {
   metadata: {
-    title: "Partners | Branded Cross-Border Programs",
+    title: "White-Label Payments | Easner for Partners",
     description:
-      "Launch branded cross-border products on Easner for Partners – compliance, local payout connectivity, and operational support built in.",
+      "Launch a branded global payments product with Easner for Partners. Get accounts, collections, payouts, verification workflows, and operational support.",
     keywords: [
       "white-label remittance",
       "OTC money transfer",
@@ -15,7 +15,7 @@ export const partnersContent: ProductPageContent = {
       "OTC compliance platform",
       "agent banking platform",
       "embedded payouts API",
-      "emerging markets partner infrastructure",
+      "global partner payment infrastructure",
       "faith-based remittance",
       "church diaspora giving",
       "nonprofit cross-border payouts",
@@ -28,9 +28,9 @@ export const partnersContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Your brand on Easner rails",
+    h1: "Build cross-border payments under your brand.",
     subhead:
-      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, and provider orchestration with ongoing operational support.",
+      "Offer your customers an international payment experience under your own name. Easner provides the infrastructure, verification workflows, payout connections, and operational support.",
     visualSlot: "mkt-hero-partners-01",
     altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
     ctas: [

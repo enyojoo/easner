@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const checkoutContent: ProductPageContent = {
   metadata: {
-    title: "Checkout | Embed Payments on Your Website",
+    title: "Online Checkout | Accept Payments & Subscriptions",
     description:
-      "Add checkout to your own website – one-time, subscription, and custom payments. Easner is the merchant on record, reconciled in one ledger in Easner Business.",
+      "Accept card, bank, and digital wallet payments on your website with Easner Checkout. Collect one-time payments and subscriptions through Easner Business.",
     keywords: [
       "merchant of record checkout",
       "checkout API",
@@ -22,9 +22,9 @@ export const checkoutContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Checkout, embedded on your site",
+    h1: "Accept payments on your website.",
     subhead:
-      "Add card, bank, and wallet payments to your own website – one-time, subscription, or custom charges, with Easner as the merchant on record.",
+      "Give customers a clear way to pay by card, bank, or supported digital wallet. Collect one-time or subscription payments and track them in Easner Business.",
     visualSlot: "mkt-hero-checkout-01",
     altText: "Easner Checkout embedded on a merchant's own website",
     ctas: [
@@ -43,7 +43,7 @@ export const checkoutContent: ProductPageContent = {
     {
       title: "Collect one-time payments",
       description:
-        "Charge once for a product, service, or one-off fee – a hosted checkout page ready to accept payment in minutes.",
+        "Let customers pay once for a product, service, or project fee through your checkout.",
       visualSlot: "mkt-ui-checkout-onetime",
       altText: "Easner Checkout one-time payment page",
     },
@@ -62,7 +62,7 @@ export const checkoutContent: ProductPageContent = {
       altText: "Easner Checkout global payment method selection",
     },
     {
-      title: "To your Easner Balance",
+      title: "Payments in one place",
       description:
         "Every checkout and subscription payment settles directly to your Easner Balance, reconciled alongside your other Easner Business activity.",
       visualSlot: "mkt-ui-checkout-ledger",
@@ -97,6 +97,7 @@ export const checkoutContent: ProductPageContent = {
     },
     {
       question: "Do I need to write code?",
+      links: [{ label: "Collect payments without code", href: "/payment-links" }],
       answer:
         "Yes – Checkout embeds on your own website with a publishable key, a short integration, and a webhook. If you don't have a website, Easner Payment Links is a no-code alternative.",
     },

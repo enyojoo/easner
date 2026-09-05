@@ -7,21 +7,21 @@ const baseUrl = "https://www.easner.com"
  * "last modified" signal to crawlers; `new Date()` on every build defeats that.
  */
 const lastModified = {
-  home: new Date("2026-09-04"),
-  checkout: new Date("2026-09-04"),
-  paymentLinks: new Date("2026-09-04"),
-  payroll: new Date("2026-09-04"),
-  personal: new Date("2026-09-04"),
-  cards: new Date("2026-09-04"),
-  about: new Date("2026-06-08"),
+  home: new Date("2026-09-05"),
+  checkout: new Date("2026-09-05"),
+  paymentLinks: new Date("2026-09-05"),
+  payroll: new Date("2026-09-05"),
+  personal: new Date("2026-09-05"),
+  cards: new Date("2026-09-05"),
+  about: new Date("2026-09-05"),
   contact: new Date("2026-06-06"),
   legal: new Date("2026-06-08"),
-  business: new Date("2026-08-26"),
-  stablecoin: new Date("2026-08-26"),
-  invoicing: new Date("2026-08-26"),
-  partners: new Date("2026-08-26"),
-  developers: new Date("2026-08-26"),
-  app: new Date("2026-08-28"),
+  business: new Date("2026-09-05"),
+  stablecoin: new Date("2026-09-05"),
+  invoicing: new Date("2026-09-05"),
+  partners: new Date("2026-09-05"),
+  developers: new Date("2026-09-05"),
+  app: new Date("2026-09-05"),
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {

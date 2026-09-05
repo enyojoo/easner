@@ -16,7 +16,11 @@ import {
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
-export const metadata = marketingMetadata({ metadata: aboutMetadata, path: "/about" })
+export const metadata = marketingMetadata({
+  metadata: aboutMetadata,
+  path: "/about",
+  titleAbsolute: aboutMetadata.title,
+})
 
 export default function AboutPage() {
   return (

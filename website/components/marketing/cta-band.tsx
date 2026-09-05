@@ -8,12 +8,17 @@ import { PersonaCtas } from "./persona-ctas"
 import type { CtaBandContent } from "@/lib/marketing/types"
 import { MARKETING_BODY_TEXT, MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { usePersonalBankingCtaDescription } from "@/hooks/use-download-platform"
 
 interface CtaBandProps {
   content: CtaBandContent
 }
 
 export function CtaBand({ content }: CtaBandProps) {
+  const personalDescription = usePersonalBankingCtaDescription()
+  const hasStoreCtas = content.ctas.some((cta) => cta.store)
+  const subhead = content.subhead ?? (hasStoreCtas ? personalDescription : undefined)
+
   return (
     <section className="relative overflow-hidden bg-[#F6F3EB] pb-16 pt-8 md:pb-28 md:pt-14">
       <div
@@ -30,12 +35,12 @@ export function CtaBand({ content }: CtaBandProps) {
           <h2 className={cn("mb-5 font-unbounded font-bold text-[#0F1110] md:mb-6", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
             {content.headline}
           </h2>
-          {content.subhead && (
-            <p className={cn("mx-auto max-w-3xl text-[#5F665F]", MARKETING_BODY_TEXT)}>{content.subhead}</p>
+          {subhead && (
+            <p className={cn("mx-auto max-w-3xl text-[#5F665F]", MARKETING_BODY_TEXT)}>{subhead}</p>
           )}
-          {content.ctas.some((cta) => cta.store) ? (
+          {hasStoreCtas ? (
             <div className="mx-auto mt-8 flex max-w-md justify-center">
-              <PersonaCtas ctas={content.ctas} className="w-full" align="center" />
+              <PersonaCtas ctas={content.ctas} className="w-full" align="center" description={false} />
             </div>
           ) : (
             <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">

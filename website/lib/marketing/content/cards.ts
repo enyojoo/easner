@@ -1,11 +1,10 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const cardsContent: ProductPageContent = {
   metadata: {
-    title: "Business Cards | Virtual & Physical",
+    title: "Personal & Business Cards | Virtual & Physical",
     description:
-      "Issue virtual and physical cards on Easner. Set spend controls, manage cardholders, and reconcile spend with accounts and payouts.",
+      "Explore virtual and physical cards for personal and business spending, with limits and cardholder controls. Easner cards are rolling out in phases, on approval.",
     keywords: [
       "corporate cards global business",
       "virtual cards SME",
@@ -18,12 +17,13 @@ export const cardsContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Virtual and physical cards, one ledger",
+    h1: "Manage spending with Easner cards.",
     subhead:
-      "Cards when available: set spend controls, manage cardholders, and see every purchase in the same ledger as your accounts and payouts on Easner Business or Easner Mobile.",
+      "Set spending limits, manage cardholders, and track purchases alongside your account activity. Personal and business cards are rolling out in phases, subject to availability and approval.",
+    badge: "Rolling out in phases",
     visualSlot: "mkt-hero-cards-01",
     altText: "Preview of Easner virtual and physical payment cards in the Business dashboard",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "cards_hero" }],
+    ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_hero" }],
   },
   featuresLayout: "bento",
   features: [
@@ -96,6 +96,6 @@ export const cardsContent: ProductPageContent = {
   ctaBand: {
     headline: "Add cards to your Easner account",
     subhead: "Corporate cards on Easner Business. Personal cards on Easner Mobile, when available.",
-    ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "cards_cta_band" }],
+    ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_cta_band" }],
   },
 }

@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin Payments | Receive, Send & QR Pay",
+    title: "Stablecoin Payments | Send & Receive USDC and EURC",
     description:
-      "Stablecoin speed with familiar banking screens on Easner Business – receive, send, Terminal, and QR Pay, with compliance built in.",
+      "Send and receive supported stablecoins with Easner. View network details, review quotes, and track payments alongside your business account activity.",
     keywords: [
       "stablecoin payments",
       "stablecoin payments infrastructure",
@@ -24,9 +24,9 @@ export const stablecoinContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Stablecoin payments",
+    h1: "Send and receive stablecoins with ease.",
     subhead:
-      "Run receive, send, Terminal, and QR Pay on rails your team already understands – USDC and EURC settlement with KYC/KYB and compliance built in.",
+      "Receive USDC and EURC, send funds on supported networks, and keep a clear record of each payment. Manage stablecoin activity alongside your Easner Business accounts.",
     visualSlot: "mkt-hero-stablecoin-01",
     altText: "Easner Business dashboard showing stablecoin settlement activity",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_hero" }],
@@ -64,7 +64,7 @@ export const stablecoinContent: ProductPageContent = {
   ],
   useCasesHeadline: "Where faster settlement matters",
   useCasesSubhead:
-    "Stablecoin infrastructure for teams that need faster cross-border pay-in and payout without exposing users to crypto complexity.",
+    "For teams receiving stablecoin payments or sending funds on supported networks, with transaction records alongside their other business activity.",
   useCases: [
     {
       title: "Cross-border SMEs",
@@ -99,7 +99,7 @@ export const stablecoinContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",
-    subhead: "Receive, send, Terminal, and QR Pay in familiar banking screens – without showing your users a crypto app.",
+    subhead: "Manage stablecoin payments and supported in-person collections alongside your business accounts.",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_cta_band" }],
   },
   complianceNote:

@@ -29,7 +29,7 @@ export default function HomePage() {
             name: "Easner",
             description: homeMetadata.description,
             path: "/",
-            serviceType: "Stablecoin-powered cross-border banking infrastructure",
+            serviceType: "Personal and business accounts and payments",
             areaServed: CORRIDOR_AREA_SERVED,
           }),
           faqPageJsonLd(homeFaq),
@@ -78,7 +78,7 @@ export default function HomePage() {
       <ProductGrid />
       <CorridorStory />
       <ComplianceStrip />
-      <FaqSection items={homeFaq} />
+      <FaqSection items={homeFaq} wideHeading />
       <CtaBand content={homeCtaBand} />
     </>
   )

@@ -13,13 +13,13 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
       className="flex w-full flex-col items-center gap-6 rounded-[1.5rem] border border-[#E4DED1] bg-white/70 px-4 py-8 shadow-sm"
     >
       <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-[#6F756F]">
-        Trusted by ambitious individuals, businesses, and platforms.
+        Technology & payment infrastructure
       </p>
       {logoList.length > 0 && (
         <div className="relative w-full flex justify-center">
@@ -40,6 +40,7 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
               {[...logoList, ...logoList].map((logo, index) => (
                 <div
                   key={index}
+                  aria-hidden={index >= logoList.length}
                   className="relative h-10 w-[140px] flex-shrink-0 flex items-center justify-center mx-1.5 sm:mx-2 opacity-60 grayscale hover:opacity-80 hover:grayscale-0 transition-all duration-200"
                 >
                   <Image

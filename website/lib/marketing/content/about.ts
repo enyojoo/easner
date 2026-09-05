@@ -4,9 +4,9 @@ import { CONTACT_PATH } from "../constants"
 import type { CardItem, CtaBandContent, Founder } from "../types"
 
 export const aboutMetadata = {
-  title: "About Us | Founders, Mission & Global Payments",
+  title: "About Easner | Our Founders & Mission",
   description:
-    "Meet the founders building Easner's stablecoin-powered banking infrastructure for cross-border money movement.",
+    "Meet the founders behind Easner and our mission to simplify personal and business banking through multi-currency accounts, payments, and global infrastructure.",
   keywords: [
     "Easner founders",
     "Easner company",
@@ -18,33 +18,33 @@ export const aboutMetadata = {
 }
 
 export const aboutHero = {
-  headlineLines: ["Making global money", "work locally"],
+  headlineLines: ["Built for your money.", "Ready for your world."],
   subhead:
-    "Easner is a financial technology company building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – for individuals and businesses where legacy cross-border paths are slowest and costliest.",
+    "Easner brings personal and business banking into one connected platform. We are building for everyday life in the US and a world where work, business, and personal connections reach far beyond one place.",
 }
 
 export const aboutMission = {
-  headlineLines: ["Built for corridors", "legacy rails serve worst"],
+  headlineLines: ["Your finances, connected.", "Your possibilities, open."],
   paragraphs: [
-    "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money across borders sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
-    "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to stablecoins into functioning local financial utility.",
+    "Managing money should fit the way you live and work. Personal payments, business operations, and international connections should feel like parts of the same experience.",
+    "Easner brings accounts, payments, and financial tools together through modern infrastructure and licensed banking partners. Our ambition is simple: make everyday finances easier and give people and businesses room to grow.",
   ],
-  emphasis: "Cost is won or lost at the off-ramp.",
+  emphasis: "Built for everyday life and global ambition.",
 }
 
-export const aboutPillarsHeadline = "One platform. Global in. Local out."
+export const aboutPillarsHeadline = "One platform. Personal and business."
 
 export const aboutPillars: CardItem[] = [
   {
     title: "Personal Banking",
     description:
-      "Global money for people who earn, send, and spend across borders – on Easner Mobile.",
+      "Everyday money, payments, and multiple currencies together in the Easner app.",
     link: "/personal",
   },
   {
     title: "Business Banking",
     description:
-      "Accounts, payouts, and collections for cross-border teams – on Easner Business.",
+      "Accounts, customer payments, and team finances together on Easner Business.",
     link: "/business",
   },
 ]
@@ -52,7 +52,7 @@ export const aboutPillars: CardItem[] = [
 export const aboutFoundersHeadline = "Who's building this"
 
 export const aboutFoundersSubhead =
-  "Easner started in 2025 to make cross-border money flow seamless for the people and businesses that legacy infrastructure leaves behind."
+  "Easner started in 2025 with a vision for more connected personal and business finances, built for people and companies with local roots and global ambitions."
 
 export const aboutFounders: Founder[] = [
   {

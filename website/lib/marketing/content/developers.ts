@@ -3,9 +3,9 @@ import { CONTACT_PATH } from "../constants"
 
 export const developersContent: ProductPageContent = {
   metadata: {
-    title: "Developers | Embedded Payments API",
+    title: "Embedded Banking & Payments API",
     description:
-      "Embed compliant global money rails via API – KYC/KYB, accounts, pay-in, payouts, collections, and webhooks.",
+      "Build accounts, customer collections, and global payouts into your product with Easner APIs, verification workflows, and webhooks. Talk to us about integration.",
     keywords: [
       "stablecoin API",
       "embedded payments API",
@@ -16,17 +16,17 @@ export const developersContent: ProductPageContent = {
       "remittance API",
       "payouts API Africa",
       "payments API Latin America",
-      "KYC API emerging markets",
+      "KYC and KYB API",
       "payouts API MENA",
       "payments API Southeast Asia",
     ],
   },
   hero: {
-    h1: "Compliant rails in your product",
+    h1: "Build international payments into your product.",
     subhead:
-      "The Developer Model gives fintechs, marketplaces, and platforms API access to Easner's stablecoin banking stack – verification, accounts, pay-in, payouts to supported local markets, collections, and webhooks with compliance built in.",
+      "Connect customer verification, accounts, collections, and payouts to your platform. Easner APIs and webhooks help your team build and track cross-border payment flows.",
     visualSlot: "mkt-hero-apis-01",
-    altText: "Developer reviewing Easner API documentation on dual monitors",
+    altText: "Illustrative Easner integration workflow for verification, accounts, payouts, and payment events",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
       { label: "Agency Model", href: "/partners", analyticsLocation: "developers_hero_partners" },
@@ -54,7 +54,7 @@ export const developersContent: ProductPageContent = {
   featuresLayout: "bento",
   featuresHeadline: "What you can build on",
   featuresSubhead:
-    "Identity, accounts, money movement, and platform tooling – one integration surface for embedded banking.",
+    "Connect onboarding and money movement through one integration, with events your backend can follow.",
   features: [
     {
       title: "Hosted KYC/KYB",

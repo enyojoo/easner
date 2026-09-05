@@ -31,12 +31,13 @@ export function PersonalBankingCtas({
   webAppOnly = false,
 }: PersonalBankingCtasProps) {
   const showWebApp = useShowWebAppCta()
+  const desktopWebAppOnly = webAppOnly && showWebApp
   const dynamicDescription = usePersonalBankingCtaDescription(descriptionVariant)
   const resolvedDescription =
     description === false
       ? null
       : description ??
-        (webAppOnly
+        (desktopWebAppOnly
           ? PERSONAL_BANKING_CTA_DESCRIPTION_WEB_APP_ONLY
           : dynamicDescription)
 
@@ -75,10 +76,10 @@ export function PersonalBankingCtas({
           compact ? "gap-2" : "gap-3"
         )}
       >
-        {!webAppOnly ? (
+        {!desktopWebAppOnly ? (
           <DownloadAppButton variant={downloadVariant} surface={surface} compact={compact} />
         ) : null}
-        {webAppOnly || showWebApp ? (
+        {showWebApp ? (
           <UseWebAppButton surface={surface} compact={compact} />
         ) : null}
       </div>

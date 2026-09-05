@@ -3,16 +3,16 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const invoicingContent: ProductPageContent = {
   metadata: {
-    title: "Invoicing | Global B2B Collections",
+    title: "Online Invoicing | Send Invoices & Get Paid",
     description:
-      "Invoice globally and get paid online, by bank, or by stablecoin. B2B invoicing on Easner Business with card checkout, virtual accounts, and stablecoin pay-in.",
+      "Create and track invoices with Easner Business. Accept online, bank transfer, or supported stablecoin payments from customers in the US and internationally.",
     keywords: [
       "international invoicing",
       "invoice online payment",
       "invoice stablecoin pay-in",
       "global B2B collections",
       "cross-border invoice payment",
-      "B2B collections emerging markets",
+      "business invoice payments",
       "invoice clients in Nigeria",
       "invoice clients in Mexico",
       "collect payments from China",
@@ -21,9 +21,9 @@ export const invoicingContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Invoice globally and get paid",
+    h1: "Send an invoice. Get back to business.",
     subhead:
-      "Create, send, and track invoices from Easner Business. Customers can pay online by card, with account details, or with a stablecoin deposit address, while your dashboard keeps status and reconciliation in one place.",
+      "Create and share invoices from Easner Business. Let customers pay online, by bank transfer, or with supported stablecoins, and track each payment from your dashboard.",
     visualSlot: "mkt-hero-invoicing-01",
     altText: "Business owner creating an international invoice in Easner Business",
     ctas: [
@@ -76,14 +76,14 @@ export const invoicingContent: ProductPageContent = {
     {
       title: "Customer directory",
       description:
-        "Save invoice recipients, payer references, and repeat payment context for cleaner collections.",
+        "Save customer details and payment references so you can invoice repeat clients without starting again.",
       visualSlot: "mkt-ui-invoice-customers",
       altText: "Easner invoice customer directory",
     },
   ],
   useCasesHeadline: "Who invoices on Easner Business",
   useCasesSubhead:
-    "Teams that bill internationally and need one ledger for bank and stablecoin collections.",
+    "For businesses billing customers locally and globally, with online, bank, and stablecoin payments together.",
   useCases: [
     {
       title: "Tuition and education",

@@ -3,9 +3,9 @@ import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const paymentLinksContent: ProductPageContent = {
   metadata: {
-    title: "Payment Links | Get Paid With a Link",
+    title: "Payment Links | Get Paid Without a Website",
     description:
-      "Create a shareable payment link and get paid – no website or code needed. One-time or recurring, card and bank, reconciled in one ledger in Easner Business.",
+      "Create a shareable payment link with Easner Business. Collect one-time or recurring payments without a website or code, and track what you receive.",
     keywords: [
       "payment link generator",
       "get paid with a link",
@@ -21,9 +21,9 @@ export const paymentLinksContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Get paid with a link",
+    h1: "Get paid with a link.",
     subhead:
-      "Create a shareable payment page in minutes – no website or code needed. One-time or recurring, card and bank, with Easner as the merchant on record.",
+      "Create a payment page and share it by email, message, or social media. Collect one-time or recurring payments through Easner Business, without a website or code.",
     visualSlot: "mkt-hero-paylinks-01",
     altText: "Easner Payment Links hosted pay page",
     ctas: [
@@ -64,7 +64,7 @@ export const paymentLinksContent: ProductPageContent = {
   ],
   useCasesHeadline: "Built for anyone who needs to get paid",
   useCasesSubhead:
-    "Easner Payment Links is for teams and individuals who want to collect money today – no website, no code.",
+    "For freelancers, creators, and businesses collecting customer payments through an eligible Easner Business account.",
   useCases: [
     {
       title: "Freelancers and consultants",
@@ -81,7 +81,7 @@ export const paymentLinksContent: ProductPageContent = {
     },
     {
       title: "Small businesses without a website",
-      description: "Start collecting online payments today – add Easner Checkout later if you build a site.",
+      description: "Collect online payments with a link, and add Easner Checkout when you build a website.",
     },
     {
       title: "Community and mission collections",
@@ -91,6 +91,7 @@ export const paymentLinksContent: ProductPageContent = {
   faq: [
     {
       question: "Do I need a website?",
+      links: [{ label: "Explore website Checkout", href: "/checkout" }],
       answer:
         "No. Payment Links is Easner's no-code option – you get a shareable hosted page with no website or code required. If you already have a website, Easner Checkout lets you embed payments directly.",
     },

@@ -1,22 +1,22 @@
 /** Canonical messaging – import for copy, FAQ, llms.txt, and JSON-LD. */
 
 export const EASNER_CANONICAL_DEFINITION =
-  "Easner is stablecoin-powered banking and payment infrastructure for global cross-border money movement – personal and business accounts, payouts, collections, cards, and partner APIs – connecting US, EU, and UK rails to supported local markets worldwide, with compliance built in."
+  "Easner is a global financial technology platform for personal and business banking. Manage everyday finances, hold multiple currencies, receive payments, and pay people and businesses in the US and around the world. Banking and payment services are provided by licensed partners."
 
 export const EASNER_CANONICAL_DEFINITION_SHORT =
-  "Stablecoin-powered banking infrastructure for cross-border money movement – accounts, payouts, collections, and cards, with compliance built in."
+  "Personal and business banking for everyday finances and global ambitions. Manage accounts, receive payments, and pay people and businesses in one place."
 
 export const EASNER_ONE_LINE_THESIS =
-  "Easner connects global and local financial rails – so businesses and individuals can collect, pay, and manage money across borders from one platform."
+  "Easner brings personal and business finances together with accounts and payments for everyday life and global growth."
 
 export const EASNER_UX_LINE =
-  "Modern mobile and business banking – global reach, local payout depth, familiar screens."
+  "Personal and business banking for life, work, and everything next."
 
 export const EASNER_AUDIENCE_A =
-  "People and businesses operating globally – multi-currency accounts, send and receive, and cards with developed-market banking clarity."
+  "Individuals who want to manage everyday finances, get paid, and send money from one account, in the US and around the world."
 
 export const EASNER_AUDIENCE_B =
-  "Companies paying across borders – pay suppliers, contractors, and teams in supported local markets from one ledger with KYC/KYB built in."
+  "Startups, small businesses, and established companies that want accounts, customer payments, team payments, and financial records in one dashboard."
 
 export const EASNER_PRODUCT_PERSONAL = "Easner Personal Banking"
 export const EASNER_PRODUCT_BUSINESS = "Easner Business Banking"
@@ -36,6 +36,9 @@ export const EASNER_SIGNUP_ELIGIBILITY_FAQ =
 
 /** Primary SEO keywords (hero/meta). */
 export const EASNER_PRIMARY_KEYWORDS = [
+  "personal banking app",
+  "business banking United States",
+  "multi-currency personal account",
   "global cross-border payments",
   "international business banking",
   "cross-border B2B payouts",
@@ -46,8 +49,8 @@ export const EASNER_PRIMARY_KEYWORDS = [
 
 /** Supporting SEO keywords (body, FAQ, llms.txt). */
 export const EASNER_SUPPORTING_KEYWORDS = [
-  "emerging markets payments",
-  "diaspora banking",
+  "everyday money management",
+  "personal banking app",
   "white-label remittance",
   "embedded payouts API",
   "send money to Nigeria",

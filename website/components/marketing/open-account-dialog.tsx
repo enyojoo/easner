@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
+import { useDialogFocus } from "@/hooks/use-dialog-focus"
 import { createPortal } from "react-dom"
 import { ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ interface OpenAccountDialogProps {
 }
 
 export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccountDialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     if (!open) return
 
@@ -40,16 +42,7 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
     }
   }, [open])
 
-  useEffect(() => {
-    if (!open) return
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange(false)
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [open, onOpenChange])
+  useDialogFocus(open, dialogRef, onOpenChange)
 
   if (!open) return null
   if (typeof document === "undefined") return null
@@ -59,10 +52,12 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
       <button
         type="button"
         aria-label="Close dialog"
+        tabIndex={-1}
         className="absolute inset-0 bg-[#0F1110]/45 backdrop-blur-[2px]"
         onClick={() => onOpenChange(false)}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="open-account-title"
@@ -71,10 +66,10 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
         <div className="flex shrink-0 items-start justify-between border-b border-[#E4DED1] px-4 py-4 sm:px-8 sm:py-5">
           <div className="min-w-0 flex-1 pr-3 text-left sm:pr-4">
             <h2 id="open-account-title" className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
-              Begin your experience
+              Open your Easner account
             </h2>
             <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2 sm:text-base">
-              Choose the Easner banking that fits your needs.
+              Choose a personal or business account.
             </p>
           </div>
           <button

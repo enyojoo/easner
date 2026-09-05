@@ -1,74 +1,58 @@
 # Easner
 
-> Easner is stablecoin-powered banking and payment infrastructure for global cross-border money movement – personal and business accounts, payouts, collections, cards, and partner APIs – connecting US, EU, and UK rails to supported local markets worldwide, with compliance built in. Easner is a fintech company, not a bank.
+> Easner is a global financial technology platform for personal and business banking. Manage everyday finances, hold multiple currencies, receive payments, and pay people and businesses in the US and around the world. Banking and payment services are provided by licensed partners. Easner is not a bank.
 
 ## What Easner is
 
-Easner connects global and local financial rails – so businesses and individuals can collect, pay, and manage money across borders from one platform.
+Easner has two core products: Easner Personal Banking and Easner Business Banking. Personal Banking covers accounts, cards, and sending and receiving money. Business Banking brings accounts, payment collections, cards, and payouts together, including Invoicing, Checkout, Payment Links, and Payroll. Partners and developers can build with Easner through branded programs and APIs. Dedicated pages explain each capability.
 
 ## Who Easner is for
 
-- **Operating globally:** People and businesses in Nigeria, China, the Philippines, India, Mexico, the US, UK, EU, and beyond who need multi-currency accounts, send/receive, and cards with modern banking clarity.
-- **Paying across borders:** Companies with operations in the US, EU, or UK that need to pay suppliers, contractors, and teams in supported local markets – from one ledger, with compliance built in.
-- **Cross-border trade and outsourcing:** Businesses that import goods or buy from manufacturers abroad (including China), and companies with offshore or nearshore contractors, agencies, and remote teams – paying suppliers, freelancers, and payroll internationally from one dashboard.
-- **Broad payout reach:** Easner accepts signups and payouts broadly worldwide, subject to standard KYC/KYB and sanctions screening – see the KYC/KYB and AML Policy for the current list of restricted jurisdictions rather than a fixed country allowlist.
+- **Personal customers:** People managing everyday finances, receiving payments, and sending money to people and businesses, at home in the US and around the world.
+- **Business customers:** US startups, small businesses, and established companies, as well as businesses operating globally. Easner brings accounts, customer payments, invoicing, team payments, and reporting into one dashboard.
+- **Partners and developers:** Companies building branded financial products or embedding accounts and payments through Easner's infrastructure and APIs.
 
-## Regions
-
-- **North America (US):** Multi-currency USD business accounts, global supplier payouts, embedded payments API.
-- **Europe (EU, UK):** EUR and GBP business accounts, cross-border B2B collections, stablecoin (EURC) settlement.
-- **Africa (Nigeria, and more as we expand):** Diaspora remittances, local payout connectivity, stablecoin (USDC) rails behind familiar banking screens.
-- **Latin America (Mexico, and more as we expand):** Cross-border supplier payouts, invoicing, and payroll for exporters and remote teams.
-- **Asia-Pacific (Philippines, India, China, and more as we expand):** Diaspora banking, contractor payroll, and B2B invoicing with bank or stablecoin pay-in.
-
-Availability varies by jurisdiction, verification tier, and partner rules – see Corridor coverage below.
+Easner accepts personal and business signups from most countries worldwide. Account and product availability depend on verification, jurisdiction, approval, and partner rules. The KYC/KYB and AML Policy lists restricted jurisdictions.
 
 ## Products
 
-- [Download Easner Banking](https://www.easner.com/app): Smart app link – iOS App Store or Google Play
-- [Personal Banking](https://www.easner.com/personal): Easner Mobile – mobile banking for global money; send, receive, and manage funds in global and local currencies via bank transfers and stablecoin
-- [Business Banking](https://www.easner.com/business): Cross-border business banking – multi-currency accounts, payouts, invoicing, and team access for global and local operators
-- [Checkout](https://www.easner.com/checkout): Embed checkout on your own website – one-time, subscription, and custom payments, with Easner as the merchant on record
-- [Payment Links](https://www.easner.com/payment-links): No-code, shareable payment links – get paid without a website, one-time or recurring
-- [Payroll](https://www.easner.com/payroll): Cross-border payroll with maker-checker approvals, pay stubs, and payee self-service via Easner Mobile
-- [Stablecoin Payments](https://www.easner.com/stablecoin): Stablecoin speed with familiar banking screens – receive, send, Terminal, and QR Pay
-- [Invoicing](https://www.easner.com/invoicing): Global B2B invoicing with bank or stablecoin pay-in
-- [Cards](https://www.easner.com/cards): Virtual and physical cards with spend controls on one ledger, rolling out in phases
-- [Partners](https://www.easner.com/partners): Branded cross-border programs via the Agency Model – compliance, corridors, and local payout connectivity for remittance, OTC, and platform partners
-- [Developers](https://www.easner.com/developers): Embedded payments API for KYC/KYB, accounts, pay-in, payouts to supported local markets, and webhooks
+- [Download Easner](https://www.easner.com/app): Get the iOS or Android app. Mobile visitors are directed to the relevant app store; desktop visitors can scan a QR code or request a download link.
+- [Personal Banking](https://www.easner.com/personal): Everyday money management, multiple currencies, receiving payments, and sending money through the Easner app. Web access is also available on desktop.
+- [Business Banking](https://www.easner.com/business): Accounts, customer payments, supplier and team payments, invoices, and financial records in one dashboard.
+- [Checkout](https://www.easner.com/checkout): Accept one-time and subscription payments on your website, connected to Easner Business.
+- [Payment Links](https://www.easner.com/payment-links): Share a payment link to get paid without a website or code, for one-time or recurring payments.
+- [Payroll](https://www.easner.com/payroll): Pay contractors and employees with approval workflows, pay stubs, and payment records.
+- [Stablecoin Payments](https://www.easner.com/stablecoin): Send and receive supported stablecoins with asset, network, and payment details in one place.
+- [Invoicing](https://www.easner.com/invoicing): Create invoices and let customers pay online, by bank transfer, or with supported stablecoins.
+- [Cards](https://www.easner.com/cards): Personal and business cards with spending controls. Rolling out in phases, subject to availability and approval.
+- [Partners](https://www.easner.com/partners): Branded payment programs through the Agency Model, with infrastructure and operational support.
+- [Developers](https://www.easner.com/developers): APIs for verification, accounts, collections, payouts, and webhooks. Sandbox access and API reference are provided during commercial onboarding.
 
-## Corridor coverage
+## Global payments
 
-Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and China, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules.
+Easner connects US, EU, and UK payment infrastructure with supported destinations around the world. Payment methods and currencies vary by account and destination. Payout coverage and account-opening eligibility are distinct; check the product information and KYC/KYB and AML Policy for details.
 
 ## Frequently asked
 
-- **Which countries are supported?** Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and China, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules.
-- **Can businesses use Easner to pay suppliers in China or other manufacturing hubs?** Yes. Easner Business Banking supports paying suppliers, manufacturers, and vendors internationally, subject to standard verification and sanctions screening.
-- **Does Easner work for offshore and nearshore outsourcing payments?** Yes. Companies use Easner Business Banking and Payroll to pay offshore and nearshore contractors, agencies, and remote teams from one dashboard, with compliance built in.
-- **Is Easner a bank?** No. Easner is a financial technology company. Regulated banking, payment, and verification services are provided by licensed partners.
-- **Do I need to understand crypto to use Easner?** No. Easner is designed around familiar banking screens. Stablecoin infrastructure may power settlement behind the scenes.
-
-## Key differentiators
-
-- Stablecoin-powered settlement behind familiar banking screens – not a crypto trading product
-- Easner is the merchant on record for Checkout and Payment Links – businesses collect online payments without their own payment processor account
-- KYC/KYB, AML screening, limits, and transaction controls built in
-- Personal banking (Easner Mobile), business banking (Easner Business), and partner programs (Easner for Partners)
+- **Can I use Easner for everyday finances in the US?** Yes. Easner serves personal and business customers in the US. Manage balances, receive payments, and pay people and businesses, with international capabilities when you need them.
+- **Does Easner offer personal and business accounts?** Yes. Easner Personal is for individual finances; Easner Business includes company accounts, payments, invoicing, payroll, and team access.
+- **Is Easner a bank?** No. Easner is a financial technology company. Banking and payment services are provided by licensed partners.
+- **Do I need to understand crypto to use Easner?** No. Easner is designed around familiar banking screens. Stablecoin infrastructure may support money movement where enabled.
+- **What fees apply?** Applicable fees and exchange rates are shown before transfer confirmation. Timing depends on the payment method, destination, banking hours, and verification or partner checks.
 
 ## Company
 
-- [Home](https://www.easner.com/): Global cross-border banking, payouts, collections, cards, and stablecoin rails
-- [About](https://www.easner.com/about): Founders, mission, and global payments infrastructure
-- [Contact](https://www.easner.com/contact): Sales, demos, and partnership inquiries
+- [Home](https://www.easner.com/): Personal and business banking for everyday finances and global ambitions.
+- [About](https://www.easner.com/about): Founders, mission, and the Easner platform.
+- [Contact](https://www.easner.com/contact): Sales, support, and partnership inquiries.
 
 ## Legal
 
-- [Terms of Service](https://www.easner.com/terms): Terms for Easner Mobile, Easner Business, Easner for Partners, and related services
-- [Privacy Policy](https://www.easner.com/privacy): How Easner collects, uses, shares, and protects information
-- [Delete Account](https://www.easner.com/delete-account): How to delete an Easner Personal Banking account and what data is deleted or retained
-- [KYC/KYB and AML Policy](https://www.easner.com/compliance): Verification, screening, and transaction controls
+- [Terms of Service](https://www.easner.com/terms)
+- [Privacy Policy](https://www.easner.com/privacy)
+- [Delete Account](https://www.easner.com/delete-account)
+- [KYC/KYB and AML Policy](https://www.easner.com/compliance)
 
 ## Optional
 
-- [Sitemap](https://www.easner.com/sitemap.xml): Full list of public pages
+- [Sitemap](https://www.easner.com/sitemap.xml): Public website pages.

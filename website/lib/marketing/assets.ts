@@ -157,11 +157,7 @@ export function getAssetObjectPosition(assetId: string): string | undefined {
   return ASSET_OBJECT_POSITION[assetId]
 }
 
-export function getAssetImageFit(
-  _assetId: string,
-  _kind: MarketingVisualKind,
-  _fill: boolean
-): "cover" | "contain" {
+export function getAssetImageFit(): "cover" | "contain" {
   return "cover"
 }
 

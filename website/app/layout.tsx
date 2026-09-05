@@ -5,7 +5,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { MarketingIntercom } from "@/components/marketing-intercom"
 import { PostHogProvider } from "@/components/posthog-provider"
-import { EASNER_CANONICAL_DEFINITION_SHORT, EASNER_PRIMARY_KEYWORDS, EASNER_SUPPORTING_KEYWORDS } from "@/lib/marketing/constants"
+import { homeMetadata } from "@/lib/marketing/content/home"
 import "./globals.css"
 
 const unbounded = Unbounded({
@@ -16,18 +16,18 @@ const unbounded = Unbounded({
 
 export const metadata: Metadata = {
   title: {
-    default: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
+    default: homeMetadata.title,
     template: "%s – Easner",
   },
-  description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
-  keywords: [...EASNER_PRIMARY_KEYWORDS, ...EASNER_SUPPORTING_KEYWORDS].join(", "),
+  description: homeMetadata.description,
+  keywords: homeMetadata.keywords,
   formatDetection: { email: false, address: false, telephone: false },
   applicationName: "Easner",
   metadataBase: new URL("https://www.easner.com"),
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
-    description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
+    title: homeMetadata.title,
+    description: homeMetadata.description,
     url: "https://www.easner.com",
     siteName: "Easner",
     locale: "en_US",
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@easnerbanking",
-    title: "Easner | Cross-Border Banking, Payouts & Stablecoin Rails",
-    description: `${EASNER_CANONICAL_DEFINITION_SHORT} Easner is not a bank.`,
+    title: homeMetadata.title,
+    description: homeMetadata.description,
     creator: "@easnerbanking",
   },
   robots: { index: true, follow: true },

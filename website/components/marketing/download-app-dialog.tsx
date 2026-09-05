@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useRef } from "react"
+import { useDialogFocus } from "@/hooks/use-dialog-focus"
+import { useShowWebAppCta } from "@/hooks/use-download-platform"
 import { createPortal } from "react-dom"
 import Link from "next/link"
 import { X } from "lucide-react"
@@ -30,8 +32,10 @@ export function DownloadAppDialog({
   src,
   surface = "dialog",
 }: DownloadAppDialogProps) {
-  const closeRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(open, dialogRef, onOpenChange)
   const showQr = !isMobilePlatform(platform)
+  const showWebApp = useShowWebAppCta()
 
   useLayoutEffect(() => {
     if (!open) return
@@ -58,14 +62,7 @@ export function DownloadAppDialog({
   useEffect(() => {
     if (!open) return
     posthog.capture("download_dialog_view", { surface, platform })
-    closeRef.current?.focus()
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange(false)
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [open, onOpenChange, platform, surface])
+  }, [open, platform, surface])
 
   if (!open) return null
   if (typeof document === "undefined") return null
@@ -75,10 +72,12 @@ export function DownloadAppDialog({
       <button
         type="button"
         aria-label="Close dialog"
+        tabIndex={-1}
         className="absolute inset-0 bg-[rgba(15,17,16,0.4)] backdrop-blur-[2px]"
         onClick={() => onOpenChange(false)}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="download-app-title"
@@ -88,7 +87,6 @@ export function DownloadAppDialog({
         )}
       >
         <button
-          ref={closeRef}
           type="button"
           aria-label="Close"
           onClick={() => onOpenChange(false)}
@@ -179,7 +177,7 @@ export function DownloadAppDialog({
 
           <DownloadEmailForm className="mt-3" src={src} analyticsLocation={`${surface}-dialog_email`} />
 
-          {showQr ? (
+          {showWebApp ? (
             <p className="mt-5 text-sm leading-6 text-[#6F756F]">
               Prefer not to install?{" "}
               <PersonalAppLink

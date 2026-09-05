@@ -3,7 +3,11 @@ import { partnersContent } from "@/lib/marketing/content/partners"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
-export const metadata = marketingMetadata({ metadata: partnersContent.metadata, path: "/partners" })
+export const metadata = marketingMetadata({
+  metadata: partnersContent.metadata,
+  path: "/partners",
+  titleAbsolute: partnersContent.metadata.title,
+})
 
 export default function PartnersPage() {
   return (

@@ -18,25 +18,17 @@ function setCrossSubdomainCookie(name: string, value: string) {
  * `.easner.com` cookies so business/app can read it without URL params.
  *
  * - Inbound UTMs (e.g. /business?utm_source=google) are forwarded as-is.
- * - Site-originated clicks use easner_website / referral / {campaign}.
+ * - Untagged organic/direct visits keep their acquisition source. Internal CTA
+ *   placement is recorded separately, never as a new acquisition campaign.
  * - PostHog distinct id is written to `easner_ph_id` (URL-free alternative to __ph_id).
  */
 export function registerOutboundAttribution(campaign: string, destination: OutboundDestination) {
   if (typeof window === "undefined") return
 
   const inboundUtms = readSessionUtms()
-  const hasInboundUtms = Object.keys(inboundUtms).length > 0
-
-  const utms = hasInboundUtms
-    ? inboundUtms
-    : {
-        utm_source: "easner_website",
-        utm_medium: "referral",
-        utm_campaign: campaign,
-      }
 
   posthog.register({
-    ...utms,
+    ...inboundUtms,
     easner_outbound_ref: campaign,
     easner_outbound_dest: destination,
   })
@@ -45,7 +37,7 @@ export function registerOutboundAttribution(campaign: string, destination: Outbo
   setCrossSubdomainCookie(OUTBOUND_DEST_COOKIE, destination)
 
   for (const key of UTM_KEYS) {
-    const value = utms[key]
+    const value = inboundUtms[key]
     if (value) setCrossSubdomainCookie(key, value)
   }
 

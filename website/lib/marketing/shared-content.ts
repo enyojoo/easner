@@ -11,19 +11,19 @@ export const REGULATORY_FOOTER_PARAGRAPHS = [
 ]
 
 export const COMPLIANCE_STRIP = {
-  headline: "Compliance is built in, not added later.",
+  headline: "Verification at every step.",
   subhead:
-    "Verification, screening, limits, and transaction controls are part of the Easner account flow – so money movement can scale with confidence.",
+    "Easner verifies individuals and businesses and screens transactions. Banking and payment services are provided by licensed partners, with access based on your location and verification.",
   bullets: [
-    "KYC/KYB onboarding built into the product experience",
+    "Identity and business verification during onboarding",
     "AML and sanctions screening on customers and transactions",
-    "Banking, wallet, and payment rails connected",
+    "Banking and payment services through licensed partners",
     "Access based on verification, jurisdiction, and product availability",
   ],
 }
 
 export const DEFAULT_CTA_BAND: CtaBandContent = {
-  headline: "Ready to move money globally?",
+  headline: "Your next chapter starts here.",
   subhead:
     "Open an Easner account, or talk to us about Easner for Partners.",
   ctas: [
@@ -74,21 +74,21 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Personal Banking",
     description:
-      "Global personal banking for earners across borders – receive, send, and manage money on supported international corridors.",
+      "Manage everyday money, get paid, and send payments from one personal account with multiple currencies.",
     link: "/personal",
     icon: "mkt-thumb-personal",
   },
   {
     title: "Business Banking",
     description:
-      "Cross-border business banking – accounts, payouts, invoicing, Terminal, QR Pay, teams, and reporting from one dashboard.",
+      "Collect customer payments, pay suppliers and teams, and track your finances from one dashboard.",
     link: "/business",
     icon: "mkt-thumb-business",
   },
   {
     title: "Checkout",
     description:
-      "Embed checkout on your own website – one-time, subscription, and custom payments, with Easner as the merchant on record.",
+      "Accept one-time and subscription payments on your website, connected to Easner Business.",
     link: "/checkout",
     icon: "mkt-thumb-checkout",
   },
@@ -102,7 +102,7 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Whitelabel programs",
     description:
-      "Launch branded cross-border products with compliance, corridors, and operational support.",
+      "Run international payment programs under your brand, with infrastructure and operational support from Easner.",
     link: "/partners",
     icon: "mkt-thumb-partners",
   },
@@ -112,28 +112,28 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Stablecoin Payments",
     description:
-      "Stablecoin speed with banking screens – receive, send, Terminal, and QR Pay.",
+      "Send and receive supported stablecoins, with network details and payment records in one place.",
     link: "/stablecoin",
     icon: "mkt-thumb-stablecoin",
   },
   {
     title: "Invoicing",
     description:
-      "Invoice globally and get paid by bank or stablecoin – with status and reconciliation in one dashboard.",
+      "Send customers an invoice they can pay online, by bank, or with supported stablecoins.",
     link: "/invoicing",
     icon: "mkt-thumb-invoicing",
   },
   {
     title: "Payroll",
     description:
-      "Pay contractors and employees in supported corridors – approvals, pay stubs, and reconciliation in one ledger.",
+      "Pay your team with approval workflows, pay stubs, and clear payment records.",
     link: "/payroll",
     icon: "mkt-thumb-payroll",
   },
   {
     title: "Cards",
     description:
-      "Corporate and personal cards with spend controls, cardholder management, and reporting built in.",
+      "Manage personal and business spending with card controls. Rolling out in phases, subject to approval.",
     link: "/cards",
     icon: "mkt-thumb-cards",
   },

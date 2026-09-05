@@ -3,7 +3,11 @@ import { personalContent } from "@/lib/marketing/content/personal"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
-export const metadata = marketingMetadata({ metadata: personalContent.metadata, path: "/personal" })
+export const metadata = marketingMetadata({
+  metadata: personalContent.metadata,
+  path: "/personal",
+  titleAbsolute: personalContent.metadata.title,
+})
 
 export default function PersonalPage() {
   return (
@@ -15,7 +19,7 @@ export default function PersonalPage() {
             name: "Easner Personal Banking",
             description: personalContent.metadata.description,
             path: "/personal",
-            serviceType: "Cross-border personal banking",
+            serviceType: "Personal banking, multi-currency accounts and payments",
             areaServed: CORRIDOR_AREA_SERVED,
           }),
           breadcrumbJsonLd([

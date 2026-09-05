@@ -1,11 +1,11 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL, EASNER_SUPPORTED_LOCAL_MARKETS } from "../constants"
+import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const payrollContent: ProductPageContent = {
   metadata: {
-    title: "Payroll | Cross-Border Payroll & Approvals",
+    title: "Global Payroll | Pay Employees & Contractors",
     description:
-      "Pay contractors and employees across borders with approvals, pay stubs, and reconciliation built in – on one ledger with Easner Business.",
+      "Pay employees and contractors with Easner Business, locally and internationally. Manage payroll approvals, generate pay stubs, and track team payments.",
     keywords: [
       "cross-border payroll",
       "international contractor payroll",
@@ -28,9 +28,9 @@ export const payrollContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Payroll for cross-border teams",
+    h1: "Your team. Your payroll. Together.",
     subhead:
-      "Run payroll for contractors and employees in supported corridors – approvals, pay stubs, and reconciliation on the same ledger as your accounts and payouts.",
+      "Pay contractors and employees in supported markets from Easner Business. Review and approve each payroll run, generate pay stubs, and keep your payment records together.",
     visualSlot: "mkt-hero-payroll-01",
     altText: "Easner Business payroll run overview",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "payroll_hero" }],
@@ -67,7 +67,7 @@ export const payrollContent: ProductPageContent = {
     },
   ],
   useCasesHeadline: "Built for distributed teams",
-  useCasesSubhead: `Pay contractors and employees in ${EASNER_SUPPORTED_LOCAL_MARKETS} with clear fees and status tracking.`,
+  useCasesSubhead: "Pay contractors and employees with approvals, pay stubs, and payment records in one place.",
   useCases: [
     {
       title: "Remote-first companies",

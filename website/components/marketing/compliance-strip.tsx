@@ -4,6 +4,7 @@ import { ShieldCheck } from "lucide-react"
 import { COMPLIANCE_STRIP } from "@/lib/marketing/shared-content"
 import { MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { MarketingLink } from "./marketing-link"
 
 interface ComplianceStripProps {
   note?: string
@@ -27,6 +28,9 @@ export function ComplianceStrip({ note }: ComplianceStripProps) {
                 </li>
               ))}
             </ul>
+            <MarketingLink href="/compliance" analyticsLocation="compliance_policy" ctaLabel="Learn about verification and eligibility" className="mt-6 inline-block text-sm font-semibold text-[#8DD0FF] underline underline-offset-4">
+              Learn about verification and eligibility
+            </MarketingLink>
             {note && <p className="mt-6 text-sm leading-6 text-white/55">{note}</p>}
           </div>
           <div

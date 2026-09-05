@@ -25,6 +25,7 @@ export interface Founder {
 export interface FaqItem {
   question: string
   answer: string
+  links?: { label: string; href: string }[]
 }
 
 export interface Feature {

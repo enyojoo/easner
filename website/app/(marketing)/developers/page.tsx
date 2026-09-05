@@ -12,10 +12,10 @@ export default function DevelopersPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({
-            name: "Easner for Partners – Developer Model",
+            name: "Easner API",
             description: developersContent.metadata.description,
             path: "/developers",
-            serviceType: "Embedded payments API",
+            serviceType: "Embedded banking and payments API",
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },

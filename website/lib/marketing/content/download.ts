@@ -1,7 +1,7 @@
 export const downloadMetadata = {
-  title: "Download Easner Banking",
+  title: "Download Easner Personal Banking | iOS & Android",
   description:
-    "Download the Easner app for iPhone or Android. Scan the QR code or get a download link by email.",
+    "Download the Easner Personal Banking app for iPhone or Android to manage money and send payments. Scan the QR code or get a download link by email.",
   keywords: [
     "Easner download",
     "Easner Banking app",

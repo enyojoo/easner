@@ -12,6 +12,7 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
     name: "Easner",
     legalName: "Easner Group, Inc.",
     url: SITE_URL,
@@ -29,11 +30,13 @@ export function websiteJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
     name: "Easner",
     url: SITE_URL,
     description: EASNER_CANONICAL_DEFINITION,
     publisher: {
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "Easner",
       url: SITE_URL,
     },
@@ -47,9 +50,8 @@ export const GLOBAL_AREA_SERVED = ["US", "EU", "GB"]
  * Full live payout-corridor footprint (ISO 3166-1 alpha-2), sourced from the Office
  * payout_corridors admin panel (confirmed 2026-09-05). This is intentionally broader than
  * EASNER_SUPPORTED_LOCAL_MARKETS, which names only the handful of markets featured in
- * visible page copy — this list backs schema.org areaServed only (not rendered on-page),
- * so it can and should track the real, current corridor footprint. Update when Office
- * corridor coverage changes materially.
+ * visible page copy. The schema builder narrows this list to those featured markets
+ * so structured data matches the page. Update when Office corridor coverage changes.
  */
 export const CORRIDOR_AREA_SERVED = [
   // Sender rails
@@ -82,14 +84,20 @@ interface FinancialServiceInput {
 export function financialServiceJsonLd({ name, description, path, serviceType, areaServed = GLOBAL_AREA_SERVED }: FinancialServiceInput) {
   return {
     "@context": "https://schema.org",
-    "@type": "FinancialService",
+    "@type": "Service",
+    "@id": `${SITE_URL}${path}#service`,
     name,
     description,
     url: `${SITE_URL}${path}`,
     serviceType,
-    areaServed,
+    // Describe the markets featured in visible copy. Payment coverage is not
+    // unconditional eligibility for every account or product.
+    areaServed: areaServed
+      .filter((name) => ["US", "GB", "EU", "NG", "MX", "PH", "IN", "CN"].includes(name))
+      .map((name) => ({ "@type": name === "EU" ? "AdministrativeArea" : "Country", name: name === "EU" ? "European Union" : name })),
     provider: {
       "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
       name: "Easner",
       url: SITE_URL,
     },
@@ -131,6 +139,6 @@ export function faqPageJsonLd(items: FaqItem[]) {
 
 export function jsonLdScript(data: Record<string, unknown> | Record<string, unknown>[]) {
   return {
-    __html: JSON.stringify(data),
+    __html: JSON.stringify(data).replace(/</g, "\\u003c"),
   }
 }

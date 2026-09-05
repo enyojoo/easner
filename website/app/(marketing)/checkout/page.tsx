@@ -15,7 +15,7 @@ export default function CheckoutPage() {
             name: "Easner Checkout",
             description: checkoutContent.metadata.description,
             path: "/checkout",
-            serviceType: "Merchant of record checkout for platforms",
+            serviceType: "Online checkout for one-time and subscription payments",
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },

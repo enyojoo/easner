@@ -6,6 +6,7 @@
     "build": "next build --webpack",
     "dev": "next dev --port 3000",
     "lint": "eslint .",
+    "check:seo": "python3 scripts/check-seo.py",
     "start": "next start --port 3000",
     "sync:legal": "node scripts/sync-legal-content.mjs"
   },

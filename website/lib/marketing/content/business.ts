@@ -1,12 +1,15 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL, EASNER_SUPPORTED_LOCAL_MARKETS } from "../constants"
+import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
-    title: "Business Banking | Multi-Currency & Payouts",
+    title: "Easner Business Banking | Accounts, Payments & Payouts",
     description:
-      "Cross-border business banking on one dashboard – multi-currency accounts, payouts, invoicing, and team access, with KYC/KYB built in.",
+      "Manage multi-currency accounts, collect customer payments, send invoices, and pay suppliers and teams with Easner Business Banking, in the US and globally.",
     keywords: [
+      "business banking United States",
+      "business account for startups",
+      "business financial management",
       "cross-border B2B payouts",
       "pay international suppliers",
       "multi-currency business account",
@@ -32,9 +35,9 @@ export const businessContent: ProductPageContent = {
   hero: {
     h1: "Global banking for business",
     subhead:
-      "One dashboard for accounts, payouts, and collections across global and local corridors – whether you operate internationally or pay teams in supported markets, with KYC/KYB and compliance built in.",
+      "Bring your accounts, customer payments, invoices, and team finances together. Easner gives you one place to run your business, from daily operations to global growth.",
     visualSlot: "mkt-hero-business-01",
-    altText: "Small business founder reviewing Easner Business dashboard",
+    altText: "Easner Business dashboard showing currency balances, an invoice payment, and a supplier payout",
     ctas: [
       { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_hero" },
       { label: "See invoicing", href: "/invoicing", analyticsLocation: "business_hero_invoicing" },
@@ -45,14 +48,14 @@ export const businessContent: ProductPageContent = {
     {
       title: "Multi-currency accounts",
       description:
-        "Stablecoin powered accounts with pay-in via virtual account details and stablecoin flows.",
+        "Receive payments using available account details or supported stablecoin deposits, and manage your currency balances in one place.",
       visualSlot: "mkt-ui-business-accounts",
       altText: "Easner Business multi-currency accounts",
     },
     {
-      title: "Send and payouts",
+      title: "Supplier and team payments",
       description:
-        "Pay suppliers, contractors, and business counterparties globally through bank, stablecoin, and regional rails where available.",
+        "Pay suppliers and contractors through supported bank, stablecoin, and local payment methods. Track payments alongside the rest of your business activity.",
       visualSlot: "mkt-ui-business-send",
       altText: "Easner Business send and payout screen",
     },
@@ -64,20 +67,20 @@ export const businessContent: ProductPageContent = {
       altText: "Easner Business invoicing, Checkout, Payment Links, Terminal, and QR Pay collections",
     },
     {
-      title: "Team and reporting",
+      title: "Team access and reporting",
       description:
-        "Role-based access, customer records, transaction history, and clean reporting for finance operations.",
+        "Give each teammate the right access, save customer details, and review your payment history and reports.",
       visualSlot: "mkt-ui-business-team",
       altText: "Easner Business team and reporting dashboard",
     },
   ],
   useCasesHeadline: "Who runs finance on Easner Business",
   useCasesSubhead:
-    "Local-market operators running global ops and US, EU, and UK companies paying suppliers and teams in supported corridors – all from one dashboard.",
+    "For US startups, growing businesses, and established teams working locally and around the world.",
   useCases: [
     {
-      title: "Pay into local markets",
-      description: `US, EU, and UK companies pay contractors and suppliers in ${EASNER_SUPPORTED_LOCAL_MARKETS} – with clear fees, status tracking, and one ledger.`,
+      title: "Startups and growing businesses",
+      description: "Keep customer payments, vendor bills, and team access together as your business grows.",
     },
     {
       title: "Global trade operators",
@@ -92,10 +95,10 @@ export const businessContent: ProductPageContent = {
     {
       title: "Faith and nonprofit organizations",
       description:
-        "Collect diaspora donations and mission support from abroad, then pay field teams and partners across borders – from one Easner Business account.",
+        "Collect donations and mission support, then pay teams and partners from one Easner Business account.",
     },
     {
-      title: "Cross-border payroll",
+      title: "Team payments",
       description: "Run payroll for contractors and employees from the same account – approvals, pay stubs, and reconciliation.",
       link: "/payroll",
     },
@@ -107,7 +110,7 @@ export const businessContent: ProductPageContent = {
     {
       title: "Software and SaaS",
       description:
-        "Hold USD or EUR balances, pay global vendors, and collect from international customers where Easner is enabled.",
+        "Manage USD and EUR balances, pay vendors, and collect customer payments from one business account.",
     },
     {
       title: "Selling on your own website",
@@ -116,13 +119,13 @@ export const businessContent: ProductPageContent = {
     },
     {
       title: "No website yet",
-      description: "Share a Payment Link and get paid today – no website or code needed.",
+      description: "Share a Payment Link to collect customer payments without a website or code.",
       link: "/payment-links",
     },
   ],
   ctaBand: {
     headline: "Open your Easner Business account",
-    subhead: "Accounts, payouts, collections, and team controls for cross-border operators.",
+    subhead: "Accounts, payments, collections, and team controls for your next stage of growth.",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_cta_band" }],
   },
 }

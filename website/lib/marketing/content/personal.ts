@@ -1,5 +1,5 @@
 import type { ProductPageContent } from "../types"
-import { APP_LINK_URL, EASNER_SUPPORTED_LOCAL_MARKETS } from "../constants"
+import { APP_LINK_URL } from "../constants"
 
 const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
@@ -7,41 +7,26 @@ const downloadCta = [
 
 export const personalContent: ProductPageContent = {
   metadata: {
-    title: "Personal Banking | Global Money App",
+    title: "Easner Personal Banking | Multi-Currency Money App",
     description:
-      "Mobile banking for global money – send, receive, and manage funds in global and local currencies. Bank transfers and stablecoin.",
+      "Manage everyday money with Easner Personal Banking. Hold multiple currencies, receive payments, and send money in the US and internationally from one mobile app.",
     keywords: [
-      "global mobile banking",
+      "personal banking app",
+      "personal finance app USA",
       "multi-currency personal account",
-      "cross-border personal payments",
-      "personal international transfers",
-      "freelancer global payments",
-      "diaspora banking app",
+      "USD personal account",
+      "send and receive money",
+      "global mobile banking",
+      "freelancer payments",
       "international money transfer app",
-      "send money to Nigeria",
-      "send money to China",
-      "send money to the Philippines",
-      "send money to Mexico",
-      "send money to India",
-      "remittance app for diaspora",
-      "app for Nigerians abroad",
-      "app for Filipinos abroad",
-      "UK to Africa money transfer",
-      "US to Africa money transfer",
-      "send money to Ghana",
-      "send money to Pakistan",
-      "send money to Bangladesh",
-      "app for Ghanaians abroad",
-      "app for Pakistanis abroad",
-      "diaspora banking Middle East",
     ],
   },
   hero: {
     h1: "Bank globally with Ease",
     subhead:
-      "Receive, send, and manage money across international corridors. Stablecoin speed behind familiar banking.",
+      "Get paid, send money, and keep your finances in view. Easner brings your everyday payments and multiple currencies together in one simple app.",
     visualSlot: "mkt-hero-personal-01",
-    altText: "Freelancer using Easner Mobile app to send money internationally",
+    altText: "Easner Mobile account and receive money screens",
     ctas: downloadCta,
   },
   featuresLayout: "bento",
@@ -49,68 +34,68 @@ export const personalContent: ProductPageContent = {
     {
       title: "Send money",
       description:
-        "Pay across supported corridors by bank, stablecoin, open banking, or mobile money – fees and rates shown before you confirm.",
+        "Pay people and businesses through supported bank accounts, wallets, and mobile money services. Keep every payment in view from your app.",
       visualSlot: "mkt-ui-personal-send",
       altText: "Easner Mobile send money screen",
     },
     {
       title: "Receive money",
       description:
-        "Get paid by account details or stablecoin deposit address – one Receive flow with clear pay-in instructions.",
+        "Share your available account details or a supported stablecoin deposit address, with clear instructions for the person paying you.",
       visualSlot: "mkt-ui-personal-receive",
       altText: "Easner Mobile receive options",
     },
     {
-      title: "Recipients and EASETAG",
+      title: "Quick sending",
       description:
-        "Save people you pay often and send to Easetags without re-entering details every time.",
+        "Save family, friends, and other recipients. Use an EASETAG to find people on Easner without entering their account details again.",
       visualSlot: "mkt-ui-personal-recipients",
       altText: "Easner Mobile recipients and EASETAG",
     },
     {
-      title: "Security",
+      title: "Account security",
       description:
         "Protect your account with multi-factor authentication, PIN, and biometric unlock on your device.",
       visualSlot: "mkt-ui-personal-security",
       altText: "Easner Mobile security settings",
     },
   ],
-  useCasesHeadline: "Built for life across borders",
+  useCasesHeadline: "Built for the way you live",
   useCasesSubhead:
-    "Easner banking is for people who earn, send, and spend globally – whether you operate from Lagos, London, or anywhere in between.",
+    "For your everyday finances in the US and the connections you make around the world.",
   useCases: [
     {
-      title: "Freelancers and remote workers",
+      title: "Everyday money",
       description:
-        "Get paid in USD or EUR, hold balances, and pay out on your schedule from one mobile account.",
+        "Receive money, manage your balances, and pay the people in your life from one mobile account.",
     },
     {
-      title: "Diaspora remittances",
-      description: `Send support home to ${EASNER_SUPPORTED_LOCAL_MARKETS} on faster paths than legacy bank wires – with clear fees and status in the app.`,
+      title: "Friends and family",
+      description: "Send money to the people who matter, whether they are nearby or on another continent.",
     },
     {
       title: "Students and families",
       description:
-        "Cover tuition and living expenses across borders with tracked transfers and saved recipients.",
+        "Manage school and living expenses with payment records and saved recipients.",
     },
     {
-      title: "Expats",
+      title: "Life in more than one country",
       description:
-        "Manage money between your host country and home – send, receive, and spend money in one place.",
+        "Keep multiple currencies in one account and manage your money as you move between places.",
     },
     {
-      title: "Cross-border gig workers",
+      title: "Freelancers and independent professionals",
       description:
-        "Collect client pay-in globally and move earnings to local accounts or mobile money when you need to.",
+        "Receive client payments and manage your earnings, whether your next project is local or international.",
     },
     {
-      title: "Families abroad",
+      title: "Staying organized",
       description:
-        "Support relatives back home with repeat transfers, EASETAG, and a clear record of every payment.",
+        "Save recipients, connect with people using EASETAG, and keep a clear record of your payments.",
     },
   ],
   ctaBand: {
-    headline: "Take Easner banking with you.",
+    headline: "Wherever life takes you.",
     ctas: [{ ...downloadCta[0], analyticsLocation: "personal_cta_band" }],
   },
 }

@@ -27,7 +27,7 @@ export const APP_STORE_PERSONAL_SECTIONS = [
   },
   {
     heading: "SEND MONEY YOUR WAY",
-    body: "Send by bank transfer, stablecoin, open banking, or mobile money. See fees, FX, and delivery estimates before you confirm.",
+    body: "Send payments by bank transfer, stablecoin, open banking, or mobile money, and keep track of your activity in the app.",
   },
   {
     heading: "RECEIVE MONEY",

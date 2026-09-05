@@ -1,17 +1,18 @@
 "use client"
 
 import { useLayoutEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { MARKETING_BODY_TEXT, MARKETING_HERO_TITLE, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, MARKETING_HERO_TITLE } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
 
 export function HeroSection() {
+  const reducedMotion = useReducedMotion()
   useLayoutEffect(() => {
     if (window.location.hash !== PRODUCTS_HASH) return
 
@@ -34,9 +35,9 @@ export function HeroSection() {
     <section className="relative overflow-hidden px-4 pb-12 pt-8 sm:px-6 sm:pb-16 md:pt-14 lg:px-8 lg:pb-20">
       <div className="mx-auto max-w-7xl">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: reducedMotion ? 0 : 0.5 }}
           className="mx-auto max-w-7xl text-center"
         >
           <div className="space-y-5">
@@ -44,7 +45,7 @@ export function HeroSection() {
               {homeHero.h1Lines.map((line, index) => (
                 <span
                   key={line}
-                  className={index === 1 ? "block whitespace-nowrap text-[#007ACC]" : "block whitespace-nowrap"}
+                  className={index === 1 ? "block text-balance text-[#007ACC]" : "block text-balance"}
                 >
                   {index > 0 && " "}
                   {line}
@@ -71,7 +72,7 @@ export function HeroSection() {
             </Button>
           </div>
         </motion.div>
-        <div className={cn("relative z-10 mx-auto mt-10 max-w-6xl sm:mt-12", SPLIT_VISUAL_CONTAINER)}>
+        <div className="relative z-10 mx-auto mt-10 h-[26rem] max-w-6xl overflow-hidden rounded-[1.5rem] border border-[#E4DED1] bg-[#F5F7F8] sm:mt-12 sm:h-[29rem] sm:rounded-[1.75rem] lg:h-[30rem]">
           <VisualSlot
             assetId={homeHero.visualSlot}
             alt={homeHero.altText}
