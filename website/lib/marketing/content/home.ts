@@ -42,27 +42,27 @@ export const whyEasnerHeadline = "Why choose Easner"
 
 export const whyEasnerPillars: CardItem[] = [
   {
-    title: "Add money fast",
+    title: "An account in your name",
     description:
-      "Fund your balance with card, Apple Pay, Google Pay, or ACH Direct, then send from the same account.",
+      "USD, EUR, and GBP details in your name once verified. Top up by card, Apple Pay, or ACH Direct.",
     icon: "mkt-icon-pillar-ux",
   },
   {
-    title: "Send to 80+ countries",
+    title: "Reach 80+ countries",
     description:
-      "Pay people and businesses across Africa, Latin America, Asia, and Europe. Coverage varies by destination.",
+      "Pay suppliers, contractors, and family across Africa, Latin America, Asia, and Europe.",
     icon: "mkt-icon-pillar-invisible",
   },
   {
-    title: "Less lost to fees",
+    title: "Keep more of each payment",
     description:
       "Stablecoin settlement can cut cross-border cost by up to ~60% in supported corridors.",
     icon: "mkt-icon-pillar-cost",
   },
   {
-    title: "Compliance built in",
+    title: "Clear before you confirm",
     description:
-      "Verification, screening, and limits come standard, not bolted on later.",
+      "Fees and rates shown up front. Identity checks, screening, and limits on every account.",
     icon: "mkt-icon-pillar-compliance",
   },
 ]
