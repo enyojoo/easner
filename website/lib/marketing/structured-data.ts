@@ -3,6 +3,9 @@ import {
   EASNER_CANONICAL_DEFINITION,
   EASNER_ONE_LINE_THESIS,
   BRAND_BASE_URL,
+  CONTACT_EMAIL,
+  SUPPORT_EMAIL,
+  CONTACT_PATH,
 } from "./constants"
 
 const SITE_URL = "https://www.easner.com"
@@ -23,6 +26,25 @@ export function organizationJsonLd() {
       "https://www.linkedin.com/company/easner/",
     ],
     slogan: EASNER_ONE_LINE_THESIS,
+    foundingDate: "2025",
+    /** Founders as named on /about – helps answer engines resolve the Easner entity. */
+    founder: [
+      { "@type": "Person", name: "Christian Levan", jobTitle: "Co-founder & CEO" },
+      { "@type": "Person", name: "Enyo Sam", jobTitle: "Founder & CTO" },
+    ],
+    /** Registered address as published in the Privacy Policy. */
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "584 Castro St, Suite 4092",
+      addressLocality: "San Francisco",
+      addressRegion: "CA",
+      postalCode: "94114",
+      addressCountry: "US",
+    },
+    contactPoint: [
+      { "@type": "ContactPoint", contactType: "sales", email: CONTACT_EMAIL, url: `${SITE_URL}${CONTACT_PATH}`, availableLanguage: "en" },
+      { "@type": "ContactPoint", contactType: "customer support", email: SUPPORT_EMAIL, availableLanguage: "en" },
+    ],
   }
 }
 
@@ -72,6 +94,34 @@ export const CORRIDOR_AREA_SERVED = [
   // Asia-Pacific / South Asia
   "BD", "KH", "CN", "HK", "IN", "ID", "MY", "PK", "PH", "SG", "LK", "TH", "VN",
 ]
+
+interface MobileApplicationInput {
+  name: string
+  description: string
+  path: string
+  downloadUrls: string[]
+}
+
+/**
+ * Easner Mobile as a MobileApplication entity. Intentionally omits `offers` and
+ * `aggregateRating`: neither store price nor review scores are verified here, and
+ * inventing either would breach Google's structured-data policies. Adding a verified
+ * `offers` block later is what makes this eligible for app rich results.
+ */
+export function mobileApplicationJsonLd({ name, description, path, downloadUrls }: MobileApplicationInput) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    name,
+    description,
+    url: `${SITE_URL}${path}`,
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "iOS, Android",
+    downloadUrl: downloadUrls,
+    installUrl: `${SITE_URL}${path}`,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  }
+}
 
 interface FinancialServiceInput {
   name: string
