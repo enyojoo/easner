@@ -62,7 +62,7 @@ export const paymentLinksContent: ProductPageContent = {
       altText: "Easner Balance showing payment link activity",
     },
   ],
-  useCasesHeadline: "Built for anyone who needs to get paid",
+  useCasesHeadline: "Built for anyone to get paid",
   useCasesSubhead:
     "For freelancers, creators, and businesses collecting customer payments through an eligible Easner Business account.",
   useCases: [

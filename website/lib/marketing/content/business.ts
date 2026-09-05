@@ -44,14 +44,14 @@ export const businessContent: ProductPageContent = {
   featuresLayout: "bento",
   features: [
     {
-      title: "Account details in your name",
+      title: "Named Accounts",
       description:
         "Share USD, EUR, and GBP details – account name, number, and routing – so customers pay you directly. Stablecoin deposits land in the same place.",
       visualSlot: "mkt-ui-business-accounts",
       altText: "Easner Business account details showing account name, account number, and routing number",
     },
     {
-      title: "Supplier and team payments",
+      title: "Supplier payments",
       description:
         "Pay suppliers and contractors through supported bank, stablecoin, and local payment methods. Track payments alongside the rest of your business activity.",
       visualSlot: "mkt-ui-business-send",
@@ -65,7 +65,7 @@ export const businessContent: ProductPageContent = {
       altText: "Easner Business invoicing, Checkout, Payment Links, Terminal, and QR Pay collections",
     },
     {
-      title: "Team access and reporting",
+      title: "Team access",
       description:
         "Give each teammate the right access, save customer details, and review your payment history and reports.",
       visualSlot: "mkt-ui-business-team",
