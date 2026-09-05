@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next"
 const baseUrl = "https://www.easner.com"
 
 /**
- * Bump a route's date when its content materially changes — a static date is a real
+ * Bump a route's date when its content materially changes – a static date is a real
  * "last modified" signal to crawlers; `new Date()` on every build defeats that.
  */
 const lastModified = {

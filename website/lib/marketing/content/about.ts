@@ -82,7 +82,7 @@ export const aboutFounders: Founder[] = [
 
 export const aboutTrust = {
   headline: "Trust, by design",
-  body: "Easner is a financial technology company, not a bank. Banking, payment, verification, and card services are provided by licensed partners. We built the software and compliance layer that makes global money work locally – accounts, payouts, and settlement on familiar banking screens.",
+  body: "Easner is a financial technology company, not a bank. Banking, payment, verification, and card services are provided by licensed partners. We built the software and compliance layer that makes global money work locally – accounts, payouts, and settlement in one place.",
   bullets: [
     "KYC/KYB onboarding built into the product",
     "AML and sanctions screening",

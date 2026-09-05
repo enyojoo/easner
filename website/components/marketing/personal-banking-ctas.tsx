@@ -16,7 +16,7 @@ interface PersonalBankingCtasProps {
   /** Center CTAs on mobile; use "center" for footer-style bands. */
   align?: "start" | "center" | "responsive"
   descriptionVariant?: "default" | "open-account"
-  /** Download page: QR/email already present — hide download button, web app only. */
+  /** Download page: QR/email already present – hide download button, web app only. */
   webAppOnly?: boolean
 }
 

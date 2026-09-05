@@ -33,7 +33,7 @@ export const businessContent: ProductPageContent = {
   hero: {
     h1: "Global banking for business",
     subhead:
-      "Bring your accounts, customer payments, invoices, and team finances together. Easner gives you one place to run your business, from daily operations to global growth.",
+      "Bring accounts, customer payments, invoices, and payouts into one dashboard. Stablecoin settlement carries cross-border payments to suppliers and teams in 80+ countries.",
     visualSlot: "mkt-hero-business-01",
     altText: "Easner Business dashboard showing currency balances, an invoice payment, and a supplier payout",
     ctas: [

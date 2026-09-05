@@ -41,14 +41,14 @@ Easner connects US, EU, and UK payment infrastructure with more than 80 payout d
 
 ## How Easner moves money
 
-Easner settles cross-border payments on stablecoin rails, primarily USDC and EURC, then pays out in local currency at the destination. Customers send and receive in familiar currencies; the settlement layer is not something they interact with directly. A crypto wallet is not required to use Easner accounts, invoicing, Checkout, Payment Links, or Payroll. Timing depends on destination, payment method, banking hours, and verification checks.
+Easner settles cross-border payments on stablecoin rails, primarily USDC and EURC, then pays out in local currency at the destination. A customer sends dollars and the recipient is paid in their own currency; the settlement step happens in between and customers never handle it. A crypto wallet is not required to use Easner accounts, invoicing, Checkout, Payment Links, or Payroll. Timing depends on destination, payment method, banking hours, and verification checks.
 
 ## Frequently asked
 
 - **Can I use Easner for everyday finances in the US?** Yes. Easner serves personal and business customers in the US. Manage balances, receive payments, and pay people and businesses, with international capabilities when you need them.
 - **Does Easner offer personal and business accounts?** Yes. Easner Personal is for individual finances; Easner Business includes company accounts, payments, invoicing, payroll, and team access.
 - **Is Easner a bank?** No. Easner is a financial technology company. Banking and payment services are provided by licensed partners.
-- **Do I need to understand crypto to use Easner?** No. Easner is designed around familiar banking screens. Stablecoin infrastructure may support money movement where enabled.
+- **Do I need to understand crypto to use Easner?** No. Customers see balances, payments, and recipients, the same as any banking app. There are no wallets or networks to manage. Stablecoin settlement runs behind the scenes.
 - **What fees apply?** Applicable fees and exchange rates are shown before transfer confirmation. Timing depends on the payment method, destination, banking hours, and verification or partner checks.
 
 ## Company

@@ -9,7 +9,7 @@ export function isPersonalEasnerUrl(href: string): boolean {
   }
 }
 
-/** Clean app URL — attribution is passed via PostHog + `.easner.com` cookie, not query params. */
+/** Clean app URL – attribution is passed via PostHog + `.easner.com` cookie, not query params. */
 export function buildPersonalAppUrl(base: string = PERSONAL_WEB_APP_URL): string {
   try {
     const url = new URL(base)

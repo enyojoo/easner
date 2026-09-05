@@ -27,7 +27,7 @@ export const stablecoinContent: ProductPageContent = {
   hero: {
     h1: "Stablecoin speed. Banking simplicity.",
     subhead:
-      "Easner settles on stablecoin rails, so cross-border money moves faster — while you work in familiar currencies and screens.",
+      "Easner settles on stablecoin rails, so cross-border money moves faster. Your team works in dollars and euros, on the same dashboard as every other payment.",
     visualSlot: "mkt-hero-stablecoin-01",
     altText: "Easner Business dashboard showing stablecoin settlement activity",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_hero" }],
@@ -70,7 +70,7 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Cross-border SMEs",
       description:
-        "Settle supplier payments and customer collections on faster rails while finance keeps familiar banking screens and audit trails.",
+        "Settle supplier payments and customer collections on faster rails, while finance keeps the same dashboard and audit trail as every other payment.",
     },
     {
       title: "Remittance settlement",
@@ -85,7 +85,7 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Marketplaces and platforms",
       description:
-        "Collect from buyers and pay sellers across borders with familiar pay-in and payout flows – one ledger for platform settlement and reconciliation.",
+        "Collect from buyers and pay sellers across borders without asking either side to touch a wallet – one ledger for platform settlement and reconciliation.",
     },
     {
       title: "Import and export",
@@ -95,14 +95,14 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Software and SaaS",
       description:
-        "Collect global customer payments with stablecoin pay-in, Terminal, and QR Pay – familiar banking screens for finance, faster settlement.",
+        "Collect global customer payments with stablecoin pay-in, Terminal, and QR Pay – faster settlement, with every payment on one dashboard.",
     },
   ],
   faq: [
     {
       question: "How does Easner move money internationally?",
       answer:
-        "Easner settles cross-border payments on stablecoin rails – primarily USDC and EURC – then pays out in local currency at the destination. You send and receive in familiar currencies; the settlement layer runs behind the screens.",
+        "Easner settles cross-border payments on stablecoin rails – primarily USDC and EURC – then pays out in local currency at the destination. You send dollars and your recipient is paid in their own currency. The settlement step happens in between, and you never handle it.",
     },
     {
       question: "Do I need a crypto wallet to use Easner?",

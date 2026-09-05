@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Apple logo — glyph sits smaller in 24×24 viewBox; sized up for visual parity with Play. */
+/** Apple logo – glyph sits smaller in 24×24 viewBox; sized up for visual parity with Play. */
 export function AppleStoreIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -14,7 +14,7 @@ export function AppleStoreIcon({ className }: { className?: string }) {
   )
 }
 
-/** Google Play triangle — matched height to AppleStoreIcon. */
+/** Google Play triangle – matched height to AppleStoreIcon. */
 export function PlayStoreIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -37,7 +37,7 @@ export function PlayStoreIcon({ className }: { className?: string }) {
   )
 }
 
-/** Paired store icons for Download the App CTAs — equal visual weight. */
+/** Paired store icons for Download the App CTAs – equal visual weight. */
 export function StoreBadgeIcons({ className }: { className?: string }) {
   return (
     <span

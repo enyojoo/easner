@@ -24,7 +24,7 @@ export const PERSONAL_BANKING_CTA_DESCRIPTION =
 export const PERSONAL_BANKING_CTA_DESCRIPTION_MOBILE =
   "Download the Easner app."
 
-/** Download landing already shows QR + email — desktop CTAs are web-app only. */
+/** Download landing already shows QR + email – desktop CTAs are web-app only. */
 export const PERSONAL_BANKING_CTA_DESCRIPTION_WEB_APP_ONLY =
   "Manage your Easner account on the web."
 

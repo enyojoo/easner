@@ -67,7 +67,7 @@ export const EASNER_SUPPORTING_KEYWORDS = [
 ] as const
 
 /**
- * Developed-market (Global North) geo keywords — disaggregates Easner's confirmed
+ * Developed-market (Global North) geo keywords – disaggregates Easner's confirmed
  * US/EU/UK rails by country and major business hub for search granularity. Safe to use
  * broadly: these describe where customers/businesses operate FROM, already covered by
  * the canonical "US, EU, and UK rails" definition.
@@ -91,7 +91,7 @@ export const EASNER_DEVELOPED_MARKET_KEYWORDS = [
 ] as const
 
 /**
- * Emerging-market (Global South) geo keywords — targets major markets by cross-border
+ * Emerging-market (Global South) geo keywords – targets major markets by cross-border
  * remittance and trade volume across Africa, MENA, Latin America, and Asia-Pacific.
  * Easner accepts signups and payouts broadly (see /compliance for hard-blocked
  * jurisdictions, not an allowlist), so these are safe SEO-only targeting terms – they
@@ -137,7 +137,7 @@ export const EASNER_EMERGING_MARKET_KEYWORDS = [
 ] as const
 
 /**
- * Cross-border trade and outsourcing intent keywords — targets businesses in developed
+ * Cross-border trade and outsourcing intent keywords – targets businesses in developed
  * markets paying emerging-market suppliers, contractors, or offshore/nearshore teams
  * (including manufacturers in China), plus service businesses operating across borders.
  * High commercial intent; SEO-only, same visible-copy rule as EASNER_EMERGING_MARKET_KEYWORDS.

@@ -11,7 +11,7 @@ export function isBusinessEasnerUrl(href: string): boolean {
   }
 }
 
-/** Clean signup URL — attribution is passed via PostHog + `.easner.com` cookie, not query params. */
+/** Clean signup URL – attribution is passed via PostHog + `.easner.com` cookie, not query params. */
 export function buildBusinessSignupUrl(_campaign?: string): string {
   return BUSINESS_SIGNUP_BASE
 }

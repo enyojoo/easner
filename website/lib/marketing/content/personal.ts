@@ -9,7 +9,7 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Easner Personal Banking | Multi-Currency Money App",
     description:
-      "Manage everyday money with Easner Personal Banking. Hold USD, EUR, GBP, and NGN, receive payments, and send money to 80+ countries from one app.",
+      "Manage everyday money with Easner Personal Banking. Hold a multi-currency balance, top up by card or bank, and send money to 80+ countries from one app.",
     keywords: [
       "personal banking app",
       "personal finance app USA",
@@ -24,7 +24,7 @@ export const personalContent: ProductPageContent = {
   hero: {
     h1: "Bank globally with Ease",
     subhead:
-      "Get paid, send money, and hold USD, EUR, GBP, and NGN — all from one app.",
+      "Hold a balance in USD and other major currencies. Top up with card, Apple Pay, Google Pay, or ACH Direct, and send to 80+ countries.",
     visualSlot: "mkt-hero-personal-01",
     altText: "Easner Mobile account and receive money screens",
     ctas: downloadCta,
@@ -34,7 +34,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Send money",
       description:
-        "Pay people and businesses through supported bank accounts, wallets, and mobile money services. Keep every payment in view from your app.",
+        "Pay people and businesses through supported bank accounts, wallets, and mobile money services. Stablecoin settlement carries it across borders; you just see the payment.",
       visualSlot: "mkt-ui-personal-send",
       altText: "Easner Mobile send money screen",
     },
@@ -72,7 +72,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Getting paid from abroad",
       description:
-        "Take client and employer payments from other countries in USD, EUR, GBP, or NGN.",
+        "Take client and employer payments from other countries, by bank transfer or stablecoin deposit.",
     },
     {
       title: "Family and friends abroad",
@@ -92,7 +92,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Living between countries",
       description:
-        "Keep balances in USD, EUR, GBP, and NGN as you move between places.",
+        "Keep a multi-currency balance as you move between places, and top it up from either side.",
     },
   ],
   ctaBand: {

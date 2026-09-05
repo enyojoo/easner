@@ -13,7 +13,7 @@ interface IntegrationStepsProps {
 }
 
 export function IntegrationSteps({ headline, steps, footnote, className, id }: IntegrationStepsProps) {
-  // Wait until xl: to go multi-column beyond 2 — at lg: (1024–1279px) a 3-4 column grid
+  // Wait until xl: to go multi-column beyond 2 – at lg: (1024–1279px) a 3-4 column grid
   // is too narrow for a single long word in bold uppercase tracked letters (e.g. "DEPLOYMENT").
   const wideCols = steps.length >= 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
 
@@ -41,7 +41,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
                   "mt-4 font-unbounded font-bold leading-snug text-[#0F1110]",
                   MARKETING_SUBSECTION_TITLE,
                   MARKETING_HEADING_CAPS,
-                  // Cap below the general subsection scale — this grid gets narrower than most other bento/card contexts.
+                  // Cap below the general subsection scale – this grid gets narrower than most other bento/card contexts.
                   "lg:text-2xl xl:text-2xl"
                 )}
               >

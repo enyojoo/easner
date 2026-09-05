@@ -42,27 +42,27 @@ export const whyEasnerHeadline = "Why choose Easner"
 
 export const whyEasnerPillars: CardItem[] = [
   {
+    title: "Add money fast",
+    description:
+      "Fund your balance with card, Apple Pay, Google Pay, or ACH Direct, then send from the same account.",
+    icon: "mkt-icon-pillar-ux",
+  },
+  {
     title: "Send to 80+ countries",
     description:
       "Pay people and businesses across Africa, Latin America, Asia, and Europe. Coverage varies by destination.",
     icon: "mkt-icon-pillar-invisible",
   },
   {
-    title: "One account, many currencies",
-    description:
-      "Hold USD, EUR, GBP, and NGN in one place, and pay out well beyond them.",
-    icon: "mkt-icon-pillar-ux",
-  },
-  {
     title: "Less lost to fees",
     description:
-      "Modern settlement can cut cross-border cost by up to ~60% in supported corridors.",
+      "Stablecoin settlement can cut cross-border cost by up to ~60% in supported corridors.",
     icon: "mkt-icon-pillar-cost",
   },
   {
     title: "Compliance built in",
     description:
-      "Verification, screening, and limits come standard — not bolted on later.",
+      "Verification, screening, and limits come standard, not bolted on later.",
     icon: "mkt-icon-pillar-compliance",
   },
 ]
@@ -108,7 +108,7 @@ export const solutionsPersonas = [
 
 export const corridorContent = {
   headline: "At home. Around the world.",
-  body: "Hold USD, EUR, GBP, and NGN, then pay people and businesses in 80+ countries. Payment methods and coverage vary by destination.",
+  body: "Hold a balance in USD and other major currencies, then pay people and businesses in 80+ countries. Payment methods and coverage vary by destination.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
@@ -146,7 +146,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Do I need to understand crypto to use Easner?",
     answer:
-      "No. Easner is designed around familiar banking screens. Stablecoin infrastructure may power settlement behind the scenes.",
+      "No. You see balances, payments, and recipients, the same as any banking app. There are no wallets or networks to manage. Stablecoin settlement runs behind the scenes.",
   },
   {
     question: "What products does Easner offer?",
