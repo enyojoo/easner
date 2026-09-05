@@ -26,7 +26,6 @@ export function BusinessFeatureMockup({ kind }: { kind: "accounts" | "send" | "c
         <Row label="Account name" value="Oakridge Studio" />
         <Row label="Account number" value="•••• 9012" />
         <Row label="Routing number" value="•••• 0021" />
-        <Row label="SWIFT / BIC" value="•••• 4471" />
       </div>
       <div className="mt-auto flex items-center gap-2 pt-3 text-[11px] text-[#0064A8]"><Landmark aria-hidden="true" className="size-3.5" />Share these details to get paid</div>
     </Panel>

@@ -46,9 +46,9 @@ export const businessContent: ProductPageContent = {
     {
       title: "Account details in your name",
       description:
-        "Share USD, EUR, and GBP details – account number, routing, and SWIFT – so customers pay you directly. Stablecoin deposits land in the same place.",
+        "Share USD, EUR, and GBP details – account name, number, and routing – so customers pay you directly. Stablecoin deposits land in the same place.",
       visualSlot: "mkt-ui-business-accounts",
-      altText: "Easner Business account details showing account name, account number, routing number, and SWIFT",
+      altText: "Easner Business account details showing account name, account number, and routing number",
     },
     {
       title: "Supplier and team payments",
