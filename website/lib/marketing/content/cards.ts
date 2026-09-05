@@ -4,7 +4,7 @@ export const cardsContent: ProductPageContent = {
   metadata: {
     title: "Personal & Business Cards | Virtual & Physical",
     description:
-      "Explore virtual and physical cards for personal and business spending, with limits and cardholder controls. Easner cards are rolling out in phases, on approval.",
+      "Virtual and physical cards for personal and business spending, with limits and cardholder controls. Easner cards are rolling out in phases, on approval.",
     keywords: [
       "corporate cards global business",
       "virtual cards SME",

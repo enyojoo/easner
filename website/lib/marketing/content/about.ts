@@ -6,7 +6,7 @@ import type { CardItem, CtaBandContent, Founder } from "../types"
 export const aboutMetadata = {
   title: "About Easner | Our Founders & Mission",
   description:
-    "Meet the founders behind Easner and our mission to simplify personal and business banking through multi-currency accounts, payments, and global infrastructure.",
+    "Meet the founders behind Easner and the mission to make global money work locally, through multi-currency accounts, payments, and stablecoin rails.",
   keywords: [
     "Easner founders",
     "Easner company",

@@ -9,7 +9,7 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Easner Personal Banking | Multi-Currency Money App",
     description:
-      "Manage everyday money with Easner Personal Banking. Hold a multi-currency balance, top up by card or bank, and send money to 80+ countries from one app.",
+      "Get account details in your name, hold a multi-currency balance, and top up by card, Apple Pay, or ACH Direct. Send money to 80+ countries from one app.",
     keywords: [
       "personal banking app",
       "personal finance app USA",

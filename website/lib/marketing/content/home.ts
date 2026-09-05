@@ -11,7 +11,7 @@ import { DEFAULT_CTA_BAND } from "../shared-content"
 export const homeMetadata = {
   title: "Easner | Global Banking, Payments & Stablecoin Rails",
   description:
-    "Personal and business banking with multi-currency accounts, customer payments, cards, and global payouts. Manage everyday money and business finances with Easner.",
+    "Personal and business banking on stablecoin rails. Get account details in your name, hold multiple currencies, and pay people and businesses in 80+ countries.",
   keywords: [
     "personal banking app",
     "business banking United States",

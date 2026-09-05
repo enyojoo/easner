@@ -5,7 +5,7 @@ export const developersContent: ProductPageContent = {
   metadata: {
     title: "Embedded Banking & Payments API",
     description:
-      "Build accounts, customer collections, and global payouts into your product with Easner APIs, verification workflows, and webhooks. Talk to us about integration.",
+      "Build accounts, customer collections, and global payouts into your product with Easner APIs, verification workflows, and webhooks.",
     keywords: [
       "stablecoin API",
       "embedded payments API",

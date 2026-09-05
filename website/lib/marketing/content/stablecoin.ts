@@ -5,7 +5,7 @@ export const stablecoinContent: ProductPageContent = {
   metadata: {
     title: "Stablecoin Payments | Send & Receive USDC and EURC",
     description:
-      "Send and receive supported stablecoins with Easner. View network details, review quotes, and track payments alongside your business account activity.",
+      "Easner settles cross-border payments on stablecoin rails. Receive and send USDC and EURC, and track every payment beside your business accounts.",
     keywords: [
       "stablecoin payments",
       "stablecoin payments infrastructure",

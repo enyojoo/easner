@@ -9,7 +9,7 @@ export const businessContent: ProductPageContent = {
   metadata: {
     title: "Easner Business Banking | Accounts, Payments & Payouts",
     description:
-      "Manage multi-currency accounts, collect customer payments, send invoices, and pay suppliers and teams with Easner Business Banking, in the US and globally.",
+      "Get account details in your name, collect customer payments, send invoices, and pay suppliers in 80+ countries from one Easner Business dashboard.",
     keywords: [
       "business account for startups",
       "business financial management",
