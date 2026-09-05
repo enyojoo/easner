@@ -15,8 +15,9 @@ export function AboutHero() {
         className="mx-auto max-w-6xl text-center"
       >
         <h1 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
-          {aboutHero.headlineLines.map((line) => (
+          {aboutHero.headlineLines.map((line, index) => (
             <span key={line} className="block">
+              {index > 0 && " "}
               {line}
             </span>
           ))}

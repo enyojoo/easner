@@ -1,9 +1,9 @@
 import type { ComponentType } from "react"
 import { Globe2 } from "lucide-react"
 import {
+  IconChina,
   IconEurope,
   IconIndia,
-  IconKenya,
   IconMexico,
   IconNigeria,
   IconPhilippines,
@@ -28,7 +28,7 @@ const corridorMarkets: MarketBadge[] = [
   { label: "Mexico", Flag: IconMexico, accent: "from-[#E8F4EC] to-white" },
   { label: "Philippines", Flag: IconPhilippines, accent: "from-[#FCEEF3] to-white" },
   { label: "India", Flag: IconIndia, accent: "from-[#FFF4E8] to-white" },
-  { label: "Kenya", Flag: IconKenya, accent: "from-[#FFF8E8] to-white" },
+  { label: "China", Flag: IconChina, accent: "from-[#FFF8E8] to-white" },
   { label: "More markets", soon: true, accent: "from-[#F8F6F0] to-white" },
 ]
 

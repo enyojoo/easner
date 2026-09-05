@@ -22,6 +22,9 @@ export const partnersContent: ProductPageContent = {
       "white-label remittance Africa",
       "agency banking Latin America",
       "white-label payments Asia",
+      "white-label remittance MENA",
+      "agency banking South Asia",
+      "white-label payments Southeast Asia",
     ],
   },
   hero: {

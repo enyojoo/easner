@@ -40,9 +40,36 @@ export function websiteJsonLd() {
   }
 }
 
-/** Global rails (always served) plus supported local payout markets — keep in sync with EASNER_SUPPORTED_LOCAL_MARKETS. */
+/** Sender-side rails (US, EU, UK) named in the canonical definition. */
 export const GLOBAL_AREA_SERVED = ["US", "EU", "GB"]
-export const CORRIDOR_AREA_SERVED = [...GLOBAL_AREA_SERVED, "NG", "MX", "PH", "IN", "KE"]
+
+/**
+ * Full live payout-corridor footprint (ISO 3166-1 alpha-2), sourced from the Office
+ * payout_corridors admin panel (confirmed 2026-09-05). This is intentionally broader than
+ * EASNER_SUPPORTED_LOCAL_MARKETS, which names only the handful of markets featured in
+ * visible page copy — this list backs schema.org areaServed only (not rendered on-page),
+ * so it can and should track the real, current corridor footprint. Update when Office
+ * corridor coverage changes materially.
+ */
+export const CORRIDOR_AREA_SERVED = [
+  // Sender rails
+  "US", "GB",
+  // Europe / EEA
+  "AD", "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IS",
+  "IE", "IT", "LV", "LI", "LT", "LU", "MT", "MC", "NL", "NO", "PL", "PT", "RO", "SM", "SK",
+  "SI", "ES", "SE", "CH", "VA",
+  // North America
+  "CA",
+  // Africa
+  "BW", "CM", "CG", "CI", "CD", "EG", "ET", "GA", "GH", "KE", "MW", "NG", "RW", "SN", "ZA",
+  "TZ", "UG", "ZM",
+  // Middle East
+  "IL", "AE",
+  // Latin America / Caribbean
+  "AR", "BR", "CO", "EC", "SV", "GT", "HT", "JM", "MX", "PE",
+  // Asia-Pacific / South Asia
+  "BD", "KH", "CN", "HK", "IN", "ID", "MY", "PK", "PH", "SG", "LK", "TH", "VN",
+]
 
 interface FinancialServiceInput {
   name: string

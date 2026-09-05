@@ -24,8 +24,9 @@ export function AboutMissionSection() {
     <section className="bg-white py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4 text-center sm:px-6 lg:px-8">
         <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
-          {aboutMission.headlineLines.map((line) => (
+          {aboutMission.headlineLines.map((line, index) => (
             <span key={line} className="block">
+              {index > 0 && " "}
               {line}
             </span>
           ))}

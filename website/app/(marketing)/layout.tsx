@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import Script from "next/script"
 import { PublicHeader } from "@/components/layout/public-header"
 import { PublicFooter } from "@/components/layout/public-footer"
 import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
@@ -7,8 +6,7 @@ import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/marketing
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-[#F6F3EB] text-[#0F1110]">
-      <Script
-        id="easner-organization-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([organizationJsonLd(), websiteJsonLd()])}
       />

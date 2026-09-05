@@ -8,16 +8,18 @@ Easner connects global and local financial rails – so businesses and individua
 
 ## Who Easner is for
 
-- **Operating globally:** People and businesses in Nigeria, Kenya, the Philippines, India, Mexico, the US, UK, EU, and beyond who need multi-currency accounts, send/receive, and cards with modern banking clarity.
+- **Operating globally:** People and businesses in Nigeria, China, the Philippines, India, Mexico, the US, UK, EU, and beyond who need multi-currency accounts, send/receive, and cards with modern banking clarity.
 - **Paying across borders:** Companies with operations in the US, EU, or UK that need to pay suppliers, contractors, and teams in supported local markets – from one ledger, with compliance built in.
+- **Cross-border trade and outsourcing:** Businesses that import goods or buy from manufacturers abroad (including China), and companies with offshore or nearshore contractors, agencies, and remote teams – paying suppliers, freelancers, and payroll internationally from one dashboard.
+- **Broad payout reach:** Easner accepts signups and payouts broadly worldwide, subject to standard KYC/KYB and sanctions screening – see the KYC/KYB and AML Policy for the current list of restricted jurisdictions rather than a fixed country allowlist.
 
 ## Regions
 
 - **North America (US):** Multi-currency USD business accounts, global supplier payouts, embedded payments API.
 - **Europe (EU, UK):** EUR and GBP business accounts, cross-border B2B collections, stablecoin (EURC) settlement.
-- **Africa (Nigeria, Kenya, and more as we expand):** Diaspora remittances, local payout connectivity, stablecoin (USDC) rails behind familiar banking screens.
+- **Africa (Nigeria, and more as we expand):** Diaspora remittances, local payout connectivity, stablecoin (USDC) rails behind familiar banking screens.
 - **Latin America (Mexico, and more as we expand):** Cross-border supplier payouts, invoicing, and payroll for exporters and remote teams.
-- **Asia-Pacific (Philippines, India, and more as we expand):** Diaspora banking, contractor payroll, and B2B invoicing with bank or stablecoin pay-in.
+- **Asia-Pacific (Philippines, India, China, and more as we expand):** Diaspora banking, contractor payroll, and B2B invoicing with bank or stablecoin pay-in.
 
 Availability varies by jurisdiction, verification tier, and partner rules – see Corridor coverage below.
 
@@ -37,7 +39,15 @@ Availability varies by jurisdiction, verification tier, and partner rules – se
 
 ## Corridor coverage
 
-Easner connects US, EU, and UK rails to supported local markets across Africa, Latin America, and Asia-Pacific – including Nigeria, Mexico, Philippines, India, and Kenya, with more corridors in progress. Availability varies by jurisdiction, verification tier, and partner rules.
+Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and China, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules.
+
+## Frequently asked
+
+- **Which countries are supported?** Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and China, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules.
+- **Can businesses use Easner to pay suppliers in China or other manufacturing hubs?** Yes. Easner Business Banking supports paying suppliers, manufacturers, and vendors internationally, subject to standard verification and sanctions screening.
+- **Does Easner work for offshore and nearshore outsourcing payments?** Yes. Companies use Easner Business Banking and Payroll to pay offshore and nearshore contractors, agencies, and remote teams from one dashboard, with compliance built in.
+- **Is Easner a bank?** No. Easner is a financial technology company. Regulated banking, payment, and verification services are provided by licensed partners.
+- **Do I need to understand crypto to use Easner?** No. Easner is designed around familiar banking screens. Stablecoin infrastructure may power settlement behind the scenes.
 
 ## Key differentiators
 

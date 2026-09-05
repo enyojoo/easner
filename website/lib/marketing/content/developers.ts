@@ -17,6 +17,8 @@ export const developersContent: ProductPageContent = {
       "payouts API Africa",
       "payments API Latin America",
       "KYC API emerging markets",
+      "payouts API MENA",
+      "payments API Southeast Asia",
     ],
   },
   hero: {

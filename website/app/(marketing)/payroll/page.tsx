@@ -1,4 +1,3 @@
-import Script from "next/script"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { payrollContent } from "@/lib/marketing/content/payroll"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -9,8 +8,7 @@ export const metadata = marketingMetadata({ metadata: payrollContent.metadata, p
 export default function PayrollPage() {
   return (
     <>
-      <Script
-        id="easner-payroll-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({

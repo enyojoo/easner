@@ -22,8 +22,7 @@ export const metadata: Metadata = marketingMetadata({
 export default function HomePage() {
   return (
     <>
-      <Script
-        id="easner-home-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({

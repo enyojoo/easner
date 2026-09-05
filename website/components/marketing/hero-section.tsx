@@ -46,6 +46,7 @@ export function HeroSection() {
                   key={line}
                   className={index === 1 ? "block whitespace-nowrap text-[#007ACC]" : "block whitespace-nowrap"}
                 >
+                  {index > 0 && " "}
                   {line}
                 </span>
               ))}

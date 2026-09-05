@@ -1,4 +1,3 @@
-import Script from "next/script"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -9,8 +8,7 @@ export const metadata = marketingMetadata({ metadata: paymentLinksContent.metada
 export default function PaymentLinksPage() {
   return (
     <>
-      <Script
-        id="easner-payment-links-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({

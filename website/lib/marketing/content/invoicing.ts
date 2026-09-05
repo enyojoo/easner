@@ -15,7 +15,7 @@ export const invoicingContent: ProductPageContent = {
       "B2B collections emerging markets",
       "invoice clients in Nigeria",
       "invoice clients in Mexico",
-      "collect payments from Kenya",
+      "collect payments from China",
       "invoice customers in the Philippines",
       "invoice software for exporters",
     ],

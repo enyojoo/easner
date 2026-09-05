@@ -5,6 +5,10 @@ import {
   EASNER_CANONICAL_DEFINITION,
   EASNER_CANONICAL_DEFINITION_SHORT,
   EASNER_CORRIDOR_COVERAGE_FAQ,
+  EASNER_SIGNUP_ELIGIBILITY_FAQ,
+  EASNER_DEVELOPED_MARKET_KEYWORDS,
+  EASNER_EMERGING_MARKET_KEYWORDS,
+  EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
 } from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
@@ -32,6 +36,9 @@ export const homeMetadata = {
     "stablecoin payouts",
     "payment collections",
     "banking infrastructure for emerging markets",
+    ...EASNER_DEVELOPED_MARKET_KEYWORDS,
+    ...EASNER_EMERGING_MARKET_KEYWORDS,
+    ...EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
   ],
 }
 
@@ -121,7 +128,7 @@ export const corridorContent = {
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
-    "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and Kenya",
+    "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and China",
   ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_corridor" }] satisfies Cta[],
 }
 
@@ -159,5 +166,19 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Which countries are supported?",
     answer: EASNER_CORRIDOR_COVERAGE_FAQ,
+  },
+  {
+    question: "Can I sign up for Easner from any country?",
+    answer: EASNER_SIGNUP_ELIGIBILITY_FAQ,
+  },
+  {
+    question: "Can businesses use Easner to pay suppliers in China or other manufacturing hubs?",
+    answer:
+      "Yes. Easner Business Banking supports paying suppliers, manufacturers, and vendors internationally, subject to standard verification and sanctions screening. See our KYC/KYB and AML Policy for eligibility details.",
+  },
+  {
+    question: "Does Easner work for offshore and nearshore outsourcing payments?",
+    answer:
+      "Yes. Companies use Easner Business Banking and Payroll to pay offshore and nearshore contractors, agencies, and remote teams from one dashboard, with compliance built in.",
   },
 ]

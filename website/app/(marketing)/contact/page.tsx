@@ -1,4 +1,3 @@
-import Script from "next/script"
 import { ContactHero } from "@/components/marketing/contact-hero"
 import { ContactBooking } from "@/components/marketing/contact-booking"
 import { ContactSupportNotice } from "@/components/marketing/contact-support-notice"
@@ -11,8 +10,7 @@ export const metadata = marketingMetadata({ metadata: contactMetadata, path: "/c
 export default function ContactPage() {
   return (
     <>
-      <Script
-        id="easner-contact-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
           breadcrumbJsonLd([

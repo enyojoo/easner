@@ -1,4 +1,3 @@
-import Script from "next/script"
 import { AboutHero } from "@/components/marketing/about-hero"
 import { AboutMissionSection } from "@/components/marketing/about-mission-section"
 import { AboutTrustSection } from "@/components/marketing/about-trust-section"
@@ -22,8 +21,7 @@ export const metadata = marketingMetadata({ metadata: aboutMetadata, path: "/abo
 export default function AboutPage() {
   return (
     <>
-      <Script
-        id="easner-about-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(
           breadcrumbJsonLd([

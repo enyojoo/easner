@@ -1,4 +1,3 @@
-import Script from "next/script"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -9,8 +8,7 @@ export const metadata = marketingMetadata({ metadata: invoicingContent.metadata,
 export default function InvoicingPage() {
   return (
     <>
-      <Script
-        id="easner-invoicing-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
           financialServiceJsonLd({

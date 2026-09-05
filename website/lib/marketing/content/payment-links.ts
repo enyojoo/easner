@@ -15,7 +15,7 @@ export const paymentLinksContent: ProductPageContent = {
       "share a payment link",
       "small business payment link",
       "payment link Nigeria",
-      "get paid in Kenya",
+      "get paid in China",
       "freelancer payment link Africa",
       "payment link for consultants",
     ],

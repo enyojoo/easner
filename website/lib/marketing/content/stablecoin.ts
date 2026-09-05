@@ -15,9 +15,12 @@ export const stablecoinContent: ProductPageContent = {
       "stablecoin invoicing",
       "USDC payments Africa",
       "stablecoin settlement Nigeria",
-      "USDC business Kenya",
+      "USDC business China",
       "EURC payments Europe",
       "stablecoin payments Asia",
+      "USDC payments Latin America",
+      "stablecoin payments MENA",
+      "USDC business Pakistan",
     ],
   },
   hero: {
