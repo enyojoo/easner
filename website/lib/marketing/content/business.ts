@@ -1,5 +1,9 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL } from "../constants"
+import {
+  BUSINESS_SIGNUP_URL,
+  EASNER_DEVELOPED_MARKET_KEYWORDS,
+  EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
+} from "../constants"
 
 export const businessContent: ProductPageContent = {
   metadata: {
@@ -7,7 +11,6 @@ export const businessContent: ProductPageContent = {
     description:
       "Manage multi-currency accounts, collect customer payments, send invoices, and pay suppliers and teams with Easner Business Banking, in the US and globally.",
     keywords: [
-      "business banking United States",
       "business account for startups",
       "business financial management",
       "cross-border B2B payouts",
@@ -21,15 +24,10 @@ export const businessContent: ProductPageContent = {
       "pay suppliers in Mexico",
       "pay suppliers in the Philippines",
       "pay suppliers in India",
-      "business account for exporters",
       "US business account for global suppliers",
       "EU business account for cross-border trade",
-      "pay suppliers in China",
-      "pay Chinese manufacturers",
-      "cross-border payments for importers",
-      "international vendor payments platform",
-      "B2B cross-border trade payments",
-      "pay import suppliers internationally",
+      ...EASNER_DEVELOPED_MARKET_KEYWORDS,
+      ...EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
     ],
   },
   hero: {

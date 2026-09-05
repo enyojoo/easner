@@ -42,28 +42,28 @@ export const whyEasnerHeadline = "Why choose Easner"
 
 export const whyEasnerPillars: CardItem[] = [
   {
-    title: "Your money, in one place",
+    title: "Send to 80+ countries",
     description:
-      "Receive payments, send money, and manage your balances with a personal account or business dashboard.",
+      "Pay people and businesses across Africa, Latin America, Asia, and Europe. Coverage varies by destination.",
+    icon: "mkt-icon-pillar-invisible",
+  },
+  {
+    title: "One account, many currencies",
+    description:
+      "Hold USD, EUR, GBP, and NGN in one place, and pay out well beyond them.",
     icon: "mkt-icon-pillar-ux",
   },
   {
-    title: "Keep the full picture",
+    title: "Less lost to fees",
     description:
-      "See your balances and payment activity together, so you can stay on top of your money.",
+      "Modern settlement can cut cross-border cost by up to ~60% in supported corridors.",
     icon: "mkt-icon-pillar-cost",
   },
   {
-    title: "Verification built in",
+    title: "Compliance built in",
     description:
-      "Identity and business verification, screening, and transaction limits are part of your Easner account.",
+      "Verification, screening, and limits come standard — not bolted on later.",
     icon: "mkt-icon-pillar-compliance",
-  },
-  {
-    title: "Local and global payments",
-    description:
-      "Move money through supported bank, mobile money, and stablecoin payment methods, with a record of each transfer.",
-    icon: "mkt-icon-pillar-invisible",
   },
 ]
 
@@ -108,7 +108,7 @@ export const solutionsPersonas = [
 
 export const corridorContent = {
   headline: "At home. Around the world.",
-  body: "From everyday payments in the US to connections around the world, Easner brings your money together. Hold multiple currencies and pay people and businesses through our global payment network.",
+  body: "Hold USD, EUR, GBP, and NGN, then pay people and businesses in 80+ countries. Payment methods and coverage vary by destination.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:

@@ -7,7 +7,7 @@ export function ProductGrid() {
       id="products"
       analyticsSection="homepage_products"
       headline="One infrastructure. Many ways to use."
-      headlineClassName="lg:whitespace-nowrap xl:text-4xl"
+      headlineClassName="xl:whitespace-nowrap xl:text-4xl"
       items={ALL_PRODUCT_CARDS}
       showIcons
     />

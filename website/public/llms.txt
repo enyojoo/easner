@@ -30,7 +30,18 @@ Easner accepts personal and business signups from most countries worldwide. Acco
 
 ## Global payments
 
-Easner connects US, EU, and UK payment infrastructure with supported destinations around the world. Payment methods and currencies vary by account and destination. Payout coverage and account-opening eligibility are distinct; check the product information and KYC/KYB and AML Policy for details.
+Easner connects US, EU, and UK payment infrastructure with more than 80 payout destinations worldwide. Account balances are held in USD, EUR, GBP, and NGN. Payment methods and currencies vary by account and destination. Payout coverage and account-opening eligibility are distinct; check the product information and KYC/KYB and AML Policy for details.
+
+- **North America (US):** Personal and business accounts, USD balances, domestic and international payments, and cards.
+- **Europe (EU, UK):** EUR and GBP balances, business collections, invoicing, and EURC settlement.
+- **Africa:** Local payout connectivity including Nigeria, Ghana, Kenya, South Africa, Egypt, Rwanda, Uganda, Tanzania, Senegal, and Zambia.
+- **Latin America:** Payouts including Mexico, Brazil, Colombia, Peru, Guatemala, Ecuador, and Jamaica.
+- **Asia-Pacific and South Asia:** Payouts including India, China, the Philippines, Indonesia, Vietnam, Pakistan, Bangladesh, Sri Lanka, Thailand, Malaysia, Singapore, and Hong Kong.
+- **Middle East:** Payouts including the United Arab Emirates and Israel.
+
+## How Easner moves money
+
+Easner settles cross-border payments on stablecoin rails, primarily USDC and EURC, then pays out in local currency at the destination. Customers send and receive in familiar currencies; the settlement layer is not something they interact with directly. A crypto wallet is not required to use Easner accounts, invoicing, Checkout, Payment Links, or Payroll. Timing depends on destination, payment method, banking hours, and verification checks.
 
 ## Frequently asked
 

@@ -1,5 +1,5 @@
 import type { ProductPageContent } from "../types"
-import { BUSINESS_SIGNUP_URL } from "../constants"
+import { BUSINESS_SIGNUP_URL, EASNER_EMERGING_MARKET_KEYWORDS } from "../constants"
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
@@ -21,12 +21,13 @@ export const stablecoinContent: ProductPageContent = {
       "USDC payments Latin America",
       "stablecoin payments MENA",
       "USDC business Pakistan",
+      ...EASNER_EMERGING_MARKET_KEYWORDS,
     ],
   },
   hero: {
-    h1: "Send and receive stablecoins with ease.",
+    h1: "Stablecoin speed. Banking simplicity.",
     subhead:
-      "Receive USDC and EURC, send funds on supported networks, and keep a clear record of each payment. Manage stablecoin activity alongside your Easner Business accounts.",
+      "Easner settles on stablecoin rails, so cross-border money moves faster — while you work in familiar currencies and screens.",
     visualSlot: "mkt-hero-stablecoin-01",
     altText: "Easner Business dashboard showing stablecoin settlement activity",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_hero" }],
@@ -95,6 +96,28 @@ export const stablecoinContent: ProductPageContent = {
       title: "Software and SaaS",
       description:
         "Collect global customer payments with stablecoin pay-in, Terminal, and QR Pay – familiar banking screens for finance, faster settlement.",
+    },
+  ],
+  faq: [
+    {
+      question: "How does Easner move money internationally?",
+      answer:
+        "Easner settles cross-border payments on stablecoin rails – primarily USDC and EURC – then pays out in local currency at the destination. You send and receive in familiar currencies; the settlement layer runs behind the screens.",
+    },
+    {
+      question: "Do I need a crypto wallet to use Easner?",
+      answer:
+        "No. Stablecoin settlement runs behind your account. You can receive to a deposit address or send to supported wallets if you want to, but everyday accounts, invoices, and payouts work in regular currencies.",
+    },
+    {
+      question: "Why is stablecoin settlement faster than a bank wire?",
+      answer:
+        "A traditional wire passes through several correspondent banks, each adding a step. Stablecoin settlement shortens that path between Easner and its payout partners. Timing still depends on destination, banking hours, and verification checks.",
+    },
+    {
+      question: "Which stablecoins does Easner support?",
+      answer:
+        "USDC and EURC on supported networks. Deposit addresses and network details are shown in your Easner Business account before you send or receive.",
     },
   ],
   ctaBand: {

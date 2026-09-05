@@ -9,7 +9,7 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Easner Personal Banking | Multi-Currency Money App",
     description:
-      "Manage everyday money with Easner Personal Banking. Hold multiple currencies, receive payments, and send money in the US and internationally from one mobile app.",
+      "Manage everyday money with Easner Personal Banking. Hold USD, EUR, GBP, and NGN, receive payments, and send money to 80+ countries from one app.",
     keywords: [
       "personal banking app",
       "personal finance app USA",
@@ -24,7 +24,7 @@ export const personalContent: ProductPageContent = {
   hero: {
     h1: "Bank globally with Ease",
     subhead:
-      "Get paid, send money, and keep your finances in view. Easner brings your everyday payments and multiple currencies together in one simple app.",
+      "Get paid, send money, and hold USD, EUR, GBP, and NGN — all from one app.",
     visualSlot: "mkt-hero-personal-01",
     altText: "Easner Mobile account and receive money screens",
     ctas: downloadCta,
@@ -62,36 +62,37 @@ export const personalContent: ProductPageContent = {
   ],
   useCasesHeadline: "Built for the way you live",
   useCasesSubhead:
-    "For your everyday finances in the US and the connections you make around the world.",
+    "For your money at home, and the payments that cross borders.",
   useCases: [
     {
       title: "Everyday money",
       description:
-        "Receive money, manage your balances, and pay the people in your life from one mobile account.",
+        "Receive, spend, and send from one account you actually use day to day.",
     },
     {
-      title: "Friends and family",
-      description: "Send money to the people who matter, whether they are nearby or on another continent.",
+      title: "Getting paid from abroad",
+      description:
+        "Take client and employer payments from other countries in USD, EUR, GBP, or NGN.",
+    },
+    {
+      title: "Family and friends abroad",
+      description:
+        "Send support to people in 80+ countries, with fees and rates shown before you confirm.",
     },
     {
       title: "Students and families",
       description:
-        "Manage school and living expenses with payment records and saved recipients.",
+        "Cover tuition and living costs across countries, with a record of every payment.",
     },
     {
-      title: "Life in more than one country",
+      title: "Freelancers and creators",
       description:
-        "Keep multiple currencies in one account and manage your money as you move between places.",
+        "Get paid by clients at home or overseas, then move earnings when you need them.",
     },
     {
-      title: "Freelancers and independent professionals",
+      title: "Living between countries",
       description:
-        "Receive client payments and manage your earnings, whether your next project is local or international.",
-    },
-    {
-      title: "Staying organized",
-      description:
-        "Save recipients, connect with people using EASETAG, and keep a clear record of your payments.",
+        "Keep balances in USD, EUR, GBP, and NGN as you move between places.",
     },
   ],
   ctaBand: {
