@@ -5,7 +5,7 @@ export const payrollContent: ProductPageContent = {
   metadata: {
     title: "Global Payroll | Pay Employees & Contractors",
     description:
-      "Pay employees and contractors with Easner Business, locally and internationally. Manage payroll approvals, generate pay stubs, and track team payments.",
+      "Pay employees and contractors in 80+ countries, with approvals, pay stubs, and payment records on the same balance as the rest of Easner Business.",
     keywords: [
       "cross-border payroll",
       "international contractor payroll",

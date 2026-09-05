@@ -5,7 +5,7 @@ export const checkoutContent: ProductPageContent = {
   metadata: {
     title: "Online Checkout | Accept Payments & Subscriptions",
     description:
-      "Accept card, bank, and digital wallet payments on your website with Easner Checkout. Collect one-time payments and subscriptions through Easner Business.",
+      "Accept card, bank, and wallet payments on your own website. Easner is the merchant on record, so there's no separate payment processor to set up.",
     keywords: [
       "merchant of record checkout",
       "checkout API",
