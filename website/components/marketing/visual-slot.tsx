@@ -994,7 +994,7 @@ function ApiPayoutsMockup({ compact, fill = false }: { compact: boolean; fill?: 
           <div className="text-white/35">{"}"}</div>
         </div>
         <div className="mt-2 flex items-center justify-between rounded-xl bg-[#EAF5FD] px-3 py-2.5">
-          <span className="text-[11px] font-medium text-[#0A2540]">Illustrative rate · review before sending</span>
+          <span className="text-[11px] font-medium text-[#0A2540]">Review before sending</span>
           <div className="rounded-lg bg-[#007ACC] px-2.5 py-1 text-[10px] font-semibold text-white">Confirm</div>
         </div>
       </div>
@@ -2169,7 +2169,6 @@ function PersonaMockup({ assetId, compact, fill = false }: { assetId: string; co
           <div className="mt-3 max-w-sm text-2xl font-semibold text-[#0F1110]">
             Money movement for real work
           </div>
-          {!compact && <p className="mt-2 max-w-sm text-sm text-[#6F756F]">A polished interim visual, ready to swap for brand photography.</p>}
         </div>
       </div>
     </div>

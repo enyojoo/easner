@@ -19,7 +19,6 @@ export function BusinessDashboardMockup({ compact = false }: { compact?: boolean
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-[#E8ECEE] bg-[#FAFBFC] px-4">
         <div aria-hidden="true" className="flex gap-1.5"><span className="size-1.5 rounded-full bg-[#C9D1D8]" /><span className="size-1.5 rounded-full bg-[#C9D1D8]" /><span className="size-1.5 rounded-full bg-[#C9D1D8]" /></div>
         <span className="ml-1 text-[11px] font-medium text-[#54616D]">Easner Business</span>
-        <span className="ml-auto text-[10px] text-[#66727D]">Illustrative account</span>
       </div>
       <div className="flex min-h-0 flex-1">
         <div className="hidden w-36 shrink-0 flex-col border-r border-[#E8ECEE] bg-[#FAFBFC] p-3 @[580px]:flex">
@@ -61,7 +60,7 @@ export function BusinessDashboardMockup({ compact = false }: { compact?: boolean
 
 export function HomeDashboardMockup() {
   return (
-    <div className="h-full min-h-0 p-3 sm:p-5 lg:p-6" role="img" aria-label="Illustrative Easner dashboard with currency balances, an incoming invoice payment, and a supplier payment.">
+    <div className="h-full min-h-0 p-3 sm:p-5 lg:p-6" role="img" aria-label="Easner dashboard with currency balances, an incoming invoice payment, and a supplier payment.">
       <BusinessDashboardMockup compact />
     </div>
   )

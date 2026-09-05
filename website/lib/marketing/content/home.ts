@@ -31,7 +31,7 @@ export const homeHero = {
   subhead:
     "Bank, spend, and send with Easner Personal Banking. Bring your business accounts, customer payments, cards, and payouts together with Easner Business Banking.",
   visualSlot: "mkt-hero-home-01",
-  altText: "Illustrative Easner dashboard showing currency accounts, an incoming payment, and a supplier payment",
+  altText: "Easner dashboard showing currency accounts, an incoming payment, and a supplier payment",
   ctas: [
     { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_hero" },
     { label: "Explore products", href: "#products" },

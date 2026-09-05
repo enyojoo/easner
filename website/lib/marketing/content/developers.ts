@@ -26,7 +26,7 @@ export const developersContent: ProductPageContent = {
     subhead:
       "Connect customer verification, accounts, collections, and payouts to your platform. Easner APIs and webhooks help your team build and track cross-border payment flows.",
     visualSlot: "mkt-hero-apis-01",
-    altText: "Illustrative Easner integration workflow for verification, accounts, payouts, and payment events",
+    altText: "Easner integration workflow for verification, accounts, payouts, and payment events",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
       { label: "Agency Model", href: "/partners", analyticsLocation: "developers_hero_partners" },
