@@ -46,28 +46,28 @@ export const businessContent: ProductPageContent = {
     {
       title: "Named Accounts",
       description:
-        "Share USD, EUR, and GBP details – account name, number, and routing – so customers pay you directly. Stablecoin deposits land in the same place.",
+        "Share USD, EUR, and GBP account details so customers pay you directly. Stablecoin deposits land in the same place.",
       visualSlot: "mkt-ui-business-accounts",
       altText: "Easner Business account details showing account name, account number, and routing number",
     },
     {
       title: "Supplier payments",
       description:
-        "Pay suppliers and contractors through supported bank, stablecoin, and local payment methods. Track payments alongside the rest of your business activity.",
+        "Pay suppliers and contractors by bank transfer, stablecoin, or local payment methods in 80+ countries.",
       visualSlot: "mkt-ui-business-send",
       altText: "Easner Business send and payout screen",
     },
     {
       title: "Collections",
       description:
-        "Invoice customers, embed Checkout on your site, share a Payment Link, collect in person with Terminal, or offer QR Pay – all connected to your business dashboard.",
+        "Invoice customers, embed Checkout, share a Payment Link, or collect in person with Terminal and QR Pay.",
       visualSlot: "mkt-ui-business-collections",
       altText: "Easner Business invoicing, Checkout, Payment Links, Terminal, and QR Pay collections",
     },
     {
       title: "Team access",
       description:
-        "Give each teammate the right access, save customer details, and review your payment history and reports.",
+        "Set the right level of access for each teammate, with payment history and reports for the whole team.",
       visualSlot: "mkt-ui-business-team",
       altText: "Easner Business team and reporting dashboard",
     },

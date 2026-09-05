@@ -34,21 +34,21 @@ export const personalContent: ProductPageContent = {
     {
       title: "Send money",
       description:
-        "Pay people and businesses through supported bank accounts, wallets, and mobile money services. Stablecoin settlement carries it across borders; you just see the payment.",
+        "Pay people and businesses by bank transfer, wallet, or mobile money. Stablecoin settlement moves it across borders.",
       visualSlot: "mkt-ui-personal-send",
       altText: "Easner Mobile send money screen",
     },
     {
       title: "Named Accounts",
       description:
-        "Share your own account details so clients and family can pay you directly, or receive to a stablecoin deposit address instead.",
+        "Share account details in your own name so clients and family can pay you, or use a stablecoin deposit address.",
       visualSlot: "mkt-ui-personal-receive",
       altText: "Easner Mobile receive screen showing shareable account details",
     },
     {
       title: "Quick sending",
       description:
-        "Save family, friends, and other recipients. Use an EASETAG to find people on Easner without entering their account details again.",
+        "Save the people you pay often, and use an EASETAG to reach them without entering details each time.",
       visualSlot: "mkt-ui-personal-recipients",
       altText: "Easner Mobile recipients and EASETAG",
     },
