@@ -15,6 +15,10 @@ export const checkoutContent: ProductPageContent = {
       "subscription billing API",
       "online checkout for SaaS",
       "sub-merchant payouts",
+      "checkout for US startups",
+      "checkout for European startups",
+      "checkout for African startups",
+      "global SaaS payment infrastructure",
     ],
   },
   hero: {
@@ -34,15 +38,21 @@ export const checkoutContent: ProductPageContent = {
     { title: "Integrate", description: "Add the payment form with a publishable key and a few lines of code – your page stays yours." },
     { title: "Verify and go live", description: "Confirm your webhook, run a test payment, then start charging real customers." },
   ],
-  integrationStepsFootnote: "No separate merchant account or payment processor to set up.",
   featuresLayout: "bento",
   features: [
     {
-      title: "One-time, subscription, or custom",
+      title: "Collect one-time payments",
       description:
-        "Charge once, bill on a schedule, or key a charge to your own record id for bookings and gated access – all through the same checkout session.",
-      visualSlot: "mkt-ui-checkout-hosted",
-      altText: "Easner hosted checkout page embedded on a website",
+        "Charge once for a product, service, or one-off fee – a hosted checkout page ready to accept payment in minutes.",
+      visualSlot: "mkt-ui-checkout-onetime",
+      altText: "Easner Checkout one-time payment page",
+    },
+    {
+      title: "Collect subscriptions",
+      description:
+        "Bill on a recurring schedule – set the interval once and Easner handles renewals from the same checkout session.",
+      visualSlot: "mkt-ui-checkout-subscription",
+      altText: "Easner Checkout subscription billing page",
     },
     {
       title: "Global payment methods",
@@ -52,14 +62,14 @@ export const checkoutContent: ProductPageContent = {
       altText: "Easner Checkout global payment method selection",
     },
     {
-      title: "One ledger",
+      title: "To your Easner Balance",
       description:
-        "Every checkout and subscription payment settles alongside your invoices, payouts, and card activity in Easner Business – one place to reconcile.",
+        "Every checkout and subscription payment settles directly to your Easner Balance, reconciled alongside your other Easner Business activity.",
       visualSlot: "mkt-ui-checkout-ledger",
-      altText: "Easner Business unified ledger with checkout activity",
+      altText: "Easner Business balance with checkout activity",
     },
   ],
-  useCasesHeadline: "Built for platforms with their own website",
+  useCasesHeadline: "Built for your website or app",
   useCasesSubhead:
     "Easner Checkout is for teams that already have a website or product and want to add payments without building their own processor integration.",
   useCases: [
@@ -77,11 +87,6 @@ export const checkoutContent: ProductPageContent = {
       title: "Marketplaces and platforms",
       description:
         "Collect from buyers and route funds to sellers, with Easner as the merchant on record and one ledger for platform reconciliation.",
-    },
-    {
-      title: "Bookings and gated access",
-      description:
-        "Charge for a class, a download, or gated access, keyed to your own record ids – built for pay-for-access flows.",
     },
   ],
   faq: [

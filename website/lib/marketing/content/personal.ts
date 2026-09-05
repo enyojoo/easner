@@ -1,5 +1,5 @@
 import type { ProductPageContent } from "../types"
-import { APP_LINK_URL } from "../constants"
+import { APP_LINK_URL, EASNER_SUPPORTED_LOCAL_MARKETS } from "../constants"
 
 const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
@@ -19,6 +19,15 @@ export const personalContent: ProductPageContent = {
       "diaspora banking app",
       "international money transfer app",
       "send money to Nigeria",
+      "send money to Kenya",
+      "send money to the Philippines",
+      "send money to Mexico",
+      "send money to India",
+      "remittance app for diaspora",
+      "app for Nigerians abroad",
+      "app for Filipinos abroad",
+      "UK to Africa money transfer",
+      "US to Africa money transfer",
     ],
   },
   hero: {
@@ -71,8 +80,7 @@ export const personalContent: ProductPageContent = {
     },
     {
       title: "Diaspora remittances",
-      description:
-        "Send support home on faster paths than legacy bank wires – with clear fees and status in the app.",
+      description: `Send support home to ${EASNER_SUPPORTED_LOCAL_MARKETS} on faster paths than legacy bank wires – with clear fees and status in the app.`,
     },
     {
       title: "Students and families",

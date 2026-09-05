@@ -13,6 +13,8 @@ export const cardsContent: ProductPageContent = {
       "business expense cards",
       "global corporate cards",
       "virtual cards cross-border",
+      "corporate cards for distributed teams",
+      "spend management for remote teams",
     ],
   },
   hero: {

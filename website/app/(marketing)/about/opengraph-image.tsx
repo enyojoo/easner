@@ -7,7 +7,7 @@ export const contentType = OG_CONTENT_TYPE
 
 export default async function Image() {
   return createOgImage({
-    headline: aboutHero.headline,
+    headline: aboutHero.headlineLines.join(" "),
     subhead: aboutHero.subhead,
   })
 }

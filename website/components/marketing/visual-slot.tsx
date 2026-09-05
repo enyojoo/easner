@@ -1105,6 +1105,9 @@ function InvoiceMockup({ assetId, compact, fill = false }: { assetId: string; co
   if (assetId.includes("hero-invoicing")) {
     return <InvoiceOverviewMockup compact={compact} fill={fill} />
   }
+  if (assetId.includes("online-payin")) {
+    return <InvoiceOnlinePayinMockup compact={compact} fill={fill} />
+  }
   if (assetId.includes("bank-payin")) {
     return <InvoiceBankPayinMockup compact={compact} fill={fill} />
   }
@@ -1268,6 +1271,38 @@ function InvoiceEditorMockup({ compact, fill = false }: { compact: boolean; fill
   )
 }
 
+function InvoiceOnlinePayinMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Pay invoice</div>
+            <div className="mt-1 text-xl font-semibold text-[#0F1110]">INV-1042 · $4,800</div>
+          </div>
+          <CreditCard className="h-7 w-7 text-[#007ACC]" />
+        </div>
+        <div className="mt-5 flex gap-2">
+          <div className="rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">Pay online</div>
+          <div className="rounded-full bg-[#F8F6F0] px-3 py-1.5 text-xs font-semibold text-[#6F756F]">Bank transfer</div>
+          <div className="rounded-full bg-[#F8F6F0] px-3 py-1.5 text-xs font-semibold text-[#6F756F]">Stablecoin</div>
+        </div>
+        <div className="mt-5 rounded-2xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Card or bank debit</div>
+          <div className="mt-1 text-xs font-medium text-[#0F1110]">•••• •••• •••• 4242</div>
+        </div>
+        {!compact && (
+          <div className="mt-3 rounded-2xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Reference</div>
+            <div className="mt-1 text-xs font-medium text-[#0F1110]">INV-1042</div>
+          </div>
+        )}
+        <div className="mt-5 rounded-xl bg-[#007ACC] py-2.5 text-center text-xs font-semibold text-white">Pay $4,800.00</div>
+      </div>
+    </div>
+  )
+}
+
 function InvoiceBankPayinMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
   return (
     <div className={mockupOuterClass(compact, fill)}>
@@ -1280,6 +1315,7 @@ function InvoiceBankPayinMockup({ compact, fill = false }: { compact: boolean; f
           <Landmark className="h-7 w-7 text-[#007ACC]" />
         </div>
         <div className="mt-5 flex gap-2">
+          <div className="rounded-full bg-[#F8F6F0] px-3 py-1.5 text-xs font-semibold text-[#6F756F]">Pay online</div>
           <div className="rounded-full bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">Bank transfer</div>
           <div className="rounded-full bg-[#F8F6F0] px-3 py-1.5 text-xs font-semibold text-[#6F756F]">Stablecoin</div>
         </div>
@@ -2411,7 +2447,10 @@ function CardReportingMockup({ compact, fill = false }: { compact: boolean; fill
 }
 
 function CheckoutMockup({ assetId, compact, fill = false }: { assetId: string; compact: boolean; fill?: boolean }) {
-  if (assetId.includes("hosted")) {
+  if (assetId.includes("onetime")) {
+    return <CheckoutOneTimeMockup compact={compact} fill={fill} />
+  }
+  if (assetId.includes("subscription")) {
     return <CheckoutHostedMockup compact={compact} fill={fill} />
   }
   if (assetId.includes("methods")) {
@@ -2421,6 +2460,30 @@ function CheckoutMockup({ assetId, compact, fill = false }: { assetId: string; c
     return <CheckoutLedgerMockup compact={compact} fill={fill} />
   }
   return <CheckoutHeroMockup compact={compact} fill={fill} />
+}
+
+function CheckoutOneTimeMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
+  return (
+    <div className={mockupOuterClass(compact, fill)}>
+      <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">One-time payment</div>
+            <div className="mt-1 text-lg font-semibold text-[#0F1110]">Onboarding package</div>
+          </div>
+          <ShoppingCart className="h-6 w-6 text-[#007ACC]" />
+        </div>
+        <div className="mt-4 rounded-2xl border border-[#E9E4D8] bg-[#F8F6F0] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6F756F]">Amount due</div>
+          <div className="mt-1 flex items-end justify-between">
+            <span className="text-2xl font-semibold text-[#0F1110]">$299.00</span>
+            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#6F756F]">One-time</span>
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl bg-[#007ACC] py-2.5 text-center text-xs font-semibold text-white">Pay</div>
+      </div>
+    </div>
+  )
 }
 
 function CheckoutHeroMockup({ compact, fill = false }: { compact: boolean; fill?: boolean }) {
@@ -2467,7 +2530,7 @@ function CheckoutHostedMockup({ compact, fill = false }: { compact: boolean; fil
       <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Hosted checkout</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Subscription</div>
             <div className="mt-1 text-lg font-semibold text-[#0F1110]">Nova Analytics Pro</div>
           </div>
           <ShoppingCart className="h-6 w-6 text-[#007ACC]" />
@@ -2489,10 +2552,7 @@ function CheckoutHostedMockup({ compact, fill = false }: { compact: boolean; fil
             </div>
           </div>
         )}
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-[#EAF5FD] px-3 py-2.5">
-          <span className="text-[11px] text-[#0A2540]">Fee shown before confirm</span>
-          <div className="rounded-lg bg-[#007ACC] px-3 py-1.5 text-xs font-semibold text-white">Pay</div>
-        </div>
+        <div className="mt-4 rounded-xl bg-[#007ACC] py-2.5 text-center text-xs font-semibold text-white">Pay</div>
       </div>
     </div>
   )
@@ -2547,7 +2607,7 @@ function CheckoutLedgerMockup({ compact, fill = false }: { compact: boolean; fil
       <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">One ledger</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6F756F]">Easner Balance</div>
             <div className="mt-1 text-lg font-semibold text-[#0F1110]">Checkout activity</div>
           </div>
           <ReceiptText className="h-6 w-6 text-[#007ACC]" />
@@ -2923,7 +2983,7 @@ function PayLinksLedgerMockup({ compact, fill = false }: { compact: boolean; fil
     <div className={mockupOuterClass(compact, fill)}>
       <div className={cn(mockupPanelClass(compact, false, fill), compact ? "p-4" : "rounded-3xl border-[#E4DED1] p-5")}>
         <div className="rounded-2xl bg-[#0F1110] p-4 text-white">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Total balance</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Easner Balance</div>
           <div className="mt-1 text-xl font-semibold">$184,920.40</div>
           <div className="mt-1 text-[10px] text-white/45">Payment links settle with your other activity</div>
         </div>

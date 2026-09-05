@@ -5,19 +5,25 @@ export const invoicingContent: ProductPageContent = {
   metadata: {
     title: "Invoicing | Global B2B Collections",
     description:
-      "Invoice globally and get paid by bank or stablecoin. B2B invoicing on Easner Business with virtual accounts and stablecoin pay-in.",
+      "Invoice globally and get paid online, by bank, or by stablecoin. B2B invoicing on Easner Business with card checkout, virtual accounts, and stablecoin pay-in.",
     keywords: [
       "international invoicing",
+      "invoice online payment",
       "invoice stablecoin pay-in",
       "global B2B collections",
       "cross-border invoice payment",
       "B2B collections emerging markets",
+      "invoice clients in Nigeria",
+      "invoice clients in Mexico",
+      "collect payments from Kenya",
+      "invoice customers in the Philippines",
+      "invoice software for exporters",
     ],
   },
   hero: {
     h1: "Invoice globally and get paid",
     subhead:
-      "Create, send, and track invoices from Easner Business. Customers can pay with account details or a stablecoin deposit address, while your dashboard keeps status and reconciliation in one place.",
+      "Create, send, and track invoices from Easner Business. Customers can pay online by card, with account details, or with a stablecoin deposit address, while your dashboard keeps status and reconciliation in one place.",
     visualSlot: "mkt-hero-invoicing-01",
     altText: "Business owner creating an international invoice in Easner Business",
     ctas: [
@@ -33,6 +39,13 @@ export const invoicingContent: ProductPageContent = {
         "Generate branded invoices, add line items, and share a hosted invoice page customers can pay directly.",
       visualSlot: "mkt-ui-invoice-editor",
       altText: "Easner invoice creation screen",
+    },
+    {
+      title: "Pay online",
+      description:
+        "Customers pay by card, bank debit, or other supported methods on a hosted checkout page – no account details to copy.",
+      visualSlot: "mkt-ui-invoice-online-payin",
+      altText: "Invoice payment page showing pay-online card checkout",
     },
     {
       title: "Bank pay-in",
@@ -112,7 +125,7 @@ export const invoicingContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Invoice from Easner Business today",
-    subhead: "One invoice flow for bank pay-in, stablecoin pay-in, status tracking, and reconciliation.",
+    subhead: "One invoice flow for online, bank, and stablecoin pay-in, with status tracking and reconciliation.",
     ctas: [{ label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "invoicing_cta_band" }],
   },
 }

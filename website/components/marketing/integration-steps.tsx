@@ -13,6 +13,10 @@ interface IntegrationStepsProps {
 }
 
 export function IntegrationSteps({ headline, steps, footnote, className, id }: IntegrationStepsProps) {
+  // Wait until xl: to go multi-column beyond 2 — at lg: (1024–1279px) a 3-4 column grid
+  // is too narrow for a single long word in bold uppercase tracked letters (e.g. "DEPLOYMENT").
+  const wideCols = steps.length >= 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
+
   return (
     <section id={id} className={cn("scroll-mt-24 bg-white pb-16 pt-8 md:pb-24 md:pt-12", className)}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -23,7 +27,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
             </h2>
           </div>
         )}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        <div className={cn("grid grid-cols-1 gap-5 sm:grid-cols-2 xl:gap-6", wideCols)}>
           {steps.map((step, index) => (
             <article
               key={step.title}
@@ -37,7 +41,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
                   "mt-4 font-unbounded font-bold leading-snug text-[#0F1110]",
                   MARKETING_SUBSECTION_TITLE,
                   MARKETING_HEADING_CAPS,
-                  // Narrow 4-column layout at lg+ — cap growth below the general subsection scale to avoid clipping single-word titles.
+                  // Cap below the general subsection scale — this grid gets narrower than most other bento/card contexts.
                   "lg:text-2xl xl:text-2xl"
                 )}
               >
@@ -46,7 +50,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
               <p className="mt-3 flex-1 text-sm leading-7 text-[#5F665F]">{step.description}</p>
               {index < steps.length - 1 && (
                 <div
-                  className="absolute right-0 top-1/2 hidden h-px w-6 translate-x-full bg-[#D9D4C7] lg:block"
+                  className="absolute right-0 top-1/2 hidden h-px w-6 translate-x-full bg-[#D9D4C7] xl:block"
                   aria-hidden
                 />
               )}

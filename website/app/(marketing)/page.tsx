@@ -11,7 +11,7 @@ import { FaqSection } from "@/components/marketing/faq-section"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { homeMetadata, homeCtaBand, homeFaq } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { faqPageJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata: Metadata = marketingMetadata({
   metadata: homeMetadata,
@@ -23,9 +23,18 @@ export default function HomePage() {
   return (
     <>
       <Script
-        id="easner-home-faq-jsonld"
+        id="easner-home-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLdScript(faqPageJsonLd(homeFaq))}
+        dangerouslySetInnerHTML={jsonLdScript([
+          financialServiceJsonLd({
+            name: "Easner",
+            description: homeMetadata.description,
+            path: "/",
+            serviceType: "Stablecoin-powered cross-border banking infrastructure",
+            areaServed: CORRIDOR_AREA_SERVED,
+          }),
+          faqPageJsonLd(homeFaq),
+        ])}
       />
       <Script id="products-hash-scroll" strategy="beforeInteractive">
         {`

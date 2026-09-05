@@ -14,6 +14,10 @@ export const paymentLinksContent: ProductPageContent = {
       "recurring payment link",
       "share a payment link",
       "small business payment link",
+      "payment link Nigeria",
+      "get paid in Kenya",
+      "freelancer payment link Africa",
+      "payment link for consultants",
     ],
   },
   hero: {
@@ -51,11 +55,11 @@ export const paymentLinksContent: ProductPageContent = {
       altText: "Easner Payment Links payment count and totals",
     },
     {
-      title: "One ledger",
+      title: "To your Easner Balance",
       description:
-        "Every payment link settles alongside your invoices, payouts, and card activity in Easner Business – one place to reconcile.",
+        "Every payment link settles directly to your Easner Balance, reconciled alongside your invoices, payouts, and card activity.",
       visualSlot: "mkt-ui-paylinks-ledger",
-      altText: "Easner Business unified ledger with payment link activity",
+      altText: "Easner Balance showing payment link activity",
     },
   ],
   useCasesHeadline: "Built for anyone who needs to get paid",

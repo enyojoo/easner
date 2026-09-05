@@ -40,14 +40,19 @@ export function websiteJsonLd() {
   }
 }
 
+/** Global rails (always served) plus supported local payout markets — keep in sync with EASNER_SUPPORTED_LOCAL_MARKETS. */
+export const GLOBAL_AREA_SERVED = ["US", "EU", "GB"]
+export const CORRIDOR_AREA_SERVED = [...GLOBAL_AREA_SERVED, "NG", "MX", "PH", "IN", "KE"]
+
 interface FinancialServiceInput {
   name: string
   description: string
   path: string
   serviceType: string
+  areaServed?: string[]
 }
 
-export function financialServiceJsonLd({ name, description, path, serviceType }: FinancialServiceInput) {
+export function financialServiceJsonLd({ name, description, path, serviceType, areaServed = GLOBAL_AREA_SERVED }: FinancialServiceInput) {
   return {
     "@context": "https://schema.org",
     "@type": "FinancialService",
@@ -55,7 +60,7 @@ export function financialServiceJsonLd({ name, description, path, serviceType }:
     description,
     url: `${SITE_URL}${path}`,
     serviceType,
-    areaServed: ["US", "EU", "GB"],
+    areaServed,
     provider: {
       "@type": "Organization",
       name: "Easner",

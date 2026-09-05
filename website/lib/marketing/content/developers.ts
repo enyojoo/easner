@@ -14,6 +14,9 @@ export const developersContent: ProductPageContent = {
       "cross-border payout API",
       "embedded payouts API",
       "remittance API",
+      "payouts API Africa",
+      "payments API Latin America",
+      "KYC API emerging markets",
     ],
   },
   hero: {

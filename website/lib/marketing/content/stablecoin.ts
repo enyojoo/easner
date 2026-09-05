@@ -13,6 +13,11 @@ export const stablecoinContent: ProductPageContent = {
       "invisible stablecoin",
       "USDC business account",
       "stablecoin invoicing",
+      "USDC payments Africa",
+      "stablecoin settlement Nigeria",
+      "USDC business Kenya",
+      "EURC payments Europe",
+      "stablecoin payments Asia",
     ],
   },
   hero: {

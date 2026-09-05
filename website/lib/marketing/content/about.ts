@@ -18,13 +18,13 @@ export const aboutMetadata = {
 }
 
 export const aboutHero = {
-  headline: "Making global money work locally",
+  headlineLines: ["Making global money", "work locally"],
   subhead:
     "Easner is a financial technology company building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – for individuals and businesses where legacy cross-border paths are slowest and costliest.",
 }
 
 export const aboutMission = {
-  headline: "Built for corridors legacy rails serve worst",
+  headlineLines: ["Built for corridors", "legacy rails serve worst"],
   paragraphs: [
     "Most providers quote a fee and bury the rest in the FX spread. The real cost of moving money across borders sits in four places: the on-ramp, the FX markup, prefunded local liquidity, and the last-mile payout.",
     "Stablecoins collapse settlement time in the middle of that stack. Cost is won or lost at the off-ramp. Easner focuses on that last mile – turning access to stablecoins into functioning local financial utility.",
@@ -36,23 +36,23 @@ export const aboutPillarsHeadline = "One platform. Global in. Local out."
 
 export const aboutPillars: CardItem[] = [
   {
-    title: "Accounts & money movement",
+    title: "Personal Banking",
     description:
-      "USD, EUR, and GBP accounts, payouts, and collections – for global earners, freelancers, SMEs, and partners.",
+      "Global money for people who earn, send, and spend across borders – on Easner Mobile.",
     link: "/personal",
   },
   {
-    title: "Stablecoin settlement",
+    title: "Business Banking",
     description:
-      "USDC/EURC speed behind fiat-native send, receive, invoice, and manage-money flows.",
-    link: "/stablecoin",
+      "Accounts, payouts, and collections for cross-border teams – on Easner Business.",
+    link: "/business",
   },
 ]
 
 export const aboutFoundersHeadline = "Who's building this"
 
 export const aboutFoundersSubhead =
-  "Easner was founded in 2025 to make cross-border money practical for the people and businesses legacy infrastructure leaves behind."
+  "Easner started in 2025 to make cross-border money flow seamless for the people and businesses that legacy infrastructure leaves behind."
 
 export const aboutFounders: Founder[] = [
   {

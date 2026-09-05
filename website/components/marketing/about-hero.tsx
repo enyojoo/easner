@@ -12,12 +12,16 @@ export function AboutHero() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mx-auto max-w-3xl text-center"
+        className="mx-auto max-w-6xl text-center"
       >
-        <h1 className={cn("text-balance font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
-          {aboutHero.headline}
+        <h1 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
+          {aboutHero.headlineLines.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
+          ))}
         </h1>
-        <p className={cn("mt-4 text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
+        <p className={cn("mx-auto mt-4 max-w-2xl text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
           {aboutHero.subhead}
         </p>
       </motion.div>

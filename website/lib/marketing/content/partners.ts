@@ -19,12 +19,15 @@ export const partnersContent: ProductPageContent = {
       "faith-based remittance",
       "church diaspora giving",
       "nonprofit cross-border payouts",
+      "white-label remittance Africa",
+      "agency banking Latin America",
+      "white-label payments Asia",
     ],
   },
   hero: {
     h1: "Your brand on Easner rails",
     subhead:
-      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, and provider orchestration with ongoing operational support. Built for qualified partners, including remittance operators, OTC networks, platforms, and faith-based organizations.",
+      "Launch branded cross-border financial products on Easner infrastructure – global and local payout connectivity, compliance, and provider orchestration with ongoing operational support.",
     visualSlot: "mkt-hero-partners-01",
     altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
     ctas: [
@@ -85,23 +88,12 @@ export const partnersContent: ProductPageContent = {
     {
       headline: "Full-stack branded deployment",
       body: "The Agency Model is a live, branded money-movement product on Easner – not a DIY integration. Easner runs backend infrastructure, orchestration, provider connectivity, and compliance; you operate under your brand.",
-      bullets: [
-        "Customized branded setup (your name, your customers)",
-        "Over-the-counter and agent-led transaction flows",
-        "Move away from undocumented transactions with a full audit trail",
-        "KYB/KYC onboarding with our team",
-      ],
       visualSlot: "mkt-ui-partners-agency",
       altText: "Agency Model diagram showing branded partner layer on Easner infrastructure",
     },
     {
       headline: "Branded programs for faith & mission",
       body: "Large churches and nonprofits often move money across borders for diaspora giving, branch support, and field missions. The Agency Model lets you run that program on Easner without building a banking stack from scratch.",
-      bullets: [
-        "Branded experience for members and donors (your name, not Easner's)",
-        "Diaspora collections and corridor payouts to branches and partners",
-        "KYB/KYC, AML screening, and audit trails on every transfer",
-      ],
       visualSlot: "mkt-ui-partners-faith",
       altText: "Branded faith-based organization portal showing diaspora giving and mission payout activity",
     },

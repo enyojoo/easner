@@ -23,10 +23,15 @@ export const homeMetadata = {
     "emerging markets payments",
     "cross-border payments",
     "Africa cross-border payments",
+    "Latin America cross-border payments",
+    "Asia cross-border payments",
+    "Europe cross-border banking",
+    "US business banking infrastructure",
     "diaspora banking",
     "white-label remittance",
     "stablecoin payouts",
     "payment collections",
+    "banking infrastructure for emerging markets",
   ],
 }
 

@@ -13,6 +13,12 @@ export const payrollContent: ProductPageContent = {
       "pay international contractors",
       "payroll approvals software",
       "multi-currency payroll",
+      "pay contractors in Nigeria",
+      "pay contractors in the Philippines",
+      "pay contractors in Kenya",
+      "remote team payroll Africa",
+      "contractor payments Latin America",
+      "pay remote employees globally",
     ],
   },
   hero: {

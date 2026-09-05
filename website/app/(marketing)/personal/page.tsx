@@ -2,7 +2,7 @@ import Script from "next/script"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: personalContent.metadata, path: "/personal" })
 
@@ -18,6 +18,7 @@ export default function PersonalPage() {
             description: personalContent.metadata.description,
             path: "/personal",
             serviceType: "Cross-border personal banking",
+            areaServed: CORRIDOR_AREA_SERVED,
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },

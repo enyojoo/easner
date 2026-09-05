@@ -15,6 +15,13 @@ export const businessContent: ProductPageContent = {
       "cross-border payroll",
       "multi-currency SME account",
       "pay suppliers in Nigeria",
+      "pay suppliers in Mexico",
+      "pay suppliers in the Philippines",
+      "pay suppliers in Kenya",
+      "pay suppliers in India",
+      "business account for exporters",
+      "US business account for global suppliers",
+      "EU business account for cross-border trade",
     ],
   },
   hero: {
