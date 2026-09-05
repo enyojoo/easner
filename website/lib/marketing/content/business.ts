@@ -44,11 +44,11 @@ export const businessContent: ProductPageContent = {
   featuresLayout: "bento",
   features: [
     {
-      title: "Multi-currency accounts",
+      title: "Account details in your name",
       description:
-        "Receive payments using available account details or supported stablecoin deposits, and manage your currency balances in one place.",
+        "Share USD, EUR, and GBP details – account number, routing, and SWIFT – so customers pay you directly. Stablecoin deposits land in the same place.",
       visualSlot: "mkt-ui-business-accounts",
-      altText: "Easner Business multi-currency accounts",
+      altText: "Easner Business account details showing account name, account number, routing number, and SWIFT",
     },
     {
       title: "Supplier and team payments",

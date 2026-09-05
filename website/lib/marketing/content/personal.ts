@@ -39,11 +39,11 @@ export const personalContent: ProductPageContent = {
       altText: "Easner Mobile send money screen",
     },
     {
-      title: "Receive money",
+      title: "Account details in your name",
       description:
-        "Share your available account details or a supported stablecoin deposit address, with clear instructions for the person paying you.",
+        "Share your own account details so clients and family can pay you directly, or receive to a stablecoin deposit address instead.",
       visualSlot: "mkt-ui-personal-receive",
-      altText: "Easner Mobile receive options",
+      altText: "Easner Mobile receive screen showing shareable account details",
     },
     {
       title: "Quick sending",

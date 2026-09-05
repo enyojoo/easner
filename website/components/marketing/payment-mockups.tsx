@@ -13,14 +13,22 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
 
 export function BusinessFeatureMockup({ kind }: { kind: "accounts" | "send" | "collections" | "team" }) {
   if (kind === "accounts") return (
-    <Panel title="Currency accounts">
-      <p className="mb-3 text-sm font-semibold">Your balances, at a glance</p>
-      <div className="grid grid-cols-2 gap-2">
-        {[{ code: "USD" as const, balance: "$84,220.40", ending: "9012" }, { code: "EUR" as const, balance: "€62,180.00", ending: "4451" }].map((account) => (
-          <div key={account.code} className="rounded-xl border border-[#D8E8F4] bg-[#F0F8FE] p-3"><CurrencyBadge code={account.code} labelClassName="text-[11px]" /><p className="mt-3 text-base font-semibold tracking-tight @[450px]:text-xl">{account.balance}</p><p className="mt-1 text-[10px] text-[#63717B]">Account · •••• {account.ending}</p></div>
-        ))}
+    <Panel title="Account details">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold">Your account, in your name</p>
+        <div className="flex shrink-0 gap-1">
+          <span className="rounded-full bg-[#EAF5FD] px-2 py-1 text-[10px] font-semibold text-[#0064A8]">USD</span>
+          <span className="rounded-full bg-[#F0F3F5] px-2 py-1 text-[10px] text-[#54616D]">EUR</span>
+          <span className="rounded-full bg-[#F0F3F5] px-2 py-1 text-[10px] text-[#54616D]">GBP</span>
+        </div>
       </div>
-      <div className="mt-auto flex items-center gap-2 pt-3 text-[11px] text-[#0064A8]"><Landmark aria-hidden="true" className="size-3.5" />Account details for receiving payments</div>
+      <div className="mt-3 rounded-xl border border-[#E3E8EB] bg-[#FAFBFC] px-3 py-1">
+        <Row label="Account name" value="Oakridge Studio" />
+        <Row label="Account number" value="•••• 9012" />
+        <Row label="Routing number" value="•••• 0021" />
+        <Row label="SWIFT / BIC" value="•••• 4471" />
+      </div>
+      <div className="mt-auto flex items-center gap-2 pt-3 text-[11px] text-[#0064A8]"><Landmark aria-hidden="true" className="size-3.5" />Share these details to get paid</div>
     </Panel>
   )
   if (kind === "send") return (

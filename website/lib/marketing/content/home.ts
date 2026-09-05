@@ -60,9 +60,9 @@ export const whyEasnerPillars: CardItem[] = [
     icon: "mkt-icon-pillar-cost",
   },
   {
-    title: "Clear before you confirm",
+    title: "Dollars or stablecoins",
     description:
-      "Fees and rates shown up front. Identity checks, screening, and limits on every account.",
+      "Receive USDC and EURC alongside your currency balances, and send to wallets or local accounts.",
     icon: "mkt-icon-pillar-compliance",
   },
 ]
