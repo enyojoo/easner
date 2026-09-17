@@ -1,6 +1,6 @@
 # KYC/KYB and AML Policy
 
-Last updated: August 12, 2026
+Last updated: September 17, 2026
 
 ---
 
@@ -10,7 +10,7 @@ Last updated: August 12, 2026
 
 Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by **licensed partners**. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
 
-For Turnkey-backed wallet features, Easner is **not a custodian** and does **not** sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including **Lightspark Grid**, **Noah**, and **Yellowcard** where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
+For Turnkey-backed wallet features, Easner is **not a custodian** and does **not** sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including **Lightspark Grid**, **Bridge**, **Noah**, and **Yellowcard** where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
 
 This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our Privacy Policy.
 
@@ -134,7 +134,7 @@ We conduct KYC/KYB when:
 - Your profile, ownership, activity, or jurisdiction changes materially
 - A partner or regulator requires additional information
 
-You may need to accept **partner terms** presented during hosted verification before certain services are enabled. For **Lightspark Grid** money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For **Noah** money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (**Noah US, Inc.**, NMLS ID 2696057 for applicable U.S. money-transmission services). For **Yellowcard** corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
+You may need to accept **partner terms** presented during hosted verification before certain services are enabled. For **Lightspark Grid** money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For **Bridge** money transmission and related payment services, Bridge’s partner terms and notices presented during onboarding also apply (**Bridge Building Inc.**, NMLS ID 2450917 for applicable U.S. money-transmission services). For **Noah** money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (**Noah US, Inc.**, NMLS ID 2696057 for applicable U.S. money-transmission services). For **Yellowcard** corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
 
 ---
 
@@ -170,8 +170,8 @@ Identity documents must be valid, legible, and match account information. Addres
 
 1. You create an Easner account.
 2. You complete **hosted verification** with a licensed partner:
-   - **Easner Personal Banking (individuals):** **Noah** KYC (in-app or browser).
-   - **Easner Business Banking:** **Lightspark Grid** KYB.
+   - **Easner Personal Banking (individuals):** **Bridge** KYC where Bridge is enabled (in-app or browser); **Noah** KYC for New York residents and other geos that remain on Noah.
+   - **Easner Business Banking:** **Lightspark Grid** KYB and/or **Bridge** KYB depending on product and rail (for example U.S. / global banking via Grid and EUR / additional accounts via Bridge where enabled).
 3. Automated and, where needed, manual review is performed.
 4. Sanctions, PEP, and adverse media screening is conducted.
 5. You receive an outcome: approved, pending, rejected, or a request for more information.
@@ -179,7 +179,7 @@ Identity documents must be valid, legible, and match account information. Addres
 
 Most verifications complete within **1–3 business days**. Complex cases may take longer.
 
-For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open.
+For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open. For Bridge money-transmission customers, you accept Bridge’s terms in the hosted onboarding flow; Bridge records that acceptance before accounts can open.
 
 ---
 
@@ -259,7 +259,7 @@ For data held by a licensed partner, contact **legal@easner.com** and we will co
 
 ## 12. Sharing and Security
 
-We share KYC/KYB and compliance information with **licensed partners**, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our **Privacy Policy** (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
+We share KYC/KYB and compliance information with **licensed partners**, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our **Privacy Policy** (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Bridge, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
 
 We protect compliance data with encryption, access controls, and confidentiality training. Partners retain data under their own regulatory obligations, which may continue after your Easner account closes.
 

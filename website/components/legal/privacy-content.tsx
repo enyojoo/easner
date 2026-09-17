@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyLink, PolicyPageShell, PolicyTable } from "@/
 
 export function PrivacyPolicyPage() {
   return (
-    <PolicyPageShell title="Privacy Policy" lastUpdated="August 12, 2026">
+    <PolicyPageShell title="Privacy Policy" lastUpdated="September 17, 2026">
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Introduction</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -138,7 +138,8 @@ export function PrivacyPolicyPage() {
           headers={["Partner", "Role"]}
           rows={[
             ["**Lightspark Payments, LLC (Grid)**", "Licensed money transmission for eligible Easner Business Banking flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193"],
-            ["**Noah US, Inc. (and Noah-group entities)**", "Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including many **Easner Personal Banking** flows today"],
+            ["**Bridge Building Inc. (and Bridge-group entities)**", "Licensed money transmission and payments infrastructure for eligible flows (KYC/KYB, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2450917 – including many **Easner Personal Banking** flows and eligible **Easner Business Banking** EUR / multi-currency account flows"],
+            ["**Noah US, Inc. (and Noah-group entities)**", "Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including certain **Easner Personal Banking** flows such as New York residents and other geos that remain on Noah"],
             ["**Sumsub**", "Identity verification technology used in certain hosted KYB/KYC experiences"],
             ["**Stripe**", "Online card payments on invoices via Stripe Connect; Connected Account onboarding and settlement"],
             ["**Turnkey**", "Wallet and key-management infrastructure, deposit addresses, and transaction signing (self-custody model – see Section 12)"],
@@ -178,7 +179,7 @@ export function PrivacyPolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">7. Retention</h2>
         <p className="text-[#5F665F] leading-relaxed">
-          We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires <strong>5 to 7 years</strong> or longer after account closure or last activity. Partners (including Lightspark, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page.
+          We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires <strong>5 to 7 years</strong> or longer after account closure or last activity. Partners (including Lightspark, Bridge, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page.
         </p>
       </section>
 

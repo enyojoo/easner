@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: August 12, 2026
+Last updated: September 17, 2026
 
 ---
 
@@ -111,7 +111,8 @@ Depending on your product, jurisdiction, and features enabled, we work with part
 | Partner | Role |
 |---------|------|
 | **Lightspark Payments, LLC (Grid)** | Licensed money transmission for eligible Easner Business Banking flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193 |
-| **Noah US, Inc. (and Noah-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including many **Easner Personal Banking** flows today |
+| **Bridge Building Inc. (and Bridge-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC/KYB, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2450917 – including many **Easner Personal Banking** flows and eligible **Easner Business Banking** EUR / multi-currency account flows |
+| **Noah US, Inc. (and Noah-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including certain **Easner Personal Banking** flows such as New York residents and other geos that remain on Noah |
 | **Sumsub** | Identity verification technology used in certain hosted KYB/KYC experiences |
 | **Stripe** | Online card payments on invoices via Stripe Connect; Connected Account onboarding and settlement |
 | **Turnkey** | Wallet and key-management infrastructure, deposit addresses, and transaction signing (self-custody model – see Section 12) |
@@ -144,7 +145,7 @@ We use technical and organizational measures – including encryption in transit
 
 ## 7. Retention
 
-We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Partners (including Lightspark, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our [Delete Account](/delete-account) page.
+We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Partners (including Lightspark, Bridge, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our [Delete Account](/delete-account) page.
 
 ---
 

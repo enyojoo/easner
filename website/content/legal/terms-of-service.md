@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: August 12, 2026
+Last updated: September 17, 2026
 
 ---
 
@@ -67,7 +67,9 @@ When you use partner-provided services, you may need to accept **separate partne
 
 **Lightspark Grid.** When you use **Lightspark money-transmission services** through Easner (including certain Business KYB, virtual account, fund, payout, or cross-border flows when Grid is enabled for your account), the **Lightspark Grid End User Terms** in **Section 20** below also apply and form part of your agreement for those regulated services. **Lightspark Payments, LLC** (NMLS ID 2429193) is the licensed money transmitter on those transactions.
 
-**Noah.** When you use **Noah money-transmission and related payment services** through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Noah is enabled for your account – including many **Easner Personal Banking** flows today), Noah’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. **Noah US, Inc.** (NMLS ID 2696057) is a licensed money transmitter for applicable U.S. money-transmission services. Noah-group entities in other jurisdictions (for example Canada MSB registration and EU/Lithuania VASP registration) may provide services under their local licenses. Those terms govern the regulated services Noah provides.
+**Bridge.** When you use **Bridge money-transmission and related payment services** through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Bridge is enabled for your account – including many **Easner Personal Banking** flows and eligible **Easner Business Banking** EUR / multi-currency account flows), Bridge’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. **Bridge Building Inc.** (NMLS ID 2450917) is a licensed money transmitter for applicable U.S. money-transmission services. Bridge-group entities in other jurisdictions (for example Bridge Ventures LLC for certain non-EEA services, and Bridge Building S.A. or Bridge Building Sp. z o.o. for certain EEA services) may provide services under their local licenses. Those terms govern the regulated services Bridge provides.
+
+**Noah.** When you use **Noah money-transmission and related payment services** through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Noah is enabled for your account – including certain **Easner Personal Banking** flows such as New York residents and other geos that remain on Noah), Noah’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. **Noah US, Inc.** (NMLS ID 2696057) is a licensed money transmitter for applicable U.S. money-transmission services. Noah-group entities in other jurisdictions (for example Canada MSB registration and EU/Lithuania VASP registration) may provide services under their local licenses. Those terms govern the regulated services Noah provides.
 
 **Yellowcard.** When you use **Yellowcard** corridor services through Easner (including local fund-balance, mobile-money, and cross-border pay-in/pay-out where Yellowcard is enabled for your account), Yellowcard’s partner terms and privacy notices presented during onboarding or in the payment flow also apply and form part of your agreement for those regulated services. Yellowcard is the licensed payments / money-movement partner on those corridor transactions. Those terms govern the regulated services Yellowcard provides.
 
@@ -91,7 +93,7 @@ Where enabled, businesses may run payroll and disburse wages or contractor payme
 
 ### Digital asset and wallet services
 
-Where enabled, wallet and stablecoin features may be supported through infrastructure partners (including Turnkey for key management and signing, and approved bridge or routing partners for certain wallet sends). This can include stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through approved corridors (primarily on **Easner Business Banking**), Terminal and QR Pay collections denominated in supported assets, and balance visibility tied to partner-managed infrastructure.
+Where enabled, wallet and stablecoin features may be supported through infrastructure partners (including Turnkey for key management and signing, and approved cross-chain routing partners such as Relay for certain wallet sends). This can include stablecoin deposit addresses (for example USDC or EURC on supported networks), wallet-initiated sends through approved corridors (primarily on **Easner Business Banking**), Terminal and QR Pay collections denominated in supported assets, and balance visibility tied to partner-managed infrastructure.
 
 Digital asset balances are **not bank deposits** and are not FDIC insured. Blockchain transactions may be public and irreversible. You are responsible for correct addresses, memos, and recipient details.
 
@@ -105,7 +107,7 @@ For Turnkey-backed wallet features, **Easner does not sit in the flow of funds**
 - Easner controls access to our product (that is, who can initiate actions through our UI/API), but we are **not a custodian** and **not a signing party** on any transaction.
 - Any “block” on our side is only **product access control** (for example verification, security, or compliance gating in the app). It is not the ability to alter, cancel, or reverse a transaction once it has been signed and submitted.
 
-Fiat money-transmission, virtual-account, and partner payout rails (including **Lightspark Grid**, **Noah**, and **Yellowcard** where enabled) remain separate from this self-custody wallet model and are provided by those licensed partners under their terms.
+Fiat money-transmission, virtual-account, and partner payout rails (including **Lightspark Grid**, **Bridge**, **Noah**, and **Yellowcard** where enabled) remain separate from this self-custody wallet model and are provided by those licensed partners under their terms.
 
 ### Cards
 
@@ -241,13 +243,13 @@ We may modify these Terms. Material changes will receive at least **30 days’ n
 
 **Exceptions:** Either party may use **small claims court** for qualifying claims or seek **injunctive relief** for unauthorized use or intellectual property abuse.
 
-**Partner disputes:** Claims arising solely from a partner’s regulated services (including Lightspark money transmission, Noah money transmission, Yellowcard corridor payments, or Stripe card acceptance) may be subject to that partner’s dispute process.
+**Partner disputes:** Claims arising solely from a partner’s regulated services (including Lightspark money transmission, Bridge money transmission, Noah money transmission, Yellowcard corridor payments, or Stripe card acceptance) may be subject to that partner’s dispute process.
 
 ---
 
 ## 18. General Provisions
 
-**Entire agreement:** These Terms (including **Section 20 – Lightspark Grid End User Terms** where those services apply), together with the incorporated **Privacy Policy** and **KYC/KYB and AML Policy**, constitute the entire agreement between you and Easner regarding the Services. Lightspark’s End User Terms govern your direct relationship with Lightspark for Grid money-transmission services. Noah’s partner terms govern your relationship with Noah for Noah money-transmission and related payment services where enabled. Yellowcard’s partner terms govern Yellowcard corridor payments where enabled. Stripe’s Connected Account and related agreements govern card acceptance where you enable online payments.
+**Entire agreement:** These Terms (including **Section 20 – Lightspark Grid End User Terms** where those services apply), together with the incorporated **Privacy Policy** and **KYC/KYB and AML Policy**, constitute the entire agreement between you and Easner regarding the Services. Lightspark’s End User Terms govern your direct relationship with Lightspark for Grid money-transmission services. Bridge’s partner terms govern your relationship with Bridge for Bridge money-transmission and related payment services where enabled. Noah’s partner terms govern your relationship with Noah for Noah money-transmission and related payment services where enabled. Yellowcard’s partner terms govern Yellowcard corridor payments where enabled. Stripe’s Connected Account and related agreements govern card acceptance where you enable online payments.
 
 **Severability:** If any provision is held invalid or unenforceable, the remaining provisions remain in effect.
 

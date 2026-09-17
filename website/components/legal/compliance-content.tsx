@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyLink, PolicyPageShell, PolicyTable } from "@/
 
 export function CompliancePolicyPage() {
   return (
-    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="August 12, 2026">
+    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="September 17, 2026">
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">1. Overview</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
@@ -13,7 +13,7 @@ export function CompliancePolicyPage() {
           Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by <strong>licensed partners</strong>. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
         </p>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          For Turnkey-backed wallet features, Easner is <strong>not a custodian</strong> and does <strong>not</strong> sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including <strong>Lightspark Grid</strong>, <strong>Noah</strong>, and <strong>Yellowcard</strong> where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
+          For Turnkey-backed wallet features, Easner is <strong>not a custodian</strong> and does <strong>not</strong> sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including <strong>Lightspark Grid</strong>, <strong>Bridge</strong>, <strong>Noah</strong>, and <strong>Yellowcard</strong> where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our Privacy Policy.
@@ -153,7 +153,7 @@ export function CompliancePolicyPage() {
           <li>A partner or regulator requires additional information</li>
         </ul>
         <p className="text-[#5F665F] leading-relaxed">
-          You may need to accept <strong>partner terms</strong> presented during hosted verification before certain services are enabled. For <strong>Lightspark Grid</strong> money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For <strong>Noah</strong> money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (<strong>Noah US, Inc.</strong>, NMLS ID 2696057 for applicable U.S. money-transmission services). For <strong>Yellowcard</strong> corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
+          You may need to accept <strong>partner terms</strong> presented during hosted verification before certain services are enabled. For <strong>Lightspark Grid</strong> money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For <strong>Bridge</strong> money transmission and related payment services, Bridge’s partner terms and notices presented during onboarding also apply (<strong>Bridge Building Inc.</strong>, NMLS ID 2450917 for applicable U.S. money-transmission services). For <strong>Noah</strong> money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (<strong>Noah US, Inc.</strong>, NMLS ID 2696057 for applicable U.S. money-transmission services). For <strong>Yellowcard</strong> corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
         </p>
       </section>
 
@@ -192,8 +192,8 @@ export function CompliancePolicyPage() {
           <li>You complete <strong>hosted verification</strong> with a licensed partner:</li>
         </ol>
         <ul className="list-disc pl-6 space-y-2 text-[#5F665F] mb-4">
-          <li><strong>Easner Personal Banking (individuals):</strong> <strong>Noah</strong> KYC (in-app or browser).</li>
-          <li><strong>Easner Business Banking:</strong> <strong>Lightspark Grid</strong> KYB.</li>
+          <li><strong>Easner Personal Banking (individuals):</strong> <strong>Bridge</strong> KYC where Bridge is enabled (in-app or browser); <strong>Noah</strong> KYC for New York residents and other geos that remain on Noah.</li>
+          <li><strong>Easner Business Banking:</strong> <strong>Lightspark Grid</strong> KYB and/or <strong>Bridge</strong> KYB depending on product and rail (for example U.S. / global banking via Grid and EUR / additional accounts via Bridge where enabled).</li>
         </ul>
         <ol className="list-decimal pl-6 space-y-2 text-[#5F665F] mb-4">
           <li>Automated and, where needed, manual review is performed.</li>
@@ -205,7 +205,7 @@ export function CompliancePolicyPage() {
           Most verifications complete within <strong>1–3 business days</strong>. Complex cases may take longer.
         </p>
         <p className="text-[#5F665F] leading-relaxed">
-          For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open.
+          For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open. For Bridge money-transmission customers, you accept Bridge’s terms in the hosted onboarding flow; Bridge records that acceptance before accounts can open.
         </p>
       </section>
 
@@ -303,7 +303,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-unbounded text-2xl font-bold text-[#0F1110] mb-4">12. Sharing and Security</h2>
         <p className="text-[#5F665F] leading-relaxed mb-4">
-          We share KYC/KYB and compliance information with <strong>licensed partners</strong>, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
+          We share KYC/KYB and compliance information with <strong>licensed partners</strong>, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Bridge, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
         </p>
         <p className="text-[#5F665F] leading-relaxed">
           We protect compliance data with encryption, access controls, and confidentiality training. Partners retain data under their own regulatory obligations, which may continue after your Easner account closes.
