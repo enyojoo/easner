@@ -33,7 +33,7 @@ export const businessContent: ProductPageContent = {
   hero: {
     h1: "Global banking for business",
     subhead:
-      "Bring accounts, customer payments, invoices, and payouts into one dashboard. Stablecoin settlement carries cross-border payments to suppliers and teams in 80+ countries.",
+      "Stablecoin settlement carries payments to suppliers and teams in 80+ countries, all from one dashboard for accounts, customer payments, invoices, and payouts.",
     visualSlot: "mkt-hero-business-01",
     altText: "Easner Business dashboard showing currency balances, an invoice payment, and a supplier payout",
     ctas: [

@@ -23,7 +23,7 @@ export const invoicingContent: ProductPageContent = {
   hero: {
     h1: "Send an invoice. Get back to business.",
     subhead:
-      "Create and share invoices from Easner Business. Let customers pay online, by bank transfer, or with supported stablecoins, and track each payment from your dashboard.",
+      "Create and share invoices from Easner Business, on the same stablecoin infrastructure behind every payment. Let customers pay online, by bank transfer, or with supported stablecoins, and track each payment from your dashboard.",
     visualSlot: "mkt-hero-invoicing-01",
     altText: "Business owner creating an international invoice in Easner Business",
     ctas: [

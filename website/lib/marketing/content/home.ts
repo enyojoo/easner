@@ -29,7 +29,7 @@ export const homeMetadata = {
 export const homeHero = {
   h1Lines: ["Your Money.", "Moved with Ease."],
   subhead:
-    "Bank, spend, and send with Easner Personal Banking. Bring your business accounts, customer payments, cards, and payouts together with Easner Business Banking.",
+    "Bank, spend, and send with Easner Personal Banking. Run business accounts, collections, and global payouts on Easner Business Banking, settled on stablecoin rails behind the scenes.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner dashboard showing currency accounts, an incoming payment, and a supplier payment",
   ctas: [

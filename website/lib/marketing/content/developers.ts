@@ -24,7 +24,7 @@ export const developersContent: ProductPageContent = {
   hero: {
     h1: "Build international payments into your product.",
     subhead:
-      "Connect customer verification, accounts, collections, and payouts to your platform. Easner APIs and webhooks help your team build and track cross-border payment flows.",
+      "Connect customer verification, accounts, collections, and payouts to your platform, built on Easner's stablecoin infrastructure. APIs and webhooks help your team build and track cross-border payment flows.",
     visualSlot: "mkt-hero-apis-01",
     altText: "Easner integration workflow for verification, accounts, payouts, and payment events",
     ctas: [

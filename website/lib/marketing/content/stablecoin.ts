@@ -100,6 +100,11 @@ export const stablecoinContent: ProductPageContent = {
   ],
   faq: [
     {
+      question: "Why did Easner build on stablecoin rails instead of traditional banking rails?",
+      answer:
+        "Easner is stablecoin-native banking and payment infrastructure – settlement was built on stablecoin rails from day one, not added on top of legacy banking rails afterward. The same rails power everyday transfers, invoices, payouts, and checkout, not a separate stablecoin feature.",
+    },
+    {
       question: "How does Easner move money internationally?",
       answer:
         "Easner settles cross-border payments on stablecoin rails – primarily USDC and EURC – then pays out in local currency at the destination. You send dollars and your recipient is paid in their own currency. The settlement step happens in between, and you never handle it.",

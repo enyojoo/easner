@@ -1,6 +1,6 @@
 # Easner
 
-> Easner is a global financial technology platform for personal and business banking. Manage everyday finances, hold multiple currencies, receive payments, and pay people and businesses in the US and around the world. Banking and payment services are provided by licensed partners. Easner is not a bank.
+> Easner is stablecoin-native banking and payment infrastructure for individuals and businesses. Manage everyday finances, hold multiple currencies, receive payments, and pay people and businesses in the US and around the world. Settlement runs on stablecoin rails behind banking-simple screens. Banking and payment services are provided by licensed partners. Easner is not a bank.
 
 ## What Easner is
 
@@ -53,7 +53,7 @@ Easner settles cross-border payments on stablecoin rails, primarily USDC and EUR
 
 ## Company
 
-- [Home](https://www.easner.com/): Personal and business banking for everyday finances and global ambitions.
+- [Home](https://www.easner.com/): Stablecoin-native banking for individuals and businesses.
 - [About](https://www.easner.com/about): Founders, mission, and the Easner platform.
 - [Contact](https://www.easner.com/contact): Sales, support, and partnership inquiries.
 

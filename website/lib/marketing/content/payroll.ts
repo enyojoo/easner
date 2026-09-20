@@ -30,7 +30,7 @@ export const payrollContent: ProductPageContent = {
   hero: {
     h1: "Your team. Your payroll. Together.",
     subhead:
-      "Pay contractors and employees in supported markets from Easner Business. Review and approve each payroll run, generate pay stubs, and keep your payment records together.",
+      "Pay contractors and employees in supported markets from Easner Business, on stablecoin infrastructure. Review and approve each payroll run, generate pay stubs, and keep your payment records together.",
     visualSlot: "mkt-hero-payroll-01",
     altText: "Easner Business payroll run overview",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "payroll_hero" }],

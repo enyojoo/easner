@@ -30,7 +30,7 @@ export const partnersContent: ProductPageContent = {
   hero: {
     h1: "Build cross-border payments under your brand.",
     subhead:
-      "Offer your customers an international payment experience under your own name. Easner provides the infrastructure, verification workflows, payout connections, and operational support.",
+      "Offer your customers an international payment experience under your own name. Easner provides the stablecoin infrastructure, verification workflows, payout connections, and operational support.",
     visualSlot: "mkt-hero-partners-01",
     altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
     ctas: [

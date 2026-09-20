@@ -9,6 +9,9 @@ import {
   aboutFounders,
   aboutFoundersHeadline,
   aboutFoundersSubhead,
+  aboutInfrastructure,
+  aboutInfrastructureHeadline,
+  aboutInfrastructureSubhead,
   aboutMetadata,
   aboutPillars,
   aboutPillarsHeadline,
@@ -41,6 +44,12 @@ export default function AboutPage() {
         founders={aboutFounders}
       />
       <AboutMissionSection />
+      <ThreeColCards
+        headline={aboutInfrastructureHeadline}
+        subhead={aboutInfrastructureSubhead}
+        items={aboutInfrastructure}
+        columns={3}
+      />
       <ThreeColCards
         headline={aboutPillarsHeadline}
         headlineClassName="lg:whitespace-nowrap lg:text-2xl xl:text-3xl"

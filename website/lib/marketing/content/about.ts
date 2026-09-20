@@ -27,10 +27,31 @@ export const aboutMission = {
   headlineLines: ["Your finances, connected.", "Your possibilities, open."],
   paragraphs: [
     "Managing money should fit the way you live and work. Personal payments, business operations, and international connections should feel like parts of the same experience.",
-    "Easner brings accounts, payments, and financial tools together through modern infrastructure and licensed banking partners. Our ambition is simple: make everyday finances easier and give people and businesses room to grow.",
+    "Easner brings accounts, payments, and financial tools together through stablecoin-native infrastructure and licensed banking partners. Our ambition is simple: make everyday finances easier and give people and businesses room to grow.",
   ],
   emphasis: "Built for everyday life and global ambition.",
 }
+
+export const aboutInfrastructureHeadline = "Why stablecoin-native"
+export const aboutInfrastructureSubhead = "Not a feature bolted on – the way Easner is built."
+
+export const aboutInfrastructure: CardItem[] = [
+  {
+    title: "Built stablecoin-native from day one",
+    description:
+      "Easner's settlement layer runs on stablecoin rails from the ground up, not legacy banking rails with stablecoin added on top.",
+  },
+  {
+    title: "Fewer hops, faster settlement",
+    description:
+      "A traditional wire passes through several correspondent banks, each adding a step. Stablecoin settlement shortens that path between Easner and its payout partners.",
+  },
+  {
+    title: "Compliance built into every flow",
+    description:
+      "Stablecoin receive, send, and settlement run through the same KYC/KYB and AML screening as every other transaction on Easner – never a separate crypto pathway.",
+  },
+]
 
 export const aboutPillarsHeadline = "One platform. Personal and business."
 
@@ -60,7 +81,7 @@ export const aboutFounders: Founder[] = [
     title: "Co-founder & CEO",
     tagline: "Connecting global and local financial rails.",
     bio: [
-      "Christian is Co-founder and CEO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning stablecoin settlement into real local financial utility.",
+      "Christian is Co-founder and CEO of Easner, building stablecoin-native banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning stablecoin settlement into real local financial utility.",
       "Before Easner, he drove growth at venture-backed and private-market companies, with earlier grounding as a financial advisor at Morgan Stanley and Merrill Lynch. He also serves as an enlisted Reconnaissance Marine in the U.S. Marine Corps Reserve – bringing discipline, discretion, and outcomes-over-narrative to how Easner is built.",
     ],
     image: founderChristianPhoto,
@@ -71,7 +92,7 @@ export const aboutFounders: Founder[] = [
     title: "Founder & CTO",
     tagline: "Building secure financial infrastructure with stablecoins.",
     bio: [
-      "Enyo is Founder and CTO of Easner, building stablecoin-powered banking and payment infrastructure that connects global and local financial rails – technical architecture, stablecoin settlement, partner integrations, and secure cross-border coverage. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
+      "Enyo is Founder and CTO of Easner, building stablecoin-native banking and payment infrastructure that connects global and local financial rails – technical architecture, stablecoin settlement, partner integrations, and secure cross-border coverage. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
       "Since founding Easner in 2025, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
     ],
     image: founderEnyoPhoto,

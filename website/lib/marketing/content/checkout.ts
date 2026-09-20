@@ -24,7 +24,7 @@ export const checkoutContent: ProductPageContent = {
   hero: {
     h1: "Accept payments on your website.",
     subhead:
-      "Give customers a clear way to pay by card, bank, or supported digital wallet. Collect one-time or subscription payments and track them in Easner Business.",
+      "Give customers a clear way to pay by card, bank, or supported digital wallet, backed by Easner's stablecoin infrastructure. Collect one-time or subscription payments and track them in Easner Business.",
     visualSlot: "mkt-hero-checkout-01",
     altText: "Easner Checkout embedded on a merchant's own website",
     ctas: [
