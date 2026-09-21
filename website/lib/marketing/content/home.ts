@@ -9,10 +9,11 @@ import {
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
-  title: "Easner | Global Banking, Payments & Stablecoin Rails",
+  title: "Easner | Stablecoin-Native Banking & Payment Infrastructure",
   description:
-    "Personal and business banking on stablecoin rails. Get account details in your name, hold multiple currencies, and pay people and businesses in 80+ countries.",
+    "Stablecoin-native banking and payment infrastructure with account details in your name, multi-currency balances, and payouts to 80+ countries.",
   keywords: [
+    "stablecoin-native banking infrastructure",
     "personal banking app",
     "business banking United States",
     "multi-currency personal account",
@@ -29,7 +30,7 @@ export const homeMetadata = {
 export const homeHero = {
   h1Lines: ["Your Money.", "Moved with Ease."],
   subhead:
-    "Bank, spend, and send with Easner Personal Banking. Run business accounts, collections, and global payouts on Easner Business Banking, settled on stablecoin rails behind the scenes.",
+    "Stablecoin-native banking and payment infrastructure that lets you bank, spend, and send money to people and businesses in 80+ countries.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner dashboard showing currency accounts, an incoming payment, and a supplier payment",
   ctas: [
@@ -108,7 +109,7 @@ export const solutionsPersonas = [
 
 export const corridorContent = {
   headline: "At home. Around the world.",
-  body: "Hold a balance in USD and other major currencies, then pay people and businesses in 80+ countries.",
+  body: "Hold a balance in USD, EUR, and GBP, then reach payout networks across Africa, Latin America, Asia, and Europe – the same stablecoin-native infrastructure behind every Easner payment.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
