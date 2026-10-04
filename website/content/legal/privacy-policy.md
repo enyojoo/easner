@@ -133,6 +133,8 @@ We also use service providers under contract, including:
 
 When you use **Sign in with Apple** or **Sign in with Google**, those companies process authentication data under their own privacy policies.
 
+This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).
+
 Additional partners and providers may be disclosed when you enable a specific feature or during onboarding. Partner and provider lists may change as our Services evolve; material changes will be reflected in this policy.
 
 ---

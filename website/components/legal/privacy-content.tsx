@@ -164,6 +164,10 @@ export function PrivacyPolicyPage() {
         <p className="text-[#5F665F] leading-relaxed mb-4">
           When you use <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong>, those companies process authentication data under their own privacy policies.
         </p>
+        <p className="text-[#5F665F] leading-relaxed mb-4">
+          This product includes GeoLite2 data created by MaxMind, available from{" "}
+          <a href="https://www.maxmind.com" className="text-[#007ACC] hover:underline" target="_blank" rel="noopener noreferrer">https://www.maxmind.com</a>.
+        </p>
         <p className="text-[#5F665F] leading-relaxed">
           Additional partners and providers may be disclosed when you enable a specific feature or during onboarding. Partner and provider lists may change as our Services evolve; material changes will be reflected in this policy.
         </p>
