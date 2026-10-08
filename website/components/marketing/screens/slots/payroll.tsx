@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 /** Payroll page screens (design system: BizPayroll, BizPayrollPayday, AppPayroll, AppPayStub). */
 import { ArrowRight, CalendarClock, Check, CircleCheck, UserRoundCheck, X } from "lucide-react"
 import { Amount } from "@/components/ds/amount"
@@ -174,51 +175,76 @@ function ApprovalCard() {
   )
 }
 
-/** Pay stub sheet in the Easner app (AppPayStub). */
+/** Pay stub sheet in the Easner app (design system: AppPayStub, frame 1 "Pay stub, with pay items"). */
 function PayStubScreen() {
-  const rows: [string, string][] = [
+  const items: { label: string; note?: string; amount: number; net?: boolean }[] = [
+    { label: "Base pay", amount: 2000 },
+    { label: "Bonus", note: "Q3 target", amount: 500 },
+    { label: "Deduction", note: "Health plan", amount: -50 },
+    { label: "Net pay", amount: 2450, net: true },
+  ]
+  const rows: [string, ReactNode][] = [
     ["Paid by", DEMO_BUSINESS.name],
     ["Payday", "Aug 31, 2026"],
     ["Paid on", "Aug 31, 2026 • 9:14 AM"],
+    ["Status", <span key="s" className="text-app-success-text">Completed</span>],
     ["Paid to", "GTBank • 0123 4567 89"],
-    ["Reference", "PRL-8F2A91"],
+    ["Reference", <span key="r" className="font-mono font-medium">PRL-8F2A91</span>],
+    ["Verification code", <span key="v" className="font-mono font-medium">EPST7K2M9QXA</span>],
   ]
   return (
     <AppScreen>
+      <BackHeader title="Payroll connection" />
       <div className="absolute inset-0 bg-app-scrim" />
-      <div className="absolute inset-x-0 bottom-0 top-16 rounded-t-[24px] bg-app-plate px-5 pt-2">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-app-hairline" />
-        <div className="flex items-center justify-between">
-          <span className="text-[17px] font-semibold">Pay stub</span>
-          <span className="grid size-9 place-items-center rounded-full shadow-[inset_0_0_0_0.5px_var(--app-hairline)]">
-            <X className="size-4" strokeWidth={2} aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 flex max-h-[calc(100%-64px)] flex-col rounded-t-[24px] bg-app-plate px-5 pb-[30px] pt-2 shadow-[inset_0_0.5px_0_var(--app-hairline)]">
+        <div className="mx-auto mb-1 h-1 w-10 shrink-0 rounded-full bg-app-hairline" />
+        <div className="flex shrink-0 items-center justify-between">
+          <span className="my-2 text-xl font-bold leading-[25px]">Pay stub</span>
+          <span className="grid size-10 place-items-center rounded-full bg-app-plate text-app-text-secondary shadow-[inset_0_0_0_0.5px_var(--app-hairline)]">
+            <X className="size-5" strokeWidth={2} aria-hidden="true" />
           </span>
         </div>
-        <div className="my-4 text-center text-[34px] font-bold tracking-[-0.5px]">{money(2450)}</div>
-        <AppOverline className="mb-1">Pay</AppOverline>
-        {[
-          ["Base pay", money(2000)],
-          ["Bonus · Q3 target", money(500)],
-          ["Deduction · Health plan", formatMoney(-50, "USD", { cents: "always" })],
-          ["Net pay", money(2450)],
-        ].map(([label, value], index) => (
-          <div
-            key={label}
-            className={cn("flex justify-between border-t border-app-hairline py-2.5 text-[13px]", index === 3 && "font-semibold")}
-          >
-            <span className={index === 3 ? undefined : "text-app-text-secondary"}>{label}</span>
-            <span>{value}</span>
+        <div className="min-h-0 overflow-hidden [mask-image:linear-gradient(#000_calc(100%-28px),transparent)]">
+          <div className="pb-3 pt-1 text-center text-[40px] font-bold leading-[48px] tracking-[-0.5px] tabular-nums">{money(2450)}</div>
+          <div className="pt-1 text-[11px] font-semibold uppercase leading-[15px] tracking-[0.6px] text-app-text-secondary">Pay</div>
+          <div className="mb-1.5 shadow-[inset_0_0.5px_0_var(--app-hairline)]">
+            {items.map((item, index) => (
+              <div
+                key={item.label}
+                className={cn(
+                  "flex items-baseline justify-between gap-4 py-2.5 text-sm leading-5",
+                  item.net ? "font-semibold text-app-text" : "text-app-text-secondary",
+                  index > 0 && "shadow-[inset_0_0.5px_0_var(--app-hairline)]",
+                )}
+              >
+                <span>
+                  {item.label}
+                  {item.note && <small className="block text-xs leading-4 text-app-text-secondary">{item.note}</small>}
+                </span>
+                <b className={cn("whitespace-nowrap text-app-text tabular-nums", item.net ? "font-bold" : "font-semibold")}>
+                  {formatMoney(item.amount, "USD", { cents: "always" })}
+                </b>
+              </div>
+            ))}
           </div>
-        ))}
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between border-t border-app-hairline py-2.5 text-[13px]">
-            <span className="text-app-text-secondary">{label}</span>
-            <span>{value}</span>
-          </div>
-        ))}
-        <div className="flex justify-between border-t border-app-hairline py-2.5 text-[13px]">
-          <span className="text-app-text-secondary">Status</span>
-          <span className="font-semibold text-app-success-text">Completed</span>
+          {rows.map(([label, value], index) => (
+            <div
+              key={label}
+              className={cn(
+                "flex justify-between gap-4 py-3 text-sm leading-5 text-app-text-secondary",
+                index > 0 && "shadow-[inset_0_0.5px_0_var(--app-hairline)]",
+              )}
+            >
+              <span>{label}</span>
+              <b className="text-right font-semibold text-app-text">{value}</b>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3.5 grid shrink-0 grid-cols-2 gap-3">
+          <span className="grid h-[52px] place-items-center rounded-full bg-app-primary text-[15px] font-semibold text-white">Download PDF</span>
+          <span className="grid h-[52px] place-items-center rounded-full bg-app-plate text-[15px] font-semibold text-app-text shadow-[inset_0_0_0_1px_var(--app-hairline)]">
+            Share PDF
+          </span>
         </div>
       </div>
     </AppScreen>

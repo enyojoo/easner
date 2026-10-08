@@ -84,6 +84,13 @@ export const invoicingContent: ProductPageContent = {
       visualSlot: "mkt-ui-invoice-customers",
       altText: "Easner invoice customer directory",
     },
+    {
+      title: "Know who owes what",
+      description:
+        "See every open balance aged by due date, and what's coming in each week – so you know which invoices to chase first.",
+      visualSlot: "mkt-ui-invoice-owed",
+      altText: "Owed to you: open invoice balances aged by due date, with payments expected by week",
+    },
   ],
   useCasesHeadline: "Who invoices on Easner Business",
   useCasesSubhead:

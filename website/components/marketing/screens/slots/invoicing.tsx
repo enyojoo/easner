@@ -127,6 +127,68 @@ function CustomersTable() {
   )
 }
 
+/** Owed to you (design system: BizInvoices Home): open balances aged by due date, then Coming in by week. */
+function OwedToYouCard() {
+  const buckets: [string, number, string][] = [
+    ["Current", 73560, "bg-chart-1"],
+    ["1–30 days", 8300, "bg-chart-3"],
+    ["31–60 days", 3160, "bg-warning"],
+    ["61–90 days", 1400, "bg-destructive"],
+  ]
+  const total = buckets.reduce((sum, [, amount]) => sum + amount, 0)
+  const weeks: [string, number, boolean][] = [
+    ["This week", 21.4, true],
+    ["Oct 19", 32, false],
+    ["Oct 26", 9.8, false],
+    ["Nov 2", 14.6, false],
+    ["Nov 9", 6.2, false],
+  ]
+  return (
+    <PCard className="grid h-full grid-cols-[1.1fr_1fr] gap-6">
+      <div>
+        <div className="text-base font-semibold">Owed to you</div>
+        <div className="text-[13px] text-muted-foreground">{money(total)} open · aged by due date</div>
+        <div className="mt-4 flex h-2.5 overflow-hidden rounded-full">
+          {buckets.map(([label, amount, colour]) => (
+            <span key={label} className={colour} style={{ width: `${(amount / total) * 100}%` }} />
+          ))}
+        </div>
+        <div className="mt-3">
+          {buckets.map(([label, amount, colour], index) => (
+            <div key={label} className={cn("flex h-9 items-center justify-between text-sm", index > 0 && "border-t border-border/60")}>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <span className={cn("size-2 rounded-[2px]", colour)} />
+                {label}
+              </span>
+              <span className="font-semibold">{money(amount)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Coming in</div>
+        <div className="mt-3 flex h-[170px] items-end gap-2.5">
+          {weeks.map(([label, value, now]) => (
+            <div key={label} className="flex flex-1 flex-col items-center gap-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground">${value}k</span>
+              <span
+                className={cn(
+                  "w-full rounded-t-[6px]",
+                  now
+                    ? "bg-chart-1"
+                    : "border border-chart-1/60 bg-[repeating-linear-gradient(135deg,var(--surface-tint)_0_4px,color-mix(in_srgb,var(--chart-1)_25%,transparent)_4px_6px)]",
+                )}
+                style={{ height: `${(value / 32) * 120}px` }}
+              />
+              <span className="whitespace-nowrap text-[11px] text-muted-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PCard>
+  )
+}
+
 export const INVOICING_SLOTS: Record<string, Canvas> = {
   "mkt-hero-invoicing-01": {
     width: 1000,
@@ -152,4 +214,5 @@ export const INVOICING_SLOTS: Record<string, Canvas> = {
   "mkt-ui-invoice-bank-payin": panel(440, 460, surface(<LeftToPay method={1} />)),
   "mkt-ui-invoice-stablecoin-payin": panel(440, 520, surface(<LeftToPay method={2} />)),
   "mkt-ui-invoice-customers": panel(640, 340, surface(<CustomersTable />)),
+  "mkt-ui-invoice-owed": panel(640, 330, surface(<OwedToYouCard />)),
 }
