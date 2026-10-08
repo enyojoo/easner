@@ -6,8 +6,9 @@ import Image from "next/image"
 import { Linkedin, X } from "lucide-react"
 import type { Founder } from "@/lib/marketing/types"
 import { captureCtaClicked, trackLinkClick } from "@/lib/marketing/analytics"
-import { MARKETING_BODY_TEXT, MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 interface FoundersSectionProps {
   headline: string
@@ -36,7 +37,7 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
         href={founder.linkedin}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4DED1] bg-white text-[#3D443E] transition-colors hover:border-[#007ACC]/40 hover:text-[#007ACC]"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-web-hairline bg-white text-web-nav transition-colors hover:border-brand-primary/40 hover:text-brand-primary"
         aria-label={`${founder.name} on LinkedIn`}
         onClick={() =>
           trackLinkClick(`about_founder_linkedin_${slug}`, "LinkedIn", founder.linkedin, {
@@ -51,7 +52,7 @@ function SocialLinks({ founder, className }: { founder: Founder; className?: str
           href={founder.x}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4DED1] bg-white text-[#3D443E] transition-colors hover:border-[#007ACC]/40 hover:text-[#007ACC]"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-web-hairline bg-white text-web-nav transition-colors hover:border-brand-primary/40 hover:text-brand-primary"
           aria-label={`${founder.name} on X`}
           onClick={() =>
             trackLinkClick(`about_founder_x_${slug}`, "X", founder.x!, { external: true })
@@ -116,31 +117,29 @@ function FounderBioDialog({
       <button
         type="button"
         aria-label="Close dialog"
-        className="absolute inset-0 bg-[#0F1110]/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-web-ink/45 backdrop-blur-[2px]"
         onClick={() => onOpenChange(false)}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-xl flex-col overflow-hidden rounded-[1.25rem] border border-[#E4DED1] bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)] sm:max-h-[min(720px,calc(100dvh-2rem))] sm:rounded-[1.75rem]"
+        className="relative z-10 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-xl flex-col overflow-hidden rounded-[1.25rem] border border-web-hairline bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)] sm:max-h-[min(720px,calc(100dvh-2rem))] sm:rounded-[1.75rem]"
       >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E4DED1] px-5 py-4 sm:px-7 sm:py-5">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-web-hairline px-5 py-4 sm:px-7 sm:py-5">
           <div className="min-w-0 flex-1">
-            <h2
-              id={titleId}
-              className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}
-            >
+            <Headline level="display"
+              id={titleId}>
               {founder.name}
-            </h2>
-            <p className="mt-1 text-sm font-medium text-[#6F756F]">{founder.title}</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#007ACC]">{founder.tagline}</p>
+            </Headline>
+            <p className="mt-1 text-sm font-medium text-web-meta">{founder.title}</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-brand-primary">{founder.tagline}</p>
           </div>
           <button
             type="button"
             aria-label="Close"
             onClick={() => onOpenChange(false)}
-            className="shrink-0 rounded-full border border-[#E4DED1] p-2 text-[#5F665F] transition-colors hover:bg-[#F8F6F0] hover:text-[#0F1110]"
+            className="shrink-0 rounded-full border border-web-hairline p-2 text-web-body transition-colors hover:bg-web-plate hover:text-web-ink"
           >
             <X className="h-4 w-4" />
           </button>
@@ -148,7 +147,7 @@ function FounderBioDialog({
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-6">
           <div className="space-y-4">
             {founder.bio.map((paragraph) => (
-              <p key={paragraph.slice(0, 48)} className="text-sm leading-7 text-[#5F665F] sm:text-[0.9375rem] sm:leading-8">
+              <p key={paragraph.slice(0, 48)} className="text-sm leading-7 text-web-body sm:text-[0.9375rem] sm:leading-8">
                 {paragraph}
               </p>
             ))}
@@ -165,8 +164,8 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
   const slug = founderSlug(founder.name)
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_12px_35px_rgba(15,17,16,0.05)] transition-all hover:-translate-y-1 hover:border-[#007ACC]/30 hover:shadow-[0_20px_55px_rgba(15,17,16,0.09)] sm:rounded-[1.75rem]">
-      <div className="relative aspect-square w-full shrink-0 overflow-hidden border-b border-[#E4DED1] bg-[#EDE8DC]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-web-hairline bg-web-plate shadow-[0_12px_35px_rgba(15,17,16,0.05)] transition-all hover:-translate-y-1 hover:border-brand-primary/30 hover:shadow-[0_20px_55px_rgba(15,17,16,0.09)] sm:rounded-[1.75rem]">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden border-b border-web-hairline bg-web-band">
         <Image
           src={founder.image}
           alt={`${founder.name}, ${founder.title}`}
@@ -177,11 +176,11 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
         />
       </div>
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <h3 className="font-unbounded text-lg font-bold leading-snug text-[#0F1110] sm:text-xl">
+        <h3 className="font-display text-lg font-bold leading-snug text-web-ink sm:text-xl">
           {founder.name}
         </h3>
-        <p className="mt-1 text-sm font-medium text-[#6F756F]">{founder.title}</p>
-        <p className="mt-3 text-sm font-semibold leading-6 text-[#007ACC]">{founder.tagline}</p>
+        <p className="mt-1 text-sm font-medium text-web-meta">{founder.title}</p>
+        <p className="mt-3 text-sm font-semibold leading-6 text-brand-primary">{founder.tagline}</p>
         <div className="mt-auto flex items-center gap-3 pt-6">
           <button
             type="button"
@@ -194,7 +193,7 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
               })
               onReadBio()
             }}
-            className="text-sm font-semibold text-[#0F1110] underline underline-offset-2 transition-opacity hover:opacity-80"
+            className="text-sm font-semibold text-web-ink underline underline-offset-2 transition-opacity hover:opacity-80"
           >
             Read bio
           </button>
@@ -209,13 +208,13 @@ export function FoundersSection({ headline, subhead, founders }: FoundersSection
   const [activeFounder, setActiveFounder] = useState<Founder | null>(null)
 
   return (
-    <section className="bg-[#F6F3EB] pb-14 pt-7 md:pb-24 md:pt-12">
+    <section className="bg-web-band pb-14 pt-7 md:pb-24 md:pt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-9 max-w-3xl text-center sm:mb-12">
-          <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+          <Headline level="section">
             {headline}
-          </h2>
-          <p className={cn("mx-auto mt-4 max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT)}>
+          </Headline>
+          <p className={cn("mx-auto mt-4 max-w-2xl text-web-body", MARKETING_BODY_TEXT)}>
             {subhead}
           </p>
         </div>

@@ -77,11 +77,11 @@ export function DownloadAppButton({
             ? "min-h-10 gap-1.5 px-3.5 py-2 text-[13px] sm:text-sm"
             : "min-h-12 gap-2.5 px-5 py-3 text-sm sm:min-h-[3rem] sm:px-6 sm:text-[15px]",
           variant === "primary" &&
-            "bg-[#007ACC] text-[#F6F3EB] hover:bg-[#0062A3]",
+            "bg-brand-primary text-web-band hover:bg-primary-hover",
           variant === "dark" &&
-            "border border-[#0F1110] bg-[#0F1110] text-white hover:opacity-90",
+            "border border-web-ink bg-web-ink text-white hover:opacity-90",
           variant === "outline" &&
-            "border border-[#E9E4D8] bg-white text-[#0F1110] hover:border-[#007ACC]/30",
+            "border border-web-hairline bg-white text-web-ink hover:border-brand-primary/30",
           className
         )}
       >

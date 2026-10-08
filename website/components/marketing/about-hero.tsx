@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion"
 import { aboutHero } from "@/lib/marketing/content/about"
-import { MARKETING_BODY_TEXT, MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 export function AboutHero() {
   return (
@@ -14,15 +15,15 @@ export function AboutHero() {
         transition={{ duration: 0.5 }}
         className="mx-auto max-w-6xl text-center"
       >
-        <h1 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
+        <Headline level="page">
           {aboutHero.headlineLines.map((line, index) => (
             <span key={line} className="block">
               {index > 0 && " "}
               {line}
             </span>
           ))}
-        </h1>
-        <p className={cn("mx-auto mt-4 max-w-2xl text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
+        </Headline>
+        <p className={cn("mx-auto mt-4 max-w-2xl text-pretty text-web-body sm:mt-5", MARKETING_BODY_TEXT)}>
           {aboutHero.subhead}
         </p>
       </motion.div>

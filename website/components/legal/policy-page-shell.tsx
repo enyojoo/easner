@@ -19,7 +19,7 @@ export function PolicyLink({
   const resolvedLocation = analyticsLocation ?? `legal_link_${href.replace(/^\//, "") || "home"}`
 
   return (
-    <MarketingLink href={href} analyticsLocation={resolvedLocation} className="font-semibold text-[#007ACC] hover:underline">
+    <MarketingLink href={href} analyticsLocation={resolvedLocation} className="font-semibold text-brand-primary hover:underline">
       {children}
     </MarketingLink>
   )
@@ -37,15 +37,15 @@ export function PolicyPageShell({
   return (
     <section className="pb-16 pt-10 md:pb-24 md:pt-14">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <article className="overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-white/90 shadow-[0_18px_60px_rgba(15,17,16,0.08)]">
-          <header className="border-b border-[#E4DED1] px-6 py-8 sm:px-10">
-            <h1 className="font-unbounded text-3xl font-bold leading-tight text-[#0F1110] sm:text-4xl">
+        <article className="overflow-hidden rounded-[1.75rem] border border-web-hairline bg-white/90 shadow-panel">
+          <header className="border-b border-web-hairline px-6 py-8 sm:px-10">
+            <h1 className="font-display text-3xl font-bold leading-tight text-web-ink sm:text-4xl">
               {title}
             </h1>
           </header>
           <div className="space-y-10 px-6 py-8 sm:px-10 sm:py-10">{children}</div>
-          <footer className="border-t border-[#E4DED1] px-6 py-6 sm:px-10">
-            <p className="text-sm text-[#6F756F]">Last updated: {lastUpdated}</p>
+          <footer className="border-t border-web-hairline px-6 py-6 sm:px-10">
+            <p className="text-sm text-web-meta">Last updated: {lastUpdated}</p>
           </footer>
         </article>
       </div>
@@ -55,26 +55,26 @@ export function PolicyPageShell({
 
 export function PolicyContactBlock() {
   return (
-    <div className="mt-4 rounded-2xl border border-[#E4DED1] bg-[#F8F6F0] p-5 text-sm leading-7 text-[#5F665F] sm:text-base">
+    <div className="mt-4 rounded-[16px] border border-web-hairline bg-web-plate p-5 text-sm leading-7 text-web-body sm:text-base">
       <p>
-        <strong className="text-[#0F1110]">Easner Group, Inc.</strong>
+        <strong className="text-web-ink">Easner Group, Inc.</strong>
         <br />
         584 Castro St, Suite 4092
         <br />
         San Francisco, CA 94114, United States
         <br />
         <br />
-        <strong className="text-[#0F1110]">Email (legal and compliance):</strong>{" "}
+        <strong className="text-web-ink">Email (legal and compliance):</strong>{" "}
         <MarketingLink
           href="mailto:legal@easner.com"
           analyticsLocation="legal_contact_email"
           ctaLabel="legal@easner.com"
-          className="font-semibold text-[#007ACC] hover:underline"
+          className="font-semibold text-brand-primary hover:underline"
         >
           legal@easner.com
         </MarketingLink>
         <br />
-        <strong className="text-[#0F1110]">For Support:</strong>{" "}
+        <strong className="text-web-ink">For Support:</strong>{" "}
         <SupportChatTrigger variant="link" analyticsLocation="legal_support_chat">
           Live Chat
         </SupportChatTrigger>{" "}
@@ -83,14 +83,14 @@ export function PolicyContactBlock() {
           href="mailto:support@easner.com"
           analyticsLocation="legal_support_email"
           ctaLabel="support@easner.com"
-          className="font-semibold text-[#007ACC] hover:underline"
+          className="font-semibold text-brand-primary hover:underline"
         >
           support@easner.com
         </MarketingLink>
         <br />
-        <strong className="text-[#0F1110]">Phone:</strong> +1 628 228 6083
+        <strong className="text-web-ink">Phone:</strong> +1 628 228 6083
         <br />
-        <strong className="text-[#0F1110]">Website:</strong> www.easner.com
+        <strong className="text-web-ink">Website:</strong> www.easner.com
       </p>
     </div>
   )
@@ -104,7 +104,7 @@ function renderTableCell(cell: string) {
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) {
       return (
-        <strong key={index} className="text-[#0F1110]">
+        <strong key={index} className="text-web-ink">
           {part.slice(2, -2)}
         </strong>
       )
@@ -115,14 +115,14 @@ function renderTableCell(cell: string) {
 
 export function PolicyTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-2xl border border-[#E4DED1]">
-      <table className="min-w-full text-sm text-[#5F665F]">
+    <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
+      <table className="min-w-full text-sm text-web-body">
         <thead>
-          <tr className="bg-[#F8F6F0]">
+          <tr className="bg-web-plate">
             {headers.map((header) => (
               <th
                 key={header}
-                className="border-b border-[#E4DED1] px-4 py-3 text-left font-semibold text-[#0F1110]"
+                className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink"
               >
                 {header}
               </th>
@@ -131,7 +131,7 @@ export function PolicyTable({ headers, rows }: { headers: string[]; rows: string
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-[#E4DED1] last:border-b-0">
+            <tr key={i} className="border-b border-web-hairline last:border-b-0">
               {row.map((cell, j) => (
                 <td key={j} className="px-4 py-3 align-top">
                   {renderTableCell(cell)}
@@ -159,7 +159,7 @@ export function PolicyExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-semibold text-[#007ACC] hover:underline"
+      className="font-semibold text-brand-primary hover:underline"
       onClick={() => trackLinkClick(analyticsLocation, href, href, { external: true })}
     >
       {children}

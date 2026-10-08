@@ -32,7 +32,7 @@ export const payrollContent: ProductPageContent = {
     subhead:
       "Pay contractors and employees in supported markets from Easner Business, on stablecoin infrastructure. Review and approve each payroll run, generate pay stubs, and keep your payment records together.",
     visualSlot: "mkt-hero-payroll-01",
-    altText: "Easner Business payroll run overview",
+    altText: "The next payday with funding and approval status, above recent paydays",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "payroll_hero" }],
   },
   featuresLayout: "bento",
@@ -49,7 +49,7 @@ export const payrollContent: ProductPageContent = {
       description:
         "Generate pay stubs automatically for every run, with a clear record for your team and your payees.",
       visualSlot: "mkt-ui-payroll-stubs",
-      altText: "Easner Business payroll pay stub",
+      altText: "A pay stub in the Easner app with pay items and net pay",
     },
     {
       title: "Payee self-service",
@@ -63,7 +63,7 @@ export const payrollContent: ProductPageContent = {
       description:
         "Payroll runs settle alongside your other payouts, invoices, and card activity in Easner Business – one place for finance to reconcile.",
       visualSlot: "mkt-ui-payroll-reconcile",
-      altText: "Easner Business payroll reconciled in the unified ledger",
+      altText: "Recent paydays with totals and status",
     },
   ],
   useCasesHeadline: "Built for distributed teams",

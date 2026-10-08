@@ -1,127 +1,42 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion"
+import { useState } from "react"
 import { cn } from "@/lib/utils"
-import {
-  MARKETING_BODY_TEXT,
-  MARKETING_HEADING_CAPS,
-  MARKETING_SECTION_TITLE,
-  MARKETING_SUBSECTION_TITLE,
-  SPLIT_COPY_CARD,
-  SPLIT_GRID_GAP,
-  PERSONA_VISUAL_CONTAINER,
-} from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, SPLIT_COPY_CARD, SPLIT_GRID_GAP, PERSONA_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { capturePersonaTabSelected } from "@/lib/marketing/analytics"
 import { VisualSlot } from "./visual-slot"
 import { PersonaCtas } from "./persona-ctas"
 import { solutionsPersonas } from "@/lib/marketing/content/home"
+import { Headline } from "@/components/ds/headline"
 
+/**
+ * The four audiences as tabs. Click or arrow keys switch them; every panel stays in the HTML for search
+ * and answer engines. (Previously pinned on scroll, which took about four screens to pass.)
+ */
 export function SolutionsByAudience() {
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const tabScrollTimeoutRef = useRef<number | null>(null)
-  const hashJumpTimeoutRef = useRef<number | null>(null)
-  const isTabScrollRef = useRef(false)
-  const isHashJumpRef = useRef(false)
   const [active, setActive] = useState(0)
-  const prefersReducedMotion = useReducedMotion()
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  })
-
-  useEffect(() => {
-    const suspendForProductsHash = () => {
-      if (window.location.hash !== "#products") return
-
-      isHashJumpRef.current = true
-
-      if (hashJumpTimeoutRef.current) {
-        window.clearTimeout(hashJumpTimeoutRef.current)
-      }
-
-      hashJumpTimeoutRef.current = window.setTimeout(() => {
-        isHashJumpRef.current = false
-      }, 900)
-    }
-
-    suspendForProductsHash()
-    window.addEventListener("hashchange", suspendForProductsHash)
-
-    return () => {
-      window.removeEventListener("hashchange", suspendForProductsHash)
-
-      if (tabScrollTimeoutRef.current) {
-        window.clearTimeout(tabScrollTimeoutRef.current)
-      }
-
-      if (hashJumpTimeoutRef.current) {
-        window.clearTimeout(hashJumpTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (isTabScrollRef.current || isHashJumpRef.current) return
-
-    const nextIndex = Math.min(
-      solutionsPersonas.length - 1,
-      Math.max(0, Math.floor(latest * solutionsPersonas.length))
-    )
-
-    setActive((current) => (current === nextIndex ? current : nextIndex))
-  })
 
   const handleTabClick = (index: number) => {
     const persona = solutionsPersonas[index]
     capturePersonaTabSelected(persona.id, persona.label)
     setActive(index)
-
-    if (!sectionRef.current) return
-
-    const sectionTop = sectionRef.current.getBoundingClientRect().top + window.scrollY
-    const scrollableDistance = sectionRef.current.offsetHeight - window.innerHeight
-    const segmentProgress = (index + 0.05) / solutionsPersonas.length
-    isTabScrollRef.current = true
-
-    if (tabScrollTimeoutRef.current) {
-      window.clearTimeout(tabScrollTimeoutRef.current)
-    }
-
-    window.scrollTo({
-      top: sectionTop + scrollableDistance * segmentProgress + 1,
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-    })
-
-    tabScrollTimeoutRef.current = window.setTimeout(
-      () => {
-        isTabScrollRef.current = false
-      },
-      prefersReducedMotion ? 0 : 700
-    )
   }
 
   return (
-    <section className="bg-white py-8 sm:py-12">
+    <section className="bg-web-canvas pb-14 pt-8 sm:pb-20 sm:pt-12">
       <div className="mx-auto px-4 text-center sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl lg:max-w-none">
-          <h2
-            className={cn(
-              "font-unbounded font-bold text-[#0F1110] lg:whitespace-nowrap",
-              MARKETING_SECTION_TITLE,
-              MARKETING_HEADING_CAPS
-            )}
-          >
+          <Headline level="section" className="lg:whitespace-nowrap">
             Built for how you move money
-          </h2>
-          <p className={cn("mx-auto mt-3 max-w-3xl text-[#5F665F] sm:mt-4", MARKETING_BODY_TEXT)}>
+          </Headline>
+          <p className={cn("mx-auto mt-3 max-w-3xl text-web-body sm:mt-4", MARKETING_BODY_TEXT)}>
             For your everyday money, your business payments, or the next product you build. Choose the Easner account or integration that fits.
           </p>
         </div>
       </div>
 
-      <div ref={sectionRef} className="mt-3 h-[220vh] sm:mt-4 sm:h-[260vh] lg:h-[285vh]">
-        <div className="mx-auto flex max-w-7xl sticky top-20 items-start px-4 sm:px-6 lg:px-8">
+      <div className="mt-6 sm:mt-8">
+        <div className="mx-auto flex max-w-7xl items-start px-4 sm:px-6 lg:px-8">
           <div className="w-full">
             <div
               className="mb-4 flex flex-wrap justify-center gap-2 sm:mb-8"
@@ -149,8 +64,8 @@ export function SolutionsByAudience() {
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:py-2 sm:text-sm",
                   active === index
-                    ? "bg-[#0F1110] text-white"
-                    : "border border-[#E4DED1] bg-[#F8F6F0] text-[#5F665F] hover:border-[#007ACC]/30 hover:text-[#0F1110]"
+                    ? "bg-web-ink text-white"
+                    : "border border-web-hairline bg-web-plate text-web-body hover:border-brand-primary/30 hover:text-web-ink"
                 )}
               >
                 {p.label}
@@ -168,10 +83,10 @@ export function SolutionsByAudience() {
                 hidden={active !== index}
                 className={cn(SPLIT_COPY_CARD, "min-h-[17.5rem] p-5 sm:min-h-[22rem] lg:min-h-[28rem]", active !== index && "!hidden")}
               >
-                <h3 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
+                <Headline level="sub">
                   {persona.headline}
-                </h3>
-                <p className={cn("mt-3 flex-1 text-[#5F665F] sm:mt-4", MARKETING_BODY_TEXT)}>{persona.body}</p>
+                </Headline>
+                <p className={cn("mt-3 flex-1 text-web-body sm:mt-4", MARKETING_BODY_TEXT)}>{persona.body}</p>
                 <div className="mt-5 min-h-[3.25rem] shrink-0 sm:mt-8">
                   <PersonaCtas ctas={persona.ctas} storeLayout="grid" surface={`homepage_persona_${persona.id}`} />
                 </div>

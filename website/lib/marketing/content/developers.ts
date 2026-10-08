@@ -22,11 +22,11 @@ export const developersContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Build international payments into your product.",
+    h1: "Build international payments into your product",
     subhead:
       "Connect customer verification, accounts, collections, and payouts to your platform, built on Easner's stablecoin infrastructure. APIs and webhooks help your team build and track cross-border payment flows.",
     visualSlot: "mkt-hero-apis-01",
-    altText: "Easner integration workflow for verification, accounts, payouts, and payment events",
+    altText: "The Easner developer Workbench creating a payout through the API",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
       { label: "Agency Model", href: "/partners", analyticsLocation: "developers_hero_partners" },
@@ -61,14 +61,14 @@ export const developersContent: ProductPageContent = {
       description:
         "Run identity and business verification inside your onboarding – create customers, link accounts, and keep verification status in sync.",
       visualSlot: "mkt-ui-api-identity",
-      altText: "Easner API customer verification flow",
+      altText: "Customers with their verification status in the developer console",
     },
     {
       title: "Accounts and pay-in",
       description:
         "Issue multi-currency account details, virtual bank pay-in, and stablecoin deposit addresses from one API.",
       visualSlot: "mkt-ui-api-payin",
-      altText: "Easner API accounts and pay-in provisioning",
+      altText: "A customer's receive details: a US account and a USDC deposit address",
     },
     {
       title: "Payouts and FX",
@@ -95,7 +95,7 @@ export const developersContent: ProductPageContent = {
         "Signed webhook payloads for backend verification",
       ],
       visualSlot: "mkt-ui-api-dev-panel",
-      altText: "Easner developer workspace showing API keys, webhooks, and event logs",
+      altText: "API keys in the developer console with a sample request",
     },
   ],
   useCasesHeadline: "Built for platforms that move money",

@@ -89,6 +89,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
           headline={content.useCasesHeadline ?? "Use cases"}
           subhead={content.useCasesSubhead}
           items={content.useCases}
+          footerLinks={content.useCaseLinks}
         />
       )}
       {content.commercialModels && (
@@ -100,13 +101,13 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
         />
       )}
       {content.commercialModels && (
-        <div className="mx-auto max-w-3xl px-4 pb-8 text-center text-sm text-[#5F665F] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4 pb-8 text-center text-sm text-web-body sm:px-6 lg:px-8">
           Commercial terms are customized.{" "}
           <MarketingLink
             href={CONTACT_PATH}
             analyticsLocation="developers_pricing_contact"
             ctaLabel="Contact us"
-            className="font-semibold text-[#007ACC] hover:underline"
+            className="font-semibold text-brand-primary hover:underline"
           >
             Contact us
           </MarketingLink>{" "}
@@ -119,14 +120,14 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
       {content.tiers && <TierLadder variant={content.tiers} />}
       {content.tierNote && (
         <div className="mx-auto max-w-4xl px-4 py-8 text-center sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-[#E4DED1] bg-white/85 px-6 py-5 text-sm leading-7 text-[#5F665F] shadow-sm">
+          <div className="rounded-[24px] border border-web-hairline bg-white/85 px-6 py-5 text-sm leading-7 text-web-body shadow-sm">
             {content.tierNote}
           </div>
         </div>
       )}
       {content.statusBanner && (
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-3xl border border-[#BFE3FA] bg-[#EAF5FD] px-6 py-5 text-center text-sm font-medium leading-7 text-[#0A2540]">
+          <div className="rounded-[24px] border border-web-eyebrow-border bg-surface-tint px-6 py-5 text-center text-sm font-medium leading-7 text-brand-navy">
             {content.statusBanner}
           </div>
         </div>

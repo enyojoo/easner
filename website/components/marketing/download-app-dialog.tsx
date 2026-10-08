@@ -82,7 +82,7 @@ export function DownloadAppDialog({
         aria-modal="true"
         aria-labelledby="download-app-title"
         className={cn(
-          "relative z-10 w-full max-w-[420px] overflow-hidden rounded-2xl border border-[#E9E4D8] bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)]",
+          "relative z-10 w-full max-w-[420px] overflow-hidden rounded-[16px] border border-web-hairline bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)]",
           "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-200"
         )}
       >
@@ -90,7 +90,7 @@ export function DownloadAppDialog({
           type="button"
           aria-label="Close"
           onClick={() => onOpenChange(false)}
-          className="absolute right-3 top-3 z-10 rounded-full border border-[#E9E4D8] p-2 text-[#6F756F] transition-colors hover:bg-[#F8F6F0] hover:text-[#0F1110]"
+          className="absolute right-3 top-3 z-10 rounded-full border border-web-hairline p-2 text-web-meta transition-colors hover:bg-web-plate hover:text-web-ink"
         >
           <X className="h-4 w-4" />
         </button>
@@ -102,11 +102,11 @@ export function DownloadAppDialog({
 
           <h2
             id="download-app-title"
-            className="font-unbounded text-xl font-bold text-[#0F1110] sm:text-[1.35rem]"
+            className="font-display text-xl font-bold text-web-ink sm:text-[1.35rem]"
           >
             Get the Easner app
           </h2>
-          <p className="mt-2 text-sm leading-6 text-[#3D403D] sm:text-[15px]">
+          <p className="mt-2 text-sm leading-6 text-web-nav sm:text-[15px]">
             {showQr
               ? "Scan the QR code to download the app"
               : "Install Easner Banking on your phone"}
@@ -131,7 +131,7 @@ export function DownloadAppDialog({
                     destination_type: "download",
                   })
                 }}
-                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-[#0F1110] bg-[#0F1110] px-4 py-3 text-white transition-opacity hover:opacity-90"
+                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-[12px] border border-web-ink bg-web-ink px-4 py-3 text-white transition-opacity hover:opacity-90"
               >
                 <AppleStoreIcon className="size-6 text-white" />
                 <span className="text-left leading-tight">
@@ -158,11 +158,11 @@ export function DownloadAppDialog({
                     destination_type: "download",
                   })
                 }}
-                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border border-[#E9E4D8] bg-white px-4 py-3 text-[#0F1110] transition-colors hover:border-[#007ACC]/30"
+                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-[12px] border border-web-hairline bg-white px-4 py-3 text-web-ink transition-colors hover:border-brand-primary/30"
               >
                 <PlayStoreIcon />
                 <span className="text-left leading-tight">
-                  <span className="block text-[10px] font-medium uppercase tracking-wide text-[#6F756F]">
+                  <span className="block text-[10px] font-medium uppercase tracking-wide text-web-meta">
                     Get it on
                   </span>
                   <span className="block text-sm font-semibold">Google Play</span>
@@ -171,19 +171,19 @@ export function DownloadAppDialog({
             </div>
           )}
 
-          <p className="mt-6 text-[13px] leading-5 text-[#6F756F] sm:text-sm">
+          <p className="mt-6 text-[13px] leading-5 text-web-meta sm:text-sm">
             – or get a download link via email –
           </p>
 
           <DownloadEmailForm className="mt-3" src={src} analyticsLocation={`${surface}-dialog_email`} />
 
           {showWebApp ? (
-            <p className="mt-5 text-sm leading-6 text-[#6F756F]">
+            <p className="mt-5 text-sm leading-6 text-web-meta">
               Prefer not to install?{" "}
               <PersonalAppLink
                 campaign={`${surface}-dialog_web_app`}
                 ctaLabel="Use the web app"
-                className="font-semibold text-[#007ACC] hover:underline"
+                className="font-semibold text-brand-primary hover:underline"
               >
                 Use the web app
               </PersonalAppLink>

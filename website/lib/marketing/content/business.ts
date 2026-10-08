@@ -33,9 +33,9 @@ export const businessContent: ProductPageContent = {
   hero: {
     h1: "Global banking for business",
     subhead:
-      "Stablecoin settlement carries payments to suppliers and teams in 80+ countries, all from one dashboard for accounts, customer payments, invoices, and payouts.",
+      "Account details in your business's name, customer payments, invoices and payouts to 80+ countries – in one dashboard, on stablecoin-native rails.",
     visualSlot: "mkt-hero-business-01",
-    altText: "Easner Business dashboard showing currency balances, an invoice payment, and a supplier payout",
+    altText: "Easner Business total balance with recent activity: an invoice paid, a local transfer and a payroll run",
     ctas: [
       { label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_hero" },
       { label: "See invoicing", href: "/invoicing", analyticsLocation: "business_hero_invoicing" },
@@ -44,7 +44,7 @@ export const businessContent: ProductPageContent = {
   featuresLayout: "bento",
   features: [
     {
-      title: "Named Accounts",
+      title: "Accounts in your name",
       description:
         "Share USD, EUR, and GBP account details so customers pay you directly. Stablecoin deposits land in the same place.",
       visualSlot: "mkt-ui-business-accounts",
@@ -96,11 +96,6 @@ export const businessContent: ProductPageContent = {
         "Collect donations and mission support, then pay teams and partners from one Easner Business account.",
     },
     {
-      title: "Team payments",
-      description: "Run payroll for contractors and employees from the same account – approvals, pay stubs, and reconciliation.",
-      link: "/payroll",
-    },
-    {
       title: "Agencies and consultancies",
       description:
         "Manage client invoicing, supplier payouts, and team permissions without separate tools for each workflow.",
@@ -110,20 +105,15 @@ export const businessContent: ProductPageContent = {
       description:
         "Manage USD and EUR balances, pay vendors, and collect customer payments from one business account.",
     },
-    {
-      title: "Selling on your own website",
-      description: "Embed Checkout for one-time, subscription, and custom payments, with Easner as the merchant on record.",
-      link: "/checkout",
-    },
-    {
-      title: "No website yet",
-      description: "Share a Payment Link to collect customer payments without a website or code.",
-      link: "/payment-links",
-    },
+  ],
+  useCaseLinks: [
+    { label: "Run payroll", href: "/payroll" },
+    { label: "Sell on your website", href: "/checkout" },
+    { label: "Get paid with a link", href: "/payment-links" },
   ],
   ctaBand: {
     headline: "Open your Easner Business account",
-    subhead: "Accounts, payments, collections, and team controls for your next stage of growth.",
+    subhead: "Accounts, collections, payouts and team controls – set up in one place.",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "business_cta_band" }],
   },
 }

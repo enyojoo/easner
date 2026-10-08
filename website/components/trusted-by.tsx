@@ -16,9 +16,9 @@ export function TrustedBy({ logos = TRUSTED_BY_LOGOS }: TrustedByProps) {
       initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="flex w-full flex-col items-center gap-6 rounded-[1.5rem] border border-[#E4DED1] bg-white/70 px-4 py-8 shadow-sm"
+      className="flex w-full flex-col items-center gap-6 rounded-[1.5rem] border border-web-hairline bg-white/70 px-4 py-8 shadow-sm"
     >
-      <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-[#6F756F]">
+      <p className="text-center text-sm font-semibold uppercase tracking-[0.14em] text-web-meta">
         Technology & payment infrastructure
       </p>
       {logoList.length > 0 && (

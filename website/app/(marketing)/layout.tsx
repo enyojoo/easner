@@ -5,7 +5,7 @@ import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/marketing
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#F6F3EB] text-[#0F1110]">
+    <div className="min-h-screen bg-web-band text-web-ink">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([organizationJsonLd(), websiteJsonLd()])}

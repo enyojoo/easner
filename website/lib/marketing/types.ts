@@ -41,6 +41,8 @@ export interface CardItem {
   description: string
   icon?: string
   link?: string
+  /** A figure that leads the card in proof rows ("80+", "~60%"). */
+  stat?: string
 }
 
 export interface PageMetadata {
@@ -103,6 +105,8 @@ export interface ProductPageContent {
   useCases?: CardItem[]
   useCasesHeadline?: string
   useCasesSubhead?: string
+  /** Jobs that have their own page, shown as links under the use cases ("Run payroll →"). */
+  useCaseLinks?: { label: string; href: string }[]
   tierNote?: string
   statusBanner?: string
   commercialModels?: CardItem[]

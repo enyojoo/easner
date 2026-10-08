@@ -3,25 +3,26 @@
 import { ArrowRight } from "lucide-react"
 import { MarketingLink } from "@/components/marketing/marketing-link"
 import { aboutTrust } from "@/lib/marketing/content/about"
-import { MARKETING_BODY_TEXT, MARKETING_HEADING_CAPS, MARKETING_SECTION_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 export function AboutTrustSection() {
   return (
     <section className="bg-white pb-14 pt-7 md:pb-24 md:pt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-[1.5rem] border border-[#E4DED1] bg-[#F8F6F0] p-6 shadow-[0_12px_35px_rgba(15,17,16,0.05)] sm:rounded-[1.75rem] sm:p-10">
-          <h2 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SECTION_TITLE, MARKETING_HEADING_CAPS)}>
+        <div className="mx-auto max-w-3xl rounded-[1.5rem] border border-web-hairline bg-web-plate p-6 shadow-[0_12px_35px_rgba(15,17,16,0.05)] sm:rounded-[1.75rem] sm:p-10">
+          <Headline level="section">
             {aboutTrust.headline}
-          </h2>
-          <p className={cn("mt-5 text-[#5F665F]", MARKETING_BODY_TEXT)}>{aboutTrust.body}</p>
+          </Headline>
+          <p className={cn("mt-5 text-web-body", MARKETING_BODY_TEXT)}>{aboutTrust.body}</p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {aboutTrust.bullets.map((bullet) => (
               <li
                 key={bullet}
-                className="flex items-start gap-3 rounded-2xl border border-[#E4DED1] bg-white/80 p-4 text-sm leading-6 text-[#3D443E]"
+                className="flex items-start gap-3 rounded-[16px] border border-web-hairline bg-white/80 p-4 text-sm leading-6 text-web-nav"
               >
-                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#007ACC]" />
+                <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-primary" />
                 <span>{bullet}</span>
               </li>
             ))}
@@ -30,7 +31,7 @@ export function AboutTrustSection() {
             href={aboutTrust.learnMoreHref}
             analyticsLocation="about_trust_compliance"
             ctaLabel={aboutTrust.learnMoreLabel}
-            className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#007ACC] transition-colors hover:text-[#0062A3]"
+            className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-brand-primary transition-colors hover:text-primary-text"
           >
             {aboutTrust.learnMoreLabel}
             <ArrowRight className="h-4 w-4" />

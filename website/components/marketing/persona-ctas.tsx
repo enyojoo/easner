@@ -45,13 +45,8 @@ export function PersonaCtas({
         <Button
           key={cta.label}
           asChild
-          size="lg"
-          variant={i === 0 ? "default" : "outline"}
-          className={
-            i === 0
-              ? "h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white hover:bg-[#0062A3] sm:h-12 sm:px-6"
-              : "h-11 rounded-full border-[#D9D4C7] bg-white px-5 text-sm text-[#0F1110] hover:bg-white sm:h-12 sm:px-6"
-          }
+          variant={i === 0 ? "primary" : "outline"}
+          pill
         >
           <MarketingLink
             href={cta.href}

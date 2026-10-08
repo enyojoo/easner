@@ -1,17 +1,11 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import {
-  MARKETING_BODY_TEXT,
-  MARKETING_HEADING_CAPS,
-  MARKETING_SUBSECTION_TITLE,
-  SPLIT_COPY_CARD,
-  SPLIT_GRID_GAP,
-  SPLIT_VISUAL_CONTAINER,
-} from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT, SPLIT_COPY_CARD, SPLIT_GRID_GAP, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
 import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { corridorContent } from "@/lib/marketing/content/home"
+import { Headline } from "@/components/ds/headline"
 
 export function CorridorStory() {
   return (
@@ -19,16 +13,15 @@ export function CorridorStory() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className={cn("grid grid-cols-1 items-stretch lg:grid-cols-2", SPLIT_GRID_GAP)}>
           <div className={SPLIT_COPY_CARD}>
-            <h3 className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_SUBSECTION_TITLE, MARKETING_HEADING_CAPS)}>
+            <Headline level="sub">
               {corridorContent.headline}
-            </h3>
-            <p className={cn("mt-4 flex-1 text-[#5F665F]", MARKETING_BODY_TEXT)}>{corridorContent.body}</p>
+            </Headline>
+            <p className={cn("mt-4 flex-1 text-web-body", MARKETING_BODY_TEXT)}>{corridorContent.body}</p>
             {corridorContent.ctas && corridorContent.ctas.length > 0 && (
               <div className="mt-8 min-h-[3.25rem] shrink-0">
                 <OpenAccountButton
                   ctaLocation="homepage_corridor"
                   showArrow
-                  className="h-12 rounded-full bg-[#007ACC] px-6 text-white hover:bg-[#0062A3]"
                 />
               </div>
             )}

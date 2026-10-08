@@ -61,7 +61,7 @@ export function PersonalBankingCtas({
       {resolvedDescription ? (
         <p
           className={cn(
-            "text-sm leading-6 text-[#5F665F]",
+            "text-sm leading-6 text-web-body",
             descriptionAlign,
             compact ? "mb-3" : "mb-4"
           )}

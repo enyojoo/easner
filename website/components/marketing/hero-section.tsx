@@ -7,9 +7,10 @@ import { VisualSlot } from "./visual-slot"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PRODUCTS_HASH, scrollToProductsWithPaintRetries } from "./product-anchor"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { MARKETING_BODY_TEXT, MARKETING_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 export function HeroSection() {
   const reducedMotion = useReducedMotion()
@@ -41,18 +42,8 @@ export function HeroSection() {
           className="mx-auto max-w-7xl text-center"
         >
           <div className="space-y-5">
-            <h1 className={cn("mx-auto w-full font-unbounded font-bold text-[#0F1110]", MARKETING_HERO_TITLE)}>
-              {homeHero.h1Lines.map((line, index) => (
-                <span
-                  key={line}
-                  className={index === 1 ? "block text-balance text-[#007ACC]" : "block text-balance"}
-                >
-                  {index > 0 && " "}
-                  {line}
-                </span>
-              ))}
-            </h1>
-            <p className={cn("mx-auto max-w-2xl text-[#5F665F]", MARKETING_BODY_TEXT)}>
+            <Headline level="hero" lines={homeHero.h1Lines} accentLine={1} className="mx-auto w-full" />
+            <p className={cn("mx-auto max-w-2xl text-web-body", MARKETING_BODY_TEXT)}>
               {homeHero.subhead}
             </p>
           </div>
@@ -60,26 +51,18 @@ export function HeroSection() {
             <OpenAccountButton
               ctaLocation="homepage_hero"
               showArrow
-              className="h-11 rounded-full bg-[#007ACC] px-5 text-sm text-white shadow-[0_12px_30px_rgba(0,122,204,0.22)] hover:bg-[#0062A3] sm:h-12 sm:px-6"
             />
             <Button
-              size="lg"
               variant="outline"
-              className="h-11 rounded-full border-[#D9D4C7] bg-white/75 px-5 text-sm text-[#0F1110] hover:bg-white sm:h-12 sm:px-6"
+              pill
               onClick={handleProductsClick}
             >
               {homeHero.ctas[1].label}
             </Button>
           </div>
         </motion.div>
-        <div className="relative z-10 mx-auto mt-10 h-[26rem] max-w-6xl overflow-hidden rounded-[1.5rem] border border-[#E4DED1] bg-[#F5F7F8] sm:mt-12 sm:h-[29rem] sm:rounded-[1.75rem] lg:h-[30rem]">
-          <VisualSlot
-            assetId={homeHero.visualSlot}
-            alt={homeHero.altText}
-            aspect="hero"
-            className="h-full rounded-none border-0 bg-transparent shadow-none"
-            priority
-          />
+        <div className="relative z-10 mx-auto mt-10 max-w-6xl overflow-hidden rounded-[1.5rem] border border-web-hairline bg-web-band pt-6 sm:mt-12 sm:rounded-[1.75rem] sm:pt-0">
+          <VisualSlot assetId={homeHero.visualSlot} alt={homeHero.altText} aspect="hero" priority />
         </div>
       </div>
     </section>

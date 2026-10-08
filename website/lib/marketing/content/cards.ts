@@ -17,12 +17,12 @@ export const cardsContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Manage spending with Easner cards.",
+    h1: "Manage spending with Easner cards",
     subhead:
       "Set spending limits, manage cardholders, and track purchases alongside your account activity. Personal and business cards are rolling out in phases, subject to availability and approval.",
     badge: "Rolling out in phases",
     visualSlot: "mkt-hero-cards-01",
-    altText: "Preview of Easner virtual and physical payment cards in the Business dashboard",
+    altText: "Easner card faces marked Coming soon",
     ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_hero" }],
   },
   featuresLayout: "bento",
@@ -53,7 +53,7 @@ export const cardsContent: ProductPageContent = {
       description:
         "Card purchases alongside payouts, collections, and account activity – one ledger for finance and ops.",
       visualSlot: "mkt-ui-cards-reporting",
-      altText: "Easner unified activity feed with card and payout transactions",
+      altText: "A card spend preview listing purchases by card",
     },
   ],
   useCasesHeadline: "Built for global spend",

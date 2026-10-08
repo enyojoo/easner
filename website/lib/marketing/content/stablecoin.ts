@@ -29,7 +29,7 @@ export const stablecoinContent: ProductPageContent = {
     subhead:
       "Easner settles on stablecoin rails, so cross-border money moves faster. Your team works in dollars and euros, on the same dashboard as every other payment.",
     visualSlot: "mkt-hero-stablecoin-01",
-    altText: "Easner Business dashboard showing stablecoin settlement activity",
+    altText: "Receive stablecoins screen with a USDC deposit address on Solana",
     ctas: [{ label: "Open Business account", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "stablecoin_hero" }],
   },
   featuresLayout: "bento",
@@ -39,28 +39,28 @@ export const stablecoinContent: ProductPageContent = {
       description:
         "Deposit USDC and EURC to your Business account – deposit address, network details, and ledger visibility in one place.",
       visualSlot: "mkt-ui-stablecoin-receive",
-      altText: "Easner Business stablecoin receive screen",
+      altText: "Stablecoin deposits in USDC and EURC with their status",
     },
     {
       title: "Terminal collections",
       description:
         "Take in-person payments. Tap, card, or scan – every collection posts to your Business ledger alongside invoices and payouts.",
       visualSlot: "mkt-ui-stablecoin-terminal",
-      altText: "Merchant using Easner Terminal for in-person payment",
+      altText: "Easner Terminal charges for USDC and USDT payments",
     },
     {
       title: "QR Pay",
       description:
         "Share a scan-to-pay QR for retail, events, or field collections. Payers scan once; you reconcile in Easner Business with account-level controls.",
       visualSlot: "mkt-ui-stablecoin-qrpay",
-      altText: "Customer scanning QR code to pay a business via Easner",
+      altText: "A counter QR code asking for 48.20 USDC on Solana",
     },
     {
       title: "Corridor sends",
       description:
         "Send to supported wallets on approved networks with live quotes, clear status, and signing flows.",
       visualSlot: "mkt-ui-stablecoin-send",
-      altText: "Easner Business wallet send flow",
+      altText: "Sending $2,500 to a supplier's USDC wallet on Solana",
     },
   ],
   useCasesHeadline: "Where faster settlement matters",

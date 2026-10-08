@@ -21,7 +21,7 @@ export const paymentLinksContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Get paid with a link.",
+    h1: "Get paid with a link",
     subhead:
       "Create a payment page and share it by email, message, or social media. Collect one-time or recurring payments through Easner Business, without a website or code, on stablecoin infrastructure.",
     visualSlot: "mkt-hero-paylinks-01",

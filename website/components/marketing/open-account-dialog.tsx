@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button"
 import { PersonalBankingCtas } from "./personal-banking-ctas"
 import { BusinessSignupLink } from "./business-signup-link"
 import { BUSINESS_BANKING_CTA_DESCRIPTION } from "@/lib/marketing/constants"
-import { MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS } from "@/lib/marketing/layout-constants"
 import { captureCtaClicked } from "@/lib/marketing/analytics"
-import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 interface OpenAccountDialogProps {
   open: boolean
@@ -53,7 +52,7 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
         type="button"
         aria-label="Close dialog"
         tabIndex={-1}
-        className="absolute inset-0 bg-[#0F1110]/45 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-web-ink/45 backdrop-blur-[2px]"
         onClick={() => onOpenChange(false)}
       />
       <div
@@ -61,14 +60,14 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
         role="dialog"
         aria-modal="true"
         aria-labelledby="open-account-title"
-        className="relative z-10 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl flex-col overflow-hidden rounded-[1.25rem] border border-[#E4DED1] bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)] sm:max-h-[min(920px,calc(100dvh-2rem))] sm:rounded-[1.75rem]"
+        className="relative z-10 flex max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl flex-col overflow-hidden rounded-[1.25rem] border border-web-hairline bg-white shadow-[0_24px_90px_rgba(15,17,16,0.18)] sm:max-h-[min(920px,calc(100dvh-2rem))] sm:rounded-[1.75rem]"
       >
-        <div className="flex shrink-0 items-start justify-between border-b border-[#E4DED1] px-4 py-4 sm:px-8 sm:py-5">
+        <div className="flex shrink-0 items-start justify-between border-b border-web-hairline px-4 py-4 sm:px-8 sm:py-5">
           <div className="min-w-0 flex-1 pr-3 text-left sm:pr-4">
-            <h2 id="open-account-title" className={cn("font-unbounded font-bold text-[#0F1110]", MARKETING_DISPLAY_TITLE, MARKETING_HEADING_CAPS)}>
+            <Headline level="display" id="open-account-title">
               Open your Easner account
-            </h2>
-            <p className="mt-1.5 text-sm leading-6 text-[#5F665F] sm:mt-2 sm:text-base">
+            </Headline>
+            <p className="mt-1.5 text-sm leading-6 text-web-body sm:mt-2 sm:text-base">
               Choose a personal or business account.
             </p>
           </div>
@@ -76,15 +75,15 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
             type="button"
             aria-label="Close"
             onClick={() => onOpenChange(false)}
-            className="shrink-0 rounded-full border border-[#E4DED1] p-2 text-[#5F665F] transition-colors hover:bg-[#F8F6F0] hover:text-[#0F1110]"
+            className="shrink-0 rounded-full border border-web-hairline p-2 text-web-body transition-colors hover:bg-web-plate hover:text-web-ink"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="border-b border-[#E4DED1] p-4 sm:p-8 md:border-b-0 md:border-r">
-              <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Personal Banking</h3>
+            <div className="border-b border-web-hairline p-4 sm:p-8 md:border-b-0 md:border-r">
+              <h3 className="font-display text-base font-bold text-web-ink sm:text-lg">Personal Banking</h3>
               <PersonalBankingCtas
                 className="mt-4 sm:mt-6"
                 surface="open-account"
@@ -94,12 +93,12 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
               />
             </div>
             <div className="p-4 sm:p-8">
-              <h3 className="font-unbounded text-base font-bold text-[#0F1110] sm:text-lg">Business Banking</h3>
+              <h3 className="font-display text-base font-bold text-web-ink sm:text-lg">Business Banking</h3>
               <div className="mt-4 sm:mt-6">
-                <p className="mb-3 text-sm leading-6 text-[#5F665F]">{BUSINESS_BANKING_CTA_DESCRIPTION}</p>
+                <p className="mb-3 text-sm leading-6 text-web-body">{BUSINESS_BANKING_CTA_DESCRIPTION}</p>
                 <Button
                   asChild
-                  className="inline-flex h-10 shrink-0 rounded-full bg-[#007ACC] px-3.5 text-[13px] font-semibold text-white hover:bg-[#0062A3] sm:text-sm"
+                  className="inline-flex h-10 shrink-0 rounded-full bg-brand-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover sm:text-sm"
                 >
                   <BusinessSignupLink campaign={ctaLocation ?? "open_account_dialog"}>
                     Open Business account
@@ -118,6 +117,8 @@ export function OpenAccountDialog({ open, onOpenChange, ctaLocation }: OpenAccou
 interface OpenAccountButtonProps {
   className?: string
   showArrow?: boolean
+  /** Website primary pill (default). The header uses the compact, non-pill size. */
+  pill?: boolean
   onPress?: () => void
   /** Analytics location for outbound attribution (PostHog + cookie, not URL params). */
   ctaLocation?: string
@@ -129,6 +130,7 @@ interface OpenAccountButtonProps {
 export function OpenAccountButton({
   className,
   showArrow = false,
+  pill = true,
   onPress,
   ctaLocation,
   dialogOpen,
@@ -143,6 +145,8 @@ export function OpenAccountButton({
     <>
       <Button
         type="button"
+        variant="primary"
+        pill={pill}
         className={className}
         onClick={() => {
           if (ctaLocation) {

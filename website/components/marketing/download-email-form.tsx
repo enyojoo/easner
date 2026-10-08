@@ -81,7 +81,7 @@ export function DownloadEmailForm({ className, src, analyticsLocation, onSuccess
 
   if (status === "success") {
     return (
-      <p className={cn("text-center text-sm leading-6 text-[#3D403D]", className)} role="status">
+      <p className={cn("text-center text-sm leading-6 text-web-nav", className)} role="status">
         Check your inbox – we sent your download link.
       </p>
     )
@@ -121,13 +121,13 @@ export function DownloadEmailForm({ className, src, analyticsLocation, onSuccess
             }
           }}
           disabled={status === "loading"}
-          className="h-12 min-w-0 flex-1 rounded-xl border border-[#E9E4D8] bg-[#F8F6F0] px-4 text-[15px] text-[#0F1110] placeholder:text-[#6F756F] focus:border-[#007ACC] focus:outline-none focus:ring-2 focus:ring-[#007ACC]/25 disabled:opacity-60"
+          className="h-12 min-w-0 flex-1 rounded-[12px] border border-web-hairline bg-web-plate px-4 text-[15px] text-web-ink placeholder:text-web-meta focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/25 disabled:opacity-60"
         />
         <button
           type="submit"
           disabled={!canSubmit}
           aria-label="Send download link"
-          className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#007ACC] text-[#F6F3EB] transition-colors hover:bg-[#0062A3] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-primary text-web-band transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           {status === "loading" ? (
             <Loader2 className="size-5 animate-spin" />
@@ -137,7 +137,7 @@ export function DownloadEmailForm({ className, src, analyticsLocation, onSuccess
         </button>
       </div>
       {error ? (
-        <p className="mt-2 text-center text-sm text-red-600" role="alert">
+        <p className="mt-2 text-center text-sm text-destructive-text" role="alert">
           {error}
         </p>
       ) : null}

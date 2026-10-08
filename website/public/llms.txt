@@ -46,7 +46,7 @@ Easner settles cross-border payments on stablecoin rails, primarily USDC and EUR
 ## Frequently asked
 
 - **Can I use Easner for everyday finances in the US?** Yes. Easner serves personal and business customers in the US. Manage balances, receive payments, and pay people and businesses, with international capabilities when you need them.
-- **Does Easner offer personal and business accounts?** Yes. Easner Personal is for individual finances; Easner Business includes company accounts, payments, invoicing, payroll, and team access.
+- **Does Easner offer personal and business accounts?** Yes. Easner Personal Banking is for individual finances; Easner Business Banking includes company accounts, payments, invoicing, payroll, and team access.
 - **Is Easner a bank?** No. Easner is a financial technology company. Banking and payment services are provided by licensed partners.
 - **Do I need to understand crypto to use Easner?** No. Customers see balances, payments, and recipients, the same as any banking app. There are no wallets or networks to manage. Stablecoin settlement runs behind the scenes.
 - **What fees apply?** Applicable fees and exchange rates are shown before transfer confirmation. Timing depends on the payment method, destination, banking hours, and verification or partner checks.

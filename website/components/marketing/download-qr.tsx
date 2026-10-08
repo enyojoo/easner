@@ -14,7 +14,7 @@ export function DownloadQr({ className, size = 180, value = APP_LINK_URL }: Down
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-2xl border border-[#E9E4D8] bg-white p-3 shadow-[0_8px_24px_rgba(15,17,16,0.06)]",
+        "inline-flex items-center justify-center rounded-[16px] border border-web-hairline bg-white p-3 shadow-[0_8px_24px_rgba(15,17,16,0.06)]",
         className
       )}
     >

@@ -4,20 +4,9 @@ import * as React from "react"
 import Link from "next/link"
 import { OpenAccountButton, OpenAccountDialog } from "@/components/marketing/open-account-dialog"
 import { BrandLogo } from "@easner/shared"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { captureNavClick } from "@/lib/marketing/analytics"
-import {
-  NAV_LEADING_LINKS,
-  NAV_LINKS,
-  NAV_SECTIONS,
-  NAV_TRAILING_LINKS,
-  type NavIconName,
-} from "@/lib/nav-config"
+import { NAV_LEADING_LINKS, NAV_LINKS, NAV_SECTIONS, NAV_TRAILING_LINKS, type NavIconName } from "@/lib/nav-config"
 
 export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
@@ -64,28 +53,28 @@ export function PublicHeader() {
   }
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#E4DED1]/80 bg-white/[0.82] shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
+    <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-web-hairline/80 bg-white/[0.82] shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-white/70">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center" onClick={() => trackNavClick("Logo", "/")}>
             <BrandLogo size="sm" className="h-7" />
           </Link>
 
-          {/* Desktop nav: Home, About → Products → rest → Contact */}
+          {/* Desktop nav: About → Products → Contact (the logo links home) */}
           <nav className="hidden md:flex items-center gap-1">
             {NAV_LEADING_LINKS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => trackNavClick(item.label, item.href)}
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
               >
                 {item.label}
               </Link>
             ))}
             {NAV_SECTIONS.map((section) => (
               <DropdownMenu key={section.label}>
-                <DropdownMenuTrigger className="flex items-center gap-1 rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-[#F8F6F0] data-[state=open]:text-[#007ACC]">
+                <DropdownMenuTrigger className="flex items-center gap-1 rounded-full px-4 py-2.5 text-sm font-semibold text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=open]:bg-web-plate data-[state=open]:text-brand-primary">
                   {section.label}
                   <ChevronDownIcon className="h-4 w-4" />
                 </DropdownMenuTrigger>
@@ -93,32 +82,37 @@ export function PublicHeader() {
                   align="center"
                   sideOffset={4}
                   onCloseAutoFocus={(e) => e.preventDefault()}
-                  className="w-[min(36rem,90vw)] rounded-2xl border border-[#E4DED1] bg-white p-2 shadow-2xl"
+                  className="w-[min(52rem,94vw)] rounded-[16px] border border-web-hairline bg-web-canvas p-3 shadow-lift"
                 >
-                  <div className="grid grid-cols-2 gap-2">
-                    {section.items.map((item) => {
-                      return (
-                        <DropdownMenuItem key={item.href} asChild>
-                          <Link
-                            href={item.href}
-                            onClick={() => trackNavClick(item.label, item.href)}
-                            className="flex cursor-pointer items-start gap-3 rounded-xl px-3 py-3 text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F8F6F0] text-[#007ACC]">
-                              <NavIcon name={item.icon} className="h-4 w-4" />
-                            </div>
-                            <span>
-                              <span className="block font-semibold">{item.label}</span>
-                              {item.description && (
-                                <span className="mt-1 block text-xs leading-5 text-[#6F756F]">
-                                  {item.description}
+                  <div className="grid grid-cols-[1fr_1.15fr_1fr] gap-2">
+                    {section.groups.map((group) => (
+                      <div key={group.label}>
+                        <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta">
+                          {group.label}
+                        </div>
+                        {group.items.map((item) => {
+                          return (
+                            <DropdownMenuItem key={item.href} asChild>
+                              <Link
+                                href={item.href}
+                                onClick={() => trackNavClick(item.label, item.href)}
+                                className="flex cursor-pointer items-start gap-3 rounded-[12px] px-3 py-3 text-web-ink transition-colors hover:bg-web-plate hover:text-brand-primary"
+                              >
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-web-plate text-brand-primary">
+                                  <NavIcon name={item.icon} className="h-4 w-4" />
+                                </div>
+                                <span>
+                                  <span className="block font-semibold">{item.label}</span>
+                                  {item.description && (
+                                    <span className="mt-1 block text-xs leading-5 text-web-meta">{item.description}</span>
+                                  )}
                                 </span>
-                              )}
-                            </span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )
-                    })}
+                              </Link>
+                            </DropdownMenuItem>
+                          )
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -128,7 +122,7 @@ export function PublicHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={() => trackNavClick(item.label, item.href)}
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
               >
                 {item.label}
               </Link>
@@ -138,7 +132,7 @@ export function PublicHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={() => trackNavClick(item.label, item.href)}
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                className="rounded-full px-4 py-2.5 text-sm font-semibold text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
               >
                 {item.label}
               </Link>
@@ -148,7 +142,8 @@ export function PublicHeader() {
           <div className="hidden md:flex items-center gap-3">
             <OpenAccountButton
               ctaLocation="nav_cta"
-              className="rounded-full bg-[#007ACC] text-white shadow-[0_10px_25px_rgba(0,122,204,0.2)] transition-all duration-200 hover:bg-[#0062A3] hover:shadow-[0_14px_32px_rgba(0,122,204,0.22)]"
+              pill={false}
+              className="rounded-full shadow-cta"
               dialogOpen={accountDialogOpen}
               onDialogOpenChange={setAccountDialogOpen}
             />
@@ -157,7 +152,7 @@ export function PublicHeader() {
           {/* Mobile menu button */}
           <button
             type="button"
-            className="md:hidden p-2 text-[#3D443E] hover:text-[#007ACC]"
+            className="md:hidden p-2 text-web-nav hover:text-brand-primary"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
@@ -167,18 +162,18 @@ export function PublicHeader() {
 
         {/* Mobile nav - collapsible sections, scrollable with CTA pinned */}
         {mobileMenuOpen && (
-          <div className="md:hidden flex flex-col max-h-[calc(100dvh-4rem)] overflow-hidden border-t border-[#E4DED1]">
+          <div className="md:hidden flex flex-col max-h-[calc(100dvh-4rem)] overflow-hidden border-t border-web-hairline">
             <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4">
               <div className="flex flex-col gap-1">
                 {NAV_LEADING_LINKS.map((item) => (
-                  <div key={item.href} className="border-b border-[#E9E4D8]">
+                  <div key={item.href} className="border-b border-web-hairline">
                     <Link
                       href={item.href}
                       onClick={() => {
                         trackNavClick(item.label, item.href)
                         setMobileMenuOpen(false)
                       }}
-                      className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                      className="flex items-center rounded-[8px] px-3 py-3 text-sm font-semibold text-web-ink transition-colors hover:bg-web-plate hover:text-brand-primary"
                     >
                       {item.label}
                     </Link>
@@ -187,72 +182,77 @@ export function PublicHeader() {
                 {NAV_SECTIONS.map((section) => {
                   const isExpanded = mobileExpanded.has(section.label)
                   return (
-                    <div key={section.label} className="border-b border-[#E9E4D8]">
+                    <div key={section.label} className="border-b border-web-hairline">
                       <button
                         type="button"
                         onClick={() => toggleMobileSection(section.label)}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-left text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0]"
+                        className="flex w-full items-center justify-between rounded-[8px] px-3 py-3 text-left text-sm font-semibold text-web-ink transition-colors hover:bg-web-plate"
                       >
                         {section.label}
                         <ChevronRightIcon
-                          className={`h-4 w-4 text-[#6F756F] transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                          className={`h-4 w-4 text-web-meta transition-transform ${isExpanded ? "rotate-90" : ""}`}
                         />
                       </button>
                       {isExpanded && (
                         <div className="pl-3 pb-2 space-y-0.5">
-                          {section.items.map((item) => {
-                            return (
-                              <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={() => {
-                        trackNavClick(item.label, item.href)
-                        setMobileMenuOpen(false)
-                      }}
-                                className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-[#3D443E] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
-                              >
-                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F8F6F0] text-[#007ACC]">
-                                  <NavIcon name={item.icon} className="h-4 w-4" />
-                                </div>
-                                <span>
-                                  <span className="block font-semibold">{item.label}</span>
-                                  {item.description && (
-                                    <span className="mt-0.5 block text-xs leading-5 text-[#6F756F]">
-                                      {item.description}
+                          {section.groups.map((group) => (
+                            <div key={group.label}>
+                              <div className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta">
+                                {group.label}
+                              </div>
+                              {group.items.map((item) => {
+                                return (
+                                  <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => {
+                                      trackNavClick(item.label, item.href)
+                                      setMobileMenuOpen(false)
+                                    }}
+                                    className="flex items-start gap-3 rounded-[8px] px-3 py-2.5 text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
+                                  >
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-web-plate text-brand-primary">
+                                      <NavIcon name={item.icon} className="h-4 w-4" />
+                                    </div>
+                                    <span>
+                                      <span className="block font-semibold">{item.label}</span>
+                                      {item.description && (
+                                        <span className="mt-0.5 block text-xs leading-5 text-web-meta">{item.description}</span>
+                                      )}
                                     </span>
-                                  )}
-                                </span>
-                              </Link>
-                            )
-                          })}
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
                   )
                 })}
                 {NAV_LINKS.map((item) => (
-                  <div key={item.href} className="border-b border-[#E9E4D8]">
+                  <div key={item.href} className="border-b border-web-hairline">
                     <Link
                       href={item.href}
                       onClick={() => {
                         trackNavClick(item.label, item.href)
                         setMobileMenuOpen(false)
                       }}
-                      className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                      className="flex items-center rounded-[8px] px-3 py-3 text-sm font-semibold text-web-ink transition-colors hover:bg-web-plate hover:text-brand-primary"
                     >
                       {item.label}
                     </Link>
                   </div>
                 ))}
                 {NAV_TRAILING_LINKS.map((item) => (
-                  <div key={item.href} className="border-b border-[#E9E4D8] last:border-b-0">
+                  <div key={item.href} className="border-b border-web-hairline last:border-b-0">
                     <Link
                       href={item.href}
                       onClick={() => {
                         trackNavClick(item.label, item.href)
                         setMobileMenuOpen(false)
                       }}
-                      className="flex items-center rounded-lg px-3 py-3 text-sm font-semibold text-[#0F1110] transition-colors hover:bg-[#F8F6F0] hover:text-[#007ACC]"
+                      className="flex items-center rounded-[8px] px-3 py-3 text-sm font-semibold text-web-ink transition-colors hover:bg-web-plate hover:text-brand-primary"
                     >
                       {item.label}
                     </Link>
@@ -260,10 +260,11 @@ export function PublicHeader() {
                 ))}
               </div>
             </nav>
-            <div className="flex-shrink-0 border-t border-[#E4DED1] bg-white px-4 pb-4 pt-4">
+            <div className="flex-shrink-0 border-t border-web-hairline bg-white px-4 pb-4 pt-4">
               <OpenAccountButton
                 ctaLocation="nav_cta"
-                className="w-full rounded-full bg-[#007ACC] text-white hover:bg-[#0062A3]"
+                pill={false}
+                className="w-full rounded-full"
                 dialogOpen={accountDialogOpen}
                 onDialogOpenChange={setAccountDialogOpen}
                 onPress={() => setMobileMenuOpen(false)}
@@ -272,11 +273,7 @@ export function PublicHeader() {
           </div>
         )}
       </div>
-      <OpenAccountDialog
-        open={accountDialogOpen}
-        onOpenChange={setAccountDialogOpen}
-        ctaLocation="nav_cta"
-      />
+      <OpenAccountDialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen} ctaLocation="nav_cta" />
     </header>
   )
 }

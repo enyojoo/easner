@@ -48,7 +48,7 @@ export function CurrencyBadge({
         />
       </span>
       {showLabel && (
-        <span className={cn("text-sm font-semibold leading-none text-[#0F1110]", labelClassName)}>{code}</span>
+        <span className={cn("text-sm font-semibold leading-none text-web-ink", labelClassName)}>{code}</span>
       )}
     </span>
   )

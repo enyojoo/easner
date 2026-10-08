@@ -7,20 +7,20 @@ const baseUrl = "https://www.easner.com"
  * "last modified" signal to crawlers; `new Date()` on every build defeats that.
  */
 const lastModified = {
-  home: new Date("2026-09-05"),
-  checkout: new Date("2026-09-05"),
-  paymentLinks: new Date("2026-09-05"),
-  payroll: new Date("2026-09-05"),
-  personal: new Date("2026-09-05"),
-  cards: new Date("2026-09-05"),
+  home: new Date("2026-10-08"),
+  checkout: new Date("2026-10-08"),
+  paymentLinks: new Date("2026-10-08"),
+  payroll: new Date("2026-10-08"),
+  personal: new Date("2026-10-08"),
+  cards: new Date("2026-10-08"),
   about: new Date("2026-09-05"),
   contact: new Date("2026-06-06"),
   legal: new Date("2026-06-08"),
-  business: new Date("2026-09-05"),
-  stablecoin: new Date("2026-09-05"),
-  invoicing: new Date("2026-09-05"),
-  partners: new Date("2026-09-05"),
-  developers: new Date("2026-09-05"),
+  business: new Date("2026-10-08"),
+  stablecoin: new Date("2026-10-08"),
+  invoicing: new Date("2026-10-08"),
+  partners: new Date("2026-10-08"),
+  developers: new Date("2026-10-08"),
   app: new Date("2026-09-05"),
 }
 

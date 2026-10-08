@@ -28,11 +28,11 @@ export const partnersContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Build cross-border payments under your brand.",
+    h1: "Build cross-border payments under your brand",
     subhead:
       "Offer your customers an international payment experience under your own name. Easner provides the stablecoin infrastructure, verification workflows, payout connections, and operational support.",
     visualSlot: "mkt-hero-partners-01",
-    altText: "Branded partner portal showing cross-border transactions and compliance status on Easner infrastructure",
+    altText: "The Easner app under a fictional partner's brand, beside the brand settings a partner chooses",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "partners_hero_contact" },
       { label: "Developer Model", href: "/developers", analyticsLocation: "partners_hero_developers" },
@@ -66,7 +66,7 @@ export const partnersContent: ProductPageContent = {
       title: "Branded deployment",
       description: "Live product under your name on Easner infrastructure",
       visualSlot: "mkt-ui-partners-branded",
-      altText: "Branded partner portal configuration on Easner",
+      altText: "The Easner app beside the same app under a partner's brand",
     },
     {
       title: "Compliance built in",
@@ -84,7 +84,7 @@ export const partnersContent: ProductPageContent = {
       title: "Operational support",
       description: "Infrastructure maintenance and ongoing partner operations",
       visualSlot: "mkt-ui-partners-operations",
-      altText: "Partner operations console with infrastructure and support status",
+      altText: "A partner programme overview with customers, payouts and the Easner partner team",
     },
   ],
   extraSections: [
@@ -92,13 +92,13 @@ export const partnersContent: ProductPageContent = {
       headline: "Full-stack branded deployment",
       body: "The Agency Model is a live, branded money-movement product on Easner – not a DIY integration. Easner runs backend infrastructure, orchestration, provider connectivity, and compliance; you operate under your brand.",
       visualSlot: "mkt-ui-partners-agency",
-      altText: "Agency Model diagram showing branded partner layer on Easner infrastructure",
+      altText: "A partner's branded app on top of the accounts, payouts, verification and rails Easner runs",
     },
     {
       headline: "Branded programs for faith & mission",
       body: "Large churches and nonprofits often move money across borders for diaspora giving, branch support, and field missions. The Agency Model lets you run that program on Easner without building a banking stack from scratch.",
       visualSlot: "mkt-ui-partners-faith",
-      altText: "Branded faith-based organization portal showing diaspora giving and mission payout activity",
+      altText: "A faith organisation's branded app showing diaspora giving and branch support",
     },
   ],
   useCasesHeadline: "Built for how you move money",

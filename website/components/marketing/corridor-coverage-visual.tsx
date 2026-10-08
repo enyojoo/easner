@@ -1,5 +1,5 @@
 import type { ComponentType } from "react"
-import { Globe2 } from "lucide-react"
+import { ArrowRight, Globe2 } from "lucide-react"
 import {
   IconChina,
   IconEurope,
@@ -11,25 +11,23 @@ import {
   IconUnitedStates,
   type IconProps,
 } from "nucleo-flags"
+import { CurrencyFlag } from "@/components/ds/currency-flag"
+import { formatMoney, formatRate } from "@/lib/marketing/format-money"
 import { EASNER_CORRIDOR_VISUAL_ARIA_LABEL } from "@/lib/marketing/positioning"
 import { cn } from "@/lib/utils"
 
 type FlagIcon = ComponentType<IconProps>
 
-type MarketBadge =
-  | { label: string; Flag: FlagIcon; accent: string; soon?: false }
-  | { label: string; soon: true; accent: string }
-
-const corridorMarkets: MarketBadge[] = [
-  { label: "United States", Flag: IconUnitedStates, accent: "from-[#EAF5FD] to-white" },
-  { label: "Europe", Flag: IconEurope, accent: "from-[#EEF0FF] to-white" },
-  { label: "United Kingdom", Flag: IconUnitedKingdom, accent: "from-[#F3F0E8] to-white" },
-  { label: "Nigeria", Flag: IconNigeria, accent: "from-[#E8F7F0] to-white" },
-  { label: "Mexico", Flag: IconMexico, accent: "from-[#E8F4EC] to-white" },
-  { label: "Philippines", Flag: IconPhilippines, accent: "from-[#FCEEF3] to-white" },
-  { label: "India", Flag: IconIndia, accent: "from-[#FFF4E8] to-white" },
-  { label: "China", Flag: IconChina, accent: "from-[#FFF8E8] to-white" },
-  { label: "More markets", soon: true, accent: "from-[#F8F6F0] to-white" },
+const corridorMarkets: { label: string; Flag?: FlagIcon }[] = [
+  { label: "United States", Flag: IconUnitedStates },
+  { label: "Europe", Flag: IconEurope },
+  { label: "United Kingdom", Flag: IconUnitedKingdom },
+  { label: "Nigeria", Flag: IconNigeria },
+  { label: "Mexico", Flag: IconMexico },
+  { label: "Philippines", Flag: IconPhilippines },
+  { label: "India", Flag: IconIndia },
+  { label: "China", Flag: IconChina },
+  { label: "More markets" },
 ]
 
 interface CorridorCoverageVisualProps {
@@ -37,57 +35,53 @@ interface CorridorCoverageVisualProps {
   "aria-label"?: string
 }
 
+/**
+ * Where money goes: neutral market tiles, the 80+ figure, and one example payout in the rate format
+ * ("$1 = ₦1,359"). The rate is illustrative and labelled as such.
+ */
 export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: CorridorCoverageVisualProps) {
   return (
     <div
-      className={cn(
-        "relative overflow-hidden rounded-[1.75rem] border border-[#E4DED1] bg-[#F8F6F0] shadow-[0_24px_80px_rgba(15,17,16,0.12)]",
-        className
-      )}
+      className={cn("relative overflow-hidden rounded-[1.75rem] border border-web-hairline bg-web-plate shadow-showcase", className)}
       aria-label={ariaLabel ?? EASNER_CORRIDOR_VISUAL_ARIA_LABEL}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(0,122,204,0.12),transparent_34%),radial-gradient(circle_at_82%_88%,rgba(15,138,95,0.10),transparent_32%)]" />
-      <div className="relative flex h-full flex-col justify-center p-5 sm:p-6">
-        <div className="pointer-events-none absolute inset-5 opacity-60 sm:inset-6">
-          <div className="absolute left-[14%] top-[22%] h-2 w-2 rounded-full bg-[#007ACC]" />
-          <div className="absolute right-[18%] bottom-[20%] h-2 w-2 rounded-full bg-[#0F8A5F]" />
-          <div className="absolute left-[18%] top-[24%] h-px w-[58%] rotate-[14deg] bg-gradient-to-r from-[#007ACC]/45 via-[#007ACC]/15 to-[#0F8A5F]/45" />
+      <div className="relative flex h-full flex-col justify-center gap-4 p-5 sm:p-6">
+        <div className="flex items-end justify-between">
+          <span>
+            <span className="block text-4xl font-semibold leading-none tracking-[-0.03em] text-web-ink sm:text-5xl">80+</span>
+            <span className="mt-1 block text-sm text-web-meta">countries for payouts</span>
+          </span>
         </div>
-
-        <div className="relative grid grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
           {corridorMarkets.map((market) => (
             <div
               key={market.label}
               className={cn(
-                "group flex flex-col items-center gap-2 rounded-2xl border bg-gradient-to-br px-2 py-3 text-center shadow-sm transition-all duration-200 sm:px-3 sm:py-3.5",
-                market.soon
-                  ? "border-dashed border-[#D9D4C7] hover:border-[#007ACC]/30"
-                  : "border-[#E4DED1] hover:-translate-y-0.5 hover:border-[#007ACC]/35 hover:shadow-md",
-                market.accent
+                "flex flex-col items-center gap-2 rounded-[16px] border bg-web-canvas px-2 py-3 text-center sm:px-3",
+                market.Flag ? "border-web-hairline" : "border-dashed border-brand-stone",
               )}
             >
-              <span
-                className={cn(
-                  "flex size-10 items-center justify-center overflow-hidden rounded-xl bg-white sm:size-11",
-                  market.soon ? "ring-1 ring-dashed ring-[#D9D4C7]" : "ring-1 ring-[#E4DED1]"
-                )}
-              >
-                {market.soon ? (
-                  <Globe2 className="size-5 text-[#007ACC]" aria-hidden />
-                ) : (
+              <span className="flex size-9 items-center justify-center overflow-hidden rounded-[10px] sm:size-10">
+                {market.Flag ? (
                   <market.Flag className="size-7 sm:size-8" aria-hidden />
+                ) : (
+                  <Globe2 className="size-5 text-brand-primary" aria-hidden />
                 )}
               </span>
-              <span
-                className={cn(
-                  "text-[11px] font-semibold leading-tight sm:text-xs",
-                  market.soon ? "text-[#6F756F]" : "text-[#0F1110]"
-                )}
-              >
+              <span className={cn("text-[11px] font-semibold leading-tight sm:text-xs", market.Flag ? "text-web-ink" : "text-web-meta")}>
                 {market.label}
               </span>
             </div>
           ))}
+        </div>
+        <div className="flex items-center gap-3 rounded-[16px] border border-web-hairline bg-web-canvas px-4 py-3 text-sm">
+          <CurrencyFlag code="US" size={24} />
+          <ArrowRight className="size-4 text-web-meta" aria-hidden="true" />
+          <CurrencyFlag code="NG" size={24} />
+          <span className="flex-1 font-medium text-web-ink">
+            {formatMoney(450, "USD")} → {formatMoney(611550, "NGN")}
+          </span>
+          <span className="text-web-meta">{formatRate("USD", "NGN", 1359)} · Example</span>
         </div>
       </div>
     </div>

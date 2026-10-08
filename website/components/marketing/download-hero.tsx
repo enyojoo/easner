@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion"
 import { downloadHero } from "@/lib/marketing/content/download"
-import { MARKETING_BODY_TEXT, MARKETING_PAGE_HERO_TITLE } from "@/lib/marketing/layout-constants"
+import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { Headline } from "@/components/ds/headline"
 
 export function DownloadHero() {
   return (
@@ -14,10 +15,10 @@ export function DownloadHero() {
         transition={{ duration: 0.5 }}
         className="mx-auto max-w-3xl text-center"
       >
-        <h1 className={cn("text-balance font-unbounded font-bold text-[#0F1110]", MARKETING_PAGE_HERO_TITLE)}>
+        <Headline level="page" className="text-balance">
           {downloadHero.headline}
-        </h1>
-        <p className={cn("mt-4 text-pretty text-[#5F665F] sm:mt-5", MARKETING_BODY_TEXT)}>
+        </Headline>
+        <p className={cn("mt-4 text-pretty text-web-body sm:mt-5", MARKETING_BODY_TEXT)}>
           {downloadHero.subhead}
         </p>
       </motion.div>

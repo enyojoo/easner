@@ -11,9 +11,9 @@ export const REGULATORY_FOOTER_PARAGRAPHS = [
 ]
 
 export const COMPLIANCE_STRIP = {
-  headline: "Verification at every step.",
+  headline: "Verification at every step",
   subhead:
-    "Easner verifies individuals and businesses and screens transactions. Banking and payment services are provided by licensed partners, with access based on your location and verification.",
+    "Easner verifies every individual and business and screens transactions for AML and sanctions. Banking and payment services are provided by licensed partners.",
   bullets: [
     "Identity and business verification during onboarding",
     "AML and sanctions screening on customers and transactions",
@@ -23,9 +23,9 @@ export const COMPLIANCE_STRIP = {
 }
 
 export const DEFAULT_CTA_BAND: CtaBandContent = {
-  headline: "Your next chapter starts here.",
+  headline: "One account. 80+ countries.",
   subhead:
-    "Open an Easner account, or talk to us about Easner for Partners.",
+    "Open Easner Personal Banking in the app or Easner Business Banking on the web – or talk to us about building on Easner.",
   ctas: [
     { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_cta_band" },
     { label: "Contact", href: CONTACT_PATH, analyticsLocation: "homepage_cta_band_contact" },
@@ -74,35 +74,35 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Personal Banking",
     description:
-      "Manage everyday money, get paid, and send payments from one personal account with multiple currencies.",
+      "Hold USD and EUR, get paid to account details in your name, and send to 80+ countries.",
     link: "/personal",
     icon: "mkt-thumb-personal",
   },
   {
     title: "Business Banking",
     description:
-      "Collect customer payments, pay suppliers and teams, and track your finances from one dashboard.",
+      "Business accounts, customer payments and supplier payouts in one dashboard.",
     link: "/business",
     icon: "mkt-thumb-business",
   },
   {
     title: "Checkout",
     description:
-      "Accept one-time and subscription payments on your website, connected to Easner Business.",
+      "Card, bank and USDC payments on your own site, with Easner as merchant of record.",
     link: "/checkout",
     icon: "mkt-thumb-checkout",
   },
   {
     title: "Payment Links",
     description:
-      "Get paid with a shareable link – no website or code needed, one-time or recurring.",
+      "Get paid with a link – one-time or recurring, no website needed.",
     link: "/payment-links",
     icon: "mkt-thumb-paylinks",
   },
   {
     title: "Whitelabel programs",
     description:
-      "Run international payment programs under your brand, with infrastructure and operational support from Easner.",
+      "Launch cross-border payments under your own brand on Easner infrastructure.",
     link: "/partners",
     icon: "mkt-thumb-partners",
   },
@@ -112,28 +112,28 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Stablecoin Payments",
     description:
-      "Send and receive supported stablecoins, with network details and payment records in one place.",
+      "Send and receive USDC and EURC, where enabled, alongside your currency balances.",
     link: "/stablecoin",
     icon: "mkt-thumb-stablecoin",
   },
   {
     title: "Invoicing",
     description:
-      "Send customers an invoice they can pay online, by bank, or with supported stablecoins.",
+      "Invoices your customers can pay by card, bank transfer or stablecoin.",
     link: "/invoicing",
     icon: "mkt-thumb-invoicing",
   },
   {
     title: "Payroll",
     description:
-      "Pay your team with approval workflows, pay stubs, and clear payment records.",
+      "Pay your team in 80+ countries, with approvals before any money moves.",
     link: "/payroll",
     icon: "mkt-thumb-payroll",
   },
   {
     title: "Cards",
     description:
-      "Manage personal and business spending with card controls. Rolling out in phases, subject to approval.",
+      "Spend controls for you and your team – when available.",
     link: "/cards",
     icon: "mkt-thumb-cards",
   },

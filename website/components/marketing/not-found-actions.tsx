@@ -8,7 +8,7 @@ import { CONTACT_PATH } from "@/lib/marketing/constants"
 export function NotFoundActions() {
   return (
     <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-      <Button asChild className="h-12 rounded-full bg-[#007ACC] px-6 text-white hover:bg-[#0062A3]">
+      <Button asChild variant="primary" pill>
         <MarketingLink href="/" analyticsLocation="404_home" ctaLabel="Back to home">
           Back to home
         </MarketingLink>
@@ -16,7 +16,7 @@ export function NotFoundActions() {
       <Button
         asChild
         variant="outline"
-        className="h-12 rounded-full border-[#D9D4C7] bg-white px-6 text-[#0F1110] hover:bg-white"
+        pill
       >
         <MarketingLink
           href={CONTACT_PATH}

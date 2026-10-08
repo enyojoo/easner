@@ -25,7 +25,7 @@ export const invoicingContent: ProductPageContent = {
     subhead:
       "Create and share invoices from Easner Business, on the same stablecoin infrastructure behind every payment. Let customers pay online, by bank transfer, or with supported stablecoins, and track each payment from your dashboard.",
     visualSlot: "mkt-hero-invoicing-01",
-    altText: "Business owner creating an international invoice in Easner Business",
+    altText: "An invoice beside its Left to pay panel with Apple Pay and card",
     ctas: [
       { label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "invoicing_hero" },
       { label: "See Business banking", href: "/business", analyticsLocation: "invoicing_hero_business" },

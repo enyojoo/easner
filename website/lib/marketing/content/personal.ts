@@ -24,9 +24,9 @@ export const personalContent: ProductPageContent = {
   hero: {
     h1: "Bank globally with Ease",
     subhead:
-      "Hold a balance in USD and other major currencies. Top up with card, Apple Pay, Google Pay, or ACH Direct, and send to 80+ countries.",
+      "Hold USD and EUR, and GBP where supported. Top up with card, Apple Pay, Google Pay or ACH, and send to 80+ countries.",
     visualSlot: "mkt-hero-personal-01",
-    altText: "Easner Mobile account and receive money screens",
+    altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
   },
   featuresLayout: "bento",
@@ -39,7 +39,7 @@ export const personalContent: ProductPageContent = {
       altText: "Easner Mobile send money screen",
     },
     {
-      title: "Named Accounts",
+      title: "Accounts in your name",
       description:
         "Share account details in your own name so clients and family can pay you, or use a stablecoin deposit address.",
       visualSlot: "mkt-ui-personal-receive",
@@ -55,7 +55,7 @@ export const personalContent: ProductPageContent = {
     {
       title: "Account security",
       description:
-        "Protect your account with multi-factor authentication, PIN, and biometric unlock on your device.",
+        "Authenticator, PIN and Face ID protect every sign-in and every new recipient.",
       visualSlot: "mkt-ui-personal-security",
       altText: "Easner Mobile security settings",
     },
@@ -96,7 +96,7 @@ export const personalContent: ProductPageContent = {
     },
   ],
   ctaBand: {
-    headline: "Wherever life takes you.",
+    headline: "Wherever life takes you",
     ctas: [{ ...downloadCta[0], analyticsLocation: "personal_cta_band" }],
   },
 }

@@ -22,13 +22,13 @@ export const checkoutContent: ProductPageContent = {
     ],
   },
   hero: {
-    h1: "Accept payments on your website.",
+    h1: "Accept payments on your website",
     subhead:
-      "Give customers a clear way to pay by card, bank, or supported digital wallet, backed by Easner's stablecoin infrastructure. Collect one-time or subscription payments and track them in Easner Business.",
+      "Take card, bank and USDC payments on your site, one-time or by subscription, with Easner as merchant of record. Every payment lands in Easner Business.",
     visualSlot: "mkt-hero-checkout-01",
-    altText: "Easner Checkout embedded on a merchant's own website",
+    altText: "An Easner hosted checkout page with Apple Pay, card, bank and USDC options beside the order summary",
     ctas: [
-      { label: "Start with Easner Checkout", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "checkout_hero" },
+      { label: "Get started", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "checkout_hero" },
       { label: "See how it works", href: "#integration", analyticsLocation: "checkout_hero_integration" },
     ],
   },
@@ -66,7 +66,7 @@ export const checkoutContent: ProductPageContent = {
       description:
         "Every checkout and subscription payment settles directly to your Easner Balance, reconciled alongside your other Easner Business activity.",
       visualSlot: "mkt-ui-checkout-ledger",
-      altText: "Easner Business balance with checkout activity",
+      altText: "Recent checkout payments with their status",
     },
   ],
   useCasesHeadline: "Built for your website or app",
@@ -115,7 +115,7 @@ export const checkoutContent: ProductPageContent = {
   ctaBand: {
     headline: "Add checkout to your website",
     subhead: "One-time, subscription, and custom payments, on Easner Business.",
-    ctas: [{ label: "Start with Easner Checkout", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "checkout_cta_band" }],
+    ctas: [{ label: "Get started", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "checkout_cta_band" }],
   },
   complianceNote:
     "Checkout sessions and subscriptions run through the same verification and screening as the rest of your Easner Business account.",

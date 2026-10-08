@@ -32,7 +32,7 @@ export const homeHero = {
   subhead:
     "Stablecoin-native banking and payment infrastructure that lets you bank, spend, and send money to people and businesses in 80+ countries.",
   visualSlot: "mkt-hero-home-01",
-  altText: "Easner dashboard showing currency accounts, an incoming payment, and a supplier payment",
+  altText: "Easner Business home showing a total balance, money in and out, and recent payments with their status",
   ctas: [
     { label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_hero" },
     { label: "Explore products", href: "#products" },
@@ -44,24 +44,28 @@ export const whyEasnerHeadline = "Why choose Easner"
 export const whyEasnerPillars: CardItem[] = [
   {
     title: "An account in your name",
+    stat: "USD · EUR · GBP",
     description:
       "USD, EUR, and GBP details in your name once verified. Top up by card, Apple Pay, or ACH Direct.",
     icon: "mkt-icon-pillar-ux",
   },
   {
     title: "Reach 80+ countries",
+    stat: "80+",
     description:
       "Pay suppliers, contractors, and family across Africa, Latin America, Asia, and Europe.",
     icon: "mkt-icon-pillar-invisible",
   },
   {
     title: "Keep more of each payment",
+    stat: "~60%",
     description:
       "Stablecoin settlement can cut cross-border cost by up to ~60% in supported corridors.",
     icon: "mkt-icon-pillar-cost",
   },
   {
     title: "Dollars or stablecoins",
+    stat: "USDC · EURC",
     description:
       "Receive USDC and EURC alongside your currency balances, and send to wallets or local accounts.",
     icon: "mkt-icon-pillar-compliance",
@@ -72,10 +76,10 @@ export const solutionsPersonas = [
   {
     id: "diaspora",
     label: "Personal Banking",
-    headline: "Your everyday. Your next big thing.",
-    body: "Get paid, send money, and keep track of your balances in one account. Easner Personal fits your everyday finances and the places life takes you.",
+    headline: "Get paid in dollars. Pay anyone, anywhere.",
+    body: "Hold USD and EUR, get paid to account details in your name, and send to bank accounts and mobile money in 80+ countries – all from the Easner app.",
     visualSlot: "mkt-persona-diaspora",
-    altText: "Remote professional using Easner on mobile",
+    altText: "The Easner app home screen with a USD balance, a salary payment received and a transfer processing",
     ctas: [{ label: "Explore Personal Banking", href: "/personal", analyticsLocation: "homepage_persona_diaspora" }] satisfies Cta[],
   },
   {
@@ -84,32 +88,32 @@ export const solutionsPersonas = [
     headline: "Get paid. Pay your people. Keep track.",
     body: "Collect customer payments, pay suppliers and contractors, and give your team the access they need. Run your business finances from one dashboard, whether you work locally or globally.",
     visualSlot: "mkt-persona-sme",
-    altText: "Small business owner managing international payments",
+    altText: "Easner Business accounts showing USD, EUR and GBP balances",
     ctas: [{ label: "Explore Business Banking", href: "/business", analyticsLocation: "homepage_persona_sme" }] satisfies Cta[],
   },
   {
     id: "otc",
     label: "Deploy Easner",
-    headline: "Cross-border payments under your brand.",
+    headline: "Cross-border payments under your brand",
     body: "Build a branded payment program with Easner handling the underlying infrastructure, verification flows, and supported payout connections.",
     visualSlot: "mkt-persona-otc",
-    altText: "Partner operator managing branded cross-border transfers",
+    altText: "The Easner app under a partner's brand, beside the brand settings a partner chooses",
     ctas: [{ label: "Explore Partners", href: "/partners", analyticsLocation: "homepage_persona_otc" }] satisfies Cta[],
   },
   {
     id: "dev",
     label: "Easner API",
-    headline: "Build payments into your product.",
+    headline: "Build payments into your product",
     body: "Connect verification, accounts, collections, and international payouts to your platform through Easner APIs and webhooks.",
     visualSlot: "mkt-persona-dev",
-    altText: "Developer integrating payments API",
+    altText: "The Easner developer Workbench creating a payout through the API",
     ctas: [{ label: "Explore Developers", href: "/developers", analyticsLocation: "homepage_persona_dev" }] satisfies Cta[],
   },
 ]
 
 export const corridorContent = {
   headline: "At home. Around the world.",
-  body: "Hold a balance in USD, EUR, and GBP, then reach payout networks across Africa, Latin America, Asia, and Europe – the same stablecoin-native infrastructure behind every Easner payment.",
+  body: "Hold USD and EUR, and GBP where supported. Pay out to bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia and Europe, typically within minutes to hours.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
@@ -123,7 +127,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "How can I receive international payments?",
     answer: "Share the account details or stablecoin deposit address in your Easner account, and the payment lands on your balance. Businesses can also collect with invoices, Checkout, and Payment Links.",
-    links: [{ label: "Receive with Easner Personal", href: "/personal" }, { label: "Invoice international customers", href: "/invoicing" }],
+    links: [{ label: "Receive with Easner Personal Banking", href: "/personal" }, { label: "Invoice international customers", href: "/invoicing" }],
   },
   {
     question: "How long does an international transfer take?",
@@ -177,6 +181,6 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Does Easner offer both personal and business accounts?",
     answer:
-      "Yes. Easner Personal is for your own money and everyday payments. Easner Business brings company accounts, customer payments, invoicing, payroll, and team access together. Choose the account that fits how you plan to use Easner.",
+      "Yes. Easner Personal Banking is for your own money and everyday payments. Easner Business Banking brings company accounts, customer payments, invoicing, payroll, and team access together. Choose the account that fits how you plan to use Easner.",
   },
 ]
