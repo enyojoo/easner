@@ -111,7 +111,7 @@ export function SolutionsByAudience() {
         <div className="mx-auto flex max-w-7xl sticky top-20 items-start px-4 sm:px-6 lg:px-8">
           <div className="w-full">
             <div
-              className="mx-auto mb-4 grid max-w-sm grid-cols-2 gap-2 sm:mb-8 sm:flex sm:max-w-none sm:flex-wrap sm:justify-center"
+              className="mx-auto mb-4 grid max-w-sm grid-cols-2 gap-1.5 sm:mb-8 sm:gap-2 sm:flex sm:max-w-none sm:flex-wrap sm:justify-center"
               role="tablist"
               aria-label="Ways to use Easner"
             >
@@ -134,7 +134,7 @@ export function SolutionsByAudience() {
                 }}
                 onClick={() => handleTabClick(index)}
                 className={cn(
-                  "rounded-full px-3 py-2.5 text-[13px] font-semibold transition-colors sm:px-4 sm:py-2 sm:text-sm",
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:px-4 sm:py-2 sm:text-sm",
                   active === index
                     ? "bg-web-ink text-white"
                     : "border border-web-hairline bg-web-plate text-web-body hover:border-brand-primary/30 hover:text-web-ink"
