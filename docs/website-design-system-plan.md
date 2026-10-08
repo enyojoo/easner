@@ -265,6 +265,8 @@ The previous version restated "stablecoin-native infrastructure". The hero alrea
 
 ## Decisions (made October 8, 2026)
 
+Later the same day, your calls: the audience tabs keep their human photos and scroll-driven switching (sections 2.3 and the persona rows in Phase 3 are superseded); "Why choose Easner" uses small SVG illustrations instead of lead figures, and its ~60% cost pillar became "Money that moves fast"; the footer disclaimer stays centred.
+
 1. **Personal-page screenshots: replace all five** with screens built from the design system (AppHome, AppSend and AppSendReview, AccountCard with CopyField, AppRecipient, AppSecurity). The current screenshots show a $0.07 balance, a ₦10 send and two-factor authentication switched off; on a page asking people to trust Easner with their money, that outweighs the September decision to keep them. The coded screens also stay current as the app changes.
 2. **Homepage hero: the Business dashboard only** (your call, October 8, overriding my phone-overlay recommendation). BizHome in a browser frame; on phones, a legible crop of its main column (balance, actions, money in and out).
 3. **Naming: the website follows `NAMING.md`.** "Easner Personal Banking" for the product, "the Easner app" in running prose, never "Easner Personal". The design-system README's casing example covers product UI, not marketing copy, so no design-system change is needed.

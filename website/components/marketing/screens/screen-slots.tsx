@@ -13,14 +13,12 @@ import { CHECKOUT_SLOTS } from "./slots/checkout"
 import { INVOICING_SLOTS } from "./slots/invoicing"
 import { PAYMENT_LINKS_SLOTS } from "./slots/payment-links"
 import { DEVELOPERS_SLOTS } from "./slots/developers"
-import { HOME_SLOTS } from "./slots/home"
 import { PARTNERS_SLOTS } from "./slots/partners"
 import { PAYROLL_SLOTS } from "./slots/payroll"
 import { PERSONAL_SLOTS } from "./slots/personal"
 import { STABLECOIN_SLOTS } from "./slots/stablecoin"
 
 const SCREEN_SLOTS: Record<string, Canvas> = {
-  ...HOME_SLOTS,
   ...PERSONAL_SLOTS,
   ...BUSINESS_SLOTS,
   ...DEVELOPERS_SLOTS,

@@ -41,8 +41,6 @@ export interface CardItem {
   description: string
   icon?: string
   link?: string
-  /** A figure that leads the card in proof rows ("80+", "~60%"). */
-  stat?: string
 }
 
 export interface PageMetadata {

@@ -2,7 +2,6 @@
 
 import {
   ArrowRightLeft,
-  Banknote,
   Briefcase,
   Code2,
   CreditCard,
@@ -15,6 +14,11 @@ import {
   Smartphone,
   Users2,
 } from "lucide-react"
+import Image, { type StaticImageData } from "next/image"
+import developerPhoto from "@/assets/Developer.jpg"
+import freelancerPhoto from "@/assets/Freelancer.jpg"
+import otcAgentPhoto from "@/assets/otcagent.jpg"
+import smePhoto from "@/assets/Sme.jpg"
 import { cn } from "@/lib/utils"
 import { CorridorCoverageVisual } from "./corridor-coverage-visual"
 import { HomeHeroVisual, ScreenSlot, hasScreenSlot } from "./screens/screen-slots"
@@ -28,11 +32,15 @@ interface VisualSlotProps {
   preload?: boolean
 }
 
+/** People photos for the homepage audience tabs: they keep a human feel beside the product screens elsewhere. */
+const PERSONA_PHOTOS: Record<string, { src: StaticImageData; position: string }> = {
+  "mkt-persona-diaspora": { src: freelancerPhoto, position: "50% 38%" },
+  "mkt-persona-sme": { src: smePhoto, position: "50% 22%" },
+  "mkt-persona-dev": { src: developerPhoto, position: "50% 42%" },
+  "mkt-persona-otc": { src: otcAgentPhoto, position: "50% 35%" },
+}
+
 const iconByAsset = {
-  "mkt-icon-pillar-ux": Smartphone,
-  "mkt-icon-pillar-cost": Banknote,
-  "mkt-icon-pillar-compliance": ShieldCheck,
-  "mkt-icon-pillar-invisible": ArrowRightLeft,
   "mkt-thumb-personal": Smartphone,
   "mkt-thumb-business": Landmark,
   "mkt-thumb-apis": Code2,
@@ -53,8 +61,27 @@ const iconByAsset = {
  * A marketing visual by id. Product visuals are design-system screens (./screens); the corridor map and
  * icon tiles are the only other kinds.
  */
-export function VisualSlot({ assetId, alt, className, aspect = "feature" }: VisualSlotProps) {
+export function VisualSlot({ assetId, alt, className, aspect = "feature", priority = false }: VisualSlotProps) {
   if (assetId === "mkt-hero-home-01") return <HomeHeroVisual alt={alt} />
+
+  const photo = PERSONA_PHOTOS[assetId]
+  if (photo) {
+    return (
+      <div className={cn("relative h-full w-full overflow-hidden bg-web-band", className)}>
+        <Image
+          src={photo.src}
+          alt={alt}
+          fill
+          className="object-cover"
+          style={{ objectPosition: photo.position }}
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          priority={priority}
+          placeholder="blur"
+        />
+      </div>
+    )
+  }
+
   if (hasScreenSlot(assetId)) return <ScreenSlot assetId={assetId} alt={alt} className={className} />
 
   if (assetId === "mkt-map-corridors" || assetId === "mkt-diagram-invisible-rails") {

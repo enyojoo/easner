@@ -44,31 +44,27 @@ export const whyEasnerHeadline = "Why choose Easner"
 export const whyEasnerPillars: CardItem[] = [
   {
     title: "An account in your name",
-    stat: "USD · EUR · GBP",
     description:
       "USD, EUR, and GBP details in your name once verified. Top up by card, Apple Pay, or ACH Direct.",
-    icon: "mkt-icon-pillar-ux",
+    icon: "pillar-account",
   },
   {
     title: "Reach 80+ countries",
-    stat: "80+",
     description:
       "Pay suppliers, contractors, and family across Africa, Latin America, Asia, and Europe.",
-    icon: "mkt-icon-pillar-invisible",
+    icon: "pillar-reach",
   },
   {
     title: "Money that moves fast",
-    stat: "Minutes",
     description:
       "Payouts typically land in minutes to hours, same-day where supported, and you can follow each one in your account.",
-    icon: "mkt-icon-pillar-cost",
+    icon: "pillar-speed",
   },
   {
     title: "Dollars or stablecoins",
-    stat: "USDC · EURC",
     description:
       "Receive USDC and EURC alongside your currency balances, and send to wallets or local accounts.",
-    icon: "mkt-icon-pillar-compliance",
+    icon: "pillar-stablecoin",
   },
 ]
 
@@ -79,7 +75,7 @@ export const solutionsPersonas = [
     headline: "Get paid in dollars. Pay anyone, anywhere.",
     body: "Hold USD and EUR, get paid to account details in your name, and send to bank accounts and mobile money in 80+ countries – all from the Easner app.",
     visualSlot: "mkt-persona-diaspora",
-    altText: "The Easner app home screen with a USD balance, a salary payment received and a transfer processing",
+    altText: "Remote professional using Easner on mobile",
     ctas: [{ label: "Explore Personal Banking", href: "/personal", analyticsLocation: "homepage_persona_diaspora" }] satisfies Cta[],
   },
   {
@@ -88,7 +84,7 @@ export const solutionsPersonas = [
     headline: "Get paid. Pay your people. Keep track.",
     body: "Collect customer payments, pay suppliers and contractors, and give your team the access they need. Run your business finances from one dashboard, whether you work locally or globally.",
     visualSlot: "mkt-persona-sme",
-    altText: "Easner Business accounts showing USD, EUR and GBP balances",
+    altText: "Small business owner managing international payments",
     ctas: [{ label: "Explore Business Banking", href: "/business", analyticsLocation: "homepage_persona_sme" }] satisfies Cta[],
   },
   {
@@ -97,7 +93,7 @@ export const solutionsPersonas = [
     headline: "Cross-border payments under your brand",
     body: "Build a branded payment program with Easner handling the underlying infrastructure, verification flows, and supported payout connections.",
     visualSlot: "mkt-persona-otc",
-    altText: "The Easner app under a partner's brand, beside the brand settings a partner chooses",
+    altText: "Partner operator managing branded cross-border transfers",
     ctas: [{ label: "Explore Partners", href: "/partners", analyticsLocation: "homepage_persona_otc" }] satisfies Cta[],
   },
   {
@@ -106,7 +102,7 @@ export const solutionsPersonas = [
     headline: "Build payments into your product",
     body: "Connect verification, accounts, collections, and international payouts to your platform through Easner APIs and webhooks.",
     visualSlot: "mkt-persona-dev",
-    altText: "The Easner developer Workbench creating a payout through the API",
+    altText: "Developers integrating the Easner API",
     ctas: [{ label: "Explore Developers", href: "/developers", analyticsLocation: "homepage_persona_dev" }] satisfies Cta[],
   },
 ]
