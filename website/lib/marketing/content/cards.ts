@@ -23,7 +23,7 @@ export const cardsContent: ProductPageContent = {
   hero: {
     h1: "Manage spending with Easner cards",
     subhead:
-      "Set spending limits, manage cardholders, and track purchases alongside your account activity. Personal and business cards are rolling out in phases, subject to availability and approval.",
+      "Set spending limits, manage cardholders, and track purchases alongside your account activity – for personal and business spending.",
     visualSlot: "mkt-hero-cards-01",
     altText: "Easner card faces marked Coming soon",
     ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_hero" }],
@@ -98,7 +98,7 @@ export const cardsContent: ProductPageContent = {
     {
       question: "When will Easner cards be available?",
       answer:
-        "Cards are rolling out in phases. They appear in Easner Business and the Easner app once they're available for your account and you're approved.",
+        "Cards appear in Easner Business and the Easner app once they're available for your account and you're approved.",
     },
     {
       question: "Are there personal and business cards?",
