@@ -57,10 +57,10 @@ export const whyEasnerPillars: CardItem[] = [
     icon: "mkt-icon-pillar-invisible",
   },
   {
-    title: "Keep more of each payment",
-    stat: "~60%",
+    title: "Money that moves fast",
+    stat: "Minutes",
     description:
-      "Stablecoin settlement can cut cross-border cost by up to ~60% in supported corridors.",
+      "Payouts typically land in minutes to hours, same-day where supported, and you can follow each one in your account.",
     icon: "mkt-icon-pillar-cost",
   },
   {

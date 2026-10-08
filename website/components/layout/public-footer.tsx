@@ -96,8 +96,8 @@ export function PublicFooter() {
           </nav>
         </div>
         <div className="flex flex-col gap-4 border-t border-web-hairline py-6 sm:py-8">
-          <div className="text-sm text-web-meta">© {new Date().getFullYear()} Easner Group, Inc.</div>
-          <div className="max-w-4xl space-y-3 text-xs leading-relaxed text-web-meta">
+          <div className="text-center text-sm text-web-meta sm:text-left">© {new Date().getFullYear()} Easner Group, Inc.</div>
+          <div className="mx-auto max-w-4xl space-y-3 text-center text-xs leading-relaxed text-web-meta sm:text-left">
             {REGULATORY_FOOTER_PARAGRAPHS.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
