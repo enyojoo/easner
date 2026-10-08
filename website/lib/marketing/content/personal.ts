@@ -95,6 +95,40 @@ export const personalContent: ProductPageContent = {
         "Keep a multi-currency balance as you move between places, and top it up from either side.",
     },
   ],
+  faq: [
+    {
+      question: "How do I open an Easner Personal Banking account?",
+      links: [{ label: "Download the app", href: "/app" }],
+      answer:
+        "Download the Easner app on iPhone or Android, sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.",
+    },
+    {
+      question: "Which currencies can I hold?",
+      answer:
+        "USD and EUR, and GBP where supported for your profile. Each balance gets account details in your name, so you can get paid directly.",
+    },
+    {
+      question: "How do I add money to my account?",
+      answer:
+        "Top up by card, Apple Pay, Google Pay or ACH, or receive a bank transfer to your account details. Stablecoin deposits are also supported where enabled.",
+    },
+    {
+      question: "Where can I send money?",
+      links: [{ label: "Check eligibility and restrictions", href: "/compliance" }],
+      answer:
+        "To bank accounts and mobile money in 80+ countries, and to other Easner users by EASETAG. You see the fee, the rate and what your recipient gets before you confirm.",
+    },
+    {
+      question: "How long does a transfer take?",
+      answer:
+        "Typically minutes to hours, same-day where supported. Every transfer shows its status in the app until it's completed.",
+    },
+    {
+      question: "How is my account protected?",
+      answer:
+        "An authenticator, your PIN and Face ID protect every sign-in and every new recipient, and a first payment to someone new can be held for your review. Easner verifies every customer and screens transactions; banking services are provided by licensed partners.",
+    },
+  ],
   ctaBand: {
     headline: "Wherever life takes you",
     ctas: [{ ...downloadCta[0], analyticsLocation: "personal_cta_band" }],

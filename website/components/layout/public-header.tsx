@@ -2,10 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { OpenAccountButton, OpenAccountDialog } from "@/components/marketing/open-account-dialog"
 import { BrandLogo } from "@easner/shared"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { captureNavClick } from "@/lib/marketing/analytics"
+import { cn } from "@/lib/utils"
 import { NAV_LEADING_LINKS, NAV_LINKS, NAV_SECTIONS, NAV_TRAILING_LINKS, type NavIconName } from "@/lib/nav-config"
 
 export function PublicHeader() {
@@ -60,7 +62,7 @@ export function PublicHeader() {
             <BrandLogo size="sm" className="h-7" />
           </Link>
 
-          {/* Desktop nav: About → Products → Contact (the logo links home) */}
+          {/* Desktop nav: Home, About → Personal, Business, Build → Contact */}
           <nav className="hidden md:flex items-center gap-1">
             {NAV_LEADING_LINKS.map((item) => (
               <Link
@@ -80,39 +82,49 @@ export function PublicHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="center"
-                  sideOffset={4}
+                  sideOffset={8}
                   onCloseAutoFocus={(e) => e.preventDefault()}
-                  className="w-[min(52rem,94vw)] rounded-[16px] border border-web-hairline bg-web-canvas p-3 shadow-lift"
+                  className={cn(
+                    "rounded-[20px] border border-web-hairline bg-web-canvas p-2 shadow-lift",
+                    section.items.length > 3 ? "w-[min(46rem,94vw)]" : "w-[min(36rem,94vw)]",
+                  )}
                 >
-                  <div className="grid grid-cols-[1fr_1.15fr_1fr] gap-2">
-                    {section.groups.map((group) => (
-                      <div key={group.label}>
-                        <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta">
-                          {group.label}
-                        </div>
-                        {group.items.map((item) => {
-                          return (
-                            <DropdownMenuItem key={item.href} asChild>
-                              <Link
-                                href={item.href}
-                                onClick={() => trackNavClick(item.label, item.href)}
-                                className="flex cursor-pointer items-start gap-3 rounded-[12px] px-3 py-3 text-web-ink transition-colors hover:bg-web-plate hover:text-brand-primary"
-                              >
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-web-plate text-brand-primary">
-                                  <NavIcon name={item.icon} className="h-4 w-4" />
-                                </div>
-                                <span>
-                                  <span className="block font-semibold">{item.label}</span>
-                                  {item.description && (
-                                    <span className="mt-1 block text-xs leading-5 text-web-meta">{item.description}</span>
-                                  )}
-                                </span>
-                              </Link>
-                            </DropdownMenuItem>
-                          )
-                        })}
+                  <div className="grid grid-cols-[13.5rem_1fr] gap-2">
+                    <div className="flex flex-col justify-between rounded-[14px] bg-web-band p-5">
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta">{section.label}</div>
+                        <div className="mt-3 text-base font-semibold leading-6 text-web-ink">{section.intro.title}</div>
+                        <p className="mt-1.5 text-sm leading-[22px] text-web-body">{section.intro.body}</p>
                       </div>
-                    ))}
+                      <DropdownMenuItem
+                        asChild
+                        className="group mt-5 w-fit gap-1.5 rounded-[8px] px-0 py-0 text-sm font-semibold text-brand-primary hover:bg-transparent focus:bg-transparent"
+                      >
+                        <Link href={section.intro.cta.href} onClick={() => trackNavClick(section.intro.cta.label, section.intro.cta.href)}>
+                          {section.intro.cta.label}
+                          <ArrowRight className="size-4 transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
+                        </Link>
+                      </DropdownMenuItem>
+                    </div>
+                    <div className={cn("grid content-start gap-1 py-1", section.items.length > 3 && "grid-cols-2")}>
+                      {section.items.map((item) => (
+                        <DropdownMenuItem key={item.href} asChild>
+                          <Link
+                            href={item.href}
+                            onClick={() => trackNavClick(item.label, item.href)}
+                            className="group flex cursor-pointer items-start gap-3 rounded-[12px] px-3 py-3 text-web-ink transition-colors hover:bg-web-plate"
+                          >
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-[12px] border border-web-hairline bg-web-canvas text-brand-primary transition-colors group-hover:border-brand-primary/30">
+                              <NavIcon name={item.icon} className="h-4 w-4" />
+                            </div>
+                            <span>
+                              <span className="block text-sm font-semibold group-hover:text-brand-primary">{item.label}</span>
+                              {item.description && <span className="mt-0.5 block text-xs leading-5 text-web-meta">{item.description}</span>}
+                            </span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -194,37 +206,38 @@ export function PublicHeader() {
                         />
                       </button>
                       {isExpanded && (
-                        <div className="pl-3 pb-2 space-y-0.5">
-                          {section.groups.map((group) => (
-                            <div key={group.label}>
-                              <div className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta">
-                                {group.label}
+                        <div className="space-y-0.5 pb-3 pl-3">
+                          <p className="px-3 pb-2 text-xs leading-5 text-web-meta">{section.intro.body}</p>
+                          {section.items.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => {
+                                trackNavClick(item.label, item.href)
+                                setMobileMenuOpen(false)
+                              }}
+                              className="flex items-start gap-3 rounded-[8px] px-3 py-2.5 text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
+                            >
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-web-plate text-brand-primary">
+                                <NavIcon name={item.icon} className="h-4 w-4" />
                               </div>
-                              {group.items.map((item) => {
-                                return (
-                                  <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => {
-                                      trackNavClick(item.label, item.href)
-                                      setMobileMenuOpen(false)
-                                    }}
-                                    className="flex items-start gap-3 rounded-[8px] px-3 py-2.5 text-web-nav transition-colors hover:bg-web-plate hover:text-brand-primary"
-                                  >
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-web-plate text-brand-primary">
-                                      <NavIcon name={item.icon} className="h-4 w-4" />
-                                    </div>
-                                    <span>
-                                      <span className="block font-semibold">{item.label}</span>
-                                      {item.description && (
-                                        <span className="mt-0.5 block text-xs leading-5 text-web-meta">{item.description}</span>
-                                      )}
-                                    </span>
-                                  </Link>
-                                )
-                              })}
-                            </div>
+                              <span>
+                                <span className="block font-semibold">{item.label}</span>
+                                {item.description && <span className="mt-0.5 block text-xs leading-5 text-web-meta">{item.description}</span>}
+                              </span>
+                            </Link>
                           ))}
+                          <Link
+                            href={section.intro.cta.href}
+                            onClick={() => {
+                              trackNavClick(section.intro.cta.label, section.intro.cta.href)
+                              setMobileMenuOpen(false)
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-brand-primary"
+                          >
+                            {section.intro.cta.label}
+                            <ArrowRight className="size-4" aria-hidden="true" />
+                          </Link>
                         </div>
                       )}
                     </div>

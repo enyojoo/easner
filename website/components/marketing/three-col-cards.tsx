@@ -92,11 +92,11 @@ export function ThreeColCards({
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="flex items-start justify-between gap-3 text-base font-semibold leading-snug text-web-ink sm:text-lg">
+                  <CardTitle className="text-base font-semibold leading-snug text-web-ink sm:text-lg">
                     {item.title}
                     {item.link && (
                       <ArrowRight
-                        className="mt-1 size-4 shrink-0 text-brand-primary transition-transform duration-150 group-hover:translate-x-0.5"
+                        className="ml-1.5 inline-block size-4 -translate-y-px align-middle text-brand-primary transition-transform duration-150 group-hover:translate-x-1"
                         aria-hidden="true"
                       />
                     )}

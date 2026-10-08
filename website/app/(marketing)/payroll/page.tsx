@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { payrollContent } from "@/lib/marketing/content/payroll"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: payrollContent.metadata, path: "/payroll" })
 
@@ -11,6 +11,7 @@ export default function PayrollPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
+          ...(payrollContent.faq ? [faqPageJsonLd(payrollContent.faq)] : []),
           financialServiceJsonLd({
             name: "Easner Payroll",
             description: payrollContent.metadata.description,

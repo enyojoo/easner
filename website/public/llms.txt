@@ -51,6 +51,82 @@ Easner settles cross-border payments on stablecoin rails, primarily USDC and EUR
 - **Do I need to understand crypto to use Easner?** No. Customers see balances, payments, and recipients, the same as any banking app. There are no wallets or networks to manage. Stablecoin settlement runs behind the scenes.
 - **What fees apply?** Applicable fees and exchange rates are shown before transfer confirmation. Timing depends on the payment method, destination, banking hours, and verification or partner checks.
 
+### Personal Banking
+
+- **How do I open an Easner Personal Banking account?** Download the Easner app on iPhone or Android, sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.
+- **Which currencies can I hold?** USD and EUR, and GBP where supported for your profile. Each balance gets account details in your name, so you can get paid directly.
+- **How do I add money to my account?** Top up by card, Apple Pay, Google Pay or ACH, or receive a bank transfer to your account details. Stablecoin deposits are also supported where enabled.
+- **Where can I send money?** To bank accounts and mobile money in 80+ countries, and to other Easner users by EASETAG. You see the fee, the rate and what your recipient gets before you confirm.
+- **How long does a transfer take?** Typically minutes to hours, same-day where supported. Every transfer shows its status in the app until it's completed.
+- **How is my account protected?** An authenticator, your PIN and Face ID protect every sign-in and every new recipient, and a first payment to someone new can be held for your review. Easner verifies every customer and screens transactions; banking services are provided by licensed partners.
+
+### Business Banking
+
+- **Who can open an Easner Business account?** Startups, small businesses and established companies from most countries. A small number of jurisdictions are excluded for compliance and sanctions reasons.
+- **What do I need to verify my business?** Your business registration details, the people who own and control it, and identity verification for each owner. You can track every step from your dashboard.
+- **Which currencies can my business hold?** USD and EUR account details in your business's name, plus GBP and other currencies where supported for your organisation. Stablecoin deposits land in the same place where enabled.
+- **How do I pay suppliers and contractors abroad?** Send from your balance to bank accounts, mobile money or stablecoin wallets in 80+ countries. The rate and fees are shown before you confirm, and each payment carries its own status.
+- **Can my team use the account?** Yes. Invite teammates and give each one the access they need, with payment history and reports for the whole team.
+- **How do customers pay my business?** Send an invoice, share a payment link, embed Checkout on your website, or collect in person with Terminal and QR Pay. Every payment lands in the same Easner Business ledger.
+
+### Checkout
+
+- **Can customers pay with stablecoins?** Yes, where enabled. A stablecoin option sits beside card and bank, and the payment lands in Easner Business like any other.
+- **Can I charge subscriptions?** Yes. Set a billing interval and an optional free trial; customers see when they'll be charged before they pay.
+
+### Payment Links
+
+- **How can customers pay a link?** By card, Apple Pay or Google Pay, by US bank account, or with stablecoins where enabled.
+- **Can I limit or close a link?** Yes. Cap the number of payments, let customers choose a quantity, or close the link whenever you're done.
+
+### Invoicing
+
+- **How can customers pay an invoice?** By card, Apple Pay or Google Pay, by bank transfer, or with stablecoins where enabled – all from the same hosted invoice page.
+- **How are bank transfers matched to invoices?** Each invoice has its own reference. When a customer pays with it, the payment is matched to the invoice automatically.
+- **Which currencies can I invoice in?** USD and EUR, and other currencies where supported for your business.
+- **Can customers download the invoice?** Yes. Every hosted invoice page offers a PDF download, so customers can keep it for their records.
+- **Where do invoice payments go?** Into your Easner Business balance, reconciled alongside your other payments in one ledger.
+
+### Payroll
+
+- **Who can I pay with Easner Payroll?** Employees and contractors in 80+ countries, paid from your Easner Business balance.
+- **How do people choose how they get paid?** Each person connects to your payroll in the Easner app and chooses where they're paid – an EASETAG, a bank account or mobile money – so you don't collect payment details by hand.
+- **How do approvals work?** Each payday is reviewed and approved before any money moves. Maker-checker approvals mean the person who drafts a run isn't the only one who signs it off.
+- **Do people get pay stubs?** Yes. A pay stub is generated for every payment, with pay items and net pay, and people can download it from the Easner app.
+- **Can I run off-cycle payments and bonuses?** Yes. Add an off-cycle payment, such as a bonus, alongside your regular paydays, with the same approvals and records.
+- **Where do payroll payments show up for finance?** Payroll settles alongside your other payouts, invoices and card activity in Easner Business, so finance reconciles in one place.
+
+### Stablecoin
+
+- **Can I accept stablecoins in person?** Yes. Terminal and QR Pay let customers pay at your counter with stablecoins, where enabled, and every payment posts to your Easner Business ledger.
+
+### Cards
+
+- **When will Easner cards be available?** Cards are rolling out in phases. They appear in Easner Business and the Easner app once they're available for your account and you're approved.
+- **Are there personal and business cards?** Yes. Corporate cards are issued from Easner Business; personal cards come with Easner Personal Banking in the Easner app, when available.
+- **Can I get virtual and physical cards?** Both. Virtual cards are ready to use online, and physical cards are shipped to the cardholder, when available.
+- **What spending controls are there?** Monthly limits, merchant rules and team policies for each cardholder, plus the option to freeze or retire a card from the dashboard.
+- **Where do card purchases show up?** Alongside your payouts, collections and account activity in Easner Business, so finance reconciles everything in one place.
+- **Who issues Easner cards?** Card products are issued by a third-party issuer and are subject to approval. Easner is a financial technology company, not a bank.
+
+### Developers
+
+- **How do I get access to the Easner API?** Talk to our team. API credentials and sandbox access are provided during commercial onboarding.
+- **What can I build with the API?** Customer verification, multi-currency accounts and pay-in details, stablecoin deposit addresses, payout quotes and cross-border payouts, all with webhooks for every status change.
+- **Is there a sandbox?** Yes. Test keys and a sandbox let you run verification, pay-in, payout and webhook flows before you go live.
+- **How are webhooks secured?** Every webhook payload is signed, so your backend can verify it came from Easner before acting on it.
+- **Do my customers need a crypto wallet?** No. Settlement runs on stablecoin rails behind the API; your customers see balances and payments in regular currencies.
+- **How is the API priced?** Pricing depends on your use case and volumes. Contact our team for commercial terms.
+
+### Easner for Partners
+
+- **What is Easner for Partners?** A commercial partner programme with two models: the Agency Model, a full branded deployment on Easner infrastructure, and the Developer Model, API access without a full branded deployment.
+- **What does Easner run, and what do I run?** Easner runs the infrastructure, verification, screening, payout connections and ongoing operational support. You run the brand and the relationship with your customers.
+- **Can the product carry my own brand?** Yes. Your customers use a product under your name, logo and colour, built on Easner infrastructure.
+- **Who is the programme for?** Money transfer agents, OTC agents, and faith and nonprofit networks moving money across borders, among others.
+- **How do I get started?** Talk to our team about your use case and corridors, complete business verification with Easner, configure your branded product, then go live with ongoing support.
+- **How is the partner programme priced?** Commercial terms depend on your model, corridors and volumes. Contact our team to discuss them.
+
 ## Company
 
 - [Home](https://www.easner.com/): Stablecoin-native banking for individuals and businesses.

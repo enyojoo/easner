@@ -78,7 +78,7 @@ export default function HomePage() {
       <ProductGrid />
       <CorridorStory />
       <ComplianceStrip />
-      <FaqSection items={homeFaq} wideHeading />
+      <FaqSection items={homeFaq} />
       <CtaBand content={homeCtaBand} />
     </>
   )

@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { partnersContent } from "@/lib/marketing/content/partners"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: partnersContent.metadata,
@@ -15,6 +15,7 @@ export default function PartnersPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
+          ...(partnersContent.faq ? [faqPageJsonLd(partnersContent.faq)] : []),
           financialServiceJsonLd({
             name: "Easner for Partners",
             description: partnersContent.metadata.description,

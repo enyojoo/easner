@@ -14,8 +14,8 @@ const money = (value: number) => formatMoney(value, "USD", { cents: "always" })
 
 const METHODS = [
   { label: "Card", Icon: CreditCard },
-  { label: "Bank transfer", Icon: Landmark },
-  { label: "USDC", Icon: Coins },
+  { label: "Bank", Icon: Landmark },
+  { label: "Stablecoin", Icon: Coins },
 ]
 
 /** "Left to pay" panel beside the invoice, on the chosen method. */

@@ -88,7 +88,7 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Checkout",
     description:
-      "Card, bank and USDC payments on your own site, with Easner as merchant of record.",
+      "Card, bank and stablecoin payments on your own site, with Easner as merchant of record.",
     link: "/checkout",
     icon: "mkt-thumb-checkout",
   },
@@ -112,7 +112,7 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Stablecoin Payments",
     description:
-      "Send and receive USDC and EURC, where enabled, alongside your currency balances.",
+      "Send and receive stablecoins such as USDC and EURC, where enabled, alongside your currency balances.",
     link: "/stablecoin",
     icon: "mkt-thumb-stablecoin",
   },

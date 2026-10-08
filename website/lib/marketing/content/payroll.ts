@@ -85,6 +85,38 @@ export const payrollContent: ProductPageContent = {
         "Add payroll to the accounts and payouts you already run in Easner Business, with one ledger for finance.",
     },
   ],
+  faq: [
+    {
+      question: "Who can I pay with Easner Payroll?",
+      answer:
+        "Employees and contractors in 80+ countries, paid from your Easner Business balance.",
+    },
+    {
+      question: "How do people choose how they get paid?",
+      answer:
+        "Each person connects to your payroll in the Easner app and chooses where they're paid – an EASETAG, a bank account or mobile money – so you don't collect payment details by hand.",
+    },
+    {
+      question: "How do approvals work?",
+      answer:
+        "Each payday is reviewed and approved before any money moves. Maker-checker approvals mean the person who drafts a run isn't the only one who signs it off.",
+    },
+    {
+      question: "Do people get pay stubs?",
+      answer:
+        "Yes. A pay stub is generated for every payment, with pay items and net pay, and people can download it from the Easner app.",
+    },
+    {
+      question: "Can I run off-cycle payments and bonuses?",
+      answer:
+        "Yes. Add an off-cycle payment, such as a bonus, alongside your regular paydays, with the same approvals and records.",
+    },
+    {
+      question: "Where do payroll payments show up for finance?",
+      answer:
+        "Payroll settles alongside your other payouts, invoices and card activity in Easner Business, so finance reconciles in one place.",
+    },
+  ],
   ctaBand: {
     headline: "Add payroll to your Easner Business account",
     subhead: "Approvals, pay stubs, and reconciliation for cross-border teams.",

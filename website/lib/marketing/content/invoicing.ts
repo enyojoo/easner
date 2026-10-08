@@ -122,9 +122,35 @@ export const invoicingContent: ProductPageContent = {
       answer:
         "Invoicing is for itemized bills to a named customer, with line items and payer records. Easner Payment Links is a no-code shareable page for quick one-time or recurring payments – no invoice needed. Easner Checkout is for embedding payments directly on your own website. All three settle in the same Easner Business ledger.",
     },
+    {
+      question: "How can customers pay an invoice?",
+      answer:
+        "By card, Apple Pay or Google Pay, by bank transfer, or with stablecoins where enabled – all from the same hosted invoice page.",
+    },
+    {
+      question: "How are bank transfers matched to invoices?",
+      answer:
+        "Each invoice has its own reference. When a customer pays with it, the payment is matched to the invoice automatically.",
+    },
+    {
+      question: "Which currencies can I invoice in?",
+      answer:
+        "USD and EUR, and other currencies where supported for your business.",
+    },
+    {
+      question: "Can customers download the invoice?",
+      answer:
+        "Yes. Every hosted invoice page offers a PDF download, so customers can keep it for their records.",
+    },
+    {
+      question: "Where do invoice payments go?",
+      links: [{ label: "Business Banking", href: "/business" }],
+      answer:
+        "Into your Easner Business balance, reconciled alongside your other payments in one ledger.",
+    },
   ],
   ctaBand: {
-    headline: "Invoice from Easner Business today",
+    headline: "Invoice from Easner today",
     subhead: "One invoice flow for online, bank, and stablecoin pay-in, with status tracking and reconciliation.",
     ctas: [{ label: "Start invoicing", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "invoicing_cta_band" }],
   },

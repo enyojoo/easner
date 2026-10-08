@@ -6,15 +6,17 @@ import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
 import { MarketingLink } from "@/components/marketing/marketing-link"
 import { trackLinkClick } from "@/lib/marketing/analytics"
 import { REGULATORY_FOOTER_PARAGRAPHS } from "@/lib/marketing/shared-content"
-import { NAV_SECTIONS, type NavGroup } from "@/lib/nav-config"
+import { NAV_SECTIONS, type NavLink } from "@/lib/nav-config"
 
-/** Sitemap columns: the product groups from the header menu, then the company and legal pages. */
-const FOOTER_COLUMNS: NavGroup[] = [
-  ...NAV_SECTIONS[0].groups.map((group) =>
-    group.label === "Personal"
-      ? { ...group, items: [...group.items, { label: "Download the app", href: "/app", icon: "wallet" as const }] }
-      : group,
-  ),
+/** Sitemap columns: the Personal, Business and Build menus from the header, then the company and legal pages. */
+const FOOTER_COLUMNS: { label: string; items: NavLink[] }[] = [
+  ...NAV_SECTIONS.map((section) => ({
+    label: section.label,
+    items:
+      section.label === "Personal"
+        ? [...section.items, { label: "Download the app", href: "/app", icon: "wallet" as const }]
+        : section.items,
+  })),
   {
     label: "Company",
     items: [

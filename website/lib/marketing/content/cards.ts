@@ -20,7 +20,6 @@ export const cardsContent: ProductPageContent = {
     h1: "Manage spending with Easner cards",
     subhead:
       "Set spending limits, manage cardholders, and track purchases alongside your account activity. Personal and business cards are rolling out in phases, subject to availability and approval.",
-    badge: "Rolling out in phases",
     visualSlot: "mkt-hero-cards-01",
     altText: "Easner card faces marked Coming soon",
     ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_hero" }],
@@ -91,8 +90,39 @@ export const cardsContent: ProductPageContent = {
         "Cover supplier deposits, logistics, and trade expenses from the same platform you use for international payouts.",
     },
   ],
-  statusBanner:
-    "Cards are rolling out in phases – available on Easner Business and Easner Mobile when your account is approved.",
+  faq: [
+    {
+      question: "When will Easner cards be available?",
+      answer:
+        "Cards are rolling out in phases. They appear in Easner Business and the Easner app once they're available for your account and you're approved.",
+    },
+    {
+      question: "Are there personal and business cards?",
+      answer:
+        "Yes. Corporate cards are issued from Easner Business; personal cards come with Easner Personal Banking in the Easner app, when available.",
+    },
+    {
+      question: "Can I get virtual and physical cards?",
+      answer:
+        "Both. Virtual cards are ready to use online, and physical cards are shipped to the cardholder, when available.",
+    },
+    {
+      question: "What spending controls are there?",
+      answer:
+        "Monthly limits, merchant rules and team policies for each cardholder, plus the option to freeze or retire a card from the dashboard.",
+    },
+    {
+      question: "Where do card purchases show up?",
+      answer:
+        "Alongside your payouts, collections and account activity in Easner Business, so finance reconciles everything in one place.",
+    },
+    {
+      question: "Who issues Easner cards?",
+      links: [{ label: "Read the Terms of Service", href: "/terms" }],
+      answer:
+        "Card products are issued by a third-party issuer and are subject to approval. Easner is a financial technology company, not a bank.",
+    },
+  ],
   ctaBand: {
     headline: "Add cards to your Easner account",
     subhead: "Corporate cards on Easner Business. Personal cards on Easner Mobile, when available.",

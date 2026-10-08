@@ -1,5 +1,5 @@
 import type { ComponentType } from "react"
-import { ArrowRight, Globe2 } from "lucide-react"
+import { Globe2 } from "lucide-react"
 import {
   IconChina,
   IconEurope,
@@ -11,8 +11,6 @@ import {
   IconUnitedStates,
   type IconProps,
 } from "nucleo-flags"
-import { CurrencyFlag } from "@/components/ds/currency-flag"
-import { formatMoney, formatRate } from "@/lib/marketing/format-money"
 import { EASNER_CORRIDOR_VISUAL_ARIA_LABEL } from "@/lib/marketing/positioning"
 import { cn } from "@/lib/utils"
 
@@ -36,8 +34,7 @@ interface CorridorCoverageVisualProps {
 }
 
 /**
- * Where money goes: neutral market tiles, the 80+ figure, and one example payout in the rate format
- * ("$1 = ₦1,359"). The rate is illustrative and labelled as such.
+ * Where money goes: the 80+ figure above neutral market tiles.
  */
 export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: CorridorCoverageVisualProps) {
   return (
@@ -73,15 +70,6 @@ export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: C
               </span>
             </div>
           ))}
-        </div>
-        <div className="flex items-center gap-3 rounded-[16px] border border-web-hairline bg-web-canvas px-4 py-3 text-sm">
-          <CurrencyFlag code="US" size={24} />
-          <ArrowRight className="size-4 text-web-meta" aria-hidden="true" />
-          <CurrencyFlag code="NG" size={24} />
-          <span className="flex-1 font-medium text-web-ink">
-            {formatMoney(450, "USD")} → {formatMoney(611550, "NGN")}
-          </span>
-          <span className="text-web-meta">{formatRate("USD", "NGN", 1359)} · Example</span>
         </div>
       </div>
     </div>

@@ -24,9 +24,9 @@ export const checkoutContent: ProductPageContent = {
   hero: {
     h1: "Accept payments on your website",
     subhead:
-      "Take card, bank and USDC payments on your site, one-time or by subscription, with Easner as merchant of record. Every payment lands in Easner Business.",
+      "Take card, bank and stablecoin payments on your site, one-time or by subscription, with Easner as merchant of record. Every payment lands in Easner Business.",
     visualSlot: "mkt-hero-checkout-01",
-    altText: "An Easner hosted checkout page with Apple Pay, card, bank and USDC options beside the order summary",
+    altText: "An Easner hosted checkout page with Apple Pay, card, bank and stablecoin options beside the order summary",
     ctas: [
       { label: "Get started", href: BUSINESS_SIGNUP_URL, external: true, analyticsLocation: "checkout_hero" },
       { label: "See how it works", href: "#integration", analyticsLocation: "checkout_hero_integration" },
@@ -110,6 +110,16 @@ export const checkoutContent: ProductPageContent = {
       question: "How do payouts work?",
       answer:
         "Checkout and subscription payments settle into your Easner Business account and reconcile alongside your other activity in one ledger.",
+    },
+    {
+      question: "Can customers pay with stablecoins?",
+      answer:
+        "Yes, where enabled. A stablecoin option sits beside card and bank, and the payment lands in Easner Business like any other.",
+    },
+    {
+      question: "Can I charge subscriptions?",
+      answer:
+        "Yes. Set a billing interval and an optional free trial; customers see when they'll be charged before they pay.",
     },
   ],
   ctaBand: {

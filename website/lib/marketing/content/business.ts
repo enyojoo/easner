@@ -111,6 +111,40 @@ export const businessContent: ProductPageContent = {
     { label: "Sell on your website", href: "/checkout" },
     { label: "Get paid with a link", href: "/payment-links" },
   ],
+  faq: [
+    {
+      question: "Who can open an Easner Business account?",
+      links: [{ label: "Verification requirements", href: "/compliance" }],
+      answer:
+        "Startups, small businesses and established companies from most countries. A small number of jurisdictions are excluded for compliance and sanctions reasons.",
+    },
+    {
+      question: "What do I need to verify my business?",
+      answer:
+        "Your business registration details, the people who own and control it, and identity verification for each owner. You can track every step from your dashboard.",
+    },
+    {
+      question: "Which currencies can my business hold?",
+      answer:
+        "USD and EUR account details in your business's name, plus GBP and other currencies where supported for your organisation. Stablecoin deposits land in the same place where enabled.",
+    },
+    {
+      question: "How do I pay suppliers and contractors abroad?",
+      answer:
+        "Send from your balance to bank accounts, mobile money or stablecoin wallets in 80+ countries. The rate and fees are shown before you confirm, and each payment carries its own status.",
+    },
+    {
+      question: "Can my team use the account?",
+      answer:
+        "Yes. Invite teammates and give each one the access they need, with payment history and reports for the whole team.",
+    },
+    {
+      question: "How do customers pay my business?",
+      links: [{ label: "Invoicing", href: "/invoicing" }, { label: "Payment Links", href: "/payment-links" }, { label: "Checkout", href: "/checkout" }],
+      answer:
+        "Send an invoice, share a payment link, embed Checkout on your website, or collect in person with Terminal and QR Pay. Every payment lands in the same Easner Business ledger.",
+    },
+  ],
   ctaBand: {
     headline: "Open your Easner Business account",
     subhead: "Accounts, collections, payouts and team controls – set up in one place.",

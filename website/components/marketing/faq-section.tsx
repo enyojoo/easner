@@ -10,10 +10,9 @@ import { Headline } from "@/components/ds/headline"
 
 interface FaqSectionProps {
   items: FaqItem[]
-  wideHeading?: boolean
 }
 
-export function FaqSection({ items, wideHeading = false }: FaqSectionProps) {
+export function FaqSection({ items }: FaqSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const id = useId()
 
@@ -21,8 +20,8 @@ export function FaqSection({ items, wideHeading = false }: FaqSectionProps) {
 
   return (
     <section className="py-16 md:py-24 bg-white">
-      <div className={cn("mx-auto px-4 sm:px-6 lg:px-8", wideHeading ? "max-w-7xl" : "max-w-4xl")}>
-        <Headline level="section" className="mb-12 text-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Headline level="section" className="mb-12 whitespace-nowrap text-center text-[13px] min-[360px]:text-[15px] sm:text-2xl">
           Frequently asked questions
         </Headline>
       </div>

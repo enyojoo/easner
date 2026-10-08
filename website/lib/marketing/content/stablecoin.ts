@@ -122,7 +122,12 @@ export const stablecoinContent: ProductPageContent = {
     {
       question: "Which stablecoins does Easner support?",
       answer:
-        "USDC and EURC on supported networks. Deposit addresses and network details are shown in your Easner Business account before you send or receive.",
+        "USDC, USDT and EURC on supported networks, where enabled. Deposit addresses and network details are shown in your Easner Business account before you send or receive.",
+    },
+    {
+      question: "Can I accept stablecoins in person?",
+      answer:
+        "Yes. Terminal and QR Pay let customers pay at your counter with stablecoins, where enabled, and every payment posts to your Easner Business ledger.",
     },
   ],
   ctaBand: {

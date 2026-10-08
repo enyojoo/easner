@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: personalContent.metadata,
@@ -15,6 +15,7 @@ export default function PersonalPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([
+          ...(personalContent.faq ? [faqPageJsonLd(personalContent.faq)] : []),
           financialServiceJsonLd({
             name: "Easner Personal Banking",
             description: personalContent.metadata.description,

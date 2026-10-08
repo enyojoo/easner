@@ -133,6 +133,40 @@ export const developersContent: ProductPageContent = {
         "Ship accounts, verification, and cross-border pay-in and payout inside your product – compliance and webhooks built in.",
     },
   ],
+  faq: [
+    {
+      question: "How do I get access to the Easner API?",
+      links: [{ label: "Talk to our team", href: "/contact" }],
+      answer:
+        "Talk to our team. API credentials and sandbox access are provided during commercial onboarding.",
+    },
+    {
+      question: "What can I build with the API?",
+      answer:
+        "Customer verification, multi-currency accounts and pay-in details, stablecoin deposit addresses, payout quotes and cross-border payouts, all with webhooks for every status change.",
+    },
+    {
+      question: "Is there a sandbox?",
+      answer:
+        "Yes. Test keys and a sandbox let you run verification, pay-in, payout and webhook flows before you go live.",
+    },
+    {
+      question: "How are webhooks secured?",
+      answer:
+        "Every webhook payload is signed, so your backend can verify it came from Easner before acting on it.",
+    },
+    {
+      question: "Do my customers need a crypto wallet?",
+      answer:
+        "No. Settlement runs on stablecoin rails behind the API; your customers see balances and payments in regular currencies.",
+    },
+    {
+      question: "How is the API priced?",
+      links: [{ label: "Contact sales", href: "/contact" }],
+      answer:
+        "Pricing depends on your use case and volumes. Contact our team for commercial terms.",
+    },
+  ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",
     subhead: "Talk to Easner about the Developer Model and embedded global money movement.",

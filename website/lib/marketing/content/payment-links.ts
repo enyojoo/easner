@@ -87,6 +87,10 @@ export const paymentLinksContent: ProductPageContent = {
       title: "Community and mission collections",
       description: "Collect donations and mission support with a link you can share anywhere.",
     },
+    {
+      title: "Events and classes",
+      description: "Sell seats for a class, workshop or event, cap the number of payments, and close the link when you're full.",
+    },
   ],
   faq: [
     {
@@ -108,6 +112,16 @@ export const paymentLinksContent: ProductPageContent = {
       question: "How do payouts work?",
       answer:
         "Payments settle into your Easner Business account and reconcile alongside your other activity in one ledger.",
+    },
+    {
+      question: "How can customers pay a link?",
+      answer:
+        "By card, Apple Pay or Google Pay, by US bank account, or with stablecoins where enabled.",
+    },
+    {
+      question: "Can I limit or close a link?",
+      answer:
+        "Yes. Cap the number of payments, let customers choose a quantity, or close the link whenever you're done.",
     },
   ],
   ctaBand: {

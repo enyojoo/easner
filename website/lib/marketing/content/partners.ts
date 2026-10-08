@@ -121,6 +121,41 @@ export const partnersContent: ProductPageContent = {
         "Launch branded diaspora giving and mission payout programs under your organization's name – for churches, nonprofits and more.",
     },
   ],
+  faq: [
+    {
+      question: "What is Easner for Partners?",
+      links: [{ label: "Developer Model", href: "/developers" }],
+      answer:
+        "A commercial partner programme with two models: the Agency Model, a full branded deployment on Easner infrastructure, and the Developer Model, API access without a full branded deployment.",
+    },
+    {
+      question: "What does Easner run, and what do I run?",
+      answer:
+        "Easner runs the infrastructure, verification, screening, payout connections and ongoing operational support. You run the brand and the relationship with your customers.",
+    },
+    {
+      question: "Can the product carry my own brand?",
+      answer:
+        "Yes. Your customers use a product under your name, logo and colour, built on Easner infrastructure.",
+    },
+    {
+      question: "Who is the programme for?",
+      answer:
+        "Money transfer agents, OTC agents, and faith and nonprofit networks moving money across borders, among others.",
+    },
+    {
+      question: "How do I get started?",
+      links: [{ label: "Talk to our team", href: "/contact" }],
+      answer:
+        "Talk to our team about your use case and corridors, complete business verification with Easner, configure your branded product, then go live with ongoing support.",
+    },
+    {
+      question: "How is the partner programme priced?",
+      links: [{ label: "Contact us", href: "/contact" }],
+      answer:
+        "Commercial terms depend on your model, corridors and volumes. Contact our team to discuss them.",
+    },
+  ],
   ctaBand: {
     headline: "Ready to launch under your brand?",
     subhead:

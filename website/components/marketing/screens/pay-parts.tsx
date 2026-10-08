@@ -52,7 +52,7 @@ export function Segmented({ options, active }: { options: { label: string; Icon:
         <span
           key={label}
           className={cn(
-            "flex h-9 flex-1 items-center justify-center gap-2 rounded-[12px] text-sm font-medium",
+            "flex h-9 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-[12px] text-sm font-medium",
             index === active ? "bg-card shadow-soft" : "text-muted-foreground",
           )}
         >
@@ -64,7 +64,7 @@ export function Segmented({ options, active }: { options: { label: string; Icon:
   )
 }
 
-/** The pay panel: wallet button, Card or bank / USDC, the card form and the merchant-coloured Pay button. */
+/** The pay panel: wallet button, Card or bank / Stablecoin, the card form and the merchant-coloured Pay button. */
 export function PayPanel({
   merchant,
   amount,
@@ -103,7 +103,7 @@ export function PayPanel({
           active={0}
           options={[
             { label: "Card or bank", Icon: CreditCard },
-            { label: "USDC", Icon: Coins },
+            { label: "Stablecoin", Icon: Coins },
           ]}
         />
       )}
@@ -218,7 +218,7 @@ export function OrderSummary({
   )
 }
 
-/** USDC deposit: QR, the exact amount and network, the wallet address and the waiting state. */
+/** Stablecoin deposit (USDC here): QR, the exact amount and network, the wallet address and the waiting state. */
 export function UsdcDeposit({
   amount,
   address = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",

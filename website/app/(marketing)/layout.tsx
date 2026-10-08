@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { PublicHeader } from "@/components/layout/public-header"
 import { PublicFooter } from "@/components/layout/public-footer"
+import { CalPreloader } from "@/components/marketing/cal-preloader"
 import { organizationJsonLd, websiteJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
@@ -16,6 +17,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         <div className="relative">{children}</div>
       </main>
       <PublicFooter />
+      <CalPreloader />
     </div>
   )
 }
