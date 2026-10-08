@@ -7,6 +7,10 @@ export const paymentLinksContent: ProductPageContent = {
     description:
       "Create a shareable payment link with Easner Business. Collect one-time or recurring payments without a website or code, and track what you receive.",
     keywords: [
+      "payment link for events and classes",
+      "stablecoin payment link",
+      "QR code payment link",
+      "limit payments on a link",
       "payment link generator",
       "get paid with a link",
       "no code payment page",

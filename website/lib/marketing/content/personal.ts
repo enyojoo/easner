@@ -11,6 +11,11 @@ export const personalContent: ProductPageContent = {
     description:
       "Get account details in your name, hold a multi-currency balance, and top up by card, Apple Pay, or ACH Direct. Send money to 80+ countries from one app.",
     keywords: [
+      "receive money from abroad",
+      "USD and EUR account details",
+      "send money to 80+ countries",
+      "EASETAG payments",
+      "money transfer app with Face ID",
       "personal banking app",
       "personal finance app USA",
       "multi-currency personal account",

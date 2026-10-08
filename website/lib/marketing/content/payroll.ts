@@ -7,6 +7,10 @@ export const payrollContent: ProductPageContent = {
     description:
       "Pay employees and contractors in 80+ countries, with approvals, pay stubs, and payment records on the same balance as the rest of Easner Business.",
     keywords: [
+      "payroll approvals before payday",
+      "contractor pay stubs",
+      "off-cycle payments and bonuses",
+      "pay employees to mobile money",
       "cross-border payroll",
       "international contractor payroll",
       "global payroll platform",

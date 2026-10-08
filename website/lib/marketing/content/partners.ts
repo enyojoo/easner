@@ -7,6 +7,10 @@ export const partnersContent: ProductPageContent = {
     description:
       "Launch a branded global payments product with Easner for Partners. Get accounts, collections, payouts, verification workflows, and operational support.",
     keywords: [
+      "white-label banking app",
+      "branded money transfer app",
+      "agency model payments",
+      "Easner for Partners",
       "white-label remittance",
       "OTC money transfer",
       "branded cross-border payments",

@@ -6,7 +6,11 @@ import {
   CONTACT_EMAIL,
   SUPPORT_EMAIL,
   CONTACT_PATH,
+  APP_STORE_URL,
+  PLAY_STORE_URL,
+  CAL_LINK,
 } from "./constants"
+import { NAV_SECTIONS } from "@/lib/nav-config"
 
 const SITE_URL = "https://www.easner.com"
 const LOGO_URL = `${BRAND_BASE_URL}/Easner%20Logo.svg`
@@ -21,10 +25,25 @@ export function organizationJsonLd() {
     url: SITE_URL,
     logo: LOGO_URL,
     description: EASNER_CANONICAL_DEFINITION,
-    sameAs: [
-      "https://x.com/easnerbanking",
-      "https://www.linkedin.com/company/easner/",
+    sameAs: ["https://x.com/easnerbanking", "https://www.linkedin.com/company/easner/", APP_STORE_URL, PLAY_STORE_URL],
+    /** Topics Easner is an authority on – helps generative engines place the brand. */
+    knowsAbout: [
+      "Stablecoin payments",
+      "Cross-border payments",
+      "Multi-currency accounts",
+      "International money transfers",
+      "Business banking",
+      "Payroll for international teams",
+      "Online checkout and payment links",
+      "Invoicing",
+      "USDC",
+      "USDT",
+      "EURC",
+      "Embedded finance APIs",
+      "White-label payments",
     ],
+    /** Machine-readable product catalogue, from the site navigation, for search engines and AI agents. */
+    hasOfferCatalog: productCatalogJsonLd(),
     slogan: EASNER_ONE_LINE_THESIS,
     foundingDate: "2025",
     /** Founders as named on /about – helps answer engines resolve the Easner entity. */
@@ -45,6 +64,46 @@ export function organizationJsonLd() {
       { "@type": "ContactPoint", contactType: "sales", email: CONTACT_EMAIL, url: `${SITE_URL}${CONTACT_PATH}`, availableLanguage: "en" },
       { "@type": "ContactPoint", contactType: "customer support", email: SUPPORT_EMAIL, availableLanguage: "en" },
     ],
+  }
+}
+
+/** Every Easner product, grouped as in the site navigation (Personal, Business, Build). */
+export function productCatalogJsonLd() {
+  return {
+    "@type": "OfferCatalog",
+    name: "Easner products",
+    itemListElement: NAV_SECTIONS.map((section) => ({
+      "@type": "OfferCatalog",
+      name: section.label,
+      description: section.intro.body,
+      itemListElement: section.items.map((item) => ({
+        "@type": "Offer",
+        itemOffered: {
+          "@type": "Service",
+          name: item.label,
+          description: item.description,
+          url: `${SITE_URL}${item.href}`,
+          provider: { "@id": `${SITE_URL}/#organization` },
+        },
+      })),
+    })),
+  }
+}
+
+/** Contact page: how to reach Easner, with a booking action an assistant or agent can follow. */
+export function contactPageJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${SITE_URL}${CONTACT_PATH}#contact`,
+    name: "Contact Easner",
+    url: `${SITE_URL}${CONTACT_PATH}`,
+    about: { "@id": `${SITE_URL}/#organization` },
+    potentialAction: {
+      "@type": "ScheduleAction",
+      name: "Book a 15-minute call with Easner",
+      target: { "@type": "EntryPoint", urlTemplate: `https://cal.com/${CAL_LINK}`, actionPlatform: "https://schema.org/DesktopWebPlatform" },
+    },
   }
 }
 

@@ -3,10 +3,15 @@ import { BUSINESS_SIGNUP_URL, EASNER_EMERGING_MARKET_KEYWORDS } from "../constan
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
-    title: "Stablecoin Payments | Send & Receive USDC and EURC",
+    title: "Stablecoin Payments | Send & Receive USDC, USDT & EURC",
     description:
-      "Easner settles cross-border payments on stablecoin rails. Receive and send USDC and EURC, and track every payment beside your business accounts.",
+      "Easner settles cross-border payments on stablecoin rails. Send and receive USDC, USDT and EURC, where enabled, beside your business accounts.",
     keywords: [
+      "USDT business payments",
+      "USDC USDT EURC",
+      "accept stablecoins in person",
+      "stablecoin QR payments",
+      "stablecoin terminal",
       "stablecoin payments",
       "stablecoin payments infrastructure",
       "USDC business payments",

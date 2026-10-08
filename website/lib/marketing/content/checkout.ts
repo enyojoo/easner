@@ -5,8 +5,13 @@ export const checkoutContent: ProductPageContent = {
   metadata: {
     title: "Online Checkout | Accept Payments & Subscriptions",
     description:
-      "Accept card, bank, and wallet payments on your own website. Easner is the merchant on record, so there's no separate payment processor to set up.",
+      "Accept card, bank, wallet and stablecoin payments on your own website, one-time or by subscription. Easner is merchant of record – no processor to set up.",
     keywords: [
+      "accept stablecoin payments",
+      "stablecoin checkout",
+      "USDC and USDT checkout",
+      "Apple Pay and card checkout",
+      "hosted checkout page",
       "merchant of record checkout",
       "checkout API",
       "embed payment checkout",

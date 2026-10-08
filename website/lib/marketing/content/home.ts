@@ -1,11 +1,5 @@
 import type { CardItem, Cta, FaqItem } from "../types"
-import {
-  EASNER_AUDIENCE_A,
-  EASNER_AUDIENCE_B,
-  EASNER_CANONICAL_DEFINITION,
-  EASNER_CORRIDOR_COVERAGE_FAQ,
-  EASNER_SIGNUP_ELIGIBILITY_FAQ,
-} from "../constants"
+import { EASNER_CANONICAL_DEFINITION } from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
 
 export const homeMetadata = {
@@ -121,62 +115,43 @@ export const homeCtaBand = DEFAULT_CTA_BAND
 
 export const homeFaq: FaqItem[] = [
   {
-    question: "How can I receive international payments?",
-    answer: "Share the account details or stablecoin deposit address in your Easner account, and the payment lands on your balance. Businesses can also collect with invoices, Checkout, and Payment Links.",
-    links: [{ label: "Receive with Easner Personal Banking", href: "/personal" }, { label: "Invoice international customers", href: "/invoicing" }],
-  },
-  {
-    question: "How long does an international transfer take?",
-    answer: "Transfers are typically fast – minutes to hours, and same-day where supported. Timing varies with the destination and banking hours, and you can follow each transfer's status in your account.",
-    links: [{ label: "Contact support", href: "/contact" }],
-  },
-  {
     question: "What is Easner?",
     answer: EASNER_CANONICAL_DEFINITION,
   },
   {
-    question: "Who is Easner for?",
-    answer: `${EASNER_AUDIENCE_A} ${EASNER_AUDIENCE_B}`,
-    links: [{ label: "Explore Personal", href: "/personal" }, { label: "Explore Business", href: "/business" }],
-  },
-  {
     question: "Is Easner a bank?",
     answer:
-      "No. Easner is a financial technology company. Regulated banking, payment, and verification services are provided by licensed partners.",
+      "No. Easner is a financial technology company. Banking and payment services are provided by licensed partners, and every customer is verified and screened before money moves.",
+    links: [{ label: "KYC/KYB and AML Policy", href: "/compliance" }],
+  },
+  {
+    question: "Should I open a personal or a business account?",
+    answer:
+      "Choose Easner Personal Banking for your own money – it runs in the Easner app on iPhone and Android. Choose Easner Business Banking for company accounts, customer payments, invoicing, payroll and team access on the web. Easner accepts signups from most countries; a small number are excluded for compliance and sanctions reasons.",
+    links: [
+      { label: "Personal Banking", href: "/personal" },
+      { label: "Business Banking", href: "/business" },
+    ],
+  },
+  {
+    question: "How do I get paid from abroad?",
+    answer:
+      "Share the USD or EUR account details in your name – or GBP where supported – and payments land in your balance. You can also receive stablecoins to a deposit address where enabled, and businesses can collect with invoices, Checkout and Payment Links.",
+    links: [
+      { label: "Receive with Personal Banking", href: "/personal" },
+      { label: "Invoice international customers", href: "/invoicing" },
+    ],
+  },
+  {
+    question: "Where can I send money, and how long does it take?",
+    answer:
+      "To bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia and Europe. Transfers typically arrive in minutes to hours, same-day where supported, and the fee, the rate and what your recipient gets are shown before you confirm.",
+    links: [{ label: "Check eligibility and restrictions", href: "/compliance" }],
   },
   {
     question: "Do I need to understand crypto to use Easner?",
     answer:
-      "No. You see balances, payments, and recipients, the same as any banking app. There are no wallets or networks to manage. Stablecoin settlement runs behind the scenes.",
-  },
-  {
-    question: "What products does Easner offer?",
-    answer:
-      "Easner has two core products: Easner Personal Banking for accounts, cards, and sending and receiving money; and Easner Business Banking for accounts, payment collections, cards, and payouts. Business capabilities include Invoicing, Checkout, Payment Links, and Payroll. Partners and developers can also build with Easner.",
-  },
-  {
-    question: "What fees and exchange rates apply?",
-    answer:
-      "Fees and exchange rates may apply, and are always shown before you confirm a transaction.",
-  },
-  {
-    question: "Where can I send money with Easner?",
-    answer: EASNER_CORRIDOR_COVERAGE_FAQ,
-    links: [{ label: "Check eligibility and restrictions", href: "/compliance" }],
-  },
-  {
-    question: "Can I sign up for Easner from any country?",
-    answer: EASNER_SIGNUP_ELIGIBILITY_FAQ,
-    links: [{ label: "Verification requirements", href: "/compliance" }],
-  },
-  {
-    question: "Can I use Easner for everyday finances in the US?",
-    answer:
-      "Yes. Easner serves personal and business customers in the US. Manage balances, receive payments, and pay people and businesses, with international capabilities when you need them.",
-  },
-  {
-    question: "Does Easner offer both personal and business accounts?",
-    answer:
-      "Yes. Easner Personal Banking is for your own money and everyday payments. Easner Business Banking brings company accounts, customer payments, invoicing, payroll, and team access together. Choose the account that fits how you plan to use Easner.",
+      "No. You see balances, payments and recipients, the same as any banking app – there are no wallets or networks to manage. Settlement runs on stablecoin rails behind the scenes, which is how Easner moves money across borders faster.",
+    links: [{ label: "How stablecoin payments work", href: "/stablecoin" }],
   },
 ]

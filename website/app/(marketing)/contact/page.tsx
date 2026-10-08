@@ -3,7 +3,7 @@ import { ContactBooking } from "@/components/marketing/contact-booking"
 import { ContactSupportNotice } from "@/components/marketing/contact-support-notice"
 import { contactMetadata } from "@/lib/marketing/content/contact"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, contactPageJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: contactMetadata, path: "/contact" })
 
@@ -12,12 +12,13 @@ export default function ContactPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLdScript(
+        dangerouslySetInnerHTML={jsonLdScript([
+          contactPageJsonLd(),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Contact", path: "/contact" },
-          ])
-        )}
+          ]),
+        ])}
       />
       <ContactHero />
       <section className="bg-web-band pb-12 pt-0 sm:pb-16 md:pb-24">

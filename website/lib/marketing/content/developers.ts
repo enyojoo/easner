@@ -7,6 +7,10 @@ export const developersContent: ProductPageContent = {
     description:
       "Build accounts, customer collections, and global payouts into your product with Easner APIs, verification workflows, and webhooks.",
     keywords: [
+      "payout quote API",
+      "signed webhooks",
+      "sandbox payments API",
+      "stablecoin deposit address API",
       "stablecoin API",
       "embedded payments API",
       "fintech infrastructure API",

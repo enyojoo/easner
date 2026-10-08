@@ -7,6 +7,10 @@ export const invoicingContent: ProductPageContent = {
     description:
       "Create and track invoices with Easner Business. Accept online, bank transfer, or supported stablecoin payments from customers in the US and internationally.",
     keywords: [
+      "invoice with bank transfer reference",
+      "hosted invoice payment page",
+      "invoice paid by card or stablecoin",
+      "PDF invoice download",
       "international invoicing",
       "invoice online payment",
       "invoice stablecoin pay-in",
