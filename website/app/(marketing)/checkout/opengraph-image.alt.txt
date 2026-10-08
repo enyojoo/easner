@@ -1,0 +1,1 @@
+Easner Checkout – a hosted checkout page with Apple Pay, card, bank and stablecoin.

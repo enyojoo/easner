@@ -31,6 +31,11 @@ const SCREEN_SLOTS: Record<string, Canvas> = {
   ...PARTNERS_SLOTS,
 }
 
+/** The native-size canvas for a slot, for reuse outside the page (social share cards). */
+export function getScreenCanvas(assetId: string): Canvas | undefined {
+  return SCREEN_SLOTS[assetId]
+}
+
 export function hasScreenSlot(assetId: string): boolean {
   return assetId in SCREEN_SLOTS
 }
@@ -64,7 +69,7 @@ const HOME_HERO = { width: 1280, height: 740 }
 /** Phones: the dashboard's main column (balance, actions, money in and out), cropped so it stays legible. */
 const HOME_HERO_MOBILE = { width: 620, height: 560 }
 
-function browserWithBizHome() {
+export function browserWithBizHome() {
   return (
     <div style={{ width: BIZ_HOME_SIZE.width, height: BIZ_HOME_SIZE.height + 44 }} className="rounded-[20px] shadow-showcase">
       <BrowserFrame url="business.easner.com">

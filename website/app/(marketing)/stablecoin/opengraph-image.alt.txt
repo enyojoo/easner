@@ -1,0 +1,1 @@
+Easner stablecoin payments – a stablecoin deposit address with its QR code.

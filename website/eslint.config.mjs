@@ -28,14 +28,12 @@ const eslintConfig = defineConfig([
     rules: { "no-restricted-syntax": noHex("error") },
   },
   {
-    // Hex is required here: third-party embed config, QR rendering, brand-coloured store icons, OG images, demo partner colour.
+    // Hex is required here: third-party embed config, QR rendering, brand-coloured store icons, demo partner colour.
     files: [
       "components/marketing/contact-booking.tsx",
       "components/marketing/download-qr.tsx",
       "components/marketing/store-icons.tsx",
       "components/marketing/screens/partner-showcase.tsx",
-      "lib/marketing/og-image.tsx",
-      "app/**/opengraph-image.tsx",
     ],
     rules: { "no-restricted-syntax": "off" },
   },
