@@ -17,8 +17,8 @@ const DEFAULT_TAG: Record<HeadlineLevel, ElementType> = {
 }
 
 const LEVEL_CLASS: Record<HeadlineLevel, string> = {
-  /** Home h1 only. */
-  hero: "uppercase text-[1.75rem] min-[390px]:text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl leading-[1.12] tracking-[-0.025em] sm:tracking-[-0.02em]",
+  /** Home h1 only. On phones each line stays on one row: the size follows the screen width (longest line ≈ 12 em). */
+  hero: "uppercase text-[min(2rem,calc((100vw-2rem)/12.4))] max-sm:whitespace-nowrap sm:text-4xl md:text-5xl lg:text-6xl xl:text-6xl leading-[1.12] tracking-[-0.025em] sm:tracking-[-0.02em]",
   /** Product and inner-page h1, one step below the home hero. */
   page: "uppercase text-balance text-[1.5rem] min-[390px]:text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.5rem] xl:text-5xl leading-[1.15] tracking-[-0.02em]",
   /** Section h2. */
