@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: paymentLinksContent.metadata, path: "/payment-links" })
 
@@ -22,6 +22,7 @@ export default function PaymentLinksPage() {
             { name: "Payment Links", path: "/payment-links" },
           ]),
           ...(paymentLinksContent.faq ? [faqPageJsonLd(paymentLinksContent.faq)] : []),
+          ...productAnswerJsonLd(paymentLinksContent, "/payment-links"),
         ])}
       />
       <ProductPageSections content={paymentLinksContent} />

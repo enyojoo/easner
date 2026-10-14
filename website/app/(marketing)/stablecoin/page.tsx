@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: stablecoinContent.metadata, path: "/stablecoin" })
 
@@ -23,6 +23,7 @@ export default function StablecoinPage() {
             { name: "Stablecoin", path: "/stablecoin" },
           ]),
           ...(stablecoinContent.faq ? [faqPageJsonLd(stablecoinContent.faq)] : []),
+          ...productAnswerJsonLd(stablecoinContent, "/stablecoin"),
         ])}
       />
       <ProductPageSections content={stablecoinContent} />

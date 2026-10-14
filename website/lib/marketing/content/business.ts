@@ -1,9 +1,26 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import {
   BUSINESS_SIGNUP_URL,
   EASNER_DEVELOPED_MARKET_KEYWORDS,
   EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
 } from "../constants"
+
+export const businessDefinition: AnswerDefinition = {
+  term: "Easner Business Banking",
+  question: "What is Easner Business Banking?",
+  answer:
+    "Easner Business Banking is a web dashboard for company finances. Get account details in your business's name, collect customer payments, send invoices, and pay suppliers and contractors in 80+ countries.",
+  facts: [
+    {
+      term: "Who it's for",
+      definition: "Startups, small businesses, and established companies from most countries, subject to verification.",
+    },
+    {
+      term: "How customers pay you",
+      definition: "Invoices, Payment Links, Checkout, Terminal, and QR Pay all settle into the same Easner Business ledger.",
+    },
+  ],
+}
 
 export const businessContent: ProductPageContent = {
   metadata: {
@@ -115,6 +132,7 @@ export const businessContent: ProductPageContent = {
     { label: "Sell on your website", href: "/checkout" },
     { label: "Get paid with a link", href: "/payment-links" },
   ],
+  definition: businessDefinition,
   faq: [
     {
       question: "Who can open an Easner Business account?",

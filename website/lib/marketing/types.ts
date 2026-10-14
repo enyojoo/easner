@@ -28,6 +28,29 @@ export interface FaqItem {
   links?: { label: string; href: string }[]
 }
 
+/** Visible, query-shaped answer used for AEO / AIO. Schema must quote this exact text. */
+export interface AnswerFact {
+  term: string
+  definition: string
+}
+
+export interface HowToStep {
+  name: string
+  text: string
+}
+
+export interface AnswerDefinition {
+  /** DefinedTerm name, e.g. "Easner Personal Banking". */
+  term: string
+  /** Question-shaped H2, e.g. "What is Easner Personal Banking?" */
+  question: string
+  /** 40–70 word answer; the first sentence must stand alone. */
+  answer: string
+  facts?: AnswerFact[]
+  stepsHeadline?: string
+  steps?: HowToStep[]
+}
+
 export interface Feature {
   title: string
   description: string
@@ -111,6 +134,8 @@ export interface ProductPageContent {
   capabilities?: CardItem[]
   segments?: CardItem[]
   ctaBand: CtaBandContent
+  /** Always-visible definition used for answer engines and FAQ schema. */
+  definition?: AnswerDefinition
   faq?: FaqItem[]
   complianceNote?: string
 }

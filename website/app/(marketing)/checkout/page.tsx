@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: checkoutContent.metadata, path: "/checkout" })
 
@@ -22,6 +22,7 @@ export default function CheckoutPage() {
             { name: "Checkout", path: "/checkout" },
           ]),
           ...(checkoutContent.faq ? [faqPageJsonLd(checkoutContent.faq)] : []),
+          ...productAnswerJsonLd(checkoutContent, "/checkout"),
         ])}
       />
       <ProductPageSections content={checkoutContent} />

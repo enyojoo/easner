@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { partnersContent } from "@/lib/marketing/content/partners"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: partnersContent.metadata,
@@ -26,6 +26,7 @@ export default function PartnersPage() {
             { name: "Home", path: "/" },
             { name: "Partners", path: "/partners" },
           ]),
+          ...productAnswerJsonLd(partnersContent, "/partners"),
         ])}
       />
       <ProductPageSections content={partnersContent} />

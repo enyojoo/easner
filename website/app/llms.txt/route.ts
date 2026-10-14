@@ -7,7 +7,9 @@ import { businessContent } from "@/lib/marketing/content/business"
 import { cardsContent } from "@/lib/marketing/content/cards"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
 import { developersContent } from "@/lib/marketing/content/developers"
-import { homeFaq } from "@/lib/marketing/content/home"
+import { aboutDefinition } from "@/lib/marketing/content/about"
+import { aiCompanyFaq } from "@/lib/marketing/content/ai"
+import { homeDefinition, homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { partnersContent } from "@/lib/marketing/content/partners"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
@@ -43,16 +45,18 @@ function build(): string {
     "",
     `> ${EASNER_CANONICAL_DEFINITION} Easner is not a bank.`,
     "",
-    "Easner Group, Inc. is a financial technology company. Its products are grouped as Personal (for your own money), Business (for your company) and Build (for platforms and partners). Cross-border payments settle on stablecoin rails – USDC, USDT and EURC on supported networks, where enabled – and pay out in local currency, so customers see ordinary balances and payments.",
+    "Easner Group, Inc. is a Delaware C-corporation. Enyo Sam founded Easner in 2025 from Europe; Christian Levan joined as co-founder in 2026. The corporate operational address is in San Francisco. Its products are grouped as Personal (for your own money), Business (for your company) and Build (for platforms and partners). Cross-border payments settle on stablecoin rails – USDC, USDT and EURC on supported networks, where enabled – and pay out in local currency, so customers see ordinary balances and payments.",
     "",
     "## Key facts",
     "",
     "- **Accounts:** USD and EUR account details in the customer's name, and GBP where supported.",
     "- **Reach:** payouts to bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe.",
     "- **Speed:** typically minutes to hours, same-day where supported.",
-    "- **Fees:** fees and exchange rates are shown before a payment is confirmed.",
+    "- **Fees:** fees and exchange rates are shown before a payment is confirmed, including what the recipient gets.",
     "- **Stablecoins:** USDC, USDT and EURC on supported networks, where enabled. No crypto wallet is needed to use Easner.",
     "- **Regulation:** banking, payment, verification and card services are provided by licensed partners. Every customer is verified and transactions are screened for AML and sanctions.",
+    "- **FDIC:** Easner is not FDIC-insured and does not hold customer deposits. Banking services are provided by third-party banking partners, not by Easner.",
+    "- **Eligibility:** Easner accepts signups from most countries. A small number are excluded for compliance and sanctions reasons. Opening an account always needs the person to verify their own identity.",
     "- **Apps:** the Easner app (iPhone and Android) for Personal Banking; Easner Business on the web for companies.",
     "",
   ]
@@ -89,9 +93,20 @@ function build(): string {
     `- **API access or partner programme:** ${SITE}/contact or ${CONTACT_EMAIL}. Sandbox and API reference are provided during commercial onboarding.`,
     `- **Customer support:** ${SUPPORT_EMAIL}`,
     "",
+    "## Short answers",
+    "",
+    `- **${homeDefinition.question}** ${homeDefinition.answer}`,
+    ...(homeDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
+    `- **${aboutDefinition.question}** ${aboutDefinition.answer}`,
+    "",
+    ...Object.values(PAGE_CONTENT).flatMap((content) =>
+      content.definition ? [`- **${content.definition.question}** ${content.definition.answer}`] : [],
+    ),
+    "",
     "## Frequently asked",
     "",
     ...faqLines(homeFaq),
+    ...faqLines(aiCompanyFaq),
     "",
   )
 
@@ -108,6 +123,7 @@ function build(): string {
     "",
     `- [Home](${SITE}/): Stablecoin-native banking for individuals and businesses.`,
     `- [About](${SITE}/about): Founders, mission and the Easner platform.`,
+    `- [Answers](${SITE}/answers): Direct answers to what Easner is and how each product works.`,
     `- [Contact](${SITE}/contact): Sales, partnerships and booking a call.`,
     "",
     "## Legal",

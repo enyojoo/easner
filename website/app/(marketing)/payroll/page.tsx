@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { payrollContent } from "@/lib/marketing/content/payroll"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: payrollContent.metadata, path: "/payroll" })
 
@@ -23,6 +23,7 @@ export default function PayrollPage() {
             { name: "Home", path: "/" },
             { name: "Payroll", path: "/payroll" },
           ]),
+          ...productAnswerJsonLd(payrollContent, "/payroll"),
         ])}
       />
       <ProductPageSections content={payrollContent} />

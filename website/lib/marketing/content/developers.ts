@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
+
+export const developersDefinition: AnswerDefinition = {
+  term: "Easner API",
+  question: "What is the Easner API?",
+  answer:
+    "The Easner API lets platforms embed customer verification, multi-currency accounts, collections, and cross-border payouts. Credentials and sandbox access are provided during commercial onboarding.",
+  facts: [
+    {
+      term: "How to get access",
+      definition: "Talk to the Easner team. API credentials and sandbox access come with commercial onboarding.",
+    },
+    {
+      term: "Do customers need a wallet?",
+      definition: "No. Settlement runs on stablecoin rails behind the API. Customers see balances and payments in regular currencies.",
+    },
+  ],
+}
 
 export const developersContent: ProductPageContent = {
   metadata: {
@@ -137,6 +154,7 @@ export const developersContent: ProductPageContent = {
         "Ship accounts, verification, and cross-border pay-in and payout inside your product – compliance and webhooks built in.",
     },
   ],
+  definition: developersDefinition,
   faq: [
     {
       question: "How do I get access to the Easner API?",

@@ -1,5 +1,28 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
+
+export const personalDefinition: AnswerDefinition = {
+  term: "Easner Personal Banking",
+  question: "What is Easner Personal Banking?",
+  answer:
+    "Easner Personal Banking is a multi-currency money app for your own finances. Hold USD and EUR, and GBP where supported, get account details in your name, and send money to bank accounts and mobile money in 80+ countries.",
+  facts: [
+    {
+      term: "Currencies",
+      definition: "USD and EUR, and GBP where supported for your profile, with account details in your name.",
+    },
+    {
+      term: "How to add money",
+      definition: "Top up by card, Apple Pay, Google Pay, or ACH, receive a bank transfer, or use a stablecoin deposit where enabled.",
+    },
+  ],
+  stepsHeadline: "How to open an Easner Personal Banking account",
+  steps: [
+    { name: "Download the app", text: "Get the Easner app on iPhone or Android, or start from easner.com/app." },
+    { name: "Verify your identity", text: "Sign up with your email and complete identity verification." },
+    { name: "Get paid or send", text: "Share your account details, or send to bank accounts and mobile money." },
+  ],
+}
 
 const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
@@ -100,6 +123,7 @@ export const personalContent: ProductPageContent = {
         "Keep a multi-currency balance as you move between places, and top it up from either side.",
     },
   ],
+  definition: personalDefinition,
   faq: [
     {
       question: "How do I open an Easner Personal Banking account?",

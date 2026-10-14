@@ -1,4 +1,21 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
+
+export const cardsDefinition: AnswerDefinition = {
+  term: "Easner cards",
+  question: "What are Easner cards?",
+  answer:
+    "Easner cards are virtual and physical cards for personal and business spending, with limits, merchant rules, and cardholder controls. Cards appear once they are available for your account and you are approved.",
+  facts: [
+    {
+      term: "Availability",
+      definition: "Cards appear in Easner Business and the Easner app once they are available for your account and you are approved.",
+    },
+    {
+      term: "Who issues them",
+      definition: "Card products are issued by a third-party issuer. Easner is a financial technology company, not a bank.",
+    },
+  ],
+}
 
 export const cardsContent: ProductPageContent = {
   metadata: {
@@ -94,6 +111,7 @@ export const cardsContent: ProductPageContent = {
         "Cover supplier deposits, logistics, and trade expenses from the same platform you use for international payouts.",
     },
   ],
+  definition: cardsDefinition,
   faq: [
     {
       question: "When will Easner cards be available?",

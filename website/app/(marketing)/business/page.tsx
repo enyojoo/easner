@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { businessContent } from "@/lib/marketing/content/business"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: businessContent.metadata,
@@ -27,6 +27,7 @@ export default function BusinessPage() {
             { name: "Home", path: "/" },
             { name: "Business Banking", path: "/business" },
           ]),
+          ...productAnswerJsonLd(businessContent, "/business"),
         ])}
       />
       <ProductPageSections content={businessContent} />

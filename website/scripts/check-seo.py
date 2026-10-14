@@ -119,6 +119,27 @@ for route, path in sorted(routes.items()):
             check(body.exists() and body.stat().st_size > 0, f"{route}: missing generated social image: {url.path}")
     types = [schema.get("@type") for schema in page.schemas]
     check("Organization" in types and "WebSite" in types, f"{route}: missing company/site schema")
+    answer_routes = {
+        "/",
+        "/about",
+        "/personal",
+        "/business",
+        "/checkout",
+        "/payment-links",
+        "/invoicing",
+        "/payroll",
+        "/stablecoin",
+        "/cards",
+        "/partners",
+        "/developers",
+        "/answers",
+    }
+    if route in answer_routes:
+        check("WebPage" in types, f"{route}: missing WebPage answer-engine schema")
+    if route == "/answers":
+        check("aeo-answer" in path.read_text(), f"{route}: missing visible answer-engine copy")
+        check("FAQPage" in types, f"{route}: missing FAQPage schema")
+        check("DefinedTermSet" in types, f"{route}: missing glossary schema")
     content = normalize(" ".join(page.text))
     for schema in page.schemas:
         check(schema.get("@context") == "https://schema.org", f"{route}: invalid schema context")
@@ -131,6 +152,21 @@ for route, path in sorted(routes.items()):
                 faq_count += 1
                 check(normalize(question["name"]) in content, f"{route}: FAQ question absent from HTML")
                 check(normalize(question["acceptedAnswer"]["text"]) in content, f"{route}: FAQ answer absent from HTML")
+        if schema.get("@type") == "WebPage" and schema.get("speakable"):
+            selectors = schema["speakable"].get("cssSelector", [])
+            html = path.read_text()
+            for selector in selectors:
+                classname = selector.lstrip(".")
+                check(classname in html, f"{route}: speakable selector {selector} missing from HTML")
+        if schema.get("@type") == "DefinedTerm":
+            check(normalize(schema.get("description", "")) in content, f"{route}: DefinedTerm missing from HTML")
+        if schema.get("@type") == "DefinedTermSet":
+            for term in schema.get("hasDefinedTerm", []):
+                check(normalize(term.get("description", "")) in content, f"{route}: glossary term missing from HTML")
+        if schema.get("@type") == "HowTo":
+            for step in schema.get("step", []):
+                check(normalize(step.get("name", "")) in content, f"{route}: HowTo step name absent from HTML")
+                check(normalize(step.get("text", "")) in content, f"{route}: HowTo step text absent from HTML")
         if schema.get("@type") == "BreadcrumbList":
             items = schema["itemListElement"]
             check(items[-1]["item"] == ORIGIN + route, f"{route}: breadcrumb destination differs from canonical")
@@ -162,4 +198,4 @@ if robots_path.exists():
 if ERRORS:
     print("SEO validation failed:\n- " + "\n- ".join(ERRORS))
     sys.exit(1)
-print(f"SEO checks passed: {len(routes)} pages, unique metadata, canonicals, indexing, social images, structured data, {faq_count} FAQ answers, internal links, sitemap and robots.txt.")
+print(f"SEO checks passed: {len(routes)} pages, unique metadata, canonicals, indexing, social images, structured data, {faq_count} FAQ answers, answer-engine markup, internal links, sitemap and robots.txt.")

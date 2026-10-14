@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL } from "../constants"
+
+export const paymentLinksDefinition: AnswerDefinition = {
+  term: "Easner Payment Links",
+  question: "What are Easner Payment Links?",
+  answer:
+    "Easner Payment Links are shareable payment pages for collecting one-time or recurring payments without a website or code. Payments settle into your Easner Business account.",
+  facts: [
+    {
+      term: "Do you need a website?",
+      definition: "No. Payment Links is the no-code option. Use Checkout if you already have a website.",
+    },
+    {
+      term: "How customers pay",
+      definition: "Card, Apple Pay or Google Pay, a US bank account, or stablecoins where enabled.",
+    },
+  ],
+}
 
 export const paymentLinksContent: ProductPageContent = {
   metadata: {
@@ -96,6 +113,7 @@ export const paymentLinksContent: ProductPageContent = {
       description: "Sell seats for a class, workshop or event, cap the number of payments, and close the link when you're full.",
     },
   ],
+  definition: paymentLinksDefinition,
   faq: [
     {
       question: "Do I need a website?",

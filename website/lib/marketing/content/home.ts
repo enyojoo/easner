@@ -1,6 +1,34 @@
-import type { CardItem, Cta, FaqItem } from "../types"
+import type { AnswerDefinition, CardItem, Cta, FaqItem } from "../types"
 import { EASNER_CANONICAL_DEFINITION } from "../constants"
 import { DEFAULT_CTA_BAND } from "../shared-content"
+
+export const homeDefinition: AnswerDefinition = {
+  term: "Easner",
+  question: "What is Easner?",
+  answer: EASNER_CANONICAL_DEFINITION,
+  facts: [
+    {
+      term: "Easner Personal Banking",
+      definition:
+        "A multi-currency money app for your own finances. Hold USD and EUR, get account details in your name, and send money from the Easner app.",
+    },
+    {
+      term: "Easner Business Banking",
+      definition:
+        "A web dashboard for company finances. Collect customer payments, send invoices, and pay suppliers in 80+ countries.",
+    },
+    {
+      term: "Not a bank",
+      definition:
+        "Easner is a financial technology company. Banking and payment services are provided by licensed partners.",
+    },
+    {
+      term: "Where you can send",
+      definition:
+        "Bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, and Europe. Transfers typically arrive in minutes to hours.",
+    },
+  ],
+}
 
 export const homeMetadata = {
   title: "Easner | Stablecoin-Native Banking & Payment Infrastructure",

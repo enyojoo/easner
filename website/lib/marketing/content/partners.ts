@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
+
+export const partnersDefinition: AnswerDefinition = {
+  term: "Easner for Partners",
+  question: "What is Easner for Partners?",
+  answer:
+    "Easner for Partners is a commercial programme with two models: the Agency Model, a full branded payments product on Easner infrastructure, and the Developer Model, API access without a branded deployment.",
+  facts: [
+    {
+      term: "What Easner runs",
+      definition: "Infrastructure, verification, screening, payout connections, and ongoing operational support.",
+    },
+    {
+      term: "What you run",
+      definition: "The brand and the relationship with your customers. The product can carry your name, logo, and colour.",
+    },
+  ],
+}
 
 export const partnersContent: ProductPageContent = {
   metadata: {
@@ -125,12 +142,12 @@ export const partnersContent: ProductPageContent = {
         "Launch branded diaspora giving and mission payout programs under your organization's name – for churches, nonprofits and more.",
     },
   ],
+  definition: partnersDefinition,
   faq: [
     {
-      question: "What is Easner for Partners?",
+      question: partnersDefinition.question,
+      answer: partnersDefinition.answer,
       links: [{ label: "Developer Model", href: "/developers" }],
-      answer:
-        "A commercial partner programme with two models: the Agency Model, a full branded deployment on Easner infrastructure, and the Developer Model, API access without a full branded deployment.",
     },
     {
       question: "What does Easner run, and what do I run?",

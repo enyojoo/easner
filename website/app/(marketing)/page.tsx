@@ -11,7 +11,7 @@ import { FaqSection } from "@/components/marketing/faq-section"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { homeMetadata, homeCtaBand, homeFaq } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { answerEngineJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata: Metadata = marketingMetadata({
   metadata: homeMetadata,
@@ -33,6 +33,11 @@ export default function HomePage() {
             areaServed: CORRIDOR_AREA_SERVED,
           }),
           faqPageJsonLd(homeFaq),
+          ...answerEngineJsonLd({
+            name: homeMetadata.title,
+            description: homeMetadata.description,
+            path: "/",
+          }),
         ])}
       />
       <Script id="products-hash-scroll" strategy="beforeInteractive">

@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL } from "../constants"
+
+export const payrollDefinition: AnswerDefinition = {
+  term: "Easner Payroll",
+  question: "What is Easner Payroll?",
+  answer:
+    "Easner Payroll pays employees and contractors in 80+ countries from your Easner Business balance, with approvals, pay stubs, and payment records on the same ledger.",
+  facts: [
+    {
+      term: "Who you can pay",
+      definition: "Employees and contractors in 80+ countries, paid from your Easner Business balance.",
+    },
+    {
+      term: "Approvals",
+      definition: "Each payday is reviewed before money moves. Maker-checker means the drafter is not the only signer.",
+    },
+  ],
+}
 
 export const payrollContent: ProductPageContent = {
   metadata: {
@@ -89,6 +106,7 @@ export const payrollContent: ProductPageContent = {
         "Add payroll to the accounts and payouts you already run in Easner Business, with one ledger for finance.",
     },
   ],
+  definition: payrollDefinition,
   faq: [
     {
       question: "Who can I pay with Easner Payroll?",

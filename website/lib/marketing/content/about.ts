@@ -1,7 +1,7 @@
 import founderChristianPhoto from "@/assets/founder-christian.png"
 import founderEnyoPhoto from "@/assets/founder-enyo.png"
 import { CONTACT_PATH } from "../constants"
-import type { CardItem, CtaBandContent, Founder } from "../types"
+import type { AnswerDefinition, CardItem, CtaBandContent, Founder } from "../types"
 
 export const aboutMetadata = {
   title: "About Easner | Our Founders & Mission",
@@ -14,6 +14,33 @@ export const aboutMetadata = {
     "global cross-border payments",
     "international business banking",
     "fintech cross-border infrastructure",
+  ],
+}
+
+export const aboutDefinition: AnswerDefinition = {
+  term: "Easner Group, Inc.",
+  question: "Who founded Easner?",
+  answer:
+    "Enyo Sam founded Easner in 2025 from Europe. Christian Levan joined as co-founder in 2026. Easner Group, Inc. is a Delaware C-corporation with its corporate operational address in San Francisco.",
+  facts: [
+    {
+      term: "Founded",
+      definition: "Enyo Sam founded Easner in 2025 from Europe.",
+    },
+    {
+      term: "Company",
+      definition:
+        "Easner Group, Inc. is a Delaware C-corporation. Its corporate operational address is 584 Castro St, Suite 4092, San Francisco, CA 94114.",
+    },
+    {
+      term: "Founders",
+      definition: "Enyo Sam is Founder & CTO. Christian Levan joined as Co-founder & CEO in 2026.",
+    },
+    {
+      term: "Not a bank",
+      definition:
+        "Easner is a financial technology company. Banking, payment, verification, and card services are provided by licensed partners.",
+    },
   ],
 }
 
@@ -81,7 +108,7 @@ export const aboutFounders: Founder[] = [
     title: "Co-founder & CEO",
     tagline: "Connecting global and local financial rails.",
     bio: [
-      "Christian is Co-founder and CEO of Easner, building stablecoin-native banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning stablecoin settlement into real local financial utility.",
+      "Christian joined Easner as Co-founder and CEO in 2026, building stablecoin-native banking and payment infrastructure that connects global and local financial rails – compliant onboarding, fiat and stablecoin conversion, cross-border payments, and local payout coverage. His focus is the last mile: turning stablecoin settlement into real local financial utility.",
       "Before Easner, he drove growth at venture-backed and private-market companies, with earlier grounding as a financial advisor at Morgan Stanley and Merrill Lynch. He also serves as an enlisted Reconnaissance Marine in the U.S. Marine Corps Reserve – bringing discipline, discretion, and outcomes-over-narrative to how Easner is built.",
     ],
     image: founderChristianPhoto,
@@ -93,7 +120,7 @@ export const aboutFounders: Founder[] = [
     tagline: "Building secure financial infrastructure with stablecoins.",
     bio: [
       "Enyo is Founder and CTO of Easner, building stablecoin-native banking and payment infrastructure that connects global and local financial rails – technical architecture, stablecoin settlement, partner integrations, and secure cross-border coverage. His focus is making stablecoins practical: expanding access to global financial services without crypto complexity.",
-      "Since founding Easner in 2025, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
+      "Since founding Easner in 2025 from Europe, he has led product and technical vision, engineering leadership, security, and infrastructure for compliant, scalable payments – validating market demand through early real-world payment flows. His multidisciplinary background spans International Management, Mathematics, Artificial Intelligence, and Computer Science.",
     ],
     image: founderEnyoPhoto,
     linkedin: "https://www.linkedin.com/in/enyosam/",

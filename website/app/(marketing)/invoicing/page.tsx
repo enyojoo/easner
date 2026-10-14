@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({ metadata: invoicingContent.metadata, path: "/invoicing" })
 
@@ -23,6 +23,7 @@ export default function InvoicingPage() {
             { name: "Invoicing", path: "/invoicing" },
           ]),
           ...(invoicingContent.faq ? [faqPageJsonLd(invoicingContent.faq)] : []),
+          ...productAnswerJsonLd(invoicingContent, "/invoicing"),
         ])}
       />
       <ProductPageSections content={invoicingContent} />

@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL, EASNER_EMERGING_MARKET_KEYWORDS } from "../constants"
+
+export const stablecoinDefinition: AnswerDefinition = {
+  term: "Easner stablecoin payments",
+  question: "What are Easner stablecoin payments?",
+  answer:
+    "Easner stablecoin payments settle cross-border transfers on USDC, USDT, and EURC rails. You work in dollars and euros on a banking-simple dashboard; no crypto wallet is required.",
+  facts: [
+    {
+      term: "Supported assets",
+      definition: "USDC, USDT, and EURC on supported networks, where enabled.",
+    },
+    {
+      term: "Do you need a wallet?",
+      definition: "No. Everyday accounts, invoices, and payouts work in regular currencies. Wallet send and receive are optional.",
+    },
+  ],
+}
 
 export const stablecoinContent: ProductPageContent = {
   metadata: {
@@ -103,6 +120,7 @@ export const stablecoinContent: ProductPageContent = {
         "Collect global customer payments with stablecoin pay-in, Terminal, and QR Pay – faster settlement, with every payment on one dashboard.",
     },
   ],
+  definition: stablecoinDefinition,
   faq: [
     {
       question: "Why did Easner build on stablecoin rails instead of traditional banking rails?",

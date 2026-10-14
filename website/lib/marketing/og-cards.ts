@@ -132,6 +132,15 @@ export const OG_CARDS: OgCard[] = [
     alt: "Download the Easner app – the app home screen.",
   },
   {
+    slug: "answers",
+    route: "answers",
+    headline: ["Answers", "about Easner"],
+    accentLine: 1,
+    line: "What Easner is, who it is for, and how each product works.",
+    visual: { kind: "mark" },
+    alt: "Easner answers – what Easner is and how it works.",
+  },
+  {
     slug: "about",
     route: "about",
     headline: ["Built for your money.", "Ready for your world."],

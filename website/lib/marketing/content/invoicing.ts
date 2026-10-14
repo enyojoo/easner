@@ -1,5 +1,23 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL } from "../constants"
+
+export const invoicingDefinition: AnswerDefinition = {
+  term: "Easner Invoicing",
+  question: "What is Easner Invoicing?",
+  answer:
+    "Easner Invoicing lets businesses create itemized invoices and collect payment by card, bank transfer, or supported stablecoins. Every payment lands in the same Easner Business ledger.",
+  facts: [
+    {
+      term: "How customers pay",
+      definition: "Card, Apple Pay or Google Pay, bank transfer, or stablecoins where enabled, from one hosted invoice page.",
+    },
+    {
+      term: "Invoicing vs Payment Links vs Checkout",
+      definition:
+        "Invoicing is an itemized bill to a named customer. Payment Links are a no-code page. Checkout embeds on your website.",
+    },
+  ],
+}
 
 export const invoicingContent: ProductPageContent = {
   metadata: {
@@ -127,6 +145,7 @@ export const invoicingContent: ProductPageContent = {
         "Invoice international partners or wholesale buyers and collect by bank or stablecoin.",
     },
   ],
+  definition: invoicingDefinition,
   faq: [
     {
       question: "Invoicing vs. Checkout vs. Payment Links?",

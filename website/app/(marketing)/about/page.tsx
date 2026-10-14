@@ -17,7 +17,7 @@ import {
   aboutPillarsHeadline,
 } from "@/lib/marketing/content/about"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { answerEngineJsonLd, breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: aboutMetadata,
@@ -30,12 +30,17 @@ export default function AboutPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLdScript(
+        dangerouslySetInnerHTML={jsonLdScript([
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "About", path: "/about" },
-          ])
-        )}
+          ]),
+          ...answerEngineJsonLd({
+            name: aboutMetadata.title,
+            description: aboutMetadata.description,
+            path: "/about",
+          }),
+        ])}
       />
       <AboutHero />
       <FoundersSection

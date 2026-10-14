@@ -22,6 +22,7 @@ const lastModified = {
   partners: new Date("2026-10-08"),
   developers: new Date("2026-10-08"),
   app: new Date("2026-09-05"),
+  answers: new Date("2026-10-14"),
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -44,5 +45,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/cards`, lastModified: lastModified.cards, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/partners`, lastModified: lastModified.partners, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/developers`, lastModified: lastModified.developers, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${baseUrl}/answers`, lastModified: lastModified.answers, changeFrequency: "weekly", priority: 0.7 },
   ]
 }

@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { marketingMetadata } from "@/lib/marketing/metadata"
-import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 export const metadata = marketingMetadata({
   metadata: personalContent.metadata,
@@ -27,6 +27,7 @@ export default function PersonalPage() {
             { name: "Home", path: "/" },
             { name: "Personal Banking", path: "/personal" },
           ]),
+          ...productAnswerJsonLd(personalContent, "/personal"),
         ])}
       />
       <ProductPageSections content={personalContent} />

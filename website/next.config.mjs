@@ -32,6 +32,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [{ source: "/ai", destination: "/answers", permanent: true }]
+  },
   async headers() {
     return [
       {

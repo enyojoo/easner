@@ -1,5 +1,22 @@
-import type { ProductPageContent } from "../types"
+import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL } from "../constants"
+
+export const checkoutDefinition: AnswerDefinition = {
+  term: "Easner Checkout",
+  question: "What is Easner Checkout?",
+  answer:
+    "Easner Checkout is an embeddable payment form for your website. Accept card, bank, wallet, and stablecoin payments, one-time or by subscription, with Easner as merchant of record.",
+  facts: [
+    {
+      term: "Do you need a processor?",
+      definition: "No. Easner is the merchant on record, so you do not set up a separate payment account.",
+    },
+    {
+      term: "No website?",
+      definition: "Use Easner Payment Links, a no-code shareable page, instead of embedding Checkout.",
+    },
+  ],
+}
 
 export const checkoutContent: ProductPageContent = {
   metadata: {
@@ -94,6 +111,7 @@ export const checkoutContent: ProductPageContent = {
         "Collect from buyers and route funds to sellers, with Easner as the merchant on record and one ledger for platform reconciliation.",
     },
   ],
+  definition: checkoutDefinition,
   faq: [
     {
       question: "Do I need my own payment processor?",

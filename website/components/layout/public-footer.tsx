@@ -21,6 +21,7 @@ const FOOTER_COLUMNS: { label: string; items: NavLink[] }[] = [
     label: "Company",
     items: [
       { label: "About", href: "/about", icon: "building" },
+      { label: "Answers", href: "/answers", icon: "file" },
       { label: "Contact", href: "/contact", icon: "user" },
       { label: "Terms", href: "/terms", icon: "file" },
       { label: "Privacy Policy", href: "/privacy", icon: "file" },

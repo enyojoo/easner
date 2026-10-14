@@ -1,4 +1,4 @@
-import type { FaqItem } from "./types"
+import type { AnswerDefinition, FaqItem, HowToStep, IntegrationStep, ProductPageContent } from "./types"
 import {
   EASNER_CANONICAL_DEFINITION,
   EASNER_ONE_LINE_THESIS,
@@ -48,10 +48,20 @@ export function organizationJsonLd() {
     foundingDate: "2025",
     /** Founders as named on /about – helps answer engines resolve the Easner entity. */
     founder: [
-      { "@type": "Person", name: "Christian Levan", jobTitle: "Co-founder & CEO" },
-      { "@type": "Person", name: "Enyo Sam", jobTitle: "Founder & CTO" },
+      {
+        "@type": "Role",
+        startDate: "2025",
+        roleName: "Founder & CTO",
+        founder: { "@type": "Person", name: "Enyo Sam", jobTitle: "Founder & CTO" },
+      },
+      {
+        "@type": "Role",
+        startDate: "2026",
+        roleName: "Co-founder & CEO",
+        founder: { "@type": "Person", name: "Christian Levan", jobTitle: "Co-founder & CEO" },
+      },
     ],
-    /** Registered address as published in the Privacy Policy. */
+    /** Corporate operational address as published in the Privacy Policy. Incorporated in Delaware. */
     address: {
       "@type": "PostalAddress",
       streetAddress: "584 Castro St, Suite 4092",
@@ -244,6 +254,127 @@ export function faqPageJsonLd(items: FaqItem[]) {
       },
     })),
   }
+}
+
+export function webPageJsonLd({
+  name,
+  description,
+  path,
+  speakable = false,
+}: {
+  name: string
+  description: string
+  path: string
+  speakable?: boolean
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${SITE_URL}${path}#webpage`,
+    url: `${SITE_URL}${path}`,
+    name,
+    description,
+    inLanguage: "en-US",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    about: { "@id": `${SITE_URL}/#organization` },
+    ...(speakable
+      ? {
+          speakable: {
+            "@type": "SpeakableSpecification",
+            cssSelector: [".aeo-answer"],
+          },
+        }
+      : {}),
+  }
+}
+
+export function definedTermJsonLd({ name, description }: { name: string; description: string }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    name,
+    description,
+    inDefinedTermSet: `${SITE_URL}/#glossary`,
+  }
+}
+
+export function definedTermSetJsonLd(terms: { name: string; description: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "@id": `${SITE_URL}/#glossary`,
+    name: "Easner glossary",
+    hasDefinedTerm: terms.map((term) => ({
+      "@type": "DefinedTerm",
+      name: term.name,
+      description: term.description,
+    })),
+  }
+}
+
+export function howToJsonLd({ name, description, steps }: { name: string; description: string; steps: HowToStep[] }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description,
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  }
+}
+
+function howToFromProduct(content: ProductPageContent): { name: string; description: string; steps: HowToStep[] } | undefined {
+  if (content.integrationSteps && content.integrationSteps.length > 0) {
+    return {
+      name: content.integrationStepsHeadline ?? `How to get started with ${content.definition?.term ?? "Easner"}`,
+      description: content.definition?.answer ?? content.metadata.description,
+      steps: content.integrationSteps.map((step: IntegrationStep) => ({ name: step.title, text: step.description })),
+    }
+  }
+  return undefined
+}
+
+/** WebPage + DefinedTerm + optional HowTo. FAQPage stays a separate call so it stays next to the visible FAQ. */
+export function answerEngineJsonLd({
+  name,
+  description,
+  path,
+  definition,
+  glossary,
+  howTo,
+  speakable = false,
+}: {
+  name: string
+  description: string
+  path: string
+  definition?: AnswerDefinition
+  glossary?: { name: string; description: string }[]
+  howTo?: { name: string; description: string; steps: HowToStep[] }
+  speakable?: boolean
+}) {
+  const schemas: Record<string, unknown>[] = [webPageJsonLd({ name, description, path, speakable })]
+  if (glossary?.length) {
+    schemas.push(definedTermSetJsonLd(glossary))
+  } else if (definition) {
+    schemas.push(definedTermJsonLd({ name: definition.term, description: definition.answer }))
+  }
+  if (howTo?.steps.length) {
+    schemas.push(howToJsonLd(howTo))
+  }
+  return schemas
+}
+
+export function productAnswerJsonLd(content: ProductPageContent, path: string) {
+  return answerEngineJsonLd({
+    name: content.metadata.title,
+    description: content.metadata.description,
+    path,
+    howTo: howToFromProduct(content),
+  })
 }
 
 export function jsonLdScript(data: Record<string, unknown> | Record<string, unknown>[]) {
