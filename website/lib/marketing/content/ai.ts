@@ -1,5 +1,6 @@
 import type { AnswerDefinition, FaqItem, HowToStep } from "../types"
 import { aboutDefinition } from "./about"
+import { contactDefinition, contactFaq } from "./contact"
 import { businessContent, businessDefinition } from "./business"
 import { cardsContent, cardsDefinition } from "./cards"
 import { checkoutContent, checkoutDefinition } from "./checkout"
@@ -79,6 +80,29 @@ export const aiCompanyFaq: FaqItem[] = [
 export const aiSections: AiAnswerSection[] = [
   { href: "/", label: "Home", definition: homeDefinition, faq: homeFaq },
   { href: "/about", label: "About", definition: aboutDefinition, faq: aiCompanyFaq },
+  {
+    href: "/contact",
+    label: "Contact",
+    definition: contactDefinition,
+    faq: contactFaq,
+    howTo: {
+      name: "How to get in touch",
+      steps: [
+        {
+          name: "Already a customer",
+          text: "Chat on the site or in the Easner app and Business dashboard, or email support@easner.com, for help with transfers, accounts, verification, or transactions.",
+        },
+        {
+          name: "Sales or partnerships",
+          text: "Book a consultation on the Contact page, or email hello@easner.com.",
+        },
+        {
+          name: "Prefer email",
+          text: "hello@easner.com for sales and partnerships. support@easner.com for account help.",
+        },
+      ],
+    },
+  },
   {
     href: "/personal",
     label: "Personal Banking",

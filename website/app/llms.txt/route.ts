@@ -9,6 +9,7 @@ import { checkoutContent } from "@/lib/marketing/content/checkout"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq } from "@/lib/marketing/content/ai"
+import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
 import { homeDefinition, homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { partnersContent } from "@/lib/marketing/content/partners"
@@ -57,6 +58,7 @@ function build(): string {
     "- **Regulation:** banking, payment, verification and card services are provided by licensed partners. Every customer is verified and transactions are screened for AML and sanctions.",
     "- **FDIC:** Easner is not FDIC-insured and does not hold customer deposits. Banking services are provided by third-party banking partners, not by Easner.",
     "- **Eligibility:** Easner accepts signups from most countries. A small number are excluded for compliance and sanctions reasons. Opening an account always needs the person to verify their own identity.",
+    `- **Support:** chat on ${SITE} or email ${SUPPORT_EMAIL}. Sales and partnerships: ${SITE}/contact or ${CONTACT_EMAIL}.`,
     "- **Apps:** the Easner app (iPhone and Android) for Personal Banking; Easner Business on the web for companies.",
     "",
   ]
@@ -98,6 +100,7 @@ function build(): string {
     `- **${homeDefinition.question}** ${homeDefinition.answer}`,
     ...(homeDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
     `- **${aboutDefinition.question}** ${aboutDefinition.answer}`,
+    `- **${contactDefinition.question}** ${contactDefinition.answer}`,
     "",
     ...Object.values(PAGE_CONTENT).flatMap((content) =>
       content.definition ? [`- **${content.definition.question}** ${content.definition.answer}`] : [],
@@ -107,6 +110,7 @@ function build(): string {
     "",
     ...faqLines(homeFaq),
     ...faqLines(aiCompanyFaq),
+    ...faqLines(contactFaq),
     "",
   )
 
