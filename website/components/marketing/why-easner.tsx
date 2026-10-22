@@ -5,7 +5,7 @@ import { PillarArt } from "./pillar-art"
 /** Why choose Easner: each pillar leads with a small illustration of what it means, then its sentence. */
 export function WhyEasner() {
   return (
-    <section className="bg-web-band pb-14 pt-7 md:pb-24 md:pt-12">
+    <section className="bg-web-canvas pb-14 pt-7 md:pb-24 md:pt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Headline level="section" className="mb-9 text-center sm:mb-12">
           {whyEasnerHeadline}
@@ -14,7 +14,7 @@ export function WhyEasner() {
           {whyEasnerPillars.map((pillar) => (
             <div
               key={pillar.title}
-              className="grid content-start gap-3 overflow-hidden rounded-xl border border-web-hairline bg-web-canvas/90 shadow-soft sm:rounded-2xl"
+              className="grid content-start gap-3 overflow-hidden rounded-xl border border-web-hairline bg-web-plate shadow-soft sm:rounded-2xl"
             >
               {pillar.icon && (
                 <div className="border-b border-web-hairline bg-web-plate px-4 py-3">

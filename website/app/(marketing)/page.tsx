@@ -78,9 +78,9 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 pb-10 sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
         <TrustedBy />
       </div>
-      <WhyEasner />
       <SolutionsByAudience />
       <ProductGrid />
+      <WhyEasner />
       <CorridorStory />
       <ComplianceStrip />
       <FaqSection items={homeFaq} />
