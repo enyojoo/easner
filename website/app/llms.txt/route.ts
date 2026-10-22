@@ -132,7 +132,7 @@ function build(): string {
     "",
     `- [Home](${SITE}/): Stablecoin-native banking for individuals and businesses.`,
     `- [About](${SITE}/about): Founders, mission and the Easner platform.`,
-    `- [Pricing](${SITE}/pricing): Ease is $0 a month. Ease Plus and Ease Pro add people, invoicing, and payouts. Ease Gold is agreed with us.`,
+    `- [Pricing](${SITE}/pricing): Banking services and essential business tools are always $0 a month, with more plans as the business grows.`,
     `- [Answers](${SITE}/answers): Direct answers to what Easner is and how each product works.`,
     `- [Contact](${SITE}/contact): Sales, partnerships and booking a call.`,
     "",

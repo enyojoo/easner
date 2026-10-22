@@ -152,7 +152,7 @@ export const OG_CARDS: OgCard[] = [
   {
     slug: "pricing",
     route: "pricing",
-    headline: ["Pricing that", "fits the business"],
+    headline: ["Pricing that", "fits your business"],
     accentLine: 1,
     line: "Ease is $0 a month. Compare Ease Plus, Ease Pro, and Ease Gold.",
     visual: { kind: "mark" },

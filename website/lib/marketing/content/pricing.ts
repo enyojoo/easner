@@ -88,9 +88,9 @@ export const pricingFaq: FaqItem[] = [
 ]
 
 export const pricingHero = {
-  h1: "Pricing that fits the business",
+  h1: "Pricing that fits your business",
   subhead:
-    "Ease is $0 a month. Ease Plus and Ease Pro add people, invoicing, and payouts. Ease Gold is agreed with us.",
+    "Banking services and essential business tools are always $0 a month – with more plans available as your business grows.",
 }
 
 export type PricingInterval = "annual" | "monthly"
