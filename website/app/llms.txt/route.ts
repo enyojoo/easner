@@ -16,6 +16,7 @@ import { partnersContent } from "@/lib/marketing/content/partners"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
 import { payrollContent } from "@/lib/marketing/content/payroll"
 import { personalContent } from "@/lib/marketing/content/personal"
+import { pricingDefinition, pricingFaq } from "@/lib/marketing/content/pricing"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
 import { EASNER_CANONICAL_DEFINITION } from "@/lib/marketing/positioning"
 import type { FaqItem, ProductPageContent } from "@/lib/marketing/types"
@@ -101,6 +102,8 @@ function build(): string {
     ...(homeDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
     `- **${aboutDefinition.question}** ${aboutDefinition.answer}`,
     `- **${contactDefinition.question}** ${contactDefinition.answer}`,
+    `- **${pricingDefinition.question}** ${pricingDefinition.answer}`,
+    ...(pricingDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
     "",
     ...Object.values(PAGE_CONTENT).flatMap((content) =>
       content.definition ? [`- **${content.definition.question}** ${content.definition.answer}`] : [],
@@ -122,11 +125,14 @@ function build(): string {
     }
   }
 
+  lines.push("### Pricing", "", ...faqLines(pricingFaq), "")
+
   lines.push(
     "## Company",
     "",
     `- [Home](${SITE}/): Stablecoin-native banking for individuals and businesses.`,
     `- [About](${SITE}/about): Founders, mission and the Easner platform.`,
+    `- [Pricing](${SITE}/pricing): Ease is $0 a month. Ease Plus and Ease Pro add people, invoicing, and payouts. Ease Gold is agreed with us.`,
     `- [Answers](${SITE}/answers): Direct answers to what Easner is and how each product works.`,
     `- [Contact](${SITE}/contact): Sales, partnerships and booking a call.`,
     "",

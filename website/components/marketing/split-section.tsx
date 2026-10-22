@@ -10,7 +10,7 @@ import { VisualSlot } from "./visual-slot"
 import { Eyebrow } from "@/components/ds/eyebrow"
 import { cn } from "@/lib/utils"
 import { MARKETING_BODY_TEXT, SPLIT_COPY_CARD, SPLIT_GRID_GAP, SPLIT_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
-import type { Cta } from "@/lib/marketing/types"
+import type { Cta, HeroNote } from "@/lib/marketing/types"
 import { Headline } from "@/components/ds/headline"
 
 interface SplitSectionProps {
@@ -26,6 +26,7 @@ interface SplitSectionProps {
   h1?: boolean
   subhead?: string
   ctaDescription?: string
+  note?: HeroNote
   variant?: "hero" | "content"
 }
 
@@ -94,6 +95,7 @@ function CopyBlock({
   boxed,
   isHero,
   ctaDescription,
+  note,
 }: {
   headline: string
   subhead?: string
@@ -105,6 +107,7 @@ function CopyBlock({
   boxed: boolean
   isHero?: boolean
   ctaDescription?: string
+  note?: HeroNote
 }) {
   const HeadingTag = h1 ? "h1" : "h2"
 
@@ -123,6 +126,20 @@ function CopyBlock({
           )}
         >
           {subhead}
+        </p>
+      )}
+      {note && (
+        <p className={cn("mt-4 max-w-2xl text-sm leading-6 text-web-body", isHero && "mx-auto lg:mx-0")}>
+          {note.lead}
+          <MarketingLink
+            href={note.href}
+            analyticsLocation="personal_hero_pricing"
+            ctaLabel={note.linkLabel}
+            className="font-semibold text-web-link underline underline-offset-4"
+          >
+            {note.linkLabel}
+          </MarketingLink>
+          {note.trail}
         </p>
       )}
       {body && (
@@ -171,6 +188,7 @@ export function SplitSection({
   subhead,
   variant,
   ctaDescription,
+  note,
 }: SplitSectionProps) {
   const resolvedVariant = variant ?? (h1 ? "hero" : "content")
   const hasVisual = !!(visual || (visualSlot && altText))
@@ -197,6 +215,7 @@ export function SplitSection({
             boxed={isContent && hasVisual}
             isHero={!isContent}
             ctaDescription={ctaDescription}
+            note={note}
           />
           {hasVisual && (
             <div className={SPLIT_VISUAL_CONTAINER}>

@@ -31,6 +31,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
         badge={content.hero.badge}
         ctas={content.hero.ctas}
         ctaDescription={content.hero.ctaDescription}
+        note={content.hero.note}
       />
       {content.problem && (
         <CenteredBlock

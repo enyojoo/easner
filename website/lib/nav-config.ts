@@ -78,7 +78,7 @@ export const NAV_SECTIONS: NavSection[] = [
 ]
 
 /** Mid nav links after Products */
-export const NAV_LINKS: NavLink[] = []
+export const NAV_LINKS: NavLink[] = [{ label: "Pricing", href: "/pricing", icon: "receipt" }]
 
 /** Contact – rendered last */
 export const NAV_TRAILING_LINKS: NavLink[] = [{ label: "Contact", href: "/contact", icon: "user" }]

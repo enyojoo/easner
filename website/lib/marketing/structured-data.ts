@@ -11,6 +11,7 @@ import {
   CAL_LINK,
 } from "./constants"
 import { NAV_SECTIONS } from "@/lib/nav-config"
+import { pricingPlans } from "./content/pricing"
 
 const SITE_URL = "https://www.easner.com"
 const LOGO_URL = `${BRAND_BASE_URL}/Easner%20Logo.svg`
@@ -226,6 +227,30 @@ export function financialServiceJsonLd({ name, description, path, serviceType, a
 interface BreadcrumbSegment {
   name: string
   path: string
+}
+
+/** Public business plan prices. Annual is the default, so that is the price on the offer. */
+export function pricingOfferCatalogJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "OfferCatalog",
+    name: "Easner business plans",
+    url: `${SITE_URL}/pricing`,
+    itemListElement: pricingPlans.map((plan) => {
+      const offer: Record<string, unknown> = {
+        "@type": "Offer",
+        name: plan.name,
+        description: `${plan.sentence} ${plan.features.join(". ")}.`,
+        url: plan.cta.href.startsWith("/") ? `${SITE_URL}${plan.cta.href}` : `${SITE_URL}/pricing`,
+      }
+      if (plan.annual.amount !== null) {
+        offer.price = String(plan.annual.amount)
+        offer.priceCurrency = "USD"
+        offer.unitText = plan.annual.interval
+      }
+      return offer
+    }),
+  }
 }
 
 export function breadcrumbJsonLd(segments: BreadcrumbSegment[]) {

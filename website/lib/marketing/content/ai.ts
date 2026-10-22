@@ -11,6 +11,7 @@ import { partnersContent, partnersDefinition } from "./partners"
 import { paymentLinksContent, paymentLinksDefinition } from "./payment-links"
 import { payrollContent, payrollDefinition } from "./payroll"
 import { personalContent, personalDefinition } from "./personal"
+import { pricingDefinition, pricingFaq } from "./pricing"
 import { stablecoinContent, stablecoinDefinition } from "./stablecoin"
 
 export const aiMetadata = {
@@ -57,7 +58,8 @@ export const aiCompanyFaq: FaqItem[] = [
   {
     question: "How much does Easner cost?",
     answer:
-      "Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
+      "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed with us. Card payments and transfers have a processing fee. Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
+    links: [{ label: "Pricing", href: "/pricing" }],
   },
   {
     question: "Who can sign up for Easner?",
@@ -131,6 +133,12 @@ export const aiSections: AiAnswerSection[] = [
         },
       ],
     },
+  },
+  {
+    href: "/pricing",
+    label: "Pricing",
+    definition: pricingDefinition,
+    faq: pricingFaq,
   },
   {
     href: "/checkout",

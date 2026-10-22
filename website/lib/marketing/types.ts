@@ -72,6 +72,13 @@ export interface PageMetadata {
   keywords?: string[]
 }
 
+export interface HeroNote {
+  lead: string
+  linkLabel: string
+  href: string
+  trail: string
+}
+
 export interface HeroContent {
   h1: string
   subhead: string
@@ -81,6 +88,8 @@ export interface HeroContent {
   ctas: Cta[]
   /** Shown above download / web-app CTAs when present. */
   ctaDescription?: string
+  /** One line under the subhead, with a single link. */
+  note?: HeroNote
 }
 
 export interface ProblemContent {

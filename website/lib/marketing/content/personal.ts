@@ -56,6 +56,12 @@ export const personalContent: ProductPageContent = {
     visualSlot: "mkt-hero-personal-01",
     altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
+    note: {
+      lead: "A $57.48/year subscription, covered with an ",
+      linkLabel: "Easner Business account",
+      href: "/pricing",
+      trail: ".",
+    },
   },
   featuresLayout: "bento",
   features: [
