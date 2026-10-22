@@ -58,7 +58,7 @@ export const aiCompanyFaq: FaqItem[] = [
   {
     question: "How much does Easner cost?",
     answer:
-      "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed with us. Card payments and transfers have a processing fee. Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
+      "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed with us. Card payments and transfers have a processing fee. Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
     links: [{ label: "Pricing", href: "/pricing" }],
   },
   {

@@ -4,7 +4,7 @@ import { BUSINESS_SIGNUP_URL, CONTACT_PATH } from "../constants"
 export const pricingMetadata = {
   title: "Pricing | Accounts, Payouts, Invoicing & Payroll",
   description:
-    "Ease is $0 a month. Compare Ease Plus, Ease Pro, and Ease Gold for accounts, payouts, invoicing, and payroll. Card payments and transfers have a processing fee.",
+    "Banking services and essential business tools are always $0 a month – with more plans available as your business grows. Card payments and transfers have a processing fee.",
   keywords: [
     "Easner business pricing",
     "Ease plan",
@@ -24,7 +24,7 @@ export const pricingDefinition: AnswerDefinition = {
   term: "Easner business plans",
   question: "How much does Easner Business cost?",
   answer:
-    "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold is agreed with Easner. Card payments and transfers have a processing fee.",
+    "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold is agreed with Easner. Card payments and transfers have a processing fee.",
   facts: [
     {
       term: "Ease",

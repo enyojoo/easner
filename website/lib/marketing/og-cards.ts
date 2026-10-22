@@ -154,9 +154,9 @@ export const OG_CARDS: OgCard[] = [
     route: "pricing",
     headline: ["Pricing that", "fits your business"],
     accentLine: 1,
-    line: "Ease is $0 a month. Compare Ease Plus, Ease Pro, and Ease Gold.",
+    line: "Banking services and essential business tools are always $0 a month – with more plans available as your business grows.",
     visual: { kind: "mark" },
-    alt: "Easner pricing – Ease, Ease Plus, Ease Pro, and Ease Gold.",
+    alt: "Pricing that fits your business. Banking services and essential business tools are always $0 a month, with more plans as the business grows.",
   },
   {
     slug: "contact",
