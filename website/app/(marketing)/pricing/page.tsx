@@ -6,11 +6,7 @@ import { pricingDefinition, pricingFaq, pricingMetadata } from "@/lib/marketing/
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { answerEngineJsonLd, breadcrumbJsonLd, faqPageJsonLd, jsonLdScript, pricingOfferCatalogJsonLd } from "@/lib/marketing/structured-data"
 
-export const metadata = marketingMetadata({
-  metadata: pricingMetadata,
-  path: "/pricing",
-  titleAbsolute: pricingMetadata.title,
-})
+export const metadata = marketingMetadata({ metadata: pricingMetadata, path: "/pricing" })
 
 export default function PricingPage() {
   return (

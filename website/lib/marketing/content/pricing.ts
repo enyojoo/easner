@@ -2,7 +2,7 @@ import type { AnswerDefinition, FaqItem } from "../types"
 import { BUSINESS_SIGNUP_URL, CONTACT_PATH } from "../constants"
 
 export const pricingMetadata = {
-  title: "Pricing | Easner Business Banking",
+  title: "Pricing | Accounts, Payouts, Invoicing & Payroll",
   description:
     "Ease is $0 a month. Compare Ease Plus, Ease Pro, and Ease Gold for accounts, payouts, invoicing, and payroll. Card payments and transfers have a processing fee.",
   keywords: [
@@ -143,7 +143,7 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease Plus",
     sentence: "For a business that invoices and pays a team.",
     features: [
-      "Priority support",
+      "Everything in Ease",
       "Team of 5, with approvals",
       "5 cards, virtual or physical",
       "Unlimited invoices",
@@ -159,7 +159,7 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease Pro",
     sentence: "For a larger team.",
     features: [
-      "Priority support",
+      "Everything in Ease Plus",
       "A relationship with Easner",
       "Unlimited team, with approvals",
       "A card for each person, virtual or physical",
@@ -175,8 +175,7 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease Gold",
     sentence: "A contracted plan for a business that needs its own terms.",
     features: [
-      "Priority support",
-      "A relationship with Easner",
+      "Everything in Ease Pro",
       "Team, payouts, and pricing agreed with us",
       "Cards agreed with us",
       "API and webhooks",
