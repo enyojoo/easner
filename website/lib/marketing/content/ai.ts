@@ -143,8 +143,24 @@ export const aiSections: AiAnswerSection[] = [
   {
     href: "/checkout",
     label: "Checkout",
-    definition: checkoutDefinition,
-    faq: checkoutContent.faq,
+    definition: {
+      ...checkoutDefinition,
+      answer:
+        "Easner Checkout is an embeddable payment form for your website. Accept card, bank, wallet, and stablecoin payments, one-time or by subscription.",
+      facts: (checkoutDefinition.facts ?? []).map((fact) =>
+        fact.term === "Do you need a processor?"
+          ? { ...fact, definition: "No. You do not set up a separate payment account." }
+          : fact,
+      ),
+    },
+    faq: checkoutContent.faq.map((item) =>
+      item.question === "Do I need my own payment processor?"
+        ? {
+            ...item,
+            answer: "No. You don't need to set up or maintain a separate payment account.",
+          }
+        : item,
+    ),
     howTo: howToFromSteps(checkoutContent.integrationStepsHeadline ?? "How to add Easner Checkout", checkoutContent.integrationSteps),
   },
   {
