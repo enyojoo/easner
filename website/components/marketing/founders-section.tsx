@@ -160,7 +160,15 @@ function FounderBioDialog({
   )
 }
 
-function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () => void }) {
+function FounderCard({
+  founder,
+  onReadBio,
+  priority,
+}: {
+  founder: Founder
+  onReadBio: () => void
+  priority?: boolean
+}) {
   const slug = founderSlug(founder.name)
 
   return (
@@ -172,7 +180,7 @@ function FounderCard({ founder, onReadBio }: { founder: Founder; onReadBio: () =
           fill
           className="object-cover object-top"
           sizes="(max-width: 768px) 100vw, 28rem"
-          priority
+          priority={priority}
         />
       </div>
       <div className="flex flex-1 flex-col p-5 sm:p-6">
@@ -218,12 +226,13 @@ export function FoundersSection({ headline, subhead, founders }: FoundersSection
             {subhead}
           </p>
         </div>
-        <div className="mx-auto grid max-w-sm grid-cols-1 items-stretch gap-6 sm:max-w-md md:max-w-4xl md:grid-cols-2 md:gap-6 lg:gap-8">
-          {founders.map((founder) => (
+        <div className="mx-auto grid max-w-sm grid-cols-1 items-stretch gap-6 sm:max-w-xl sm:grid-cols-2 md:max-w-none md:gap-6 lg:grid-cols-4 lg:gap-6">
+          {founders.map((founder, index) => (
             <FounderCard
               key={founder.name}
               founder={founder}
               onReadBio={() => setActiveFounder(founder)}
+              priority={index < 2}
             />
           ))}
         </div>

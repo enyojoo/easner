@@ -1,5 +1,7 @@
 import founderChristianPhoto from "@/assets/founder-christian.png"
 import founderEnyoPhoto from "@/assets/founder-enyo.png"
+import founderRajivPhoto from "@/assets/founder-rajiv.png"
+import founderGracePhoto from "@/assets/founder-grace.png"
 import { CONTACT_PATH } from "../constants"
 import type { AnswerDefinition, CardItem, CtaBandContent, Founder } from "../types"
 
@@ -125,6 +127,28 @@ export const aboutFounders: Founder[] = [
     image: founderEnyoPhoto,
     linkedin: "https://www.linkedin.com/in/enyosam/",
     x: "https://x.com/enyosaam",
+  },
+  {
+    name: "Rajiv Jadhav",
+    title: "Chief Marketing Officer",
+    tagline: "Turning financial access into a brand people trust.",
+    bio: [
+      "Rajiv joined Easner as Chief Marketing Officer, leading brand, growth, and partner marketing for Easner's personal and business banking products – positioning, messaging, and the partnerships that bring stablecoin-native banking to new markets. His focus is making a technical infrastructure story feel simple and trustworthy to everyday customers.",
+      "Before Easner, he founded Rsquare Media, a strategic communications and reputation advisory firm serving executives, founders, and public figures, and has advised the United Nations on innovation and communications strategy – work recognized with a 2025 UN Innovation Award. That grounding in trust and narrative now shapes how Easner communicates with customers moving money across borders.",
+    ],
+    image: founderRajivPhoto,
+    linkedin: "https://www.linkedin.com/in/rajivjadhav/",
+  },
+  {
+    name: "Grace Atuluku",
+    title: "Founding Executive Fellow",
+    tagline: "Building the relationships that make revenue repeatable.",
+    bio: [
+      "Grace joined Easner as Founding Executive Fellow, focused on revenue, people, and culture as the company scales – turning early customer relationships into a repeatable sales motion and building the team and culture to support it. Her focus is the operational discipline that lets a growing fintech scale without losing the relationships that got it there.",
+      "Before Easner, she spent five years in B2B sales and account management, most recently driving growth at BlooCloud Tek Consult by helping enterprise clients adopt Cloud ERP systems like Oracle NetSuite and Sage. That background in understanding client operations and building long-term stakeholder relationships now informs how Easner grows its own customer base and culture.",
+    ],
+    image: founderGracePhoto,
+    linkedin: "https://www.linkedin.com/in/grace-atuluku-3a646a144/",
   },
 ]
 
