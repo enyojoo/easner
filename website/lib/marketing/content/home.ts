@@ -67,7 +67,7 @@ export const whyEasnerPillars: CardItem[] = [
   {
     title: "An account in your name",
     description:
-      "USD and EUR details in your name, and GBP where supported, once verified. Top up by card, Apple Pay, Google Pay or ACH.",
+      "USD, EUR, and GBP details in your name once verified. Top up by card, Apple Pay, or ACH Direct.",
     icon: "pillar-account",
   },
   {
