@@ -1,6 +1,6 @@
 import { SUPPORT_EMAIL } from "../constants"
 
-/** App Store Connect / Google Play listing copy for Easner Mobile (Personal Banking). */
+/** App Store Connect / Google Play listing copy for the Easner app (Personal Banking). */
 
 export const APP_STORE_PERSONAL_SUMMARY =
   "Easner is mobile banking for global money – send, receive, and manage funds in global and local currencies. Bank transfers and stablecoin, built so you can bank globally with Ease."

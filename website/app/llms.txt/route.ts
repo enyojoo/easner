@@ -41,13 +41,51 @@ const PAGE_CONTENT: Record<string, ProductPageContent> = {
 
 const faqLines = (items: FaqItem[]) => items.map((item) => `- **${item.question}** ${item.answer}`)
 
+function mergeFaqs(items: FaqItem[]): FaqItem[] {
+  const best = new Map<string, FaqItem>()
+  for (const item of items) {
+    const existing = best.get(item.question)
+    if (!existing || item.answer.length > existing.answer.length) best.set(item.question, item)
+  }
+  const seen = new Set<string>()
+  const ordered: FaqItem[] = []
+  for (const item of items) {
+    if (seen.has(item.question)) continue
+    seen.add(item.question)
+    ordered.push(best.get(item.question)!)
+  }
+  return ordered
+}
+
+function allLlmsFaqs(): FaqItem[] {
+  const productDefinitions = Object.values(PAGE_CONTENT).flatMap((content) =>
+    content.definition
+      ? [{ question: content.definition.question, answer: content.definition.answer }]
+      : [],
+  )
+  const productFaqs = Object.values(PAGE_CONTENT).flatMap((content) => content.faq ?? [])
+
+  return mergeFaqs([
+    { question: homeDefinition.question, answer: homeDefinition.answer },
+    { question: aboutDefinition.question, answer: aboutDefinition.answer },
+    { question: contactDefinition.question, answer: contactDefinition.answer },
+    { question: pricingDefinition.question, answer: pricingDefinition.answer },
+    ...productDefinitions,
+    ...homeFaq,
+    ...aiCompanyFaq,
+    ...contactFaq,
+    ...productFaqs,
+    ...pricingFaq,
+  ])
+}
+
 function build(): string {
   const lines: string[] = [
     "# Easner",
     "",
     `> ${EASNER_CANONICAL_DEFINITION} Easner is not a bank.`,
     "",
-    "Easner Group, Inc. is a Delaware C-corporation. Enyo Sam founded Easner in 2025 from Europe; Christian Levan joined as co-founder in 2026. The corporate operational address is in San Francisco. Its products are grouped as Personal (for your own money), Business (for your company) and Build (for platforms and partners). Cross-border payments settle on stablecoin rails – USDC, USDT and EURC on supported networks, where enabled – and pay out in local currency, so customers see ordinary balances and payments.",
+    "Easner Group, Inc. is a Delaware C-corporation. Christian Levan is Co-founder & CEO; Enyo Sam is Founder & CTO. Easner started in 2025 from Europe; Christian joined as co-founder in 2026. The corporate operational address is in San Francisco. Its products are grouped as Personal (for your own money), Business (for your company) and Build (for platforms and partners). Cross-border payments settle on stablecoin rails – USDC, USDT and EURC on supported networks, where enabled – and pay out in local currency, so customers see ordinary balances and payments.",
     "",
     "## Key facts",
     "",
@@ -96,38 +134,10 @@ function build(): string {
     `- **API access or partner programme:** ${SITE}/contact or ${CONTACT_EMAIL}. Sandbox and API reference are provided during commercial onboarding.`,
     `- **Customer support:** ${SUPPORT_EMAIL}`,
     "",
-    "## Short answers",
-    "",
-    `- **${homeDefinition.question}** ${homeDefinition.answer}`,
-    ...(homeDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
-    `- **${aboutDefinition.question}** ${aboutDefinition.answer}`,
-    `- **${contactDefinition.question}** ${contactDefinition.answer}`,
-    `- **${pricingDefinition.question}** ${pricingDefinition.answer}`,
-    ...(pricingDefinition.facts ?? []).map((fact) => `- **${fact.term}:** ${fact.definition}`),
-    "",
-    ...Object.values(PAGE_CONTENT).flatMap((content) =>
-      content.definition ? [`- **${content.definition.question}** ${content.definition.answer}`] : [],
-    ),
-    "",
     "## Frequently asked",
     "",
-    ...faqLines(homeFaq),
-    ...faqLines(aiCompanyFaq),
-    ...faqLines(contactFaq),
+    ...faqLines(allLlmsFaqs()),
     "",
-  )
-
-  for (const section of NAV_SECTIONS) {
-    for (const item of section.items) {
-      const faq = PAGE_CONTENT[item.href]?.faq
-      if (!faq?.length) continue
-      lines.push(`### ${item.label}`, "", ...faqLines(faq), "")
-    }
-  }
-
-  lines.push("### Pricing", "", ...faqLines(pricingFaq), "")
-
-  lines.push(
     "## Company",
     "",
     `- [Home](${SITE}/): Stablecoin-native banking for individuals and businesses.`,
@@ -136,15 +146,12 @@ function build(): string {
     `- [Answers](${SITE}/answers): Direct answers to what Easner is and how each product works.`,
     `- [Contact](${SITE}/contact): Sales, partnerships and booking a call.`,
     "",
-    "## Legal",
+    "## Optional",
     "",
     `- [Terms of Service](${SITE}/terms)`,
     `- [Privacy Policy](${SITE}/privacy)`,
     `- [KYC/KYB and AML Policy](${SITE}/compliance)`,
     `- [Delete Account](${SITE}/delete-account)`,
-    "",
-    "## Optional",
-    "",
     `- [Sitemap](${SITE}/sitemap.xml): every public page.`,
     "",
   )

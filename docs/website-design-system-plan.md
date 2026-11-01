@@ -212,7 +212,7 @@ Proposals only. Locked headlines are untouched. Each proposal follows the voice 
 | Checkout | Card, bank and USDC payments on your own site, with Easner as merchant of record. |
 | Payment Links | Get paid with a link – one-time or recurring, no website needed. |
 | Whitelabel programs | Launch cross-border payments under your own brand on Easner infrastructure. |
-| Stablecoin Payments | Send and receive USDC and EURC, where enabled, alongside your currency balances. |
+| Stablecoin Payments | Send and receive USDC, USDT and EURC on supported networks, where enabled, alongside your currency balances. |
 | Invoicing | Invoices your customers can pay by card, bank or stablecoin. |
 | Payroll | Pay your team in 80+ countries, with approvals before any money moves. |
 | Cards | Spend controls for you and your team – when available. |

@@ -1,4 +1,4 @@
-# Easner Mobile – App Store marketing
+# Easner app – App Store marketing
 
 Source of truth: [`lib/marketing/content/app-store.ts`](lib/marketing/content/app-store.ts)  
 Website alignment: [`/personal`](https://www.easner.com/personal)

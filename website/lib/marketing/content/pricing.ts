@@ -29,12 +29,12 @@ export const pricingDefinition: AnswerDefinition = {
     {
       term: "Ease",
       definition:
-        "$0 a month. Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, and 10 invoices a month. 0 Included Free payouts a month.",
+        "$0 a month. Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card (when available), a team of 1, and 10 invoices a month. 0 Included Free payouts a month.",
     },
     {
       term: "Ease Plus",
       definition:
-        "$39 a month, billed yearly, or $49 a month. Saves $120 a year on annual billing. Team of 5 with approvals, 5 cards, unlimited invoices, and 5 Included Free payouts a month.",
+        "$39 a month, billed yearly, or $49 a month. Saves $120 a year on annual billing. Team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month.",
     },
     {
       term: "Ease Pro",
@@ -61,12 +61,12 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What does Ease include?",
     answer:
-      "Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, and 10 invoices a month. Ease includes 0 Included Free payouts a month.",
+      "Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card (when available), a team of 1, and 10 invoices a month. Ease includes 0 Included Free payouts a month.",
   },
   {
     question: "What do Ease Plus and Ease Pro add?",
     answer:
-      "Ease Plus is for a business that invoices and pays a team: a team of 5 with approvals, 5 cards, unlimited invoices, and 5 Included Free payouts a month. Ease Pro is for a larger team: a relationship with Easner, an unlimited team, a card for each person, unlimited payroll, and 15 Included Free payouts a month.",
+      "Ease Plus is for a business that invoices and pays a team: a team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month. Ease Pro is for a larger team: a relationship with Easner, an unlimited team, a card for each person (when available), unlimited payroll, and 15 Included Free payouts a month.",
   },
   {
     question: "How do I choose Ease Gold?",
@@ -82,7 +82,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "Is a personal subscription covered by a business account?",
     answer:
-      "A $57.48/year subscription is covered with an Easner Business account. Ease and Ease Plus for personal banking are chosen in Easner Mobile.",
+      "A $57.48/year subscription is covered with an Easner Business account. Ease and Ease Plus for personal banking are chosen in the Easner app.",
     links: [{ label: "Personal Banking", href: "/personal" }],
   },
 ]
@@ -130,7 +130,7 @@ export const pricingPlans: PricingPlan[] = [
     features: [
       "Priority support",
       "USD, EUR, GBP, and Stablecoin",
-      "1 virtual card",
+      "1 virtual card (when available)",
       "Team of 1",
       "10 invoices a month",
     ],
@@ -145,7 +145,7 @@ export const pricingPlans: PricingPlan[] = [
     features: [
       "Everything in Ease",
       "Team of 5, with approvals",
-      "5 cards, virtual or physical",
+      "5 cards (when available), virtual or physical",
       "Unlimited invoices",
       "5 Included Free payouts a month",
     ],
@@ -162,7 +162,7 @@ export const pricingPlans: PricingPlan[] = [
       "Everything in Ease Plus",
       "A relationship with Easner",
       "Unlimited team, with approvals",
-      "A card for each person, virtual or physical",
+      "A card for each person (when available), virtual or physical",
       "Unlimited payroll",
       "15 Included Free payouts a month",
     ],
@@ -247,7 +247,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
   {
     id: "cards",
     label: "Cards",
-    rows: [{ label: "Cards", cells: ["1 virtual", "5, virtual or physical", "1 per person, virtual or physical", "Contract"] }],
+    rows: [{ label: "Cards", cells: ["1 virtual (when available)", "5 (when available), virtual or physical", "1 per person (when available), virtual or physical", "Contract"] }],
   },
   {
     id: "send-and-payouts",

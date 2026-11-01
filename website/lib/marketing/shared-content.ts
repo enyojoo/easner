@@ -2,7 +2,7 @@ import type { CardItem, CtaBandContent } from "./types"
 import { CONTACT_PATH } from "./constants"
 
 export const REGULATORY_FOOTER_PARAGRAPHS = [
-  'Easner Group, Inc. ("Easner") is a financial technology company, not a bank or investment adviser. Banking, payment, verification, and card services available through Easner Mobile (Easner Personal Banking) and Easner Business (Easner Business Banking) are provided by licensed partners. Easner does not provide investment, legal, tax, or financial advice.',
+  'Easner Group, Inc. ("Easner") is a financial technology company, not a bank or investment adviser. Banking, payment, verification, and card services available through the Easner app (Easner Personal Banking) and Easner Business (Easner Business Banking) are provided by licensed partners. Easner does not provide investment, legal, tax, or financial advice.',
   "Easner is not FDIC-insured and does not hold customer deposits. Banking services are provided by third-party banking partners, not by Easner.",
   "Where enabled, stablecoin and wallet features are supported through infrastructure partners and may operate on public blockchains. Digital assets are not legal tender, are not backed by a government, and are not FDIC-insured or protected by SIPC. Blockchain transactions may be public and irreversible.",
   "Corporate and personal card products, when available, are issued by a third-party issuer and are subject to credit approval.",
@@ -112,7 +112,7 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Stablecoin Payments",
     description:
-      "Send and receive stablecoins such as USDC and EURC, where enabled, alongside your currency balances.",
+      "Send and receive USDC, USDT and EURC on supported networks, where enabled, alongside your currency balances.",
     link: "/stablecoin",
     icon: "mkt-thumb-stablecoin",
   },

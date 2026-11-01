@@ -59,9 +59,9 @@ export const stablecoinContent: ProductPageContent = {
     {
       title: "Stablecoin receive",
       description:
-        "Deposit USDC and EURC to your Business account – deposit address, network details, and ledger visibility in one place.",
+        "Deposit USDC, USDT and EURC to your Business account – deposit address, network details, and ledger visibility in one place.",
       visualSlot: "mkt-ui-stablecoin-receive",
-      altText: "Stablecoin deposits in USDC and EURC with their status",
+      altText: "Stablecoin deposits in USDC, USDT and EURC with their status",
     },
     {
       title: "Terminal collections",
@@ -130,7 +130,7 @@ export const stablecoinContent: ProductPageContent = {
     {
       question: "How does Easner move money internationally?",
       answer:
-        "Easner settles cross-border payments on stablecoin rails – primarily USDC and EURC – then pays out in local currency at the destination. You send dollars and your recipient is paid in their own currency. The settlement step happens in between, and you never handle it.",
+        "Easner settles cross-border payments on stablecoin rails – USDC, USDT and EURC on supported networks, where enabled – then pays out in local currency at the destination. You send dollars and your recipient is paid in their own currency. The settlement step happens in between, and you never handle it.",
     },
     {
       question: "Do I need a crypto wallet to use Easner?",

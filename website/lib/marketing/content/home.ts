@@ -10,7 +10,7 @@ export const homeDefinition: AnswerDefinition = {
     {
       term: "Easner Personal Banking",
       definition:
-        "A multi-currency money app for your own finances. Hold USD and EUR, get account details in your name, and send money from the Easner app.",
+        "A multi-currency money app for your own finances. Hold USD and EUR, and GBP where supported, get account details in your name, and send money from the Easner app.",
     },
     {
       term: "Easner Business Banking",
@@ -25,7 +25,7 @@ export const homeDefinition: AnswerDefinition = {
     {
       term: "Where you can send",
       definition:
-        "Bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, and Europe. Transfers typically arrive in minutes to hours.",
+        "Bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe. Transfers typically arrive in minutes to hours.",
     },
   ],
 }
@@ -67,13 +67,13 @@ export const whyEasnerPillars: CardItem[] = [
   {
     title: "An account in your name",
     description:
-      "USD, EUR, and GBP details in your name once verified. Top up by card, Apple Pay, or ACH Direct.",
+      "USD and EUR details in your name, and GBP where supported, once verified. Top up by card, Apple Pay, Google Pay or ACH.",
     icon: "pillar-account",
   },
   {
     title: "Reach 80+ countries",
     description:
-      "Pay suppliers, contractors, and family across Africa, Latin America, Asia, and Europe.",
+      "Pay suppliers, contractors, and family across Africa, Latin America, Asia, the Middle East and Europe.",
     icon: "pillar-reach",
   },
   {
@@ -85,7 +85,7 @@ export const whyEasnerPillars: CardItem[] = [
   {
     title: "Dollars or stablecoins",
     description:
-      "Receive USDC and EURC alongside your currency balances, and send to wallets or local accounts.",
+      "Receive USDC, USDT and EURC alongside your currency balances, and send to wallets or local accounts.",
     icon: "pillar-stablecoin",
   },
 ]
@@ -131,7 +131,7 @@ export const solutionsPersonas = [
 
 export const corridorContent = {
   headline: "At home. Around the world.",
-  body: "Hold USD and EUR, and GBP where supported. Pay out to bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia and Europe, typically within minutes to hours.",
+  body: "Hold USD and EUR, and GBP where supported. Pay out to bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe, typically within minutes to hours.",
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
@@ -173,7 +173,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Where can I send money, and how long does it take?",
     answer:
-      "To bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia and Europe. Transfers typically arrive in minutes to hours, same-day where supported, and the fee, the rate and what your recipient gets are shown before you confirm.",
+      "To bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe. Transfers typically arrive in minutes to hours, same-day where supported, and the fee, the rate and what your recipient gets are shown before you confirm.",
     links: [{ label: "Check eligibility and restrictions", href: "/compliance" }],
   },
   {

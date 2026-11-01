@@ -173,7 +173,7 @@ interface MobileApplicationInput {
 }
 
 /**
- * Easner Mobile as a MobileApplication entity. Intentionally omits `offers` and
+ * The Easner app as a MobileApplication entity. Intentionally omits `offers` and
  * `aggregateRating`: neither store price nor review scores are verified here, and
  * inventing either would breach Google's structured-data policies. Adding a verified
  * `offers` block later is what makes this eligible for app rich results.

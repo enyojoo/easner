@@ -75,9 +75,9 @@ export const payrollContent: ProductPageContent = {
     {
       title: "Payee self-service",
       description:
-        "Payees connect and manage how they receive funds from Easner Mobile – no back-and-forth to collect payment details.",
+        "Payees connect and manage how they receive funds from the Easner app – no back-and-forth to collect payment details.",
       visualSlot: "mkt-ui-payroll-mobile",
-      altText: "Easner Mobile payee payroll connection screen",
+      altText: "Easner app payee payroll connection screen",
     },
     {
       title: "Reconciliation on one ledger",

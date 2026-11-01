@@ -50,7 +50,7 @@ export const cardsContent: ProductPageContent = {
     {
       title: "Virtual and physical cards",
       description:
-        "Issue virtual cards when available or ship physical cards to cardholders – from Easner Business or Easner Mobile.",
+        "Issue virtual cards when available or ship physical cards to cardholders – from Easner Business or the Easner app.",
       visualSlot: "mkt-ui-cards-issue",
       altText: "Easner issue card flow with virtual and physical options",
     },
@@ -147,7 +147,7 @@ export const cardsContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Add cards to your Easner account",
-    subhead: "Corporate cards on Easner Business. Personal cards on Easner Mobile, when available.",
+    subhead: "Corporate cards on Easner Business. Personal cards on the Easner app, when available.",
     ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_cta_band" }],
   },
 }

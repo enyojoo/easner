@@ -32,7 +32,7 @@ export const personalContent: ProductPageContent = {
   metadata: {
     title: "Easner Personal Banking | Multi-Currency Money App",
     description:
-      "Get account details in your name, hold a multi-currency balance, and top up by card, Apple Pay, or ACH Direct. Send money to 80+ countries from one app.",
+      "Get account details in your name, hold a multi-currency balance, and top up by card, Apple Pay, Google Pay or ACH. Send money to 80+ countries from one app.",
     keywords: [
       "receive money from abroad",
       "USD and EUR account details",
@@ -70,28 +70,28 @@ export const personalContent: ProductPageContent = {
       description:
         "Pay people and businesses by bank transfer, wallet, or mobile money. Stablecoin settlement moves it across borders.",
       visualSlot: "mkt-ui-personal-send",
-      altText: "Easner Mobile send money screen",
+      altText: "Easner app send money screen",
     },
     {
       title: "Accounts in your name",
       description:
         "Share account details in your own name so clients and family can pay you, or use a stablecoin deposit address.",
       visualSlot: "mkt-ui-personal-receive",
-      altText: "Easner Mobile receive screen showing shareable account details",
+      altText: "Easner app receive screen showing shareable account details",
     },
     {
       title: "Quick sending",
       description:
         "Save the people you pay often, and use an EASETAG to reach them without entering details each time.",
       visualSlot: "mkt-ui-personal-recipients",
-      altText: "Easner Mobile recipients and EASETAG",
+      altText: "Easner app recipients and EASETAG",
     },
     {
       title: "Account security",
       description:
         "Authenticator, PIN and Face ID protect every sign-in and every new recipient.",
       visualSlot: "mkt-ui-personal-security",
-      altText: "Easner Mobile security settings",
+      altText: "Easner app security settings",
     },
   ],
   useCasesHeadline: "Built for the way you live",
