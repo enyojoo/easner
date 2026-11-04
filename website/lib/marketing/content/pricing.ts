@@ -24,31 +24,37 @@ export const pricingDefinition: AnswerDefinition = {
   term: "Easner business plans",
   question: "How much does Easner Business cost?",
   answer:
-    "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold is agreed with Easner. Card payments and transfers have a processing fee.",
+    "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold starts from $1,000 a month, credited by your Easner fees. Each plan has an Easner fee per transfer: 1% on Ease, 0.5% on Ease Plus, 0.25% on Ease Pro (0.20% on monthly volume above $1 million), and 0.20% on Ease Gold. That fee is on top of the provider's cost for the transfer, which is shown before you confirm.",
   facts: [
     {
       term: "Ease",
       definition:
-        "$0 a month. Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card (when available), a team of 1, and 10 invoices a month. 0 Included Free payouts a month.",
+        "$0 a month, with a 1% Easner fee per transfer. Priority support, USD, EUR, GBP, and Stablecoin, 1 virtual card (when available), a team of 1, and 10 invoices a month. 0 Included Free payouts a month.",
     },
     {
       term: "Ease Plus",
       definition:
-        "$39 a month, billed yearly, or $49 a month. Saves $120 a year on annual billing. Team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month.",
+        "$39 a month, billed yearly, or $49 a month, with a 0.5% Easner fee per transfer. Saves $120 a year on annual billing. Team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month.",
     },
     {
       term: "Ease Pro",
       definition:
-        "$159 a month, billed yearly, or $199 a month. Saves $480 a year on annual billing. A relationship with Easner, an unlimited team, a card for each person, unlimited payroll, and 15 Included Free payouts a month.",
+        "$159 a month, billed yearly, or $199 a month, with a 0.25% Easner fee per transfer (0.20% on monthly volume above $1 million). Saves $480 a year on annual billing. A relationship with Easner, an unlimited team, a card for each person, unlimited payroll, and 15 Included Free payouts a month.",
     },
     {
       term: "Ease Gold",
-      definition: "A contracted plan. Talk to us. It is not a public price and not a checkout button.",
+      definition:
+        "From $1,000 a month, credited by your Easner fees, with a 0.20% Easner fee per transfer. Agreed in a contract: team, payouts, and pricing agreed with us.",
+    },
+    {
+      term: "Easner fee per transfer",
+      definition:
+        "Easner's own fee on a transfer, on top of the provider's cost for that route. The provider's cost is passed through at cost and shown before you confirm; Easner never names the provider or publishes its cost.",
     },
     {
       term: "Included Free payouts",
       definition:
-        "The monthly payout allowance: 0 on Ease, 5 on Ease Plus, 15 on Ease Pro, and Contract on Ease Gold. The word Free names the allowance. It does not mean a transfer has no fee.",
+        "The monthly payout allowance: 0 on Ease, 5 on Ease Plus, 15 on Ease Pro, and Contract on Ease Gold. The word Free names the allowance: it waives Easner's fee on that payout. Provider costs still apply.",
     },
   ],
 }
@@ -56,7 +62,8 @@ export const pricingDefinition: AnswerDefinition = {
 export const pricingFaq: FaqItem[] = [
   {
     question: "How much does an Easner business plan cost?",
-    answer: pricingDefinition.answer,
+    answer:
+      "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold starts from $1,000 a month, credited by your Easner fees, and is agreed in a contract.",
   },
   {
     question: "What does Ease include?",
@@ -66,23 +73,33 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What do Ease Plus and Ease Pro add?",
     answer:
-      "Ease Plus is for a business that invoices and pays a team: a team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month. Ease Pro is for a larger team: a relationship with Easner, an unlimited team, a card for each person (when available), unlimited payroll, and 15 Included Free payouts a month.",
+      "Ease Plus is for a business that invoices and pays a team: a team of 5 with approvals, 5 cards (when available), unlimited invoices, and 5 Included Free payouts a month. Ease Pro is for a larger team: a named relationship with Easner, an unlimited team, a card for each person (when available), unlimited payroll, and 15 Included Free payouts a month.",
   },
   {
     question: "How do I choose Ease Gold?",
     answer:
-      "Ease Gold is agreed with us. Talk to us from the pricing page. Opening an account does not pre-select Ease Plus, Ease Pro, or Ease Gold.",
+      "Ease Gold starts from $1,000 a month, credited by your Easner fees, with terms agreed in a contract. Talk to us from the pricing page. Opening an account does not pre-select Ease Plus, Ease Pro, or Ease Gold.",
     links: [{ label: "Contact", href: "/contact" }],
   },
   {
     question: "Do card payments and transfers have a fee?",
     answer:
-      "Yes. Card payments and transfers have a processing fee. Included Free payouts is the monthly allowance on a plan. It does not mean a transfer has no fee.",
+      "Yes. Every plan carries an Easner fee per transfer: 1% on Ease, 0.5% on Ease Plus, 0.25% on Ease Pro (0.20% on monthly volume above $1 million), and 0.20% on Ease Gold. That's Easner's fee only, on top of the provider's cost for the transfer; the two combine into one fee shown before you confirm. Easner adds no margin to the exchange rate, and doesn't publish provider costs since they vary by route and change over time. Included Free payouts is the monthly allowance on a plan: it waives Easner's fee, but provider costs still apply.",
+  },
+  {
+    question: "Which plan should I choose?",
+    answer:
+      "As a guide, Ease suits a business sending up to about $8,000 a month, Ease Plus about $8,000 to $48,000, Ease Pro about $48,000 to $336,000, and Ease Gold above that or when you need your own terms.",
+  },
+  {
+    question: "Can I change plans?",
+    answer:
+      "Yes. Moving to a higher plan starts straight away. Moving to a lower plan takes effect at your next billing date.",
   },
   {
     question: "Is a personal subscription covered by a business account?",
     answer:
-      "A $57.48/year subscription is covered with an Easner Business account. Ease and Ease Plus for personal banking are chosen in the Easner app.",
+      "Yes. The Personal Ease Plus subscription ($4.79 a month, billed yearly at $57.48 a year, or $5.99 a month) is covered by a Business Ease Plus account or above — a free Business Ease account does not cover it. Personal Ease and Personal Ease Plus are chosen in the Easner app.",
     links: [{ label: "Personal Banking", href: "/personal" }],
   },
 ]
@@ -102,6 +119,8 @@ export interface PricingPrice {
   interval?: string
   /** Annual savings line. Omitted on monthly. */
   save?: string
+  /** Easner's own fee per transfer, worded explicitly as Easner's fee — never the total transfer cost. */
+  fee: string
 }
 
 export interface PricingPlan {
@@ -135,8 +154,8 @@ export const pricingPlans: PricingPlan[] = [
       "10 invoices a month",
     ],
     cta: openAccount("ease"),
-    annual: { amount: 0, interval: "a month" },
-    monthly: { amount: 0, interval: "a month" },
+    annual: { amount: 0, interval: "a month", fee: "1% Easner fee per transfer" },
+    monthly: { amount: 0, interval: "a month", fee: "1% Easner fee per transfer" },
   },
   {
     id: "ease_plus",
@@ -151,8 +170,8 @@ export const pricingPlans: PricingPlan[] = [
     ],
     highlighted: true,
     cta: openAccount("ease_plus"),
-    annual: { amount: 39, interval: "a month, billed yearly", save: "Saves $120 a year" },
-    monthly: { amount: 49, interval: "a month" },
+    annual: { amount: 39, interval: "a month, billed yearly", save: "Saves $120 a year", fee: "0.5% Easner fee per transfer" },
+    monthly: { amount: 49, interval: "a month", fee: "0.5% Easner fee per transfer" },
   },
   {
     id: "ease_pro",
@@ -167,8 +186,13 @@ export const pricingPlans: PricingPlan[] = [
       "15 Included Free payouts a month",
     ],
     cta: openAccount("ease_pro"),
-    annual: { amount: 159, interval: "a month, billed yearly", save: "Saves $480 a year" },
-    monthly: { amount: 199, interval: "a month" },
+    annual: {
+      amount: 159,
+      interval: "a month, billed yearly",
+      save: "Saves $480 a year",
+      fee: "0.25% Easner fee per transfer, 0.20% above $1 million a month",
+    },
+    monthly: { amount: 199, interval: "a month", fee: "0.25% Easner fee per transfer, 0.20% above $1 million a month" },
   },
   {
     id: "ease_gold",
@@ -185,8 +209,8 @@ export const pricingPlans: PricingPlan[] = [
       href: CONTACT_PATH,
       analyticsLocation: "pricing_plan_ease_gold",
     },
-    annual: { amount: null },
-    monthly: { amount: null },
+    annual: { amount: 1000, interval: "a month, credited by your Easner fees", fee: "0.20% Easner fee per transfer" },
+    monthly: { amount: 1000, interval: "a month, credited by your Easner fees", fee: "0.20% Easner fee per transfer" },
   },
 ]
 
@@ -242,7 +266,13 @@ export const pricingComparison: PricingComparisonGroup[] = [
   {
     id: "accounts",
     label: "Accounts",
-    rows: [{ label: "USD, EUR, GBP, and Stablecoin", cells: ["Yes", "Yes", "Yes", "Yes"] }],
+    rows: [
+      { label: "USD, EUR, GBP, and Stablecoin", cells: ["Yes", "Yes", "Yes", "Yes"] },
+      {
+        label: "Easner fee per transfer",
+        cells: ["1%", "0.5%", "0.25%; 0.20% above $1M/mo", "0.20%"],
+      },
+    ],
   },
   {
     id: "cards",
@@ -292,10 +322,11 @@ export const pricingComparison: PricingComparisonGroup[] = [
     id: "support",
     label: "Support",
     rows: [
-      { label: "Priority support", cells: ["Yes", "Yes", "Yes", "Yes"] },
+      { label: "Priority support", cells: ["Standard", "Standard", "Priority", "Priority, with a named relationship"] },
       { label: "A relationship with Easner", cells: ["No", "No", "Yes", "Yes"] },
     ],
   },
 ]
 
-export const pricingFeeLine = "Card payments and transfers have a processing fee."
+export const pricingFeeLine =
+  "The percentages above are Easner's own fee, on top of the provider's cost for the transfer – not the total cost. The two combine into one processing fee shown before you confirm, and Easner adds no margin to the exchange rate. Provider costs vary by route and change over time, so they're shown before you confirm rather than listed here. Card payments you take cost the card processor's published price, with no Easner fee. Bank payments you take cost the provider's cost plus a 0.40% Easner fee, capped at $2.50."

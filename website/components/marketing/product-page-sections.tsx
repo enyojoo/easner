@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import type { ProductPageContent } from "@/lib/marketing/types"
 import { CONTACT_PATH } from "@/lib/marketing/constants"
 import { MarketingLink } from "./marketing-link"
@@ -16,9 +17,11 @@ import { FaqSection } from "./faq-section"
 
 interface ProductPageSectionsProps {
   content: ProductPageContent
+  /** Rendered after use cases / tiers, before the FAQ. For a page-specific section that doesn't fit the generic content shape. */
+  beforeFaq?: ReactNode
 }
 
-export function ProductPageSections({ content }: ProductPageSectionsProps) {
+export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsProps) {
   return (
     <>
       <SplitSection
@@ -133,6 +136,7 @@ export function ProductPageSections({ content }: ProductPageSectionsProps) {
           </div>
         </div>
       )}
+      {beforeFaq}
       {content.faq && <FaqSection items={content.faq} />}
       <ComplianceStrip note={content.complianceNote} />
       <CtaBand content={content.ctaBand} />

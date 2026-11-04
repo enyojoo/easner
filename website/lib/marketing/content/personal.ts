@@ -28,6 +28,46 @@ const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
 ]
 
+export interface PersonalPlan {
+  id: string
+  name: string
+  sentence: string
+  features: string[]
+  highlighted?: boolean
+  price: { amount: number | null; interval?: string; save?: string }
+}
+
+/** Personal Ease / Personal Ease Plus. Chosen and billed in the Easner app, not on the website. */
+export const personalPlans: PersonalPlan[] = [
+  {
+    id: "personal_ease",
+    name: "Personal Ease",
+    sentence: "Everyday banking for your own money.",
+    features: [
+      "USD and EUR, and GBP where supported",
+      "Account details in your name",
+      "EASETAG transfers and recipients",
+      "1 virtual card (when available)",
+    ],
+    price: { amount: 0, interval: "a month" },
+  },
+  {
+    id: "personal_ease_plus",
+    name: "Personal Ease Plus",
+    sentence: "For people who send more often.",
+    features: [
+      "Everything in Personal Ease",
+      "5 cards (when available), virtual or physical",
+      "3 Included Free withdrawals a month",
+    ],
+    highlighted: true,
+    price: { amount: 4.79, interval: "a month, billed yearly ($57.48 a year)", save: "Saves $14.40 a year (20%)" },
+  },
+]
+
+export const personalPlansFeeNote =
+  "Personal Ease Plus is $5.99 a month, or $4.79 a month billed yearly. Covered free with a Business Ease Plus account or above. Chosen and billed in the Easner app."
+
 export const personalContent: ProductPageContent = {
   metadata: {
     title: "Easner Personal Banking | Multi-Currency Money App",
@@ -57,8 +97,8 @@ export const personalContent: ProductPageContent = {
     altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
     note: {
-      lead: "A $57.48/year subscription, covered with an ",
-      linkLabel: "Easner Business account",
+      lead: "Personal Ease Plus is $4.79 a month, billed yearly ($57.48 a year), covered with a ",
+      linkLabel: "Business Ease Plus account or above",
       href: "/pricing",
       trail: ".",
     },
@@ -141,6 +181,12 @@ export const personalContent: ProductPageContent = {
       question: "Which currencies can I hold?",
       answer:
         "USD and EUR, and GBP where supported for your profile. Each balance gets account details in your name, so you can get paid directly.",
+    },
+    {
+      question: "What does Personal Ease Plus cost?",
+      answer:
+        "Personal Ease Plus is $5.99 a month, or $4.79 a month billed yearly ($57.48 a year), which saves $14.40 a year. It's covered free with a Business Ease Plus account or above. You choose and manage it in the Easner app.",
+      links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
       question: "How do I add money to my account?",

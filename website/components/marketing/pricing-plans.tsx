@@ -68,6 +68,7 @@ export function PricingPlans() {
                 )}
               </p>
               {price.save && <p className="text-[13px] font-semibold leading-[18px] text-success-text">{price.save}</p>}
+              <p className="text-[13px] leading-[18px] text-web-meta">{price.fee}</p>
               <p className="text-sm leading-[22px] text-web-body md:min-h-11">{plan.sentence}</p>
               <ul className="grid flex-1 gap-2">
                 {plan.features.map((feature) => (

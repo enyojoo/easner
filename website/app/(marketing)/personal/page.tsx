@@ -1,4 +1,5 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
+import { PersonalPlans } from "@/components/marketing/personal-plans"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, faqPageJsonLd, CORRIDOR_AREA_SERVED, financialServiceJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
@@ -30,7 +31,7 @@ export default function PersonalPage() {
           ...productAnswerJsonLd(personalContent, "/personal"),
         ])}
       />
-      <ProductPageSections content={personalContent} />
+      <ProductPageSections content={personalContent} beforeFaq={<PersonalPlans />} />
     </>
   )
 }
