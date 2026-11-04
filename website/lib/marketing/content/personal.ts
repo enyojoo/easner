@@ -37,11 +37,11 @@ export interface PersonalPlan {
   price: { amount: number | null; interval?: string; save?: string }
 }
 
-/** Personal Ease / Personal Ease Plus. Chosen and billed in the Easner app, not on the website. */
+/** Ease / Ease Plus for personal banking. Chosen and billed in the Easner app, not on the website. */
 export const personalPlans: PersonalPlan[] = [
   {
     id: "personal_ease",
-    name: "Personal Ease",
+    name: "Ease",
     sentence: "Everyday banking for your own money.",
     features: [
       "USD and EUR, and GBP where supported",
@@ -53,10 +53,10 @@ export const personalPlans: PersonalPlan[] = [
   },
   {
     id: "personal_ease_plus",
-    name: "Personal Ease Plus",
+    name: "Ease Plus",
     sentence: "For people who send more often.",
     features: [
-      "Everything in Personal Ease",
+      "Everything in Ease",
       "5 cards (when available), virtual or physical",
       "3 Included Free withdrawals a month",
     ],
@@ -66,7 +66,7 @@ export const personalPlans: PersonalPlan[] = [
 ]
 
 export const personalPlansFeeNote =
-  "Personal Ease Plus is $5.99 a month, or $4.79 a month billed yearly. Covered free with a Business Ease Plus account or above. Chosen and billed in the Easner app."
+  "Ease Plus is $5.99 a month, or $4.79 a month billed yearly. Covered free with an Ease Plus account or above. Chosen and billed in the Easner app."
 
 export const personalContent: ProductPageContent = {
   metadata: {
@@ -97,8 +97,8 @@ export const personalContent: ProductPageContent = {
     altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
     note: {
-      lead: "Personal Ease Plus is $4.79 a month, billed yearly ($57.48 a year), covered with a ",
-      linkLabel: "Business Ease Plus account or above",
+      lead: "Ease Plus is $4.79 a month, billed yearly ($57.48 a year), covered with an ",
+      linkLabel: "Ease Plus account or above",
       href: "/pricing",
       trail: ".",
     },
@@ -183,9 +183,9 @@ export const personalContent: ProductPageContent = {
         "USD and EUR, and GBP where supported for your profile. Each balance gets account details in your name, so you can get paid directly.",
     },
     {
-      question: "What does Personal Ease Plus cost?",
+      question: "What does Ease Plus cost?",
       answer:
-        "Personal Ease Plus is $5.99 a month, or $4.79 a month billed yearly ($57.48 a year), which saves $14.40 a year. It's covered free with a Business Ease Plus account or above. You choose and manage it in the Easner app.",
+        "Ease Plus is $5.99 a month, or $4.79 a month billed yearly ($57.48 a year), which saves $14.40 a year. It's covered free with an Ease Plus account or above. You choose and manage it in the Easner app.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {

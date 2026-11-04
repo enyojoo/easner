@@ -99,7 +99,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "Is a personal subscription covered by a business account?",
     answer:
-      "Yes. The Personal Ease Plus subscription ($4.79 a month, billed yearly at $57.48 a year, or $5.99 a month) is covered by a Business Ease Plus account or above — a free Business Ease account does not cover it. Personal Ease and Personal Ease Plus are chosen in the Easner app.",
+      "Yes. The Ease Plus subscription ($4.79 a month, billed yearly at $57.48 a year, or $5.99 a month) is covered by an Ease Plus account or above — a free Ease account does not cover it. Ease and Ease Plus for personal banking are chosen in the Easner app.",
     links: [{ label: "Personal Banking", href: "/personal" }],
   },
 ]

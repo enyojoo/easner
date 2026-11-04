@@ -13,7 +13,7 @@ export function PersonalPlans() {
       <div className="mx-auto max-w-3xl text-center">
         <Headline level="section">Personal plans</Headline>
         <p className={cn("mx-auto mt-3 max-w-xl text-web-body", MARKETING_BODY_TEXT)}>
-          Everyday banking is always free, with Personal Ease Plus for people who send more often.
+          Everyday banking is always free, with Ease Plus for people who send more often.
         </p>
       </div>
       <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
