@@ -24,7 +24,7 @@ export const pricingDefinition: AnswerDefinition = {
   term: "Easner business plans",
   question: "How much does Easner Business cost?",
   answer:
-    "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold starts from $1,000 a month, credited by your Easner fees. Each plan has an Easner fee per transfer: 1% on Ease, 0.5% on Ease Plus, 0.25% on Ease Pro (0.20% on monthly volume above $1 million), and 0.20% on Ease Gold. That fee is on top of the provider's cost for the transfer, which is shown before you confirm.",
+    "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month, and saves $120 a year on annual billing. Ease Pro is $159 a month billed yearly, or $199 a month, and saves $480 a year. Ease Gold starts from $1,000 a month. Each plan has an Easner fee per transfer: 1% on Ease, 0.5% on Ease Plus, 0.25% on Ease Pro (0.20% on monthly volume above $1 million), and 0.20% on Ease Gold. That fee is on top of the provider's cost for the transfer, which is shown before you confirm.",
   facts: [
     {
       term: "Ease",
@@ -44,7 +44,7 @@ export const pricingDefinition: AnswerDefinition = {
     {
       term: "Ease Gold",
       definition:
-        "From $1,000 a month, credited by your Easner fees, with a 0.20% Easner fee per transfer. Agreed in a contract: team, payouts, and pricing agreed with us.",
+        "From $1,000 a month, with a 0.20% Easner fee per transfer. Agreed in a contract: team, payouts, and pricing agreed with us.",
     },
     {
       term: "Easner fee per transfer",
@@ -63,7 +63,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "How much does an Easner business plan cost?",
     answer:
-      "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold starts from $1,000 a month, credited by your Easner fees, and is agreed in a contract.",
+      "Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold starts from $1,000 a month, and is agreed in a contract.",
   },
   {
     question: "What does Ease include?",
@@ -78,7 +78,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "How do I choose Ease Gold?",
     answer:
-      "Ease Gold starts from $1,000 a month, credited by your Easner fees, with terms agreed in a contract. Talk to us from the pricing page. Opening an account does not pre-select Ease Plus, Ease Pro, or Ease Gold.",
+      "Ease Gold starts from $1,000 a month, with terms agreed in a contract. Talk to us from the pricing page. Opening an account does not pre-select Ease Plus, Ease Pro, or Ease Gold.",
     links: [{ label: "Contact", href: "/contact" }],
   },
   {
@@ -209,8 +209,8 @@ export const pricingPlans: PricingPlan[] = [
       href: CONTACT_PATH,
       analyticsLocation: "pricing_plan_ease_gold",
     },
-    annual: { amount: 1000, interval: "a month, credited by your Easner fees", fee: "0.20% Easner fee per transfer" },
-    monthly: { amount: 1000, interval: "a month, credited by your Easner fees", fee: "0.20% Easner fee per transfer" },
+    annual: { amount: 1000, interval: "a month", fee: "0.20% Easner fee per transfer" },
+    monthly: { amount: 1000, interval: "a month", fee: "0.20% Easner fee per transfer" },
   },
 ]
 
