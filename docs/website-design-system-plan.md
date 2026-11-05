@@ -26,7 +26,7 @@ From the September 5 plan and later user corrections. These are not reopened her
 - Homepage product grid: keep every card, its position and its link. Do not group the cards.
 - Existing section order on every page.
 - **Direct Local Transfer is a rail, not a product.** Never market it by name.
-- Cards are "when available". No live-card language.
+- Do not use "(when available)" on card copy in marketing surfaces.
 - No em-dashes in customer-facing copy (use en-dashes), qualifiers inline and once (Voice and Guardrails).
 
 ---
@@ -215,7 +215,7 @@ Proposals only. Locked headlines are untouched. Each proposal follows the voice 
 | Stablecoin Payments | Send and receive USDC, USDT and EURC on supported networks, where enabled, alongside your currency balances. |
 | Invoicing | Invoices your customers can pay by card, bank or stablecoin. |
 | Payroll | Pay your team in 80+ countries, with approvals before any money moves. |
-| Cards | Spend controls for you and your team – when available. |
+| Cards | Spend controls for you and your team. |
 
 **Corridor section.** The headline "At home. Around the world." is fine. Shorten the body:
 

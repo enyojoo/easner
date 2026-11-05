@@ -214,7 +214,7 @@ Where we or a partner identify potentially suspicious activity, a **Suspicious A
 | Tier | Description | Typical requirement |
 |------|-------------|---------------------|
 | **Tier 1 – Global banking** | USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows | Approved KYC or KYB |
-| **Tier 2 – Cards** | Personal or business cards when available | Separate partner approval; **not generally live today** |
+| **Tier 2 – Cards** | Personal or business cards | Separate partner approval; **not generally live today** |
 | **Tier 3 – Online payments (Business Banking)** | Accept card payments on invoices via Stripe Connect; settlement to Easner balance | Approved KYB plus Stripe Connected Account onboarding |
 
 Cross-border and local pay-in/pay-out corridors (for example via Yellowcard mobile-money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible Tier 1 global users and jurisdictions. They are a corridor capability under Tier 1, not a separate regional banking account tier, unless we expressly launch one.

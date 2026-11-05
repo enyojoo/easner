@@ -21,7 +21,7 @@ export const cardsContent: ProductPageContent = {
   metadata: {
     title: "Personal & Business Cards | Virtual & Physical",
     description:
-      "Virtual and physical cards for personal and business spending, with monthly limits, merchant rules and cardholder controls – when available.",
+      "Virtual and physical cards for personal and business spending, with monthly limits, merchant rules and cardholder controls.",
     keywords: [
       "virtual and physical business cards",
       "card spend limits",
@@ -50,7 +50,7 @@ export const cardsContent: ProductPageContent = {
     {
       title: "Virtual and physical cards",
       description:
-        "Issue virtual cards when available or ship physical cards to cardholders – from Easner Business or the Easner app.",
+        "Issue virtual cards or ship physical cards to cardholders – from Easner Business or the Easner app.",
       visualSlot: "mkt-ui-cards-issue",
       altText: "Easner issue card flow with virtual and physical options",
     },
@@ -121,12 +121,12 @@ export const cardsContent: ProductPageContent = {
     {
       question: "Are there personal and business cards?",
       answer:
-        "Yes. Corporate cards are issued from Easner Business; personal cards come with Easner Personal Banking in the Easner app, when available.",
+        "Yes. Corporate cards are issued from Easner Business; personal cards come with Easner Personal Banking in the Easner app.",
     },
     {
       question: "Can I get virtual and physical cards?",
       answer:
-        "Both. Virtual cards are ready to use online, and physical cards are shipped to the cardholder, when available.",
+        "Both. Virtual cards are ready to use online, and physical cards are shipped to the cardholder.",
     },
     {
       question: "What spending controls are there?",
@@ -147,7 +147,7 @@ export const cardsContent: ProductPageContent = {
   ],
   ctaBand: {
     headline: "Add cards to your Easner account",
-    subhead: "Corporate cards on Easner Business. Personal cards on the Easner app, when available.",
+    subhead: "Corporate cards on Easner Business. Personal cards on the Easner app.",
     ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "cards_cta_band" }],
   },
 }

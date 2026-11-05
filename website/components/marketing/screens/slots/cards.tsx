@@ -1,6 +1,6 @@
 /**
  * Cards page screens (design system: CardFace, BizCards). Cards are not generally available, so every
- * visual carries the design system's "Coming soon" face or a "Preview" label (Voice and Guardrails: cards when available).
+ * visual carries the design system's "Coming soon" face or a "Preview" label.
  */
 import type { ReactNode } from "react"
 import Image from "next/image"

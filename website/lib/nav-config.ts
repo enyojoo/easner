@@ -44,7 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
     },
     items: [
       { label: "Personal Banking", href: "/personal", icon: "wallet", description: "Accounts in your name, sending and receiving" },
-      { label: "Cards", href: "/cards", icon: "card", description: "Spend controls, when available" },
+      { label: "Cards", href: "/cards", icon: "card", description: "Spend controls" },
     ],
   },
   {

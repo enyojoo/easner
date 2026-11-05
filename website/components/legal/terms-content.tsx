@@ -44,7 +44,7 @@ export function TermsPolicyPage() {
           <li><strong>Easner Business Banking</strong> – business banking, payouts, payroll, collections, and online payments through our web dashboard</li>
         </ul>
         <p className="text-web-body leading-relaxed mb-4">
-          Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products when available.
+          Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Service tiers (availability depends on verification, jurisdiction, and partner enablement):</strong>

@@ -33,7 +33,7 @@ We offer:
 - **Easner Personal Banking** – consumer banking and payments through our mobile app
 - **Easner Business Banking** – business banking, payouts, payroll, collections, and online payments through our web dashboard
 
-Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products when available.
+Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products.
 
 **Service tiers (availability depends on verification, jurisdiction, and partner enablement):**
 

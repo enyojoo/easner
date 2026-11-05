@@ -5,7 +5,7 @@ export const REGULATORY_FOOTER_PARAGRAPHS = [
   'Easner Group, Inc. ("Easner") is a financial technology company, not a bank or investment adviser. Banking, payment, verification, and card services available through the Easner app (Easner Personal Banking) and Easner Business (Easner Business Banking) are provided by licensed partners. Easner does not provide investment, legal, tax, or financial advice.',
   "Easner is not FDIC-insured and does not hold customer deposits. Banking services are provided by third-party banking partners, not by Easner.",
   "Where enabled, stablecoin and wallet features are supported through infrastructure partners and may operate on public blockchains. Digital assets are not legal tender, are not backed by a government, and are not FDIC-insured or protected by SIPC. Blockchain transactions may be public and irreversible.",
-  "Corporate and personal card products, when available, are issued by a third-party issuer and are subject to credit approval.",
+  "Corporate and personal card products are issued by a third-party issuer and are subject to credit approval.",
   "Easner may receive compensation from third-party service providers.",
   "Use of the Easner platform is subject to the Terms of Service, Privacy Policy, and KYC/KYB and AML Policy, which include limitations of liability, a class action waiver, and mandatory arbitration.",
 ]
@@ -133,7 +133,7 @@ export const SECONDARY_PRODUCT_CARDS: CardItem[] = [
   {
     title: "Cards",
     description:
-      "Spend controls for you and your team – when available.",
+      "Spend controls for you and your team.",
     link: "/cards",
     icon: "mkt-thumb-cards",
   },

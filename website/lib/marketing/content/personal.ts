@@ -47,7 +47,7 @@ export const personalPlans: PersonalPlan[] = [
       "USD and EUR, and GBP where supported",
       "Account details in your name",
       "EASETAG transfers and recipients",
-      "1 virtual card (when available)",
+      "1 virtual card",
     ],
     price: { amount: 0, interval: "a month" },
   },
@@ -57,7 +57,7 @@ export const personalPlans: PersonalPlan[] = [
     sentence: "For people who send more often.",
     features: [
       "Everything in Ease",
-      "5 cards (when available), virtual or physical",
+      "5 cards, virtual or physical",
       "3 Included Free withdrawals a month",
     ],
     highlighted: true,

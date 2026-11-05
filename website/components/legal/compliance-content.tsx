@@ -245,7 +245,7 @@ export function CompliancePolicyPage() {
           headers={["Tier", "Description", "Typical requirement"]}
           rows={[
             ["**Tier 1 – Global banking**", "USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows", "Approved KYC or KYB"],
-            ["**Tier 2 – Cards**", "Personal or business cards when available", "Separate partner approval; **not generally live today**"],
+            ["**Tier 2 – Cards**", "Personal or business cards", "Separate partner approval; **not generally live today**"],
             ["**Tier 3 – Online payments (Business Banking)**", "Accept card payments on invoices via Stripe Connect; settlement to Easner balance", "Approved KYB plus Stripe Connected Account onboarding"]
           ]}
         />
