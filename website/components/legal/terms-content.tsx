@@ -57,7 +57,7 @@ export function TermsPolicyPage() {
           <li><strong>More accounts:</strong> Additional currency accounts (for example EUR, GBP) where offered</li>
           <li><strong>Online payments (Business Banking):</strong> Accept card payments on invoices via our payment processor, with settlement to your Easner balance when enabled</li>
           <li><strong>Cards:</strong> Personal or business cards <strong>when approved and launched</strong> (not generally available today)</li>
-          <li><strong>Wallet and stablecoin:</strong> Deposit addresses and wallet-initiated sends where enabled (Turnkey-backed signing — see below)</li>
+          <li><strong>Wallet and stablecoin:</strong> Deposit addresses and wallet-initiated sends where enabled (Turnkey-backed signing – see below)</li>
         </ul>
         <p className="text-web-body leading-relaxed mb-4">
           Cross-border and local pay-in/pay-out corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible users with approved verification. Corridor availability depends on partners and destination – not a separate regional banking account product unless we expressly launch one.

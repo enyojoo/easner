@@ -109,6 +109,7 @@ Standard footer line used on statements and emails: Easner is a financial techno
 584 Castro St, Suite 4092  
 San Francisco, CA 94114, United States  
 
-**Legal and compliance:** [legal@easner.com](mailto:legal@easner.com)  
-**Support:** [support@easner.com](mailto:support@easner.com) or live chat  
+**Email (legal and compliance):** legal@easner.com  
+**For Support:** Live Chat or email support@easner.com  
 **Phone:** +1 628 228 6083  
+**Website:** www.easner.com

@@ -111,9 +111,6 @@ export function DeleteAccountPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">Contact</h2>
         <PolicyContactBlock />
-        <p className="text-web-body leading-relaxed">
-          <strong>Support:</strong> <PolicyLink href="mailto:support@easner.com">support@easner.com</PolicyLink> <strong>Legal / privacy:</strong> <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> <strong>Phone:</strong> +1 628 228 6083 <strong>Website:</strong> www.easner.com
-        </p>
       </section>
     </PolicyPageShell>
   )

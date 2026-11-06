@@ -92,7 +92,7 @@ Easner does not currently offer a separate self-serve option to delete individua
 584 Castro St, Suite 4092  
 San Francisco, CA 94114, United States  
 
-**Support:** [support@easner.com](mailto:support@easner.com)  
-**Legal / privacy:** [legal@easner.com](mailto:legal@easner.com)  
+**Email (legal and compliance):** legal@easner.com  
+**For Support:** Live Chat or email support@easner.com  
 **Phone:** +1 628 228 6083  
 **Website:** www.easner.com

@@ -41,7 +41,7 @@ Depending on your verification status, location, and product availability, the S
 - **More accounts:** Additional currency accounts (for example EUR, GBP) where offered
 - **Online payments (Business Banking):** Accept card payments on invoices via our payment processor, with settlement to your Easner balance when enabled
 - **Cards:** Personal or business cards **when approved and launched** (not generally available today)
-- **Wallet and stablecoin:** Deposit addresses and wallet-initiated sends where enabled (Turnkey-backed signing — see below)
+- **Wallet and stablecoin:** Deposit addresses and wallet-initiated sends where enabled (Turnkey-backed signing – see below)
 
 Cross-border and local pay-in/pay-out corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible users with approved verification. Corridor availability depends on partners and destination – not a separate regional banking account product unless we expressly launch one.
 

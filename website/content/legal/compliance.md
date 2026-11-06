@@ -212,7 +212,7 @@ Where we or a partner identify potentially suspicious activity, a **Suspicious A
 
 ## 8. Verification and product access
 
-Access depends on successful verification, your jurisdiction, and which **products** are enabled — not on numbered “tiers.”
+Access depends on successful verification, your jurisdiction, and which **products** are enabled – not on numbered “tiers.”
 
 | Product | What it covers | Typical requirement |
 |---------|----------------|---------------------|

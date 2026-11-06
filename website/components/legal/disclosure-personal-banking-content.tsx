@@ -23,7 +23,7 @@ export function PersonalBankingDisclosurePage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">Products and verification</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          Access depends on successful <strong>verification</strong>, your jurisdiction, and product availability — not on numbered “tiers.” Typical products include <strong>global banking</strong> (accounts, send and receive, corridors where enabled), <strong>more accounts</strong> (additional currencies where offered), <strong>cards</strong> (when launched), and <strong>wallet / stablecoin</strong> features where enabled. Additional verification steps may be required for certain destinations or products.
+          Access depends on successful <strong>verification</strong>, your jurisdiction, and product availability – not on numbered “tiers.” Typical products include <strong>global banking</strong> (accounts, send and receive, corridors where enabled), <strong>more accounts</strong> (additional currencies where offered), <strong>cards</strong> (when launched), and <strong>wallet / stablecoin</strong> features where enabled. Additional verification steps may be required for certain destinations or products.
         </p>
         <p className="text-web-body leading-relaxed">
           See the <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink> for residence rules.

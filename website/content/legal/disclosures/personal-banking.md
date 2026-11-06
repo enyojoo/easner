@@ -12,7 +12,7 @@ Identity verification, virtual accounts, fiat pay-in and pay-out, money transmis
 
 ## Products and verification
 
-Access depends on successful **verification**, your jurisdiction, and product availability — not on numbered “tiers.” Typical products include **global banking** (accounts, send and receive, corridors where enabled), **more accounts** (additional currencies where offered), **cards** (when launched), and **wallet / stablecoin** features where enabled. Additional verification steps may be required for certain destinations or products.
+Access depends on successful **verification**, your jurisdiction, and product availability – not on numbered “tiers.” Typical products include **global banking** (accounts, send and receive, corridors where enabled), **more accounts** (additional currencies where offered), **cards** (when launched), and **wallet / stablecoin** features where enabled. Additional verification steps may be required for certain destinations or products.
 
 See the [KYC/KYB and AML Policy](/compliance) for residence rules.
 

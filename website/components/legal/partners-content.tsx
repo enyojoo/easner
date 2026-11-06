@@ -42,7 +42,7 @@ export function PartnersPolicyPage() {
                   <strong>Lightspark Payments, LLC</strong> (Grid)
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Licensed money transmission — KYB, virtual accounts, fund, payout, cross-border where Grid is enabled
+                  Licensed money transmission – KYB, virtual accounts, fund, payout, cross-border where Grid is enabled
                 </td>
                 <td className="px-4 py-3 align-top">
                   NMLS ID 2429193
@@ -56,7 +56,7 @@ export function PartnersPolicyPage() {
                   <strong>Bridge Building Inc.</strong> and Bridge-group entities
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Licensed money transmission and payments — KYC/KYB, virtual accounts, fiat pay-in and pay-out
+                  Licensed money transmission and payments – KYC/KYB, virtual accounts, fiat pay-in and pay-out
                 </td>
                 <td className="px-4 py-3 align-top">
                   U.S. NMLS ID 2450917 (Bridge Building Inc.)
@@ -70,7 +70,7 @@ export function PartnersPolicyPage() {
                   <strong>Noah US, Inc.</strong> and Noah-group entities
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Licensed money transmission and payments — KYC, virtual accounts, fiat pay-in and pay-out
+                  Licensed money transmission and payments – KYC, virtual accounts, fiat pay-in and pay-out
                 </td>
                 <td className="px-4 py-3 align-top">
                   U.S. NMLS ID 2696057 (Noah US, Inc.)
@@ -84,7 +84,7 @@ export function PartnersPolicyPage() {
                   <strong>Yellowcard</strong> (operating entities per corridor)
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Licensed payments / money movement — local and cross-border corridors
+                  Licensed payments / money movement – local and cross-border corridors
                 </td>
                 <td className="px-4 py-3 align-top">
                   Per entity and jurisdiction
@@ -98,7 +98,7 @@ export function PartnersPolicyPage() {
                   <strong>Stripe, Inc.</strong> and Stripe affiliates
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Payment processing — card acceptance (Stripe Connect), platform billing (Easner plans, Easner Checkout)
+                  Payment processing – card acceptance (Stripe Connect), platform billing (Easner plans, Easner Checkout)
                 </td>
                 <td className="px-4 py-3 align-top">
                   Money transmitter / PI licenses as applicable
@@ -112,7 +112,7 @@ export function PartnersPolicyPage() {
                   <strong>Turnkey Global Inc.</strong> (Turnkey)
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Wallet and key-management infrastructure — deposit addresses, transaction signing (self-custody model)
+                  Wallet and key-management infrastructure – deposit addresses, transaction signing (self-custody model)
                 </td>
                 <td className="px-4 py-3 align-top">
                   Infrastructure; not a money transmitter for user signing

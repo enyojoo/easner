@@ -142,11 +142,11 @@ export function PrivacyPolicyPage() {
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Categories we use</h3>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
-          <li><strong>Licensed money transmission and payments partners</strong> — verification, accounts, pay-in, pay-out, and corridor settlement</li>
-          <li><strong>Card acceptance and payment processing</strong> — <strong>Stripe, Inc.</strong> and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers</li>
-          <li><strong>Identity and business verification technology</strong> — hosted KYC/KYB vendors used in verification flows</li>
-          <li><strong>Wallet and transaction signing</strong> — <strong>Turnkey Global Inc. (Turnkey)</strong> provides key management, deposit addresses, and transaction signing for wallet features (self-custody model — see Section 12)</li>
-          <li><strong>Cross-chain routing</strong> — bridging or routing providers for certain wallet sends where enabled</li>
+          <li><strong>Licensed money transmission and payments partners</strong> – verification, accounts, pay-in, pay-out, and corridor settlement</li>
+          <li><strong>Card acceptance and payment processing</strong> – <strong>Stripe, Inc.</strong> and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers</li>
+          <li><strong>Identity and business verification technology</strong> – hosted KYC/KYB vendors used in verification flows</li>
+          <li><strong>Wallet and transaction signing</strong> – <strong>Turnkey Global Inc. (Turnkey)</strong> provides key management, deposit addresses, and transaction signing for wallet features (self-custody model – see Section 12)</li>
+          <li><strong>Cross-chain routing</strong> – bridging or routing providers for certain wallet sends where enabled</li>
         </ul>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Technology and support service providers</h3>
         <p className="text-web-body leading-relaxed mb-4">

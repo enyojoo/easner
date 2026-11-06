@@ -678,7 +678,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">8. Verification and product access</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          Access depends on successful verification, your jurisdiction, and which <strong>products</strong> are enabled — not on numbered “tiers.”
+          Access depends on successful verification, your jurisdiction, and which <strong>products</strong> are enabled – not on numbered “tiers.”
         </p>
         <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
           <table className="min-w-full text-sm text-web-body">

@@ -111,11 +111,11 @@ When you complete hosted verification or enable a regulated feature, a partner (
 
 ### Categories we use
 
-- **Licensed money transmission and payments partners** — verification, accounts, pay-in, pay-out, and corridor settlement
-- **Card acceptance and payment processing** — **Stripe, Inc.** and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers
-- **Identity and business verification technology** — hosted KYC/KYB vendors used in verification flows
-- **Wallet and transaction signing** — **Turnkey Global Inc. (Turnkey)** provides key management, deposit addresses, and transaction signing for wallet features (self-custody model — see Section 12)
-- **Cross-chain routing** — bridging or routing providers for certain wallet sends where enabled
+- **Licensed money transmission and payments partners** – verification, accounts, pay-in, pay-out, and corridor settlement
+- **Card acceptance and payment processing** – **Stripe, Inc.** and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers
+- **Identity and business verification technology** – hosted KYC/KYB vendors used in verification flows
+- **Wallet and transaction signing** – **Turnkey Global Inc. (Turnkey)** provides key management, deposit addresses, and transaction signing for wallet features (self-custody model – see Section 12)
+- **Cross-chain routing** – bridging or routing providers for certain wallet sends where enabled
 
 ### Technology and support service providers
 
