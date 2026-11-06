@@ -231,6 +231,15 @@ export const OG_CARDS: OgCard[] = [
     alt: "Lightspark Grid End User Terms on Easner.",
   },
   {
+    slug: "legal-disclosures",
+    route: "legal/disclosures",
+    headline: ["Product", "disclosures"],
+    accentLine: 0,
+    line: "Personal Banking, Business Banking, and digital assets summaries.",
+    visual: { kind: "shield" },
+    alt: "Easner product disclosures index.",
+  },
+  {
     slug: "law-enforcement",
     route: "legal/law-enforcement",
     headline: ["Law enforcement", "and subpoenas"],

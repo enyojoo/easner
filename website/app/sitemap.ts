@@ -41,6 +41,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/legal/lightspark-eut`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
     { url: `${baseUrl}/legal/law-enforcement`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
     {
+      url: `${baseUrl}/legal/disclosures`,
+      lastModified: lastModified.legalBundle,
+      changeFrequency: "yearly",
+      priority: 0.45,
+    },
+    {
       url: `${baseUrl}/legal/disclosures/personal-banking`,
       lastModified: lastModified.legalBundle,
       changeFrequency: "yearly",
