@@ -1,9 +1,13 @@
-import { PolicyContactBlock, PolicyLink, PolicyPageShell, PolicyTable } from "@/components/legal/policy-page-shell"
+import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } from "@/components/legal/policy-page-shell"
 
 
 export function PrivacyPolicyPage() {
   return (
-    <PolicyPageShell title="Privacy Policy" lastUpdated="September 17, 2026">
+    <PolicyPageShell title="Privacy Policy" lastUpdated="November 6, 2026">
+      <section>
+
+      </section>
+
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">1. Introduction</h2>
         <p className="text-web-body leading-relaxed mb-4">
@@ -14,6 +18,8 @@ export function PrivacyPolicyPage() {
           <li><strong>Easner Personal Banking</strong> (via our mobile app)</li>
           <li><strong>Easner Business Banking</strong> (via our web dashboard)</li>
           <li>Public invoice and payment experiences we host for business users (including card checkout where enabled)</li>
+          <li><strong>Easner Checkout</strong> (hosted checkout, payment links, embed, customer portal, and subscriptions) for merchants and payers</li>
+          <li><strong>Membership and plan billing</strong> (Ease and paid plans for Personal and Business)</li>
           <li>Related support and communications channels</li>
         </ul>
         <p className="text-web-body leading-relaxed">
@@ -31,7 +37,8 @@ export function PrivacyPolicyPage() {
           <li>Identity and business verification data (government ID, date of birth, address, tax identifiers, business registration, beneficial ownership, selfies or liveness where required)</li>
           <li>Financial and transaction data (accounts, payment instructions, amounts, currencies, counterparties, source of funds, payment or transfer notes, payroll run details)</li>
           <li>Recipients, customers, employees/contractors, and collections data (invoice recipients, Terminal and QR Pay payer references, payroll payees, wallet addresses)</li>
-          <li>Online-payment / merchant data when you enable Stripe Connect (business profile details Stripe requires, bank or settlement preferences, dispute or refund context)</li>
+          <li><strong>Membership and billing</strong> data (plan, billing period, payment status, trial or offer metadata) when you subscribe to a paid plan</li>
+          <li>Online-payment / merchant data when you enable Stripe Connect or Easner Checkout (business profile details our payment processor requires, bank or settlement preferences, dispute or refund context)</li>
           <li>Support communications (email, phone, in-app live chat, including voice messages you choose to send)</li>
           <li>Files you upload (for example transfer receipts or compliance documents)</li>
         </ul>
@@ -125,51 +132,90 @@ export function PrivacyPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">5. Service Providers and Partners</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          We engage partners who process data on our behalf or under their own regulatory obligations, including providers of hosted KYC/KYB, virtual accounts, fiat payments, money transmission, card acceptance, wallet infrastructure, transaction routing or bridging, and regional payout corridors.
+          We engage <strong>licensed financial and payments partners</strong> and <strong>infrastructure providers</strong> who process data on our behalf or under their own regulatory obligations, including providers of hosted KYC/KYB, virtual accounts, fiat pay-in and pay-out, money transmission, corridor disbursement, card acceptance, wallet signing, and cross-chain routing where enabled.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          When you complete hosted verification, the partner (and any identity vendor they use) processes documents and shares results with Easner. Partner terms and privacy notices may be presented during onboarding. Partners may retain data as required by their regulatory duties.
+          When you complete hosted verification or enable a regulated feature, a partner (and any identity vendor they use) may process documents and share results with Easner. <strong>Partner terms and privacy notices</strong> are presented during onboarding or in the payment flow. Partners may retain data as required by their regulatory duties.
         </p>
-        <h3 className="text-lg font-semibold text-web-ink mb-2">Key financial and infrastructure partners</h3>
         <p className="text-web-body leading-relaxed mb-4">
-          Depending on your product, jurisdiction, and features enabled, we work with partners including:
+          <strong>Named financial partners and roles</strong> (legal entity, NMLS where applicable, and “applies when”) are listed on our <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page, which we update when the stack changes.
         </p>
-        <PolicyTable
-          headers={["Partner", "Role"]}
-          rows={[
-            ["**Lightspark Payments, LLC (Grid)**", "Licensed money transmission for eligible Easner Business Banking flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193"],
-            ["**Bridge Building Inc. (and Bridge-group entities)**", "Licensed money transmission and payments infrastructure for eligible flows (KYC/KYB, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2450917 – including many **Easner Personal Banking** flows and eligible **Easner Business Banking** EUR / multi-currency account flows"],
-            ["**Noah US, Inc. (and Noah-group entities)**", "Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including certain **Easner Personal Banking** flows such as New York residents and other geos that remain on Noah"],
-            ["**Sumsub**", "Identity verification technology used in certain hosted KYB/KYC experiences"],
-            ["**Stripe**", "Online card payments on invoices via Stripe Connect; Connected Account onboarding and settlement"],
-            ["**Turnkey**", "Wallet and key-management infrastructure, deposit addresses, and transaction signing (self-custody model – see Section 12)"],
-            ["**Relay**", "Cross-chain bridging / routing for certain wallet sends where enabled"],
-            ["**Yellowcard**", "Licensed payments / money-movement partner for cross-border and local payout / mobile-money corridors globally (including Africa, Latin America, Asia, and other regions where enabled)"]
-          ]}
-        />
+        <h3 className="text-lg font-semibold text-web-ink mb-2">Categories we use</h3>
+        <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
+          <li><strong>Licensed money transmission and payments partners</strong> — verification, accounts, pay-in, pay-out, and corridor settlement</li>
+          <li><strong>Card acceptance and payment processing</strong> — <strong>Stripe, Inc.</strong> and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers</li>
+          <li><strong>Identity and business verification technology</strong> — hosted KYC/KYB vendors used in verification flows</li>
+          <li><strong>Wallet and transaction signing</strong> — <strong>Turnkey Global Inc. (Turnkey)</strong> provides key management, deposit addresses, and transaction signing for wallet features (self-custody model — see Section 12)</li>
+          <li><strong>Cross-chain routing</strong> — bridging or routing providers for certain wallet sends where enabled</li>
+        </ul>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Technology and support service providers</h3>
         <p className="text-web-body leading-relaxed mb-4">
           We also use service providers under contract, including:
         </p>
-        <PolicyTable
-          headers={["Provider", "Role"]}
-          rows={[
-            ["**Supabase**", "Authentication, database, and session storage"],
-            ["**SendGrid**", "Transactional email (account, invoice, payroll, and transfer notices)"],
-            ["**Expo**", "Push notification delivery for the mobile app"],
-            ["**PostHog**", "Product analytics, feature usage, and error or diagnostic events"],
-            ["**Intercom**", "In-app customer support and live chat"]
-          ]}
-        />
+        <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
+          <table className="min-w-full text-sm text-web-body">
+            <thead>
+              <tr className="bg-web-plate">
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Provider
+              </th>
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Role
+              </th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Supabase</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Authentication, database, and session storage
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>SendGrid</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Transactional email (account, invoice, payroll, and transfer notices)
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Expo</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Push notification delivery for the mobile app
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>PostHog</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Product analytics, feature usage, and error or diagnostic events
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Intercom</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  In-app customer support and live chat
+                </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
         <p className="text-web-body leading-relaxed mb-4">
           When you use <strong>Sign in with Apple</strong> or <strong>Sign in with Google</strong>, those companies process authentication data under their own privacy policies.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          This product includes GeoLite2 data created by MaxMind, available from{" "}
-          <a href="https://www.maxmind.com" className="text-brand-primary hover:underline" target="_blank" rel="noopener noreferrer">https://www.maxmind.com</a>.
+          This product includes GeoLite2 data created by MaxMind, available from <PolicyExternalLink href="https://www.maxmind.com" analyticsLocation="legal_external_link">https://www.maxmind.com</PolicyExternalLink>.
         </p>
         <p className="text-web-body leading-relaxed">
-          Additional partners and providers may be disclosed when you enable a specific feature or during onboarding. Partner and provider lists may change as our Services evolve; material changes will be reflected in this policy.
+          Additional partners may be disclosed when you enable a specific feature or during onboarding. Material changes to subprocessors are reflected on <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> and, where required, in this policy’s “Last updated” date.
         </p>
       </section>
 
@@ -183,7 +229,7 @@ export function PrivacyPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">7. Retention</h2>
         <p className="text-web-body leading-relaxed">
-          We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires <strong>5 to 7 years</strong> or longer after account closure or last activity. Partners (including Lightspark, Bridge, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page.
+          We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires <strong>5 to 7 years</strong> or longer after account closure or last activity. Licensed partners and payment processors may retain records under their own obligations after your account closes.
         </p>
       </section>
 
@@ -191,9 +237,6 @@ export function PrivacyPolicyPage() {
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">8. Your Rights</h2>
         <p className="text-web-body leading-relaxed mb-4">
           Depending on where you live, you may have rights to access, correct, delete, restrict, or port your information, or object to certain processing. Financial regulations may limit some requests.
-        </p>
-        <p className="text-web-body leading-relaxed mb-4">
-          <strong>Easner Personal Banking</strong> users can close their account in the mobile app. See our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page for in-app steps, the 7-day grace period, what data we delete or retain, and how to request deletion if you cannot access the app. Business account closure may require additional steps.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           Contact <strong>legal@easner.com</strong>, <strong>support@easner.com</strong>, or in-app live chat. If a partner holds verification or payment data, contact us first and we will coordinate where appropriate.
@@ -256,7 +299,7 @@ export function PrivacyPolicyPage() {
           Digital assets are <strong>not bank deposits</strong> and are not FDIC insured. Transactions may be irreversible.
         </p>
         <p className="text-web-body leading-relaxed">
-          For Turnkey-backed wallet features, Easner does <strong>not</strong> sit in the flow of funds as a custodian or signing party: we do not sign or co-sign user transactions; we do not hold, custody, or export private keys or seed phrases; keys and signing are managed within Turnkey’s infrastructure; Easner only controls product access (who can initiate actions in our UI/API). Product access blocks (verification, security, or compliance gating) are not the ability to alter, cancel, or reverse a transaction once signed and submitted. See our Terms of Service for the full self-custody disclosure.
+          For Turnkey-backed wallet features, Easner does <strong>not</strong> sit in the flow of funds as a custodian or signing party: we do not sign or co-sign user transactions; we do not hold, custody, or export private keys or seed phrases; keys and signing are managed within <strong>Turnkey Global Inc. (Turnkey)</strong> infrastructure; Easner only controls product access (who can initiate actions in our UI/API). Product access blocks (verification, security, or compliance gating) are not the ability to alter, cancel, or reverse a transaction once signed and submitted. See our <PolicyLink href="/terms">Terms of Service</PolicyLink> and <PolicyLink href="/legal/disclosures/digital-assets">Digital assets disclosure</PolicyLink> for the full self-custody disclosure.
         </p>
       </section>
 
@@ -281,7 +324,6 @@ export function PrivacyPolicyPage() {
         </p>
         <PolicyContactBlock />
       </section>
-
     </PolicyPageShell>
   )
 }

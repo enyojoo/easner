@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: September 17, 2026
+Last updated: November 6, 2026
 
 ---
 
@@ -12,6 +12,8 @@ This Privacy Policy explains how **Easner Group, Inc.** (“**Easner**,” “**
 - **Easner Personal Banking** (via our mobile app)
 - **Easner Business Banking** (via our web dashboard)
 - Public invoice and payment experiences we host for business users (including card checkout where enabled)
+- **Easner Checkout** (hosted checkout, payment links, embed, customer portal, and subscriptions) for merchants and payers
+- **Membership and plan billing** (Ease and paid plans for Personal and Business)
 - Related support and communications channels
 
 Easner is a financial technology company. We work with **licensed partners** to deliver banking, money transmission, payment acceptance, and related services described in our Terms of Service. This policy covers **account holders** and, where noted, **business customers, employees/contractors on payroll, and payers** whose data business users submit through collections or payroll tools.
@@ -26,7 +28,8 @@ Easner is a financial technology company. We work with **licensed partners** to 
 - Identity and business verification data (government ID, date of birth, address, tax identifiers, business registration, beneficial ownership, selfies or liveness where required)
 - Financial and transaction data (accounts, payment instructions, amounts, currencies, counterparties, source of funds, payment or transfer notes, payroll run details)
 - Recipients, customers, employees/contractors, and collections data (invoice recipients, Terminal and QR Pay payer references, payroll payees, wallet addresses)
-- Online-payment / merchant data when you enable Stripe Connect (business profile details Stripe requires, bank or settlement preferences, dispute or refund context)
+- **Membership and billing** data (plan, billing period, payment status, trial or offer metadata) when you subscribe to a paid plan
+- Online-payment / merchant data when you enable Stripe Connect or Easner Checkout (business profile details our payment processor requires, bank or settlement preferences, dispute or refund context)
 - Support communications (email, phone, in-app live chat, including voice messages you choose to send)
 - Files you upload (for example transfer receipts or compliance documents)
 
@@ -100,24 +103,19 @@ We may share information:
 
 ## 5. Service Providers and Partners
 
-We engage partners who process data on our behalf or under their own regulatory obligations, including providers of hosted KYC/KYB, virtual accounts, fiat payments, money transmission, card acceptance, wallet infrastructure, transaction routing or bridging, and regional payout corridors.
+We engage **licensed financial and payments partners** and **infrastructure providers** who process data on our behalf or under their own regulatory obligations, including providers of hosted KYC/KYB, virtual accounts, fiat pay-in and pay-out, money transmission, corridor disbursement, card acceptance, wallet signing, and cross-chain routing where enabled.
 
-When you complete hosted verification, the partner (and any identity vendor they use) processes documents and shares results with Easner. Partner terms and privacy notices may be presented during onboarding. Partners may retain data as required by their regulatory duties.
+When you complete hosted verification or enable a regulated feature, a partner (and any identity vendor they use) may process documents and share results with Easner. **Partner terms and privacy notices** are presented during onboarding or in the payment flow. Partners may retain data as required by their regulatory duties.
 
-### Key financial and infrastructure partners
+**Named financial partners and roles** (legal entity, NMLS where applicable, and “applies when”) are listed on our **[Partners and service providers](/legal/partners)** page, which we update when the stack changes.
 
-Depending on your product, jurisdiction, and features enabled, we work with partners including:
+### Categories we use
 
-| Partner | Role |
-|---------|------|
-| **Lightspark Payments, LLC (Grid)** | Licensed money transmission for eligible Easner Business Banking flows (KYB, virtual accounts, fund/payout/cross-border where Grid is enabled); NMLS ID 2429193 |
-| **Bridge Building Inc. (and Bridge-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC/KYB, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2450917 – including many **Easner Personal Banking** flows and eligible **Easner Business Banking** EUR / multi-currency account flows |
-| **Noah US, Inc. (and Noah-group entities)** | Licensed money transmission and payments infrastructure for eligible flows (KYC, virtual accounts, fiat pay-in and pay-out); U.S. NMLS ID 2696057 – including certain **Easner Personal Banking** flows such as New York residents and other geos that remain on Noah |
-| **Sumsub** | Identity verification technology used in certain hosted KYB/KYC experiences |
-| **Stripe** | Online card payments on invoices via Stripe Connect; Connected Account onboarding and settlement |
-| **Turnkey** | Wallet and key-management infrastructure, deposit addresses, and transaction signing (self-custody model – see Section 12) |
-| **Relay** | Cross-chain bridging / routing for certain wallet sends where enabled |
-| **Yellowcard** | Licensed payments / money-movement partner for cross-border and local payout / mobile-money corridors globally (including Africa, Latin America, Asia, and other regions where enabled) |
+- **Licensed money transmission and payments partners** — verification, accounts, pay-in, pay-out, and corridor settlement
+- **Card acceptance and payment processing** — **Stripe, Inc.** and Stripe affiliates process card payments for invoice online payments (Stripe Connect), Easner Checkout, and Easner membership billing; card numbers are collected and processed by Stripe; Easner does not store full primary account numbers
+- **Identity and business verification technology** — hosted KYC/KYB vendors used in verification flows
+- **Wallet and transaction signing** — **Turnkey Global Inc. (Turnkey)** provides key management, deposit addresses, and transaction signing for wallet features (self-custody model — see Section 12)
+- **Cross-chain routing** — bridging or routing providers for certain wallet sends where enabled
 
 ### Technology and support service providers
 
@@ -135,7 +133,7 @@ When you use **Sign in with Apple** or **Sign in with Google**, those companies 
 
 This product includes GeoLite2 data created by MaxMind, available from [https://www.maxmind.com](https://www.maxmind.com).
 
-Additional partners and providers may be disclosed when you enable a specific feature or during onboarding. Partner and provider lists may change as our Services evolve; material changes will be reflected in this policy.
+Additional partners may be disclosed when you enable a specific feature or during onboarding. Material changes to subprocessors are reflected on **[Partners and service providers](/legal/partners)** and, where required, in this policy’s “Last updated” date.
 
 ---
 
@@ -147,15 +145,13 @@ We use technical and organizational measures – including encryption in transit
 
 ## 7. Retention
 
-We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Partners (including Lightspark, Bridge, Noah, Yellowcard, and Stripe) may retain records under their own obligations after your account closes. For in-app deletion steps and what we delete versus retain after closure, see our [Delete Account](/delete-account) page.
+We retain information as long as needed to provide the Services and meet legal obligations. Financial services recordkeeping often requires **5 to 7 years** or longer after account closure or last activity. Licensed partners and payment processors may retain records under their own obligations after your account closes.
 
 ---
 
 ## 8. Your Rights
 
 Depending on where you live, you may have rights to access, correct, delete, restrict, or port your information, or object to certain processing. Financial regulations may limit some requests.
-
-**Easner Personal Banking** users can close their account in the mobile app. See our [Delete Account](/delete-account) page for in-app steps, the 7-day grace period, what data we delete or retain, and how to request deletion if you cannot access the app. Business account closure may require additional steps.
 
 Contact **legal@easner.com**, **support@easner.com**, or in-app live chat. If a partner holds verification or payment data, contact us first and we will coordinate where appropriate.
 
@@ -205,7 +201,7 @@ The regulatory treatment of digital assets **varies by jurisdiction**.
 
 Digital assets are **not bank deposits** and are not FDIC insured. Transactions may be irreversible.
 
-For Turnkey-backed wallet features, Easner does **not** sit in the flow of funds as a custodian or signing party: we do not sign or co-sign user transactions; we do not hold, custody, or export private keys or seed phrases; keys and signing are managed within Turnkey’s infrastructure; Easner only controls product access (who can initiate actions in our UI/API). Product access blocks (verification, security, or compliance gating) are not the ability to alter, cancel, or reverse a transaction once signed and submitted. See our Terms of Service for the full self-custody disclosure.
+For Turnkey-backed wallet features, Easner does **not** sit in the flow of funds as a custodian or signing party: we do not sign or co-sign user transactions; we do not hold, custody, or export private keys or seed phrases; keys and signing are managed within **Turnkey Global Inc. (Turnkey)** infrastructure; Easner only controls product access (who can initiate actions in our UI/API). Product access blocks (verification, security, or compliance gating) are not the ability to alter, cancel, or reverse a transaction once signed and submitted. See our [Terms of Service](/terms) and [Digital assets disclosure](/legal/disclosures/digital-assets) for the full self-custody disclosure.
 
 ---
 

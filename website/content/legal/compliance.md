@@ -1,6 +1,6 @@
 # KYC/KYB and AML Policy
 
-Last updated: September 17, 2026
+Last updated: November 6, 2026
 
 ---
 
@@ -10,9 +10,9 @@ Last updated: September 17, 2026
 
 Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by **licensed partners**. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
 
-For Turnkey-backed wallet features, Easner is **not a custodian** and does **not** sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including **Lightspark Grid**, **Bridge**, **Noah**, and **Yellowcard** where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
+For Turnkey-backed wallet features, Easner is **not a custodian** and does **not** sit in the flow of funds as a signing party (keys and signing are managed in **Turnkey** infrastructure; Easner controls product access only). Fiat money-transmission rails remain **partner-provided** under those partners’ licenses and terms. See our [Terms of Service](/terms) and [Digital assets disclosure](/legal/disclosures/digital-assets).
 
-This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our Privacy Policy.
+This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our [Privacy Policy](/privacy). Named partners are listed on **[Partners and service providers](/legal/partners)**.
 
 ---
 
@@ -30,7 +30,7 @@ Together, these programs help protect Easner, our partners, our users, and the i
 
 ## 3. Supported Jurisdictions
 
-Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on **licensed partner** eligibility rules and Easner product availability. **Easner Business Banking** and **Easner Personal Banking** apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
+Access to **global banking** – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on **licensed partner** eligibility rules and Easner product availability. **Easner Business Banking** and **Easner Personal Banking** apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
 
 ### Eligibility principles
 
@@ -117,7 +117,7 @@ We do not onboard Personal Banking users located in, or ordinarily resident in:
 
 ### Other jurisdictions
 
-If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
+If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible users with approved verification without constituting a separate regional banking account product.
 
 Partner jurisdiction policies may change. We update our practices when material changes apply.
 
@@ -129,12 +129,13 @@ We conduct KYC/KYB when:
 
 - You register for an account or before regulated features are enabled
 - You send, receive, or fund an account through partner rails
-- Virtual accounts, stablecoin deposit addresses, payroll disbursement, online payments (Stripe Connect), or card products are provisioned or enabled
+- Virtual accounts, stablecoin deposit addresses, payroll disbursement, **online payments**, or card products are provisioned or enabled
+- You need **additional verification** for a product or corridor (for example online payments merchant setup, or destination-specific requirements)
 - Periodic or risk-based reviews are required
 - Your profile, ownership, activity, or jurisdiction changes materially
 - A partner or regulator requires additional information
 
-You may need to accept **partner terms** presented during hosted verification before certain services are enabled. For **Lightspark Grid** money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For **Bridge** money transmission and related payment services, Bridge’s partner terms and notices presented during onboarding also apply (**Bridge Building Inc.**, NMLS ID 2450917 for applicable U.S. money-transmission services). For **Noah** money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (**Noah US, Inc.**, NMLS ID 2696057 for applicable U.S. money-transmission services). For **Yellowcard** corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
+You may need to accept **partner terms** presented during hosted verification or before certain services are enabled. Where **Lightspark Grid** money transmission applies, the [Lightspark Grid End User Terms](/legal/lightspark-eut) incorporated into our [Terms of Service](/terms) also apply. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
 
 ---
 
@@ -148,6 +149,7 @@ You may need to accept **partner terms** presented during hosted verification be
 - Employment, occupation, source of funds, and expected activity where required
 - Selfie or liveness data where required for fraud prevention
 - Verification status and related compliance metadata
+- Local identity data where required for certain corridors (for example national ID numbers where applicable)
 
 ### Annex B – Business users (Easner Business Banking)
 
@@ -158,7 +160,7 @@ You may need to accept **partner terms** presented during hosted verification be
 - Authorized signatories and their identity verification
 - Source of funds, expected volumes, and operational details
 - Team members with access to the business account, where required for access control
-- Merchant / online-payments details required by Stripe when Connect is enabled
+- Merchant / **online payments** details required by our payment processor when Connect or checkout card acceptance is enabled
 
 ### Document standards
 
@@ -169,17 +171,16 @@ Identity documents must be valid, legible, and match account information. Addres
 ## 6. Verification Process
 
 1. You create an Easner account.
-2. You complete **hosted verification** with a licensed partner:
-   - **Easner Personal Banking (individuals):** **Bridge** KYC where Bridge is enabled (in-app or browser); **Noah** KYC for New York residents and other geos that remain on Noah.
-   - **Easner Business Banking:** **Lightspark Grid** KYB and/or **Bridge** KYB depending on product and rail (for example U.S. / global banking via Grid and EUR / additional accounts via Bridge where enabled).
-3. Automated and, where needed, manual review is performed.
-4. Sanctions, PEP, and adverse media screening is conducted.
-5. You receive an outcome: approved, pending, rejected, or a request for more information.
-6. Upon approval, eligible accounts, payment rails, and features are provisioned by tier and partner enablement.
+2. You complete **hosted verification** with a licensed partner (in-app, in-dashboard, or browser flow as offered for your product and jurisdiction).
+3. You may be asked to complete **additional verification** for another product or corridor (for example before sending to certain destinations or enabling online payments).
+4. Automated and, where needed, manual review is performed.
+5. Sanctions, PEP, and adverse media screening is conducted.
+6. You receive an outcome: approved, pending, rejected, or a request for more information.
+7. Upon approval, eligible accounts, payment rails, and features are provisioned according to your verification level and product enablement.
 
 Most verifications complete within **1–3 business days**. Complex cases may take longer.
 
-For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open. For Bridge money-transmission customers, you accept Bridge’s terms in the hosted onboarding flow; Bridge records that acceptance before accounts can open.
+Verified profile information may be shared with payout partners as required to enable corridor services, in line with our [Privacy Policy](/privacy).
 
 ---
 
@@ -209,21 +210,27 @@ Where we or a partner identify potentially suspicious activity, a **Suspicious A
 
 ---
 
-## 8. Tier Entitlements
+## 8. Verification and product access
 
-| Tier | Description | Typical requirement |
-|------|-------------|---------------------|
-| **Tier 1 – Global banking** | USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows | Approved KYC or KYB |
-| **Tier 2 – Cards** | Personal or business cards | Separate partner approval; **not generally live today** |
-| **Tier 3 – Online payments (Business Banking)** | Accept card payments on invoices via Stripe Connect; settlement to Easner balance | Approved KYB plus Stripe Connected Account onboarding |
+Access depends on successful verification, your jurisdiction, and which **products** are enabled — not on numbered “tiers.”
 
-Cross-border and local pay-in/pay-out corridors (for example via Yellowcard mobile-money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible Tier 1 global users and jurisdictions. They are a corridor capability under Tier 1, not a separate regional banking account tier, unless we expressly launch one.
+| Product | What it covers | Typical requirement |
+|---------|----------------|---------------------|
+| **Global banking** | USD and other core accounts, send and receive, regional corridors where enabled, stablecoin receive/send where enabled | Approved account verification (individual or business) |
+| **More accounts** | Additional currency accounts (for example EUR, GBP) where offered | Account verification; extra steps where required |
+| **Online payments (Business)** | Card acceptance on invoices; settlement to Easner balance when enabled | Business verification; merchant onboarding for card acceptance |
+| **Cards** | Spend from balance in store or online | Not generally available today; separate approval when launched |
+| **Wallet and stablecoin** | Deposit addresses, wallet-initiated sends where enabled | Account verification; Turnkey-backed signing (see Terms) |
+
+Cross-border and local pay-in/pay-out corridors may be offered to eligible users with approved verification. Corridors are a capability under **global banking**, not a separate regional banking account product, unless we expressly launch one.
+
+**Membership plans** (Ease Plus, Ease Pro, and related) affect fees and feature limits described in the [Terms of Service](/terms); they do not replace KYC/KYB.
 
 ---
 
 ## 9. Verification Outcomes and Limits
 
-**Approved:** You may use Services within your tier, limits, and partner availability.
+**Approved:** You may use Services within your enabled products, limits, and partner availability.
 
 **Pending:** Some features may be restricted until review completes.
 
@@ -231,7 +238,7 @@ Cross-border and local pay-in/pay-out corridors (for example via Yellowcard mobi
 
 We and our partners may impose transaction limits, corridor restrictions, or holds based on verification level and risk. Limits are communicated in the app or dashboard where practicable.
 
-Online payments may be limited or suspended independently based on Stripe, card-network, or Easner risk decisions.
+Online payments may be limited or suspended independently based on payment processor, card-network, or Easner risk decisions.
 
 ---
 
@@ -259,7 +266,7 @@ For data held by a licensed partner, contact **legal@easner.com** and we will co
 
 ## 12. Sharing and Security
 
-We share KYC/KYB and compliance information with **licensed partners**, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our **Privacy Policy** (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Bridge, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
+We share KYC/KYB and compliance information with **licensed partners**, infrastructure providers (including **Turnkey** for wallet-related compliance metadata where applicable), regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our [Privacy Policy](/privacy) and [Partners and service providers](/legal/partners).
 
 We protect compliance data with encryption, access controls, and confidentiality training. Partners retain data under their own regulatory obligations, which may continue after your Easner account closes.
 

@@ -29,6 +29,7 @@ export default function PricingPage() {
         ])}
       />
       <PricingPlans />
+      <p className="sr-only">{pricingDefinition.answer}</p>
       <PricingComparison />
       <FaqSection items={pricingFaq} />
       <ComplianceStrip />

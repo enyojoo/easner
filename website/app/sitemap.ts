@@ -24,6 +24,7 @@ const lastModified = {
   app: new Date("2026-09-05"),
   answers: new Date("2026-10-14"),
   pricing: new Date("2026-10-22"),
+  legalBundle: new Date("2026-11-06"),
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -35,6 +36,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/privacy`, lastModified: lastModified.legal, changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/delete-account`, lastModified: lastModified.legal, changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/compliance`, lastModified: lastModified.legal, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/legal`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/legal/partners`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
+    { url: `${baseUrl}/legal/lightspark-eut`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
+    { url: `${baseUrl}/legal/law-enforcement`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
+    {
+      url: `${baseUrl}/legal/disclosures/personal-banking`,
+      lastModified: lastModified.legalBundle,
+      changeFrequency: "yearly",
+      priority: 0.45,
+    },
+    {
+      url: `${baseUrl}/legal/disclosures/business-banking`,
+      lastModified: lastModified.legalBundle,
+      changeFrequency: "yearly",
+      priority: 0.45,
+    },
+    {
+      url: `${baseUrl}/legal/disclosures/digital-assets`,
+      lastModified: lastModified.legalBundle,
+      changeFrequency: "yearly",
+      priority: 0.45,
+    },
     { url: `${baseUrl}/personal`, lastModified: lastModified.personal, changeFrequency: "monthly", priority: 0.9 },
     { url: `${baseUrl}/app`, lastModified: lastModified.app, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/business`, lastModified: lastModified.business, changeFrequency: "monthly", priority: 0.9 },

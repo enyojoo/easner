@@ -1,9 +1,13 @@
-import { PolicyContactBlock, PolicyLink, PolicyPageShell, PolicyTable } from "@/components/legal/policy-page-shell"
+import { PolicyContactBlock, PolicyPageShell, PolicyLink } from "@/components/legal/policy-page-shell"
 
 
 export function CompliancePolicyPage() {
   return (
-    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="September 17, 2026">
+    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="November 6, 2026">
+      <section>
+
+      </section>
+
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">1. Overview</h2>
         <p className="text-web-body leading-relaxed mb-4">
@@ -13,10 +17,10 @@ export function CompliancePolicyPage() {
           Easner is a financial technology company. Banking, money transmission, payment acceptance, verification, and related regulated services accessible through our platform are provided by <strong>licensed partners</strong>. Easner designs and operates the technology experience; partners perform regulated financial and compliance services under their licenses and regulatory frameworks.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          For Turnkey-backed wallet features, Easner is <strong>not a custodian</strong> and does <strong>not</strong> sit in the flow of funds as a signing party (keys and signing are managed in Turnkey’s infrastructure; Easner controls product access only). Fiat money-transmission rails (including <strong>Lightspark Grid</strong>, <strong>Bridge</strong>, <strong>Noah</strong>, and <strong>Yellowcard</strong> where enabled) remain partner-provided under those partners’ licenses and terms. See our Terms of Service for the full self-custody disclosure.
+          For Turnkey-backed wallet features, Easner is <strong>not a custodian</strong> and does <strong>not</strong> sit in the flow of funds as a signing party (keys and signing are managed in <strong>Turnkey</strong> infrastructure; Easner controls product access only). Fiat money-transmission rails remain <strong>partner-provided</strong> under those partners’ licenses and terms. See our <PolicyLink href="/terms">Terms of Service</PolicyLink> and <PolicyLink href="/legal/disclosures/digital-assets">Digital assets disclosure</PolicyLink>.
         </p>
         <p className="text-web-body leading-relaxed">
-          This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our Privacy Policy.
+          This policy explains who may use our Services, how we verify customers and businesses, how we monitor for financial crime, and your responsibilities. For how we handle personal data, see our <PolicyLink href="/privacy">Privacy Policy</PolicyLink>. Named partners are listed on <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong>.
         </p>
       </section>
 
@@ -39,7 +43,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">3. Supported Jurisdictions</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          Access to Tier 1 global banking – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability. <strong>Easner Business Banking</strong> and <strong>Easner Personal Banking</strong> apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
+          Access to <strong>global banking</strong> – including identity verification, virtual accounts, and fiat pay-in and pay-out – depends on <strong>licensed partner</strong> eligibility rules and Easner product availability. <strong>Easner Business Banking</strong> and <strong>Easner Personal Banking</strong> apply product-specific residence rules for signup and verification. Countries offered at registration may also reflect our current rollout and Office allowlists.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Eligibility principles</h3>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
@@ -51,39 +55,246 @@ export function CompliancePolicyPage() {
         <p className="text-web-body leading-relaxed mb-4">
           We do not onboard businesses located in, ordinarily resident in, or organized under the laws of:
         </p>
-        <PolicyTable
-          headers={["Jurisdiction", "ISO"]}
-          rows={[
-            ["Afghanistan", "AF"],
-            ["Belarus", "BY"],
-            ["Bhutan", "BT"],
-            ["Burundi", "BI"],
-            ["Congo (Democratic Republic of the)", "CD"],
-            ["Cuba", "CU"],
-            ["Gaza Strip / West Bank (Palestinian Territories)", "PS"],
-            ["Guinea-Bissau", "GW"],
-            ["Haiti", "HT"],
-            ["Iran", "IR"],
-            ["Iraq", "IQ"],
-            ["Kenya", "KE"],
-            ["Kosovo", "XK"],
-            ["Lebanon", "LB"],
-            ["Libya", "LY"],
-            ["Mozambique", "MZ"],
-            ["Myanmar", "MM"],
-            ["North Korea (Democratic People's Republic of Korea)", "KP"],
-            ["Pakistan", "PK"],
-            ["Qatar", "QA"],
-            ["Russia", "RU"],
-            ["Somalia", "SO"],
-            ["South Sudan", "SS"],
-            ["Sudan", "SD"],
-            ["Syria", "SY"],
-            ["Venezuela", "VE"],
-            ["Yemen", "YE"],
-            ["Zimbabwe", "ZW"]
-          ]}
-        />
+        <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
+          <table className="min-w-full text-sm text-web-body">
+            <thead>
+              <tr className="bg-web-plate">
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Jurisdiction
+              </th>
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                ISO
+              </th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Afghanistan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  AF
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Belarus
+                </td>
+                <td className="px-4 py-3 align-top">
+                  BY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Bhutan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  BT
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Burundi
+                </td>
+                <td className="px-4 py-3 align-top">
+                  BI
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Congo (Democratic Republic of the)
+                </td>
+                <td className="px-4 py-3 align-top">
+                  CD
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Cuba
+                </td>
+                <td className="px-4 py-3 align-top">
+                  CU
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Gaza Strip / West Bank (Palestinian Territories)
+                </td>
+                <td className="px-4 py-3 align-top">
+                  PS
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Guinea-Bissau
+                </td>
+                <td className="px-4 py-3 align-top">
+                  GW
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Haiti
+                </td>
+                <td className="px-4 py-3 align-top">
+                  HT
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Iran
+                </td>
+                <td className="px-4 py-3 align-top">
+                  IR
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Iraq
+                </td>
+                <td className="px-4 py-3 align-top">
+                  IQ
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Kenya
+                </td>
+                <td className="px-4 py-3 align-top">
+                  KE
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Kosovo
+                </td>
+                <td className="px-4 py-3 align-top">
+                  XK
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Lebanon
+                </td>
+                <td className="px-4 py-3 align-top">
+                  LB
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Libya
+                </td>
+                <td className="px-4 py-3 align-top">
+                  LY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Mozambique
+                </td>
+                <td className="px-4 py-3 align-top">
+                  MZ
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Myanmar
+                </td>
+                <td className="px-4 py-3 align-top">
+                  MM
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  North Korea (Democratic People's Republic of Korea)
+                </td>
+                <td className="px-4 py-3 align-top">
+                  KP
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Pakistan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  PK
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Qatar
+                </td>
+                <td className="px-4 py-3 align-top">
+                  QA
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Russia
+                </td>
+                <td className="px-4 py-3 align-top">
+                  RU
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Somalia
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SO
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  South Sudan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SS
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Sudan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SD
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Syria
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Venezuela
+                </td>
+                <td className="px-4 py-3 align-top">
+                  VE
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Yemen
+                </td>
+                <td className="px-4 py-3 align-top">
+                  YE
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Zimbabwe
+                </td>
+                <td className="px-4 py-3 align-top">
+                  ZW
+                </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
         <p className="text-web-body leading-relaxed mb-4">
           We also do not provide Services in <strong>Crimea, Sevastopol, Donetsk, Kherson, Luhansk, or Zaporizhzhia</strong> (sub-national regions; not selectable as standalone countries in registration).
         </p>
@@ -94,45 +305,273 @@ export function CompliancePolicyPage() {
         <p className="text-web-body leading-relaxed mb-4">
           We do not onboard Personal Banking users located in, or ordinarily resident in:
         </p>
-        <PolicyTable
-          headers={["Jurisdiction", "ISO"]}
-          rows={[
-            ["Afghanistan", "AF"],
-            ["Burkina Faso", "BF"],
-            ["Belarus", "BY"],
-            ["Congo (Democratic Republic of the)", "CD"],
-            ["Central African Republic", "CF"],
-            ["Cuba", "CU"],
-            ["United Kingdom", "GB"],
-            ["Guinea-Bissau", "GW"],
-            ["Haiti", "HT"],
-            ["Iraq", "IQ"],
-            ["Iran", "IR"],
-            ["North Korea (Democratic People's Republic of Korea)", "KP"],
-            ["Lebanon", "LB"],
-            ["Libya", "LY"],
-            ["Mali", "ML"],
-            ["Myanmar", "MM"],
-            ["Mozambique", "MZ"],
-            ["Nicaragua", "NI"],
-            ["Panama", "PA"],
-            ["Pakistan", "PK"],
-            ["Palestinian Territory", "PS"],
-            ["Russia", "RU"],
-            ["Sudan", "SD"],
-            ["Somalia", "SO"],
-            ["South Sudan", "SS"],
-            ["Syria", "SY"],
-            ["Ukraine", "UA"],
-            ["Venezuela", "VE"],
-            ["Vanuatu", "VU"],
-            ["Yemen", "YE"],
-            ["Zimbabwe", "ZW"]
-          ]}
-        />
+        <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
+          <table className="min-w-full text-sm text-web-body">
+            <thead>
+              <tr className="bg-web-plate">
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Jurisdiction
+              </th>
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                ISO
+              </th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Afghanistan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  AF
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Burkina Faso
+                </td>
+                <td className="px-4 py-3 align-top">
+                  BF
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Belarus
+                </td>
+                <td className="px-4 py-3 align-top">
+                  BY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Congo (Democratic Republic of the)
+                </td>
+                <td className="px-4 py-3 align-top">
+                  CD
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Central African Republic
+                </td>
+                <td className="px-4 py-3 align-top">
+                  CF
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Cuba
+                </td>
+                <td className="px-4 py-3 align-top">
+                  CU
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  United Kingdom
+                </td>
+                <td className="px-4 py-3 align-top">
+                  GB
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Guinea-Bissau
+                </td>
+                <td className="px-4 py-3 align-top">
+                  GW
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Haiti
+                </td>
+                <td className="px-4 py-3 align-top">
+                  HT
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Iraq
+                </td>
+                <td className="px-4 py-3 align-top">
+                  IQ
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Iran
+                </td>
+                <td className="px-4 py-3 align-top">
+                  IR
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  North Korea (Democratic People's Republic of Korea)
+                </td>
+                <td className="px-4 py-3 align-top">
+                  KP
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Lebanon
+                </td>
+                <td className="px-4 py-3 align-top">
+                  LB
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Libya
+                </td>
+                <td className="px-4 py-3 align-top">
+                  LY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Mali
+                </td>
+                <td className="px-4 py-3 align-top">
+                  ML
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Myanmar
+                </td>
+                <td className="px-4 py-3 align-top">
+                  MM
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Mozambique
+                </td>
+                <td className="px-4 py-3 align-top">
+                  MZ
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Nicaragua
+                </td>
+                <td className="px-4 py-3 align-top">
+                  NI
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Panama
+                </td>
+                <td className="px-4 py-3 align-top">
+                  PA
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Pakistan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  PK
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Palestinian Territory
+                </td>
+                <td className="px-4 py-3 align-top">
+                  PS
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Russia
+                </td>
+                <td className="px-4 py-3 align-top">
+                  RU
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Sudan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SD
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Somalia
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SO
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  South Sudan
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SS
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Syria
+                </td>
+                <td className="px-4 py-3 align-top">
+                  SY
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Ukraine
+                </td>
+                <td className="px-4 py-3 align-top">
+                  UA
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Venezuela
+                </td>
+                <td className="px-4 py-3 align-top">
+                  VE
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Vanuatu
+                </td>
+                <td className="px-4 py-3 align-top">
+                  VU
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Yemen
+                </td>
+                <td className="px-4 py-3 align-top">
+                  YE
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  Zimbabwe
+                </td>
+                <td className="px-4 py-3 align-top">
+                  ZW
+                </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Other jurisdictions</h3>
         <p className="text-web-body leading-relaxed mb-4">
-          If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible Tier 1 global users without constituting a separate regional banking account product.
+          If your country is not listed above for the product you are using, you may be eligible subject to partner approval, successful verification, sanctions screening, and Easner feature availability. Cross-border and local corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be available to eligible users with approved verification without constituting a separate regional banking account product.
         </p>
         <p className="text-web-body leading-relaxed">
           Partner jurisdiction policies may change. We update our practices when material changes apply.
@@ -147,13 +586,14 @@ export function CompliancePolicyPage() {
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
           <li>You register for an account or before regulated features are enabled</li>
           <li>You send, receive, or fund an account through partner rails</li>
-          <li>Virtual accounts, stablecoin deposit addresses, payroll disbursement, online payments (Stripe Connect), or card products are provisioned or enabled</li>
+          <li>Virtual accounts, stablecoin deposit addresses, payroll disbursement, <strong>online payments</strong>, or card products are provisioned or enabled</li>
+          <li>You need <strong>additional verification</strong> for a product or corridor (for example online payments merchant setup, or destination-specific requirements)</li>
           <li>Periodic or risk-based reviews are required</li>
           <li>Your profile, ownership, activity, or jurisdiction changes materially</li>
           <li>A partner or regulator requires additional information</li>
         </ul>
         <p className="text-web-body leading-relaxed">
-          You may need to accept <strong>partner terms</strong> presented during hosted verification before certain services are enabled. For <strong>Lightspark Grid</strong> money transmission, the Lightspark End User Terms included in our Terms of Service also apply. For <strong>Bridge</strong> money transmission and related payment services, Bridge’s partner terms and notices presented during onboarding also apply (<strong>Bridge Building Inc.</strong>, NMLS ID 2450917 for applicable U.S. money-transmission services). For <strong>Noah</strong> money transmission and related payment services, Noah’s partner terms and notices presented during onboarding also apply (<strong>Noah US, Inc.</strong>, NMLS ID 2696057 for applicable U.S. money-transmission services). For <strong>Yellowcard</strong> corridor payments, Yellowcard’s partner terms presented during onboarding or in the payment flow also apply.
+          You may need to accept <strong>partner terms</strong> presented during hosted verification or before certain services are enabled. Where <strong>Lightspark Grid</strong> money transmission applies, the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> incorporated into our <PolicyLink href="/terms">Terms of Service</PolicyLink> also apply. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
         </p>
       </section>
 
@@ -167,6 +607,7 @@ export function CompliancePolicyPage() {
           <li>Employment, occupation, source of funds, and expected activity where required</li>
           <li>Selfie or liveness data where required for fraud prevention</li>
           <li>Verification status and related compliance metadata</li>
+          <li>Local identity data where required for certain corridors (for example national ID numbers where applicable)</li>
         </ul>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Annex B – Business users (Easner Business Banking)</h3>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
@@ -177,7 +618,7 @@ export function CompliancePolicyPage() {
           <li>Authorized signatories and their identity verification</li>
           <li>Source of funds, expected volumes, and operational details</li>
           <li>Team members with access to the business account, where required for access control</li>
-          <li>Merchant / online-payments details required by Stripe when Connect is enabled</li>
+          <li>Merchant / <strong>online payments</strong> details required by our payment processor when Connect or checkout card acceptance is enabled</li>
         </ul>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Document standards</h3>
         <p className="text-web-body leading-relaxed">
@@ -189,23 +630,18 @@ export function CompliancePolicyPage() {
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">6. Verification Process</h2>
         <ol className="list-decimal pl-6 space-y-2 text-web-body mb-4">
           <li>You create an Easner account.</li>
-          <li>You complete <strong>hosted verification</strong> with a licensed partner:</li>
-        </ol>
-        <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
-          <li><strong>Easner Personal Banking (individuals):</strong> <strong>Bridge</strong> KYC where Bridge is enabled (in-app or browser); <strong>Noah</strong> KYC for New York residents and other geos that remain on Noah.</li>
-          <li><strong>Easner Business Banking:</strong> <strong>Lightspark Grid</strong> KYB and/or <strong>Bridge</strong> KYB depending on product and rail (for example U.S. / global banking via Grid and EUR / additional accounts via Bridge where enabled).</li>
-        </ul>
-        <ol className="list-decimal pl-6 space-y-2 text-web-body mb-4">
+          <li>You complete <strong>hosted verification</strong> with a licensed partner (in-app, in-dashboard, or browser flow as offered for your product and jurisdiction).</li>
+          <li>You may be asked to complete <strong>additional verification</strong> for another product or corridor (for example before sending to certain destinations or enabling online payments).</li>
           <li>Automated and, where needed, manual review is performed.</li>
           <li>Sanctions, PEP, and adverse media screening is conducted.</li>
           <li>You receive an outcome: approved, pending, rejected, or a request for more information.</li>
-          <li>Upon approval, eligible accounts, payment rails, and features are provisioned by tier and partner enablement.</li>
+          <li>Upon approval, eligible accounts, payment rails, and features are provisioned according to your verification level and product enablement.</li>
         </ol>
         <p className="text-web-body leading-relaxed mb-4">
           Most verifications complete within <strong>1–3 business days</strong>. Complex cases may take longer.
         </p>
         <p className="text-web-body leading-relaxed">
-          For Grid money-transmission customers, Easner records acceptance of Lightspark’s End User Terms (version, timestamp, IP, and acceptance method) and provides that consent to Lightspark as required before accounts can open. For Bridge money-transmission customers, you accept Bridge’s terms in the hosted onboarding flow; Bridge records that acceptance before accounts can open.
+          Verified profile information may be shared with payout partners as required to enable corridor services, in line with our <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.
         </p>
       </section>
 
@@ -240,24 +676,96 @@ export function CompliancePolicyPage() {
       </section>
 
       <section>
-        <h2 className="font-display text-2xl font-bold text-web-ink mb-4">8. Tier Entitlements</h2>
-        <PolicyTable
-          headers={["Tier", "Description", "Typical requirement"]}
-          rows={[
-            ["**Tier 1 – Global banking**", "USD/EUR accounts, pay-in/pay-out, regional corridors where enabled, stablecoin flows", "Approved KYC or KYB"],
-            ["**Tier 2 – Cards**", "Personal or business cards", "Separate partner approval; **not generally live today**"],
-            ["**Tier 3 – Online payments (Business Banking)**", "Accept card payments on invoices via Stripe Connect; settlement to Easner balance", "Approved KYB plus Stripe Connected Account onboarding"]
-          ]}
-        />
+        <h2 className="font-display text-2xl font-bold text-web-ink mb-4">8. Verification and product access</h2>
+        <p className="text-web-body leading-relaxed mb-4">
+          Access depends on successful verification, your jurisdiction, and which <strong>products</strong> are enabled — not on numbered “tiers.”
+        </p>
+        <div className="my-4 overflow-x-auto rounded-[16px] border border-web-hairline">
+          <table className="min-w-full text-sm text-web-body">
+            <thead>
+              <tr className="bg-web-plate">
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Product
+              </th>
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                What it covers
+              </th>
+              <th className="border-b border-web-hairline px-4 py-3 text-left font-semibold text-web-ink">
+                Typical requirement
+              </th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Global banking</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  USD and other core accounts, send and receive, regional corridors where enabled, stablecoin receive/send where enabled
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Approved account verification (individual or business)
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>More accounts</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Additional currency accounts (for example EUR, GBP) where offered
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Account verification; extra steps where required
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Online payments (Business)</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Card acceptance on invoices; settlement to Easner balance when enabled
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Business verification; merchant onboarding for card acceptance
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Cards</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Spend from balance in store or online
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Not generally available today; separate approval when launched
+                </td>
+            </tr>
+            <tr className="border-b border-web-hairline last:border-b-0">
+                <td className="px-4 py-3 align-top">
+                  <strong>Wallet and stablecoin</strong>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Deposit addresses, wallet-initiated sends where enabled
+                </td>
+                <td className="px-4 py-3 align-top">
+                  Account verification; Turnkey-backed signing (see Terms)
+                </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="text-web-body leading-relaxed mb-4">
+          Cross-border and local pay-in/pay-out corridors may be offered to eligible users with approved verification. Corridors are a capability under <strong>global banking</strong>, not a separate regional banking account product, unless we expressly launch one.
+        </p>
         <p className="text-web-body leading-relaxed">
-          Cross-border and local pay-in/pay-out corridors (for example via Yellowcard mobile-money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible Tier 1 global users and jurisdictions. They are a corridor capability under Tier 1, not a separate regional banking account tier, unless we expressly launch one.
+          <strong>Membership plans</strong> (Ease Plus, Ease Pro, and related) affect fees and feature limits described in the <PolicyLink href="/terms">Terms of Service</PolicyLink>; they do not replace KYC/KYB.
         </p>
       </section>
 
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">9. Verification Outcomes and Limits</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Approved:</strong> You may use Services within your tier, limits, and partner availability.
+          <strong>Approved:</strong> You may use Services within your enabled products, limits, and partner availability.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Pending:</strong> Some features may be restricted until review completes.
@@ -269,7 +777,7 @@ export function CompliancePolicyPage() {
           We and our partners may impose transaction limits, corridor restrictions, or holds based on verification level and risk. Limits are communicated in the app or dashboard where practicable.
         </p>
         <p className="text-web-body leading-relaxed">
-          Online payments may be limited or suspended independently based on Stripe, card-network, or Easner risk decisions.
+          Online payments may be limited or suspended independently based on payment processor, card-network, or Easner risk decisions.
         </p>
       </section>
 
@@ -303,7 +811,7 @@ export function CompliancePolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">12. Sharing and Security</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          We share KYC/KYB and compliance information with <strong>licensed partners</strong>, infrastructure providers, regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> (Section 5) for named financial and infrastructure partners (including Lightspark Grid, Bridge, Noah, and Yellowcard as fiat money-transmission / payments partners, Sumsub, Stripe, Turnkey, and Relay where applicable).
+          We share KYC/KYB and compliance information with <strong>licensed partners</strong>, infrastructure providers (including <strong>Turnkey</strong> for wallet-related compliance metadata where applicable), regulators, law enforcement, and other institutions where permitted by law and necessary to provide or protect the Services. See our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and <PolicyLink href="/legal/partners">Partners and service providers</PolicyLink>.
         </p>
         <p className="text-web-body leading-relaxed">
           We protect compliance data with encryption, access controls, and confidentiality training. Partners retain data under their own regulatory obligations, which may continue after your Easner account closes.
@@ -321,7 +829,6 @@ export function CompliancePolicyPage() {
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">14. Contact Us</h2>
         <PolicyContactBlock />
       </section>
-
     </PolicyPageShell>
   )
 }

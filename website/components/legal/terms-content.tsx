@@ -1,10 +1,13 @@
-import { LightsparkGridTermsContent } from "@/components/legal/lightspark-grid-terms-content"
-import { PolicyContactBlock, PolicyExternalLink, PolicyLink, PolicyPageShell } from "@/components/legal/policy-page-shell"
+import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } from "@/components/legal/policy-page-shell"
 
 
 export function TermsPolicyPage() {
   return (
-    <PolicyPageShell title="Terms of Service" lastUpdated="September 17, 2026">
+    <PolicyPageShell title="Terms of Service" lastUpdated="November 6, 2026">
+      <section>
+
+      </section>
+
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">1. Acceptance of Terms</h2>
         <p className="text-web-body leading-relaxed mb-4">
@@ -14,7 +17,7 @@ export function TermsPolicyPage() {
           If you use the Services on behalf of a business, you represent that you have authority to bind that entity. <strong>“You”</strong> includes that entity and its authorized users.
         </p>
         <p className="text-web-body leading-relaxed">
-          Your use of the Services is also subject to our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, each incorporated by reference.
+          Your use of the Services is also subject to our <PolicyLink href="/privacy">Privacy Policy</PolicyLink>, <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, and <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page (as updated from time to time), each incorporated by reference where applicable.
         </p>
       </section>
 
@@ -44,21 +47,23 @@ export function TermsPolicyPage() {
           <li><strong>Easner Business Banking</strong> – business banking, payouts, payroll, collections, and online payments through our web dashboard</li>
         </ul>
         <p className="text-web-body leading-relaxed mb-4">
-          Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card-acceptance on invoices, and card products.
+          Depending on your verification status, location, and product availability, the Services may include multi-currency accounts, inbound and outbound payments, currency conversion, stablecoin funding and settlement rails, invoicing and merchant collection tools, payroll disbursements, card acceptance on invoices, <strong>Easner Checkout</strong> for merchants and payers, <strong>membership plans</strong> (Ease and paid plans), and card products when available.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Service tiers (availability depends on verification, jurisdiction, and partner enablement):</strong>
+          <strong>Products (availability depends on verification, jurisdiction, and partner enablement):</strong>
         </p>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
-          <li><strong>Tier 1 – Global banking:</strong> USD and EUR accounts (and other currencies where enabled), pay-in and pay-out, regional corridors where launched, and stablecoin flows</li>
-          <li><strong>Tier 2 – Cards:</strong> Personal or business cards, spend controls, and cardholder management <strong>when approved and launched</strong> (not generally available today)</li>
-          <li><strong>Tier 3 – Online payments (Business Banking):</strong> Accept card payments on invoices via our payments partner, with settlement to your Easner balance when enabled</li>
+          <li><strong>Global banking:</strong> USD and other core accounts (and additional currencies where enabled), pay-in and pay-out, regional corridors where launched, and stablecoin flows where enabled</li>
+          <li><strong>More accounts:</strong> Additional currency accounts (for example EUR, GBP) where offered</li>
+          <li><strong>Online payments (Business Banking):</strong> Accept card payments on invoices via our payment processor, with settlement to your Easner balance when enabled</li>
+          <li><strong>Cards:</strong> Personal or business cards <strong>when approved and launched</strong> (not generally available today)</li>
+          <li><strong>Wallet and stablecoin:</strong> Deposit addresses and wallet-initiated sends where enabled (Turnkey-backed signing — see below)</li>
         </ul>
         <p className="text-web-body leading-relaxed mb-4">
-          Cross-border and local pay-in/pay-out corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered as part of Tier 1 for eligible global users and jurisdictions. Corridor availability depends on partners and destination – not a separate regional banking account product unless we expressly launch one.
+          Cross-border and local pay-in/pay-out corridors (for example mobile money or local bank rails in Africa, Latin America, Asia, and other regions) may be offered to eligible users with approved verification. Corridor availability depends on partners and destination – not a separate regional banking account product unless we expressly launch one.
         </p>
         <p className="text-web-body leading-relaxed">
-          <strong>Important:</strong> Easner is a <strong>financial technology company, not a bank</strong>. Banking, money transmission, payment acceptance, verification, and card services made available through the Services are provided by <strong>licensed financial partners</strong> in their respective jurisdictions. Easner does not offer FDIC or equivalent deposit insurance and does not itself hold customer deposits. Partner disclosures presented during onboarding, in receipts, or in these Terms identify the regulated provider for the relevant service.
+          <strong>Important:</strong> Easner is a <strong>financial technology company, not a bank</strong>. Banking, money transmission, payment acceptance, verification, and card services made available through the Services are provided by <strong>licensed financial partners</strong> in their respective jurisdictions. Easner does not offer FDIC or equivalent deposit insurance and does not itself hold customer deposits. The regulated provider for a specific service is identified in hosted onboarding, funding instructions, transaction records, and our <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page where applicable.
         </p>
       </section>
 
@@ -69,33 +74,38 @@ export function TermsPolicyPage() {
           For individuals, the Services may include account registration, identity verification, sending and receiving money, currency accounts and conversion, virtual account and stablecoin receive options, recipients, <strong>EASETAG</strong> transfers, mobile-money and local corridor flows where enabled, payroll receiving where invited by an employer, transaction history, and security features such as multi-factor authentication and biometric unlock where supported. Intended for consumers <strong>18 or older</strong> in supported jurisdictions.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          Card products shown in the app may be labeled coming soon and are <strong>not</strong> available until we launch Tier 2 cards with a licensed partner.
+          Card products shown in the app may be labeled coming soon and are <strong>not</strong> available until we launch cards with a licensed partner.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Easner Business Banking</h3>
         <p className="text-web-body leading-relaxed mb-4">
           For businesses, the Services may include organization onboarding, team access controls, multi-currency accounts, fund-balance and payouts (including cross-border corridors where enabled), <strong>payroll</strong> (people, runs, and disbursements), <strong>collections</strong> (invoicing, payment Terminal, and QR Pay where enabled), <strong>online payments</strong> (card acceptance on invoices via Stripe Connect where enabled), customer directory, wallet and stablecoin sends where enabled, and reporting. The account owner is responsible for authorized users’ actions.
         </p>
-        <h3 className="text-lg font-semibold text-web-ink mb-2">Partner-provided financial services</h3>
+        <h3 className="text-lg font-semibold text-web-ink mb-2">Licensed partner services</h3>
         <p className="text-web-body leading-relaxed mb-4">
           Identity verification, virtual accounts, fiat pay-in and pay-out, money transmission, card acceptance, sanctions screening, and related compliance processing are delivered by <strong>licensed partners</strong>. Easner provides the technology interface and program management.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          When you use partner-provided services, you may need to accept <strong>separate partner terms and privacy notices</strong> in the onboarding flow (or via these Terms). Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Our <PolicyLink href="/privacy">Privacy Policy</PolicyLink> identifies key financial and infrastructure partners.
+          When you use partner-provided services, you must accept <strong>partner terms and privacy notices</strong> presented in the hosted onboarding or payment flow (or incorporated documents such as the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> when Grid services apply). Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Current partners are listed on <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong>.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Lightspark Grid.</strong> When you use <strong>Lightspark money-transmission services</strong> through Easner (including certain Business KYB, virtual account, fund, payout, or cross-border flows when Grid is enabled for your account), the <strong>Lightspark Grid End User Terms</strong> in <strong>Section 20</strong> below also apply and form part of your agreement for those regulated services. <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) is the licensed money transmitter on those transactions.
+          When you use <strong>Lightspark Grid</strong> money-transmission services through Easner, the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> (also <strong>Section 20</strong> below) apply. When you enable <strong>online payments</strong> or other card acceptance through <strong>Stripe</strong>, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card processing, in addition to these Terms.
+        </p>
+        <h3 className="text-lg font-semibold text-web-ink mb-2">Membership and billing</h3>
+        <p className="text-web-body leading-relaxed mb-4">
+          Easner offers optional <strong>membership plans</strong> (for example Ease, Ease Plus, Ease Pro) for Personal and Business audiences. Paid plans bill through <strong>Easner Checkout</strong> (Easner as merchant) on a recurring basis unless stated otherwise at purchase.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Bridge.</strong> When you use <strong>Bridge money-transmission and related payment services</strong> through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Bridge is enabled for your account – including many <strong>Easner Personal Banking</strong> flows and eligible <strong>Easner Business Banking</strong> EUR / multi-currency account flows), Bridge’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. <strong>Bridge Building Inc.</strong> (NMLS ID 2450917) is a licensed money transmitter for applicable U.S. money-transmission services. Bridge-group entities in other jurisdictions (for example Bridge Ventures LLC for certain non-EEA services, and Bridge Building S.A. or Bridge Building Sp. z o.o. for certain EEA services) may provide services under their local licenses. Those terms govern the regulated services Bridge provides.
+          Plan prices, billing period, trials, promotional offers, and included benefits (such as reduced Easner fees per transfer or included free payouts or withdrawals) are shown before you confirm purchase and in the customer portal. Benefits apply as described at purchase; <strong>money movement is not blocked</strong> solely for being on a free plan unless we state otherwise for a non-monetary feature limit.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Noah.</strong> When you use <strong>Noah money-transmission and related payment services</strong> through Easner (including identity verification, virtual accounts, fiat pay-in and pay-out, and certain corridors where Noah is enabled for your account – including certain <strong>Easner Personal Banking</strong> flows such as New York residents and other geos that remain on Noah), Noah’s partner terms and privacy notices presented during onboarding also apply and form part of your agreement for those regulated services. <strong>Noah US, Inc.</strong> (NMLS ID 2696057) is a licensed money transmitter for applicable U.S. money-transmission services. Noah-group entities in other jurisdictions (for example Canada MSB registration and EU/Lithuania VASP registration) may provide services under their local licenses. Those terms govern the regulated services Noah provides.
+          You authorize us and our payment processor to charge your payment method on file for plan fees and applicable taxes. You may cancel or change plans through the flows we provide (including the Easner customer portal where enabled). Cancellation stops future plan charges; it does not by itself close your banking account or reverse past charges except where required by law.
+        </p>
+        <h3 className="text-lg font-semibold text-web-ink mb-2">Easner Checkout (merchants and payers)</h3>
+        <p className="text-web-body leading-relaxed mb-4">
+          Where enabled, businesses may use <strong>Easner Checkout</strong> to accept payments from their customers via hosted checkout, payment links, embed, subscriptions, and related tools. Easner or the business may be merchant of record depending on the product configuration; disclosures at checkout identify the merchant.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Yellowcard.</strong> When you use <strong>Yellowcard</strong> corridor services through Easner (including local fund-balance, mobile-money, and cross-border pay-in/pay-out where Yellowcard is enabled for your account), Yellowcard’s partner terms and privacy notices presented during onboarding or in the payment flow also apply and form part of your agreement for those regulated services. Yellowcard is the licensed payments / money-movement partner on those corridor transactions. Those terms govern the regulated services Yellowcard provides.
-        </p>
-        <p className="text-web-body leading-relaxed mb-4">
-          <strong>Stripe.</strong> When you enable <strong>online payments</strong> / Stripe Connect for invoice card acceptance, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card acceptance and settlement, in addition to these Terms.
+          <strong>Merchants</strong> must use Checkout only for lawful goods and services, provide accurate business and payout information, honor refunds and disputes as required by law and card-network rules, and protect payer data they receive. <strong>Payers</strong> provide payment and contact information subject to the merchant’s terms (when set) and Easner’s <PolicyLink href="/privacy">Privacy Policy</PolicyLink>.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Online payments and Stripe Connect (Business)</h3>
         <p className="text-web-body leading-relaxed mb-4">
@@ -135,11 +145,11 @@ export function TermsPolicyPage() {
           <li>Any “block” on our side is only <strong>product access control</strong> (for example verification, security, or compliance gating in the app). It is not the ability to alter, cancel, or reverse a transaction once it has been signed and submitted.</li>
         </ul>
         <p className="text-web-body leading-relaxed mb-4">
-          Fiat money-transmission, virtual-account, and partner payout rails (including <strong>Lightspark Grid</strong>, <strong>Bridge</strong>, <strong>Noah</strong>, and <strong>Yellowcard</strong> where enabled) remain separate from this self-custody wallet model and are provided by those licensed partners under their terms.
+          Fiat money-transmission, virtual-account, and partner payout rails remain separate from this self-custody wallet model and are provided by <strong>licensed partners</strong> under their terms.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Cards</h3>
         <p className="text-web-body leading-relaxed">
-          When Tier 2 cards are offered, they will be issued or facilitated by a <strong>licensed card program partner</strong> under a separate cardholder or program agreement, subject to partner underwriting and jurisdiction. Until launch, any cards screens in the Services are informational only.
+          When cards are offered, they will be issued or facilitated by a <strong>licensed card program partner</strong> under a separate cardholder or program agreement, subject to partner underwriting and jurisdiction. Until launch, any cards screens in the Services are informational only.
         </p>
       </section>
 
@@ -156,7 +166,7 @@ export function TermsPolicyPage() {
           <li>Keep your credentials and devices secure</li>
         </ul>
         <p className="text-web-body leading-relaxed">
-          We may refuse, suspend, or close accounts that do not meet eligibility or compliance standards. Sanctions screening applies to all users regardless of country. Currency, corridor, and tier availability depend on partners and your verification status.
+          We may refuse, suspend, or close accounts that do not meet eligibility or compliance standards. Sanctions screening applies to all users regardless of country. Currency, corridor, and product availability depend on partners and your verification status.
         </p>
       </section>
 
@@ -183,7 +193,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">7. Fees and Exchange Rates</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Fees, charges, and exchange rates may apply</strong> depending on product, corridor, currency pair, payment method, and partner costs (including Stripe processing fees for online payments and partner corridor fees). Applicable fees and rates are <strong>shown before you confirm</strong> a transaction or enable a feature unless otherwise required by law.
+          <strong>Fees, charges, and exchange rates may apply</strong> depending on product, corridor, currency pair, payment method, membership plan, and partner costs (including payment-processor fees for card acceptance and partner corridor fees). <strong>Membership subscription fees</strong> are shown at plan purchase. Transfer and conversion fees are <strong>shown before you confirm</strong> a transaction or enable a feature unless otherwise required by law.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           Rates may include a margin relative to reference or partner pricing. Third-party fees (bank charges, network fees, card scheme fees, on-chain gas) may also apply.
@@ -212,7 +222,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">9. Compliance, Limits, and Holds</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          Transaction limits, feature access, and corridor availability depend on verification tier, destination, partner rules, and your risk profile. We and our partners may delay, hold, decline, or request additional information to meet KYC, KYB, AML, sanctions, and card-acceptance obligations. See our <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>.
+          Transaction limits, feature access, and corridor availability depend on verification level, enabled products, destination, partner rules, membership plan entitlements (where applicable), and your risk profile. We and our partners may delay, hold, decline, or request additional information to meet KYC, KYB, AML, sanctions, and card-acceptance obligations. See our <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>.
         </p>
         <p className="text-web-body leading-relaxed">
           We or our partners may request <strong>source of funds, purpose of payment, or supporting documentation</strong> for high-value or higher-risk transactions before releasing funds.
@@ -268,14 +278,8 @@ export function TermsPolicyPage() {
 
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">15. Termination</h2>
-        <p className="text-web-body leading-relaxed mb-4">
-          We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time.
-        </p>
-        <p className="text-web-body leading-relaxed mb-4">
-          <strong>Easner Personal Banking</strong> users can close their account in the mobile app as described on our <PolicyLink href="/delete-account">Delete Account</PolicyLink> page, including a 7-day grace period during which signing in cancels the pending closure. If you cannot access the app, email <strong>support@easner.com</strong> or <strong>legal@easner.com</strong>. Business account closure may require additional steps (for example settling balances, payroll, or open invoices).
-        </p>
         <p className="text-web-body leading-relaxed">
-          Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
+          We may suspend or terminate access if you breach these Terms, pose a compliance or security risk, or if required by law or a partner. You may stop using the Services at any time. Surviving provisions include fees owed, chargeback and settlement obligations, dispute terms, and record retention obligations.
         </p>
       </section>
 
@@ -307,14 +311,14 @@ export function TermsPolicyPage() {
           <strong>Exceptions:</strong> Either party may use <strong>small claims court</strong> for qualifying claims or seek <strong>injunctive relief</strong> for unauthorized use or intellectual property abuse.
         </p>
         <p className="text-web-body leading-relaxed">
-          <strong>Partner disputes:</strong> Claims arising solely from a partner’s regulated services (including Lightspark money transmission, Bridge money transmission, Noah money transmission, Yellowcard corridor payments, or Stripe card acceptance) may be subject to that partner’s dispute process.
+          <strong>Partner disputes:</strong> Claims arising solely from a partner’s regulated services (including money transmission, corridor payments, or card acceptance) may be subject to that partner’s dispute process in addition to or instead of this Section 17, as stated in the partner terms accepted in the flow.
         </p>
       </section>
 
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">18. General Provisions</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Entire agreement:</strong> These Terms (including <strong>Section 20 – Lightspark Grid End User Terms</strong> where those services apply), together with the incorporated <PolicyLink href="/privacy">Privacy Policy</PolicyLink> and <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, constitute the entire agreement between you and Easner regarding the Services. Lightspark’s End User Terms govern your direct relationship with Lightspark for Grid money-transmission services. Bridge’s partner terms govern your relationship with Bridge for Bridge money-transmission and related payment services where enabled. Noah’s partner terms govern your relationship with Noah for Noah money-transmission and related payment services where enabled. Yellowcard’s partner terms govern Yellowcard corridor payments where enabled. Stripe’s Connected Account and related agreements govern card acceptance where you enable online payments.
+          <strong>Entire agreement:</strong> These Terms (including <strong>Section 20 – Lightspark Grid End User Terms</strong> and the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> where Grid services apply), together with the incorporated <PolicyLink href="/privacy">Privacy Policy</PolicyLink>, <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, and <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page, constitute the entire agreement between you and Easner regarding the Services. Partner terms accepted in the flow govern your relationship with those partners for the regulated services they provide (including money transmission and card acceptance).
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Severability:</strong> If any provision is held invalid or unenforceable, the remaining provisions remain in effect.
@@ -333,22 +337,9 @@ export function TermsPolicyPage() {
       </section>
       <section id="lightspark-money-transmission">
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">20. Lightspark Grid End User Terms</h2>
-        <p className="text-web-body leading-relaxed mb-4">
-          When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) through Easner (the Platform), you also agree to the full Lightspark Grid End User Terms below. Easner presents these terms as part of this combined document so that accepting Easner’s Terms includes accepting Lightspark’s End User Terms for those services. The current Lightspark-hosted copy is also available at{" "}
-          <PolicyExternalLink
-            href="https://www.lightspark.com/legal/grid/enduserterms"
-            analyticsLocation="legal_lightspark_terms"
-          >
-            https://www.lightspark.com/legal/grid/enduserterms
-          </PolicyExternalLink>
-          . In the event Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and Easner will update this Section 20 accordingly.
-        </p>
         <p className="text-web-body leading-relaxed">
-          <strong>Source:</strong> Lightspark Grid End User Terms (as published by Lightspark). Reproduced below in full for combined acceptance.
+          When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) through Easner, you also agree to the <strong><PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink></strong>, which are incorporated into these Terms by reference. Easner presents combined acceptance so that accepting these Terms includes accepting Lightspark’s End User Terms for those services when we record your acceptance. The current Lightspark-hosted copy is at <PolicyExternalLink href="https://www.lightspark.com/legal/grid/enduserterms" analyticsLocation="legal_external_link">https://www.lightspark.com/legal/grid/enduserterms</PolicyExternalLink>. If Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and we will update the incorporated document accordingly.
         </p>
-        <div className="mt-8 border-t border-web-hairline pt-8">
-          <LightsparkGridTermsContent />
-        </div>
       </section>
     </PolicyPageShell>
   )
