@@ -1,0 +1,238 @@
+{
+  "generatedFrom": "easnerbanking/docs/marketing/VOICE-AND-GUARDRAILS.md",
+  "banned": [
+    {
+      "id": "instant",
+      "phrase": "Instant",
+      "pattern": "\\binstant(ly)?\\b",
+      "flags": "i",
+      "replacement": "Fast; fees may apply",
+      "reason": "Conflicts with Terms of Service",
+      "severity": "error"
+    },
+    {
+      "id": "zero-fee",
+      "phrase": "zero fee",
+      "pattern": "\\bzero[- ]fees?\\b",
+      "flags": "i",
+      "replacement": "Fast; fees may apply",
+      "reason": "Conflicts with Terms of Service",
+      "severity": "error"
+    },
+    {
+      "id": "free-transfers",
+      "phrase": "free transfers",
+      "pattern": "\\bfree\\s+transfers?\\b",
+      "flags": "i",
+      "replacement": "Fast; fees may apply",
+      "reason": "Conflicts with Terms of Service",
+      "severity": "error"
+    },
+    {
+      "id": "easner-is-a-bank",
+      "phrase": "Easner is a bank",
+      "pattern": "\\bEasner\\s+is\\s+a\\s+bank\\b",
+      "flags": "i",
+      "replacement": "Licensed partners; not FDIC insured",
+      "reason": "Easner is not a bank",
+      "severity": "error"
+    },
+    {
+      "id": "fdic-insured",
+      "phrase": "FDIC insured",
+      "pattern": "(?<!not\\s)\\bFDIC[- ]insured\\b",
+      "flags": "i",
+      "replacement": "Licensed partners; not FDIC insured",
+      "reason": "Easner is not a bank",
+      "severity": "error"
+    },
+    {
+      "id": "we-hold-your-keys",
+      "phrase": "We hold your keys",
+      "pattern": "\\bwe\\s+hold\\s+your\\s+keys\\b",
+      "flags": "i",
+      "replacement": "Partner-managed wallet infrastructure",
+      "reason": "Partner-managed wallet infrastructure",
+      "severity": "error"
+    },
+    {
+      "id": "hsm-custody",
+      "phrase": "HSM custody",
+      "pattern": "\\bHSM\\s+custody\\b",
+      "flags": "i",
+      "replacement": "Partner-managed wallet infrastructure",
+      "reason": "Partner-managed wallet infrastructure",
+      "severity": "error"
+    },
+    {
+      "id": "ai-powered-aml",
+      "phrase": "AI-powered AML",
+      "pattern": "\\bAI[- ]powered\\s+AML\\b",
+      "flags": "i",
+      "replacement": "AML and sanctions screening via licensed partners",
+      "reason": "Not in legal docs; unverified",
+      "severity": "error"
+    },
+    {
+      "id": "gdpr-compliant-data-residency",
+      "phrase": "GDPR-compliant data residency",
+      "pattern": "\\bGDPR[- ]compliant\\s+data\\s+residency\\b",
+      "flags": "i",
+      "replacement": "Privacy Policy describes rights and transfers",
+      "reason": "Unverified unless counsel confirms",
+      "severity": "error"
+    },
+    {
+      "id": "crypto-app",
+      "phrase": "Crypto app",
+      "pattern": "\\bcrypto\\s+app\\b",
+      "flags": "i",
+      "replacement": "Banking-simple money movement",
+      "reason": "Wrong category; not the product",
+      "severity": "error"
+    },
+    {
+      "id": "trade-crypto",
+      "phrase": "trade crypto",
+      "pattern": "\\btrade\\s+crypto(currency)?\\b",
+      "flags": "i",
+      "replacement": "Banking-simple money movement",
+      "reason": "Wrong category; not the product",
+      "severity": "error"
+    },
+    {
+      "id": "buy-bitcoin",
+      "phrase": "buy Bitcoin",
+      "pattern": "\\bbuy\\s+bitcoin\\b",
+      "flags": "i",
+      "replacement": "Banking-simple money movement",
+      "reason": "Wrong category; not the product",
+      "severity": "error"
+    },
+    {
+      "id": "available-everywhere",
+      "phrase": "Available everywhere",
+      "pattern": "\\bavailable\\s+everywhere\\b",
+      "flags": "i",
+      "replacement": "Supported jurisdictions; tier and partner rules apply",
+      "reason": "Jurisdiction limits in KYC policy",
+      "severity": "error"
+    },
+    {
+      "id": "live-cards",
+      "phrase": "Live cards",
+      "pattern": "\\blive\\s+cards\\b",
+      "flags": "i",
+      "replacement": "Cards when available",
+      "reason": "Tier 3 not generally available",
+      "severity": "error"
+    },
+    {
+      "id": "apply-for-your-card-now",
+      "phrase": "Apply for your card now",
+      "pattern": "\\bapply\\s+for\\s+your\\s+card\\s+now\\b",
+      "flags": "i",
+      "replacement": "Cards when available",
+      "reason": "Tier 3 not generally available",
+      "severity": "error"
+    },
+    {
+      "id": "bridge",
+      "phrase": "Bridge",
+      "pattern": "\\bEasner\\s+Bridge\\b|\\bBridge\\s+(account|product|wallet|API)\\b",
+      "flags": "",
+      "replacement": "Omit",
+      "reason": "Deprecated",
+      "severity": "error"
+    },
+    {
+      "id": "easner-personal",
+      "phrase": "Easner Personal",
+      "pattern": "\\bEasner\\s+Personal\\b(?!\\s+Banking)",
+      "flags": "",
+      "replacement": "Easner Personal Banking or Easner Mobile",
+      "reason": "Retired product name",
+      "severity": "error"
+    },
+    {
+      "id": "easner-tag",
+      "phrase": "Easner tag",
+      "pattern": "\\bEasner\\s+tag\\b",
+      "flags": "i",
+      "replacement": "EASETAG",
+      "reason": "Retired handle brand",
+      "severity": "error"
+    }
+  ],
+  "qualifiers": [
+    {
+      "id": "lower-cost-vs-banks",
+      "claim": "Lower cost vs banks",
+      "qualifier": "Up to ~60%; supported corridors",
+      "trigger": "\\b(\\d+\\s?%|~\\s?\\d+\\s?%)\\s+(lower|cheaper|less)\\b|\\blower\\s+cost\\b|\\bcheaper\\s+than\\b",
+      "satisfied": "\\bup\\s+to\\b[^.]*\\bsupported\\s+corridors?\\b|\\bsupported\\s+corridors?\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "stablecoin-receive-send",
+      "claim": "Stablecoin receive/send",
+      "qualifier": "Where enabled",
+      "trigger": "\\bstablecoins?\\b[^.]*\\b(send|receive|sending|receiving)\\b|\\b(send|receive|sending|receiving)\\b[^.]*\\bstablecoins?\\b",
+      "satisfied": "\\bwhere\\s+(enabled|supported)\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "african-banking-ngn-regional",
+      "claim": "African banking (NGN, regional)",
+      "qualifier": "Where we launch",
+      "trigger": "\\bAfrican\\s+banking\\b|\\bNGN\\s+(account|banking)\\b",
+      "satisfied": "\\bwhere\\s+we\\s+launch\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "gbp-and-other-currencies",
+      "claim": "GBP and other currencies",
+      "qualifier": "Where supported and enabled for your profile",
+      "trigger": "\\bGBP\\s+(account|banking)\\b",
+      "satisfied": "\\bwhere\\s+supported\\b|\\bwhere\\s+enabled\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "corporate-personal-cards",
+      "claim": "Corporate / personal cards",
+      "qualifier": "When available / when approved",
+      "trigger": "\\b(corporate|personal|virtual|business)\\s+cards?\\b|\\bEasner\\s+cards?\\b",
+      "satisfied": "\\bwhen\\s+(available|approved)\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "wallet-send",
+      "claim": "Wallet send",
+      "qualifier": "Primarily Easner Business; approved corridors",
+      "trigger": "\\bwallet\\s+send\\b|\\bsend\\s+from\\s+(a|your)\\s+wallet\\b",
+      "satisfied": "\\bapproved\\s+corridors?\\b|\\bEasner\\s+Business\\b",
+      "flags": "i",
+      "severity": "warning"
+    },
+    {
+      "id": "api-agency-pricing",
+      "claim": "API / agency pricing",
+      "qualifier": "Contact for commercial terms",
+      "trigger": "\\b(API|agency)\\s+pricing\\b",
+      "satisfied": "\\bcontact\\b",
+      "flags": "i",
+      "severity": "warning"
+    }
+  ],
+  "emDash": {
+    "pattern": "—",
+    "replacement": "–",
+    "reason": "No em-dashes in customer-facing copy. Use an en-dash (–).",
+    "severity": "warning"
+  }
+}

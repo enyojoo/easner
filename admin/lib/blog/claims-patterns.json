@@ -1,0 +1,16 @@
+[
+  { "id": "fees-amount", "category": "fees", "label": "A fee amount", "pattern": "\\b(?:fees?|charges?|costs?)\\b[^.\\n]{0,40}\\b(?:\\d+(?:\\.\\d+)?\\s?%|[$€£]\\s?\\d+)" },
+  { "id": "fees-none", "category": "fees", "label": "No or low fees", "pattern": "\\b(?:no|zero|low|lowest|cheapest|hidden)[- ](?:fees?|charges?|costs?)\\b" },
+  { "id": "fees-free", "category": "fees", "label": "Free transfers or accounts", "pattern": "\\bfree (?:transfers?|payments?|payouts?|accounts?|conversions?|withdrawals?)\\b" },
+  { "id": "rates-apy", "category": "rates", "label": "Interest rate or APY", "pattern": "\\b(?:apy|apr|interest rates?|interest of)\\b" },
+  { "id": "rates-earn", "category": "rates", "label": "Earning a return", "pattern": "\\b(?:earn|earns|earning)\\b[^.\\n]{0,30}\\b(?:\\d+(?:\\.\\d+)?\\s?%|interest|yield|returns?)\\b" },
+  { "id": "yield", "category": "yields", "label": "Yield or returns", "pattern": "\\b(?:yields?|guaranteed returns?|returns? of \\d)\\b" },
+  { "id": "fx-margin", "category": "fx", "label": "FX margin or spread", "pattern": "\\b(?:fx|exchange|forex|currency)[ -](?:margins?|spreads?|markups?|rates? (?:of|at))\\b" },
+  { "id": "fx-mid-market", "category": "fx", "label": "Mid-market rate claim", "pattern": "\\b(?:mid-market|interbank|real) (?:exchange )?rates?\\b" },
+  { "id": "insured", "category": "insured", "label": "Insured or protected deposits", "pattern": "\\b(?:fdic|insured|deposit insurance|deposit protection|protected deposits?|ncua)\\b" },
+  { "id": "bank-claim", "category": "insured", "label": "Claims Easner is a bank", "pattern": "\\beasner is (?:a )?bank\\b" },
+  { "id": "licensed", "category": "regulatory", "label": "Licensing statement", "pattern": "\\b(?:licensed|licensing|licen[cs]es? (?:in|from|to)|authori[sz]ed by)\\b" },
+  { "id": "regulated", "category": "regulatory", "label": "Regulatory statement", "pattern": "\\b(?:regulated (?:by|in|as)|regulator|compliant with|compliance with|fully compliant|gdpr|aml|kyc|sanctions)\\b" },
+  { "id": "competitor-name", "category": "competitors", "label": "Names a competitor", "pattern": "\\b(?:wise|transferwise|remitly|western union|moneygram|paypal|revolut|payoneer|worldremit|stripe|airwallex|monzo|wells fargo|bank of america)\\b" },
+  { "id": "competitor-compare", "category": "competitors", "label": "Compares with banks or rivals", "pattern": "\\b(?:cheaper than|faster than|better than|lower than|vs|versus|compared (?:to|with)|unlike (?:banks|wise|paypal))\\b" }
+]

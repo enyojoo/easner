@@ -7,7 +7,7 @@ const monorepoRoot = path.join(__dirname, "..")
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: monorepoRoot,
-  transpilePackages: ["@easner/shared"],
+  transpilePackages: ["@easner/shared", "@easner/blog-content"],
   reactStrictMode: true,
   poweredByHeader: false,
   turbopack: {
