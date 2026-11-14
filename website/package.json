@@ -7,6 +7,8 @@
     "dev": "next dev --port 3000",
     "lint": "eslint .",
     "check:seo": "python3 scripts/check-seo.py",
+    "build:fixtures": "BLOG_FIXTURES=1 next build --webpack",
+    "check:seo:fixtures": "npm run build:fixtures && python3 scripts/check-seo.py",
     "start": "next start --port 3000",
     "sync:legal": "node scripts/sync-legal-content.mjs",
     "sync:tokens": "node scripts/sync-design-tokens.mjs",
@@ -14,6 +16,7 @@
   },
   "dependencies": {
     "@calcom/embed-react": "^1.5.3",
+    "@easner/blog-content": "*",
     "@easner/shared": "*",
     "@intercom/messenger-js-sdk": "^0.0.19",
     "@radix-ui/react-checkbox": "1.1.3",

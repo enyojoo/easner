@@ -1,3 +1,4 @@
+import { BLOG_RESERVED_SLUGS } from "@easner/blog-content"
 import { posthog } from "@/lib/posthog"
 import { isBusinessEasnerUrl } from "./business-signup-url"
 import { isPersonalEasnerUrl } from "./personal-app-url"
@@ -35,8 +36,8 @@ const PAGE_NAMES: Record<string, string> = {
 
 export function getMarketingPageName(pathname: string): string {
   if (PAGE_NAMES[pathname]) return PAGE_NAMES[pathname]
-  const blogMatch = pathname.match(/^\/blog\/([^/]+)/)
-  if (blogMatch) return `blog:${blogMatch[1]}`
+  const post = blogPostSlug(pathname)
+  if (post) return `blog:${post}`
   return pathname.replace(/^\//, "") || "home"
 }
 
@@ -97,10 +98,34 @@ export function captureMarketingPageViewed(pathname: string) {
     posthog.capture("pricing_page_viewed", { page_path: pathname, page_name })
   }
 
-  const blogMatch = pathname.match(/^\/blog\/([^/]+)/)
-  if (blogMatch) {
-    posthog.capture("blog_post_viewed", { slug: blogMatch[1], page_path: pathname })
+  const slug = blogPostSlug(pathname)
+  if (slug) {
+    posthog.capture("blog_post_viewed", { slug, page_path: pathname })
   }
+}
+
+/** Sections under /blog that are not posts (plan §3 reserved slugs). */
+const BLOG_SECTIONS = new Set<string>(BLOG_RESERVED_SLUGS)
+
+/** The slug when `pathname` is a single post, e.g. /blog/how-to-get-paid. Null for the index and archives. */
+export function blogPostSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/blog\/([^/]+)\/?$/)
+  return match && !BLOG_SECTIONS.has(match[1]) ? match[1] : null
+}
+
+export type BlogShareNetwork = "copy" | "x" | "linkedin" | "whatsapp" | "native"
+
+/** A share button was used. The visit it brings back arrives with `utm_source=<network>&utm_medium=share`. */
+export function capturePostShared(slug: string, network: BlogShareNetwork) {
+  if (typeof window === "undefined") return
+  posthog.capture("post_shared", { slug, network, page_path: `/blog/${slug}` })
+}
+
+/** How far down a post a reader got: 25, 50, 75 or 100 (each once per page view). */
+export type BlogReadDepth = 25 | 50 | 75 | 100
+export function captureBlogReadDepth(slug: string, depth: BlogReadDepth) {
+  if (typeof window === "undefined") return
+  posthog.capture("blog_read_depth", { slug, depth, page_path: `/blog/${slug}` })
 }
 
 export function capturePersonaTabSelected(personaId: string, personaLabel: string) {

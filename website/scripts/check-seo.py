@@ -1,4 +1,10 @@
-"""Check SEO invariants in the production HTML after `npm run build`."""
+"""Check SEO invariants in the production HTML after `npm run build`.
+
+Static pages are found from app/(marketing)/**/page.tsx. The blog's dynamic pages (posts, categories, authors, and
+`?page=N` archives) are found from the prerendered HTML under .next/server/app/blog, so build with data available:
+    BLOG_FIXTURES=1 npm run build && npm run check:seo      (from website/; or `npm run build:website` from the root)
+A build with no blog data has no blog posts to check; the blog index and authors pages are still checked.
+"""
 
 import json
 import re
@@ -33,6 +39,9 @@ class Page(HTMLParser):
         self.capture = None
         self.buffer = []
         self.script = False
+        self.images = []
+        self.chrome = 0
+        self.alternates = []
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
@@ -44,6 +53,13 @@ class Page(HTMLParser):
             self.canonicals.append(attrs.get("href"))
         if tag == "a" and attrs.get("href"):
             self.links.append(attrs["href"])
+        # Site chrome (the fixed header and the footer) is shared by every page and not the blog's content.
+        if (tag == "header" and "fixed" in attrs.get("class", "")) or tag == "footer":
+            self.chrome += 1
+        if tag == "img" and not self.chrome:
+            self.images.append(attrs)
+        if tag == "link" and attrs.get("rel") == "alternate":
+            self.alternates.append(attrs)
         if tag == "h1":
             self.h1_count += 1
         if tag == "title":
@@ -60,6 +76,8 @@ class Page(HTMLParser):
             self.text.append(text)
 
     def handle_endtag(self, tag):
+        if self.chrome and tag in ("header", "footer"):
+            self.chrome -= 1
         if tag == "title" and self.capture == "title":
             self.titles.append("".join(self.buffer))
             self.capture = None
@@ -79,7 +97,94 @@ routes = {}
 for source in (ROOT / "app/(marketing)").rglob("page.tsx"):
     route = "/" + source.parent.relative_to(ROOT / "app/(marketing)").as_posix()
     route = "/" if route == "/." else route
+    if "[" in route:
+        continue  # dynamic: found below from the prerendered output
     routes[route] = OUTPUT / ("index.html" if route == "/" else route[1:] + ".html")
+
+# Blog pages: posts, categories, authors and ?page=N archives, from the prerendered HTML.
+PAGE_ROUTE = re.compile(r"^(.*)/page/(\d+)$")
+for html_file in sorted((OUTPUT / "blog").rglob("*.html")) if (OUTPUT / "blog").exists() else []:
+    rel = html_file.relative_to(OUTPUT).with_suffix("").as_posix()
+    match = PAGE_ROUTE.match(rel)
+    route = f"/{match.group(1)}?page={match.group(2)}" if match else "/" + rel
+    routes[route] = html_file
+
+BLOG = {route: path for route, path in routes.items() if route == "/blog" or route.startswith("/blog/") or route.startswith("/blog?")}
+
+
+def path_of(route):
+    return route.split("?")[0]
+
+
+def blog_kind(route):
+    base = path_of(route)
+    if base == "/blog":
+        return "index"
+    if base == "/blog/authors":
+        return "authors"
+    if base.startswith("/blog/categories/"):
+        return "category"
+    if base.startswith("/blog/authors/"):
+        return "author"
+    return "post"
+
+
+author_pages = {path_of(r) for r in BLOG if blog_kind(r) == "author"}
+noindex_routes = set()
+
+def generated_file(destination):
+    """A route handler's prerendered output: feeds, share images, and /blog/<slug>.md (a rewrite to /api/blog/markdown)."""
+    if destination.endswith(".md"):
+        return (OUTPUT / "api/blog/markdown" / (destination[len("/blog/"):-3] + ".body")).exists()
+    return (OUTPUT / (destination.lstrip("/") + ".body")).exists()
+
+
+posts_seen = []
+
+
+def blog_checks(route, path, page, types, description):
+    kind = blog_kind(route)
+    html = path.read_text()
+    content = normalize(" ".join(page.text))
+    base = path_of(route)
+    # Every image: alt text and explicit dimensions (no layout shift).
+    for img in page.images:
+        check("alt" in img, f"{route}: <img> without alt: {img.get('src', '')[:80]}")
+        check(bool(img.get("width")) and bool(img.get("height")), f"{route}: <img> without width/height: {img.get('src', '')[:80]}")
+    check(any(a.get("type") == "application/rss+xml" for a in page.alternates), f"{route}: missing RSS <link rel=alternate>")
+    if kind in ("index", "category", "authors"):
+        check("CollectionPage" in types, f"{route}: archive needs CollectionPage schema")
+    if kind == "author":
+        check("ProfilePage" in types, f"{route}: author page needs ProfilePage schema")
+    if kind == "post":
+        posts_seen.append(base)
+        check(page.meta.get("og:type") == ["article"], f"{route}: og:type must be article")
+        check("article:published_time" in page.meta, f"{route}: missing article:published_time")
+        check("WebPage" in types and "BlogPosting" in types, f"{route}: needs WebPage and BlogPosting schema")
+        check(any(a.get("type") == "text/markdown" for a in page.alternates), f"{route}: missing text/markdown alternate")
+        check((OUTPUT / "api/blog/markdown" / (base[len("/blog/"):] + ".body")).exists(), f"{route}: Markdown version /blog/{base[6:]}.md was not generated")
+        for schema in page.schemas:
+            if schema.get("@type") != "BlogPosting":
+                continue
+            for field in ("headline", "description", "image", "datePublished", "dateModified", "author", "publisher", "mainEntityOfPage"):
+                check(bool(schema.get(field)), f"{route}: BlogPosting missing {field}")
+            check(schema.get("publisher", {}).get("@id") == ORIGIN + "/#organization", f"{route}: BlogPosting publisher must be /#organization")
+            check(schema.get("mainEntityOfPage", {}).get("@id") == ORIGIN + base + "#webpage", f"{route}: mainEntityOfPage must point at the WebPage node")
+            check(schema.get("headline") and normalize(schema["headline"]) in content, f"{route}: headline not visible in HTML")
+            authors = schema.get("author", [])
+            for author in authors if isinstance(authors, list) else [authors]:
+                url = author.get("url", "")
+                check(url.startswith(ORIGIN) and url[len(ORIGIN):] in author_pages, f"{route}: author {author.get('name')} has no author page")
+            for image in schema.get("image", []):
+                u = urlparse(image)
+                check(u.scheme == "https" and u.netloc == "www.easner.com", f"{route}: BlogPosting image not on www.easner.com: {image}")
+                check(generated_file(unquote(u.path)), f"{route}: BlogPosting image not generated: {u.path}")
+        if "aeo-answer" in html:
+            check(any(s.get("@type") == "WebPage" and s.get("speakable") for s in page.schemas), f"{route}: Summary present but WebPage has no speakable selector")
+        for schema in page.schemas:
+            if schema.get("@type") == "FAQPage":
+                check("<details" in html, f"{route}: FAQ not rendered as visible Q&A")
+
 
 titles, descriptions = {}, {}
 faq_count = 0
@@ -106,7 +211,13 @@ for route, path in sorted(routes.items()):
     check(page.canonicals == [canonical], f"{route}: incorrect or duplicate canonical")
     check(page.h1_count == 1, f"{route}: expected one H1, found {page.h1_count}")
     robots = ",".join(page.meta.get("robots", []) + page.meta.get("googlebot", [])).lower()
-    check("index" in robots and not re.search(r"\b(noindex|nofollow|none|nosnippet)\b", robots), f"{route}: indexing/snippet restriction: {robots}")
+    if route in BLOG and "noindex" in robots:
+        # Only thin category archives may be noindex; they must also be absent from the sitemap (checked below).
+        noindex_routes.add(route)
+        check(blog_kind(route) == "category", f"{route}: only thin category archives may be noindex, found noindex here")
+        check(not re.search(r"\b(nofollow|none|nosnippet)\b", robots), f"{route}: snippet/follow restriction: {robots}")
+    else:
+        check("index" in robots and not re.search(r"\b(noindex|nofollow|none|nosnippet)\b", robots), f"{route}: indexing/snippet restriction: {robots}")
     for key, value in [("og:title", title), ("twitter:title", title), ("og:description", description), ("twitter:description", description), ("og:url", canonical)]:
         check(page.meta.get(key) == [value], f"{route}: {key} does not match page metadata")
     for key in ["og:image", "twitter:image"]:
@@ -119,6 +230,8 @@ for route, path in sorted(routes.items()):
             check(body.exists() and body.stat().st_size > 0, f"{route}: missing generated social image: {url.path}")
     types = [schema.get("@type") for schema in page.schemas]
     check("Organization" in types and "WebSite" in types, f"{route}: missing company/site schema")
+    if route in BLOG:
+        blog_checks(route, path, page, types, description)
     answer_routes = {
         "/",
         "/about",
@@ -177,7 +290,12 @@ for route, path in sorted(routes.items()):
         if url.scheme and url.scheme not in ("http", "https"):
             continue
         destination = unquote(url.path).rstrip("/") or "/"
-        check(destination in routes or (ROOT / "public" / destination.lstrip("/")).is_file(), f"{route}: unresolved internal link {href}")
+        check(
+            destination in routes
+            or (ROOT / "public" / destination.lstrip("/")).is_file()
+            or (destination.startswith("/blog/") and generated_file(destination)),
+            f"{route}: unresolved internal link {href}",
+        )
 
 sitemap_path = OUTPUT / "sitemap.xml.body"
 check(sitemap_path.exists(), "Missing sitemap output")
@@ -185,8 +303,23 @@ if sitemap_path.exists():
     sitemap = ElementTree.fromstring(sitemap_path.read_text())
     urls = [element.text for element in sitemap.findall("{*}url/{*}loc")]
     # Next serializes the root sitemap URL without the canonical trailing slash.
-    check({url.rstrip("/") for url in urls} == {(ORIGIN + route).rstrip("/") for route in routes}, "Sitemap does not cover exactly the public pages")
+    # Paginated archives (?page=N) are crawlable but not listed; thin (noindex) archives are neither indexed nor listed.
+    expected = {(ORIGIN + route).rstrip("/") for route in routes if "?" not in route and route not in noindex_routes}
+    check({url.rstrip("/") for url in urls} == expected, "Sitemap does not cover exactly the indexable public pages: " + str(sorted(({u.rstrip("/") for u in urls} ^ expected))[:6]))
+    for route in noindex_routes:
+        check((ORIGIN + route).rstrip("/") not in {u.rstrip("/") for u in urls}, f"{route}: noindex archive must not be in the sitemap")
     check(len(urls) == len(set(urls)), "Duplicate sitemap entries")
+
+llms_path = OUTPUT / "llms.txt.body"
+check(llms_path.exists(), "Missing llms.txt output")
+if llms_path.exists():
+    llms = llms_path.read_text()
+    for post in posts_seen:
+        check(ORIGIN + post in llms, f"llms.txt does not list {post}")
+    check(not posts_seen or "## Blog" in llms, "llms.txt has no ## Blog section")
+check((OUTPUT / "llms-full.txt.body").exists(), "Missing llms-full.txt output")
+for feed in ["blog/feed.xml.body"]:
+    check((OUTPUT / feed).exists() or not posts_seen, f"Missing {feed}")
 
 robots_path = OUTPUT / "robots.txt.body"
 check(robots_path.exists(), "Missing robots.txt output")
@@ -198,4 +331,4 @@ if robots_path.exists():
 if ERRORS:
     print("SEO validation failed:\n- " + "\n- ".join(ERRORS))
     sys.exit(1)
-print(f"SEO checks passed: {len(routes)} pages, unique metadata, canonicals, indexing, social images, structured data, {faq_count} FAQ answers, answer-engine markup, internal links, sitemap and robots.txt.")
+print(f"SEO checks passed: {len(routes)} pages ({len(posts_seen)} blog posts), unique metadata, canonicals, indexing, social images, structured data, {faq_count} FAQ answers, answer-engine markup, internal links, sitemap and robots.txt.")
