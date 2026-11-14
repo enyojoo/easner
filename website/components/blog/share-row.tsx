@@ -4,6 +4,7 @@ import { Check, Link2, Share2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { capturePostShared, type BlogShareNetwork } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
+import { LinkedInIcon, WhatsAppIcon, XIcon } from "./social-icons"
 
 /** Every share link carries `utm_source=<network>&utm_medium=share` so visits from shares can be counted. The canonical never does. */
 export function shareUrl(url: string, network: BlogShareNetwork): string {
@@ -12,8 +13,6 @@ export function shareUrl(url: string, network: BlogShareNetwork): string {
   u.searchParams.set("utm_medium", "share")
   return u.toString()
 }
-
-const GLYPH = "grid size-[18px] place-items-center rounded-[5px] bg-web-ink text-[10px] font-bold leading-none text-web-canvas"
 
 /**
  * WebPostFeedback share row: Copy link, X, LinkedIn, WhatsApp, plus the native share sheet on phones.
@@ -38,9 +37,9 @@ export function ShareRow({ url, title, slug, variant = "row" }: { url: string; t
     }
   }
   const links = [
-    { network: "x" as const, label: "X", glyph: "X", href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl(url, "x"))}` },
-    { network: "linkedin" as const, label: "LinkedIn", glyph: "in", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl(url, "linkedin"))}` },
-    { network: "whatsapp" as const, label: "WhatsApp", glyph: "W", href: `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl(url, "whatsapp")}`)}` },
+    { network: "x" as const, label: "X", Icon: XIcon, href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl(url, "x"))}` },
+    { network: "linkedin" as const, label: "LinkedIn", Icon: LinkedInIcon, href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl(url, "linkedin"))}` },
+    { network: "whatsapp" as const, label: "WhatsApp", Icon: WhatsAppIcon, href: `https://wa.me/?text=${encodeURIComponent(`${title} ${shareUrl(url, "whatsapp")}`)}` },
   ]
 
   const rail = variant === "rail"
@@ -60,7 +59,7 @@ export function ShareRow({ url, title, slug, variant = "row" }: { url: string; t
           rel="noopener"
           onClick={() => track(link.network)}
         >
-          <span className={GLYPH} aria-hidden="true">{link.glyph}</span>
+          <link.Icon width={16} height={16} />
           {link.label}
         </a>
       ))}

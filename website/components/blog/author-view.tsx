@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { Globe, Github, Linkedin, MapPin } from "lucide-react"
+import { Globe, Github, MapPin } from "lucide-react"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { homeCtaBand } from "@/lib/marketing/content/home"
 import { joinNames, pluralPosts } from "@/lib/blog/format"
@@ -9,6 +9,7 @@ import { authorPath, pagePath, postPath, abs } from "@/lib/blog/urls"
 import { breadcrumbJsonLd, collectionPageJsonLd, profilePageJsonLd } from "@/lib/marketing/structured-data"
 import { Avatar } from "./avatar"
 import { Breadcrumb } from "./breadcrumb"
+import { LinkedInIcon, XIcon } from "./social-icons"
 import { JsonLd } from "./json-ld"
 import { Pagination } from "./pagination"
 import { PostGrid } from "./post-card"
@@ -83,13 +84,13 @@ export async function AuthorView({ slug, page }: { slug: string; page: number })
             <div className="mt-4 flex flex-wrap gap-2">
               {author.xUrl && (
                 <a className={PILL} href={author.xUrl} target="_blank" rel="me noopener">
-                  <span className="grid size-[18px] place-items-center rounded-[5px] bg-web-ink text-[10px] font-bold leading-none text-web-canvas" aria-hidden="true">X</span>
+                  <XIcon width={16} height={16} />
                   X
                 </a>
               )}
               {author.linkedinUrl && (
                 <a className={PILL} href={author.linkedinUrl} target="_blank" rel="me noopener">
-                  <Linkedin className="size-4" aria-hidden="true" /> LinkedIn
+                  <LinkedInIcon width={16} height={16} /> LinkedIn
                 </a>
               )}
               {author.githubUrl && (
