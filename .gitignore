@@ -130,3 +130,6 @@ website/marketing/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# One-time hosted setup scripts that carry the owner email: local only
+supabase/hosted-setup.sql
+supabase/fix-public-access.sql
