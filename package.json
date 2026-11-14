@@ -5,16 +5,20 @@
   "packageManager": "npm@10.9.3",
   "workspaces": [
     "packages/*",
-    "website"
+    "website",
+    "admin"
   ],
   "scripts": {
     "dev": "turbo run dev --filter=website",
     "dev:website": "turbo run dev --filter=website",
+    "dev:admin": "turbo run dev --filter=admin",
     "build": "turbo run build",
     "build:website": "turbo run build --filter=website",
+    "build:admin": "turbo run build --filter=admin",
     "build:shared": "turbo run build --filter=@easner/shared",
     "lint": "turbo run lint",
     "start:website": "turbo run start --filter=website",
+    "start:admin": "turbo run start --filter=admin",
     "test:db": "node supabase/tests/run-db-tests.mjs"
   },
   "devDependencies": {
