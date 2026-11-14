@@ -174,10 +174,14 @@ export function runChecklist(input: ChecklistInput): ChecklistResult {
   // Authors
   if (!authors.length) add({ id: "authors", severity: "error", title: "Author", detail: "Add at least one author.", action: { label: "Open Post settings", target: "authors" } })
   else {
-    const incomplete = authors.filter((a) => !a.avatar_path || !hasBio(a.bio))
+    // Photo, title and bio, and who is missing what.
+    const gaps = authors
+      .map((a) => ({ name: a.name, missing: [!a.avatar_path && "a photo", !a.title?.trim() && "a title", !hasBio(a.bio) && "a bio"].filter(Boolean) as string[] }))
+      .filter((g) => g.missing.length)
+    const list = (items: string[]) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}` : items[0])
     add(
-      incomplete.length
-        ? { id: "authors", severity: "error", title: "Author profile complete", detail: `${incomplete.map((a) => a.name).join(", ")} ${incomplete.length === 1 ? "needs" : "need"} a photo and a bio.`, action: { label: "Open authors", target: "authors" } }
+      gaps.length
+        ? { id: "authors", severity: "error", title: "Author profile complete", detail: gaps.map((g) => `${g.name} needs ${list(g.missing)}.`).join(" "), action: { label: "Open authors", target: "authors" } }
         : { id: "authors", severity: "pass", title: "Author profile complete", detail: authors.map((a) => a.name).join(", ") },
     )
   }

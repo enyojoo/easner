@@ -12,11 +12,25 @@ import { GripVertical, Plus } from "lucide-react"
 export function BlockHandle({ editor, containerRef }: { editor: Editor; containerRef: RefObject<HTMLDivElement | null> }) {
   const [target, setTarget] = useState<{ top: number; pos: number } | null>(null)
   const overHandle = useRef(false)
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The handle sits outside the canvas box, so the pointer leaves the canvas on its way to it. Hiding waits a beat
+  // and is cancelled when the pointer arrives.
+  const cancelHide = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current)
+    hideTimer.current = null
+  }
+  const scheduleHide = () => {
+    cancelHide()
+    hideTimer.current = setTimeout(() => {
+      if (!overHandle.current) setTarget(null)
+    }, 400)
+  }
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     const onMove = (event: MouseEvent) => {
+      cancelHide()
       if (overHandle.current || !editor.isEditable) return
       const dom = editor.view.dom as HTMLElement
       const rect = dom.getBoundingClientRect()
@@ -33,7 +47,7 @@ export function BlockHandle({ editor, containerRef }: { editor: Editor; containe
       setTarget((current) => (current && current.pos === start ? current : { top: box.top - holder.top, pos: start }))
     }
     const onLeave = () => {
-      if (!overHandle.current) setTarget(null)
+      if (!overHandle.current) scheduleHide()
     }
     container.addEventListener("mousemove", onMove)
     container.addEventListener("mouseleave", onLeave)
@@ -41,6 +55,7 @@ export function BlockHandle({ editor, containerRef }: { editor: Editor; containe
       container.removeEventListener("mousemove", onMove)
       container.removeEventListener("mouseleave", onLeave)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, containerRef])
 
   if (!target || !editor.isEditable) return null
@@ -82,9 +97,11 @@ export function BlockHandle({ editor, containerRef }: { editor: Editor; containe
       style={{ top: target.top }}
       onMouseEnter={() => {
         overHandle.current = true
+        cancelHide()
       }}
       onMouseLeave={() => {
         overHandle.current = false
+        scheduleHide()
       }}
     >
       <button

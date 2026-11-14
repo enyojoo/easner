@@ -27,7 +27,7 @@ const base = (): ChecklistInput => ({
     category_id: "c1",
   },
   doc: goodDoc(),
-  authors: [{ id: "a", name: "Ada", avatar_path: "authors/a.webp", bio: { type: "doc", content: [p("Writes about money.")] } }],
+  authors: [{ id: "a", name: "Ada", title: "Head of Product", avatar_path: "authors/a.webp", bio: { type: "doc", content: [p("Writes about money.")] } }],
   otherPosts: [],
   knownPaths: KNOWN_SITE_PATHS,
   publishedSlugs: [],
@@ -90,6 +90,12 @@ test("category", () => assert.equal(sev(run((i) => (i.post.category_id = null)),
 test("authors: none, incomplete, complete", () => {
   assert.equal(sev(run((i) => (i.authors = [])), "authors"), "error")
   assert.equal(sev(run((i) => (i.authors[0].avatar_path = null)), "authors"), "error")
+  const missing = run((i) => {
+    i.authors[0].title = ""
+    i.authors[0].bio = null
+  }).items.find((i) => i.id === "authors")
+  assert.equal(missing?.severity, "error")
+  assert.match(missing?.detail ?? "", /Ada needs a title and a bio\./)
   assert.equal(sev(run((i) => (i.authors[0].bio = null)), "authors"), "error")
   assert.equal(sev(run((i) => (i.authors[0].bio = "Plain text bio")), "authors"), "pass")
 })

@@ -100,3 +100,11 @@ the working doc), so any edit after an approval voids it.
 `summary` is a published field like `content`: it changes only through `publish_post`, because anon can read it on live
 rows. Title, excerpt, SEO fields and cover are single-copy: edits to them on a live post are live as soon as the website
 revalidates (only the body has a draft copy).
+
+## Member author profiles
+
+`accept_admin_invite()` creates the member's `blog_authors` row in the same transaction as their `admin_members` row
+(name from the invite, else the email's local part; slug from the name with `-2`, `-3` on collision; every other field
+empty). `20261115130000_member_author_profiles.sql` backfills members who signed in earlier and is safe to re-run.
+`ensure_my_author()` stays as a safety net for "My profile". Guest authors (editors insert them, `member_id` null) are
+unchanged, and the public side is unchanged: anon only reads authors with a live post, so an empty profile is invisible.

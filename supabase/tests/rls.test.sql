@@ -645,4 +645,91 @@ select tests.ok(
   (select accepted_at is not null from public.admin_invites where email = 'invitee@rls.test'),
   'invitee: the invite is marked accepted');
 
+-- ---------------------------------------------------------------------------------------------------------------
+-- Member author profiles: created with the membership, never duplicated, invisible to the public until a live post
+-- ---------------------------------------------------------------------------------------------------------------
+
+select tests.ok(
+  (select count(*) from public.blog_authors where member_id = tests.uid('invitee@rls.test')) = 1,
+  'first sign-in: the membership and the author profile are created together');
+select tests.ok(
+  (select name = 'Invitee' and slug = 'invitee' and title is null and avatar_path is null and bio is null
+     and x_url is null and linkedin_url is null and github_url is null and website_url is null and location is null
+   from public.blog_authors where member_id = tests.uid('invitee@rls.test')),
+  'first sign-in: the profile takes the invite name and leaves every other field empty');
+
+select tests.login('invitee@rls.test', 'aal1');
+set local role authenticated;
+select tests.ok(public.accept_admin_invite() = 'editor', 'second sign-in: still an editor');
+reset role;
+select tests.ok(
+  (select count(*) from public.blog_authors where member_id = tests.uid('invitee@rls.test')) = 1,
+  'second sign-in: no duplicate author profile');
+
+insert into auth.users (id, email, email_confirmed_at) values
+  ('00000000-0000-4000-8000-00000000000a', 'dup@rls.test', now()),
+  ('00000000-0000-4000-8000-00000000000b', 'no.name@rls.test', now()),
+  ('00000000-0000-4000-8000-00000000000c', 'dup2@rls.test', now());
+insert into public.admin_invites (email, role, name) values
+  ('dup@rls.test', 'writer', 'Invitee'),
+  ('dup2@rls.test', 'writer', 'Invitee'),
+  ('no.name@rls.test', 'writer', '');
+
+select tests.login('dup@rls.test', 'aal1');
+set local role authenticated;
+select public.accept_admin_invite();
+reset role;
+select tests.login('dup2@rls.test', 'aal1');
+set local role authenticated;
+select public.accept_admin_invite();
+reset role;
+select tests.login('no.name@rls.test', 'aal1');
+set local role authenticated;
+select public.accept_admin_invite();
+reset role;
+select tests.ok((select slug from public.blog_authors where member_id = tests.uid('dup@rls.test')) = 'invitee-2',
+  'slug collision: the second Invitee becomes invitee-2');
+select tests.ok((select slug from public.blog_authors where member_id = tests.uid('dup2@rls.test')) = 'invitee-3',
+  'slug collision: the third becomes invitee-3');
+select tests.ok(
+  (select name = 'no.name' and slug = 'no-name' from public.blog_authors where member_id = tests.uid('no.name@rls.test')),
+  'no invite name: the name falls back to the email local part');
+
+-- Backfill: members with no profile get one, and running it again changes nothing.
+select tests.ok(
+  exists (select 1 from public.admin_members m where m.email = 'owner@rls.test'
+          and not exists (select 1 from public.blog_authors a where a.member_id = m.user_id)),
+  'backfill: the fixture owner has no profile yet');
+do $$
+declare m record;
+begin
+  for round in 1..2 loop
+    for m in select user_id from public.admin_members x
+             where not exists (select 1 from public.blog_authors a where a.member_id = x.user_id) loop
+      perform public.blog_create_member_author(m.user_id);
+    end loop;
+  end loop;
+end $$;
+select tests.ok(
+  (select count(*) from public.admin_members m where not exists (select 1 from public.blog_authors a where a.member_id = m.user_id)) = 0,
+  'backfill: every member has a profile');
+select tests.ok(
+  (select count(*) from public.blog_authors where member_id = tests.uid('owner@rls.test')) = 1
+  and (select slug from public.blog_authors where member_id = tests.uid('owner@rls.test')) = 'owner',
+  'backfill: idempotent, one profile each, slugs from names');
+
+-- A guest author (no login) is still an editor's to insert.
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$insert into public.blog_authors (slug, name) values ('guest-one', 'Guest One')$q$) = 1,
+  'owner (an editor too): still inserts a guest author with no login');
+reset role;
+
+-- The public sees none of the empty profiles (none of these authors has a live post).
+set local role anon;
+select tests.ok(tests.count('select id from public.blog_authors where slug in (''invitee'', ''invitee-2'', ''no-name'', ''guest-one'')') = 0,
+  'anon: reads no author without a live post');
+select tests.ok(tests.throws('select member_id from public.blog_authors'), 'anon: still cannot select member_id');
+reset role;
+
 rollback;

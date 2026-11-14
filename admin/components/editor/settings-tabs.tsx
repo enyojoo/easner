@@ -203,11 +203,11 @@ export function PostTab({
         </Select>
       </Section>
 
-      <Section title="Authors" hint="Each author needs a photo and a bio before the post can publish.">
+      <Section title="Authors" hint="Each author needs a photo, a title and a bio before the post can publish.">
         <ul className="grid gap-1.5">
           {authors.length === 0 ? <li className="text-sm text-muted-foreground">No authors yet. Add one under Authors.</li> : null}
           {authors.map((author) => {
-            const gap = !author.avatar_path ? "Missing photo" : !bioToText(author.bio).trim() ? "Missing bio" : null
+            const gap = !author.avatar_path ? "Missing photo" : !author.title?.trim() ? "Missing title" : !bioToText(author.bio).trim() ? "Missing bio" : null
             return (
               <li key={author.id}>
                 <label className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-muted/50">
@@ -425,7 +425,7 @@ export function AeoTab({ post, title, doc, authors }: { post: PostFull; title: s
   const terms = extractDefinitions(doc)
   const sources = extractSources(doc)
   const chosen = authors.filter((author) => post.authorIds.includes(author.id))
-  const complete = chosen.length > 0 && chosen.every((author) => author.avatar_path && bioToText(author.bio).trim())
+  const complete = chosen.length > 0 && chosen.every((author) => author.avatar_path && author.title?.trim() && bioToText(author.bio).trim())
   return (
     <div>
       <Section title="Answer-first checks" hint="Search and AI answers quote posts that answer first, show their sources and name their author.">
@@ -435,7 +435,7 @@ export function AeoTab({ post, title, doc, authors }: { post: PostFull; title: s
           <Check ok={steps.length > 0}>Steps {steps.length ? `(${steps.length}) emit HowTo` : "none"}</Check>
           <Check ok={terms.length > 0}>Definitions {terms.length ? `(${terms.length}) emit DefinedTerm` : "none"}</Check>
           <Check ok={sources.length > 0}>Sources {sources.length ? `(${sources.length}) cited` : "none. Cite fees, rates and regulatory statements."}</Check>
-          <Check ok={Boolean(complete)}>Author profile {complete ? "complete" : "needs a photo and a bio"}</Check>
+          <Check ok={Boolean(complete)}>Author profile {complete ? "complete" : "needs a photo, a title and a bio"}</Check>
         </ul>
       </Section>
       <Section title="llms.txt line">
