@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -25,7 +26,7 @@ export default function DevelopersPage() {
           ...productAnswerJsonLd(developersContent, "/developers"),
         ])}
       />
-      <ProductPageSections content={developersContent} />
+      <ProductPageSections content={developersContent} beforeFaq={<ProductRelatedReading product="developers" />} />
     </>
   )
 }

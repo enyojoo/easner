@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { Globe, Github, MapPin } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { homeCtaBand } from "@/lib/marketing/content/home"
 import { joinNames, pluralPosts } from "@/lib/blog/format"
@@ -9,7 +9,7 @@ import { authorPath, pagePath, postPath, abs } from "@/lib/blog/urls"
 import { breadcrumbJsonLd, collectionPageJsonLd, profilePageJsonLd } from "@/lib/marketing/structured-data"
 import { Avatar } from "./avatar"
 import { Breadcrumb } from "./breadcrumb"
-import { LinkedInIcon, XIcon } from "./social-icons"
+import { AuthorSocials } from "./author-socials"
 import { JsonLd } from "./json-ld"
 import { Pagination } from "./pagination"
 import { PostGrid } from "./post-card"
@@ -82,27 +82,7 @@ export async function AuthorView({ slug, page }: { slug: string; page: number })
           </div>
           {authorSameAs(author).length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {author.xUrl && (
-                <a className={PILL} href={author.xUrl} target="_blank" rel="me noopener">
-                  <XIcon width={16} height={16} />
-                  X
-                </a>
-              )}
-              {author.linkedinUrl && (
-                <a className={PILL} href={author.linkedinUrl} target="_blank" rel="me noopener">
-                  <LinkedInIcon width={16} height={16} /> LinkedIn
-                </a>
-              )}
-              {author.githubUrl && (
-                <a className={PILL} href={author.githubUrl} target="_blank" rel="me noopener">
-                  <Github className="size-4" aria-hidden="true" /> GitHub
-                </a>
-              )}
-              {author.websiteUrl && (
-                <a className={PILL} href={author.websiteUrl} target="_blank" rel="me noopener">
-                  <Globe className="size-4" aria-hidden="true" /> Website
-                </a>
-              )}
+              <AuthorSocials author={author} labels linkClassName={PILL} />
             </div>
           )}
           <p className="mt-4 text-sm font-medium text-web-meta">

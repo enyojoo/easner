@@ -297,6 +297,45 @@ for route, path in sorted(routes.items()):
             f"{route}: unresolved internal link {href}",
         )
 
+# Related reading: on product pages (up to 3 latest posts, section absent when none) and at the end of each post.
+def related_links(route, section_id):
+    html = routes[route].read_text()
+    match = re.search(r'<section[^>]*aria-labelledby="%s".*?</section>' % section_id, html, re.S)
+    if not match:
+        return None
+    return [unquote(urlparse(h).path).rstrip("/") for h in re.findall(r'<a[^>]*href="([^"]+)"', match.group(0))]
+
+
+PRODUCT_ROUTES = ["/personal", "/business", "/checkout", "/payment-links", "/invoicing", "/payroll", "/stablecoin", "/cards", "/developers", "/partners"]
+for route in PRODUCT_ROUTES:
+    if route not in routes or not routes[route].exists():
+        continue
+    links = related_links(route, "product-related-reading")
+    if links is None:
+        continue  # hidden entirely when no post is linked to the page: no empty state
+    check(1 <= len(links) <= 3, f"{route}: Related reading must list 1 to 3 posts, found {len(links)}")
+    check(len(links) == len(set(links)), f"{route}: Related reading links a post twice")
+    for href in links:
+        check(href in {path_of(r) for r in BLOG if blog_kind(r) == "post"}, f"{route}: Related reading link {href} is not a blog post")
+# With the fixtures, these product pages have linked posts and must show them (guards against the section silently vanishing).
+FIXTURE_PRODUCT_POSTS = {
+    "/payroll": "/blog/payroll-now-pays-contractors-in-local-currency",
+    "/checkout": "/blog/checkout-or-payment-links-which-one-fits-your-business",
+    "/stablecoin": "/blog/what-stablecoin-settlement-changes-for-a-payment-to-kenya",
+}
+for route, post_path in FIXTURE_PRODUCT_POSTS.items():
+    if post_path in {path_of(r) for r in BLOG}:
+        check(post_path in (related_links(route, "product-related-reading") or []), f"{route}: Related reading missing {post_path}")
+for route in BLOG:
+    if blog_kind(route) != "post":
+        continue
+    links = related_links(route, "related-reading")
+    if links is None:
+        continue
+    check(len(links) <= 3, f"{route}: more than 3 related posts")
+    check(path_of(route) not in links, f"{route}: related posts include the post itself")
+    check(len(links) == len(set(links)), f"{route}: related posts link a post twice")
+
 sitemap_path = OUTPUT / "sitemap.xml.body"
 check(sitemap_path.exists(), "Missing sitemap output")
 if sitemap_path.exists():

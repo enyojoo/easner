@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { partnersContent } from "@/lib/marketing/content/partners"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -29,7 +30,7 @@ export default function PartnersPage() {
           ...productAnswerJsonLd(partnersContent, "/partners"),
         ])}
       />
-      <ProductPageSections content={partnersContent} />
+      <ProductPageSections content={partnersContent} beforeFaq={<ProductRelatedReading product="partners" />} />
     </>
   )
 }

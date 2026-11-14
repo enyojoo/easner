@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { cardsContent } from "@/lib/marketing/content/cards"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -25,7 +26,7 @@ export default function CardsPage() {
           ...productAnswerJsonLd(cardsContent, "/cards"),
         ])}
       />
-      <ProductPageSections content={cardsContent} />
+      <ProductPageSections content={cardsContent} beforeFaq={<ProductRelatedReading product="cards" />} />
     </>
   )
 }

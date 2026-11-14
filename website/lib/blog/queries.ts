@@ -282,11 +282,38 @@ export function pickFeatured(posts: BlogPostSummary[]): BlogPostSummary[] {
   return [...picked, ...rest].slice(0, 3)
 }
 
-/** Same category first, then recency. (Editor pinning arrives with Phase 4.) */
+/**
+ * Rank candidates for a post's "Related reading": same `product_page` first, then same category, then recency.
+ * Pure, so it is unit-testable and shared by the fixtures and Supabase paths. The current post is never included.
+ */
+export function rankRelated(post: BlogPostSummary, posts: BlogPostSummary[], count = 3): BlogPostSummary[] {
+  const score = (p: BlogPostSummary) =>
+    (post.productPage && p.productPage === post.productPage ? 2 : 0) + (p.categoryId === post.categoryId ? 1 : 0)
+  return posts
+    .filter((p) => p.id !== post.id)
+    .sort((a, b) => score(b) - score(a) || newestFirst(a, b))
+    .slice(0, count)
+}
+
+/**
+ * Three related posts. Reads the one cached, `blog`-tagged list of live posts (explicit columns), so a publish, edit or
+ * unpublish (which revalidates `blog`) refreshes every post's related row.
+ */
 export async function getRelated(post: BlogPostSummary, count = 3): Promise<BlogPostSummary[]> {
-  const others = (await getAllPosts()).filter((p) => p.id !== post.id)
-  const same = others.filter((p) => p.categoryId === post.categoryId)
-  return [...same, ...others.filter((p) => p.categoryId !== post.categoryId)].slice(0, count)
+  return rankRelated(post, await getAllPosts(), count)
+}
+
+/**
+ * Latest posts linked to a product page (`product_page`), for the product page's "Related reading". Never throws:
+ * product pages are static and must still build and render when Supabase is unreachable, so a failure logs and returns [].
+ */
+export async function getPostsForProduct(product: ProductSlug, count = 3): Promise<BlogPostSummary[]> {
+  try {
+    return (await getAllPosts()).filter((p) => p.productPage === product).slice(0, count)
+  } catch (error) {
+    console.error(`[blog] related reading for ${product} unavailable`, error)
+    return []
+  }
 }
 
 export async function getPostsByCategory(categoryId: string): Promise<BlogPostSummary[]> {

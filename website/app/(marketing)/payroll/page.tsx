@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { payrollContent } from "@/lib/marketing/content/payroll"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -26,7 +27,7 @@ export default function PayrollPage() {
           ...productAnswerJsonLd(payrollContent, "/payroll"),
         ])}
       />
-      <ProductPageSections content={payrollContent} />
+      <ProductPageSections content={payrollContent} beforeFaq={<ProductRelatedReading product="payroll" />} />
     </>
   )
 }

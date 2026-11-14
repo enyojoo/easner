@@ -21,6 +21,7 @@ import {
   howToJsonLd,
 } from "@/lib/marketing/structured-data"
 import { Avatar } from "./avatar"
+import { AuthorSocials } from "./author-socials"
 import { Breadcrumb } from "./breadcrumb"
 import { CoverImage } from "./cover-image"
 import { Helpful } from "./helpful"
@@ -180,8 +181,7 @@ export async function PostView({ slug, draft }: { slug: string; draft: boolean }
               {richPlain(a.bio) && <p className="mt-2 line-clamp-2 text-[15px] leading-6 text-web-body">{richPlain(a.bio)}</p>}
               <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 text-sm font-semibold leading-5 text-web-link">
                 <Link href={authorPath(a.slug)} className="hover:underline">All posts by {a.name.split(" ")[0]}</Link>
-                {a.xUrl && <a href={a.xUrl} target="_blank" rel="me noopener" className="hover:underline">X</a>}
-                {a.linkedinUrl && <a href={a.linkedinUrl} target="_blank" rel="me noopener" className="hover:underline">LinkedIn</a>}
+                <AuthorSocials author={a} linkClassName="inline-flex size-6 items-center justify-center hover:text-primary-text" />
               </div>
             </div>
           </div>
