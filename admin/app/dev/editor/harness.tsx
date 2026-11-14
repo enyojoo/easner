@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { del } from "idb-keyval"
 import { EMPTY_DOC } from "@easner/blog-content"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { EditorSelect } from "@/components/editor/editor-select"
 import { PostEditor } from "@/components/editor/post-editor"
 import type { CommentRow, EditorAdapter, EditorLookups, PostFull, ReviewState, Viewer } from "@/components/editor/types"
 import { readImageSize } from "@/lib/media"
@@ -214,26 +217,26 @@ export function EditorHarness() {
       <div
         role="region"
         aria-label="Development harness controls"
-        className="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-popover px-3 py-1.5 text-xs text-foreground shadow-lift"
+        className="fixed bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-popover px-4 py-2 text-sm text-foreground shadow-lift"
       >
         <span className="font-medium text-muted-foreground">Harness</span>
-        <select aria-label="Role" className="h-7 rounded-md border border-input bg-card px-1" value={roleIndex} onChange={(event) => setRoleIndex(Number(event.target.value))}>
-          {ROLES.map((role, index) => (
-            <option key={role.id} value={index}>
-              {role.label}
-            </option>
-          ))}
-        </select>
-        <button type="button" className="h-7 rounded-md border border-input bg-card px-2" onClick={() => (clearBackup(), setSample(sample === "every" ? "empty" : "every"), setGeneration((n) => n + 1))}>
+        <EditorSelect
+          ariaLabel="Role"
+          className="w-44"
+          value={String(roleIndex)}
+          onValueChange={(value) => setRoleIndex(Number(value))}
+          options={ROLES.map((role, index) => ({ value: String(index), label: role.label }))}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => (clearBackup(), setSample(sample === "every" ? "empty" : "every"), setGeneration((n) => n + 1))}>
           {sample === "every" ? "Empty post" : "Load every block"}
-        </button>
-        <label className="flex items-center gap-1">
-          <input type="checkbox" checked={offline} onChange={(event) => setOffline(event.target.checked)} />
+        </Button>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={offline} onCheckedChange={(value) => setOffline(value === true)} aria-label="Simulate offline" />
           Simulate offline
         </label>
-        <button type="button" className="h-7 rounded-md border border-input bg-card px-2" onClick={() => (clearBackup(), setGeneration((n) => n + 1))}>
+        <Button type="button" variant="outline" size="sm" onClick={() => (clearBackup(), setGeneration((n) => n + 1))}>
           Reset
-        </button>
+        </Button>
       </div>
     </>
   )
