@@ -15,7 +15,11 @@ export function AdminShellGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? ""
   const { access, sessionResolved } = useAuth()
   const isPublic = pathname === "/auth" || pathname.startsWith("/auth/")
-  const mustSignIn = !isPublic && sessionResolved && access !== "loading" && access !== "ready"
+  // The editor is the one screen that leaves the shell (OffBlogEditor): a full-width canvas with its own top bar.
+  // /dev/* is the development harness; its page answers 404 unless ADMIN_DEV_HARNESS is on.
+  const isDevHarness = pathname === "/dev" || pathname.startsWith("/dev/")
+  const isEditor = pathname === "/posts/new" || /^\/posts\/[^/]+$/.test(pathname)
+  const mustSignIn = !isPublic && !isDevHarness && sessionResolved && access !== "loading" && access !== "ready"
 
   useLayoutEffect(() => {
     if (!mustSignIn) return
@@ -23,8 +27,9 @@ export function AdminShellGate({ children }: { children: React.ReactNode }) {
     window.location.replace("/auth/login")
   }, [mustSignIn])
 
-  if (isPublic) return <>{children}</>
+  if (isPublic || isDevHarness) return <>{children}</>
   if (mustSignIn || access === "loading") return null
 
+  if (isEditor) return <>{children}</>
   return <AdminShell>{children}</AdminShell>
 }
