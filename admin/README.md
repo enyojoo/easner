@@ -64,7 +64,7 @@ Needs Docker for the local Supabase stack.
 
 ```bash
 supabase start                      # from the repo root; applies supabase/migrations and seed.sql
-cp admin/.env.example admin/.env.local   # paste the API URL and publishable (anon) key that `supabase start` prints
+# admin/.env.local: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY from `supabase start`
 npm run dev:admin                   # http://localhost:3010
 ```
 
