@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 import type { Editor } from "@tiptap/react"
 import { NodeSelection } from "@tiptap/pm/state"
 import { GripVertical, Plus } from "lucide-react"
+import { TRIGGER_INVISIBLE } from "@/components/editor/slash-menu"
 
 /**
  * The block handle: appears beside the block under the pointer. The grip drags the block (native drag, ProseMirror
@@ -63,15 +64,25 @@ export function BlockHandle({ editor, containerRef }: { editor: Editor; containe
   const addBelow = () => {
     const node = editor.state.doc.nodeAt(target.pos)
     if (!node) return
+    const storage = (editor.storage as unknown as { slashCommand?: { fromPlus: boolean; createdLine: boolean } }).slashCommand
+    // An empty line is used as it is; anything else gets a new line below. Either way the menu opens at once.
+    const empty = node.type.name === "paragraph" && node.content.size === 0
+    if (storage) {
+      // eslint-disable-next-line react-hooks/immutability -- extension storage is the editor's own mutable state
+      storage.fromPlus = true
+      storage.createdLine = !empty
+    }
+    if (empty) {
+      editor.chain().focus().setTextSelection(target.pos + 1).insertContent(TRIGGER_INVISIBLE).run()
+      return
+    }
     const at = target.pos + node.nodeSize
-    // eslint-disable-next-line react-hooks/immutability -- extension storage is the editor's own mutable state
-    ;(editor.storage as unknown as { slashCommand?: { fromPlus: boolean } }).slashCommand!.fromPlus = true
     editor
       .chain()
       .focus()
       .insertContentAt(at, { type: "paragraph" })
       .setTextSelection(at + 1)
-      .insertContent("/")
+      .insertContent(TRIGGER_INVISIBLE)
       .run()
   }
 

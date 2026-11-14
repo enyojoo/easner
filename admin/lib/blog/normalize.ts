@@ -58,9 +58,11 @@ function cleanMarks(marks: AnyNode["marks"]): AnyNode["marks"] {
 
 function cleanNode(node: AnyNode): AnyNode | null {
   if (node.type === "text") {
-    if (!node.text) return null
+    // The editor's invisible menu trigger (a zero-width space) never reaches storage.
+    const text = node.text?.replace(/\u200b/g, "")
+    if (!text) return null
     const marks = cleanMarks(node.marks)
-    return marks ? { type: "text", text: node.text, marks } : { type: "text", text: node.text }
+    return marks ? { type: "text", text, marks } : { type: "text", text }
   }
   const out: AnyNode = { type: node.type }
   const attrs = cleanAttrs(node.type, node.attrs)

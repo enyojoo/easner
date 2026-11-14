@@ -65,3 +65,8 @@ test("table cells lose default spans and colwidth; the result validates", () => 
   assert.equal(validateDoc(doc).filter((issue) => issue.severity === "error").length, 0)
   assert.equal("attrs" in (doc.content[0] as { content: { content: object[] }[] }).content[0].content[0], false)
 })
+
+test("the editor's zero-width menu trigger never reaches storage", () => {
+  const doc = normalizeDoc({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "​" }] }, { type: "paragraph", content: [{ type: "text", text: "a​b" }] }] })
+  assert.deepEqual(doc.content, [{ type: "paragraph" }, { type: "paragraph", content: [{ type: "text", text: "ab" }] }])
+})

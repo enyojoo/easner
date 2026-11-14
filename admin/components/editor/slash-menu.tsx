@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
 import { Extension, ReactRenderer, type Editor, type Range } from "@tiptap/react"
 import { Plugin } from "@tiptap/pm/state"
-import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion"
+import Suggestion, { findSuggestionMatch,  type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion"
 import {
   AlertTriangle,
   BookOpen,
@@ -372,6 +372,12 @@ const SlashList = forwardRef<ListHandle, SuggestionProps<SlashItem, SlashItem>>(
   )
 })
 
+/**
+ * What the plus button types to open the menu: a zero-width space, so the line stays visually empty. Typing "/" opens
+ * the same menu. Both are stripped before a document is stored (lib/blog/normalize.ts).
+ */
+export const TRIGGER_INVISIBLE = "\u200b"
+
 /** Remove the typed "/query" and, when the plus button made this line only to host it, the empty line too. */
 function discardSlash(editor: Editor, range: Range, dropLine: boolean) {
   const $from = editor.state.doc.resolve(range.from)
@@ -381,14 +387,14 @@ function discardSlash(editor: Editor, range: Range, dropLine: boolean) {
   editor.chain().deleteRange(target).run()
 }
 
-export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; escapedAt: number }>({
+export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; createdLine: boolean; escapedAt: number }>({
   name: "slashCommand",
   addOptions() {
     return { onPickImage: () => {}, hasSummary: () => false }
   },
   addStorage() {
     // Set by the block handle's plus button: that line exists only to hold the menu.
-    return { fromPlus: false, escapedAt: 0 }
+    return { fromPlus: false, createdLine: false, escapedAt: 0 }
   },
   addProseMirrorPlugins() {
     const ctx = this.options
@@ -404,9 +410,15 @@ export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; 
             blur: (view) => {
               if (!storage.fromPlus) return false
               const { $from } = view.state.selection
-              if ($from.depth === 1 && /^\/\S*$/.test($from.parent.textContent)) {
+              if ($from.depth === 1 && new RegExp(`^[/${TRIGGER_INVISIBLE}]\\S*$`).test($from.parent.textContent)) {
+                const created = storage.createdLine
                 storage.fromPlus = false
-                view.dispatch(view.state.tr.delete($from.before(), $from.after()))
+                storage.createdLine = false
+                view.dispatch(
+                  created
+                    ? view.state.tr.delete($from.before(), $from.after())
+                    : view.state.tr.delete($from.start(), $from.end()),
+                )
               }
               return false
             },
@@ -420,6 +432,7 @@ export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; 
       Suggestion<SlashItem, SlashItem>({
         editor: this.editor,
         char: "/",
+        findSuggestionMatch: (config) => findSuggestionMatch(config) ?? findSuggestionMatch({ ...config, char: TRIGGER_INVISIBLE }),
         startOfLine: false,
         allowSpaces: false,
         allow: ({ state, range }) => {
@@ -430,6 +443,7 @@ export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; 
         command: ({ editor, range, props }) => {
           picked = true
           storage.fromPlus = false
+          storage.createdLine = false
           props.run(editor, range, ctx)
         },
         render: () => {
@@ -465,8 +479,9 @@ export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; 
                 component = null
                 // Escape means "never mind": the "/" goes with it, as it was only there to open the menu.
                 picked = true
-                const dropLine = storage.fromPlus
+                const dropLine = storage.fromPlus && storage.createdLine
                 storage.fromPlus = false
+                storage.createdLine = false
                 discardSlash(this.editor, props.range, dropLine)
                 return true
               }
@@ -478,14 +493,15 @@ export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; 
               const escaped = Date.now() - storage.escapedAt < 200
               const text = props.editor.state.doc.textBetween(props.range.from, Math.min(props.range.to, props.editor.state.doc.content.size))
               // Escape means "never mind": the "/" goes with it, as it was only there to open the menu.
-              if (!picked && escaped && text.startsWith("/")) {
-                discardSlash(props.editor, props.range, storage.fromPlus)
+              if (!picked && escaped && (text.startsWith("/") || text.startsWith(TRIGGER_INVISIBLE))) {
+                discardSlash(props.editor, props.range, storage.fromPlus && storage.createdLine)
               }
               // Clicked away from a menu the plus button opened: don't leave a lone "/" on its own line.
-              else if (!picked && storage.fromPlus && /^\/[^\s]*$/.test(props.editor.state.doc.textBetween(props.range.from, Math.min(props.range.to, props.editor.state.doc.content.size)))) {
-                discardSlash(props.editor, props.range, true)
+              else if (!picked && storage.fromPlus && new RegExp(`^[/${TRIGGER_INVISIBLE}]\\S*$`).test(props.editor.state.doc.textBetween(props.range.from, Math.min(props.range.to, props.editor.state.doc.content.size)))) {
+                discardSlash(props.editor, props.range, storage.createdLine)
               }
               storage.fromPlus = false
+              storage.createdLine = false
               picked = false
             },
           }
