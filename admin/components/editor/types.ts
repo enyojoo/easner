@@ -90,6 +90,33 @@ export type CommentRow = {
 
 export type Viewer = { id: string; name: string; role: AdminRole }
 
+export type RevisionKind = "autosave" | "submit" | "publish" | "restore"
+
+/** One row of History: who, when, what kind, and how many words the version has (the list never carries the doc). */
+export type RevisionRow = {
+  id: string
+  kind: RevisionKind
+  created_at: string
+  created_by: string | null
+  author_name: string
+  title: string | null
+  word_count: number | null
+}
+
+export type RevisionDetail = RevisionRow & { content: DocNode | null; excerpt: string | null }
+
+/** The answer to a lock claim: you hold it, or someone else does (and whether you may take over). */
+export type LockClaim = {
+  acquired: boolean
+  took_over: boolean
+  holder_id: string | null
+  holder_name: string | null
+  can_take_over: boolean
+}
+
+/** Someone on the post right now (seen in the last 2 minutes). */
+export type PresenceViewer = { user_id: string; name: string; avatar_path: string | null; seen_at: string; holds_lock: boolean }
+
 export type AuthorOption = {
   id: string
   name: string
@@ -117,6 +144,8 @@ export type OtherPost = {
  */
 export interface EditorAdapter {
   kind: "supabase" | "local"
+  /** How often the lock heartbeat runs. The harness shortens it; the default is 30 seconds. */
+  lockHeartbeatMs?: number
   /** Saves title, excerpt and the working doc. Throws `{ offline: true }` when the network is down. */
   saveDraft(postId: string, snapshot: DraftSnapshot): Promise<{ updatedAt: string }>
   saveSettings(postId: string, patch: SettingsPatch): Promise<{ updatedAt: string; slug: string }>
@@ -129,9 +158,24 @@ export interface EditorAdapter {
   approve(postId: string): Promise<PostFull>
   publish(postId: string, opts: { significant: boolean }): Promise<{ post: PostFull; website: WebsiteResult }>
   unpublish(postId: string): Promise<{ post: PostFull; website: WebsiteResult }>
+  /** Schedules (or reschedules) at a UTC instant. The cron route publishes it when due. */
+  schedule(postId: string, at: Date): Promise<PostFull>
+  unschedule(postId: string): Promise<PostFull>
   previewLink(postId: string): Promise<{ url: string } | { skipped: string }>
   /** Tells the website a live post's slug, category or author changed. */
   notifyWebsite(postId: string, change: { oldSlug?: string; oldCategorySlug?: string }): Promise<WebsiteResult>
+
+  listRevisions(postId: string): Promise<RevisionRow[]>
+  getRevision(revisionId: string): Promise<RevisionDetail>
+  /** Copies a version into the draft (never live). Returns the post as it is afterwards. */
+  restoreRevision(revisionId: string): Promise<PostFull>
+
+  /** Takes or refreshes the edit lock (the heartbeat). `takeOver` is for editors and owners. */
+  claimLock(postId: string, takeOver: boolean): Promise<LockClaim>
+  releaseLock(postId: string): Promise<void>
+  /** Marks the person as viewing without taking the lock. */
+  touchPresence(postId: string): Promise<void>
+  viewers(postId: string): Promise<PresenceViewer[]>
 
   reviewState(postId: string): Promise<ReviewState>
   listComments(postId: string): Promise<CommentRow[]>

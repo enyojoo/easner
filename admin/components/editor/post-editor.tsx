@@ -16,6 +16,10 @@ import { BlockHandle } from "@/components/editor/block-handle"
 import { BrandLint } from "@/components/editor/brand-lint-extension"
 import { EditorBubbleMenu } from "@/components/editor/bubble-menu"
 import { CommentsPanel } from "@/components/editor/comments-panel"
+import { CompareDialog } from "@/components/editor/compare-dialog"
+import { HistoryPanel } from "@/components/editor/history-panel"
+import { LockBanner } from "@/components/editor/lock-banner"
+import { useEditLock } from "@/components/editor/use-edit-lock"
 import { fileUrl } from "@/components/editor/cover-field"
 import { buildExtensions } from "@/components/editor/extensions"
 import { PublishDialog } from "@/components/editor/publish-dialog"
@@ -29,6 +33,7 @@ import type {
   EditorLookups,
   PostFull,
   ReviewState,
+  RevisionRow,
   SettingsPatch,
   Viewer,
   WebsiteResult,
@@ -43,9 +48,11 @@ import { slugFromTitle } from "@/lib/blog/slug"
 import { KNOWN_SITE_PATHS } from "@/lib/blog/site-routes"
 import { validateUpload } from "@/lib/blog/crops"
 import { workflow } from "@/lib/blog/workflow"
+import { browserZone, scheduledLine } from "@/lib/blog/schedule"
+import { whenLabel } from "@/lib/blog/revision-format"
 import { cn } from "@/lib/utils"
 
-type PanelTab = "post" | "seo" | "comments"
+type PanelTab = "post" | "seo" | "comments" | "history"
 
 const docOf = (post: PostFull): DocNode => (post.draft_content ?? post.content ?? EMPTY_DOC) as DocNode
 
@@ -109,7 +116,13 @@ export function PostEditor({
   const [publishOpen, setPublishOpen] = useState(false)
   const [changesOpen, setChangesOpen] = useState(false)
   const [changesNote, setChangesNote] = useState("")
-  const [confirm, setConfirm] = useState<null | "unpublish" | "archive" | "withdraw">(null)
+  const [confirm, setConfirm] = useState<null | "unpublish" | "archive" | "withdraw" | "unschedule">(null)
+  const [dialogKey, setDialogKey] = useState(0)
+  const [startInSchedule, setStartInSchedule] = useState(false)
+  const [compare, setCompare] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
+  const [restoreTarget, setRestoreTarget] = useState<RevisionRow | null>(null)
+  const [revisions, setRevisions] = useState<RevisionRow[]>([])
+  const [historyKey, setHistoryKey] = useState(0)
   const [busy, setBusy] = useState(false)
   const [altRequest, setAltRequest] = useState<{ mediaId: string; src: string } | null>(null)
   const [linkRequest, setLinkRequest] = useState(0)
@@ -138,20 +151,33 @@ export function PostEditor({
     () => workflow({ role: viewer.role, userId: viewer.id, post: { ...post, claims_flagged: flagged }, review }),
     [viewer.role, viewer.id, post, flagged, review],
   )
-  const readOnly = !flow.canEdit
+  const discardRef = useRef<() => void>(() => {})
+  // The edit lock: read-only unless you hold it. Locks only apply when your role may edit this post at all.
+  const lock = useEditLock({
+    adapter,
+    postId: post.id,
+    canEdit: flow.canEdit,
+    onLost: () => discardRef.current(),
+    onTakenOver: () => setHistoryKey((n) => n + 1),
+  })
+  const readOnly = !flow.canEdit || lock.state === "checking" || lock.state === "busy" || lock.state === "lost"
+  const autosaveEnabled = flow.canEdit && lock.state !== "busy" && lock.state !== "lost"
 
   // ---- autosave -----------------------------------------------------------------------------------------------
 
   const autosave = useAutosave({
     postId: post.id,
-    enabled: !readOnly,
+    enabled: autosaveEnabled,
     baseUpdatedAt: initialPost.updated_at,
     save: (snapshot) => adapter.saveDraft(post.id, snapshot),
     onSaved: () => {
       void queryClient.invalidateQueries({ queryKey: adminKeys.posts() })
     },
   })
-  const { markDirty, flush } = autosave
+  const { markDirty, flush, discard } = autosave
+  useEffect(() => {
+    discardRef.current = discard
+  })
 
   const snapshotOf = useCallback((nextDoc: DocNode, nextTitle: string, nextExcerpt: string): DraftSnapshot => {
     const prepared = prepareSave({ title: nextTitle, excerpt: nextExcerpt, doc: nextDoc })
@@ -468,10 +494,12 @@ export function PostEditor({
     }
   }
 
-  const openPublish = async () => {
+  const openPublish = async (schedule = false) => {
     await flush()
     await flushSettings()
     await loadReview()
+    setStartInSchedule(schedule)
+    setDialogKey((n) => n + 1)
     setPublishOpen(true)
   }
 
@@ -487,6 +515,10 @@ export function PostEditor({
       case "approve":
       case "approve-publish":
         return void openPublish()
+      case "reschedule":
+        return void openPublish(true)
+      case "unschedule":
+        return setConfirm("unschedule")
       case "request-changes":
         return setChangesOpen(true)
       case "withdraw":
@@ -516,6 +548,47 @@ export function PostEditor({
       websiteToast(result.website)
     })
 
+  const confirmSchedule = (at: Date) =>
+    void run("schedule", async () => {
+      const wasScheduled = post.status === "scheduled"
+      settle(await adapter.schedule(post.id, at))
+      setPublishOpen(false)
+      toast.success(wasScheduled ? "Schedule changed" : "Scheduled", { description: scheduledLine(at.toISOString(), browserZone()) })
+    })
+
+  const unschedule = () =>
+    void run("unschedule", async () => {
+      settle(await adapter.unschedule(post.id))
+      setPublishOpen(false)
+      setConfirm(null)
+      toast.success("Unscheduled. It’s back where it was.")
+    })
+
+  /** Puts a restored version on the canvas: the server already wrote it to the draft. */
+  const applyRestored = (next: PostFull) => {
+    const nextDoc = docOf(next)
+    editor?.commands.setContent(nextDoc, false)
+    const normalized = normalizeDoc(editor?.getJSON() ?? nextDoc)
+    lastDocKey.current = JSON.stringify(normalized)
+    setDoc(normalized)
+    setTitle(next.title)
+    setExcerpt(next.excerpt ?? "")
+    titleRef.current = next.title
+    excerptRef.current = next.excerpt ?? ""
+    void autosave.clearBackup()
+    settle(next)
+    setHistoryKey((n) => n + 1)
+  }
+
+  const restore = () =>
+    void run("restore that version", async () => {
+      if (!restoreTarget) return
+      applyRestored(await adapter.restoreRevision(restoreTarget.id))
+      setRestoreTarget(null)
+      setCompare({ open: false, id: null })
+      toast.success("Version restored to the draft", { description: "The live post hasn’t changed. Publish to put it live." })
+    })
+
   const sendChanges = () =>
     void run("request changes", async () => {
       settle(await adapter.requestChanges(post.id, changesNote.trim()))
@@ -533,6 +606,10 @@ export function PostEditor({
         settle(result.post)
         websiteToast(result.website)
         toast.success("Unpublished. It’s a draft again.")
+      }
+      if (confirm === "unschedule") {
+        settle(await adapter.unschedule(post.id))
+        toast.success("Unscheduled. It’s back where it was.")
       }
       if (confirm === "archive") toast.message("Archiving from the editor arrives in the next release. Use Posts.")
       setConfirm(null)
@@ -588,6 +665,7 @@ export function PostEditor({
   const dialogLabel = flow.primary === "approve" ? "Approve" : flow.primary === "update" ? "Update live post" : "Publish now"
   const isEditorRole = viewer.role !== "writer"
   const summary = extractSummary(doc)
+  const zone = useMemo(() => browserZone(), [])
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
@@ -595,9 +673,14 @@ export function PostEditor({
         backHref={backHref}
         status={statusKey}
         save={autosave.state}
-        saveLabel={readOnly ? "Read-only" : autosave.label}
+        saveLabel={readOnly ? (lock.state === "busy" || lock.state === "lost" ? `${lock.holder?.name ?? "Someone"} is editing` : "Read-only") : autosave.label}
         commentCount={openComments_}
         panelOpen={panelOpen}
+        statusNote={post.status === "scheduled" && post.scheduled_for ? scheduledLine(post.scheduled_for, zone) : null}
+        viewers={lock.viewers}
+        meId={viewer.id}
+        primaryLabel={post.status === "scheduled" ? "Publish now" : undefined}
+        onOpenHistory={() => (setPanelOpen(true), setTab("history"))}
         primary={flow.primary}
         secondary={flow.secondary}
         busy={busy}
@@ -611,6 +694,12 @@ export function PostEditor({
         <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain [container-type:inline-size]" aria-label="Editor">
           <div className="mx-auto w-full max-w-[720px] px-6 pb-48 pt-8">
             <div className="grid gap-3 pb-6">
+              <LockBanner lock={lock} />
+              {post.status === "scheduled" && post.scheduled_for ? (
+                <Banner tone="info" icon={Info}>
+                  Scheduled. {scheduledLine(post.scheduled_for, zone)}. The URL is locked until then.
+                </Banner>
+              ) : null}
               {post.status === "in_review" && isEditorRole && !flow.needsSecondEditor ? (
                 <Banner tone="info" icon={Info}>
                   Waiting for your review. Read it, comment on anything that needs work, then approve or request changes.
@@ -763,10 +852,11 @@ export function PostEditor({
         {panelOpen ? (
           <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="m-4 mb-0 grid h-9 grid-cols-3">
+              <TabsList className="m-4 mb-0 grid h-9 grid-cols-4">
                 <TabsTrigger value="post">Post</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
                 <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
               </TabsList>
               <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <TabsContent value="post" className="mt-2">
@@ -802,6 +892,17 @@ export function PostEditor({
                     onResolve={resolveComment}
                   />
                 </TabsContent>
+                <TabsContent value="history" className="mt-2">
+                  <HistoryPanel
+                    adapter={adapter}
+                    postId={post.id}
+                    refreshKey={`${post.status}:${post.published_at ?? ""}:${historyKey}`}
+                    canRestore={!readOnly}
+                    onLoaded={setRevisions}
+                    onCompare={(row) => setCompare({ open: true, id: row.id })}
+                    onRestore={setRestoreTarget}
+                  />
+                </TabsContent>
               </div>
             </Tabs>
           </aside>
@@ -809,6 +910,7 @@ export function PostEditor({
       </div>
 
       <PublishDialog
+        key={dialogKey}
         open={publishOpen}
         onOpenChange={setPublishOpen}
         mode={post.published_at ? "update" : "publish"}
@@ -819,6 +921,32 @@ export function PostEditor({
         pending={busy}
         onConfirm={confirmPublish}
         onItemAction={goToItem}
+        canSchedule={isEditorRole && post.status !== "published" && post.status !== "archived" && flow.primary !== "approve"}
+        scheduledFor={post.status === "scheduled" ? post.scheduled_for : null}
+        startInSchedule={startInSchedule}
+        onSchedule={confirmSchedule}
+        onUnschedule={unschedule}
+      />
+
+      <CompareDialog
+        open={compare.open}
+        onOpenChange={(open) => setCompare((current) => ({ ...current, open }))}
+        adapter={adapter}
+        revisions={revisions}
+        initialId={compare.id}
+        current={{ title, excerpt, doc }}
+        canRestore={!readOnly}
+        onRestore={setRestoreTarget}
+      />
+
+      <ConfirmDialog
+        open={restoreTarget !== null}
+        onOpenChange={(open) => !open && setRestoreTarget(null)}
+        title="Restore this version?"
+        description={`The ${restoreTarget ? whenLabel(restoreTarget.created_at) : ""} version replaces your current draft. The live post doesn’t change until you publish, and the draft you have now stays in History.`}
+        confirmLabel="Restore to draft"
+        pending={busy}
+        onConfirm={restore}
       />
 
       <Dialog open={changesOpen} onOpenChange={(open) => !busy && setChangesOpen(open)}>
@@ -842,15 +970,17 @@ export function PostEditor({
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
-        title={confirm === "unpublish" ? "Unpublish this post?" : confirm === "archive" ? "Archive this post?" : "Withdraw from review?"}
+        title={confirm === "unpublish" ? "Unpublish this post?" : confirm === "archive" ? "Archive this post?" : confirm === "unschedule" ? "Unschedule this post?" : "Withdraw from review?"}
         description={
           confirm === "unpublish"
             ? "It leaves easner.com/blog and becomes a draft again. Its URL stops working until it is published again."
             : confirm === "archive"
               ? "It leaves easner.com/blog and moves to Archived."
-              : "It goes back to Draft and the Editor’s review request is cancelled."
+              : confirm === "unschedule"
+                ? "It won’t go live at the scheduled time. It goes back to the status it had before."
+                : "It goes back to Draft and the Editor’s review request is cancelled."
         }
-        confirmLabel={confirm === "unpublish" ? "Unpublish" : confirm === "archive" ? "Archive" : "Withdraw"}
+        confirmLabel={confirm === "unpublish" ? "Unpublish" : confirm === "archive" ? "Archive" : confirm === "unschedule" ? "Unschedule" : "Withdraw"}
         tone={confirm === "unpublish" || confirm === "archive" ? "destructive" : "default"}
         pending={busy}
         onConfirm={confirmed}

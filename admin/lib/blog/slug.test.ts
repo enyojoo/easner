@@ -20,4 +20,7 @@ test("slugLocked", () => {
   assert.equal(slugLocked({ publishedAt: "2026-11-01T00:00:00Z", role: "writer" }), true)
   assert.equal(slugLocked({ publishedAt: "2026-11-01T00:00:00Z", role: "owner" }), false)
   assert.equal(slugLocked({ publishedAt: undefined, role: null }), false)
+  assert.equal(slugLocked({ publishedAt: null, role: "editor", status: "scheduled" }), true)
+  assert.equal(slugLocked({ publishedAt: null, role: "owner", status: "scheduled" }), false)
+  assert.equal(slugLocked({ publishedAt: null, role: "editor", status: "draft" }), false)
 })

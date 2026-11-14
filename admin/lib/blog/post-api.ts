@@ -6,6 +6,10 @@ import { uploadBlogImage } from "@/lib/media"
 import { supabase } from "@/lib/supabase"
 import { slugFromTitle } from "@/lib/blog/slug"
 import type {
+  LockClaim,
+  PresenceViewer,
+  RevisionDetail,
+  RevisionRow,
   CommentRow,
   DraftSnapshot,
   EditorAdapter,
@@ -148,9 +152,67 @@ export const supabaseAdapter: EditorAdapter = {
     const { website } = await callBlogAction("unpublish", postId)
     return { post: (await fetchPost(postId)) as PostFull, website }
   },
+  async schedule(postId, at) {
+    await rpcPost("schedule_post", { p_post_id: postId, p_at: at.toISOString() })
+    return (await fetchPost(postId)) as PostFull
+  },
+  async unschedule(postId) {
+    await rpcPost("unschedule_post", { p_post_id: postId })
+    return (await fetchPost(postId)) as PostFull
+  },
   previewLink: fetchPreviewLink,
   async notifyWebsite(postId, change) {
     return (await callBlogAction("revalidate", postId, change)).website
+  },
+
+  async listRevisions(postId) {
+    const { data, error } = await supabase
+      .from("blog_revisions")
+      .select("id, kind, created_at, created_by, title, word_count")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: false })
+      .limit(200)
+    if (error) throw error
+    const rows = (data ?? []) as Array<Omit<RevisionRow, "author_name">>
+    const ids = [...new Set(rows.map((row) => row.created_by).filter((id): id is string => Boolean(id)))]
+    const names = new Map<string, string>()
+    if (ids.length) {
+      const { data: members } = await supabase.from("admin_members").select("user_id, name, email").in("user_id", ids)
+      for (const member of (members ?? []) as Array<{ user_id: string; name: string; email: string }>) names.set(member.user_id, member.name || member.email)
+    }
+    return rows.map((row) => ({ ...row, author_name: row.created_by ? (names.get(row.created_by) ?? "Someone on the team") : "Easner" }))
+  },
+  async getRevision(revisionId) {
+    const { data, error } = await supabase
+      .from("blog_revisions")
+      .select("id, kind, created_at, created_by, title, excerpt, content, word_count")
+      .eq("id", revisionId)
+      .single()
+    if (error) throw error
+    return { ...(data as Omit<RevisionDetail, "author_name">), author_name: "" }
+  },
+  async restoreRevision(revisionId) {
+    const { data, error } = await supabase.rpc("restore_revision", { p_revision_id: revisionId })
+    if (error) throw error
+    const postId = (data as { id: string }).id
+    return (await fetchPost(postId)) as PostFull
+  },
+
+  async claimLock(postId, takeOver) {
+    const { data, error } = await supabase.rpc("claim_post_lock", { p_post_id: postId, p_take_over: takeOver })
+    if (error) throw error
+    return data as LockClaim
+  },
+  async releaseLock(postId) {
+    await supabase.rpc("release_post_lock", { p_post_id: postId })
+  },
+  async touchPresence(postId) {
+    await supabase.rpc("touch_post_presence", { p_post_id: postId })
+  },
+  async viewers(postId) {
+    const { data, error } = await supabase.rpc("blog_post_viewers", { p_post_id: postId })
+    if (error) throw error
+    return (data ?? []) as PresenceViewer[]
   },
 
   async reviewState(postId) {
