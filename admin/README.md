@@ -1,4 +1,4 @@
-# Easner Blog Admin (admin.easner.com)
+# Easner Website Admin (admin.easner.com)
 
 The website admin: blog posts, categories, authors, media, redirects, analytics and the team. Plan:
 [`docs/blog-and-admin-plan.md`](../docs/blog-and-admin-plan.md). Phases 1 and 2 are done: sign-in, roles, the Office shell,

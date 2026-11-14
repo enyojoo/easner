@@ -10,8 +10,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: { default: "Easner Blog Admin", template: "%s – Easner Blog Admin" },
-  description: "Easner Blog Admin",
+  title: { default: "Easner Website Admin", template: "%s – Easner Website Admin" },
+  description: "Easner Website Admin",
   metadataBase: new URL("https://admin.easner.com"),
   icons: {
     icon: "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/Easner%20Favicon.svg",
