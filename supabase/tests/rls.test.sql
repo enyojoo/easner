@@ -117,6 +117,13 @@ insert into public.blog_posts (slug, status, title, draft_content, created_by) v
   ('writer2-draft', 'draft', 'Writer two draft', '{"type":"doc"}', tests.uid('writer2@rls.test')),
   ('writer-in-review', 'in_review', 'In review', '{"type":"doc"}', tests.uid('writer@rls.test'));
 
+insert into public.blog_posts (slug, status, title, draft_content, category_id, scheduled_for, created_by) values
+  ('scheduled-post', 'scheduled', 'Scheduled post', '{"type":"doc"}',
+   (select id from public.blog_categories where slug = 'company'), now() + interval '2 days', tests.uid('editor@rls.test'));
+
+-- A redirect to a post that isn't live must stay hidden.
+insert into public.blog_redirects (from_slug, to_post_id) values ('old-draft-slug', tests.post('writer-draft'));
+
 insert into public.blog_authors (slug, name, member_id) values
   ('editor', 'Editor', tests.uid('editor@rls.test')),
   ('writer', 'Writer', tests.uid('writer@rls.test'));
@@ -171,10 +178,48 @@ select tests.ok((select slug from public.blog_posts_public) = 'live-post', 'anon
 select tests.ok(position('SECRET' in (select content::text from public.blog_posts_public)) = 0,
   'anon: the live content is the published doc, not the draft');
 select tests.ok(tests.throws('select draft_content from public.blog_posts_public'), 'anon: draft_content cannot be selected');
-select tests.ok(tests.throws('select * from public.blog_posts'), 'anon: no access to the posts table');
-select tests.ok(tests.throws('select * from public.blog_categories'), 'anon: no access to the categories table');
+select tests.ok(
+  (select array_agg(c.relname::text order by c.relname) from pg_class c
+   where c.relnamespace = 'public'::regnamespace and c.relkind = 'v'
+     and coalesce(c.reloptions::text, '') like '%security_invoker=true%')
+  = array['blog_authors_public', 'blog_categories_public', 'blog_post_authors_public', 'blog_posts_public', 'blog_redirects_public'],
+  'anon: all five public views run as the caller (security_invoker)');
+
+-- Straight at the tables: only live rows and only the published columns.
+select tests.ok(tests.count('select id, slug, title, content from public.blog_posts') = 1,
+  'anon: the posts table itself returns only the live post');
+select tests.ok(tests.count($q$select id from public.blog_posts where status <> 'published' or published_at > now()$q$) = 0,
+  'anon: drafts, in-review, scheduled and future posts are invisible in the table');
+select tests.ok(tests.count($q$select id from public.blog_posts_public where slug in ('scheduled-post', 'future-post', 'writer-draft', 'writer-in-review')$q$) = 0,
+  'anon: drafts, in-review, scheduled and future posts are invisible in the view');
+select tests.ok(tests.throws('select draft_content from public.blog_posts'), 'anon: draft_content cannot be selected from the table');
+select tests.ok(tests.throws('select * from public.blog_posts'), 'anon: select * on posts is refused (admin columns)');
+select tests.ok(tests.throws('select created_by from public.blog_posts'), 'anon: created_by is not readable');
+select tests.ok(tests.throws('select updated_by from public.blog_posts'), 'anon: updated_by is not readable');
+select tests.ok(tests.throws('select locked_by from public.blog_posts'), 'anon: locked_by is not readable');
+select tests.ok(tests.throws('select has_unpublished_changes from public.blog_posts'), 'anon: has_unpublished_changes is not readable');
+select tests.ok(tests.throws('select scheduled_for from public.blog_posts'), 'anon: scheduled_for is not readable');
+select tests.ok(tests.throws('select member_id from public.blog_authors'), 'anon: author member_id is not readable');
+select tests.ok(tests.count('select id from public.blog_authors') = 1, 'anon: the authors table returns only authors with a live post');
+select tests.ok(tests.count('select post_id from public.blog_post_authors') = 1, 'anon: post_authors returns only rows for live posts');
+select tests.ok(tests.count('select from_slug from public.blog_redirects') = 0, 'anon: a redirect to a draft is hidden (table)');
+select tests.ok(tests.count('select * from public.blog_redirects_public') = 0, 'anon: a redirect to a draft is hidden (view)');
+select tests.ok(tests.count('select id, slug from public.blog_categories') = 5, 'anon: the categories table returns the active categories');
+select tests.ok(tests.throws('select created_at from public.blog_categories'), 'anon: category admin columns are not readable');
+
+-- Admin data: nothing.
 select tests.ok(tests.throws('select * from public.admin_members'), 'anon: no access to admin_members');
+select tests.ok(tests.throws('select * from public.admin_invites'), 'anon: no access to admin_invites');
+select tests.ok(tests.throws('select * from public.admin_activity'), 'anon: no access to admin_activity');
 select tests.ok(tests.throws('select * from public.blog_revisions'), 'anon: no access to revisions');
+select tests.ok(tests.throws('select * from public.blog_media'), 'anon: no access to media records');
+select tests.ok(tests.throws('select * from public.blog_stats_daily'), 'anon: no access to blog stats');
+select tests.ok(tests.throws('select * from public.blog_search_daily'), 'anon: no access to search stats');
+select tests.ok(tests.throws('select * from public.site_stats_daily'), 'anon: no access to site stats');
+select tests.ok(tests.throws('select * from public.site_breakdown_daily'), 'anon: no access to site breakdowns');
+select tests.ok(tests.throws('select * from public.blog_feedback'), 'anon: no access to feedback');
+select tests.ok(tests.throws($q$update public.blog_posts set title = 'x' where slug = 'live-post'$q$), 'anon: cannot update posts');
+select tests.ok(tests.throws($q$delete from public.blog_redirects$q$), 'anon: cannot delete redirects');
 select tests.ok(tests.count('select * from public.blog_categories_public') = 5, 'anon: reads the five categories');
 select tests.ok((select post_count from public.blog_categories_public where slug = 'business') = 1,
   'anon: category post_count counts live posts only');
@@ -197,7 +242,8 @@ set local role authenticated;
 
 select tests.ok(public.current_admin_role() is null, 'outsider: has no role');
 select tests.ok(tests.count('select * from public.blog_posts') = 0, 'outsider: sees no posts in the table');
-select tests.ok(tests.count('select * from public.blog_posts_public') = 1, 'outsider: reads the public view like anon');
+select tests.ok(tests.count('select * from public.blog_posts_public') = 0,
+  'outsider: the views run as the caller, so a signed-in non-member sees nothing (the website reads as anon)');
 select tests.ok(tests.count('select * from public.admin_members') = 0, 'outsider: sees no team');
 select tests.ok(tests.throws($q$insert into public.blog_posts (slug, title) values ('outsider-post', 'x')$q$),
   'outsider: cannot create a post');
@@ -229,7 +275,7 @@ reset role;
 select tests.login('writer@rls.test');
 set local role authenticated;
 
-select tests.ok(tests.count('select * from public.blog_posts') = 5, 'writer: reads every post in the admin');
+select tests.ok(tests.count('select * from public.blog_posts') = 6, 'writer: reads every post in the admin');
 select tests.ok(tests.count('select * from public.blog_categories') = 5, 'writer: reads categories');
 select tests.ok(tests.count('select * from public.admin_members') = 4, 'writer: reads the team');
 select tests.ok(tests.affected($q$insert into public.blog_posts (slug, title) values ('writer-new', 'New')$q$) = 1,
