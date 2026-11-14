@@ -761,7 +761,7 @@ export function PostEditor({
         </main>
 
         {panelOpen ? (
-          <aside className="flex w-[400px] shrink-0 flex-col border-l border-border bg-card" aria-label="Post settings">
+          <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
               <TabsList className="m-4 mb-0 grid h-9 grid-cols-5">
                 <TabsTrigger value="post">Post</TabsTrigger>
@@ -770,7 +770,7 @@ export function PostEditor({
                 <TabsTrigger value="social">Social</TabsTrigger>
                 <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
               </TabsList>
-              <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
                 <TabsContent value="post" className="mt-2">
                   <PostTab
                     post={post}

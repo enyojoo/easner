@@ -65,7 +65,7 @@ export function CoverField({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       <input
         ref={input}
         type="file"
@@ -142,7 +142,7 @@ export function CoverField({
             event.preventDefault()
             void pick(event.dataTransfer.files?.[0])
           }}
-          className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 text-sm text-muted-foreground hover:bg-muted/70 disabled:opacity-60"
+          className="flex aspect-video w-full min-w-0 flex-col items-center justify-center gap-2 px-4 text-center rounded-lg border border-dashed border-border bg-muted/40 text-sm text-muted-foreground hover:bg-muted/70 disabled:opacity-60"
         >
           {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <ImagePlus className="size-5" aria-hidden />}
           <span className="font-medium text-foreground">Add a cover</span>
