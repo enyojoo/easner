@@ -11,7 +11,7 @@
 begin;
 
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create function tests.ok(cond boolean, description text) returns void language plpgsql as $$
 begin
@@ -69,6 +69,13 @@ begin
 end
 $$;
 
+-- No signed-in user: what a server job (or a statement run as postgres) looks like.
+create function tests.system() returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', '', true);
+end
+$$;
+
 create function tests.uid(p_email text) returns uuid language sql as $$
   select id from auth.users where email = p_email
 $$;
@@ -77,7 +84,7 @@ create function tests.post(p_slug text) returns uuid language sql security defin
   select id from public.blog_posts where slug = p_slug
 $$;
 
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Fixtures (as postgres)
@@ -143,9 +150,9 @@ select tests.ok(
   not exists (select 1 from pg_class where relnamespace = 'public'::regnamespace and relkind in ('v', 'm')),
   'there are no public views: the website reads the tables');
 select tests.ok(
-  (select bool_and(relrowsecurity) and count(*) = 18 from pg_class
+  (select bool_and(relrowsecurity) and count(*) >= 18 from pg_class
    where relnamespace = 'public'::regnamespace and relkind = 'r'),
-  'RLS is on for all 18 tables');
+  'RLS is on for every table (at least 18)');
 select tests.ok(not has_column_privilege('anon', 'public.blog_posts', 'draft_content', 'select'),
   'anon has no grant on blog_posts.draft_content');
 select tests.ok((select count(*) from public.blog_categories) = 5, 'five default categories are seeded');
@@ -731,5 +738,437 @@ select tests.ok(tests.count('select id from public.blog_authors where slug in ('
   'anon: reads no author without a live post');
 select tests.ok(tests.throws('select member_id from public.blog_authors'), 'anon: still cannot select member_id');
 reset role;
+
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Phase 4B: scheduling, revisions, edit lock and presence, redirects (20261118120000_blog_lifecycle.sql)
+-- ---------------------------------------------------------------------------------------------------------------
+
+-- Fixtures (as postgres, no signed-in user)
+select tests.system();
+-- The team section above demoted the editor and removed the second writer: put them back.
+update public.admin_members set role = 'editor' where email = 'editor@rls.test';
+insert into public.admin_members (user_id, role, name, email)
+  values (tests.uid('writer2@rls.test'), 'writer', 'Writer Two', 'writer2@rls.test') on conflict do nothing;
+insert into public.blog_posts (slug, status, title, draft_content, category_id, cover_path, cover_alt, created_by) values
+  ('p4-sched', 'draft', 'Schedule me', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Plain words only"}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/p4/cover.webp', 'Cover', tests.uid('editor@rls.test')),
+  ('p4-sched-nocover', 'draft', 'No cover', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Words"}]}]}',
+   (select id from public.blog_categories where slug = 'business'), null, null, tests.uid('editor@rls.test')),
+  ('p4-flagged', 'in_review', 'Flagged', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"We offer no fees on anything."}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/p4/f.webp', 'Cover', tests.uid('writer@rls.test')),
+  ('p4-writer-sub', 'draft', 'Writer submits', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"One two three"}]}]}',
+   null, null, null, tests.uid('writer@rls.test')),
+  ('p4-rev', 'draft', 'Revisions', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Start"}]}]}',
+   null, null, null, tests.uid('editor@rls.test')),
+  ('p4-lock', 'draft', 'Lock me', '{"type":"doc"}', null, null, null, tests.uid('writer@rls.test'));
+insert into public.blog_posts (slug, status, title, content, category_id, cover_path, cover_alt, published_at, created_by) values
+  ('p4-live', 'published', 'Live for redirects', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Live text"}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/p4/l.webp', 'Cover', now() - interval '2 days', tests.uid('editor@rls.test')),
+  ('p4-restore', 'published', 'Restore target', '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Live version"}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/p4/r.webp', 'Cover', now() - interval '2 days', tests.uid('editor@rls.test'));
+
+select tests.ok((select claims_flagged from public.blog_posts where slug = 'p4-flagged'), 'p4 fixture: the flagged post is flagged');
+
+-- Scheduling: an editor ----------------------------------------------------------------------------------------
+select tests.login('editor@rls.test');
+set local role authenticated;
+
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-sched'), now() - interval '1 hour')$q$),
+  'schedule: a time in the past is refused');
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-sched'), now() + interval '30 seconds')$q$),
+  'schedule: a time less than a minute away is refused');
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-sched-nocover'), now() + interval '1 day')$q$),
+  'schedule: the publish rules apply (no cover, no schedule)');
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-live'), now() + interval '1 day')$q$),
+  'schedule: a live post can''t be scheduled');
+select tests.ok(
+  (select p.status = 'scheduled' and p.scheduled_for > now() + interval '1 hour' and p.scheduled_by = auth.uid() and p.scheduled_from = 'draft'
+   from public.schedule_post(tests.post('p4-sched'), now() + interval '2 hours') p),
+  'schedule: an editor schedules a draft (status, time, who, where it came from)');
+select tests.ok(exists (select 1 from public.admin_activity where action = 'post.scheduled' and entity_id = tests.post('p4-sched')::text),
+  'schedule: it is in the activity log');
+select tests.ok(tests.throws($q$update public.blog_posts set slug = 'p4-sched-renamed' where slug = 'p4-sched'$q$),
+  'schedule: the slug is locked for an editor, as for a published post');
+select tests.ok(tests.throws($q$update public.blog_posts set scheduled_for = now() + interval '1 day' where slug = 'p4-sched'$q$),
+  'schedule: the time can''t be written directly');
+select tests.ok(tests.throws($q$update public.blog_posts set status = 'draft' where slug = 'p4-sched'$q$),
+  'schedule: the status can''t be moved directly');
+select tests.ok(
+  (select p.scheduled_for > now() + interval '4 hours' and p.scheduled_from = 'draft' from public.schedule_post(tests.post('p4-sched'), now() + interval '5 hours') p),
+  'reschedule: moves the time and remembers the original status');
+select tests.ok(tests.affected($q$update public.blog_posts set title = 'Schedule me, edited' where slug = 'p4-sched'$q$) = 1,
+  'schedule: the title can still be edited while scheduled');
+reset role;
+select tests.system();
+
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$update public.blog_posts set slug = 'p4-sched-owner' where slug = 'p4-sched'$q$) = 1,
+  'schedule: an owner can still change the slug');
+select tests.ok(tests.affected($q$update public.blog_posts set slug = 'p4-sched' where slug = 'p4-sched-owner'$q$) = 1,
+  'schedule: and change it back (no redirect needed before it is published)');
+reset role;
+select tests.system();
+select tests.ok(not exists (select 1 from public.blog_redirects where from_slug in ('p4-sched', 'p4-sched-owner')),
+  'schedule: a scheduled post''s slug change makes no redirect');
+
+set local role anon;
+select tests.ok(tests.count($q$select id from public.blog_posts where slug = 'p4-sched'$q$) = 0, 'schedule: anon can''t see a scheduled post');
+reset role;
+select tests.system();
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-writer-sub'), now() + interval '1 day')$q$), 'schedule: a writer can''t schedule');
+select tests.ok(tests.throws($q$select public.unschedule_post(tests.post('p4-sched'))$q$), 'schedule: a writer can''t unschedule');
+reset role;
+select tests.system();
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(
+  (select p.status = 'draft' and p.scheduled_for is null and p.scheduled_by is null and p.scheduled_from is null from public.unschedule_post(tests.post('p4-sched')) p),
+  'unschedule: back to the status it came from, schedule cleared');
+select tests.ok(tests.throws($q$select public.unschedule_post(tests.post('p4-sched'))$q$), 'unschedule: a post that isn''t scheduled is refused');
+select tests.ok((select status from public.schedule_post(tests.post('p4-sched'), now() + interval '3 hours')) = 'scheduled', 'schedule: scheduled again');
+-- Publishing it now is allowed and clears the schedule.
+reset role;
+select tests.system();
+
+-- The cron path: the secret key (service role) publishes only what is due.
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-sched'))$q$) = false,
+  'publish now: an editor can publish a scheduled post immediately');
+reset role;
+select tests.system();
+select tests.ok(
+  (select status = 'published' and scheduled_for is null and scheduled_by is null and scheduled_from is null and published_at is not null
+   from public.blog_posts where slug = 'p4-sched'),
+  'publish now: it is live and the schedule is cleared');
+
+-- A second scheduled post for the cron.
+update public.blog_posts set status = 'draft' where slug = 'p4-sched-nocover';
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(
+  (select status from public.blog_posts where slug = 'p4-sched-nocover') = 'draft', 'p4 fixture: still a draft');
+reset role;
+select tests.system();
+update public.blog_posts set cover_path = 'posts/p4/c.webp', cover_alt = 'Cover' where slug = 'p4-sched-nocover';
+select tests.login('editor@rls.test');
+set local role authenticated;
+select public.schedule_post(tests.post('p4-sched-nocover'), now() + interval '1 hour');
+reset role;
+select tests.system();
+
+select set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+set local role service_role;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-sched-nocover'))$q$),
+  'cron: a scheduled post that is not due yet is refused');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-writer-sub'))$q$),
+  'cron: a post that isn''t scheduled is refused');
+reset role;
+select tests.system();
+
+update public.blog_posts set scheduled_for = now() - interval '2 minutes' where slug = 'p4-sched-nocover';
+
+select set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+set local role service_role;
+select tests.ok((select (public.publish_post(tests.post('p4-sched-nocover'))).status) = 'published', 'cron: the secret key publishes a due post');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-sched-nocover'))$q$),
+  'cron: running it again is refused, so it is idempotent');
+reset role;
+select tests.system();
+select tests.ok(
+  (select p.published_at < now() - interval '1 minute' and p.draft_content is null and p.content is not null and p.content_text <> ''
+   from public.blog_posts p where slug = 'p4-sched-nocover'),
+  'cron: it is dated to its scheduled time and the draft became the live doc');
+select tests.ok(exists (select 1 from public.blog_revisions where post_id = tests.post('p4-sched-nocover') and kind = 'publish' and created_by = tests.uid('editor@rls.test')),
+  'cron: the publish milestone is attributed to the Editor who scheduled it');
+select tests.ok(exists (select 1 from public.admin_activity where action = 'post.published' and entity_id = tests.post('p4-sched-nocover')::text and actor = tests.uid('editor@rls.test')),
+  'cron: the activity log names that Editor');
+
+-- A signed-in writer can't use the service path, and anon can't call publish at all.
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-sched-nocover'))$q$), 'cron: a writer can''t publish');
+reset role;
+select tests.system();
+select tests.anon();
+set local role anon;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-sched-nocover'))$q$), 'cron: anon can''t publish');
+reset role;
+select tests.system();
+
+-- Claims: a flagged post needs two editors, also when scheduled.
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.schedule_post(tests.post('p4-flagged'), now() + interval '1 day')$q$),
+  'claims: one editor can''t schedule a flagged post');
+reset role;
+select tests.system();
+select tests.login('editor@rls.test');
+set local role authenticated;
+select public.approve_post(tests.post('p4-flagged'));
+reset role;
+select tests.system();
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok((select status from public.schedule_post(tests.post('p4-flagged'), now() + interval '1 day')) = 'scheduled',
+  'claims: with a second editor''s approval it can be scheduled');
+reset role;
+select tests.system();
+update public.blog_posts set scheduled_for = now() - interval '1 minute' where slug = 'p4-flagged';
+select set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+set local role service_role;
+select tests.ok((select (public.publish_post(tests.post('p4-flagged'))).status) = 'published', 'claims: the cron publishes it');
+reset role;
+select tests.system();
+-- Edited after approval: a due flagged post is refused, not published unreviewed.
+update public.blog_posts set status = 'scheduled', scheduled_for = now() - interval '1 minute', scheduled_by = tests.uid('owner@rls.test'),
+  draft_content = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"We offer no fees on anything, and lowest fees."}]}]}'
+  where slug = 'p4-flagged';
+select set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
+set local role service_role;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('p4-flagged'))$q$),
+  'claims: a flagged post edited after approval is not published by the cron');
+reset role;
+select tests.system();
+
+-- Revisions ----------------------------------------------------------------------------------------------------
+select tests.login('writer@rls.test');
+set local role authenticated;
+select public.submit_for_review(tests.post('p4-writer-sub'));
+reset role;
+select tests.system();
+select tests.ok(
+  (select r.kind = 'submit' and r.word_count = 3 and r.created_by = tests.uid('writer@rls.test')
+   from public.blog_revisions r where r.post_id = tests.post('p4-writer-sub') and r.kind = 'submit'),
+  'revisions: submitting for review leaves a milestone with its word count');
+select tests.ok((select word_count from public.blog_revisions where post_id = tests.post('p4-sched') and kind = 'publish') = 3,
+  'revisions: a publish milestone carries the word count');
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Start and more"}]}]}' where slug = 'p4-rev';
+select tests.ok((select count(*) from public.blog_revisions where post_id = tests.post('p4-rev') and kind = 'autosave') = 1,
+  'revisions: the first edit leaves an autosave checkpoint');
+update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Start and more again"}]}]}' where slug = 'p4-rev';
+select tests.ok((select count(*) from public.blog_revisions where post_id = tests.post('p4-rev') and kind = 'autosave') = 1,
+  'revisions: edits within 5 minutes do not add another');
+reset role;
+select tests.system();
+
+update public.blog_revisions set created_at = now() - interval '10 minutes' where post_id = tests.post('p4-rev');
+insert into public.blog_revisions (post_id, content, title, kind, created_by, created_at)
+  select tests.post('p4-rev'), jsonb_build_object('type', 'doc', 'n', g), 'old ' || g, 'autosave', tests.uid('editor@rls.test'), now() - interval '1 hour' - g * interval '1 minute'
+  from generate_series(1, 60) g;
+insert into public.blog_revisions (post_id, content, title, kind, created_by, created_at)
+  values (tests.post('p4-rev'), '{"type":"doc"}', 'old publish', 'publish', tests.uid('editor@rls.test'), now() - interval '3 days');
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"A later edit"}]}]}' where slug = 'p4-rev';
+reset role;
+select tests.system();
+select tests.ok((select count(*) from public.blog_revisions where post_id = tests.post('p4-rev') and kind = 'autosave') = 40,
+  'revisions: autosave checkpoints are bounded to the newest 40');
+select tests.ok((select count(*) from public.blog_revisions where post_id = tests.post('p4-rev') and kind = 'publish') = 1,
+  'revisions: milestones are never pruned');
+select tests.ok((select content #>> '{content,0,content,0,text}' from public.blog_revisions where post_id = tests.post('p4-rev') and kind = 'autosave' order by created_at desc limit 1) = 'A later edit',
+  'revisions: the newest checkpoint is kept');
+
+-- Restore goes to the draft, never to live.
+insert into public.blog_revisions (post_id, content, title, excerpt, kind, created_by) values
+  (tests.post('p4-restore'), '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Older version"}]}]}', 'Older title', 'Older dek', 'publish', tests.uid('editor@rls.test')),
+  (tests.post('p4-restore'), '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Live version"}]}]}', 'Restore target', null, 'publish', tests.uid('editor@rls.test'));
+select tests.login('editor@rls.test');
+set local role authenticated;
+select public.restore_revision((select id from public.blog_revisions where post_id = tests.post('p4-restore') and title = 'Older title'));
+reset role;
+select tests.system();
+select tests.ok(
+  (select p.status = 'published' and p.content #>> '{content,0,content,0,text}' = 'Live version'
+     and p.draft_content #>> '{content,0,content,0,text}' = 'Older version' and p.has_unpublished_changes
+   from public.blog_posts p where slug = 'p4-restore'),
+  'restore: the old version lands in the draft; the live doc is untouched');
+select tests.ok((select count(*) from public.blog_revisions where post_id = tests.post('p4-restore') and kind = 'restore') = 1,
+  'restore: a restore milestone is recorded');
+select tests.login('editor@rls.test');
+set local role authenticated;
+select public.restore_revision((select id from public.blog_revisions where post_id = tests.post('p4-restore') and title = 'Restore target' and kind = 'publish'));
+reset role;
+select tests.system();
+select tests.ok((select draft_content is null and not has_unpublished_changes from public.blog_posts where slug = 'p4-restore'),
+  'restore: restoring what is already live clears the draft');
+select tests.ok(exists (select 1 from public.blog_revisions where post_id = tests.post('p4-restore') and kind = 'autosave'
+                          and content #>> '{content,0,content,0,text}' = 'Older version'),
+  'restore: the draft that was replaced is kept, so a restore can be undone');
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.restore_revision((select id from public.blog_revisions where post_id = tests.post('p4-restore') limit 1))$q$),
+  'restore: a writer can''t restore on someone else''s post');
+reset role;
+select tests.system();
+
+-- Edit lock and presence ---------------------------------------------------------------------------------------
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok((select (public.claim_post_lock(tests.post('p4-lock')) ->> 'acquired')::boolean), 'lock: the writer takes the lock on their draft');
+reset role;
+select tests.system();
+select tests.ok((select locked_by = tests.uid('writer@rls.test') and locked_at is not null from public.blog_posts where slug = 'p4-lock'),
+  'lock: it is recorded on the post');
+
+create temp table p4_stamp as select updated_at from public.blog_posts where slug = 'p4-lock';
+select tests.login('writer@rls.test');
+set local role authenticated;
+select public.claim_post_lock(tests.post('p4-lock'));
+reset role;
+select tests.system();
+select tests.ok((select p.updated_at = s.updated_at from public.blog_posts p, p4_stamp s where p.slug = 'p4-lock'),
+  'lock: a heartbeat does not move updated_at (autosave compares it)');
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(
+  (select not (r ->> 'acquired')::boolean and r ->> 'holder_name' = 'Writer' and (r ->> 'can_take_over')::boolean
+   from (select public.claim_post_lock(tests.post('p4-lock')) r) x),
+  'lock: an editor is told who has it and that they can take over');
+select tests.ok(
+  (select (r ->> 'acquired')::boolean and (r ->> 'took_over')::boolean from (select public.claim_post_lock(tests.post('p4-lock'), true) r) x),
+  'lock: an editor takes over');
+select tests.ok(exists (select 1 from public.admin_activity where action = 'post.lock_taken_over' and entity_id = tests.post('p4-lock')::text),
+  'lock: the take over is logged');
+select tests.ok(tests.throws($q$update public.blog_posts set locked_by = null where slug = 'p4-lock'$q$), 'lock: the columns can''t be written directly');
+reset role;
+select tests.system();
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(
+  (select not (r ->> 'acquired')::boolean and not (r ->> 'can_take_over')::boolean from (select public.claim_post_lock(tests.post('p4-lock'), true) r) x),
+  'lock: a writer can''t take over, even when asking to');
+select public.release_post_lock(tests.post('p4-lock'));
+reset role;
+select tests.system();
+select tests.ok((select locked_by = tests.uid('editor@rls.test') from public.blog_posts where slug = 'p4-lock'), 'lock: releasing someone else''s lock does nothing');
+
+update public.blog_posts set locked_at = now() - interval '3 minutes' where slug = 'p4-lock';
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok((select (public.claim_post_lock(tests.post('p4-lock')) ->> 'acquired')::boolean), 'lock: after 2 minutes without a heartbeat it is free');
+select public.release_post_lock(tests.post('p4-lock'));
+reset role;
+select tests.system();
+select tests.ok((select locked_by is null and locked_at is null from public.blog_posts where slug = 'p4-lock'), 'lock: the holder releases it');
+
+select tests.login('writer2@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.claim_post_lock(tests.post('p4-lock'))$q$), 'lock: a writer can''t lock another writer''s draft');
+select public.touch_post_presence(tests.post('p4-lock'));
+reset role;
+select tests.system();
+
+select tests.login('owner@rls.test');
+set local role authenticated;
+select public.claim_post_lock(tests.post('p4-lock'));
+select tests.ok((select count(*) from public.blog_post_viewers(tests.post('p4-lock'))) = 3, 'presence: everyone on the post is listed');
+select tests.ok((select holds_lock from public.blog_post_viewers(tests.post('p4-lock')) where name = 'Owner'), 'presence: the lock holder is marked');
+select tests.ok(not (select holds_lock from public.blog_post_viewers(tests.post('p4-lock')) where name = 'Writer Two'), 'presence: a reader is not');
+reset role;
+select tests.system();
+update public.blog_post_presence set seen_at = now() - interval '5 minutes' where user_id = tests.uid('writer2@rls.test');
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok((select count(*) from public.blog_post_viewers(tests.post('p4-lock'))) = 2, 'presence: someone not seen for 2 minutes drops off');
+select tests.ok(tests.throws($q$insert into public.blog_post_presence (post_id, user_id) values (tests.post('p4-lock'), auth.uid())$q$),
+  'presence: the table can''t be written directly');
+reset role;
+select tests.system();
+select tests.login('outsider@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.touch_post_presence(tests.post('p4-lock'))$q$), 'presence: a non-member can''t');
+select tests.ok(tests.count($q$select * from public.blog_post_viewers(tests.post('p4-lock'))$q$) = 0, 'presence: a non-member sees nobody');
+reset role;
+select tests.system();
+select tests.anon();
+set local role anon;
+select tests.ok(tests.throws($q$select * from public.blog_post_presence$q$), 'presence: anon can''t read it');
+select tests.ok(tests.throws($q$select public.claim_post_lock(tests.post('p4-lock'))$q$), 'lock: anon can''t claim');
+reset role;
+select tests.system();
+
+-- Redirects ----------------------------------------------------------------------------------------------------
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$update public.blog_posts set slug = 'p4-live-renamed' where slug = 'p4-live'$q$) = 1, 'redirect: an owner renames a live post');
+reset role;
+select tests.system();
+select tests.ok((select r.to_post_id = tests.post('p4-live-renamed') and r.created_by = tests.uid('owner@rls.test') from public.blog_redirects r where r.from_slug = 'p4-live'),
+  'redirect: a published slug change creates the redirect on its own, attributed to who did it');
+select tests.ok(exists (select 1 from public.admin_activity where action = 'post.slug_changed' and entity_id = tests.post('p4-live-renamed')::text),
+  'redirect: the slug change is logged');
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$update public.blog_posts set slug = 'p4-live' where slug = 'p4-live-renamed'$q$) = 1, 'redirect: and renames it back');
+reset role;
+select tests.system();
+select tests.ok(not exists (select 1 from public.blog_redirects where from_slug = 'p4-live'), 'redirect: renaming back removes the redirect that would loop');
+select tests.ok(exists (select 1 from public.blog_redirects where from_slug = 'p4-live-renamed'), 'redirect: the intermediate URL still redirects');
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok((select (public.add_blog_redirect('old-news', tests.post('p4-live'))).created_by = auth.uid()), 'redirect: an editor adds one to a published post');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('old-news', tests.post('p4-live'))$q$), 'redirect: a second one from the same URL is refused');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('p4-live', tests.post('live-post'))$q$), 'redirect: from a live slug is refused (no shadowing)');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('p4-writer-sub', tests.post('live-post'))$q$), 'redirect: from any existing post''s slug is refused');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('p4-live-renamed', tests.post('p4-live'))$q$), 'redirect: a URL that already redirects can''t be added again');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('another-old', tests.post('p4-rev'))$q$), 'redirect: to a draft is refused');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('another-old', tests.post('p4-sched'))$q$) = false, 'redirect: to a published post is fine');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('Bad Slug!', tests.post('p4-live'))$q$), 'redirect: a malformed URL is refused');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('categories', tests.post('p4-live'))$q$), 'redirect: a reserved URL is refused');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('nowhere', gen_random_uuid())$q$), 'redirect: to a post that doesn''t exist is refused');
+select tests.ok(tests.throws($q$insert into public.blog_redirects (from_slug, to_post_id) values ('sneaky', (select id from public.blog_posts where slug = 'p4-live'))$q$),
+  'redirect: a direct insert is closed, only the function adds');
+select tests.ok(tests.affected($q$update public.blog_redirects set to_post_id = (select id from public.blog_posts where slug = 'live-post') where from_slug = 'old-news'$q$) = 0,
+  'redirect: a direct update is closed too');
+reset role;
+select tests.system();
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.add_blog_redirect('writer-redirect', tests.post('p4-live'))$q$), 'redirect: a writer can''t add');
+select tests.ok(tests.affected($q$delete from public.blog_redirects where from_slug = 'old-news'$q$) = 0, 'redirect: a writer can''t remove');
+select tests.ok(tests.count('select from_slug from public.blog_redirects') > 0, 'redirect: a writer can read the table');
+reset role;
+select tests.system();
+
+-- A new post (or a rename) that takes a redirected URL clears the redirect.
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$insert into public.blog_posts (slug, title) values ('old-news', 'Takes the URL')$q$) = 1, 'redirect: a writer creates a post at a redirected URL');
+reset role;
+select tests.system();
+select tests.ok(not exists (select 1 from public.blog_redirects where from_slug = 'old-news'), 'redirect: the redirect that would shadow it is gone');
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$delete from public.blog_redirects where from_slug = 'p4-live-renamed'$q$) = 1, 'redirect: an editor removes one');
+reset role;
+select tests.system();
+select tests.ok(exists (select 1 from public.admin_activity where action = 'redirect.removed' and entity_id = 'p4-live-renamed'), 'redirect: the removal is logged');
+select tests.ok(exists (select 1 from public.admin_activity where action = 'redirect.added' and entity_id = 'old-news'), 'redirect: the addition is logged');
+
+select tests.anon();
+set local role anon;
+select tests.ok(tests.throws($q$select scheduled_for from public.blog_posts$q$), 'anon: can''t read the schedule columns');
+select tests.ok(tests.throws($q$select locked_by from public.blog_posts$q$), 'anon: can''t read the lock columns');
+select tests.ok(tests.throws($q$select created_by from public.blog_redirects$q$), 'anon: can''t read who made a redirect');
+select tests.ok(tests.throws($q$select public.add_blog_redirect('anon-redirect', (select id from public.blog_posts limit 1))$q$), 'redirect: anon can''t add');
+reset role;
+select tests.system();
 
 rollback;
