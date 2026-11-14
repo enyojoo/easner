@@ -1,0 +1,22 @@
+{
+  "name": "@easner/blog-content",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The blog post document format: types, validation and helpers shared by admin (writes it) and website (renders it).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "node --test \"src/*.test.ts\"",
+    "typecheck": "tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
