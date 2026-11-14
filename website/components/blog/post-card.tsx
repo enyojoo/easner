@@ -57,7 +57,7 @@ export function PostCard({
       >
         <CoverImage
           path={post.coverPath}
-          alt={post.coverAlt}
+          alt={null}
           focal={post.coverFocal}
           sizes={feature ? "(min-width: 1024px) 700px, 100vw" : "(min-width: 1024px) 390px, (min-width: 640px) 50vw, 100vw"}
           priority={priority}

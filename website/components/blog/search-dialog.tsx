@@ -202,7 +202,7 @@ export function BlogSearchProvider({
                 Esc
               </button>
             </div>
-            <div className="bs-body" id="bs-results" aria-live="polite">
+            <div className="bs-body" id="bs-results" role={showing ? "listbox" : undefined} aria-label="Search results" aria-live="polite">
               {!showing && (
                 <>
                   <span className="bs-grp">Categories</span>
@@ -239,7 +239,7 @@ export function BlogSearchProvider({
                 <>
                   <span className="bs-grp">{result.posts.length} {result.posts.length === 1 ? "post" : "posts"}</span>
                   {result.posts.map((post, i) => (
-                    <Link key={post.slug} id={`bs-hit-${i}`} href={`/blog/${post.slug}`} onClick={close} onMouseEnter={() => setIndex(i)} aria-current={i === index ? "true" : undefined} className={cn("bs-res", i === index && "on")}>
+                    <Link key={post.slug} id={`bs-hit-${i}`} href={`/blog/${post.slug}`} onClick={close} onMouseEnter={() => setIndex(i)} role="option" aria-selected={i === index} className={cn("bs-res", i === index && "on")}>
                       <b><Highlight text={post.title} words={words} /></b>
                       <span>
                         {post.categoryName} · <Highlight text={post.excerpt} words={words} />
@@ -254,7 +254,7 @@ export function BlogSearchProvider({
                   {result.answers.map((answer, i) => {
                     const at = result.posts.length + i
                     return (
-                      <Link key={answer.question} id={`bs-hit-${at}`} href={answer.href} onClick={close} onMouseEnter={() => setIndex(at)} aria-current={at === index ? "true" : undefined} className={cn("bs-res", at === index && "on")}>
+                      <Link key={answer.question} id={`bs-hit-${at}`} href={answer.href} onClick={close} onMouseEnter={() => setIndex(at)} role="option" aria-selected={at === index} className={cn("bs-res", at === index && "on")}>
                         <b><Highlight text={answer.question} words={words} /></b>
                         <span>From easner.com/answers</span>
                       </Link>

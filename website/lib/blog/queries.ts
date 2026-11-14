@@ -1,6 +1,6 @@
 import "server-only"
 import { cache } from "react"
-import { isValidDoc, validateDoc, type DocNode, type ProductSlug } from "@easner/blog-content"
+import { PRODUCT_PAGES, isValidDoc, validateDoc, type DocNode, type ProductSlug } from "@easner/blog-content"
 import {
   AUTHOR_COLUMNS,
   CATEGORY_COLUMNS,
@@ -40,6 +40,14 @@ type Row = Record<string, unknown>
 const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null)
 const rich = (v: unknown): RichField => (typeof v === "string" ? v : v && typeof v === "object" ? (v as DocNode) : null)
 
+/** The database (and the admin) store `product_page` as a path like "/payroll"; the site works in slugs. Accepts either. */
+function productSlug(v: unknown): ProductSlug | null {
+  const value = str(v)
+  if (!value) return null
+  const found = (Object.keys(PRODUCT_PAGES) as ProductSlug[]).find((slug) => slug === value || PRODUCT_PAGES[slug].path === value)
+  return found ?? null
+}
+
 function focal(v: unknown): FocalPoint | null {
   const f = v as { x?: unknown; y?: unknown } | null
   return f && typeof f.x === "number" && typeof f.y === "number" ? { x: f.x, y: f.y } : null
@@ -70,7 +78,7 @@ function mapPost(r: Row): BlogPostSummary | null {
   return {
     id: String(r.id), slug: String(r.slug), title: String(r.title), excerpt: String(r.excerpt ?? ""),
     summary: str(r.summary), coverPath: str(r.cover_path), coverAlt: str(r.cover_alt), coverFocal: focal(r.cover_focal_point),
-    ogImagePath: str(r.og_image_path), categoryId: String(r.category_id), productPage: (str(r.product_page) as ProductSlug | null),
+    ogImagePath: str(r.og_image_path), categoryId: String(r.category_id), productPage: productSlug(r.product_page),
     featured: Boolean(r.featured), featuredRank: typeof r.featured_rank === "number" ? r.featured_rank : null,
     seoTitle: str(r.seo_title), seoDescription: str(r.seo_description), canonicalUrl: str(r.canonical_url),
     noindex: Boolean(r.noindex), focusKeyword: str(r.focus_keyword), wordCount: Number(r.word_count ?? 0),
