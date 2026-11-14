@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react"
 import { Extension, ReactRenderer, type Editor, type Range } from "@tiptap/react"
+import { Plugin } from "@tiptap/pm/state"
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from "@tiptap/suggestion"
 import {
   AlertTriangle,
@@ -371,14 +372,51 @@ const SlashList = forwardRef<ListHandle, SuggestionProps<SlashItem, SlashItem>>(
   )
 })
 
-export const SlashCommand = Extension.create<SlashContext>({
+/** Remove the typed "/query" and, when the plus button made this line only to host it, the empty line too. */
+function discardSlash(editor: Editor, range: Range, dropLine: boolean) {
+  const $from = editor.state.doc.resolve(range.from)
+  const onlySlash = $from.parent.textContent === editor.state.doc.textBetween(range.from, range.to)
+  // One deletion, so positions stay valid: the whole line, or just the typed text.
+  const target = dropLine && onlySlash && $from.depth === 1 ? { from: $from.before(), to: $from.after() } : range
+  editor.chain().deleteRange(target).run()
+}
+
+export const SlashCommand = Extension.create<SlashContext, { fromPlus: boolean; escapedAt: number }>({
   name: "slashCommand",
   addOptions() {
     return { onPickImage: () => {}, hasSummary: () => false }
   },
+  addStorage() {
+    // Set by the block handle's plus button: that line exists only to hold the menu.
+    return { fromPlus: false, escapedAt: 0 }
+  },
   addProseMirrorPlugins() {
     const ctx = this.options
+    const storage = this.storage
+    let picked = false
     return [
+      // Runs before the suggestion plugin, which closes the menu on Escape by itself: remember that it was Escape.
+      new Plugin({
+        props: {
+          handleDOMEvents: {
+            // Clicking out of the editor while the plus button's menu is open: drop the lone "/" line it made.
+            // (Menu items keep focus in the editor, so choosing a block never lands here.)
+            blur: (view) => {
+              if (!storage.fromPlus) return false
+              const { $from } = view.state.selection
+              if ($from.depth === 1 && /^\/\S*$/.test($from.parent.textContent)) {
+                storage.fromPlus = false
+                view.dispatch(view.state.tr.delete($from.before(), $from.after()))
+              }
+              return false
+            },
+          },
+          handleKeyDown: (_view, event) => {
+            if (event.key === "Escape") storage.escapedAt = Date.now()
+            return false
+          },
+        },
+      }),
       Suggestion<SlashItem, SlashItem>({
         editor: this.editor,
         char: "/",
@@ -389,7 +427,11 @@ export const SlashCommand = Extension.create<SlashContext>({
           return $from.depth === 1 && $from.parent.type.name === "paragraph" && $from.parentOffset === 0
         },
         items: ({ query }) => filterSlashItems(query, ctx.hasSummary()),
-        command: ({ editor, range, props }) => props.run(editor, range, ctx),
+        command: ({ editor, range, props }) => {
+          picked = true
+          storage.fromPlus = false
+          props.run(editor, range, ctx)
+        },
         render: () => {
           let component: ReactRenderer<ListHandle, SuggestionProps<SlashItem, SlashItem>> | null = null
           const place = (props: SuggestionProps<SlashItem, SlashItem>) => {
@@ -421,13 +463,30 @@ export const SlashCommand = Extension.create<SlashContext>({
               if (props.event.key === "Escape") {
                 component?.destroy()
                 component = null
+                // Escape means "never mind": the "/" goes with it, as it was only there to open the menu.
+                picked = true
+                const dropLine = storage.fromPlus
+                storage.fromPlus = false
+                discardSlash(this.editor, props.range, dropLine)
                 return true
               }
               return component?.ref?.onKeyDown(props.event) ?? false
             },
-            onExit: () => {
+            onExit: (props) => {
               component?.destroy()
               component = null
+              const escaped = Date.now() - storage.escapedAt < 200
+              const text = props.editor.state.doc.textBetween(props.range.from, Math.min(props.range.to, props.editor.state.doc.content.size))
+              // Escape means "never mind": the "/" goes with it, as it was only there to open the menu.
+              if (!picked && escaped && text.startsWith("/")) {
+                discardSlash(props.editor, props.range, storage.fromPlus)
+              }
+              // Clicked away from a menu the plus button opened: don't leave a lone "/" on its own line.
+              else if (!picked && storage.fromPlus && /^\/[^\s]*$/.test(props.editor.state.doc.textBetween(props.range.from, Math.min(props.range.to, props.editor.state.doc.content.size)))) {
+                discardSlash(props.editor, props.range, true)
+              }
+              storage.fromPlus = false
+              picked = false
             },
           }
         },

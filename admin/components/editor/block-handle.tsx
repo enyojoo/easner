@@ -64,6 +64,8 @@ export function BlockHandle({ editor, containerRef }: { editor: Editor; containe
     const node = editor.state.doc.nodeAt(target.pos)
     if (!node) return
     const at = target.pos + node.nodeSize
+    // eslint-disable-next-line react-hooks/immutability -- extension storage is the editor's own mutable state
+    ;(editor.storage as unknown as { slashCommand?: { fromPlus: boolean } }).slashCommand!.fromPlus = true
     editor
       .chain()
       .focus()
