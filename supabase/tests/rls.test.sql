@@ -330,6 +330,8 @@ select tests.ok(tests.affected($q$update public.blog_posts set slug = 'writer-dr
   'editor: renames a published post''s slug');
 select tests.ok((select to_slug from public.blog_redirects_public where from_slug = 'writer-draft') = 'writer-draft-renamed',
   'editor: the old slug now redirects (301)');
+select tests.ok((select has_unpublished_changes from public.blog_posts where slug = 'live-post'),
+  'editor: a published post with a working copy shows unpublished changes');
 select tests.ok((select (public.unpublish_post(tests.post('live-post'))).status) = 'draft', 'editor: unpublishes');
 select tests.ok((select draft_content is not null from public.blog_posts where slug = 'live-post'),
   'editor: unpublish keeps a working copy');

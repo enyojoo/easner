@@ -244,6 +244,8 @@ create table public.blog_posts (
   content jsonb,
   -- Working doc. Null when there are no pending changes. Never exposed publicly.
   draft_content jsonb,
+  -- Lets lists show "Changes not published" without reading the draft doc.
+  has_unpublished_changes boolean generated always as (draft_content is not null) stored,
   -- Plain text of `content`, for search, read time and llms.txt. Set by publish_post.
   content_text text,
   search tsvector generated always as (
