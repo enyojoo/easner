@@ -14,9 +14,11 @@
     "build:website": "turbo run build --filter=website",
     "build:shared": "turbo run build --filter=@easner/shared",
     "lint": "turbo run lint",
-    "start:website": "turbo run start --filter=website"
+    "start:website": "turbo run start --filter=website",
+    "test:db": "node supabase/tests/run-db-tests.mjs"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.16",
     "turbo": "^2.8.12"
   },
   "allowScripts": {
