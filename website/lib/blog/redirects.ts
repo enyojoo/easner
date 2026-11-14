@@ -13,7 +13,7 @@ export async function getRedirects(): Promise<Map<string, string>> {
   const base = (process.env.SUPABASE_URL ?? "").replace(/\/$/, "")
   const key = process.env.SUPABASE_ANON_KEY ?? ""
   const response = await fetch(`${base}/rest/v1/blog_redirects?select=from_slug,blog_posts(slug)&limit=1000`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/json" },
+    headers: { apikey: key, ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}), Accept: "application/json" },
     cache: "no-store",
   })
   if (!response.ok) throw new Error(`blog_redirects read failed: ${response.status}`)

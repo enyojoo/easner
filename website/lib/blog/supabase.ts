@@ -32,7 +32,10 @@ function credentials(role: Role) {
 export async function rest<T>(table: string, query: string, options: Options = {}): Promise<T> {
   const { role = "anon", tags, revalidate = 3600, noStore, method = "GET", body, prefer } = options
   const { url, key } = credentials(role)
-  const headers: Record<string, string> = { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/json" }
+  const headers: Record<string, string> = { apikey: key, Accept: "application/json" }
+  // Legacy anon / service_role keys are JWTs and go in Authorization too. The newer sb_publishable_ / sb_secret_ keys
+  // are not JWTs and travel in `apikey` alone.
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`
   if (body !== undefined) headers["Content-Type"] = "application/json"
   if (prefer) headers.Prefer = prefer
   const response = await fetch(`${url}/rest/v1/${table}${query ? `?${query}` : ""}`, {
