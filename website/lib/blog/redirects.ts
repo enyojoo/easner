@@ -11,7 +11,7 @@ export async function getRedirects(): Promise<Map<string, string>> {
   if (source === "empty") return new Map()
   if (source === "fixtures") return new Map(FIXTURE_REDIRECTS.map((r) => [r.fromSlug, r.toSlug]))
   const base = (process.env.SUPABASE_URL ?? "").replace(/\/$/, "")
-  const key = process.env.SUPABASE_ANON_KEY ?? ""
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? ""
   const response = await fetch(`${base}/rest/v1/blog_redirects?select=from_slug,blog_posts(slug)&limit=1000`, {
     headers: { apikey: key, ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}), Accept: "application/json" },
     cache: "no-store",

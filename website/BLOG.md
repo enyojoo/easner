@@ -20,7 +20,7 @@ Plan: `docs/blog-and-admin-plan.md` §3 and §3a. The document format and the ad
 
 - `BLOG_FIXTURES=1` (or development with no `SUPABASE_URL`) reads `lib/blog/fixtures/`: 15 sample posts covering every node type.
 - Production with no env at all builds and shows the empty states.
-- Environment: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (reads), `SUPABASE_SERVICE_ROLE_KEY` (draft preview and feedback only),
+- Environment: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (reads), `SUPABASE_SERVICE_ROLE_KEY` (draft preview and feedback only),
   `BLOG_REVALIDATE_SECRET`, `BLOG_PREVIEW_SECRET`, `INDEXNOW_KEY` (optional), `BLOG_FEEDBACK_SECRET` (optional salt; defaults to the service key).
 
 ## `npm run check:seo`

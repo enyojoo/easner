@@ -20,6 +20,6 @@ export type BlogSource = "fixtures" | "supabase" | "empty"
  */
 export function blogSource(): BlogSource {
   if (process.env.BLOG_FIXTURES === "1") return "fixtures"
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) return "supabase"
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_PUBLISHABLE_KEY) return "supabase"
   return process.env.NODE_ENV === "development" ? "fixtures" : "empty"
 }

@@ -24,7 +24,7 @@ Environment variables. Same value on both sides where the name matches.
 | `WEBSITE_URL` | admin | Base URL of the site (`https://www.easner.com`, local `http://localhost:3000`) |
 | `BLOG_REVALIDATE_SECRET` | admin + website | Shared secret for `/api/revalidate` |
 | `BLOG_PREVIEW_SECRET` | admin + website | HMAC key for preview tokens |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | website (server only) | Public reads, explicit columns (`supabase/README.md`) |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | website (server only) | Public reads, explicit columns (`supabase/README.md`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | website (server only) | Draft preview and the feedback route **only**. Never imported by a page that renders live posts. |
 | `INDEXNOW_KEY` | admin | Optional. Pinged on publish when set. |
 

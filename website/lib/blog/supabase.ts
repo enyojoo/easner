@@ -24,7 +24,7 @@ interface Options {
 
 function credentials(role: Role) {
   const url = process.env.SUPABASE_URL
-  const key = role === "service" ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.SUPABASE_ANON_KEY
+  const key = role === "service" ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.SUPABASE_PUBLISHABLE_KEY
   if (!url || !key) throw new Error(`Supabase ${role} credentials are not configured`)
   return { url: url.replace(/\/$/, ""), key }
 }
