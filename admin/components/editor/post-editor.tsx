@@ -590,7 +590,7 @@ export function PostEditor({
   const summary = extractSummary(doc)
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
       <TopBar
         backHref={backHref}
         status={statusKey}
@@ -608,7 +608,7 @@ export function PostEditor({
       />
 
       <div className="flex min-h-0 flex-1">
-        <main className="min-w-0 flex-1 overflow-y-auto" aria-label="Editor">
+        <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Editor">
           <div className="mx-auto w-full max-w-[720px] px-6 pb-48 pt-8">
             <div className="grid gap-3 pb-6">
               {post.status === "in_review" && isEditorRole && !flow.needsSecondEditor ? (
@@ -770,7 +770,7 @@ export function PostEditor({
                 <TabsTrigger value="social">Social</TabsTrigger>
                 <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
               </TabsList>
-              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <TabsContent value="post" className="mt-2">
                   <PostTab
                     post={post}
