@@ -11,12 +11,10 @@ type Socials = Pick<BlogAuthor, "name" | "xUrl" | "linkedinUrl" | "githubUrl" | 
 export function AuthorSocials({
   author,
   labels = false,
-  className,
   linkClassName,
 }: {
   author: Socials
   labels?: boolean
-  className?: string
   linkClassName?: string
 }) {
   const items = [

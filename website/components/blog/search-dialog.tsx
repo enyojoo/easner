@@ -61,6 +61,7 @@ export function BlogSearchProvider({
   const [loading, setLoading] = useState(false)
   const [index, setIndex] = useState(0)
   const input = useRef<HTMLInputElement>(null)
+  const dialog = useRef<HTMLDivElement>(null)
   const returnFocus = useRef<HTMLElement | null>(null)
 
   const open = useCallback(() => {
@@ -87,6 +88,20 @@ export function BlogSearchProvider({
         open()
       } else if (event.key === "Escape" && isOpen) {
         close()
+      } else if (event.key === "Tab" && isOpen) {
+        // aria-modal: keep Tab inside the dialog.
+        const focusable = dialog.current?.querySelectorAll<HTMLElement>("input, button, a[href]")
+        if (!focusable || focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        const active = document.activeElement
+        if (event.shiftKey && (active === first || !dialog.current?.contains(active))) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && (active === last || !dialog.current?.contains(active))) {
+          event.preventDefault()
+          first.focus()
+        }
       }
     }
     window.addEventListener("keydown", onKey)
@@ -165,7 +180,7 @@ export function BlogSearchProvider({
       {children}
       {isOpen && (
         <div className="bs-scrim" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-          <div className="bs-dlg" role="dialog" aria-modal="true" aria-label="Search the blog">
+          <div ref={dialog} className="bs-dlg" role="dialog" aria-modal="true" aria-label="Search the blog">
             <div className="bs-field">
               <Search className="size-[18px] shrink-0 text-web-meta" aria-hidden="true" />
               <input
@@ -175,14 +190,19 @@ export function BlogSearchProvider({
                 onKeyDown={onInputKey}
                 placeholder="Search the blog"
                 aria-label="Search the blog"
+                role="combobox"
+                aria-expanded={hits.length > 0}
+                aria-controls="bs-results"
+                aria-autocomplete="list"
+                aria-activedescendant={hits[index] ? `bs-hit-${index}` : undefined}
                 autoComplete="off"
                 spellCheck={false}
               />
-              <button type="button" className="bs-esc" onClick={close}>
+              <button type="button" className="bs-esc" onClick={close} aria-label="Close search">
                 Esc
               </button>
             </div>
-            <div className="bs-body" aria-live="polite">
+            <div className="bs-body" id="bs-results" aria-live="polite">
               {!showing && (
                 <>
                   <span className="bs-grp">Categories</span>
@@ -219,7 +239,7 @@ export function BlogSearchProvider({
                 <>
                   <span className="bs-grp">{result.posts.length} {result.posts.length === 1 ? "post" : "posts"}</span>
                   {result.posts.map((post, i) => (
-                    <Link key={post.slug} href={`/blog/${post.slug}`} onClick={close} onMouseEnter={() => setIndex(i)} className={cn("bs-res", i === index && "on")}>
+                    <Link key={post.slug} id={`bs-hit-${i}`} href={`/blog/${post.slug}`} onClick={close} onMouseEnter={() => setIndex(i)} aria-current={i === index ? "true" : undefined} className={cn("bs-res", i === index && "on")}>
                       <b><Highlight text={post.title} words={words} /></b>
                       <span>
                         {post.categoryName} · <Highlight text={post.excerpt} words={words} />
@@ -234,7 +254,7 @@ export function BlogSearchProvider({
                   {result.answers.map((answer, i) => {
                     const at = result.posts.length + i
                     return (
-                      <Link key={answer.question} href={answer.href} onClick={close} onMouseEnter={() => setIndex(at)} className={cn("bs-res", at === index && "on")}>
+                      <Link key={answer.question} id={`bs-hit-${at}`} href={answer.href} onClick={close} onMouseEnter={() => setIndex(at)} aria-current={at === index ? "true" : undefined} className={cn("bs-res", at === index && "on")}>
                         <b><Highlight text={answer.question} words={words} /></b>
                         <span>From easner.com/answers</span>
                       </Link>
