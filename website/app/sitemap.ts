@@ -1,4 +1,8 @@
 import type { MetadataRoute } from "next"
+import { getAllPosts, getAuthors, getCategories, isThinArchive } from "@/lib/blog/queries"
+import { authorPath, authorsPath, categoryPath, cropImageUrl, postPath } from "@/lib/blog/urls"
+
+export const revalidate = 3600
 
 const baseUrl = "https://www.easner.com"
 
@@ -25,9 +29,51 @@ const lastModified = {
   answers: new Date("2026-10-14"),
   pricing: new Date("2026-10-22"),
   legalBundle: new Date("2026-11-06"),
+  /** The blog index before it has a post. Afterwards it follows its newest post. */
+  blog: new Date("2026-11-14"),
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/** Blog URLs from the data layer, with each page's real last-modified date (never `new Date()`) and cover images. */
+async function blogEntries(): Promise<MetadataRoute.Sitemap> {
+  const [posts, categories, authors] = await Promise.all([getAllPosts(), getCategories(), getAuthors()])
+  const indexable = posts.filter((p) => !p.noindex)
+  const newest = indexable.reduce((max, p) => {
+    const d = p.contentModifiedAt ?? p.publishedAt
+    return d > max ? d : max
+  }, "")
+  return [
+    { url: `${baseUrl}/blog`, lastModified: newest ? new Date(newest) : lastModified.blog, changeFrequency: "weekly", priority: 0.7 },
+    ...indexable.map((p) => {
+      const image = cropImageUrl(p, "16x9")
+      return {
+        url: `${baseUrl}${postPath(p.slug)}`,
+        lastModified: new Date(p.contentModifiedAt ?? p.publishedAt),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+        ...(image ? { images: [image] } : {}),
+      }
+    }),
+    // Thin archives (too few posts) are noindex and stay out of the sitemap.
+    ...categories
+      .filter((c) => !isThinArchive(c.postCount))
+      .map((c) => ({ url: `${baseUrl}${categoryPath(c.slug)}`, lastModified: new Date(c.lastModified), changeFrequency: "weekly" as const, priority: 0.5 })),
+    ...(authors.length
+      ? [
+          { url: `${baseUrl}${authorsPath}`, lastModified: new Date(authors.reduce((m, a) => (a.lastModified > m ? a.lastModified : m), "")), changeFrequency: "monthly" as const, priority: 0.4 },
+          ...authors.map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
+        ]
+      : []),
+  ]
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return [
+    ...staticEntries(),
+    ...(await blogEntries()),
+  ]
+}
+
+function staticEntries(): MetadataRoute.Sitemap {
   return [
     { url: baseUrl, lastModified: lastModified.home, changeFrequency: "daily", priority: 1 },
     { url: `${baseUrl}/contact`, lastModified: lastModified.contact, changeFrequency: "monthly", priority: 0.8 },
