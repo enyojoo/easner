@@ -784,4 +784,34 @@ select tests.ok(tests.affected($q$insert into public.blog_stats_daily (post_id, 
   'service role: writes blog stats with share counts');
 reset role;
 
+-- Aggregate reads: sums over days, members only.
+reset role;
+insert into public.site_stats_daily (date, path, visitors, views, avg_time_s, bounces, exits, entries, conversions) values
+  (current_date, '/pricing', 5, 10, 30, 1, 2, 3, 1), (current_date - 1, '/pricing', 4, 10, 60, 0, 1, 2, 0), (current_date, '*', 9, 20, null, 1, 3, 5, 1);
+insert into public.site_breakdown_daily (date, path, dimension, value, visitors, views) values
+  (current_date, '*', 'country', 'NG', 3, 4), (current_date - 1, '*', 'country', 'NG', 2, 2), (current_date, '*', 'country', 'KE', 1, 1);
+insert into public.blog_stats_daily (post_id, date, views, readers) values (tests.post('live-post'), current_date - 2, 7, 5), (tests.post('live-post'), current_date - 1, 3, 2);
+insert into public.blog_search_daily (post_id, date, query, impressions, clicks, position) values
+  (tests.post('live-post'), current_date, 'send money', 100, 5, 4), (tests.post('live-post'), current_date - 1, 'send money', 100, 3, 6);
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok((select views from public.analytics_pages(current_date - 7, current_date) where path = '/pricing') = 20, 'analytics_pages sums views over days');
+select tests.ok((select avg_time_s from public.analytics_pages(current_date - 7, current_date) where path = '/pricing') = 45.0, 'analytics_pages weights the average time by views');
+select tests.ok(tests.count($q$select * from public.analytics_pages(current_date - 7, current_date) where path = '*'$q$) = 0, 'analytics_pages leaves the site total row out');
+select tests.ok((select visitors from public.analytics_breakdown(current_date - 7, current_date, '*', 'country') where value = 'NG') = 5, 'analytics_breakdown sums visitors');
+select tests.ok((select avg_position from public.analytics_search(current_date - 7, current_date, 'blog') where query = 'send money') = 5.0, 'analytics_search averages position by impressions');
+select tests.ok((select views from public.analytics_top_posts(current_date - 7, current_date) where slug = 'live-post') = 10, 'analytics_top_posts sums a post''s views');
+reset role;
+
+set local role anon;
+select tests.ok(tests.throws('select * from public.analytics_pages(current_date - 7, current_date)'), 'anon: cannot call analytics_pages');
+select tests.ok(tests.throws('select * from public.analytics_top_posts(current_date - 7, current_date)'), 'anon: cannot call analytics_top_posts');
+reset role;
+
+select tests.login('outsider@rls.test');
+set local role authenticated;
+select tests.ok(tests.count('select * from public.analytics_pages(current_date - 7, current_date)') = 0, 'outsider: analytics_pages returns nothing');
+reset role;
+
 rollback;
