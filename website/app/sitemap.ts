@@ -57,12 +57,13 @@ async function blogEntries(): Promise<MetadataRoute.Sitemap> {
     ...categories
       .filter((c) => !isThinArchive(c.postCount))
       .map((c) => ({ url: `${baseUrl}${categoryPath(c.slug)}`, lastModified: new Date(c.lastModified), changeFrequency: "weekly" as const, priority: 0.5 })),
-    ...(authors.length
-      ? [
-          { url: `${baseUrl}${authorsPath}`, lastModified: new Date(authors.reduce((m, a) => (a.lastModified > m ? a.lastModified : m), "")), changeFrequency: "monthly" as const, priority: 0.4 },
-          ...authors.map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
-        ]
-      : []),
+    {
+      url: `${baseUrl}${authorsPath}`,
+      lastModified: authors.length ? new Date(authors.reduce((m, a) => (a.lastModified > m ? a.lastModified : m), "")) : lastModified.blog,
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
+    },
+    ...authors.map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
   ]
 }
 
