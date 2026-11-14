@@ -4,14 +4,32 @@
     {
       "name": "website",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:website"],
+      "runtimeArgs": [
+        "run",
+        "dev:website"
+      ],
       "port": 3000
     },
     {
       "name": "admin",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:admin"],
+      "runtimeArgs": [
+        "run",
+        "dev:admin"
+      ],
       "port": 3010
+    },
+    {
+      "name": "ds-viewer-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4871",
+        "-d",
+        "/Users/a1/Projects/easnerbanking/design-system"
+      ],
+      "port": 4871
     }
   ]
 }
