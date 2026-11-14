@@ -40,7 +40,8 @@ export const metadata: Metadata = {
     description: homeMetadata.description,
     creator: "@easnerbanking",
   },
-  robots: { index: true, follow: true },
+  // Large image previews and full snippets let Google Discover and answer engines use the blog's cover images and text.
+  robots: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

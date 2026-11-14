@@ -402,6 +402,144 @@ export function productAnswerJsonLd(content: ProductPageContent, path: string) {
   })
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// Blog
+// ---------------------------------------------------------------------------------------------------------------
+
+export interface BlogPersonInput {
+  name: string
+  /** Path of the author page, e.g. /blog/authors/ada-okafor. */
+  path: string
+  jobTitle?: string | null
+  image?: string | null
+  sameAs?: string[]
+}
+
+export const blogPersonId = (path: string) => `${SITE_URL}${path}#person`
+
+/** A post's author as a reference that resolves to the author page: `@id`, name and url. */
+export function blogAuthorRef({ name, path }: Pick<BlogPersonInput, "name" | "path">) {
+  return { "@type": "Person", "@id": blogPersonId(path), name, url: `${SITE_URL}${path}` }
+}
+
+export function personJsonLd({ name, path, jobTitle, image, sameAs }: BlogPersonInput) {
+  return {
+    "@type": "Person",
+    "@id": blogPersonId(path),
+    name,
+    url: `${SITE_URL}${path}`,
+    ...(jobTitle ? { jobTitle } : {}),
+    ...(image ? { image } : {}),
+    ...(sameAs?.length ? { sameAs } : {}),
+    worksFor: { "@id": `${SITE_URL}/#organization` },
+  }
+}
+
+/** Author page: ProfilePage whose main entity is the Person. */
+export function profilePageJsonLd(input: BlogPersonInput & { description: string }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${SITE_URL}${input.path}#webpage`,
+    url: `${SITE_URL}${input.path}`,
+    name: input.name,
+    description: input.description,
+    inLanguage: "en-US",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: personJsonLd(input),
+  }
+}
+
+/** Index, category and author archives: a CollectionPage whose main entity is the ItemList of the visible posts. */
+export function collectionPageJsonLd({
+  name,
+  description,
+  path,
+  items,
+}: {
+  name: string
+  description: string
+  path: string
+  items: { name: string; path: string }[]
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${SITE_URL}${path}#webpage`,
+    url: `${SITE_URL}${path}`,
+    name,
+    description,
+    inLanguage: "en-US",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: items.length,
+      itemListElement: items.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: `${SITE_URL}${item.path}`,
+        name: item.name,
+      })),
+    },
+  }
+}
+
+export interface BlogPostingInput {
+  path: string
+  headline: string
+  description: string
+  /** Cover crops (16:9, 4:3, 1:1), absolute URLs on www.easner.com. */
+  images: string[]
+  datePublished: string
+  dateModified: string
+  authors: BlogPersonInput[]
+  section: string
+  keywords?: string | null
+  wordCount: number
+  readingMinutes: number
+  sources: { title: string; url: string; publisher?: string }[]
+}
+
+/**
+ * Post markup: the `WebPage` node (same @id pattern as the rest of the site, with the Summary block as the
+ * `speakable` selector) plus the `BlogPosting` that points at it.
+ */
+export function blogPostJsonLd(input: BlogPostingInput & { hasSummary: boolean }) {
+  const url = `${SITE_URL}${input.path}`
+  return [
+    webPageJsonLd({ name: input.headline, description: input.description, path: input.path, speakable: input.hasSummary }),
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": `${url}#article`,
+      headline: input.headline,
+      description: input.description,
+      ...(input.images.length ? { image: input.images } : {}),
+      datePublished: input.datePublished,
+      dateModified: input.dateModified,
+      author: input.authors.map(blogAuthorRef),
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      articleSection: input.section,
+      ...(input.keywords ? { keywords: input.keywords } : {}),
+      wordCount: input.wordCount,
+      timeRequired: `PT${input.readingMinutes}M`,
+      inLanguage: "en-US",
+      mainEntityOfPage: { "@id": `${url}#webpage` },
+      ...(input.sources.length
+        ? {
+            citation: input.sources.map((source) => ({
+              "@type": "CreativeWork",
+              name: source.title,
+              url: source.url,
+              ...(source.publisher ? { publisher: { "@type": "Organization", name: source.publisher } } : {}),
+            })),
+          }
+        : {}),
+    },
+  ]
+}
+
 export function jsonLdScript(data: Record<string, unknown> | Record<string, unknown>[]) {
   return {
     __html: JSON.stringify(data).replace(/</g, "\\u003c"),
