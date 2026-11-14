@@ -304,7 +304,7 @@ export default function LoginPage() {
   }
 
   return page(
-    <AuthCard title="Sign in to Easner Website Admin" description="The place where Easner posts are written and published. We’ll email you a sign-in code.">
+    <AuthCard title="Sign in to Easner Website Admin">
       <form
         className="grid gap-4"
         onSubmit={(event) => {
