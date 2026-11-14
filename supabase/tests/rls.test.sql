@@ -143,9 +143,9 @@ select tests.ok(
   not exists (select 1 from pg_class where relnamespace = 'public'::regnamespace and relkind in ('v', 'm')),
   'there are no public views: the website reads the tables');
 select tests.ok(
-  (select bool_and(relrowsecurity) and count(*) = 15 from pg_class
+  (select bool_and(relrowsecurity) and count(*) = 18 from pg_class
    where relnamespace = 'public'::regnamespace and relkind = 'r'),
-  'RLS is on for all 15 tables');
+  'RLS is on for all 18 tables');
 select tests.ok(not has_column_privilege('anon', 'public.blog_posts', 'draft_content', 'select'),
   'anon has no grant on blog_posts.draft_content');
 select tests.ok((select count(*) from public.blog_categories) = 5, 'five default categories are seeded');
@@ -290,8 +290,18 @@ select tests.ok(tests.affected($q$update public.blog_posts set title = 'Hijack' 
   'writer: cannot edit a published post');
 select tests.ok(tests.affected($q$update public.blog_posts set title = 'Hijack' where slug = 'writer-in-review'$q$) = 0,
   'writer: cannot edit own post while it is in review');
-select tests.ok(tests.affected($q$update public.blog_posts set status = 'in_review' where slug = 'writer-new'$q$) = 1,
+select tests.ok(tests.throws($q$update public.blog_posts set status = 'in_review' where slug = 'writer-new'$q$),
+  'writer: cannot move the status directly, not even to in_review');
+select tests.ok(tests.throws($q$insert into public.blog_posts (slug, title, status) values ('writer-direct-review', 'x', 'in_review')$q$),
+  'writer: cannot create a post already in review');
+select tests.ok(tests.throws($q$select public.submit_for_review(tests.post('writer-new'))$q$),
+  'writer: cannot submit a post with no content');
+select tests.ok(tests.affected($q$update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"paragraph"}]}' where slug = 'writer-new'$q$) = 1,
+  'writer: saves content into the draft');
+select tests.ok((select (public.submit_for_review(tests.post('writer-new'))).status) = 'in_review',
   'writer: submits own draft for review');
+select tests.ok(tests.throws($q$select public.submit_for_review(tests.post('writer2-draft'))$q$),
+  'writer: cannot submit another writer''s draft');
 select tests.ok(tests.throws($q$update public.blog_posts set content = '{"type":"doc"}' where slug = 'writer-draft'$q$),
   'writer: cannot write the published content directly');
 select tests.ok(tests.throws($q$update public.blog_posts set status = 'published' where slug = 'writer-draft'$q$),
@@ -354,8 +364,13 @@ select tests.ok(tests.affected($q$update public.blog_posts set title = 'Live pos
   'editor: edits a published post''s fields');
 select tests.ok(tests.throws($q$update public.blog_posts set status = 'published' where slug = 'writer2-draft'$q$),
   'editor: cannot publish by setting status directly');
-select tests.ok(tests.affected($q$update public.blog_posts set status = 'changes_requested' where slug = 'writer-in-review'$q$) = 1,
-  'editor: requests changes on a post in review');
+select tests.ok(tests.throws($q$update public.blog_posts set status = 'changes_requested' where slug = 'writer-in-review'$q$),
+  'editor: cannot move the status directly either');
+select tests.ok((select (public.request_changes(tests.post('writer-in-review'), 'Please cite the source.')).status) = 'changes_requested',
+  'editor: requests changes on a post in review, with a comment');
+select tests.ok(exists (select 1 from public.blog_post_comments where post_id = tests.post('writer-in-review') and kind = 'change_request'
+                          and author_id = auth.uid() and body = 'Please cite the source.'),
+  'editor: the request is recorded as a comment on the draft');
 select tests.ok(tests.throws($q$select public.publish_post(tests.post('writer-draft'))$q$),
   'editor: publish refuses a post with no category or cover');
 select tests.ok(tests.affected($q$update public.blog_posts set category_id = (select id from public.blog_categories where slug = 'personal'), cover_path = 'posts/w/cover.webp', cover_alt = 'A cover' where slug = 'writer-draft'$q$) = 1,
@@ -370,8 +385,16 @@ select tests.ok(exists (select 1 from public.blog_revisions where post_id = test
   'editor: publish writes a revision');
 select tests.ok(exists (select 1 from public.admin_activity where entity_id = tests.post('writer-draft')::text and action = 'post.published'),
   'editor: publish is in the activity log');
+select tests.ok(tests.throws($q$update public.blog_posts set slug = 'writer-draft-renamed' where slug = 'writer-draft'$q$),
+  'editor: cannot change a published post''s slug (owners only)');
+reset role;
+select tests.login('owner@rls.test');
+set local role authenticated;
 select tests.ok(tests.affected($q$update public.blog_posts set slug = 'writer-draft-renamed' where slug = 'writer-draft'$q$) = 1,
-  'editor: renames a published post''s slug');
+  'owner: renames a published post''s slug');
+reset role;
+select tests.login('editor@rls.test');
+set local role authenticated;
 select tests.ok((select to_post_id from public.blog_redirects where from_slug = 'writer-draft') = tests.post('writer-draft-renamed'),
   'editor: the old slug now redirects (301)');
 select tests.ok((select has_unpublished_changes from public.blog_posts where slug = 'live-post'),
@@ -407,6 +430,183 @@ select tests.ok(
   (select array_agg(r.from_slug order by r.from_slug) from public.blog_redirects r join public.blog_posts p on p.id = r.to_post_id
    where p.slug = 'writer-draft-renamed') = array['old-draft-slug', 'writer-draft'],
   'anon: reads the redirect from the old slug and resolves it to the live post');
+reset role;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Review workflow: claims check, second approval, comments, slug lock, archive, my profile, media usage
+-- ---------------------------------------------------------------------------------------------------------------
+
+-- Fixtures (as postgres)
+insert into auth.users (id, email, email_confirmed_at) values
+  ('00000000-0000-4000-8000-000000000007', 'editor2@rls.test', now());
+insert into public.admin_members (user_id, role, name, email) values
+  (tests.uid('editor2@rls.test'), 'editor', 'Editor Two', 'editor2@rls.test');
+
+insert into public.blog_posts (slug, status, title, draft_content, category_id, cover_path, cover_alt, created_by) values
+  -- Written by an editor, makes a fee claim.
+  ('ed-flagged', 'draft', 'Sending money home',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Easner has no fees on transfers."}]}]}',
+   (select id from public.blog_categories where slug = 'personal'), 'posts/ed/cover.webp', 'Cover', tests.uid('editor@rls.test')),
+  -- Written by a writer, in review, makes a regulatory claim.
+  ('w-flagged', 'in_review', 'Why we are licensed',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Easner is fully licensed in the US."}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/wf/cover.webp', 'Cover', tests.uid('writer@rls.test')),
+  ('w-flagged-2', 'in_review', 'Rates explained',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Balances may earn 4% APY."}]}]}',
+   (select id from public.blog_categories where slug = 'business'), 'posts/wf2/cover.webp', 'Cover', tests.uid('writer@rls.test')),
+  ('w-clean', 'in_review', 'Plain launch note',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"We shipped a new settings page."}]}]}',
+   (select id from public.blog_categories where slug = 'company'), 'posts/wc/cover.webp', 'Cover', tests.uid('writer@rls.test')),
+  ('w-own-flagged', 'draft', 'Draft with a claim',
+   '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Cheaper than Wise."}]}]}',
+   null, null, null, tests.uid('writer@rls.test'));
+
+insert into public.blog_media (id, path, mime, size, created_by) values
+  ('00000000-0000-4000-8000-0000000000a1', 'posts/ed/cover.webp', 'image/webp', 10, tests.uid('editor@rls.test')),
+  ('00000000-0000-4000-8000-0000000000a2', 'posts/inline/chart.webp', 'image/webp', 10, tests.uid('editor@rls.test')),
+  ('00000000-0000-4000-8000-0000000000a3', 'posts/unused/none.webp', 'image/webp', 10, tests.uid('editor@rls.test'));
+update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"image","attrs":{"src":"https://x.supabase.co/storage/v1/object/public/blog/posts/inline/chart.webp","alt":"","width":"column"}}]}'
+  where slug = 'w-clean';
+
+select tests.ok((select claims_flagged and claims_matches = array['fees-none'] from public.blog_posts where slug = 'ed-flagged'),
+  'claims: "no fees" flags the post and records the pattern');
+select tests.ok((select not claims_flagged and claims_matches = '{}' from public.blog_posts where slug = 'w-clean'),
+  'claims: a plain post is not flagged');
+select tests.ok((select claims_flagged from public.blog_posts where slug = 'w-flagged'), 'claims: a licensing statement flags the post');
+select tests.ok((select claims_matches @> array['competitor-compare', 'competitor-name'] from public.blog_posts where slug = 'w-own-flagged'),
+  'claims: a competitor comparison flags the post');
+select tests.ok(public.blog_claims_scan('We charge a 1.5% fee') = array['fees-amount'], 'claims: a fee amount is found');
+select tests.ok(public.blog_claims_scan('Otherwise, we wrote a guide to payroll.') = '{}', 'claims: "otherwise" is not "Wise"');
+
+-- Anonymous callers see none of it.
+select tests.anon();
+set local role anon;
+select tests.ok(tests.throws('select claims_flagged from public.blog_posts'), 'anon: claims_flagged is not readable');
+select tests.ok(tests.throws('select claims_matches from public.blog_posts'), 'anon: claims_matches is not readable');
+select tests.ok(tests.throws('select * from public.blog_post_comments'), 'anon: no access to comments');
+select tests.ok(tests.throws('select * from public.blog_post_approvals'), 'anon: no access to approvals');
+select tests.ok(tests.throws('select * from public.blog_claim_patterns'), 'anon: no access to claim patterns');
+select tests.ok(tests.throws($q$select public.submit_for_review(tests.post('w-own-flagged'))$q$), 'anon: cannot submit for review');
+select tests.ok(tests.throws($q$select public.approve_post(tests.post('w-flagged'))$q$), 'anon: cannot approve');
+select tests.ok(tests.throws($q$select public.archive_post(tests.post('w-flagged'))$q$), 'anon: cannot archive');
+select tests.ok(tests.throws('select public.blog_media_usage()'), 'anon: cannot read media usage');
+reset role;
+
+-- Writer
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.approve_post(tests.post('w-flagged'))$q$), 'writer: cannot approve');
+select tests.ok(tests.throws($q$select public.request_changes(tests.post('w-flagged'), 'no')$q$), 'writer: cannot request changes');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('w-clean'))$q$), 'writer: cannot publish their own post in review');
+select tests.ok(tests.throws($q$select public.archive_post(tests.post('w-clean'))$q$), 'writer: cannot archive');
+select tests.ok((select (public.withdraw_submission(tests.post('w-clean'))).status) = 'draft', 'writer: withdraws a submission');
+select tests.ok((select (public.submit_for_review(tests.post('w-clean'))).status) = 'in_review', 'writer: submits again');
+select tests.ok(tests.affected($q$update public.blog_posts set claims_flagged = false, claims_matches = '{}' where slug = 'w-own-flagged'$q$) = 1,
+  'writer: writing the claims columns is accepted but ignored…');
+select tests.ok((select claims_flagged from public.blog_posts where slug = 'w-own-flagged'), '…the database keeps the flag');
+select tests.ok(tests.affected($q$insert into public.blog_posts (slug, title, claims_flagged) values ('w-forged-flag', 'Zero fees everywhere', false)$q$) = 1,
+  'writer: creates a post that says "zero fees"');
+select tests.ok((select claims_flagged from public.blog_posts where slug = 'w-forged-flag'), 'claims: a new post is flagged from its title');
+select tests.ok(tests.throws($q$update public.blog_posts set summary = 'early summary' where slug = 'w-own-flagged'$q$),
+  'writer: summary is a published field, not writable directly');
+select tests.ok(tests.count('select id from public.blog_authors where member_id = auth.uid()') = 1, 'writer: has an author profile');
+select tests.ok((select id from public.ensure_my_author()) = (select id from public.blog_authors where member_id = auth.uid()),
+  'writer: ensure_my_author returns the existing profile');
+-- Comments: the creator may comment and resolve on their own post; not on someone else's.
+select tests.ok(tests.affected($q$insert into public.blog_post_comments (post_id, author_id, body, quote) values (tests.post('writer-in-review'), auth.uid(), 'Added the source.', 'cite')$q$) = 1,
+  'writer: replies on their own post');
+select tests.ok(tests.throws($q$insert into public.blog_post_comments (post_id, author_id, body) values (tests.post('ed-flagged'), auth.uid(), 'hi')$q$),
+  'writer: cannot comment on someone else''s post');
+select tests.ok(tests.throws($q$insert into public.blog_post_comments (post_id, author_id, body) values (tests.post('writer-in-review'), tests.uid('editor@rls.test'), 'forged')$q$),
+  'writer: cannot comment as someone else');
+select tests.ok(tests.affected($q$update public.blog_post_comments set resolved_at = now(), resolved_by = auth.uid() where post_id = tests.post('writer-in-review') and kind = 'change_request'$q$) = 1,
+  'writer: resolves a change request on their own post');
+select tests.ok(tests.throws($q$update public.blog_post_comments set body = 'rewritten' where post_id = tests.post('writer-in-review')$q$),
+  'writer: cannot rewrite comment text');
+select tests.ok((select (public.submit_for_review(tests.post('writer-in-review'))).status) = 'in_review',
+  'writer: resubmits after changes were requested');
+reset role;
+
+-- Writer two has no author profile yet.
+select tests.login('writer2@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$insert into public.blog_post_comments (post_id, author_id, body) values (tests.post('writer-in-review'), auth.uid(), 'x')$q$),
+  'writer two: cannot comment on someone else''s post');
+select tests.ok(tests.count('select id from public.blog_authors where member_id = auth.uid()') = 0, 'writer two: starts with no author profile');
+select tests.ok((select slug from public.ensure_my_author()) = 'writer-two', 'writer two: ensure_my_author creates a profile with a slug from their name');
+select tests.ok((select id from public.ensure_my_author()) = (select id from public.blog_authors where member_id = auth.uid()),
+  'writer two: calling it again returns the same profile');
+select tests.ok(tests.affected($q$update public.blog_authors set title = 'Writer', location = 'Lagos' where member_id = auth.uid()$q$) = 1,
+  'writer two: edits their new profile');
+reset role;
+
+-- Editor one: flagged post written by an editor.
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('ed-flagged'))$q$),
+  'claims: the author-editor cannot publish their own flagged post');
+select tests.ok(tests.throws($q$select public.approve_post(tests.post('ed-flagged'))$q$),
+  'claims: nobody approves their own post (and a draft isn''t in review)');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('w-flagged'))$q$),
+  'claims: one editor alone cannot publish a writer''s flagged post');
+select tests.ok((select (public.approve_post(tests.post('w-flagged'))).status) = 'in_review', 'claims: first editor approves, status stays in review');
+select tests.ok(tests.count($q$select 1 from public.blog_post_approvals where post_id = tests.post('w-flagged')$q$) = 1, 'claims: the approval is recorded');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('w-flagged'))$q$),
+  'claims: one approving editor is still not enough');
+select tests.ok(
+  (public.blog_post_review_state(tests.post('w-flagged')) ->> 'needed')::int = 2
+  and (public.blog_post_review_state(tests.post('w-flagged')) ->> 'have')::int = 0
+  and (public.blog_post_review_state(tests.post('w-flagged')) -> 'approvals') -> 0 ->> 'name' = 'Editor',
+  'claims: review state says two are needed and, excluding me, none have approved');
+select tests.ok(tests.throws($q$update public.blog_posts set summary = 'early' where slug = 'w-flagged'$q$), 'editor: summary can''t be written directly');
+-- Unflagged writer post: one editor is enough.
+select tests.ok((select (public.publish_post(tests.post('w-clean'), true, 'We shipped a new settings page.', 6, 1, 'A settings page.')).status) = 'published',
+  'editor: publishes a clean writer post alone');
+select tests.ok((select summary = 'A settings page.' and word_count = 6 and reading_minutes = 1 and content_text = 'We shipped a new settings page.'
+                 from public.blog_posts where slug = 'w-clean'),
+  'editor: publish stores the computed fields and summary the app passed');
+-- Edits after approval void it.
+select tests.ok((select (public.approve_post(tests.post('w-flagged-2'))).status) = 'in_review', 'claims: approves the second flagged post');
+reset role;
+update public.blog_posts set draft_content = '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Balances may earn 5% APY."}]}]}'
+  where slug = 'w-flagged-2';
+select tests.login('editor2@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('w-flagged-2'))$q$),
+  'claims: an edit after the first approval voids it');
+select tests.ok((public.blog_post_review_state(tests.post('w-flagged-2')) ->> 'have')::int = 0 and
+                jsonb_array_length(public.blog_post_review_state(tests.post('w-flagged-2')) -> 'approvals') = 0,
+  'claims: the review state shows no current approvals after an edit');
+-- Second editor completes a flagged post.
+select tests.ok((select (public.publish_post(tests.post('ed-flagged'))).status) = 'published',
+  'claims: a second editor publishes the editor-authored flagged post');
+select tests.ok((select (public.approve_post(tests.post('w-flagged'))).status) = 'in_review', 'claims: the second editor approves the writer''s post');
+select tests.ok((select (public.publish_post(tests.post('w-flagged'))).status) = 'published',
+  'claims: two different editors let a writer''s flagged post go live');
+select tests.ok(exists (select 1 from public.blog_post_approvals where post_id = tests.post('ed-flagged') and approver = auth.uid()),
+  'claims: the publisher''s own approval is recorded');
+select tests.ok(tests.throws($q$select public.approve_post(tests.post('writer-draft-renamed'))$q$),
+  'editor: approving a live post with no pending changes is refused');
+-- Request changes on a flagged post, archive and restore.
+select tests.ok((select (public.archive_post(tests.post('ed-flagged'))).status) = 'archived', 'editor: archives a post');
+select tests.ok(tests.throws($q$select public.publish_post(tests.post('ed-flagged'))$q$), 'editor: cannot publish an archived post');
+select tests.ok(tests.throws($q$select public.archive_post(tests.post('ed-flagged'))$q$), 'editor: cannot archive twice');
+select tests.ok((select (public.unarchive_post(tests.post('ed-flagged'))).status) = 'draft', 'editor: restores an archived post to draft');
+select tests.ok((select draft_content is not null from public.blog_posts where slug = 'ed-flagged'), 'editor: the restored draft keeps its content');
+-- Media usage.
+select tests.ok(
+  (select in_cover and not in_content from public.blog_media_usage() where media_id = '00000000-0000-4000-8000-0000000000a1' and post_id = tests.post('ed-flagged')),
+  'media usage: a cover path is a cover use');
+select tests.ok(
+  (select in_content and not in_cover from public.blog_media_usage() where media_id = '00000000-0000-4000-8000-0000000000a2' and post_id = tests.post('w-clean')),
+  'media usage: an image block is a content use (found by its src)');
+select tests.ok(tests.count($q$select 1 from public.blog_media_usage() where media_id = '00000000-0000-4000-8000-0000000000a3'$q$) = 0,
+  'media usage: an unused upload has no rows');
+select tests.ok(tests.count('select 1 from public.blog_claim_patterns') = 14, 'editor: reads the claim patterns');
+select tests.ok(tests.throws($q$insert into public.blog_claim_patterns (id, category, label, pattern) values ('x', 'x', 'x', 'x')$q$),
+  'editor: cannot change the claim patterns');
+select tests.ok(tests.throws($q$insert into public.blog_post_approvals (post_id, approver, version_hash) values (tests.post('w-flagged'), auth.uid(), 'x')$q$),
+  'editor: cannot write approvals directly');
 reset role;
 
 -- ---------------------------------------------------------------------------------------------------------------
