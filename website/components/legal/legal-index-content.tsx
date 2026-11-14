@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } f
 
 export function LegalHubPage() {
   return (
-    <PolicyPageShell title="Legal" lastUpdated="November 6, 2026">
+    <PolicyPageShell title="Legal" lastUpdated="November 14, 2026">
       <section>
         <p className="text-web-body leading-relaxed mb-4">
           Easner Group, Inc. (“Easner”) builds financial technology for global money movement. Easner is <strong>not a bank</strong>. Banking, money transmission, payment acceptance, verification, and related regulated services are provided by <strong>licensed partners</strong> under their licenses and terms. Wallet signing for digital asset features is provided by <strong>Turnkey</strong> under the self-custody model described in our Terms and Privacy Policy.

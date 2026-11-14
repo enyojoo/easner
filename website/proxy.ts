@@ -1,7 +1,37 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { REGION_COOKIE, regionForCountry, type AnalyticsRegion } from "@/lib/analytics-consent"
 import { getRedirects } from "@/lib/blog/redirects"
 import { resolveAppPathResponse } from "@/lib/short-link-redirect"
+
+/**
+ * Analytics region from Vercel's geo header. Locally there is no header, so dev defaults to "open";
+ * pass `?geo=DE` (or any ISO country) in development to emulate a visitor from that country.
+ */
+function resolveAnalyticsRegion(request: NextRequest): AnalyticsRegion {
+  if (process.env.NODE_ENV !== "production") {
+    const override = request.nextUrl.searchParams.get("geo")
+    if (override) return regionForCountry(override)
+    const existing = request.cookies.get(REGION_COOKIE)?.value
+    if (existing === "consent" || existing === "open") return existing
+    return "open"
+  }
+  return regionForCountry(request.headers.get("x-vercel-ip-country"))
+}
+
+function withAnalyticsRegion(request: NextRequest, response: NextResponse): NextResponse {
+  const region = resolveAnalyticsRegion(request)
+  if (request.cookies.get(REGION_COOKIE)?.value !== region) {
+    // Session cookie, readable by the client, no identifier: strictly necessary to apply consent rules.
+    response.cookies.set(REGION_COOKIE, region, {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: false,
+    })
+  }
+  return response
+}
 
 /**
  * Blog routing that needs the request: crawlable pagination, and 301s for renamed posts.
@@ -72,10 +102,10 @@ export async function proxy(request: NextRequest) {
 
   if (request.nextUrl.pathname === "/blog" || request.nextUrl.pathname.startsWith("/blog/")) {
     const response = await blogResponse(request)
-    if (response) return response
+    if (response) return withAnalyticsRegion(request, response)
   }
 
-  return NextResponse.next()
+  return withAnalyticsRegion(request, NextResponse.next())
 }
 
 export const config = {

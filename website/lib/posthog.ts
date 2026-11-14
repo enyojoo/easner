@@ -1,34 +1,92 @@
 "use client"
 
 import posthog from "posthog-js"
+import { canPersistAnalytics } from "@/lib/analytics-consent"
 import { registerTrafficSource } from "@/lib/marketing/traffic-source"
 
-export function initPostHog() {
-  if (typeof window !== "undefined") {
-    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-    const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+const PERSISTENT = "localStorage+cookie" as const
 
-    if (posthogKey && posthogHost) {
-      posthog.init(posthogKey, {
-        api_host: posthogHost,
-        // Manual $pageview on route change (PostHogProvider) — required for App Router SPA nav.
-        capture_pageview: false,
-        capture_pageleave: true,
-        persistence: "localStorage+cookie",
-        cross_subdomain_cookie: true,
-        secure_cookie: true,
-        loaded: () => {
-          registerTrafficSource()
-          if (process.env.NODE_ENV === "development") {
-            console.log("PostHog loaded")
-          }
-        },
-        on_xhr_error: (failedRequest) => {
-          if (process.env.NODE_ENV === "development") {
-            console.warn("PostHog request failed:", failedRequest)
-          }
-        },
-      })
+let initialized = false
+
+export function isPostHogReady() {
+  return initialized
+}
+
+export function initPostHog() {
+  if (typeof window === "undefined" || initialized) return
+
+  const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
+  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST
+  if (!posthogKey || !posthogHost) return
+
+  // EU/UK without consent: memory only. Events still send (anonymous, per page load); nothing is
+  // written to cookies, localStorage or sessionStorage. See lib/analytics-consent.ts.
+  const persist = canPersistAnalytics()
+
+  posthog.init(posthogKey, {
+    api_host: posthogHost,
+    // Manual $pageview on route change (PostHogProvider) — required for App Router SPA nav.
+    capture_pageview: false,
+    capture_pageleave: true,
+    persistence: persist ? PERSISTENT : "memory",
+    cross_subdomain_cookie: true,
+    secure_cookie: true,
+    // Recording and surveys keep state in browser storage, so they wait for consent.
+    disable_session_recording: !persist,
+    disable_surveys: !persist,
+    loaded: () => {
+      registerTrafficSource()
+      if (process.env.NODE_ENV === "development") {
+        console.log(`PostHog loaded (${persist ? "persistent" : "memory-only"})`)
+      }
+    },
+    on_xhr_error: (failedRequest) => {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("PostHog request failed:", failedRequest)
+      }
+    },
+  })
+  initialized = true
+}
+
+/** Switch a running PostHog between memory-only and persistent storage after a consent change. */
+export function applyAnalyticsPersistence(persist: boolean) {
+  if (!initialized) return
+
+  posthog.set_config({
+    persistence: persist ? PERSISTENT : "memory",
+    disable_session_recording: !persist,
+    disable_surveys: !persist,
+  })
+
+  if (!persist) clearAnalyticsStorage()
+}
+
+/** Remove anything PostHog or outbound attribution left behind, used when consent is withdrawn. */
+function clearAnalyticsStorage() {
+  for (const store of [window.localStorage, window.sessionStorage]) {
+    try {
+      for (const key of Object.keys(store)) {
+        if (key.startsWith("ph_") || key.startsWith("__ph")) store.removeItem(key)
+      }
+    } catch {
+      // Storage can be blocked; nothing to clear then.
+    }
+  }
+
+  const host = window.location.hostname
+  const domains = ["", `; Domain=${host}`, "; Domain=.easner.com"]
+  for (const part of document.cookie.split("; ")) {
+    const name = part.split("=")[0]
+    const isAnalytics =
+      name.startsWith("ph_") ||
+      name.startsWith("__ph") ||
+      name.startsWith("easner_outbound_") ||
+      name === "easner_ph_id" ||
+      name.startsWith("utm_")
+    if (!isAnalytics) continue
+    for (const domain of domains) {
+      document.cookie = `${name}=; Path=/; Max-Age=0${domain}`
     }
   }
 }

@@ -1,3 +1,4 @@
+import { canPersistAnalytics } from "@/lib/analytics-consent"
 import { posthog } from "@/lib/posthog"
 import { readSessionUtms, UTM_KEYS } from "@/lib/marketing/traffic-source"
 
@@ -21,6 +22,7 @@ function setCrossSubdomainCookie(name: string, value: string) {
  * - Untagged organic/direct visits keep their acquisition source. Internal CTA
  *   placement is recorded separately, never as a new acquisition campaign.
  * - PostHog distinct id is written to `easner_ph_id` (URL-free alternative to __ph_id).
+ * - EU/UK visitors who have not accepted analytics get the in-memory PostHog props only: no cookies.
  */
 export function registerOutboundAttribution(campaign: string, destination: OutboundDestination) {
   if (typeof window === "undefined") return
@@ -32,6 +34,8 @@ export function registerOutboundAttribution(campaign: string, destination: Outbo
     easner_outbound_ref: campaign,
     easner_outbound_dest: destination,
   })
+
+  if (!canPersistAnalytics()) return
 
   setCrossSubdomainCookie(OUTBOUND_REF_COOKIE, campaign)
   setCrossSubdomainCookie(OUTBOUND_DEST_COOKIE, destination)

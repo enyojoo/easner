@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } f
 
 export function PrivacyPolicyPage() {
   return (
-    <PolicyPageShell title="Privacy Policy" lastUpdated="November 6, 2026">
+    <PolicyPageShell title="Privacy Policy" lastUpdated="November 14, 2026">
       <section>
 
       </section>
@@ -260,10 +260,21 @@ export function PrivacyPolicyPage() {
         </p>
       </section>
 
-      <section>
+      <section id="cookies">
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">9. Cookies</h2>
+        <p className="text-web-body leading-relaxed mb-4">
+          We use cookies and similar technologies on our website and dashboard for authentication, preferences, security, and analytics.
+        </p>
+        <p className="text-web-body leading-relaxed mb-4">
+          <strong>Website analytics.</strong> On www.easner.com we use PostHog to measure how the site is used, such as which pages are viewed, how visitors arrived, and which links they click. We do not use it for advertising.
+        </p>
+        <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
+          <li><strong>European Economic Area and United Kingdom.</strong> By default we count visits without analytics cookies or similar storage. Each page load is treated as an anonymous visit and nothing is saved on your device. We only use analytics cookies and local storage if you choose Accept in the prompt on our website. You can change your choice at any time with Cookie settings in the website footer.</li>
+          <li><strong>Everywhere else.</strong> We use analytics cookies and local storage to recognize returning browsers and understand where visits come from.</li>
+          <li><strong>Strictly necessary cookies.</strong> We set two cookies that hold no identifier: one records your broad region so we apply the right rules, and one remembers your analytics choice for up to six months.</li>
+        </ul>
         <p className="text-web-body leading-relaxed">
-          We use cookies and similar technologies on our website and dashboard for authentication, preferences, security, and analytics. You can manage cookies in browser settings; disabling them may affect functionality. Where required by law, we will obtain consent for non-essential cookies.
+          You can also manage cookies in your browser settings; disabling them may affect functionality. Where required by law, we obtain consent for non-essential cookies.
         </p>
       </section>
 

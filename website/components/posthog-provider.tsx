@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
+import { AnalyticsConsentPrompt } from "@/components/analytics-consent-prompt"
 import { initPostHog, posthog } from "@/lib/posthog"
 import { captureMarketingPageViewed, getMarketingPageName } from "@/lib/marketing/analytics"
 
@@ -24,5 +25,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     captureMarketingPageViewed(pathname)
   }, [pathname])
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <AnalyticsConsentPrompt />
+    </>
+  )
 }

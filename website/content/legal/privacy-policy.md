@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: November 6, 2026
+Last updated: November 14, 2026
 
 ---
 
@@ -171,9 +171,18 @@ For account holder data, **Easner Group, Inc.** is the controller. For invoice, 
 
 ---
 
+<a id="cookies"></a>
 ## 9. Cookies
 
-We use cookies and similar technologies on our website and dashboard for authentication, preferences, security, and analytics. You can manage cookies in browser settings; disabling them may affect functionality. Where required by law, we will obtain consent for non-essential cookies.
+We use cookies and similar technologies on our website and dashboard for authentication, preferences, security, and analytics.
+
+**Website analytics.** On www.easner.com we use PostHog to measure how the site is used, such as which pages are viewed, how visitors arrived, and which links they click. We do not use it for advertising.
+
+- **European Economic Area and United Kingdom.** By default we count visits without analytics cookies or similar storage. Each page load is treated as an anonymous visit and nothing is saved on your device. We only use analytics cookies and local storage if you choose Accept in the prompt on our website. You can change your choice at any time with Cookie settings in the website footer.
+- **Everywhere else.** We use analytics cookies and local storage to recognize returning browsers and understand where visits come from.
+- **Strictly necessary cookies.** We set two cookies that hold no identifier: one records your broad region so we apply the right rules, and one remembers your analytics choice for up to six months.
+
+You can also manage cookies in your browser settings; disabling them may affect functionality. Where required by law, we obtain consent for non-essential cookies.
 
 ---
 

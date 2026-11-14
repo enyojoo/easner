@@ -3,6 +3,7 @@
 import { Linkedin } from "lucide-react"
 import { BrandLogo } from "@easner/shared"
 import { SupportChatTrigger } from "@/components/marketing/support-chat-trigger"
+import { CookieSettingsLink } from "@/components/layout/cookie-settings-link"
 import { MarketingLink } from "@/components/marketing/marketing-link"
 import { trackLinkClick } from "@/lib/marketing/analytics"
 import { REGULATORY_FOOTER_PARAGRAPHS } from "@/lib/marketing/shared-content"
@@ -99,7 +100,10 @@ export function PublicFooter() {
           </nav>
         </div>
         <div className="flex flex-col gap-4 border-t border-web-hairline py-6 sm:py-8">
-          <div className="text-center text-sm text-web-meta sm:text-left">© {new Date().getFullYear()} Easner Group, Inc.</div>
+          <div className="flex flex-col items-center gap-2 text-sm text-web-meta sm:flex-row sm:justify-between">
+            <div>© {new Date().getFullYear()} Easner Group, Inc.</div>
+            <CookieSettingsLink />
+          </div>
           <div className="mx-auto max-w-4xl space-y-3 text-center text-xs leading-relaxed text-web-meta sm:text-left">
             {REGULATORY_FOOTER_PARAGRAPHS.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
