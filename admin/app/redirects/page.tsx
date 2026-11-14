@@ -10,8 +10,8 @@ export default function Page() {
       title="Redirects"
       description="Old blog URLs and where they send readers (301)."
       icon={Signpost}
-      emptyTitle="No redirects yet"
-      emptyMessage="When a published post’s slug changes, its old URL is kept here and redirects to the new one."
+      emptyTitle="Coming in the next release"
+      emptyMessage="The redirects table arrives in the next release. Until then, a published post’s old URL is kept automatically when its slug changes."
     />
   )
 }

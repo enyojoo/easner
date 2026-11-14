@@ -3,36 +3,37 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { ExternalLink, FileText, ImageOff, Plus } from "lucide-react"
+import { FileText, ImageOff, Plus } from "lucide-react"
+import { PostQuickView, displayStatus } from "@/components/posts/post-quick-view"
 import { PostsTableSkeleton } from "@/components/admin-skeletons"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { DetailList, DetailRow } from "@/components/ui/detail-list"
 import { EmptyState } from "@/components/ui/empty-state"
 import { FilterTabs, type FilterTab } from "@/components/ui/filter-tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { SearchField } from "@/components/ui/search-field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatListDate, useCategories, usePosts, type PostRow, type PostStatus } from "@/lib/queries"
 import { blogFileUrl } from "@/lib/supabase"
 
-type StatusFilter = "all" | "drafts" | "scheduled" | "published" | "archived"
+type StatusFilter = "all" | "drafts" | "review" | "scheduled" | "published" | "archived"
 
 const STATUS_TABS: ReadonlyArray<FilterTab<StatusFilter>> = [
   { value: "all", label: "All" },
   { value: "drafts", label: "Drafts" },
+  { value: "review", label: "In review" },
   { value: "scheduled", label: "Scheduled" },
   { value: "published", label: "Published" },
   { value: "archived", label: "Archived" },
 ]
 
-/** Drafts covers everything not yet live: draft, in review and changes requested. */
+/** Drafts: being written, or sent back with changes requested. In review: waiting for an Editor. */
 const STATUS_GROUP: Record<Exclude<StatusFilter, "all">, PostStatus[]> = {
-  drafts: ["draft", "in_review", "changes_requested"],
+  drafts: ["draft", "changes_requested"],
+  review: ["in_review"],
   scheduled: ["scheduled"],
   published: ["published"],
   archived: ["archived"],
@@ -40,15 +41,9 @@ const STATUS_GROUP: Record<Exclude<StatusFilter, "all">, PostStatus[]> = {
 
 const COLUMNS = ["Post", "Status", "Category", "Author", "Updated", "Published"]
 const ALL = "all"
-const WEBSITE_BLOG_URL = "https://www.easner.com/blog"
 
 function parseStatus(raw: string | null): StatusFilter {
   return STATUS_TABS.some((tab) => tab.value === raw) ? (raw as StatusFilter) : "all"
-}
-
-/** Published with a working copy reads "Changes not published" (plan §4, Posts list). */
-function displayStatus(post: PostRow): string {
-  return post.status === "published" && post.has_unpublished_changes ? "changes_not_published" : post.status
 }
 
 function CoverThumb({ post }: { post: PostRow }) {
@@ -126,6 +121,18 @@ function PostsPageInner() {
     })
   }, [posts, categories, status, categorySlug, authorId, urlQuery])
 
+  const statusTabs = useMemo(
+    () =>
+      STATUS_TABS.map((tab) => ({
+        ...tab,
+        count:
+          tab.value === "all"
+            ? posts.length
+            : posts.filter((post) => STATUS_GROUP[tab.value as Exclude<StatusFilter, "all">].includes(post.status)).length,
+      })),
+    [posts],
+  )
+
   const filtersActive = status !== "all" || categorySlug !== ALL || authorId !== ALL || urlQuery.trim() !== ""
   const firstLoad = postsQuery.data === undefined && !postsQuery.isError
   const settled = postsQuery.data !== undefined
@@ -161,7 +168,7 @@ function PostsPageInner() {
           <FilterTabs<StatusFilter>
             variant="pills"
             ariaLabel="Filter posts by status"
-            tabs={STATUS_TABS}
+            tabs={statusTabs}
             value={status}
             onChange={(next) => setParams({ status: next === "all" ? null : next })}
           />
@@ -288,45 +295,11 @@ function PostsPageInner() {
         )}
       </Card>
 
-      <Sheet open={Boolean(quickViewPost)} onOpenChange={(open) => !open && setQuickViewId(null)}>
-        <SheetContent>
-          {quickViewPost ? (
-            <>
-              <SheetHeader>
-                <SheetTitle>{quickViewPost.title || "Untitled"}</SheetTitle>
-                <SheetDescription asChild>
-                  <div className="pt-1">
-                    <StatusBadge status={displayStatus(quickViewPost)} />
-                  </div>
-                </SheetDescription>
-              </SheetHeader>
-              <div className="flex-1 overflow-y-auto px-6">
-                <DetailList>
-                  <DetailRow label="Slug" mono copyValue={quickViewPost.slug}>
-                    {quickViewPost.slug}
-                  </DetailRow>
-                  <DetailRow label="Category">
-                    {quickViewPost.category_id ? categoryById.get(quickViewPost.category_id)?.name : null}
-                  </DetailRow>
-                  <DetailRow label="Authors">{quickViewPost.authors.map((author) => author.name).join(", ")}</DetailRow>
-                  <DetailRow label="Updated">{formatListDate(quickViewPost.updated_at)}</DetailRow>
-                  <DetailRow label="Published">{formatListDate(quickViewPost.published_at)}</DetailRow>
-                </DetailList>
-              </div>
-              {quickViewPost.status === "published" ? (
-                <SheetFooter>
-                  <Button asChild variant="outline">
-                    <a href={`${WEBSITE_BLOG_URL}/${quickViewPost.slug}`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink aria-hidden />
-                      View live
-                    </a>
-                  </Button>
-                </SheetFooter>
-              ) : null}
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <PostQuickView
+        post={quickViewPost}
+        categoryName={quickViewPost?.category_id ? categoryById.get(quickViewPost.category_id)?.name : undefined}
+        onClose={() => setQuickViewId(null)}
+      />
     </div>
   )
 }

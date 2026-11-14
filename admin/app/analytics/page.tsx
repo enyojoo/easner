@@ -10,8 +10,8 @@ export default function Page() {
       title="Analytics"
       description="Visitors, pages and sources across easner.com."
       icon={ChartLine}
-      emptyTitle="Analytics isn’t connected yet"
-      emptyMessage="Website and blog traffic, sources, locations and conversions will show here once PostHog and Search Console are connected."
+      emptyTitle="Coming in the next release"
+      emptyMessage="Website and blog traffic, sources, locations and conversions arrive in the next release, once PostHog and Search Console are connected."
     />
   )
 }

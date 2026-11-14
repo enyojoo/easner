@@ -19,6 +19,7 @@ import {
 import { JumpTo, JumpToTrigger, useGoToShortcuts, useJumpToHotkey } from "@/components/layout/jump-to"
 import { useAuth } from "@/lib/auth-context"
 import { ADMIN_HOME, adminNavLinks, isNavItemActive, type NavItem } from "@/lib/nav-config"
+import { usePostsAttentionCount } from "@/lib/queries-pages"
 import { ROLE_LABEL } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +32,20 @@ const navItemActive =
 const navItemInactive =
   "border-transparent font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground"
 
+/** Amber count: reviews waiting (Editors, Owners) or changes requested on your drafts (Writers). */
+function PostsCountPill() {
+  const count = usePostsAttentionCount()
+  if (count === 0) return null
+  return (
+    <span
+      className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-warning-surface px-1.5 text-xs font-semibold tabular-nums text-warning-text"
+      aria-label={`${count} ${count === 1 ? "post needs" : "posts need"} attention`}
+    >
+      {count}
+    </span>
+  )
+}
+
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon
   return (
@@ -41,6 +56,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     >
       <Icon aria-hidden="true" />
       <span className="min-w-0 flex-1 truncate">{item.name}</span>
+      {item.href === "/posts" ? <PostsCountPill /> : null}
     </Link>
   )
 }
@@ -92,6 +108,9 @@ function AccountMenu() {
         </div>
         <DropdownMenuSeparator className="m-0" />
         <div className="p-1">
+          <DropdownMenuItem asChild>
+            <Link href="/authors/me">My profile</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => void handleSignOut()}
             className="text-destructive-text focus:bg-destructive-surface focus:text-destructive-text"
