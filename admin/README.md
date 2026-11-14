@@ -1,8 +1,10 @@
 # Easner admin (admin.easner.com)
 
 The website admin: blog posts, categories, authors, media, redirects, analytics and the team. Plan:
-[`docs/blog-and-admin-plan.md`](../docs/blog-and-admin-plan.md). Phase 1 (this app's foundation) is done: sign-in, roles,
-the Office shell, Posts, Categories and Settings → Team. The editor, the public blog and analytics come in later phases.
+[`docs/blog-and-admin-plan.md`](../docs/blog-and-admin-plan.md). Phases 1 and 2 are done: sign-in, roles, the Office shell,
+Posts, Categories, Settings → Team, and the editor with its review and publish workflow, Authors, My profile, Media and
+the Overview (Needs you and Pipeline). The public blog (Phase 3) is built in `website/`; scheduling, history, redirects,
+analytics and the AEO and Social tabs come in Phase 4.
 
 It looks and behaves like Office (`design-system/guides/25-office.md`) but is its own app with its own Supabase project
 (`easner-website`), never the banking database.
@@ -86,3 +88,59 @@ and the email OTP templates from `supabase/templates/`.
 
 Every response sends `X-Robots-Tag: noindex, nofollow, noarchive` (`next.config.mjs`) and `robots.txt` disallows
 everything (`app/robots.ts`). Below 1024px the `DesktopMinViewportGate` replaces the app, as in Office.
+
+## The editor (Phase 2)
+
+`/posts/new` creates an empty draft and opens `/posts/[id]`: a full-width canvas with a slim top bar and a right
+settings panel (`⌘.`), outside the shell, as in the `OffBlogEditor` card.
+
+- **Document.** Tiptap v2. `components/editor/extensions.ts` registers every node and mark in `@easner/blog-content`
+  under exactly those names and attrs and nothing else; the Easner blocks have React node views
+  (`node-views.tsx`). What the editor stores goes through `lib/blog/normalize.ts` (known attrs only) and
+  `prepareSave` (`validateDoc`, heading ids) on every save. A doc with problems still saves as a draft (so nothing is
+  lost); the canvas says how many blocks need attention and publishing is blocked until they are fixed.
+- **Writing aids.** Slash menu, bubble menu with the link picker (our pages and published posts), block handle with
+  drag and `⌥↑` `⌥↓`, markdown shortcuts, smart quotes, `--` to an en dash, paste cleanup for Google Docs, Notion and
+  Word (`paste-clean.ts`: unknown nodes dropped, H1 to H2, images that can't be uploaded this way dropped with a
+  notice), a URL alone on a line becomes an embed, pasted or dropped images upload. Brand-lint underlines come from
+  `lib/blog/brand-rules.json`.
+- **Saving.** Debounced ~2s to `draft_content` (a published post's edits go to the draft, status "Changes not
+  published"). Top-bar states Saving, Saved, Offline. Every edit also writes an IndexedDB copy; a copy newer than the
+  server row is restored on reload. Title, excerpt and the settings (cover, SEO, category, authors…) are columns on
+  `blog_posts` that have no draft copy: they change on the live post at once (the website picks them up on its next
+  revalidation, which the admin triggers for a published post).
+- **Review.** Writers submit; Editors approve and publish or request changes with a comment. The claims check
+  (`lib/blog/claims-patterns.json`, mirrored in the database table `blog_claim_patterns`) flags a post, and a flagged
+  post needs a second Editor, enforced in `publish_post`. `lib/blog/workflow.ts` decides which buttons a person sees;
+  the database decides what succeeds.
+- **Publish.** The checklist dialog (`lib/blog/checklist.ts`) runs the per-post SEO rules and the brand-voice lint.
+  Errors block, warnings don't.
+
+### Website hooks
+
+Server code only: `app/api/blog/action` (publish, unpublish, archive, slug, category and author changes) and
+`app/api/blog/preview-link`. They act as the signed-in person (the browser sends its access token), so RLS and the
+role-checked functions decide, then call the website per `packages/blog-content/README.md`. Set these in the admin's
+environment (never `NEXT_PUBLIC_`):
+
+| Variable | Purpose |
+| --- | --- |
+| `WEBSITE_URL` | Base URL of the site, e.g. `https://www.easner.com` or `http://localhost:3000` |
+| `BLOG_REVALIDATE_SECRET` | Same value as the website's |
+| `BLOG_PREVIEW_SECRET` | Same value as the website's (signs the 30 minute preview token) |
+| `INDEXNOW_KEY` | Optional. Pinged on publish |
+
+When `WEBSITE_URL` or a secret is missing the step is skipped and the person sees a non-blocking note; a publish is
+never undone because the website is down.
+
+### Development harness
+
+`/dev/editor` mounts the real editor with an in-memory adapter and no Supabase, with a role switcher, an every-block
+sample document, simulated offline and uploads that go to memory. It exists only when `NODE_ENV=development` **and**
+`ADMIN_DEV_HARNESS=1` (put it in the git-ignored `admin/.env.local`); otherwise `/dev/*` answers 404, and the harness
+code is not in a production build.
+
+### Tests
+
+`npm test -w admin` runs the pure logic (`lib/blog/*.test.ts`: claims, checklist, brand lint, slugs, autosave, crops,
+workflow, normalisation, website hooks). `npm run test:db` covers the schema, RLS and the review workflow.

@@ -87,8 +87,10 @@ const clearBackup = () => void del("easner-admin:post-backup:harness-post").catc
 
 const controls: Controls = { offline: false, saves: 0 }
 
-function makeAdapter(): EditorAdapter {
-  let post = samplePost(EMPTY_DOC)
+type HarnessAdapter = EditorAdapter & { snapshot: () => PostFull }
+
+function makeAdapter(start: PostFull): HarnessAdapter {
+  let post = start
   let comments: CommentRow[] = []
   let approvals: Array<{ approver: string; name: string; at: string }> = []
   const delay = (ms = 250) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -101,6 +103,7 @@ function makeAdapter(): EditorAdapter {
   }
   return {
     kind: "local",
+    snapshot: () => post,
     async saveDraft(_id, snapshot) {
       await delay()
       guard()
@@ -194,12 +197,14 @@ export function EditorHarness() {
 
   const adapter = useMemo(() => {
     void generation
-    return makeAdapter()
+    return makeAdapter(
+      samplePost(sample === "every" ? EVERY_BLOCK_DOC : EMPTY_DOC, sample === "every" ? { title: "Sending money to Nigeria", excerpt: "How cross-border payments work, and what to check first.", category_id: "c3", authorIds: ["a1"] } : {}),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new adapter only on Reset or when the sample changes.
   }, [generation])
-  const initial = useMemo(() => {
-    void generation
-    return samplePost(sample === "every" ? EVERY_BLOCK_DOC : EMPTY_DOC, sample === "every" ? { title: "Sending money to Nigeria", excerpt: "How cross-border payments work, and what to check first.", category_id: "c3", authorIds: ["a1"] } : {})
-  }, [sample, generation])
+  // Switching role keeps the post exactly as the adapter has it, so a Writer's submission reaches the Editor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initial = useMemo(() => adapter.snapshot(), [adapter, roleIndex])
   const current = ROLES[roleIndex]
   const viewer: Viewer = { id: current.id, role: current.role, name: current.label }
 

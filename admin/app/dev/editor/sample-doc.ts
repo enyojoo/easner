@@ -18,7 +18,7 @@ export const EVERY_BLOCK_DOC: DocNode = {
       t(" that is hard to see. Read about "),
       t("Easner Business Banking", [{ type: "link", attrs: { href: "/business" } }]),
       t(", or call "),
-      t("it", [{ type: "underline" }, { type: "strike" }]),
+      t("it", [{ type: "strike" }, { type: "underline" }]),
       t(" with "),
       t("code", [{ type: "code" }]),
       t("."),

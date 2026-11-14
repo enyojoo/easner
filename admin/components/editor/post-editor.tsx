@@ -130,9 +130,13 @@ export function PostEditor({
     postRef.current = post
   })
 
+  // The database is the authority on claims; the live check makes the banner and the buttons react as you type.
+  const claims = useMemo(() => checkClaims({ title, excerpt, doc }), [title, excerpt, doc])
+  const flagged = post.claims_flagged || claims.flagged
+
   const flow = useMemo(
-    () => workflow({ role: viewer.role, userId: viewer.id, post, review }),
-    [viewer.role, viewer.id, post, review],
+    () => workflow({ role: viewer.role, userId: viewer.id, post: { ...post, claims_flagged: flagged }, review }),
+    [viewer.role, viewer.id, post, flagged, review],
   )
   const readOnly = !flow.canEdit
 
@@ -422,8 +426,6 @@ export function PostEditor({
 
   // ---- claims, checklist --------------------------------------------------------------------------------------
 
-  const claims = useMemo(() => checkClaims({ title, excerpt, doc }), [title, excerpt, doc])
-  const flagged = post.claims_flagged || claims.flagged
   const checklist = useMemo(
     () =>
       runChecklist({
@@ -736,9 +738,11 @@ export function PostEditor({
             />
 
             <div ref={canvasRef} className="relative mt-8">
-              {editor ? (
-                <>
-                  <BlockHandle editor={editor} containerRef={canvasRef} />
+              {/* Each in its own wrapper: tippy moves the bubble menu out of the tree, and a conditional sibling next to
+                  a moved element makes React's insertBefore fail. */}
+              <div>{editor ? <BlockHandle editor={editor} containerRef={canvasRef} /> : null}</div>
+              <div>
+                {editor ? (
                   <EditorBubbleMenu
                     editor={editor}
                     linkTargets={lookups.linkTargets}
@@ -748,8 +752,8 @@ export function PostEditor({
                       openComments()
                     }}
                   />
-                </>
-              ) : null}
+                ) : null}
+              </div>
               <EditorContent editor={editor} />
             </div>
             <span className="sr-only">{summary ? "Has a summary" : "No summary yet"}</span>
