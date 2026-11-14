@@ -3,7 +3,7 @@ import { Monitor, Smartphone } from "lucide-react"
 import { BRAND, BrandLogo } from "@easner/shared"
 
 const COPY = {
-  title: "Easner admin works best on a wide screen",
+  title: "Easner Blog Admin works best on a wide screen",
   lede: "Posts, the editor, media and analytics are laid out for a keyboard and plenty of horizontal room.",
   detail:
     "The admin isn't supported on phones or small tablets. Use a laptop, a desktop or a large tablet in landscape, then come back here.",

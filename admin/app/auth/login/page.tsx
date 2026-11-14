@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase"
 
 type EmailStep = "email" | "code"
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-const FACTOR_NAME = "Easner admin"
+const FACTOR_NAME = "Easner Blog Admin"
 
 type Enrollment = { factorId: string; qrCode: string; secret: string }
 
@@ -188,7 +188,7 @@ export default function LoginPage() {
         description={
           <>
             You’re signed in as <span className="text-foreground">{user?.email}</span>, but this email isn’t on the
-            Easner admin team.
+            Easner Blog Admin team.
           </>
         }
       >
@@ -242,7 +242,7 @@ export default function LoginPage() {
 
   if (mfaStep === "verify") {
     return page(
-      <AuthCard title="Enter your authenticator code" description="Open your authenticator app and enter the 6-digit code for Easner admin.">
+      <AuthCard title="Enter your authenticator code" description="Open your authenticator app and enter the 6-digit code for Easner Blog Admin.">
         <OtpInput
           ariaLabel="Authenticator code"
           value={code}
@@ -304,7 +304,7 @@ export default function LoginPage() {
   }
 
   return page(
-    <AuthCard title="Sign in to Easner admin" description="The blog and website admin. We’ll email you a sign-in code.">
+    <AuthCard title="Sign in to Easner Blog Admin" description="The blog and website admin. We’ll email you a sign-in code.">
       <form
         className="grid gap-4"
         onSubmit={(event) => {

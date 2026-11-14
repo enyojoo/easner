@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "description": "Easner website admin (admin.easner.com): blog, media, analytics. Office UI, its own Supabase project.",
+  "description": "Easner Blog Admin (admin.easner.com): blog, media, analytics. Office UI, its own Supabase project.",
   "version": "0.1.0",
   "private": true,
   "scripts": {
