@@ -429,12 +429,19 @@ export function ImageView({ node, updateAttributes, selected, deleteNode }: Node
   const alt = String(node.attrs.alt ?? "")
   const src = String(node.attrs.src ?? "")
   return (
-    <NodeViewWrapper
-      className={cn("group relative my-5", width === "wide" && "-mx-[104px]", width === "full" && "-mx-[180px]")}
-      data-block="image"
-      contentEditable={false}
-    >
-      <figure className={cn("overflow-hidden rounded-lg border border-border bg-muted", selected && "ring-2 ring-ring")}>
+    <NodeViewWrapper className="group relative my-5" data-block="image" contentEditable={false}>
+      {/* Only the picture breaks out of the column. Wide and full are measured against the canvas (the editor's
+          container), so they never run past its edges; the caption and controls stay in the column. */}
+      <figure
+        className={cn("overflow-hidden rounded-lg border border-border bg-muted", selected && "ring-2 ring-ring")}
+        style={
+          width === "wide"
+            ? { marginInline: "calc((100% - min(960px, 100cqw - 48px)) / 2)" }
+            : width === "full"
+              ? { marginInline: "calc((100% - (100cqw - 48px)) / 2)" }
+              : undefined
+        }
+      >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element -- editor preview of a Storage URL; width and height are unknown here.
           <img src={src} alt={alt} className="block h-auto w-full" draggable={false} />

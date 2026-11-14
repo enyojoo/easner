@@ -608,7 +608,7 @@ export function PostEditor({
       />
 
       <div className="flex min-h-0 flex-1">
-        <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Editor">
+        <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain [container-type:inline-size]" aria-label="Editor">
           <div className="mx-auto w-full max-w-[720px] px-6 pb-48 pt-8">
             <div className="grid gap-3 pb-6">
               {post.status === "in_review" && isEditorRole && !flow.needsSecondEditor ? (
