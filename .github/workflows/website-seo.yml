@@ -1,0 +1,37 @@
+name: Website SEO and blog content
+
+on:
+  pull_request:
+    paths:
+      - "website/**"
+      - "packages/blog-content/**"
+      - "package-lock.json"
+      - ".github/workflows/website-seo.yml"
+
+concurrency:
+  group: website-seo-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - name: Blog content tests
+        run: npm run test:blog-content
+      # Builds with the fixture posts (BLOG_FIXTURES=1), so no Supabase or other secrets are needed, then runs scripts/check-seo.py.
+      - name: Build with fixtures and check SEO
+        run: npm run check:seo:fixtures
+        working-directory: website
