@@ -178,8 +178,11 @@ export default function LoginPage() {
     </main>
   )
 
-  // Hold a blank frame while the session resolves or the shell opens: never flash the form.
-  if (access === "loading" || access === "ready") return page(null)
+  // Hold a blank frame while the session resolves or the shell opens. The logo lives in `page`, so showing it
+  // here flashes the mark alone before the card.
+  if (access === "loading" || access === "ready") {
+    return <main className="min-h-dvh bg-background" />
+  }
 
   if (access === "no-access") {
     return page(
