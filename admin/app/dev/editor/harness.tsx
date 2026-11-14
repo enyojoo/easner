@@ -295,7 +295,7 @@ export function EditorHarness() {
   const adapter = useMemo(() => {
     void generation
     return makeAdapter(
-      samplePost(sample === "every" ? EVERY_BLOCK_DOC : EMPTY_DOC, sample === "every" ? { title: "Sending money to Nigeria", excerpt: "How cross-border payments work, and what to check first.", category_id: "c3", authorIds: ["a1"] } : {}),
+      samplePost(sample === "every" ? EVERY_BLOCK_DOC : EMPTY_DOC, sample === "every" ? { title: "Sending money to Nigeria", excerpt: "How cross-border payments work, and what to check first.", category_id: "c3", authorIds: ["a1"], cover_path: "/dev/sample-image", cover_alt: "A map of payment routes" } : {}),
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- a new adapter only on Reset or when the sample changes.
   }, [generation])

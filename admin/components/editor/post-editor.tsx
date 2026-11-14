@@ -943,7 +943,7 @@ export function PostEditor({
         open={restoreTarget !== null}
         onOpenChange={(open) => !open && setRestoreTarget(null)}
         title="Restore this version?"
-        description={`The ${restoreTarget ? whenLabel(restoreTarget.created_at) : ""} version replaces your current draft. The live post doesn’t change until you publish, and the draft you have now stays in History.`}
+        description={`The version from ${restoreTarget ? whenLabel(restoreTarget.created_at).replace(/^(Today|Yesterday)/, (word) => word.toLowerCase()) : ""} replaces your current draft. The live post doesn’t change until you publish, and the draft you have now stays in History.`}
         confirmLabel="Restore to draft"
         pending={busy}
         onConfirm={restore}

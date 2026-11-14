@@ -1,17 +1,25 @@
-import type { Metadata } from "next"
-import { Signpost } from "lucide-react"
-import { PlaceholderPage } from "@/components/placeholder-page"
+"use client"
 
-export const metadata: Metadata = { title: "Redirects" }
+import { RedirectsView } from "@/components/redirects/redirects-view"
+import { useAuth } from "@/lib/auth-context"
+import { usePosts } from "@/lib/queries"
+import { useRedirectMutations, useRedirects } from "@/lib/queries-redirects"
+import { permissionsFor } from "@/lib/roles"
 
 export default function Page() {
+  const { role } = useAuth()
+  const { canManageRedirects } = permissionsFor(role)
+  const posts = usePosts()
+  const { rows, isLoading } = useRedirects()
+  const { add, remove } = useRedirectMutations()
   return (
-    <PlaceholderPage
-      title="Redirects"
-      description="Old blog URLs and where they send readers (301)."
-      icon={Signpost}
-      emptyTitle="Coming in the next release"
-      emptyMessage="The redirects table arrives in the next release. Until then, a published post’s old URL is kept automatically when its slug changes."
+    <RedirectsView
+      redirects={rows}
+      posts={(posts.data ?? []).map(({ id, slug, title, status }) => ({ id, slug, title, status }))}
+      canEdit={canManageRedirects}
+      loading={isLoading || posts.isLoading}
+      onAdd={(from, toPostId) => add.mutateAsync({ from, toPostId })}
+      onRemove={(from) => remove.mutateAsync(from)}
     />
   )
 }
