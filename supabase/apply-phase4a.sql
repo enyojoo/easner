@@ -144,11 +144,11 @@ $$;
 create or replace function public.analytics_top_posts(p_from date, p_to date, p_limit integer default 20)
 returns table (
   post_id uuid, slug text, title text, category_name text, published_at timestamptz,
-  views bigint, readers bigint, depth_25 bigint, depth_100 bigint, cta_clicks bigint, signups bigint, share_clicks bigint, share_visits bigint
+  views bigint, readers bigint, depth_25 bigint, depth_50 bigint, depth_75 bigint, depth_100 bigint, cta_clicks bigint, signups bigint, share_clicks bigint, share_visits bigint
 )
 language sql stable security invoker set search_path = public as $$
   select p.id, p.slug, p.title, c.name, p.published_at,
-    sum(s.views)::bigint, sum(s.readers)::bigint, sum(s.depth_25)::bigint, sum(s.depth_100)::bigint,
+    sum(s.views)::bigint, sum(s.readers)::bigint, sum(s.depth_25)::bigint, sum(s.depth_50)::bigint, sum(s.depth_75)::bigint, sum(s.depth_100)::bigint,
     sum(s.cta_clicks)::bigint, sum(s.signups)::bigint, sum(s.share_clicks)::bigint, sum(s.share_visits)::bigint
   from public.blog_stats_daily s
   join public.blog_posts p on p.id = s.post_id

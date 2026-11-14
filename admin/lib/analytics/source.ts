@@ -36,6 +36,8 @@ export interface TopPostRow {
   views: number
   readers: number
   depth_25: number
+  depth_50: number
+  depth_75: number
   depth_100: number
   cta_clicks: number
   signups: number

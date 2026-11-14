@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { FilterTabs, type FilterTab } from "@/components/ui/filter-tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TopPostsThisWeek } from "@/components/analytics/top-posts-week"
 import { useAuth } from "@/lib/auth-context"
 import { usePostFlags, type PostFlagRow } from "@/lib/queries-pages"
 
@@ -239,6 +240,7 @@ function OverviewInner() {
               ))}
             </div>
           </section>
+          <TopPostsThisWeek />
         </>
       )}
     </div>

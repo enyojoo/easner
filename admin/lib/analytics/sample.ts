@@ -107,10 +107,10 @@ export function generateSampleData(today: string, seed = 20261117): SampleData {
       blog.push({
         post_id: post.id, date, views: pviews, readers,
         depth_25: Math.round(readers * 0.82), depth_50: Math.round(readers * 0.56), depth_75: Math.round(readers * 0.34), depth_100: Math.round(readers * 0.19),
-        cta_clicks: Math.round(readers * 0.06), signups: Math.round(readers * 0.012), share_clicks: shareClicks, share_visits: Math.round(shareClicks * 1.6),
+        cta_clicks: Math.round(readers * 0.06), signups: Math.round(readers * 0.035), share_clicks: shareClicks, share_visits: Math.round(shareClicks * 1.6),
         avg_time_s: 95 + Math.round(rand() * 40), sources, shares: Object.fromEntries(clicks.filter(([, n]) => n > 0)),
       })
-      blogViews += pviews; blogVisitors += pvisitors; blogSignups += Math.round(readers * 0.012); blogEntries += Math.round(pvisitors * 0.8)
+      blogViews += pviews; blogVisitors += pvisitors; blogSignups += Math.round(readers * 0.035); blogEntries += Math.round(pvisitors * 0.8)
       const path = `/blog/${post.slug}`
       site.push({ date, path, visitors: pvisitors, views: pviews, avg_time_s: 95 + Math.round(rand() * 40), bounces: Math.round(pvisitors * 0.35), exits: Math.round(pvisitors * 0.6), entries: Math.round(pvisitors * 0.8), conversions: Math.round(pvisitors * 0.012) })
       const add = (dimension: Dimension, table: Array<[string, number]>, scopePath: string, total: number) => {
@@ -206,8 +206,8 @@ export function createSampleSource(today: string, seed?: number): AnalyticsSourc
       for (const r of data.blog) {
         if (!inRange(r.date, range)) continue
         const p = titles.get(r.post_id)!
-        const cur = map.get(r.post_id) ?? { post_id: r.post_id, slug: p.slug, title: p.title, category_name: p.category, published_at: `${addDays(today, -p.ageDays)}T09:00:00Z`, views: 0, readers: 0, depth_25: 0, depth_100: 0, cta_clicks: 0, signups: 0, share_clicks: 0, share_visits: 0 }
-        cur.views += r.views; cur.readers += r.readers; cur.depth_25 += r.depth_25; cur.depth_100 += r.depth_100
+        const cur = map.get(r.post_id) ?? { post_id: r.post_id, slug: p.slug, title: p.title, category_name: p.category, published_at: `${addDays(today, -p.ageDays)}T09:00:00Z`, views: 0, readers: 0, depth_25: 0, depth_50: 0, depth_75: 0, depth_100: 0, cta_clicks: 0, signups: 0, share_clicks: 0, share_visits: 0 }
+        cur.views += r.views; cur.readers += r.readers; cur.depth_25 += r.depth_25; cur.depth_50 += r.depth_50; cur.depth_75 += r.depth_75; cur.depth_100 += r.depth_100
         cur.cta_clicks += r.cta_clicks; cur.signups += r.signups; cur.share_clicks += r.share_clicks; cur.share_visits += r.share_visits
         map.set(r.post_id, cur)
       }
