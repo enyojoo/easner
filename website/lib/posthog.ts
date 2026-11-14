@@ -28,6 +28,8 @@ export function initPostHog() {
     // Manual $pageview on route change (PostHogProvider) — required for App Router SPA nav.
     capture_pageview: false,
     capture_pageleave: true,
+    // Core Web Vitals (LCP, INP, CLS, FCP) as $web_vitals events, read by the admin's nightly analytics rollup.
+    capture_performance: { web_vitals: true },
     persistence: persist ? PERSISTENT : "memory",
     cross_subdomain_cookie: true,
     secure_cookie: true,
