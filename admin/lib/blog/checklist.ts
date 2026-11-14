@@ -186,6 +186,13 @@ export function runChecklist(input: ChecklistInput): ChecklistResult {
     )
   }
 
+  // Answer-first: a Summary block is what search and AI answers quote.
+  add(
+    summary
+      ? { id: "summary", severity: "pass", title: "Summary block", detail: "The post opens with a direct answer." }
+      : { id: "summary", severity: "warning", title: "No Summary block", detail: "Answer-first posts are quoted more by search and AI answers. Add a two or three sentence Summary at the top.", action: { label: "Open the editor", target: "editor" } },
+  )
+
   // Internal links
   const known = new Set(knownPaths)
   const broken = internalLinks(doc).filter((p) => !known.has(p) && !isKnownPath(p, publishedSlugs))

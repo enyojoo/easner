@@ -19,7 +19,7 @@ import { CommentsPanel } from "@/components/editor/comments-panel"
 import { fileUrl } from "@/components/editor/cover-field"
 import { buildExtensions } from "@/components/editor/extensions"
 import { PublishDialog } from "@/components/editor/publish-dialog"
-import { AeoTab, PostTab, SeoTab, SocialTab } from "@/components/editor/settings-tabs"
+import { PostTab, SeoTab, SocialTab } from "@/components/editor/settings-tabs"
 import { SlashCommand } from "@/components/editor/slash-menu"
 import { TopBar, type TopBarAction } from "@/components/editor/top-bar"
 import type {
@@ -45,7 +45,7 @@ import { validateUpload } from "@/lib/blog/crops"
 import { workflow } from "@/lib/blog/workflow"
 import { cn } from "@/lib/utils"
 
-type PanelTab = "post" | "seo" | "aeo" | "social" | "comments"
+type PanelTab = "post" | "seo" | "social" | "comments"
 
 const docOf = (post: PostFull): DocNode => (post.draft_content ?? post.content ?? EMPTY_DOC) as DocNode
 
@@ -763,10 +763,9 @@ export function PostEditor({
         {panelOpen ? (
           <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="m-4 mb-0 grid h-9 grid-cols-5">
+              <TabsList className="m-4 mb-0 grid h-9 grid-cols-4">
                 <TabsTrigger value="post">Post</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
-                <TabsTrigger value="aeo">AEO</TabsTrigger>
                 <TabsTrigger value="social">Social</TabsTrigger>
                 <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
               </TabsList>
@@ -792,9 +791,6 @@ export function PostEditor({
                 </TabsContent>
                 <TabsContent value="seo" className="mt-2">
                   <SeoTab post={post} title={title} excerpt={excerpt} readOnly={readOnly} patch={patch} patchSoon={patchSoon} otherPosts={lookups.otherPosts} />
-                </TabsContent>
-                <TabsContent value="aeo" className="mt-2">
-                  <AeoTab post={post} title={title} doc={doc} authors={lookups.authors} />
                 </TabsContent>
                 <TabsContent value="social" className="mt-2">
                   <SocialTab post={post} title={title} />

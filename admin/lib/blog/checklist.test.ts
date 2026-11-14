@@ -135,3 +135,11 @@ test("claims flag is a warning and never imports the claims module", () => {
   assert.equal(sev(r, "claims"), "warning")
   assert.equal(r.canPublish, true)
 })
+
+test("summary: warns when missing, never blocks", () => {
+  const r = runChecklist(base())
+  assert.equal(sev(r, "summary"), "pass")
+  const none = run((i) => (i.doc = { type: "doc", content: i.doc.content?.filter((b) => b.type !== "summary") } as ChecklistInput["doc"]))
+  assert.equal(sev(none, "summary"), "warning")
+  assert.equal(none.canPublish, true)
+})

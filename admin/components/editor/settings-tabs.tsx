@@ -1,14 +1,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { AlertTriangle, CheckCircle2, Circle, Lock } from "lucide-react"
+import { AlertTriangle, Lock } from "lucide-react"
 import {
   PRODUCT_PAGES,
-  extractDefinitions,
-  extractFaq,
-  extractSources,
-  extractSteps,
-  extractSummary,
   headings,
   internalLinks,
   externalLinks,
@@ -406,47 +401,8 @@ export function SeoTab({
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// AEO and Social (Phase 4 fills these in; today they show what the post will emit)
+// Social (Phase 4 adds the platform previews; today it shows the share crop)
 // ---------------------------------------------------------------------------------------------------------------
-
-function Check({ ok, children }: { ok: boolean; children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2 text-sm">
-      {ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success-text" aria-hidden /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />}
-      <span className={ok ? "text-foreground" : "text-muted-foreground"}>{children}</span>
-    </li>
-  )
-}
-
-export function AeoTab({ post, title, doc, authors }: { post: PostFull; title: string; doc: DocNode; authors: AuthorOption[] }) {
-  const summary = extractSummary(doc)
-  const faq = extractFaq(doc)
-  const steps = extractSteps(doc)
-  const terms = extractDefinitions(doc)
-  const sources = extractSources(doc)
-  const chosen = authors.filter((author) => post.authorIds.includes(author.id))
-  const complete = chosen.length > 0 && chosen.every((author) => author.avatar_path && author.title?.trim() && bioToText(author.bio).trim())
-  return (
-    <div>
-      <Section title="Answer-first checks" hint="Search and AI answers quote posts that answer first, show their sources and name their author.">
-        <ul className="grid gap-2">
-          <Check ok={Boolean(summary)}>Summary block {summary ? "present" : "missing: add one at the top"}</Check>
-          <Check ok={faq.length > 0}>FAQ {faq.length ? `(${faq.length}) emits FAQPage` : "none"}</Check>
-          <Check ok={steps.length > 0}>Steps {steps.length ? `(${steps.length}) emit HowTo` : "none"}</Check>
-          <Check ok={terms.length > 0}>Definitions {terms.length ? `(${terms.length}) emit DefinedTerm` : "none"}</Check>
-          <Check ok={sources.length > 0}>Sources {sources.length ? `(${sources.length}) cited` : "none. Cite fees, rates and regulatory statements."}</Check>
-          <Check ok={Boolean(complete)}>Author profile {complete ? "complete" : "needs a photo, a title and a bio"}</Check>
-        </ul>
-      </Section>
-      <Section title="llms.txt line">
-        <code className="block rounded-md bg-muted p-3 text-xs leading-5 text-foreground">
-          - [{title || "Untitled"}](https://www.easner.com/blog/{post.slug}): {summary ?? post.excerpt ?? ""}
-        </code>
-        <p className="text-xs text-muted-foreground">Pinning to an /answers section and the Markdown version arrive in the next release.</p>
-      </Section>
-    </div>
-  )
-}
 
 export function SocialTab({ post, title }: { post: PostFull; title: string }) {
   const url = fileUrl(post.cover_path)
