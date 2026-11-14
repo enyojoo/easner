@@ -45,7 +45,7 @@ import { validateUpload } from "@/lib/blog/crops"
 import { workflow } from "@/lib/blog/workflow"
 import { cn } from "@/lib/utils"
 
-type PanelTab = "post" | "seo" | "social" | "comments"
+type PanelTab = "post" | "seo" | "comments"
 
 const docOf = (post: PostFull): DocNode => (post.draft_content ?? post.content ?? EMPTY_DOC) as DocNode
 
@@ -763,10 +763,9 @@ export function PostEditor({
         {panelOpen ? (
           <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="m-4 mb-0 grid h-9 grid-cols-4">
+              <TabsList className="m-4 mb-0 grid h-9 grid-cols-3">
                 <TabsTrigger value="post">Post</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
-                <TabsTrigger value="social">Social</TabsTrigger>
                 <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
               </TabsList>
               <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
@@ -791,8 +790,6 @@ export function PostEditor({
                 </TabsContent>
                 <TabsContent value="seo" className="mt-2">
                   <SeoTab post={post} title={title} excerpt={excerpt} readOnly={readOnly} patch={patch} patchSoon={patchSoon} otherPosts={lookups.otherPosts} />
-                </TabsContent>
-                <TabsContent value="social" className="mt-2">
                   <SocialTab post={post} title={title} />
                 </TabsContent>
                 <TabsContent value="comments" className="mt-2 h-full">

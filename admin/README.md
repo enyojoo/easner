@@ -4,7 +4,7 @@ The website admin: blog posts, categories, authors, media, redirects, analytics 
 [`docs/blog-and-admin-plan.md`](../docs/blog-and-admin-plan.md). Phases 1 and 2 are done: sign-in, roles, the Office shell,
 Posts, Categories, Settings → Team, and the editor with its review and publish workflow, Authors, My profile, Media and
 the Overview (Needs you and Pipeline). The public blog (Phase 3) is built in `website/`; scheduling, history, redirects,
-analytics and the Social previews come in Phase 4. There is no AEO tab: the one useful nudge (a Summary block) is a warning in the publish checklist.
+analytics and the X, LinkedIn and WhatsApp share previews come in Phase 4 (the cover share preview already sits at the end of the SEO tab). There is no AEO tab: the one useful nudge (a Summary block) is a warning in the publish checklist.
 
 It looks and behaves like Office (`design-system/guides/25-office.md`) but is its own app with its own Supabase project
 (`easner-website`), never the banking database.

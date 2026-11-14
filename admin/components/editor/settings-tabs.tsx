@@ -401,7 +401,7 @@ export function SeoTab({
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Social (Phase 4 adds the platform previews; today it shows the share crop)
+// Share preview: shown at the end of the SEO tab (Phase 4 adds the platform previews)
 // ---------------------------------------------------------------------------------------------------------------
 
 export function SocialTab({ post, title }: { post: PostFull; title: string }) {
