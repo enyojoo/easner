@@ -11,7 +11,7 @@
 begin;
 
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create function tests.ok(cond boolean, description text) returns void language plpgsql as $$
 begin
