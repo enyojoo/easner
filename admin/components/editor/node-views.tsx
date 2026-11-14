@@ -169,7 +169,7 @@ export function FaqView(props: NodeViewProps) {
   return (
     <NodeViewWrapper className={frame(props.selected)} data-block="faq">
       <Label>FAQ · emits FAQPage</Label>
-      <NodeViewContent className="mt-2 grid gap-3" />
+      <NodeViewContent className="mt-2 [&>div]:grid [&>div]:gap-3" />
       <button
         type="button"
         contentEditable={false}
@@ -214,7 +214,7 @@ export function StepsView(props: NodeViewProps) {
   return (
     <NodeViewWrapper className={frame(props.selected)} data-block="steps">
       <Label>Steps · emits HowTo</Label>
-      <NodeViewContent className="mt-2 grid gap-3 [counter-reset:step]" />
+      <NodeViewContent className="mt-2 [counter-reset:step] [&>div]:grid [&>div]:gap-3" />
       <button
         type="button"
         contentEditable={false}
@@ -262,7 +262,7 @@ export function SourcesView(props: NodeViewProps) {
   return (
     <NodeViewWrapper className={frame(props.selected)} data-block="sources">
       <Label>Sources</Label>
-      <NodeViewContent className="mt-2 grid gap-2" />
+      <NodeViewContent className="mt-2 [&>div]:grid [&>div]:gap-3" />
       <button
         type="button"
         contentEditable={false}
