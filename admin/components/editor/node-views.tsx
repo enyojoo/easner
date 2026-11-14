@@ -1,12 +1,12 @@
 "use client"
 
 /** React node views for the Easner blocks. Each one edits through `updateAttributes`; text stays in the document. */
-import { type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react"
-import { AlertTriangle, CheckCircle2, ExternalLink, ImageOff, Info, Plus, X } from "lucide-react"
+import { AlertTriangle, CheckCircle2, ExternalLink, ImageOff, Info, Play, Plus, X } from "lucide-react"
 import { PRODUCT_PAGES, type ProductSlug } from "@easner/blog-content"
 import { EditorSelect } from "@/components/editor/editor-select"
-import { detectEmbed, PROVIDER_LABEL } from "@/lib/blog/embed"
+import { detectEmbed, embedPlayerSrc, embedPosterSrc, PROVIDER_LABEL, type EmbedInfo } from "@/lib/blog/embed"
 import { cn } from "@/lib/utils"
 
 const fieldClass =
@@ -365,6 +365,72 @@ export function ProductCardView({ node, updateAttributes, selected }: NodeViewPr
   )
 }
 
+/**
+ * What a reader sees: a poster with a play button. The player (and any cookies) loads only when you click play, the
+ * same click-to-load behaviour as the published page, so writing a post never starts third-party tracking.
+ */
+function EmbedPreview({ info, url, title }: { info: EmbedInfo | null; url: string; title: string }) {
+  const [playing, setPlaying] = useState(false)
+  const player = embedPlayerSrc(info)
+  const poster = embedPosterSrc(info)
+
+  if (!url) {
+    return <div className="flex aspect-video items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">Paste a link above</div>
+  }
+  if (!info) {
+    return (
+      <div className="flex aspect-video items-center justify-center rounded-md bg-muted px-6 text-center text-sm text-muted-foreground">
+        This address can’t be embedded. Use a link instead.
+      </div>
+    )
+  }
+  if (!player) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex aspect-video items-center justify-center gap-1.5 rounded-md bg-muted text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ExternalLink className="size-4" aria-hidden />
+        {PROVIDER_LABEL[info.provider]} opens in the reader’s browser. Open it to check.
+      </a>
+    )
+  }
+  if (playing) {
+    return (
+      <iframe
+        src={player}
+        title={title || `${PROVIDER_LABEL[info.provider]} video`}
+        className="aspect-video w-full rounded-md border-0 bg-muted"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    )
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setPlaying(true)}
+      aria-label={`Play ${title || PROVIDER_LABEL[info.provider]}`}
+      className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-muted"
+    >
+      {poster ? (
+        // eslint-disable-next-line @next/next/no-img-element -- poster for a third-party video; sized by its container
+        <img src={poster} alt="" className="absolute inset-0 size-full object-cover" draggable={false} />
+      ) : null}
+      <span className="absolute inset-0 bg-foreground/10 transition-colors group-hover:bg-foreground/20" aria-hidden />
+      <span className="relative flex size-14 items-center justify-center rounded-full bg-background/95 text-foreground shadow-card">
+        <Play className="size-6 translate-x-0.5" aria-hidden />
+      </span>
+      <span className="absolute bottom-2 left-3 rounded bg-background/90 px-2 py-0.5 text-xs font-medium text-foreground">
+        {PROVIDER_LABEL[info.provider]} · click to play
+      </span>
+    </button>
+  )
+}
+
 export function EmbedView({ node, updateAttributes, selected }: NodeViewProps) {
   const url = String(node.attrs.url ?? "")
   const provider = (node.attrs.provider as keyof typeof PROVIDER_LABEL) ?? "other"
@@ -386,18 +452,7 @@ export function EmbedView({ node, updateAttributes, selected }: NodeViewProps) {
           />
         </Field>
         <Text label="Title" value={node.attrs.title} onChange={(title) => updateAttributes({ title })} placeholder="Describes the embed for readers using a screen reader" />
-        <div className="flex aspect-video items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
-          {detected ? (
-            <span className="inline-flex items-center gap-1.5">
-              <ExternalLink className="size-4" aria-hidden />
-              {PROVIDER_LABEL[detected.provider]} loads when a reader clicks play
-            </span>
-          ) : url ? (
-            "This address can’t be embedded. Use a link instead."
-          ) : (
-            "Paste a link above"
-          )}
-        </div>
+        <EmbedPreview key={url} info={detected} url={url} title={String(node.attrs.title ?? "")} />
       </div>
     </NodeViewWrapper>
   )

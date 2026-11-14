@@ -54,3 +54,24 @@ export const PROVIDER_LABEL: Record<EmbedProvider, string> = {
   x: "X post",
   other: "Embed",
 }
+
+/** The address of the player for an embed, loaded only when someone clicks play. X posts have no player here. */
+export function embedPlayerSrc(info: EmbedInfo | null, autoplay = true): string | null {
+  if (!info?.id) return null
+  const play = autoplay ? "1" : "0"
+  switch (info.provider) {
+    case "youtube":
+      return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(info.id)}?autoplay=${play}&rel=0`
+    case "vimeo":
+      return `https://player.vimeo.com/video/${encodeURIComponent(info.id)}?autoplay=${play}&dnt=1`
+    case "loom":
+      return `https://www.loom.com/embed/${encodeURIComponent(info.id)}?autoplay=${play}`
+    default:
+      return null
+  }
+}
+
+/** A still image for the poster, where the provider serves one without an account (YouTube only). */
+export function embedPosterSrc(info: EmbedInfo | null): string | null {
+  return info?.provider === "youtube" && info.id ? `https://i.ytimg.com/vi/${encodeURIComponent(info.id)}/hqdefault.jpg` : null
+}
