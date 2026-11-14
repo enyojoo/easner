@@ -5,6 +5,7 @@ import { type ReactNode } from "react"
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from "@tiptap/react"
 import { AlertTriangle, CheckCircle2, ExternalLink, ImageOff, Info, Plus, X } from "lucide-react"
 import { PRODUCT_PAGES, type ProductSlug } from "@easner/blog-content"
+import { EditorSelect } from "@/components/editor/editor-select"
 import { detectEmbed, PROVIDER_LABEL } from "@/lib/blog/embed"
 import { cn } from "@/lib/utils"
 
@@ -352,18 +353,13 @@ export function ProductCardView({ node, updateAttributes, selected }: NodeViewPr
           <p className="text-base font-semibold text-foreground">{page?.label ?? "Choose a product"}</p>
           <p className="font-mono text-xs text-muted-foreground">{page?.path}</p>
         </div>
-        <select
-          aria-label="Product page"
-          className={cn(fieldClass, "w-48")}
+        <EditorSelect
+          ariaLabel="Product page"
+          className="w-52"
           value={slug}
-          onChange={(event) => updateAttributes({ product: event.target.value })}
-        >
-          {(Object.keys(PRODUCT_PAGES) as ProductSlug[]).map((key) => (
-            <option key={key} value={key}>
-              {PRODUCT_PAGES[key].label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(product) => updateAttributes({ product })}
+          options={(Object.keys(PRODUCT_PAGES) as ProductSlug[]).map((key) => ({ value: key, label: PRODUCT_PAGES[key].label }))}
+        />
       </div>
     </NodeViewWrapper>
   )

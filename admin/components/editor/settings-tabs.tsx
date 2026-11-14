@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { EditorSelect } from "@/components/editor/editor-select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { CoverField, fileUrl } from "@/components/editor/cover-field"
@@ -179,23 +179,14 @@ export function PostTab({
       </Section>
 
       <Section title="Category" hint="One category per post. There are no tags.">
-        <Select
+        <EditorSelect
+          ariaLabel="Category"
+          placeholder="Choose a category"
           value={post.category_id ?? NONE}
           disabled={readOnly}
           onValueChange={(value) => patch({ category_id: value === NONE ? null : value })}
-        >
-          <SelectTrigger aria-label="Category">
-            <SelectValue placeholder="Choose a category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>No category</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={[{ value: NONE, label: "No category" }, ...categories.map((category) => ({ value: category.id, label: category.name }))]}
+        />
       </Section>
 
       <Section title="Authors" hint="Each author needs a photo, a title and a bio before the post can publish.">
@@ -225,23 +216,17 @@ export function PostTab({
       </Section>
 
       <Section title="Product page" hint="The page this post supports. It feeds “Related reading” on that page.">
-        <Select
+        <EditorSelect
+          ariaLabel="Product page"
+          placeholder="None"
           value={post.product_page ?? NONE}
           disabled={readOnly}
           onValueChange={(value) => patch({ product_page: value === NONE ? null : value })}
-        >
-          <SelectTrigger aria-label="Product page">
-            <SelectValue placeholder="None" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>None</SelectItem>
-            {(Object.keys(PRODUCT_PAGES) as ProductSlug[]).map((slug) => (
-              <SelectItem key={slug} value={PRODUCT_PAGES[slug].path}>
-                {PRODUCT_PAGES[slug].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={[
+            { value: NONE, label: "None" },
+            ...(Object.keys(PRODUCT_PAGES) as ProductSlug[]).map((slug) => ({ value: PRODUCT_PAGES[slug].path, label: PRODUCT_PAGES[slug].label })),
+          ]}
+        />
       </Section>
 
       {isEditor ? (
