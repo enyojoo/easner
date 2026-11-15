@@ -36,7 +36,7 @@ export function LoadMore({ base, nextPage, pageCount }: { base: string; nextPage
           >
             {pending ? "Loading…" : "Load more posts"}
           </Button>
-          <Link href={pagePath(base, next)} className="text-[13px] text-web-meta underline underline-offset-2 hover:text-web-ink">
+          <Link href={pagePath(base, next)} className="inline-flex min-h-11 items-center text-[13px] text-web-meta underline underline-offset-2 hover:text-web-ink">
             Page {next}
           </Link>
         </div>

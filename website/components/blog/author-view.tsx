@@ -16,7 +16,7 @@ import { PostGrid } from "./post-card"
 import { RichText } from "./prose"
 
 const PILL =
-  "inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-[13px] font-medium text-web-ink shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-primary-text"
+  "inline-flex h-11 items-center gap-2 rounded-full px-3.5 md:h-9 text-[13px] font-medium text-web-ink shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-primary-text"
 
 export function authorSameAs(a: { xUrl: string | null; linkedinUrl: string | null; githubUrl: string | null; websiteUrl: string | null }) {
   return [a.xUrl, a.linkedinUrl, a.githubUrl, a.websiteUrl].filter((u): u is string => Boolean(u))
