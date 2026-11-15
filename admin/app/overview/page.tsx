@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { AlertCircle, CalendarClock, ClipboardCheck, LayoutDashboard, ShieldCheck, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { FilterTabs, type FilterTab } from "@/components/ui/filter-tabs"
 import { PageHeader } from "@/components/ui/page-header"
@@ -228,13 +228,15 @@ function OverviewInner() {
             </h2>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {cells.map((cell) => (
-                <Link key={cell.label} href={cell.href} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Card className="gap-1 transition-shadow hover:shadow-card">
-                    <p className="text-sm text-muted-foreground">{cell.label}</p>
-                    <p className="text-2xl font-semibold tabular-nums text-foreground">{cell.value}</p>
-                    {cell.label === "Published" ? (
-                      <p className="text-xs text-muted-foreground">{PERIODS.find((p) => p.value === period)?.label}</p>
-                    ) : null}
+                <Link key={cell.label} href={cell.href} className="block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Card className="h-full transition-shadow hover:shadow-card">
+                    <CardContent className="grid gap-1">
+                      <p className="text-sm text-muted-foreground">{cell.label}</p>
+                      <p className="text-2xl font-semibold tabular-nums text-foreground">{cell.value}</p>
+                      <p className="min-h-4 text-xs text-muted-foreground">
+                        {cell.label === "Published" ? PERIODS.find((p) => p.value === period)?.label : "\u00a0"}
+                      </p>
+                    </CardContent>
                   </Card>
                 </Link>
               ))}
