@@ -60,8 +60,8 @@
 /* Key takeaways */
 .bp-take { border: 1px solid var(--web-hairline); border-radius: var(--radius-xl); padding: 20px 22px; background: var(--web-canvas); }
 @media (min-width: 640px) { .bp-take { padding: 24px 28px; } }
-.bp-take h4 { margin: 0 0 12px; font: 700 15px/22px var(--font-unbounded); text-transform: uppercase; letter-spacing: 0.04em; }
-.bp-take > :not(h4) { margin-top: 0; }
+.bp-take h3.bp-h { margin: 0 0 12px; font: 700 15px/22px var(--font-unbounded); text-transform: uppercase; letter-spacing: 0.04em; }
+.bp-take > :not(h3.bp-h) { margin-top: 0; }
 
 /* Table */
 .bp-tbl { border: 1px solid var(--web-hairline); border-radius: var(--radius-md); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -86,7 +86,7 @@
 .bp-pre pre code { font: inherit; background: none; border: 0; padding: 0; color: inherit; overflow-wrap: normal; }
 .bp-pre .copy { position: absolute; top: 12px; right: 12px; height: 30px; padding: 0 10px; border-radius: 999px; display: inline-flex; gap: 6px; align-items: center; font: 500 12px/1 var(--font-geist-sans); color: var(--brand-cloud); background: color-mix(in srgb, var(--brand-cloud) 12%, transparent); border: 0; cursor: pointer; }
 .bp-pre .copy:hover { background: color-mix(in srgb, var(--brand-cloud) 20%, transparent); }
-.bp-pre .lang { position: absolute; top: 14px; left: 22px; font: 500 11px/1 var(--font-geist-sans); letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--brand-cloud) 45%, transparent); }
+.bp-pre .lang { position: absolute; top: 14px; left: 22px; font: 500 11px/1 var(--font-geist-sans); letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--brand-cloud) 62%, transparent); }
 .bp-pre.has-lang pre { padding-top: 40px; }
 .bp-pre .kw { color: var(--web-accent-on-graphite); }
 .bp-pre .str { color: var(--brand-amber); }
@@ -129,7 +129,7 @@
 /* CTA card, product card, button */
 .bp-cta { border-radius: var(--radius-2xl); background: var(--web-band); padding: 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 @media (min-width: 640px) { .bp-cta { padding: 28px; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; } }
-.bp-cta h4 { margin: 0; font: 700 18px/26px var(--font-unbounded); text-transform: uppercase; }
+.bp-cta h3.bp-h { margin: 0; font: 700 18px/26px var(--font-unbounded); text-transform: uppercase; }
 .bp-cta p { margin: 6px 0 0 !important; font: 400 15px/24px var(--font-geist-sans); color: var(--web-body); }
 .bp-prod { display: flex; gap: 16px; align-items: center; padding: 16px 18px; border-radius: var(--radius-xl); border: 1px solid var(--web-hairline); background: var(--web-plate); color: inherit; text-decoration: none; transition: border-color 0.15s; }
 .bp-prod:hover { border-color: var(--brand-primary); }
@@ -140,7 +140,7 @@
 
 /* Sources */
 .bp-src { font: 400 14px/22px var(--font-geist-sans); color: var(--web-body); }
-.bp-src h4 { margin: 0 0 8px; font: 600 12px/16px var(--font-geist-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--web-meta); }
+.bp-src h3.bp-h { margin: 0 0 8px; font: 600 12px/16px var(--font-geist-sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--web-meta); }
 .bp-src ol { margin: 0 !important; gap: 4px !important; }
 
 /* Lightbox */
@@ -201,3 +201,11 @@
 /* Category chip row scrolls sideways on phones and keeps the active chip in view */
 .bp-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
 .bp-chips::-webkit-scrollbar { display: none; }
+
+/* Touch targets: 44px minimum where a finger is the likely pointer. */
+@media (pointer: coarse), (max-width: 767px) {
+  .bp-sb, .bp-yb { min-height: 44px; height: auto; }
+  .bp-rc { min-height: 44px; height: auto; }
+}
+.bp-faq summary { padding-block: 9px; margin-block: -9px; }
+.bp-faq summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: var(--radius-md); }

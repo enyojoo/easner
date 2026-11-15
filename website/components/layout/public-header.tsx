@@ -63,7 +63,7 @@ export function PublicHeader() {
           </Link>
 
           {/* Desktop nav: Home, About → Personal, Business, Build → Contact */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {NAV_LEADING_LINKS.map((item) => (
               <Link
                 key={item.href}
@@ -151,7 +151,7 @@ export function PublicHeader() {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             <OpenAccountButton
               ctaLocation="nav_cta"
               pill={false}
@@ -164,9 +164,10 @@ export function PublicHeader() {
           {/* Mobile menu button */}
           <button
             type="button"
-            className="md:hidden p-2 text-web-nav hover:text-brand-primary"
+            className="lg:hidden -mr-2.5 p-2.5 text-web-nav hover:text-brand-primary"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <CloseIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
           </button>
@@ -174,7 +175,7 @@ export function PublicHeader() {
 
         {/* Mobile nav - collapsible sections, scrollable with CTA pinned */}
         {mobileMenuOpen && (
-          <div className="md:hidden flex flex-col max-h-[calc(100dvh-4rem)] overflow-hidden border-t border-web-hairline">
+          <div className="lg:hidden flex flex-col max-h-[calc(100dvh-4rem)] overflow-hidden border-t border-web-hairline">
             <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4">
               <div className="flex flex-col gap-1">
                 {NAV_LEADING_LINKS.map((item) => (

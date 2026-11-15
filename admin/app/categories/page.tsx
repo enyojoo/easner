@@ -265,7 +265,7 @@ function CategoriesPageInner() {
                       <p className="truncate font-mono text-xs text-muted-foreground">/blog/categories/{category.slug}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-[520px] truncate text-sm text-muted-foreground">
+                  <TableCell className="max-w-0 truncate text-sm text-muted-foreground">
                     {category.description || "–"}
                   </TableCell>
                   <TableCell className="text-right text-sm tabular-nums text-foreground">

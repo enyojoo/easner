@@ -12,7 +12,7 @@ export function Breadcrumb({ items }: { items: { label: string; href?: string; a
           {item.href ? (
             <Link
               href={item.href}
-              className={item.accent ? "text-xs font-semibold uppercase tracking-[0.08em] text-primary-text hover:underline" : "hover:text-web-ink"}
+              className={item.accent ? "inline-block max-md:-my-3 max-md:py-3 text-xs font-semibold uppercase tracking-[0.08em] text-primary-text hover:underline" : "inline-block max-md:-my-3 max-md:py-3 hover:text-web-ink"}
             >
               {item.label}
             </Link>

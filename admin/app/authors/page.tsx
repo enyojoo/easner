@@ -157,8 +157,8 @@ function AuthorsPageInner() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[260px]">Author</TableHead>
-                <TableHead className="w-[160px]">Location</TableHead>
+                <TableHead className="min-w-[240px]">Author</TableHead>
+                <TableHead className="hidden w-[160px] min-[1180px]:table-cell">Location</TableHead>
                 <TableHead className="w-[80px]">Posts</TableHead>
                 <TableHead className="w-[160px]">Profile</TableHead>
                 <TableHead className="w-[140px]">Login</TableHead>
@@ -178,7 +178,7 @@ function AuthorsPageInner() {
                     open(author.id)
                   }}
                 >
-                  <TableCell>
+                  <TableCell className="max-w-0">
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar name={author.name} src={blogFileUrl(author.avatar_path)} size="sm" />
                       <div className="min-w-0">
@@ -187,7 +187,7 @@ function AuthorsPageInner() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="truncate text-sm text-foreground">{author.location || "–"}</TableCell>
+                  <TableCell className="hidden max-w-0 truncate text-sm text-foreground min-[1180px]:table-cell">{author.location || "–"}</TableCell>
                   <TableCell className="text-sm tabular-nums text-foreground">{author.post_count}</TableCell>
                   <TableCell>
                     <ProfileCell author={author} />

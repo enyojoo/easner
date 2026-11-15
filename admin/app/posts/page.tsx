@@ -246,12 +246,12 @@ function PostsPageInner() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="min-w-[300px]">Post</TableHead>
-                <TableHead className="w-[200px]">Status</TableHead>
-                <TableHead className="w-[160px]">Category</TableHead>
-                <TableHead className="w-[180px]">Author</TableHead>
+                <TableHead className="min-w-[240px]">Post</TableHead>
+                <TableHead className="w-[170px]">Status</TableHead>
+                <TableHead className="hidden w-[160px] xl:table-cell">Category</TableHead>
+                <TableHead className="hidden w-[180px] min-[1180px]:table-cell">Author</TableHead>
                 <TableHead className="w-[110px]">Updated</TableHead>
-                <TableHead className="w-[110px]">Published</TableHead>
+                <TableHead className="hidden w-[110px] min-[1360px]:table-cell">Published</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -268,7 +268,7 @@ function PostsPageInner() {
                     setQuickViewId(post.id)
                   }}
                 >
-                  <TableCell>
+                  <TableCell className="max-w-0">
                     <div className="flex min-w-0 items-center gap-3">
                       <CoverThumb post={post} />
                       <div className="min-w-0">
@@ -280,14 +280,14 @@ function PostsPageInner() {
                   <TableCell>
                     <StatusBadge status={displayStatus(post)} />
                   </TableCell>
-                  <TableCell className="text-sm text-foreground">
+                  <TableCell className="hidden text-sm text-foreground xl:table-cell">
                     {post.category_id ? (categoryById.get(post.category_id)?.name ?? "–") : "–"}
                   </TableCell>
-                  <TableCell className="truncate text-sm text-foreground">
+                  <TableCell className="hidden max-w-0 truncate text-sm text-foreground min-[1180px]:table-cell">
                     {post.authors.map((author) => author.name).join(", ") || "–"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">{formatListDate(post.updated_at)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground tabular-nums">{formatListDate(post.published_at)}</TableCell>
+                  <TableCell className="hidden text-sm text-muted-foreground tabular-nums min-[1360px]:table-cell">{formatListDate(post.published_at)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

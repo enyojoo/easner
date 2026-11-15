@@ -300,7 +300,7 @@ export function SearchButton({ className }: { className?: string }) {
       type="button"
       onClick={open}
       className={cn(
-        "inline-flex h-9 min-w-0 items-center gap-2 rounded-full bg-web-plate pl-3 pr-2.5 text-sm text-web-meta shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink md:min-w-[220px]",
+        "inline-flex h-11 min-w-0 md:h-9 items-center gap-2 rounded-full bg-web-plate pl-3 pr-2.5 text-sm text-web-meta shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink md:min-w-[220px]",
         className,
       )}
     >

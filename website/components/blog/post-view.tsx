@@ -180,8 +180,8 @@ export async function PostView({ slug, draft }: { slug: string; draft: boolean }
               <span className="text-[13px] font-medium leading-[18px] text-web-meta">{[a.title, a.location].filter(Boolean).join(" · ")}</span>
               {richPlain(a.bio) && <p className="mt-2 line-clamp-2 text-[15px] leading-6 text-web-body">{richPlain(a.bio)}</p>}
               <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 text-sm font-semibold leading-5 text-web-link">
-                <Link href={authorPath(a.slug)} className="hover:underline">All posts by {a.name.split(" ")[0]}</Link>
-                <AuthorSocials author={a} linkClassName="inline-flex size-6 items-center justify-center hover:text-primary-text" />
+                <Link href={authorPath(a.slug)} className="inline-block max-md:-my-3 max-md:py-3 hover:underline">All posts by {a.name.split(" ")[0]}</Link>
+                <AuthorSocials author={a} linkClassName="relative inline-flex size-6 items-center justify-center after:absolute after:-inset-2.5 after:content-[''] hover:text-primary-text" />
               </div>
             </div>
           </div>

@@ -32,7 +32,7 @@ export function CategoryChips({
               href={item.href}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
+                "inline-flex h-11 shrink-0 md:h-9 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors",
                 on ? "bg-web-ink text-web-canvas" : "bg-web-canvas text-web-nav shadow-[inset_0_0_0_1px_var(--web-hairline)] hover:text-web-ink",
               )}
             >
