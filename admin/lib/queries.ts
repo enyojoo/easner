@@ -27,7 +27,7 @@ export type PostRow = {
   published_at: string | null
   scheduled_for: string | null
   has_unpublished_changes: boolean
-  authors: Array<{ id: string; name: string }>
+  authors: Array<{ id: string; name: string; avatar_path?: string | null }>
 }
 
 export type CategoryRow = {
@@ -59,11 +59,11 @@ export type InviteRow = {
 }
 
 type RawPost = Omit<PostRow, "authors"> & {
-  blog_post_authors: Array<{ position: number; blog_authors: { id: string; name: string } | null }> | null
+  blog_post_authors: Array<{ position: number; blog_authors: { id: string; name: string; avatar_path: string | null } | null }> | null
 }
 
 const POST_LIST_COLUMNS =
-  "id, slug, title, status, cover_path, cover_alt, category_id, created_by, updated_at, published_at, scheduled_for, has_unpublished_changes, blog_post_authors(position, blog_authors(id, name))"
+  "id, slug, title, status, cover_path, cover_alt, category_id, created_by, updated_at, published_at, scheduled_for, has_unpublished_changes, blog_post_authors(position, blog_authors(id, name, avatar_path))"
 
 async function fetchPosts(): Promise<PostRow[]> {
   const { data, error } = await supabase
@@ -78,7 +78,7 @@ async function fetchPosts(): Promise<PostRow[]> {
       .slice()
       .sort((a, b) => a.position - b.position)
       .map((row) => row.blog_authors)
-      .filter((author): author is { id: string; name: string } => Boolean(author)),
+      .filter((author): author is { id: string; name: string; avatar_path: string | null } => Boolean(author)),
   }))
 }
 

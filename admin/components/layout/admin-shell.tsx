@@ -8,7 +8,7 @@ import { Plus } from "lucide-react"
 import { BrandLogo } from "@easner/shared"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,8 @@ import {
 import { JumpTo, JumpToTrigger, useGoToShortcuts, useJumpToHotkey } from "@/components/layout/jump-to"
 import { useAuth } from "@/lib/auth-context"
 import { ADMIN_HOME, adminNavLinks, isNavItemActive, type NavItem } from "@/lib/nav-config"
-import { usePostsAttentionCount } from "@/lib/queries-pages"
+import { useMyAuthor, usePostsAttentionCount } from "@/lib/queries-pages"
+import { blogFileUrl } from "@/lib/supabase"
 import { ROLE_LABEL } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
@@ -71,7 +72,10 @@ function AccountMenu() {
   const { user, role, signOut } = useAuth()
   const meta = (user?.user_metadata ?? {}) as { full_name?: string; name?: string }
   const email = user?.email ?? ""
-  const name = meta.full_name || meta.name || email.split("@")[0] || "Account"
+  // The signed-in person is shown as their author profile: its name and photo, then the account's name.
+  const author = useMyAuthor().data
+  const name = author?.name || meta.full_name || meta.name || email.split("@")[0] || "Account"
+  const photo = blogFileUrl(author?.avatar_path)
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -90,6 +94,7 @@ function AccountMenu() {
           className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="size-9">
+            {photo ? <AvatarImage src={photo} alt="" className="object-cover" /> : null}
             <AvatarFallback className="bg-info-surface text-xs font-semibold text-primary-text">
               {initialsFor(name)}
             </AvatarFallback>

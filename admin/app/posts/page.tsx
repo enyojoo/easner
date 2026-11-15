@@ -58,12 +58,12 @@ function parseStatus(raw: string | null): StatusFilter {
 }
 
 /** First author as an avatar and name; more than one reads "Ada Okafor +1". */
-function AuthorCell({ authors }: { authors: Array<{ id: string; name: string }> }) {
+function AuthorCell({ authors }: { authors: PostRow["authors"] }) {
   const first = authors[0]
   if (!first) return <span className="text-muted-foreground">–</span>
   return (
     <span className="flex min-w-0 items-center gap-3">
-      <Avatar name={first.name} size="sm" decorative />
+      <Avatar name={first.name} src={blogFileUrl(first.avatar_path)} size="sm" decorative />
       <span className="truncate">{first.name}</span>
       {authors.length > 1 ? <span className="shrink-0 text-xs text-muted-foreground">+{authors.length - 1}</span> : null}
     </span>
