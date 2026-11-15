@@ -57,6 +57,7 @@ export async function AuthorView({ slug, page }: { slug: string; page: number })
             name: `Posts by ${author.name}`,
             description: meta.description,
             path,
+            idSuffix: "posts",
             items: paged.items.map((p) => ({ name: p.title, path: postPath(p.slug) })),
           }),
         ]}
