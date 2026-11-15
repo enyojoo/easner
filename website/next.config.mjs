@@ -61,7 +61,7 @@ const nextConfig = {
     return [
       { source: "/blog/:slug.md", destination: "/api/blog/markdown/:slug" },
       // IndexNow looks for the ownership key at /<key>.txt on the site root. The handler answers only for the real key.
-      { source: "/:key([0-9a-fA-F-]{8,128}).txt", destination: "/api/indexnow-key?key=:key" },
+      { source: "/:key([0-9a-fA-F-]{8,128}).txt", destination: "/api/indexnow-key/:key" },
     ]
   },
   async redirects() {

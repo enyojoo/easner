@@ -500,6 +500,7 @@ preview_route = (ROOT / "app/api/blog/preview/route.ts").read_text()
 check("X-Robots-Tag" in preview_route and "noindex" in preview_route, "/api/blog/preview must send X-Robots-Tag: noindex")
 check("noindex: post.noindex || draft" in (ROOT / "app/(marketing)/blog/[slug]/page.tsx").read_text(), "post page must be noindex in draft preview")
 check("no-store" in preview_route, "/api/blog/preview must be no-store")
+check(".txt\", destination: \"/api/indexnow-key/:key" in (ROOT / "next.config.mjs").read_text(), "IndexNow: next.config.mjs must rewrite /<key>.txt to /api/indexnow-key (IndexNow fetches the key at the site root)")
 check("blog:post:" in (ROOT / "lib/blog/config.ts").read_text(), "blog reads must carry blog:post:<slug> cache tags")
 
 if ERRORS:
