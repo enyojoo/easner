@@ -1,8 +1,8 @@
 import type { DocNode } from "@easner/blog-content"
 
-const t = (text: string, marks?: Array<{ type: "bold" | "italic" | "underline" | "strike" | "code" } | { type: "link"; attrs: { href: string } }>) =>
+const t = (text: string, marks?: Array<{ type: "bold" | "italic" | "underline" | "strike" | "code" } | { type: "link"; attrs: { href: string; sponsored?: boolean } }>) =>
   marks ? { type: "text" as const, text, marks } : { type: "text" as const, text }
-const p = (...content: ReturnType<typeof t>[]) => ({ type: "paragraph" as const, content })
+const p = (...content: Array<ReturnType<typeof t> | { type: "hardBreak" }>) => ({ type: "paragraph" as const, content })
 
 /** Every node and mark in @easner/blog-content, so the editor can be checked against all of them. */
 export const EVERY_BLOCK_DOC: DocNode = {

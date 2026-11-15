@@ -13,7 +13,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       />
       <a
         href="#main"
-        className="sr-only rounded-full bg-brand-navy px-5 py-3 text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[300]"
+        className="sr-only rounded-full bg-brand-navy text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[300] focus:px-5 focus:py-3"
       >
         Skip to content
       </a>

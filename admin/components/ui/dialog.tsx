@@ -34,11 +34,27 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean
   }
->(({ className, children, showCloseButton = true, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, onCloseAutoFocus, ...props }, ref) => {
+  // Dialogs here are opened from code, not from a <DialogTrigger>, so Radix has nothing to hand focus back to and it
+  // would fall to <body>. Remember what had focus when the dialog opened and return it on close.
+  const opener = React.useRef<HTMLElement | null>(null)
+  React.useLayoutEffect(() => {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  }, [])
+  return (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      onCloseAutoFocus={(event) => {
+        onCloseAutoFocus?.(event)
+        if (event.defaultPrevented) return
+        const target = opener.current
+        if (target && target.isConnected && target !== document.body) {
+          event.preventDefault()
+          target.focus()
+        }
+      }}
       className={cn(
         "fixed left-[50%] top-[50%] z-50 grid w-full min-w-0 max-w-lg translate-x-[-50%] translate-y-[-50%] grid-cols-1 gap-5 border border-border/60 bg-card text-card-foreground p-6 md:p-8 shadow-lift duration-300 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-xl max-h-[calc(100vh-1.5rem)] overflow-x-hidden overflow-y-auto overscroll-contain sm:max-h-[min(84vh,48rem)] [&>*]:min-w-0",
         className
@@ -54,7 +70,8 @@ const DialogContent = React.forwardRef<
       ) : null}
     </DialogPrimitive.Content>
   </DialogPortal>
-))
+  )
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
