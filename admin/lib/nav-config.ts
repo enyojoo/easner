@@ -20,12 +20,12 @@ export const adminNavLinks: NavItem[] = [
 
 export type SettingsTab = "team" | "redirects" | "media" | "categories"
 
-/** The tabs of Settings, each its own route. Jump to lists them too. */
+/** The tabs of Settings (`/settings?tab=`). Jump to lists them too. */
 export const settingsTabs: Array<{ value: SettingsTab; label: string; href: string; keywords: string[] }> = [
   { value: "team", label: "Team", href: "/settings", keywords: ["members", "invite", "roles"] },
-  { value: "redirects", label: "Redirects", href: "/settings/redirects", keywords: ["301", "slugs"] },
-  { value: "media", label: "Media", href: "/settings/media", keywords: ["images", "uploads"] },
-  { value: "categories", label: "Categories", href: "/settings/categories", keywords: ["topics"] },
+  { value: "redirects", label: "Redirects", href: "/settings?tab=redirects", keywords: ["301", "slugs"] },
+  { value: "media", label: "Media", href: "/settings?tab=media", keywords: ["images", "uploads"] },
+  { value: "categories", label: "Categories", href: "/settings?tab=categories", keywords: ["topics"] },
 ]
 
 export const ADMIN_HOME = "/posts"

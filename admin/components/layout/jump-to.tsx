@@ -100,7 +100,7 @@ export function useJumpToHotkey(onOpen: () => void): void {
 const GO_TO_ROUTES: Record<string, string> = {
   o: "/overview",
   p: "/posts",
-  c: "/settings/categories",
+  c: "/settings?tab=categories",
   s: "/settings",
 }
 

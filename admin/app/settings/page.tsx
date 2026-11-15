@@ -1,10 +1,18 @@
 "use client"
 
 import { Suspense, useMemo, useState } from "react"
+import type { ReactNode } from "react"
+import { usePathname, useSearchParams } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Lock, UserPlus, Users } from "lucide-react"
 import { toast } from "sonner"
 import { SimpleTableSkeleton } from "@/components/admin-skeletons"
+import { FilterTabs } from "@/components/ui/filter-tabs"
+import { PageHeader } from "@/components/ui/page-header"
+import { CategoriesTab } from "@/components/settings/categories-tab"
+import { MediaTab } from "@/components/settings/media-tab"
+import { RedirectsTab } from "@/components/settings/redirects-tab"
+import { settingsTabs, type SettingsTab } from "@/lib/nav-config"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
@@ -310,15 +318,94 @@ function TeamSection() {
   )
 }
 
-function SettingsPageInner() {
+const TAB_VALUES = settingsTabs.map((tab) => tab.value)
+const TABS = settingsTabs.map(({ value, label }) => ({ value, label }))
+const tabFromUrl = (raw: string | null): SettingsTab => (TAB_VALUES.includes(raw as SettingsTab) ? (raw as SettingsTab) : "team")
+
+/** Header and tabs paint before the address is read, so nothing jumps. */
+function SettingsChrome({ tab = "team", onChange }: { tab?: SettingsTab; onChange?: (tab: SettingsTab) => void }) {
   return (
-    <TeamSection />
+    <>
+      <PageHeader title="Settings" description="Your team, redirects, media and categories." />
+      <div className="overflow-x-auto">
+        <FilterTabs<SettingsTab>
+          ariaLabel="Settings sections"
+          tabs={TABS}
+          value={tab}
+          onChange={(value) => onChange?.(value)}
+          className="min-w-max"
+        />
+      </div>
+    </>
+  )
+}
+
+function TabPane({ active, label, children }: { active: boolean; label: string; children: ReactNode }) {
+  return (
+    <div role="tabpanel" hidden={!active} aria-label={label}>
+      {children}
+    </div>
+  )
+}
+
+/** Like Office's Settings: one page, the tab in `?tab=`, a tab you have opened stays loaded, and a click needs no new page. */
+function SettingsPageInner() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const fromUrl = tabFromUrl(searchParams.get("tab"))
+  const [tab, setTab] = useState<SettingsTab>(fromUrl)
+  const [visited, setVisited] = useState<ReadonlySet<SettingsTab>>(() => new Set([fromUrl]))
+
+  // A link or the browser's Back button changed the address: follow it (state adjusted during render, not in an effect).
+  const [urlTab, setUrlTab] = useState<SettingsTab>(fromUrl)
+  if (fromUrl !== urlTab) {
+    setUrlTab(fromUrl)
+    setTab(fromUrl)
+    setVisited((current) => (current.has(fromUrl) ? current : new Set([...current, fromUrl])))
+  }
+
+  // The click shows the tab at once; the address follows without a Back step per tab.
+  const show = (next: SettingsTab) => {
+    if (next === tab) return
+    setTab(next)
+    setVisited((current) => (current.has(next) ? current : new Set([...current, next])))
+    window.history.replaceState(null, "", next === "team" ? pathname : `${pathname}?tab=${next}`)
+  }
+
+  return (
+    <div className="space-y-6">
+      <SettingsChrome tab={tab} onChange={show} />
+      <TabPane active={tab === "team"} label="Team">
+        <TeamSection />
+      </TabPane>
+      {visited.has("redirects") ? (
+        <TabPane active={tab === "redirects"} label="Redirects">
+          <RedirectsTab />
+        </TabPane>
+      ) : null}
+      {visited.has("media") ? (
+        <TabPane active={tab === "media"} label="Media">
+          <MediaTab />
+        </TabPane>
+      ) : null}
+      {visited.has("categories") ? (
+        <TabPane active={tab === "categories"} label="Categories">
+          <CategoriesTab />
+        </TabPane>
+      ) : null}
+    </div>
   )
 }
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <SettingsChrome />
+        </div>
+      }
+    >
       <SettingsPageInner />
     </Suspense>
   )

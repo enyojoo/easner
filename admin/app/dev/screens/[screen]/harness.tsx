@@ -14,8 +14,8 @@ import { SAMPLE_POSTS, createSampleSource } from "@/lib/analytics/sample"
 import PostsPage from "@/app/posts/page"
 import AuthorsPage from "@/app/authors/page"
 import MyProfilePage from "@/app/authors/me/page"
-import MediaPage from "@/app/settings/media/page"
-import CategoriesPage from "@/app/settings/categories/page"
+import { MediaTab as MediaPage } from "@/components/settings/media-tab"
+import { CategoriesTab as CategoriesPage } from "@/components/settings/categories-tab"
 import SettingsPage from "@/app/settings/page"
 
 /**

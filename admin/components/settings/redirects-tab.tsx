@@ -6,7 +6,7 @@ import { usePosts } from "@/lib/queries"
 import { useRedirectMutations, useRedirects } from "@/lib/queries-redirects"
 import { permissionsFor } from "@/lib/roles"
 
-export default function Page() {
+export function RedirectsTab() {
   const { role } = useAuth()
   const { canManageRedirects } = permissionsFor(role)
   const posts = usePosts()

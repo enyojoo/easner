@@ -16,9 +16,10 @@ const nextConfig = {
   async redirects() {
     // Media, Categories and Redirects are tabs inside Settings now.
     return [
-      { source: "/media", destination: "/settings/media", permanent: false },
-      { source: "/categories", destination: "/settings/categories", permanent: false },
-      { source: "/redirects", destination: "/settings/redirects", permanent: false },
+      { source: "/media", destination: "/settings?tab=media", permanent: false },
+      { source: "/categories", destination: "/settings?tab=categories", permanent: false },
+      { source: "/redirects", destination: "/settings?tab=redirects", permanent: false },
+      { source: "/settings/:tab(media|categories|redirects)", destination: "/settings?tab=:tab", permanent: false },
     ]
   },
   async headers() {

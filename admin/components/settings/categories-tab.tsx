@@ -411,7 +411,7 @@ function CategoriesPageInner() {
   )
 }
 
-export default function CategoriesPage() {
+export function CategoriesTab() {
   return (
     <Suspense fallback={null}>
       <CategoriesPageInner />

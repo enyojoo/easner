@@ -347,7 +347,7 @@ function MediaPageInner() {
   )
 }
 
-export default function MediaPage() {
+export function MediaTab() {
   return (
     <Suspense fallback={null}>
       <MediaPageInner />
