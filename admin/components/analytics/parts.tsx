@@ -7,12 +7,15 @@ import { formatCount, formatDay, type Counted } from "@/lib/analytics/aggregate"
 import { changeText } from "@/lib/analytics/overview"
 import { cn } from "@/lib/utils"
 
-/** A card with a title, one line under it, and room for a table or a list. */
-export function Section({ title, description, actions, children, className, padding, level = 3 }: { title: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string; padding?: "sm" | "md" | "lg"; level?: 2 | 3 }) {
+/**
+ * A card with a title, one line under it, and room for a table or a list. `flush` is for tables: the card has no side
+ * padding, so the table runs edge to edge and only the header is inset (OffSiteAnalytics: Pages, Top posts, Searches).
+ */
+export function Section({ title, description, actions, children, className, padding, level = 3, flush = false }: { title: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string; padding?: "sm" | "md" | "lg"; level?: 2 | 3; flush?: boolean }) {
   const Heading = level === 2 ? "h2" : "h3"
   return (
-    <Card padding={padding} className={cn("gap-4 px-6", className)}>
-      <div className="flex items-start justify-between gap-3">
+    <Card padding={flush ? "none" : padding} className={cn(flush ? "gap-0 overflow-hidden" : "gap-4 px-6", className)}>
+      <div className={cn("flex items-start justify-between gap-3", flush && "px-6 pb-4 pt-6")}>
         <div className="min-w-0">
           <Heading className="text-base font-semibold leading-6 text-foreground">{title}</Heading>
           {description ? <p className="text-[13px] leading-[18px] text-muted-foreground">{description}</p> : null}

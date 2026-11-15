@@ -49,6 +49,19 @@ export function createSupabaseSource(): AnalyticsSource {
       if (error) throw new Error(error.message)
       return (data ?? []).map((r): SiteStatsRow => ({ date: r.date, path: r.path, visitors: n(r.visitors), views: n(r.views), avg_time_s: nn(r.avg_time_s), bounces: n(r.bounces), exits: n(r.exits), entries: n(r.entries), conversions: n(r.conversions) }))
     },
+    async dailyBy(path, range, dimension, value) {
+      const { data, error } = await supabase
+        .from("site_breakdown_daily")
+        .select("date, visitors, views")
+        .eq("path", path)
+        .eq("dimension", dimension)
+        .eq("value", value)
+        .gte("date", range.from)
+        .lte("date", range.to)
+        .order("date")
+      if (error) throw new Error(error.message)
+      return (data ?? []).map((r): SiteStatsRow => ({ date: r.date, path, visitors: n(r.visitors), views: n(r.views), avg_time_s: null, bounces: 0, exits: 0, entries: 0, conversions: 0 }))
+    },
     async pages(range) {
       const rows = await rpc<Record<string, unknown>>("analytics_pages", { p_from: range.from, p_to: range.to })
       return rows.map((r): PageRow => ({ path: String(r.path), views: n(r.views), visitors: n(r.visitors), avg_time_s: nn(r.avg_time_s), bounces: n(r.bounces), exits: n(r.exits), entries: n(r.entries), conversions: n(r.conversions) }))

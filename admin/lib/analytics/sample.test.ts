@@ -24,3 +24,14 @@ test("sample source answers like the SQL functions", async () => {
   assert.ok(top[0].views >= top[top.length - 1].views)
   assert.ok((await source.search(range, "blog")).length > 0)
 })
+
+test("dailyBy gives one dimension value per day, visitors and views only", async () => {
+  const source = createSampleSource("2026-11-15")
+  const range = rangeForPeriod("30d", "2026-11-15")
+  const rows = await source.dailyBy("*", range, "country", "NG")
+  assert.ok(rows.length > 0 && rows.length <= 30)
+  assert.ok(rows.every((r) => r.path === "*" && r.avg_time_s === null && r.conversions === 0 && r.visitors > 0))
+  const all = sumDaily(await source.daily("*", range))
+  assert.ok(sumDaily(rows).visitors < all.visitors, "one country is a part of the whole")
+  assert.deepEqual(await source.dailyBy("*", range, "country", "ZZ"), [])
+})
