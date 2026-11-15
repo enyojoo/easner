@@ -33,6 +33,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAuth } from "@/lib/auth-context"
 import { adminKeys, errorMessage, formatListDate, useTeam, type InviteRow, type MemberRow } from "@/lib/queries"
 import { permissionsFor, ROLE_DESCRIPTION, ROLE_LABEL, type AdminRole } from "@/lib/roles"
+import { sendInviteEmailFor } from "@/lib/blog/post-api"
 import { supabase } from "@/lib/supabase"
 
 /** There is one owner (the person who set the site up). Everyone else is invited as an editor or a writer. */
@@ -82,14 +83,24 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   const invite = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("admin_invites")
         .insert({ email: normalized, name: name.trim(), role, invited_by: user?.id })
+        .select("id")
+        .single()
       if (error) throw error
+      // The invite is saved either way; a failed email is reported, not undone, and can be resent from the list.
+      try {
+        await sendInviteEmailFor(data.id as string)
+        return { emailed: true as const }
+      } catch (emailError) {
+        return { emailed: false as const, reason: errorMessage(emailError, "The email didn’t send.") }
+      }
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.team() })
-      toast.success(`${normalized} can now sign in as ${ROLE_LABEL[role].toLowerCase()}`)
+      if (result.emailed) toast.success(`Invite sent to ${normalized}`)
+      else toast.warning(`${normalized} is invited, but the email didn’t send`, { description: `${result.reason} Use Resend on their row.` })
       setEmail("")
       setName("")
       setRole("writer")
@@ -200,6 +211,12 @@ function TeamSection() {
     onError: (error) => toast.error(errorMessage(error, "Couldn’t remove. Try again.")),
   })
 
+  const resend = useMutation({
+    mutationFn: (invite: InviteRow) => sendInviteEmailFor(invite.id).then(() => invite.email),
+    onSuccess: (email) => toast.success(`Invite sent again to ${email}`),
+    onError: (error) => toast.error(errorMessage(error, "Couldn’t send the invite email. Try again.")),
+  })
+
   const removalName =
     pendingRemoval?.kind === "member"
       ? pendingRemoval.member.name || pendingRemoval.member.email
@@ -242,7 +259,7 @@ function TeamSection() {
                 <TableHead className="w-[160px]">Role</TableHead>
                 <TableHead className="w-[130px]">Status</TableHead>
                 <TableHead className="w-[110px]">Added</TableHead>
-                <TableHead className="w-[140px] pr-6">
+                <TableHead className="w-[200px] pr-6">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -283,9 +300,23 @@ function TeamSection() {
                     </TableCell>
                     <TableCell className="pr-6 text-right">
                       {canManageTeam && !isSelf ? (
-                        <Button type="button" variant="ghost" size="sm" className="whitespace-nowrap" onClick={() => setPendingRemoval(row)}>
-                          {isMember ? "Remove" : "Cancel invite"}
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          {row.kind === "invite" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="whitespace-nowrap"
+                              disabled={resend.isPending}
+                              onClick={() => resend.mutate(row.invite)}
+                            >
+                              Resend
+                            </Button>
+                          ) : null}
+                          <Button type="button" variant="ghost" size="sm" className="whitespace-nowrap" onClick={() => setPendingRemoval(row)}>
+                            {isMember ? "Remove" : "Cancel invite"}
+                          </Button>
+                        </div>
                       ) : null}
                     </TableCell>
                   </TableRow>

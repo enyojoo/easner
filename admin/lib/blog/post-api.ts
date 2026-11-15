@@ -78,6 +78,8 @@ async function authedJson<T>(path: string, body: Record<string, unknown>): Promi
 export const callBlogAction = (action: string, postId: string, extra: Record<string, unknown> = {}) =>
   authedJson<{ website: WebsiteResult }>("/api/blog/action", { action, postId, ...extra })
 
+export const sendInviteEmailFor = (inviteId: string) => authedJson<{ sent: true }>("/api/team/invite-email", { inviteId })
+
 export const fetchPreviewLink = (postId: string) => authedJson<{ url: string } | { skipped: string }>("/api/blog/preview-link", { postId })
 
 async function rpcPost(fn: string, args: Record<string, unknown>): Promise<void> {

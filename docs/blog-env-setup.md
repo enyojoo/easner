@@ -23,6 +23,10 @@ openssl rand -hex 32   # BLOG_PREVIEW_SECRET
 | `BLOG_REVALIDATE_SECRET` | yes | The shared secret above |
 | `BLOG_PREVIEW_SECRET` | yes | The shared secret above |
 | `CRON_SECRET` | yes | `openssl rand -hex 24`. Vercel sends it to cron routes as a Bearer token. Without it the cron routes refuse |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | for invite emails | IAM keys allowed `ses:SendEmail` (the same ones easnerbanking uses). Without them an invite is saved but no email goes out; Resend on the Team list retries |
+| `SES_REGION` | optional | `eu-west-2` (default) |
+| `ADMIN_EMAIL_FROM` / `ADMIN_EMAIL_FROM_NAME` | optional | `noreply@easner.com` / `Easner Website Admin` (default). Must be on the verified `easner.com` identity |
+| `ADMIN_URL` | optional | `https://admin.easner.com` (default). The sign-in link in the invite email |
 | `INDEXNOW_KEY` | optional | The same key the website already serves at `/api/indexnow-key`. Pings search engines on publish |
 | `POSTHOG_PROJECT_ID` | for Analytics | PostHog, Project settings: Project ID (a number) |
 | `POSTHOG_PERSONAL_API_KEY` | for Analytics | PostHog, your avatar, Personal API keys, Create: scope **Query: read** (and Project: read if offered), limited to the Easner project |
