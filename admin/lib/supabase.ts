@@ -23,5 +23,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 /** Public URL of a file in the `blog` bucket. */
 export function blogFileUrl(path: string | null | undefined): string | null {
   if (!path) return null
+  // Absolute site paths (the dev harness's /dev/sample-image) pass through; real storage paths never start with a slash.
+  if (path.startsWith("/")) return path
   return supabase.storage.from("blog").getPublicUrl(path).data.publicUrl
 }
