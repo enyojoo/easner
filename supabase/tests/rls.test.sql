@@ -11,7 +11,7 @@
 begin;
 
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create function tests.ok(cond boolean, description text) returns void language plpgsql as $$
 begin
@@ -143,9 +143,9 @@ select tests.ok(
   not exists (select 1 from pg_class where relnamespace = 'public'::regnamespace and relkind in ('v', 'm')),
   'there are no public views: the website reads the tables');
 select tests.ok(
-  (select bool_and(relrowsecurity) and count(*) = 18 from pg_class
+  (select bool_and(relrowsecurity) and count(*) = 21 from pg_class
    where relnamespace = 'public'::regnamespace and relkind = 'r'),
-  'RLS is on for all 18 tables');
+  'RLS is on for all 21 tables');
 select tests.ok(not has_column_privilege('anon', 'public.blog_posts', 'draft_content', 'select'),
   'anon has no grant on blog_posts.draft_content');
 select tests.ok((select count(*) from public.blog_categories) = 5, 'five default categories are seeded');
@@ -730,6 +730,88 @@ set local role anon;
 select tests.ok(tests.count('select id from public.blog_authors where slug in (''invitee'', ''invitee-2'', ''no-name'', ''guest-one'')') = 0,
   'anon: reads no author without a live post');
 select tests.ok(tests.throws('select member_id from public.blog_authors'), 'anon: still cannot select member_id');
+reset role;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- Phase 4A: analytics rollups (members read, only the service role writes)
+-- ---------------------------------------------------------------------------------------------------------------
+
+insert into public.site_vitals_daily (date, path, metric, p75, samples) values (current_date, '*', 'LCP', 2100, 40);
+insert into public.site_search_daily (date, path, query, impressions, clicks, position) values (current_date, '/blog/live-post', 'send money', 10, 1, 4.2);
+insert into public.analytics_sync_log (source, day, status, rows_written) values ('posthog', current_date, 'ok', 3);
+insert into public.site_breakdown_daily (date, path, dimension, value, visitors, views) values (current_date, '*', 'share_click', 'x', 2, 2);
+
+set local role anon;
+select tests.ok(tests.throws('select * from public.site_vitals_daily'), 'anon: no access to web vitals');
+select tests.ok(tests.throws('select * from public.site_search_daily'), 'anon: no access to site search stats');
+select tests.ok(tests.throws('select * from public.analytics_sync_log'), 'anon: no access to the sync log');
+reset role;
+
+select tests.login('outsider@rls.test');
+set local role authenticated;
+select tests.ok(tests.count('select * from public.site_vitals_daily') = 0, 'outsider: reads no web vitals');
+select tests.ok(tests.count('select * from public.analytics_sync_log') = 0, 'outsider: reads no sync log');
+reset role;
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.count('select * from public.site_vitals_daily') = 1, 'writer: reads web vitals');
+select tests.ok(tests.count('select * from public.site_search_daily') = 1, 'writer: reads site search stats');
+select tests.ok(tests.count('select * from public.analytics_sync_log') = 1, 'writer: reads the sync log');
+select tests.ok(tests.throws($q$insert into public.site_vitals_daily (date, path, metric, p75) values (current_date, '/x', 'CLS', 0.1)$q$), 'writer: cannot write web vitals');
+select tests.ok(tests.throws($q$insert into public.site_search_daily (date, path, query) values (current_date, '/x', 'q')$q$), 'writer: cannot write site search stats');
+select tests.ok(tests.throws($q$insert into public.analytics_sync_log (source, day, status) values ('gsc', current_date, 'ok')$q$), 'writer: cannot write the sync log');
+select tests.ok(tests.throws($q$update public.analytics_sync_log set status = 'error'$q$), 'writer: cannot change the sync log');
+select tests.ok(tests.throws($q$insert into public.site_stats_daily (date, path) values (current_date, '/x')$q$), 'writer: cannot write site stats');
+reset role;
+
+select tests.login('editor@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$insert into public.site_breakdown_daily (date, path, dimension, value) values (current_date, '/x', 'city', 'Lagos')$q$), 'editor: cannot write breakdowns');
+select tests.ok(tests.throws($q$delete from public.site_vitals_daily$q$), 'editor: cannot delete rollups');
+reset role;
+
+set local role service_role;
+select tests.ok(tests.affected($q$insert into public.site_breakdown_daily (date, path, dimension, value, visitors, views) values (current_date, '*', 'share_visit', 'linkedin', 3, 3)$q$) = 1,
+  'service role: writes breakdowns, including share visits');
+select tests.ok(tests.affected($q$insert into public.analytics_sync_log (source, day, status) values ('gsc', current_date, 'ok')$q$) = 1,
+  'service role: writes the sync log');
+select tests.ok(tests.throws($q$insert into public.site_breakdown_daily (date, path, dimension, value) values (current_date, '*', 'nonsense', 'x')$q$),
+  'breakdown dimensions are checked');
+select tests.ok(tests.throws($q$insert into public.analytics_sync_log (source, day, status) values ('other', current_date, 'ok')$q$),
+  'sync log sources are checked');
+select tests.ok(tests.affected($q$insert into public.blog_stats_daily (post_id, date, share_clicks, shares) values (tests.post('live-post'), current_date, 4, '{"x":4}')$q$) = 1,
+  'service role: writes blog stats with share counts');
+reset role;
+
+-- Aggregate reads: sums over days, members only.
+reset role;
+insert into public.site_stats_daily (date, path, visitors, views, avg_time_s, bounces, exits, entries, conversions) values
+  (current_date, '/pricing', 5, 10, 30, 1, 2, 3, 1), (current_date - 1, '/pricing', 4, 10, 60, 0, 1, 2, 0), (current_date, '*', 9, 20, null, 1, 3, 5, 1);
+insert into public.site_breakdown_daily (date, path, dimension, value, visitors, views) values
+  (current_date, '*', 'country', 'NG', 3, 4), (current_date - 1, '*', 'country', 'NG', 2, 2), (current_date, '*', 'country', 'KE', 1, 1);
+insert into public.blog_stats_daily (post_id, date, views, readers) values (tests.post('live-post'), current_date - 2, 7, 5), (tests.post('live-post'), current_date - 1, 3, 2);
+insert into public.blog_search_daily (post_id, date, query, impressions, clicks, position) values
+  (tests.post('live-post'), current_date, 'send money', 100, 5, 4), (tests.post('live-post'), current_date - 1, 'send money', 100, 3, 6);
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok((select views from public.analytics_pages(current_date - 7, current_date) where path = '/pricing') = 20, 'analytics_pages sums views over days');
+select tests.ok((select avg_time_s from public.analytics_pages(current_date - 7, current_date) where path = '/pricing') = 45.0, 'analytics_pages weights the average time by views');
+select tests.ok(tests.count($q$select * from public.analytics_pages(current_date - 7, current_date) where path = '*'$q$) = 0, 'analytics_pages leaves the site total row out');
+select tests.ok((select visitors from public.analytics_breakdown(current_date - 7, current_date, '*', 'country') where value = 'NG') = 5, 'analytics_breakdown sums visitors');
+select tests.ok((select avg_position from public.analytics_search(current_date - 7, current_date, 'blog') where query = 'send money') = 5.0, 'analytics_search averages position by impressions');
+select tests.ok((select views from public.analytics_top_posts(current_date - 7, current_date) where slug = 'live-post') = 10, 'analytics_top_posts sums a post''s views');
+reset role;
+
+set local role anon;
+select tests.ok(tests.throws('select * from public.analytics_pages(current_date - 7, current_date)'), 'anon: cannot call analytics_pages');
+select tests.ok(tests.throws('select * from public.analytics_top_posts(current_date - 7, current_date)'), 'anon: cannot call analytics_top_posts');
+reset role;
+
+select tests.login('outsider@rls.test');
+set local role authenticated;
+select tests.ok(tests.count('select * from public.analytics_pages(current_date - 7, current_date)') = 0, 'outsider: analytics_pages returns nothing');
 reset role;
 
 rollback;

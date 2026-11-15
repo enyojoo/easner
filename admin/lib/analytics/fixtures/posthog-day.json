@@ -1,0 +1,22 @@
+{
+  "note": "Hand-written in PostHog's query response shape (results rows by query name); replace with a recorded day once keys exist.",
+  "pages": [["/", 120, 90], ["/blog/", 30, 25], ["/blog/send-money-to-nigeria", 60, 48], ["/pricing/", 40, 35]],
+  "totals_site": [[250, 170]],
+  "totals_blog": [[90, 70]],
+  "time": [["/", 20, 100], ["/blog/send-money-to-nigeria", 120, 50], ["/pricing", 40, 30]],
+  "sessions": [["/", "/pricing", 0, 30], ["/blog/send-money-to-nigeria", "/blog/send-money-to-nigeria", 1, 20], ["/blog/send-money-to-nigeria", "/", 0, 10]],
+  "ctas": [["/", "dialog", 12], ["/pricing", "business_signup", 5], ["/blog/send-money-to-nigeria", "business_signup", 3], ["/blog/send-money-to-nigeria", "internal", 4], ["/", "chat", 9]],
+  "dim_country_site": [["NG", 80, 120], ["KE", 30, 50], ["GB", 60, 80]],
+  "dim_country_blog": [["NG", 40, 50], ["GB", 30, 40]],
+  "dim_country_post": [["/blog/send-money-to-nigeria", "NG", 30, 35], ["/blog/", "NG", 5, 6]],
+  "dim_city_site": [["Lagos, NG", 40, 60], ["Nairobi, KE", 3, 5]],
+  "dim_device_site": [["Mobile", 100, 140], ["Desktop", 70, 110]],
+  "referrers_site": [["www.google.com", null, null, 50, 70], ["$direct", null, null, 60, 90], ["chatgpt.com", null, null, 10, 12], ["t.co", "x", "share", 4, 5]],
+  "referrers_blog": [["www.google.com", null, null, 30, 40], ["t.co", "x", "share", 4, 5]],
+  "referrers_post": [["/blog/send-money-to-nigeria", "www.google.com", null, null, 25, 30], ["/blog/send-money-to-nigeria", "t.co", "x", "share", 4, 5]],
+  "share_clicks": [["send-money-to-nigeria", "x", 6], ["send-money-to-nigeria", "linkedin", 2], ["deleted-post", "copy", 1]],
+  "share_visits": [["/blog/send-money-to-nigeria", "x", 4, 5]],
+  "read_depth": [["send-money-to-nigeria", 25, 40], ["send-money-to-nigeria", 50, 30], ["send-money-to-nigeria", 75, 20], ["send-money-to-nigeria", 100, 10]],
+  "vitals_site": [[2100, 80, 180, 80, 0.05, 80, 1500, 80]],
+  "vitals_path": [["/", 2000, 40, 150, 40, 0.04, 40, 1400, 40]]
+}

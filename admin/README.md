@@ -144,3 +144,43 @@ code is not in a production build.
 
 `npm test -w admin` runs the pure logic (`lib/blog/*.test.ts`: claims, checklist, brand lint, slugs, autosave, crops,
 workflow, normalisation, website hooks). `npm run test:db` covers the schema, RLS and the review workflow.
+
+## Analytics (Phase 4A)
+
+Analytics covers the whole website. PostHog is the source of truth (page views, countries and cities, devices, UTMs, CTA
+clicks, share clicks, web vitals) and Search Console adds Google searches. A nightly job (`/api/cron/analytics`) writes
+daily rollups into the website Supabase project (`site_stats_daily`, `site_breakdown_daily`, `site_vitals_daily`,
+`site_search_daily`, `blog_stats_daily`, `blog_search_daily`, log in `analytics_sync_log`); the dashboard reads those
+tables through a few aggregate SQL functions, so it opens instantly. Rollups are kept for 25 months.
+
+Set these in the admin's Vercel project (and `admin/.env.local` to try the job locally). Without them the job does
+nothing and Analytics shows "Connect PostHog".
+
+| Variable | What |
+| --- | --- |
+| `POSTHOG_PROJECT_ID` | Project id from PostHog's project settings |
+| `POSTHOG_PERSONAL_API_KEY` | A personal API key with the "Query: read" scope |
+| `POSTHOG_HOST` | Optional. The app host, `https://us.posthog.com` (default) or `https://eu.posthog.com`. Not the ingest or proxy host |
+| `GSC_SITE_URL` | Optional. The Search Console property, e.g. `sc-domain:easner.com` |
+| `GSC_SERVICE_ACCOUNT_JSON` | Optional. A Google service account key (the whole JSON). Add its `client_email` as a user on the property |
+| `SUPABASE_SECRET_KEY` | The website project's secret (service role) key. Server only, never `NEXT_PUBLIC_` |
+| `CRON_SECRET` | Any long random string. Vercel Cron sends it as `Authorization: Bearer ...`; the route refuses without it |
+
+Set the PostHog project's timezone to UTC (days are cut in the project's timezone and the job treats them as UTC).
+`vercel.json` runs the job daily at 02:30 UTC. To backfill after connecting, call it once by hand:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" "https://admin.easner.com/api/cron/analytics?days=30"
+```
+
+The first run backfills 7 days by itself; later runs fetch only the last 3 days not yet logged as ok. Search Console data
+trails by about 3 days, so its days land later.
+
+Review the dashboard without keys: with `ADMIN_DEV_HARNESS=1` in `.env.local`, open `/dev/analytics` (deterministic sample
+data, no sign-in); `?view=performance` shows a post's Performance tab and `?view=connect` the connect states.
+
+How numbers are counted: Visitors are daily uniques added up over the period (a returning visitor counts again). Bounce
+rate is single-page sessions over sessions. Conversions are `cta_clicked` events whose destination is a sign-up, the
+app or the open-account dialog. Cities with fewer than 5 visitors in the period are grouped as Other. Shares are
+`post_shared` clicks plus visits that arrive with `utm_medium=share`. Web vitals need `capture_performance.web_vitals` in
+the website's PostHog init (added).
