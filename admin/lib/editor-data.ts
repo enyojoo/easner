@@ -39,7 +39,7 @@ export function useEditorLookups(): { lookups: EditorLookups | null; viewer: Vie
     const published = others.data.filter((post) => post.status === "published")
     return {
       categories: categories.data.filter((category) => !category.archived_at).map(({ id, name, slug }) => ({ id, name, slug })),
-      authors: authors.data.map(({ id, name, slug, title, avatar_path, bio }) => ({ id, name, slug, title, avatar_path, bio })),
+      authors: authors.data.map(({ id, name, slug, title, avatar_path, bio, member_id }) => ({ id, name, slug, title, avatar_path, bio, member_id })),
       otherPosts: others.data,
       publishedSlugs: published.map((post) => post.slug),
       linkTargets: [

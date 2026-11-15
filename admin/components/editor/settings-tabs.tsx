@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { AlertTriangle, Lock } from "lucide-react"
 import {
   PRODUCT_PAGES,
@@ -151,6 +151,15 @@ export function PostTab({
   )
   const isEditor = viewer.role === "owner" || viewer.role === "editor"
   const selectedAuthors = post.authorIds
+  // The signed-in person's own author profile comes first. A writer's own profile is always on their post; owners
+  // and editors may leave themselves off (a post for a guest author).
+  const ownAuthor = authors.find((author) => author.member_id === viewer.id)
+  const orderedAuthors = ownAuthor ? [ownAuthor, ...authors.filter((author) => author.id !== ownAuthor.id)] : authors
+  useEffect(() => {
+    if (viewer.role === "writer" && ownAuthor && !readOnly && post.created_by === viewer.id && !selectedAuthors.includes(ownAuthor.id)) {
+      onAuthorsChange([ownAuthor.id, ...selectedAuthors])
+    }
+  }, [viewer.role, viewer.id, ownAuthor, readOnly, post.created_by, selectedAuthors, onAuthorsChange])
   const toggleAuthor = (id: string, on: boolean) =>
     onAuthorsChange(on ? [...selectedAuthors, id] : selectedAuthors.filter((existing) => existing !== id))
 
@@ -187,22 +196,34 @@ export function PostTab({
         />
       </Section>
 
-      <Section title="Authors" hint="Each author needs a photo, a title and a bio before the post can publish.">
+      <Section
+        title="Authors"
+        hint={
+          viewer.role === "writer"
+            ? "You are an author of your own posts. Add anyone who wrote it with you."
+            : "Pick who wrote this post. Each author needs a photo, a title and a bio before the post can publish."
+        }
+      >
         <ul className="grid gap-1.5">
           {authors.length === 0 ? <li className="text-sm text-muted-foreground">No authors yet. Add one under Authors.</li> : null}
-          {authors.map((author) => {
+          {orderedAuthors.map((author) => {
             const gap = !author.avatar_path ? "Missing photo" : !author.title?.trim() ? "Missing title" : !bioToText(author.bio).trim() ? "Missing bio" : null
+            const isYou = author.id === ownAuthor?.id
+            const fixed = isYou && viewer.role === "writer"
             return (
               <li key={author.id}>
                 <label className="flex items-center gap-3 rounded-md px-1 py-1 hover:bg-muted/50">
                   <Checkbox
-                    checked={selectedAuthors.includes(author.id)}
-                    disabled={readOnly}
+                    checked={fixed || selectedAuthors.includes(author.id)}
+                    disabled={readOnly || fixed}
                     onCheckedChange={(on) => toggleAuthor(author.id, on === true)}
                     aria-label={author.name}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-foreground">{author.name}</span>
+                    <span className="block truncate text-sm text-foreground">
+                      {author.name}
+                      {isYou ? <span className="font-normal text-muted-foreground"> (you)</span> : null}
+                    </span>
                     {author.title ? <span className="block truncate text-xs text-muted-foreground">{author.title}</span> : null}
                   </span>
                   {gap ? <span className="shrink-0 rounded-full bg-warning-surface px-2 py-0.5 text-[11px] font-medium text-warning-text">{gap}</span> : null}

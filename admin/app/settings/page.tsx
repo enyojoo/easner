@@ -29,7 +29,8 @@ import { adminKeys, errorMessage, formatListDate, useTeam, type InviteRow, type 
 import { permissionsFor, ROLE_DESCRIPTION, ROLE_LABEL, type AdminRole } from "@/lib/roles"
 import { supabase } from "@/lib/supabase"
 
-const ROLES: AdminRole[] = ["owner", "editor", "writer"]
+/** There is one owner (the person who set the site up). Everyone else is invited as an editor or a writer. */
+const ROLES: AdminRole[] = ["editor", "writer"]
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const COLUMNS = ["Member", "Role", "Status", "Added", ""]
 
@@ -257,7 +258,7 @@ function TeamSection() {
                       {name ? <p className="truncate text-xs text-muted-foreground">{email}</p> : null}
                     </TableCell>
                     <TableCell>
-                      {canManageTeam ? (
+                      {canManageTeam && role !== "owner" ? (
                         <RoleSelect
                           value={role}
                           label={`Role for ${name || email}`}

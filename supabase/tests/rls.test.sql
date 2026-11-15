@@ -1266,4 +1266,28 @@ select tests.ok(tests.throws($q$select public.add_blog_redirect('anon-redirect',
 reset role;
 select tests.system();
 
+-- ---------------------------------------------------------------------------------------------------------------
+-- One owner, and a new post starts with its creator's author profile (20261122120000_one_owner_default_author.sql)
+-- ---------------------------------------------------------------------------------------------------------------
+select tests.login('owner@rls.test');
+set local role authenticated;
+select tests.ok(tests.throws($q$insert into public.admin_invites (email, role, name, invited_by) values ('second-owner@rls.test', 'owner', 'Second Owner', auth.uid())$q$),
+  'owner: cannot invite a second owner');
+select tests.ok(tests.affected($q$insert into public.admin_invites (email, role, name, invited_by) values ('new-editor@rls.test', 'editor', 'New Editor', auth.uid())$q$) = 1,
+  'owner: can still invite an editor');
+select tests.ok(tests.throws($q$update public.admin_members set role = 'owner' where role = 'editor'$q$),
+  'owner: cannot make a second owner member');
+reset role;
+
+select tests.login('writer@rls.test');
+set local role authenticated;
+select tests.ok(tests.affected($q$insert into public.blog_posts (slug, title) values ('default-author-post', 'x')$q$) = 1,
+  'writer: creates a post');
+select tests.ok(
+  tests.count($q$select pa.post_id from public.blog_post_authors pa join public.blog_authors a on a.id = pa.author_id
+                 where pa.post_id = (select id from public.blog_posts where slug = 'default-author-post') and a.member_id = auth.uid()$q$) = 1,
+  'writer: a new post starts with their own author profile');
+reset role;
+select tests.system();
+
 rollback;

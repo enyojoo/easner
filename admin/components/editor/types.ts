@@ -124,6 +124,8 @@ export type AuthorOption = {
   title: string | null
   avatar_path: string | null
   bio: unknown
+  /** The member this profile belongs to; null for a guest author. */
+  member_id?: string | null
 }
 
 export type CategoryOption = { id: string; name: string; slug: string }
