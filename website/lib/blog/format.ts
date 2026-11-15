@@ -28,5 +28,6 @@ export function joinNames(names: string[]): string {
 }
 
 export function pluralPosts(count: number): string {
+  if (count === 0) return "No posts yet"
   return `${count} ${count === 1 ? "post" : "posts"}`
 }

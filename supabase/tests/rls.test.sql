@@ -735,8 +735,22 @@ reset role;
 -- The public sees none of the empty profiles (none of these authors has a live post).
 set local role anon;
 select tests.ok(tests.count('select id from public.blog_authors where slug in (''invitee'', ''invitee-2'', ''no-name'', ''guest-one'')') = 0,
-  'anon: reads no author without a live post');
+  'anon: reads no blank author without a live post');
 select tests.ok(tests.throws('select member_id from public.blog_authors'), 'anon: still cannot select member_id');
+reset role;
+
+-- A set-up profile (title and photo) is public even with no live post; a half-filled one is not.
+select tests.system();
+insert into public.blog_authors (slug, name, title, avatar_path) values
+  ('listed-no-posts', 'Listed No Posts', 'Engineer', 'authors/listed.jpg'),
+  ('title-only', 'Title Only', 'Engineer', null),
+  ('photo-only', 'Photo Only', null, 'authors/photo.jpg'),
+  ('blank-title-photo', 'Blank Title', '  ', 'authors/blank.jpg');
+set local role anon;
+select tests.ok(tests.count('select id from public.blog_authors where slug = ''listed-no-posts''') = 1,
+  'anon: reads an author whose profile is set up, with no live post');
+select tests.ok(tests.count('select id from public.blog_authors where slug in (''title-only'', ''photo-only'', ''blank-title-photo'')') = 0,
+  'anon: still hides a half-filled profile');
 reset role;
 
 -- ---------------------------------------------------------------------------------------------------------------

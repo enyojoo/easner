@@ -95,8 +95,14 @@ export async function AuthorView({ slug, page }: { slug: string; page: number })
         <h2 className="mb-6 flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-web-meta after:h-px after:flex-1 after:bg-web-hairline">
           Posts by {first}
         </h2>
-        <PostGrid posts={paged.items} />
-        <Pagination base={base} page={paged.page} pageCount={paged.pageCount} />
+        {author.postCount === 0 ? (
+          <p className="text-[17px] leading-7 text-web-body">{first} hasn’t published a post yet. Check back soon.</p>
+        ) : (
+          <>
+            <PostGrid posts={paged.items} />
+            <Pagination base={base} page={paged.page} pageCount={paged.pageCount} />
+          </>
+        )}
       </section>
       <CtaBand content={homeCtaBand} />
     </>

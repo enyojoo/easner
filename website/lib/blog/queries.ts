@@ -69,20 +69,23 @@ function mapAuthor(r: Row): BlogAuthor {
   }
 }
 
-function mapPost(r: Row): BlogPostSummary | null {
-  const category = r.blog_categories as Row | null
+/** A draft preview may be unfinished: no category, title or date yet. Show it anyway, plainly marked. */
+const DRAFT_CATEGORY: Row = { id: "", slug: "uncategorized", name: "No category yet" }
+
+function mapPost(r: Row, draft = false): BlogPostSummary | null {
+  const category = (r.blog_categories as Row | null) ?? (draft ? DRAFT_CATEGORY : null)
   if (!category) return null
   const links = ((r.blog_post_authors as Row[] | null) ?? [])
     .filter((l) => l.blog_authors)
     .sort((a, b) => Number(a.position) - Number(b.position))
   return {
-    id: String(r.id), slug: String(r.slug), title: String(r.title), excerpt: String(r.excerpt ?? ""),
+    id: String(r.id), slug: String(r.slug), title: String(r.title || (draft ? "Untitled draft" : "")), excerpt: String(r.excerpt ?? ""),
     summary: str(r.summary), coverPath: str(r.cover_path), coverAlt: str(r.cover_alt), coverFocal: focal(r.cover_focal_point),
     ogImagePath: str(r.og_image_path), categoryId: String(r.category_id), productPage: productSlug(r.product_page),
     featured: Boolean(r.featured), featuredRank: typeof r.featured_rank === "number" ? r.featured_rank : null,
     seoTitle: str(r.seo_title), seoDescription: str(r.seo_description), canonicalUrl: str(r.canonical_url),
     noindex: Boolean(r.noindex), focusKeyword: str(r.focus_keyword), wordCount: Number(r.word_count ?? 0),
-    readingMinutes: Number(r.reading_minutes ?? 1), publishedAt: String(r.published_at),
+    readingMinutes: Number(r.reading_minutes ?? 1), publishedAt: String(r.published_at ?? (draft ? new Date().toISOString() : r.published_at)),
     contentModifiedAt: str(r.content_modified_at),
     category: { id: String(category.id), slug: String(category.slug), name: String(category.name) },
     authors: links.map((l) => mapAuthor(l.blog_authors as Row)),
@@ -113,7 +116,7 @@ export const getAllPosts = cache(async (): Promise<BlogPostSummary[]> => {
     `select=${POST_LIST_COLUMNS},${POST_EMBEDS}&order=published_at.desc&limit=1000`,
     { tags: [BLOG_TAG] },
   )
-  return rows.map(mapPost).filter((p): p is BlogPostSummary => p !== null)
+  return rows.map((r) => mapPost(r)).filter((p): p is BlogPostSummary => p !== null)
 })
 
 const getCategoryRows = cache(async (): Promise<BlogCategory[]> => {
@@ -179,7 +182,7 @@ export const getAuthors = cache(async (): Promise<AuthorWithStats[]> => {
   const [authors, posts, categories] = await Promise.all([getAuthorRows(), getAllPosts(), getCategoryRows()])
   return authors
     .map((a) => authorStats(a, posts, categories))
-    .filter((a) => a.postCount > 0)
+    .filter((a) => a.postCount > 0 || isListedAuthor(a))
     .sort((a, b) => b.postCount - a.postCount || a.name.localeCompare(b.name))
 })
 
@@ -211,8 +214,11 @@ export async function getAuthor(slug: string): Promise<AuthorWithStats | null> {
   }
   if (!author) return null
   const stats = authorStats(author, posts, categories)
-  return stats.postCount > 0 ? stats : null
+  return stats.postCount > 0 || isListedAuthor(stats) ? stats : null
 }
+
+/** A set-up profile (title and photo) is public even before the first post. Mirrors the database policy. */
+export const isListedAuthor = (a: Pick<BlogAuthor, "title" | "avatarPath">) => Boolean(a.title?.trim() && a.avatarPath)
 
 // ---------------------------------------------------------------------------------------------------------------
 // A single post
@@ -237,7 +243,7 @@ export async function getPost(slug: string, options: { draft?: boolean } = {}): 
       { role: "service", noStore: true },
     )
     const row = rows[0]
-    const base = row && mapPost(row)
+    const base = row && mapPost(row, true)
     if (row && base) {
       const content = (row.draft_content ?? row.content) as DocNode
       post = { ...base, content, contentText: String(row.content_text ?? ""), isDraft: row.draft_content != null }
@@ -371,5 +377,5 @@ export async function searchPosts(query: string, limit = 8): Promise<SearchHit[]
     `select=${POST_LIST_COLUMNS},${POST_EMBEDS}&search=wfts(english).${encodeURIComponent(q)}&order=published_at.desc&limit=${limit}`,
     { tags: [BLOG_TAG], revalidate: 300 },
   )
-  return rows.map(mapPost).filter((p): p is BlogPostSummary => p !== null).map(toHit)
+  return rows.map((r) => mapPost(r)).filter((p): p is BlogPostSummary => p !== null).map(toHit)
 }

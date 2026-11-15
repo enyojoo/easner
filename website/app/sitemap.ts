@@ -63,7 +63,7 @@ async function blogEntries(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.4,
     },
-    ...authors.map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
+    ...authors.filter((a) => a.postCount > 0).map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
   ]
 }
 

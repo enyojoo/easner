@@ -19,6 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return marketingMetadata({
     metadata: authorMeta(author, 1),
     path: authorPath(slug),
+    // A set-up profile with no posts yet is public, but a page with nothing on it stays out of search.
+    noindex: author.postCount === 0,
     profile: { firstName, lastName: rest.join(" ") || undefined },
     images: [{ url: abs(`${authorPath(slug)}/opengraph-image`), alt: `Easner Blog – posts by ${author.name}` }],
     alternateTypes: { "application/rss+xml": `${authorPath(slug)}/feed.xml` },
