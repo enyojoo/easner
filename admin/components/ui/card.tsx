@@ -108,6 +108,15 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * Inner padding for a Card that holds text or a layout directly, without CardHeader or CardContent. Card only pads
+ * top and bottom; anything placed straight inside it touches the card's edges unless it sits in CardBody (24 px
+ * sides, the design's card inset). lib/card-padding.test.ts fails on a Card whose first child is a bare element.
+ */
+function CardBody({ className, ...props }: React.ComponentProps<"div">) {
+  return <div data-slot="card-body" className={cn("px-6", className)} {...props} />
+}
+
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -129,5 +138,6 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  CardBody,
   cardVariants,
 }

@@ -9,6 +9,7 @@ import { PostsTableSkeleton } from "@/components/admin-skeletons"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useAuth } from "@/lib/auth-context"
 import { FilterTabs, type FilterTab } from "@/components/ui/filter-tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { SearchField } from "@/components/ui/search-field"
@@ -19,7 +20,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatListDate, useCategories, usePosts, type PostRow, type PostStatus } from "@/lib/queries"
 import { blogFileUrl } from "@/lib/supabase"
 
-type StatusFilter = "all" | "drafts" | "review" | "scheduled" | "published" | "archived"
+type StatusFilter = "all" | "needs-you" | "drafts" | "review" | "scheduled" | "published" | "archived"
 
 const STATUS_TABS: ReadonlyArray<FilterTab<StatusFilter>> = [
   { value: "all", label: "All" },
@@ -31,7 +32,7 @@ const STATUS_TABS: ReadonlyArray<FilterTab<StatusFilter>> = [
 ]
 
 /** Drafts: being written, or sent back with changes requested. In review: waiting for an Editor. */
-const STATUS_GROUP: Record<Exclude<StatusFilter, "all">, PostStatus[]> = {
+const STATUS_GROUP: Record<Exclude<StatusFilter, "all" | "needs-you">, PostStatus[]> = {
   drafts: ["draft", "changes_requested"],
   review: ["in_review"],
   scheduled: ["scheduled"],
@@ -39,11 +40,17 @@ const STATUS_GROUP: Record<Exclude<StatusFilter, "all">, PostStatus[]> = {
   archived: ["archived"],
 }
 
+/** What waits on this person: reviews for Editors and Owners, their own posts sent back for Writers. Writers see it here, not on Overview. */
+function needsYou(post: PostRow, role: string | null, userId: string | undefined): boolean {
+  if (role === "owner" || role === "editor") return post.status === "in_review"
+  return post.status === "changes_requested" && post.created_by === userId
+}
+
 const COLUMNS = ["Post", "Status", "Category", "Author", "Updated", "Published"]
 const ALL = "all"
 
 function parseStatus(raw: string | null): StatusFilter {
-  return STATUS_TABS.some((tab) => tab.value === raw) ? (raw as StatusFilter) : "all"
+  return raw === "needs-you" || STATUS_TABS.some((tab) => tab.value === raw) ? (raw as StatusFilter) : "all"
 }
 
 function CoverThumb({ post }: { post: PostRow }) {
@@ -65,6 +72,7 @@ function PostsPageInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  const { role, user } = useAuth()
   const status = parseStatus(searchParams.get("status"))
   const categorySlug = searchParams.get("category") ?? ALL
   const authorId = searchParams.get("author") ?? ALL
@@ -113,25 +121,28 @@ function PostsPageInner() {
     const q = urlQuery.trim().toLowerCase()
     const categoryId = categorySlug === ALL ? null : (categories.find((c) => c.slug === categorySlug)?.id ?? "none")
     return posts.filter((post) => {
-      if (status !== "all" && !STATUS_GROUP[status].includes(post.status)) return false
+      if (status === "needs-you") {
+        if (!needsYou(post, role, user?.id)) return false
+      } else if (status !== "all" && !STATUS_GROUP[status].includes(post.status)) return false
       if (categoryId && post.category_id !== categoryId) return false
       if (authorId !== ALL && !post.authors.some((author) => author.id === authorId)) return false
       if (q && !post.title.toLowerCase().includes(q) && !post.slug.includes(q)) return false
       return true
     })
-  }, [posts, categories, status, categorySlug, authorId, urlQuery])
+  }, [posts, categories, status, categorySlug, authorId, urlQuery, role, user?.id])
 
-  const statusTabs = useMemo(
-    () =>
-      STATUS_TABS.map((tab) => ({
-        ...tab,
-        count:
-          tab.value === "all"
-            ? posts.length
-            : posts.filter((post) => STATUS_GROUP[tab.value as Exclude<StatusFilter, "all">].includes(post.status)).length,
-      })),
-    [posts],
-  )
+  const waiting = useMemo(() => posts.filter((post) => needsYou(post, role, user?.id)).length, [posts, role, user?.id])
+  const statusTabs = useMemo(() => {
+    const tabs: Array<FilterTab<StatusFilter>> = STATUS_TABS.map((tab) => ({
+      ...tab,
+      count:
+        tab.value === "all"
+          ? posts.length
+          : posts.filter((post) => STATUS_GROUP[tab.value as Exclude<StatusFilter, "all" | "needs-you">].includes(post.status)).length,
+    }))
+    // Shown only while something waits (or while it is the open filter), like Overview's Needs you.
+    return waiting > 0 || status === "needs-you" ? [tabs[0], { value: "needs-you" as const, label: "Needs you", count: waiting }, ...tabs.slice(1)] : tabs
+  }, [posts, waiting, status])
 
   const filtersActive = status !== "all" || categorySlug !== ALL || authorId !== ALL || urlQuery.trim() !== ""
   const firstLoad = postsQuery.data === undefined && !postsQuery.isError

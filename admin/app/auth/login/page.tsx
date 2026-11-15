@@ -307,7 +307,7 @@ export default function LoginPage() {
   }
 
   return page(
-    <AuthCard title="Sign in to Easner Website Admin">
+    <AuthCard title="Sign in" description="Easner website admin" spacious>
       <form
         className="grid gap-4"
         onSubmit={(event) => {
@@ -329,6 +329,7 @@ export default function LoginPage() {
         <Button type="submit" variant="primary" size="lg" className="w-full" loading={busy} loadingLabel="Sending…">
           Email me a code
         </Button>
+        <p className="text-center text-sm text-muted-foreground">No passwords. We email a 6-digit code to sign in.</p>
       </form>
     </AuthCard>,
   )
