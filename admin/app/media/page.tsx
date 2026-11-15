@@ -167,6 +167,7 @@ function MediaPageInner() {
 
   const dropZone = (
     <div
+      className="h-full"
       onDragOver={(e) => {
         e.preventDefault()
         setDragOver(true)
@@ -182,13 +183,13 @@ function MediaPageInner() {
         type="button"
         onClick={() => fileInput.current?.click()}
         className={cn(
-          "flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-center text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-          dragOver ? "border-primary bg-info-surface text-primary-text" : "border-border bg-card text-muted-foreground hover:border-foreground/40",
+          "flex h-full min-h-[196px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-[1.5px] border-dashed p-5 text-center text-[13px] leading-[18px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          dragOver ? "border-primary bg-info-surface text-primary-text" : "border-primary/45 bg-surface-tint/60 text-muted-foreground hover:border-primary",
         )}
       >
         <UploadCloud className="size-6" aria-hidden />
-        <span className="font-medium text-foreground">Drop, paste or choose</span>
-        <span className="text-xs">JPG, PNG, WebP or AVIF up to 20 MB. Covers at least 1600 × 900.</span>
+        <span className="text-sm font-medium text-foreground">Drop images here</span>
+        <span>or paste, or choose files.</span>
       </button>
     </div>
   )
@@ -229,7 +230,7 @@ function MediaPageInner() {
             onChange={(next) => setParams({ filter: next === "all" ? null : next })}
           />
         </div>
-        <p className="text-xs text-muted-foreground" aria-live="polite">
+        <p className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
           {mediaQuery.data ? `${filtered.length} ${filtered.length === 1 ? "image" : "images"} · ${formatBytes(totalSize)}` : " "}
         </p>
       </div>
@@ -270,11 +271,12 @@ function MediaPageInner() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
           {dropZone}
           {uploads.map((item) => (
-            <div key={item.key} className="space-y-2 rounded-xl border border-border/60 bg-card p-3">
-              <div className="flex aspect-[4/3] items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <div key={item.key} className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+              <div className="flex aspect-video items-center justify-center bg-muted text-muted-foreground">
                 <ImageIcon className="size-6" aria-hidden />
               </div>
-              <p className="truncate font-mono text-xs text-foreground">{item.file.name}</p>
+              <div className="grid gap-1 px-3 py-2.5">
+              <p className="truncate text-[13px] font-medium leading-[18px] text-foreground">{item.file.name}</p>
               {item.error ? (
                 <div className="space-y-1.5">
                   <p className="text-xs text-destructive-text" role="alert">
@@ -292,13 +294,14 @@ function MediaPageInner() {
               ) : (
                 <div className="space-y-1">
                   <Progress className="h-1.5" value={Math.round(item.progress * 100)} aria-label={`Uploading ${item.file.name}`} />
-                  <p className="text-xs tabular-nums text-muted-foreground">{Math.round(item.progress * 100)}%</p>
+                  <p className="text-xs tabular-nums text-muted-foreground">Uploading · {Math.round(item.progress * 100)}%</p>
                 </div>
               )}
+              </div>
             </div>
           ))}
           {filtered.length === 0 && media.length > 0 ? (
-            <div className="col-span-full flex items-center justify-center rounded-xl border border-border/60 bg-card p-8 text-sm text-muted-foreground md:col-span-3 xl:col-span-4">
+            <div className="col-span-full flex items-center justify-center rounded-2xl border border-border/70 bg-card p-8 text-sm text-muted-foreground md:col-span-3 xl:col-span-4">
               No images match these filters.
             </div>
           ) : null}
@@ -311,9 +314,9 @@ function MediaPageInner() {
                 key={m.id}
                 type="button"
                 onClick={() => setOpenId(m.id)}
-                className="group space-y-2 rounded-xl border border-border/60 bg-card p-3 text-left outline-none transition-shadow hover:shadow-card focus-visible:ring-2 focus-visible:ring-ring"
+                className="group overflow-hidden rounded-2xl border border-border/70 bg-card text-left outline-none transition-shadow hover:shadow-card focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
+                <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-muted text-muted-foreground">
                   {url ? (
                     // eslint-disable-next-line @next/next/no-img-element -- Storage URLs; thumbs.
                     <img src={url} alt={m.alt ?? ""} loading="lazy" className="size-full object-cover" />
@@ -324,14 +327,14 @@ function MediaPageInner() {
                     <span className="absolute left-2 top-2 rounded-full bg-card px-2 py-0.5 text-xs font-medium text-foreground shadow-soft">Cover</span>
                   ) : null}
                 </div>
-                <p className="truncate font-mono text-xs text-foreground">{fileNameOf(m.path)}</p>
-                <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="grid gap-0.5 px-3 py-2.5">
+                  <p className="truncate text-[13px] font-medium leading-[18px] text-foreground">{fileNameOf(m.path)}</p>
                   {noAlt ? (
-                    <span className="text-warning-text">Missing alt text</span>
+                    <p className="text-xs leading-4 text-warning-text">Missing alt text</p>
                   ) : (
-                    <span className="text-muted-foreground">{used > 0 ? `Used in ${used} ${used === 1 ? "post" : "posts"}` : "Not used"}</span>
+                    <p className="text-xs leading-4 text-muted-foreground">{used > 0 ? `Used in ${used} ${used === 1 ? "post" : "posts"}` : "Not used"}</p>
                   )}
-                  <span className="tabular-nums text-muted-foreground">{m.width && m.height ? `${m.width} × ${m.height}` : ""}</span>
+                  <p className="text-xs leading-4 tabular-nums text-muted-foreground">{m.width && m.height ? `${m.width} × ${m.height}` : " "}</p>
                 </div>
               </button>
             )

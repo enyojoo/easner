@@ -58,7 +58,7 @@ export default function MyProfilePage() {
           </Link>
         </Button>
       </div>
-      <PageHeader title="My profile" description="How you appear on your posts and your author page. There’s no public email." />
+      <PageHeader title="My profile" description="How you appear on your posts and your author page." />
       {query.isError ? (
         <Card padding="none">
           <EmptyState

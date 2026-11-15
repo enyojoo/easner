@@ -19,11 +19,12 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth-context"
-import { adminKeys, errorMessage, useCategories, usePosts, type CategoryRow } from "@/lib/queries"
+import { adminKeys, errorMessage, formatListDate, useCategories, usePosts, type CategoryRow } from "@/lib/queries"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { permissionsFor } from "@/lib/roles"
 import { supabase } from "@/lib/supabase"
 
-const COLUMNS = ["Category", "Description", "Posts", "Order"]
+const COLUMNS = ["Category", "Description", "Posts", "Latest post", "On the blog"]
 /** Plan §3: the admin warns above 8 categories; the index chip row should fit on one line. */
 const SOFT_CAP = 8
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -80,6 +81,16 @@ function CategoriesPageInner() {
       if (post.category_id) counts.set(post.category_id, (counts.get(post.category_id) ?? 0) + 1)
     }
     return counts
+  }, [postsQuery.data])
+  // Latest published post per category. A category with none is Hidden: no chip, no sitemap entry, URL 404s.
+  const latestPublished = useMemo(() => {
+    const latest = new Map<string, string>()
+    for (const post of postsQuery.data ?? []) {
+      if (post.status !== "published" || !post.category_id || !post.published_at) continue
+      const current = latest.get(post.category_id)
+      if (!current || post.published_at > current) latest.set(post.category_id, post.published_at)
+    }
+    return latest
   }, [postsQuery.data])
 
   // ?open=<slug> opens that category (Jump to links here); ?open=new starts a new one.
@@ -182,10 +193,10 @@ function CategoriesPageInner() {
     <div className="space-y-6">
       <PageHeader
         title="Categories"
-        description="One category per post. They are the blog’s sections and archive pages."
+        description="One category per post. They drive the chips on easner.com/blog and each has its own page."
         actions={
           canManageCategories ? (
-            <Button type="button" variant="primary" size="sm" onClick={() => setOpen("new")}>
+            <Button type="button" variant="outline" size="sm" onClick={() => setOpen("new")}>
               <Plus aria-hidden />
               New category
             </Button>
@@ -194,7 +205,7 @@ function CategoriesPageInner() {
       />
 
       <div className="space-y-1">
-        <p className="text-xs text-muted-foreground" aria-live="polite">
+        <p className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
           {categoriesQuery.data
             ? `${active.length} ${active.length === 1 ? "category" : "categories"}${
                 categories.length > active.length ? ` · ${categories.length - active.length} archived` : ""
@@ -239,7 +250,8 @@ function CategoriesPageInner() {
                 <TableHead className="w-[260px]">Category</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="w-[100px] text-right">Posts</TableHead>
-                <TableHead className="w-[100px] text-right">Order</TableHead>
+                <TableHead className="w-[130px]">Latest post</TableHead>
+                <TableHead className="w-[130px]">On the blog</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -258,10 +270,10 @@ function CategoriesPageInner() {
                 >
                   <TableCell>
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
+                      <div className="flex items-center gap-2 truncate text-sm font-medium text-foreground">
                         {category.name}
                         {category.archived_at ? <Badge variant="slate">Archived</Badge> : null}
-                      </p>
+                      </div>
                       <p className="truncate font-mono text-xs text-muted-foreground">/blog/categories/{category.slug}</p>
                     </div>
                   </TableCell>
@@ -271,7 +283,14 @@ function CategoriesPageInner() {
                   <TableCell className="text-right text-sm tabular-nums text-foreground">
                     {postsQuery.data ? (postCounts.get(category.id) ?? 0) : "–"}
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums text-muted-foreground">{category.sort_order}</TableCell>
+                  <TableCell className="text-sm tabular-nums text-muted-foreground">{formatListDate(latestPublished.get(category.id))}</TableCell>
+                  <TableCell>
+                    {postsQuery.data ? (
+                      <StatusBadge status={latestPublished.has(category.id) && !category.archived_at ? "published" : "draft"}>
+                        {latestPublished.has(category.id) && !category.archived_at ? "Shown" : "Hidden"}
+                      </StatusBadge>
+                    ) : null}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
