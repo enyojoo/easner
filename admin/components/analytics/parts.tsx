@@ -1,20 +1,21 @@
 "use client"
 
 import * as React from "react"
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { change, formatCount, formatDay, type Counted } from "@/lib/analytics/aggregate"
+import { formatCount, formatDay, type Counted } from "@/lib/analytics/aggregate"
+import { changeText } from "@/lib/analytics/overview"
 import { cn } from "@/lib/utils"
 
 /** A card with a title, one line under it, and room for a table or a list. */
-export function Section({ title, description, actions, children, className }: { title: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string }) {
+export function Section({ title, description, actions, children, className, padding, level = 3 }: { title: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string; padding?: "sm" | "md" | "lg"; level?: 2 | 3 }) {
+  const Heading = level === 2 ? "h2" : "h3"
   return (
-    <Card className={cn("gap-4 px-6", className)}>
+    <Card padding={padding} className={cn("gap-4 px-6", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-foreground">{title}</h3>
-          {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
+          <Heading className="text-base font-semibold leading-6 text-foreground">{title}</Heading>
+          {description ? <p className="text-[13px] leading-[18px] text-muted-foreground">{description}</p> : null}
         </div>
         {actions}
       </div>
@@ -31,33 +32,23 @@ export function SectionTitle({ id, children }: { id: string; children: React.Rea
   )
 }
 
-/** Up is green, down is muted, never red (OffSiteAnalytics). Both come with an arrow, so colour is not the only signal. */
+/** Up is green, down is muted, never red (OffSiteAnalytics): "+12%", "\u22123.0%". The sign carries the direction, so colour is not the only signal. */
 export function Delta({ current, previous, invert = false }: { current: number | null; previous: number | null; invert?: boolean }) {
-  const value = change(current, previous)
-  if (value === null) return <span className="text-xs text-muted-foreground">No previous data</span>
-  if (Math.abs(value) < 0.005) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground tabular-nums">
-        <Minus className="size-3" aria-hidden />
-        No change
-      </span>
-    )
-  }
-  const up = value > 0
-  const good = invert ? !up : up
-  const Icon = up ? ArrowUpRight : ArrowDownRight
+  const value = changeText(current, previous)
+  if (!value) return <span className="text-xs font-medium leading-4 text-muted-foreground">No previous data</span>
+  const good = value.tone === "flat" ? false : invert ? value.tone === "down" : value.tone === "up"
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-medium tabular-nums", good ? "text-success-text" : "text-muted-foreground")}>
-      <Icon className="size-3" aria-hidden />
-      {up ? "Up" : "Down"} {Math.abs(value * 100).toFixed(Math.abs(value) < 0.1 ? 1 : 0)}%<span className="sr-only"> from the previous period</span>
+    <span className={cn("text-xs font-medium leading-4 tabular-nums", good ? "text-success-text" : "text-muted-foreground")}>
+      {value.text}
+      <span className="sr-only"> from the previous period</span>
     </span>
   )
 }
 
 export function Kpi({ label, value, current, previous, hint, loading }: { label: string; value: string; current?: number | null; previous?: number | null; hint?: string; loading?: boolean }) {
   return (
-    <Card className="min-w-0 gap-1.5 px-5 py-5">
-      <p className="truncate text-sm text-muted-foreground">{label}</p>
+    <Card className="min-w-0 gap-1.5 px-6">
+      <p className="truncate text-[11px] font-medium uppercase leading-4 tracking-[0.08em] text-muted-foreground">{label}</p>
       {loading ? (
         <>
           <Skeleton className="h-8 w-20" />
@@ -65,7 +56,7 @@ export function Kpi({ label, value, current, previous, hint, loading }: { label:
         </>
       ) : (
         <>
-          <p className="truncate text-2xl font-semibold tabular-nums text-foreground">{value}</p>
+          <p className="truncate text-2xl font-semibold leading-8 tracking-[-0.01em] tabular-nums text-foreground">{value}</p>
           {current !== undefined && previous !== undefined ? <Delta current={current} previous={previous} /> : hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
         </>
       )}
@@ -169,7 +160,7 @@ export function TrafficChart({ points, previous, labels = { a: "Visitors", b: "P
   )
 }
 
-function niceCeil(value: number): number {
+export function niceCeil(value: number): number {
   const power = 10 ** Math.floor(Math.log10(value))
   const f = value / power
   const step = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10
