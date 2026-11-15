@@ -5,7 +5,7 @@
  *
  * Copy rule: no Easner fees, rates or country counts here. Timing lines are the generic ones the design card uses.
  */
-import { plainText, type BlockNode, type DocNode, type InlineNode, type Mark, type TextNode } from "@easner/blog-content"
+import { plainText, type BlockNode, type DocNode, type InlineNode, type Mark, type ProductSlug, type TextNode } from "@easner/blog-content"
 import type { BlogAuthor, BlogCategory, BlogPost, FocalPoint } from "../types"
 
 const text = (value: string, marks?: Mark[]): TextNode => ({ type: "text", text: value, ...(marks ? { marks } : {}) })
@@ -99,6 +99,7 @@ interface FixtureInput {
   minutes: number
   featured?: boolean
   featuredRank?: number
+  product?: ProductSlug
   seoTitle?: string
   body: DocNode
 }
@@ -120,7 +121,7 @@ function post(input: FixtureInput): BlogPost {
     coverFocal: input.focal ?? { x: 0.5, y: 0.5 },
     ogImagePath: null,
     categoryId: category.id,
-    productPage: null,
+    productPage: input.product ?? null,
     featured: Boolean(input.featured),
     featuredRank: input.featuredRank ?? null,
     seoTitle: input.seoTitle ?? null,
@@ -227,6 +228,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "payroll-now-pays-contractors-in-local-currency",
+    product: "payroll",
     title: "Payroll now pays contractors in local currency",
     excerpt: "Approvals, pay stubs and local-currency payouts for contractors, from the same Easner Business dashboard.",
     summary: "Payroll can now pay contractors in their local currency, with approvals and pay stubs in the same dashboard.",
@@ -236,6 +238,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "checkout-or-payment-links-which-one-fits-your-business",
+    product: "checkout",
     title: "Checkout or Payment Links: which one fits your business",
     excerpt: "If you have a website, Checkout. If you don't, a link. Here is how to choose in two minutes.",
     category: "business", authors: ["priya-raman"], cover: cover("navy"), publishedAt: "2026-11-06T09:00:00Z", minutes: 5,
@@ -244,6 +247,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "holding-usd-and-eur-without-a-foreign-bank-account",
+    product: "personal",
     title: "Holding USD and EUR without a foreign bank account",
     excerpt: "What account details in your name mean, what they don't, and when holding a second currency helps.",
     category: "personal", authors: ["sofia-hernandez"], cover: cover("deep"), publishedAt: "2026-11-03T09:00:00Z", minutes: 6,
@@ -251,6 +255,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "what-stablecoin-settlement-changes-for-a-payment-to-kenya",
+    product: "stablecoin",
     title: "What stablecoin settlement changes for a payment to Kenya",
     excerpt: "Where it is enabled, why it can cut the time to KSh, and what the person receiving it actually sees.",
     category: "global-money", authors: ["ada-okafor"], cover: cover("tint"), publishedAt: "2026-10-29T09:00:00Z", minutes: 8,
@@ -279,6 +284,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "invoices-can-now-be-paid-online-by-card",
+    product: "invoicing",
     title: "Invoices can now be paid online by card",
     excerpt: "A third way to pay on every hosted invoice, next to bank transfer and stablecoin where enabled.",
     category: "product-updates", authors: ["daniel-mensah"], cover: cover("navy"), publishedAt: "2026-10-09T09:00:00Z", minutes: 3,
@@ -286,6 +292,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "paying-contractors-in-ghana-what-changes-with-local-currency-payroll",
+    product: "payroll",
     title: "Paying contractors in Ghana: what changes with local-currency payroll",
     excerpt: "How cedi payouts, pay stubs and approvals work when your team is in Accra and your account is in USD.",
     category: "business", authors: ["ada-okafor"], cover: cover("deep"), publishedAt: "2026-10-05T09:00:00Z", minutes: 4,
@@ -314,6 +321,7 @@ export const FIXTURE_POSTS: BlogPost[] = [
   }),
   post({
     slug: "how-approvals-work-for-a-team-account",
+    product: "business",
     title: "How approvals work for a team account",
     excerpt: "Who can create a payment, who approves it, and what happens while it waits.",
     category: "business", authors: ["priya-raman"], cover: cover("tint"), publishedAt: "2026-09-05T09:00:00Z", minutes: 4,

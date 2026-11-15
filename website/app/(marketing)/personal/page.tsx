@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { PersonalPlans } from "@/components/marketing/personal-plans"
 import { personalContent } from "@/lib/marketing/content/personal"
@@ -31,7 +32,12 @@ export default function PersonalPage() {
           ...productAnswerJsonLd(personalContent, "/personal"),
         ])}
       />
-      <ProductPageSections content={personalContent} beforeFaq={<PersonalPlans />} />
+      <ProductPageSections content={personalContent} beforeFaq={
+          <>
+            <PersonalPlans />
+            <ProductRelatedReading product="personal" />
+          </>
+        } />
     </>
   )
 }

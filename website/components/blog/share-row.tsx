@@ -61,6 +61,7 @@ export function ShareRow({ url, title, slug, variant = "row" }: { url: string; t
         >
           <link.Icon width={16} height={16} />
           {link.label}
+          <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ))}
       {canNativeShare && !rail && (

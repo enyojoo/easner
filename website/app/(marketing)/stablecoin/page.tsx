@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -26,7 +27,7 @@ export default function StablecoinPage() {
           ...productAnswerJsonLd(stablecoinContent, "/stablecoin"),
         ])}
       />
-      <ProductPageSections content={stablecoinContent} />
+      <ProductPageSections content={stablecoinContent} beforeFaq={<ProductRelatedReading product="stablecoin" />} />
     </>
   )
 }

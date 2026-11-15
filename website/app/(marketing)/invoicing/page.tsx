@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -26,7 +27,7 @@ export default function InvoicingPage() {
           ...productAnswerJsonLd(invoicingContent, "/invoicing"),
         ])}
       />
-      <ProductPageSections content={invoicingContent} />
+      <ProductPageSections content={invoicingContent} beforeFaq={<ProductRelatedReading product="invoicing" />} />
     </>
   )
 }

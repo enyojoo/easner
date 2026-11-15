@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -25,7 +26,7 @@ export default function PaymentLinksPage() {
           ...productAnswerJsonLd(paymentLinksContent, "/payment-links"),
         ])}
       />
-      <ProductPageSections content={paymentLinksContent} />
+      <ProductPageSections content={paymentLinksContent} beforeFaq={<ProductRelatedReading product="payment-links" />} />
     </>
   )
 }

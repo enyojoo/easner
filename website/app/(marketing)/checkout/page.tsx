@@ -1,3 +1,4 @@
+import { ProductRelatedReading } from "@/components/blog/product-related-reading"
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -25,7 +26,7 @@ export default function CheckoutPage() {
           ...productAnswerJsonLd(checkoutContent, "/checkout"),
         ])}
       />
-      <ProductPageSections content={checkoutContent} />
+      <ProductPageSections content={checkoutContent} beforeFaq={<ProductRelatedReading product="checkout" />} />
     </>
   )
 }
