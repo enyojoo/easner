@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { FilterTabs, type FilterTab } from "@/components/ui/filter-tabs"
-import { PageHeader } from "@/components/ui/page-header"
+import { TabHeader } from "@/components/layout/tab-header"
 import { Progress } from "@/components/ui/progress"
 import { SearchField } from "@/components/ui/search-field"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -196,7 +196,7 @@ function MediaPageInner() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <TabHeader
         title="Media"
         description="Every image uploaded to the blog. Alt text set here is used wherever the image appears."
         actions={

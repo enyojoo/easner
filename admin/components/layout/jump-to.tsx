@@ -12,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { adminNavLinks } from "@/lib/nav-config"
+import { adminNavLinks, settingsTabs } from "@/lib/nav-config"
 import { adminKeys, type CategoryRow, type PostRow } from "@/lib/queries"
 import { ADMIN_JUMP_RECENTS_KEY } from "@/lib/query/web-persist"
 import { cn } from "@/lib/utils"
@@ -100,7 +100,7 @@ export function useJumpToHotkey(onOpen: () => void): void {
 const GO_TO_ROUTES: Record<string, string> = {
   o: "/overview",
   p: "/posts",
-  c: "/categories",
+  c: "/settings/categories",
   s: "/settings",
 }
 
@@ -164,6 +164,14 @@ export function JumpTo({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     const pages: JumpTarget[] = adminNavLinks
       .filter((item) => !q || matches(q, item.name, ...(item.keywords ?? [])))
       .map((item) => ({ key: `page:${item.href}`, kind: "page", label: item.name, href: item.href }))
+    // The Settings tabs are pages of their own for search ("media" finds Settings, Media).
+    if (q) {
+      for (const tab of settingsTabs) {
+        if (tab.value !== "team" && matches(q, tab.label, ...tab.keywords)) {
+          pages.push({ key: `page:${tab.href}`, kind: "page", label: tab.label, href: tab.href, secondary: "Settings" })
+        }
+      }
+    }
     if (!q) return { recents, pages, posts: [] as JumpTarget[], categories: [] as JumpTarget[] }
     const postTargets: JumpTarget[] = (posts ?? [])
       .filter((post) => matches(q, post.title, post.slug))

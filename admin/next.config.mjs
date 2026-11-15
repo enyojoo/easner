@@ -13,6 +13,14 @@ const nextConfig = {
   turbopack: {
     root: monorepoRoot,
   },
+  async redirects() {
+    // Media, Categories and Redirects are tabs inside Settings now.
+    return [
+      { source: "/media", destination: "/settings/media", permanent: false },
+      { source: "/categories", destination: "/settings/categories", permanent: false },
+      { source: "/redirects", destination: "/settings/redirects", permanent: false },
+    ]
+  },
   async headers() {
     return [
       {

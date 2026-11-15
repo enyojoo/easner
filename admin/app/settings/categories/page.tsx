@@ -14,7 +14,7 @@ import { DetailList, DetailRow } from "@/components/ui/detail-list"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { PageHeader } from "@/components/ui/page-header"
+import { TabHeader } from "@/components/layout/tab-header"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
@@ -191,7 +191,7 @@ function CategoriesPageInner() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <TabHeader
         title="Categories"
         description="One category per post. They drive the chips on easner.com/blog and each has its own page."
         actions={

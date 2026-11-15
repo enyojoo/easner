@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { formatListDate } from "@/lib/queries"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { PageHeader } from "@/components/ui/page-header"
+import { TabHeader } from "@/components/layout/tab-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EditorSelect } from "@/components/editor/editor-select"
 import { normalizeFromSlug, validateRedirect } from "@/lib/blog/redirects"
@@ -101,7 +101,7 @@ export function RedirectsView({
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <TabHeader
         title="Redirects"
         description="Old blog addresses and where they send readers. Most are added for you when a slug changes."
         actions={

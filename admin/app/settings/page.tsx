@@ -17,9 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
-import { FilterTabs } from "@/components/ui/filter-tabs"
 import { Input } from "@/components/ui/input"
-import { PageHeader } from "@/components/ui/page-header"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SettingsSection } from "@/components/ui/settings-section"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -314,11 +312,7 @@ function TeamSection() {
 
 function SettingsPageInner() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Settings" description="The admin’s team and roles." />
-      <FilterTabs ariaLabel="Settings sections" tabs={[{ value: "team", label: "Team" }]} value="team" onChange={() => {}} />
-      <TeamSection />
-    </div>
+    <TeamSection />
   )
 }
 
