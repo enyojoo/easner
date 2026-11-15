@@ -58,7 +58,7 @@ export function FilterTabs<T extends string = string>({
       aria-label={ariaLabel}
       onKeyDown={onKeyDown}
       className={cn(
-        pills ? "inline-flex items-center gap-1 rounded-full bg-muted p-1" : "flex items-center gap-6 border-b border-border/60",
+        pills ? "inline-flex items-center gap-1 rounded-full bg-muted p-1" : "flex items-center gap-1 shadow-[inset_0_-1px_0_var(--border)]",
         className,
       )}
     >
@@ -84,16 +84,16 @@ export function FilterTabs<T extends string = string>({
                     selected ? "bg-card text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground",
                   )
                 : cn(
-                    "-mb-px h-11 border-b-2 px-0.5",
+                    "h-11 px-3",
                     selected
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
+                      ? "text-foreground shadow-[inset_0_-2px_0_var(--primary)]"
+                      : "text-muted-foreground hover:text-foreground",
                   ),
             )}
           >
             {tab.label}
             {typeof tab.count === "number" ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium tabular-nums text-muted-foreground">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-semibold tabular-nums text-muted-foreground">
                 {tab.count}
               </span>
             ) : null}
