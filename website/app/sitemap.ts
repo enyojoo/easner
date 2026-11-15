@@ -33,6 +33,13 @@ const lastModified = {
   blog: new Date("2026-11-14"),
 }
 
+/** An author or post with no usable timestamp must not reach `toISOString` (`new Date("")` is Invalid Date). */
+function modified(value: string | null | undefined, fallback: Date): Date {
+  if (!value) return fallback
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? fallback : date
+}
+
 /** Blog URLs from the data layer, with each page's real last-modified date (never `new Date()`) and cover images. */
 async function blogEntries(): Promise<MetadataRoute.Sitemap> {
   const [posts, categories, authors] = await Promise.all([getAllPosts(), getCategories(), getAuthors()])
@@ -42,12 +49,12 @@ async function blogEntries(): Promise<MetadataRoute.Sitemap> {
     return d > max ? d : max
   }, "")
   return [
-    { url: `${baseUrl}/blog`, lastModified: newest ? new Date(newest) : lastModified.blog, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${baseUrl}/blog`, lastModified: modified(newest, lastModified.blog), changeFrequency: "weekly", priority: 0.7 },
     ...indexable.map((p) => {
       const image = cropImageUrl(p, "16x9")
       return {
         url: `${baseUrl}${postPath(p.slug)}`,
-        lastModified: new Date(p.contentModifiedAt ?? p.publishedAt),
+        lastModified: modified(p.contentModifiedAt ?? p.publishedAt, lastModified.blog),
         changeFrequency: "monthly" as const,
         priority: 0.6,
         ...(image ? { images: [image] } : {}),
@@ -56,14 +63,14 @@ async function blogEntries(): Promise<MetadataRoute.Sitemap> {
     // Thin archives (too few posts) are noindex and stay out of the sitemap.
     ...categories
       .filter((c) => !isThinArchive(c.postCount))
-      .map((c) => ({ url: `${baseUrl}${categoryPath(c.slug)}`, lastModified: new Date(c.lastModified), changeFrequency: "weekly" as const, priority: 0.5 })),
+      .map((c) => ({ url: `${baseUrl}${categoryPath(c.slug)}`, lastModified: modified(c.lastModified, lastModified.blog), changeFrequency: "weekly" as const, priority: 0.5 })),
     {
       url: `${baseUrl}${authorsPath}`,
-      lastModified: authors.length ? new Date(authors.reduce((m, a) => (a.lastModified > m ? a.lastModified : m), "")) : lastModified.blog,
+      lastModified: modified(authors.reduce((m, a) => (a.lastModified > m ? a.lastModified : m), ""), lastModified.blog),
       changeFrequency: "monthly" as const,
       priority: 0.4,
     },
-    ...authors.filter((a) => a.postCount > 0).map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: new Date(a.lastModified), changeFrequency: "monthly" as const, priority: 0.4 })),
+    ...authors.filter((a) => a.postCount > 0).map((a) => ({ url: `${baseUrl}${authorPath(a.slug)}`, lastModified: modified(a.lastModified, lastModified.blog), changeFrequency: "monthly" as const, priority: 0.4 })),
   ]
 }
 
