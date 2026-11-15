@@ -30,7 +30,7 @@ test("writer: submits their own draft, then waits; others' posts are read-only",
 test("editor: reviews, approves and publishes a writer's post", () => {
   const review = workflow(base({ post: { status: "in_review" } }))
   assert.equal(review.primary, "approve-publish")
-  assert.deepEqual(review.secondary, ["request-changes"])
+  assert.deepEqual(review.secondary, ["request-changes", "delete"])
   assert.equal(workflow(base()).primary, "publish")
   assert.equal(workflow(base({ role: "owner", post: { created_by: "ed1" } })).primary, "publish")
 })
@@ -68,14 +68,14 @@ test("published posts: update only with draft changes; unpublish and archive are
 test("archived is read-only with unarchive", () => {
   const archived = workflow(base({ post: { status: "archived" } }))
   assert.equal(archived.canEdit, false)
-  assert.deepEqual(archived.secondary, ["unarchive"])
+  assert.deepEqual(archived.secondary, ["unarchive", "delete"])
 })
 
 test("scheduled: not live, so publishing now stays available and the schedule can move or go", () => {
   const scheduled = workflow(base({ post: { status: "scheduled", has_unpublished_changes: true } }))
   assert.equal(scheduled.canEdit, true)
   assert.equal(scheduled.primary, "publish")
-  assert.deepEqual(scheduled.secondary, ["reschedule", "unschedule", "archive"])
+  assert.deepEqual(scheduled.secondary, ["reschedule", "unschedule", "archive", "delete"])
   const writer = workflow(base({ role: "writer", userId: "w1", post: { status: "scheduled" } }))
   assert.equal(writer.canEdit, false)
   assert.equal(writer.primary, null)

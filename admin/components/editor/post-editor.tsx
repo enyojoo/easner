@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { EditorContent, useEditor, type Editor } from "@tiptap/react"
@@ -104,6 +105,7 @@ export function PostEditor({
   backHref?: string
 }) {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [post, setPost] = useState(initialPost)
   const [title, setTitle] = useState(initialPost.title)
   const [excerpt, setExcerpt] = useState(initialPost.excerpt ?? "")
@@ -118,7 +120,7 @@ export function PostEditor({
   const [publishOpen, setPublishOpen] = useState(false)
   const [changesOpen, setChangesOpen] = useState(false)
   const [changesNote, setChangesNote] = useState("")
-  const [confirm, setConfirm] = useState<null | "unpublish" | "archive" | "withdraw" | "unschedule">(null)
+  const [confirm, setConfirm] = useState<null | "unpublish" | "archive" | "withdraw" | "unschedule" | "delete">(null)
   const [dialogKey, setDialogKey] = useState(0)
   const [startInSchedule, setStartInSchedule] = useState(false)
   const [compare, setCompare] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
@@ -173,6 +175,9 @@ export function PostEditor({
     baseUpdatedAt: initialPost.updated_at,
     save: (snapshot) => adapter.saveDraft(post.id, snapshot),
     onSaved: () => {
+      // A saved edit to a live post is a draft that isn't published yet (the database flag follows draft_content), so
+      // the "Update live post" action must appear now, not after a reload.
+      setPost((current) => (current.status === "published" && !current.has_unpublished_changes ? { ...current, has_unpublished_changes: true } : current))
       void queryClient.invalidateQueries({ queryKey: adminKeys.posts() })
     },
   })
@@ -527,10 +532,12 @@ export function PostEditor({
         return setConfirm("withdraw")
       case "unpublish":
       case "archive":
+      case "delete":
         return setConfirm(action)
       case "unarchive":
         return void run("restore the post", async () => {
-          toast.message("Restoring archived posts arrives in the next release")
+          settle(await adapter.unarchive(post.id))
+          toast.success("Restored. It’s a draft again.")
         })
     }
   }
@@ -613,7 +620,18 @@ export function PostEditor({
         settle(await adapter.unschedule(post.id))
         toast.success("Unscheduled. It’s back where it was.")
       }
-      if (confirm === "archive") toast.message("Archiving from the editor arrives in the next release. Use Posts.")
+      if (confirm === "archive") {
+        const result = await adapter.archive(post.id)
+        settle(result.post)
+        websiteToast(result.website)
+        toast.success("Archived. It’s off easner.com/blog.")
+      }
+      if (confirm === "delete") {
+        await adapter.delete(post.id)
+        void queryClient.invalidateQueries({ queryKey: adminKeys.posts() })
+        toast.success("Post deleted")
+        router.push("/posts")
+      }
       setConfirm(null)
     })
 
@@ -983,9 +1001,11 @@ export function PostEditor({
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
-        title={confirm === "unpublish" ? "Unpublish this post?" : confirm === "archive" ? "Archive this post?" : confirm === "unschedule" ? "Unschedule this post?" : "Withdraw from review?"}
+        title={confirm === "delete" ? "Delete this post?" : confirm === "unpublish" ? "Unpublish this post?" : confirm === "archive" ? "Archive this post?" : confirm === "unschedule" ? "Unschedule this post?" : "Withdraw from review?"}
         description={
-          confirm === "unpublish"
+          confirm === "delete"
+            ? "It’s deleted for good, with its history and comments. This can’t be undone. To keep it, archive it instead."
+            : confirm === "unpublish"
             ? "It leaves easner.com/blog and becomes a draft again. Its URL stops working until it is published again."
             : confirm === "archive"
               ? "It leaves easner.com/blog and moves to Archived."
@@ -993,8 +1013,8 @@ export function PostEditor({
                 ? "It won’t go live at the scheduled time. It goes back to the status it had before."
                 : "It goes back to Draft and the Editor’s review request is cancelled."
         }
-        confirmLabel={confirm === "unpublish" ? "Unpublish" : confirm === "archive" ? "Archive" : confirm === "unschedule" ? "Unschedule" : "Withdraw"}
-        tone={confirm === "unpublish" || confirm === "archive" ? "destructive" : "default"}
+        confirmLabel={confirm === "delete" ? "Delete post" : confirm === "unpublish" ? "Unpublish" : confirm === "archive" ? "Archive" : confirm === "unschedule" ? "Unschedule" : "Withdraw"}
+        tone={confirm === "unpublish" || confirm === "archive" || confirm === "delete" ? "destructive" : "default"}
         pending={busy}
         onConfirm={confirmed}
       />

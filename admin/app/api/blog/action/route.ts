@@ -77,6 +77,16 @@ export async function POST(request: Request) {
       if (error) return failure(readable(error.message), error.code === "42501" ? 403 : 400)
       return Response.json({ website: { status: "ok" } })
     }
+    case "delete": {
+      const { data: found } = await client.from("blog_posts").select("status").eq("id", postId).maybeSingle()
+      if (!found) return failure("That post couldn’t be found.", 404)
+      if (found.status === "published") return failure("A live post can’t be deleted. Archive it first.", 409)
+      const { data: removed, error } = await client.from("blog_posts").delete().eq("id", postId).select("id")
+      if (error) return failure(readable(error.message), error.code === "42501" ? 403 : 400)
+      // Row-level security hides rows you can't delete: nothing removed means no permission.
+      if (!removed?.length) return failure("You don’t have permission to delete this post.", 403)
+      return Response.json({ website: { status: "ok" } })
+    }
     case "revalidate": {
       // A slug, category or author change on a live post.
       const { row } = await load()

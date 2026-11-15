@@ -25,6 +25,7 @@ const SECONDARY_LABEL: Record<SecondaryAction, string> = {
   unarchive: "Restore as draft",
   reschedule: "Change the schedule",
   unschedule: "Unschedule",
+  delete: "Delete post…",
 }
 
 export type TopBarAction = PrimaryAction | SecondaryAction
@@ -126,7 +127,7 @@ export function TopBar({
             <DropdownMenuContent align="end">
               {menu.map((action, index) => (
                 <div key={action}>
-                  {index > 0 && action === "archive" ? <DropdownMenuSeparator /> : null}
+                  {index > 0 && (action === "archive" || action === "delete") ? <DropdownMenuSeparator /> : null}
                   <DropdownMenuItem onSelect={() => onAction(action)}>{SECONDARY_LABEL[action]}</DropdownMenuItem>
                 </div>
               ))}

@@ -205,6 +205,16 @@ function makeAdapter(start: PostFull): HarnessAdapter {
       const next = set({ status: "draft", draft_content: post.content, has_unpublished_changes: true })
       return { post: next, website: { status: "skipped" as const, note: "Harness: no website to notify." } }
     },
+    async archive() {
+      const next = set({ status: "archived" })
+      return { post: next, website: { status: "skipped" as const, note: "Harness: no website to notify." } }
+    },
+    async delete() {
+      await delay(200)
+    },
+    async unarchive() {
+      return set({ status: "draft" })
+    },
     async schedule(_id, at) {
       await delay(200)
       return set({ status: "scheduled", scheduled_for: at.toISOString() })

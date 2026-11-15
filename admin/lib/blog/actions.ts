@@ -23,6 +23,9 @@ export const publishPost = (postId: string, opts: { significant?: boolean } = {}
 export const unpublishPost = (postId: string) => withWebsite(postId, "unpublish")
 export const archivePost = (postId: string) => withWebsite(postId, "archive")
 export const unarchivePost = (postId: string) => withWebsite(postId, "unarchive")
+export const deletePost = async (postId: string) => {
+  await callBlogAction("delete", postId)
+}
 export const submitForReview = (postId: string) => supabaseAdapter.submitForReview(postId)
 export const withdrawSubmission = (postId: string) => supabaseAdapter.withdraw(postId)
 export const requestChanges = (postId: string, comment?: string) => supabaseAdapter.requestChanges(postId, comment ?? "")

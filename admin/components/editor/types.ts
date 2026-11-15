@@ -160,6 +160,9 @@ export interface EditorAdapter {
   approve(postId: string): Promise<PostFull>
   publish(postId: string, opts: { significant: boolean }): Promise<{ post: PostFull; website: WebsiteResult }>
   unpublish(postId: string): Promise<{ post: PostFull; website: WebsiteResult }>
+  archive(postId: string): Promise<{ post: PostFull; website: WebsiteResult }>
+  unarchive(postId: string): Promise<PostFull>
+  delete(postId: string): Promise<void>
   /** Schedules (or reschedules) at a UTC instant. The cron route publishes it when due. */
   schedule(postId: string, at: Date): Promise<PostFull>
   unschedule(postId: string): Promise<PostFull>

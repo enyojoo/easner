@@ -154,6 +154,17 @@ export const supabaseAdapter: EditorAdapter = {
     const { website } = await callBlogAction("unpublish", postId)
     return { post: (await fetchPost(postId)) as PostFull, website }
   },
+  async archive(postId) {
+    const { website } = await callBlogAction("archive", postId)
+    return { post: (await fetchPost(postId)) as PostFull, website }
+  },
+  async unarchive(postId) {
+    await callBlogAction("unarchive", postId)
+    return (await fetchPost(postId)) as PostFull
+  },
+  async delete(postId) {
+    await callBlogAction("delete", postId)
+  },
   async schedule(postId, at) {
     await rpcPost("schedule_post", { p_post_id: postId, p_at: at.toISOString() })
     return (await fetchPost(postId)) as PostFull

@@ -7,7 +7,7 @@ export type WorkflowRole = "owner" | "editor" | "writer"
 export type WorkflowStatus = "draft" | "in_review" | "changes_requested" | "scheduled" | "published" | "archived"
 
 export type PrimaryAction = "submit" | "publish" | "update" | "approve" | "approve-publish" | null
-export type SecondaryAction = "request-changes" | "withdraw" | "unpublish" | "archive" | "unarchive" | "reschedule" | "unschedule"
+export type SecondaryAction = "request-changes" | "withdraw" | "unpublish" | "archive" | "unarchive" | "reschedule" | "unschedule" | "delete"
 
 export interface WorkflowInput {
   role: WorkflowRole
@@ -49,7 +49,7 @@ export function workflow({ role, userId, post, review }: WorkflowInput): Workflo
   }
 
   if (status === "archived") {
-    return { canEdit: false, primary: null, secondary: ["unarchive"], note: "Archived posts are read-only.", needsSecondEditor: false }
+    return { canEdit: false, primary: null, secondary: ["unarchive", "delete"], note: "Archived posts are read-only.", needsSecondEditor: false }
   }
 
   // Scheduled is not live yet: the main action publishes now, and the schedule can move or go.
@@ -58,7 +58,7 @@ export function workflow({ role, userId, post, review }: WorkflowInput): Workflo
     return {
       canEdit: true,
       primary: flaggedScheduler ? null : "publish",
-      secondary: ["reschedule", "unschedule", "archive"],
+      secondary: ["reschedule", "unschedule", "archive", "delete"],
       note: null,
       needsSecondEditor: false,
     }
@@ -80,7 +80,7 @@ export function workflow({ role, userId, post, review }: WorkflowInput): Workflo
   }
 
   if (status === "in_review") {
-    const secondary: SecondaryAction[] = ["request-changes"]
+    const secondary: SecondaryAction[] = ["request-changes", "delete"]
     if (flaggedAuthor) {
       return { canEdit: true, primary: null, secondary, note: "This post makes claims. A different Editor has to approve and publish it.", needsSecondEditor: true }
     }
@@ -92,12 +92,12 @@ export function workflow({ role, userId, post, review }: WorkflowInput): Workflo
     return {
       canEdit: true,
       primary: "submit",
-      secondary: [],
+      secondary: ["delete"],
       note: "This post makes claims about fees, rates or regulation. Send it for review: two Editors have to approve it.",
       needsSecondEditor: true,
     }
   }
-  return { canEdit: true, primary: "publish", secondary: [], note: null, needsSecondEditor: false }
+  return { canEdit: true, primary: "publish", secondary: ["delete"], note: null, needsSecondEditor: false }
 }
 
 export const PRIMARY_LABEL: Record<Exclude<PrimaryAction, null>, string> = {

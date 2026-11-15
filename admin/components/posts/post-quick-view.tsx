@@ -13,7 +13,7 @@ import { DetailList, DetailRow } from "@/components/ui/detail-list"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useAuth } from "@/lib/auth-context"
-import { archivePost, duplicatePost, getPreviewLink, unarchivePost, unpublishPost } from "@/lib/blog/actions"
+import { archivePost, deletePost, duplicatePost, getPreviewLink, unarchivePost, unpublishPost } from "@/lib/blog/actions"
 import { adminKeys, errorMessage, formatListDate, type PostRow } from "@/lib/queries"
 import { pageKeys } from "@/lib/queries-pages"
 import { permissionsFor } from "@/lib/roles"
@@ -26,7 +26,7 @@ export function displayStatus(post: PostRow): string {
 }
 
 type Props = { post: PostRow | null; categoryName?: string; onClose: () => void }
-type Confirm = "unpublish" | "archive" | null
+type Confirm = "unpublish" | "archive" | "delete" | null
 
 /** The quick view (OffBlog): details, Copy link, Duplicate, Unpublish, Archive; View live or Copy preview link; Edit. */
 export function PostQuickView({ post, categoryName, onClose }: Props) {
@@ -67,6 +67,16 @@ export function PostQuickView({ post, categoryName, onClose }: Props) {
       onClose()
     },
     onError: (e) => toast.error(errorMessage(e, "Couldn’t archive the post. Try again.")),
+  })
+  const remove = useMutation({
+    mutationFn: () => deletePost(post!.id),
+    onSuccess: async () => {
+      await refresh()
+      toast.success("Post deleted")
+      setConfirm(null)
+      onClose()
+    },
+    onError: (e) => toast.error(errorMessage(e, "Couldn’t delete the post. Try again.")),
   })
   const unarchive = useMutation({
     mutationFn: () => unarchivePost(post!.id),
@@ -175,6 +185,11 @@ export function PostQuickView({ post, categoryName, onClose }: Props) {
                       Archive
                     </Button>
                   ) : null}
+                  {canPublish && !isLive ? (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setConfirm("delete")}>
+                      Delete
+                    </Button>
+                  ) : null}
                 </div>
               </div>
               <SheetFooter>
@@ -228,6 +243,16 @@ export function PostQuickView({ post, categoryName, onClose }: Props) {
         tone="destructive"
         pending={archive.isPending}
         onConfirm={() => archive.mutate()}
+      />
+      <ConfirmDialog
+        open={confirm === "delete"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="Delete this post?"
+        description="It’s deleted for good, with its history and comments. This can’t be undone. To keep it, archive it instead."
+        confirmLabel="Delete post"
+        tone="destructive"
+        pending={remove.isPending}
+        onConfirm={() => remove.mutate()}
       />
     </>
   )
