@@ -4,13 +4,15 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { UserPlus, UserRoundPen } from "lucide-react"
+import { ChevronDown, Mail, UserPlus, UserRoundPen } from "lucide-react"
 import { toast } from "sonner"
 import { SimpleTableSkeleton } from "@/components/admin-skeletons"
 import { AuthorFields, draftFromAuthor, EMPTY_AUTHOR, saveAuthor, slugifyName, validateAuthor, type AuthorDraft } from "@/components/authors/author-form"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { InviteDialog } from "@/components/team/invite-dialog"
 import { DetailList, DetailRow } from "@/components/ui/detail-list"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/ui/page-header"
@@ -41,7 +43,8 @@ function AuthorsPageInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { role, user } = useAuth()
-  const { canManageAuthors } = permissionsFor(role)
+  const { canManageAuthors, canManageTeam } = permissionsFor(role)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const queryClient = useQueryClient()
   const urlQuery = searchParams.get("q") ?? ""
   const [search, setSearch] = useState(urlQuery)
@@ -88,7 +91,7 @@ function AuthorsPageInner() {
     mutationFn: () => saveAuthor(isNew ? null : (selected?.id ?? null), draft, canManageAuthors),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: pageKeys.authors() })
-      toast.success(isNew ? "Author added" : "Author saved")
+      toast.success(isNew ? "Guest author added" : "Author saved")
       setOpenId(null)
     },
     onError: (error) => toast.error(errorMessage(error, "Couldn’t save the author. Try again.")),
@@ -103,10 +106,36 @@ function AuthorsPageInner() {
         title="Authors"
         description="The people behind each post. Their profile shows on posts and on easner.com/blog/authors."
         actions={
-          canManageAuthors ? (
+          canManageTeam ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" size="sm">
+                  <UserPlus aria-hidden />
+                  New author
+                  <ChevronDown aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuItem className="items-start gap-2" onSelect={() => setInviteOpen(true)}>
+                  <Mail className="mt-0.5 size-4" aria-hidden />
+                  <span>
+                    <span className="block font-medium">Invite a team member</span>
+                    <span className="block text-xs text-muted-foreground">An editor or writer with a login. Their author profile is created when they sign in.</span>
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="items-start gap-2" onSelect={() => open("new")}>
+                  <UserRoundPen className="mt-0.5 size-4" aria-hidden />
+                  <span>
+                    <span className="block font-medium">Add a guest author</span>
+                    <span className="block text-xs text-muted-foreground">A byline for someone outside the team. No login.</span>
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : canManageAuthors ? (
             <Button type="button" variant="outline" size="sm" onClick={() => open("new")}>
               <UserPlus aria-hidden />
-              New author
+              Add guest author
             </Button>
           ) : null
         }
@@ -139,7 +168,7 @@ function AuthorsPageInner() {
             message={
               urlQuery
                 ? "Try a different name."
-                : "Author profiles (photo, role, bio and links) will show here. Guest authors don’t need a login."
+                : "Team members get an author profile when they accept an invite. Guest authors, for people outside the team, don’t need a login."
             }
             actions={
               !urlQuery ? (
@@ -200,6 +229,8 @@ function AuthorsPageInner() {
         )}
       </Card>
 
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+
       <Sheet open={sheetOpen} onOpenChange={(o) => !o && setOpenId(null)}>
         <SheetContent>
           <form
@@ -211,10 +242,10 @@ function AuthorsPageInner() {
             }}
           >
             <SheetHeader>
-              <SheetTitle>{isNew ? "New author" : (selected?.name ?? "Author")}</SheetTitle>
+              <SheetTitle>{isNew ? "New guest author" : (selected?.name ?? "Author")}</SheetTitle>
               <SheetDescription>
                 {isNew
-                  ? "A byline for a teammate or a guest. A guest author has no login."
+                  ? "A byline for someone outside the team. They have no login. To give someone a login, invite them as a team member instead."
                   : canManageAuthors
                     ? "Changing the URL changes the author page’s address."
                     : "Only editors and owners can edit other authors."}
@@ -246,7 +277,7 @@ function AuthorsPageInner() {
             {canManageAuthors ? (
               <SheetFooter className="flex-row items-center justify-end gap-2 border-t border-border/60">
                 <Button type="submit" variant="primary" loading={save.isPending} loadingLabel="Saving…">
-                  {isNew ? "Add author" : "Save changes"}
+                  {isNew ? "Add guest author" : "Save changes"}
                 </Button>
               </SheetFooter>
             ) : null}

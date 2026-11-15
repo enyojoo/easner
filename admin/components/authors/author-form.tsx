@@ -126,7 +126,7 @@ type FieldsProps = {
 
 const NO_MEMBER = "none"
 
-export function AuthorFields({ draft, onChange, errors, editor, members = [], onNameChange }: FieldsProps) {
+export function AuthorFields({ draft, onChange, errors, editor, isNew, members = [], onNameChange }: FieldsProps) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
   const photoUrl = blogFileUrl(draft.avatar_path)
@@ -238,7 +238,8 @@ export function AuthorFields({ draft, onChange, errors, editor, members = [], on
           aria-readonly={!editor}
         />
       </Field>
-      {editor ? (
+      {/* A new author made here is a guest. A teammate's byline is created when they accept an invite. */}
+      {editor && !isNew ? (
         <Field label="Linked login" optional hint="Leave empty for a shared byline or a guest author with no login.">
           <Select value={draft.member_id ?? NO_MEMBER} onValueChange={(v) => onChange({ member_id: v === NO_MEMBER ? null : v })}>
             <SelectTrigger aria-label="Linked login">
