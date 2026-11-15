@@ -209,3 +209,4 @@
 }
 .bp-faq summary { padding-block: 9px; margin-block: -9px; }
 .bp-faq summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: var(--radius-md); }
+@media (pointer: coarse), (max-width: 767px) { .bp-pre .copy { min-height: 44px; min-width: 44px; justify-content: center; top: 6px; right: 6px; } }
