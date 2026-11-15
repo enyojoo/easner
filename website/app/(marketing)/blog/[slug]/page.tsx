@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { draftMode } from "next/headers"
 import { PostView, postDateModified, postDescription } from "@/components/blog/post-view"
 import { getPost, getPostSlugs } from "@/lib/blog/queries"
@@ -15,7 +15,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const { isEnabled: draft } = await draftMode()
   const post = await getPost(slug, { draft })
-  if (!post) notFound()
+  // Archived, unpublished and deleted posts send readers to the blog instead of a dead end. (Temporary, so a post
+  // that comes back at the same address isn't stuck behind a cached redirect.)
+  if (!post) redirect("/blog")
   const title = post.seoTitle ?? post.title
   return marketingMetadata({
     metadata: { title, description: postDescription(post), keywords: post.focusKeyword ? [post.focusKeyword] : undefined },

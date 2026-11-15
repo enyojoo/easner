@@ -214,9 +214,9 @@ for route, path in sorted(routes.items()):
     check(page.h1_count == 1, f"{route}: expected one H1, found {page.h1_count}")
     robots = ",".join(page.meta.get("robots", []) + page.meta.get("googlebot", [])).lower()
     if route in BLOG and "noindex" in robots:
-        # Only thin category archives may be noindex; they must also be absent from the sitemap (checked below).
+        # Only thin category archives and author pages with no posts yet may be noindex; they must also be absent from the sitemap (checked below).
         noindex_routes.add(route)
-        check(blog_kind(route) == "category", f"{route}: only thin category archives may be noindex, found noindex here")
+        check(blog_kind(route) in ("category", "author"), f"{route}: only thin category archives and empty author pages may be noindex, found noindex here")
         check(not re.search(r"\b(nofollow|none|nosnippet)\b", robots), f"{route}: snippet/follow restriction: {robots}")
     else:
         check("index" in robots and not re.search(r"\b(noindex|nofollow|none|nosnippet)\b", robots), f"{route}: indexing/snippet restriction: {robots}")

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 import {
   extractDefinitions,
   extractFaq,
@@ -41,7 +41,7 @@ export const postDateModified = (post: Pick<BlogPost, "contentModifiedAt" | "pub
 /** `/blog/<slug>`: header, cover, contents rail, article, share rail, then helpful, author cards, related and CTA. */
 export async function PostView({ slug, draft }: { slug: string; draft: boolean }) {
   const post = await getPost(slug, { draft })
-  if (!post) notFound()
+  if (!post) redirect("/blog")
   const related = await getRelated(post)
   const path = postPath(post.slug)
   const url = abs(path)
