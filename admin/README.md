@@ -139,7 +139,7 @@ never undone because the website is down.
 `Authorization: Bearer ...`) and `SUPABASE_SECRET_KEY` (server only; it bypasses RLS). It lists posts that are
 `scheduled` and due and calls `publish_post` for each with the secret key. In the database, `publish_post` with no user and
 the `service_role` claim refuses anything that is not scheduled and due, so a second run does nothing. Then it runs the
-same website revalidation and IndexNow ping as a manual publish. Both variables are listed in `admin/.env.example`. A
+same website revalidation and IndexNow ping as a manual publish. Both variables are listed in `docs/blog-env-setup.md`. A
 call without the secret answers 401; with `CRON_SECRET` unset, 503. A scheduled post is published within 5 minutes of its
 time and dated to that time.
 
