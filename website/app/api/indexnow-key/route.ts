@@ -1,6 +1,6 @@
 /**
- * GET /api/indexnow-key: the IndexNow ownership key as plain text, so the admin's ping can name this URL as its
- * `keyLocation`. An empty 404 when INDEXNOW_KEY is not set.
+ * The IndexNow ownership key as plain text, for checking the setup by hand. IndexNow itself fetches `/<key>.txt`
+ * (next.config.mjs rewrites that to `./[key]/route.ts`). An empty 404 when INDEXNOW_KEY is not set.
  */
 export const dynamic = "force-dynamic"
 

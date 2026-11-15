@@ -10,7 +10,8 @@
     "start": "next start --port 3010",
     "sync:tokens": "node scripts/sync-design-tokens.mjs",
     "build:brand-rules": "node scripts/build-brand-rules.mjs",
-    "test": "node --test \"lib/**/*.test.ts\""
+    "test": "node --test \"lib/**/*.test.ts\"",
+    "e2e:renderer": "node scripts/e2e-editor-renderer.mjs"
   },
   "dependencies": {
     "@easner/blog-content": "*",

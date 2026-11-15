@@ -29,7 +29,7 @@ export function ComplianceStrip({ note }: ComplianceStripProps) {
                 </li>
               ))}
             </ul>
-            <MarketingLink href="/compliance" analyticsLocation="compliance_policy" ctaLabel="Learn about verification and eligibility" className="mt-6 inline-block text-sm font-semibold text-web-accent-on-graphite underline underline-offset-4">
+            <MarketingLink href="/compliance" analyticsLocation="compliance_policy" ctaLabel="Learn about verification and eligibility" className="mt-6 inline-flex min-h-11 items-center text-sm font-semibold text-web-accent-on-graphite underline underline-offset-4">
               Learn about verification and eligibility
             </MarketingLink>
             {note && <p className="mt-6 text-sm leading-6 text-white/55">{note}</p>}

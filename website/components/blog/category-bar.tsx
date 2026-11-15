@@ -18,7 +18,7 @@ export function CategoryBar({ categories, activeSlug, feedHref = "/blog/feed.xml
           <Link
             href={feedHref}
             aria-label="RSS feed"
-            className="grid size-9 shrink-0 place-items-center rounded-full bg-web-canvas text-web-nav shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink"
+            className="grid size-11 shrink-0 md:size-9 place-items-center rounded-full bg-web-canvas text-web-nav shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink"
           >
             <Rss className="size-4" aria-hidden="true" />
           </Link>

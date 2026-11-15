@@ -64,6 +64,7 @@ export async function IndexView({ page }: { page: number }) {
         <>
           {page === 1 && featured.length > 0 && (
             <section aria-label="Featured" className="mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-4 sm:px-6 lg:grid-cols-[1.45fr_1fr] lg:gap-8 lg:px-8 lg:pb-12">
+              <h2 className="sr-only">Featured posts</h2>
               <PostCard post={featured[0]} size="feature" priority />
               <div className="grid content-start gap-7 sm:grid-cols-2 lg:grid-cols-1">
                 {featured.slice(1).map((post) => (

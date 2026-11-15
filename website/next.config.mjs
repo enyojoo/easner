@@ -58,7 +58,11 @@ const nextConfig = {
    * /blog/<slug>.md is served by the route handler at /api/blog/markdown/<slug>. The URL stays /blog/<slug>.md.
    */
   async rewrites() {
-    return [{ source: "/blog/:slug.md", destination: "/api/blog/markdown/:slug" }]
+    return [
+      { source: "/blog/:slug.md", destination: "/api/blog/markdown/:slug" },
+      // IndexNow looks for the ownership key at /<key>.txt on the site root. The handler answers only for the real key.
+      { source: "/:key([0-9a-fA-F-]{8,128}).txt", destination: "/api/indexnow-key/:key" },
+    ]
   },
   async redirects() {
     return [{ source: "/ai", destination: "/answers", permanent: true }]

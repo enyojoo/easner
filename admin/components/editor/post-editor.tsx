@@ -215,7 +215,7 @@ export function PostEditor({
     editable: !readOnly,
     immediatelyRender: false,
     editorProps: {
-      attributes: { class: "editor-prose min-h-[50vh] focus:outline-none", "aria-label": "Post body", spellcheck: "true" },
+      attributes: { class: "editor-prose min-h-[50vh] focus:outline-none", role: "textbox", "aria-multiline": "true", "aria-label": "Post body", spellcheck: "true" },
     },
     onCreate: ({ editor: created }) => {
       lastDocKey.current = JSON.stringify(normalizeDoc(created.getJSON()))
@@ -853,7 +853,7 @@ export function PostEditor({
         {panelOpen ? (
           <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="m-4 mb-0 grid h-9 grid-cols-4">
+              <TabsList className="m-4 mb-0 flex h-9 justify-between gap-0.5 [&>button]:flex-1 [&>button]:px-1.5">
                 <TabsTrigger value="post">Post</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
                 <TabsTrigger value="performance">Performance</TabsTrigger>

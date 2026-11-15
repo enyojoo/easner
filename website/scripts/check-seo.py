@@ -187,6 +187,7 @@ def blog_checks(route, path, page, types, description):
 
 
 titles, descriptions = {}, {}
+PAGES = {}
 faq_count = 0
 for route, path in sorted(routes.items()):
     check(path.exists(), f"{route}: production HTML missing; run the build first")
@@ -197,6 +198,7 @@ for route, path in sorted(routes.items()):
     except (ValueError, TypeError) as error:
         ERRORS.append(f"{route}: invalid structured data: {error}")
         continue
+    PAGES[route] = page
     check(len(page.titles) == 1 and bool(page.titles[0]), f"{route}: needs one nonempty title")
     title = page.titles[0] if page.titles else ""
     check(title not in titles, f"{route}: duplicate title with {titles.get(title)}")
@@ -366,6 +368,140 @@ if robots_path.exists():
     robots = robots_path.read_text()
     check("Allow: /" in robots and not re.search(r"Disallow:\s*/\s*$", robots, re.M), "robots.txt blocks the site")
     check(f"Sitemap: {ORIGIN}/sitemap.xml" in robots, "robots.txt sitemap reference is incorrect")
+
+# ---------------------------------------------------------------------------------------------------------------
+# Blog structured data in depth: no duplicate nodes, references that resolve, values Google can parse.
+# ---------------------------------------------------------------------------------------------------------------
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+
+
+def parse_iso(value):
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return None
+
+
+SINGLETON_TYPES = ("Organization", "WebSite", "BreadcrumbList", "BlogPosting", "FAQPage", "HowTo", "ProfilePage", "CollectionPage", "WebPage")
+post_routes = {path_of(r) for r in BLOG if blog_kind(r) == "post"}
+for route in sorted(BLOG):
+    page = PAGES.get(route)
+    if page is None:
+        continue
+    kind = blog_kind(route)
+    ids = [s.get("@id") for s in page.schemas if s.get("@id")]
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    check(not dupes, f"{route}: JSON-LD has two nodes with the same @id: {dupes}")
+    for t in SINGLETON_TYPES:
+        count = sum(1 for s in page.schemas if s.get("@type") == t)
+        check(count <= 1, f"{route}: {count} {t} JSON-LD nodes, expected at most one")
+    known = set(ids) | {ORIGIN + "/#organization", ORIGIN + "/#website"}
+    for schema in page.schemas:
+        for key in ("isPartOf", "publisher", "mainEntityOfPage", "about"):
+            ref = schema.get(key)
+            if isinstance(ref, dict) and set(ref) == {"@id"}:
+                check(ref["@id"] in known, f"{route}: {schema.get('@type')}.{key} points at {ref['@id']}, which is not on the page")
+        if schema.get("@type") == "BreadcrumbList":
+            items = schema.get("itemListElement", [])
+            check(len(items) >= 2, f"{route}: breadcrumb needs at least 2 items")
+            check([i.get("position") for i in items] == list(range(1, len(items) + 1)), f"{route}: breadcrumb positions are not 1..n")
+            check(all(i.get("name") and i.get("item", "").startswith(ORIGIN) for i in items), f"{route}: breadcrumb item without name or absolute URL")
+        if schema.get("@type") == "CollectionPage":
+            entity = schema.get("mainEntity", {})
+            listed = entity.get("itemListElement", [])
+            check(entity.get("numberOfItems") == len(listed), f"{route}: ItemList numberOfItems does not match its items")
+            allowed = {path_of(r) for r in BLOG if blog_kind(r) == "author"} if kind == "authors" else post_routes
+            for item in listed:
+                check(urlparse(item.get("url", "")).path in allowed, f"{route}: ItemList entry does not exist: {item.get('url')}")
+        if schema.get("@type") == "ProfilePage":
+            person = schema.get("mainEntity", {})
+            check(person.get("@type") == "Person" and bool(person.get("name")) and bool(person.get("url")), f"{route}: ProfilePage needs a Person with name and url")
+        if schema.get("@type") == "BlogPosting":
+            published, modified = parse_iso(schema.get("datePublished")), parse_iso(schema.get("dateModified"))
+            check(published is not None and modified is not None, f"{route}: BlogPosting dates are not ISO 8601")
+            if published and modified:
+                check(modified >= published, f"{route}: dateModified is before datePublished")
+                check(published <= datetime.now(timezone.utc), f"{route}: BlogPosting is dated in the future")
+                check(page.meta.get("article:published_time") == [schema["datePublished"]], f"{route}: article:published_time differs from datePublished")
+                check(page.meta.get("article:modified_time") == [schema["dateModified"]], f"{route}: article:modified_time differs from dateModified")
+            check(schema.get("wordCount", 0) > 0, f"{route}: BlogPosting wordCount missing")
+    if kind == "post":
+        check(page.meta.get("twitter:card") == ["summary_large_image"], f"{route}: twitter:card must be summary_large_image")
+        check(bool(page.meta.get("article:author")), f"{route}: missing article:author")
+
+# Sitemap: posts carry a lastmod that matches the page's own modified time.
+if sitemap_path.exists():
+    lastmods = {e.findtext("{*}loc").rstrip("/"): e.findtext("{*}lastmod") for e in sitemap.findall("{*}url")}
+    for route in BLOG:
+        if blog_kind(route) != "post" or route in noindex_routes:
+            continue
+        loc = ORIGIN + route
+        mod = parse_iso(lastmods.get(loc))
+        check(mod is not None, f"{route}: sitemap entry has no valid lastmod")
+        page = PAGES.get(route)
+        if mod and page and page.meta.get("article:modified_time"):
+            page_mod = parse_iso(page.meta["article:modified_time"][0])
+            check(page_mod is not None and abs((page_mod - mod).total_seconds()) < 1, f"{route}: sitemap lastmod {lastmods[loc]} differs from article:modified_time")
+
+# RSS and Atom-in-RSS feeds: the main feed, every category and author feed.
+RFC822 = re.compile(r"^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$")
+feed_files = [OUTPUT / "blog/feed.xml.body"] + sorted((OUTPUT / "blog/categories").glob("*/feed.xml.body")) + sorted((OUTPUT / "blog/authors").glob("*/feed.xml.body"))
+for feed_file in feed_files:
+    if not feed_file.exists():
+        continue
+    name = "/" + feed_file.relative_to(OUTPUT).as_posix().removesuffix(".body")
+    try:
+        root = ElementTree.fromstring(feed_file.read_text())
+    except ElementTree.ParseError as error:
+        ERRORS.append(f"{name}: feed is not well-formed XML: {error}")
+        continue
+    check(root.tag == "rss" and root.get("version") == "2.0", f"{name}: root must be <rss version=2.0>")
+    channel = root.find("channel")
+    if channel is None:
+        ERRORS.append(f"{name}: no <channel>")
+        continue
+    for field in ("title", "link", "description", "language", "lastBuildDate"):
+        check(bool((channel.findtext(field) or "").strip()), f"{name}: channel is missing <{field}>")
+    self_link = [l for l in channel.findall("{http://www.w3.org/2005/Atom}link") if l.get("rel") == "self"]
+    check(len(self_link) == 1 and self_link[0].get("href") == ORIGIN + name, f"{name}: needs exactly one atom:link rel=self equal to its own URL")
+    check(RFC822.match(channel.findtext("lastBuildDate") or "") is not None, f"{name}: lastBuildDate is not RFC 822")
+    guids, newest = [], None
+    for item in channel.findall("item"):
+        link = (item.findtext("link") or "").strip()
+        guid = (item.findtext("guid") or "").strip()
+        check(urlparse(link).path in post_routes, f"{name}: item link is not a published post: {link}")
+        check(bool(guid) and bool((item.findtext("title") or "").strip()) and bool((item.findtext("description") or "").strip()), f"{name}: item missing title, guid or description: {link}")
+        check(RFC822.match(item.findtext("pubDate") or "") is not None, f"{name}: item pubDate is not RFC 822: {link}")
+        if RFC822.match(item.findtext("pubDate") or ""):
+            when = parsedate_to_datetime(item.findtext("pubDate"))
+            newest = when if newest is None or when > newest else newest
+        guids.append(guid)
+    check(len(guids) == len(set(guids)), f"{name}: duplicate item guids")
+    if newest and RFC822.match(channel.findtext("lastBuildDate") or ""):
+        check(parsedate_to_datetime(channel.findtext("lastBuildDate")) >= newest, f"{name}: lastBuildDate is older than the newest item")
+    check("\x00" not in feed_file.read_text(), f"{name}: contains a NUL byte")
+
+# The Markdown twin of each post and the LLM text files.
+llms_full = (OUTPUT / "llms-full.txt.body").read_text() if (OUTPUT / "llms-full.txt.body").exists() else ""
+for base in sorted(post_routes):
+    md_file = OUTPUT / "api/blog/markdown" / (base[len("/blog/"):] + ".body")
+    if not md_file.exists():
+        continue
+    md = md_file.read_text()
+    check(md.startswith("# "), f"{base}.md: must start with an H1")
+    check(f"Source: {ORIGIN}{base}" in md, f"{base}.md: missing the Source: canonical line")
+    check(len(md) > 200, f"{base}.md: suspiciously short")
+    check(not re.search(r"<[a-z]+[ >]", md.split("```")[0]), f"{base}.md: raw HTML leaked into the Markdown")
+    check(f"Source: {ORIGIN}{base}" in llms_full, f"llms-full.txt does not include the post {base}")
+
+# Noindex rules that the static output cannot show: draft previews and archives.
+preview_route = (ROOT / "app/api/blog/preview/route.ts").read_text()
+check("X-Robots-Tag" in preview_route and "noindex" in preview_route, "/api/blog/preview must send X-Robots-Tag: noindex")
+check("noindex: post.noindex || draft" in (ROOT / "app/(marketing)/blog/[slug]/page.tsx").read_text(), "post page must be noindex in draft preview")
+check("no-store" in preview_route, "/api/blog/preview must be no-store")
+check(".txt\", destination: \"/api/indexnow-key/:key" in (ROOT / "next.config.mjs").read_text(), "IndexNow: next.config.mjs must rewrite /<key>.txt to /api/indexnow-key (IndexNow fetches the key at the site root)")
+check("blog:post:" in (ROOT / "lib/blog/config.ts").read_text(), "blog reads must carry blog:post:<slug> cache tags")
 
 if ERRORS:
     print("SEO validation failed:\n- " + "\n- ".join(ERRORS))

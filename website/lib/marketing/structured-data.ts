@@ -456,16 +456,19 @@ export function collectionPageJsonLd({
   description,
   path,
   items,
+  idSuffix = "webpage",
 }: {
   name: string
   description: string
   path: string
   items: { name: string; path: string }[]
+  /** Fragment of the node's `@id`. An author page has a ProfilePage at `#webpage`, so its post list uses another one. */
+  idSuffix?: string
 }) {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${SITE_URL}${path}#webpage`,
+    "@id": `${SITE_URL}${path}#${idSuffix}`,
     url: `${SITE_URL}${path}`,
     name,
     description,

@@ -51,7 +51,7 @@ export function Helpful({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="bp-help">
+    <div className="bp-help" aria-live="polite">
       {state === "thanks" ? (
         <p className="bp-ty">
           <Check size={18} aria-hidden="true" /> Thanks. This helps us improve the post.

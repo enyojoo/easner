@@ -302,6 +302,10 @@ export function EditorHarness() {
   // Switching role keeps the post exactly as the adapter has it, so a Writer's submission reaches the Editor.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const initial = useMemo(() => adapter.snapshot(), [adapter, roleIndex, reload])
+  // Lets the end-to-end script (scripts/e2e-editor-renderer.mjs) read the post exactly as the adapter holds it.
+  useEffect(() => {
+    ;(window as unknown as { __harness?: { snapshot: () => PostFull } }).__harness = { snapshot: adapter.snapshot }
+  }, [adapter])
   const current = ROLES[roleIndex]
   const viewer: Viewer = { id: current.id, role: current.role, name: current.label }
   useEffect(() => {

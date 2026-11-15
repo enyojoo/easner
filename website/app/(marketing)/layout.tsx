@@ -11,8 +11,14 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript([organizationJsonLd(), websiteJsonLd()])}
       />
+      <a
+        href="#main"
+        className="sr-only rounded-full bg-brand-navy text-sm font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[300] focus:px-5 focus:py-3"
+      >
+        Skip to content
+      </a>
       <PublicHeader />
-      <main className="relative overflow-x-clip pt-16">
+      <main id="main" tabIndex={-1} className="relative overflow-x-clip pt-16 outline-none">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_18%_10%,rgba(0,122,204,0.12),transparent_32%),linear-gradient(180deg,#FFFFFF_0%,rgba(246,243,235,0)_75%)]" />
         <div className="relative">{children}</div>
       </main>

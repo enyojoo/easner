@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase"
 import { isAdminRole, type AdminRole } from "@/lib/roles"
@@ -109,14 +109,28 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [bootRole] = useState<AdminRole | null>(() => readCachedRole(probeStoredAdminUserId()))
+  // The first render must match the server's (nothing known yet). The fast-boot cache is read right after mount,
+  // before the browser paints, so a recently verified member still sees the shell at once without a hydration mismatch.
+  const [bootUserId, setBootUserId] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [role, setRole] = useState<AdminRole | null>(bootRole)
-  const [access, setAccess] = useState<AdminAccess>(bootRole ? "ready" : "loading")
-  const [hasVerifiedFactor, setHasVerifiedFactor] = useState(Boolean(bootRole))
+  const [role, setRole] = useState<AdminRole | null>(null)
+  const [access, setAccess] = useState<AdminAccess>("loading")
+  const [hasVerifiedFactor, setHasVerifiedFactor] = useState(false)
   const [sessionResolved, setSessionResolved] = useState(false)
   const userIdRef = useRef<string | null>(null)
   const generationRef = useRef(0)
+
+  useLayoutEffect(() => {
+    const stored = probeStoredAdminUserId()
+    const cached = readCachedRole(stored)
+    setBootUserId(stored)
+    if (!cached) return
+    // Only while nothing newer has resolved (a fast session check can finish first).
+    if (generationRef.current !== 0) return
+    setRole(cached)
+    setAccess("ready")
+    setHasVerifiedFactor(true)
+  }, [])
 
   const sync = useCallback(async (session: Session | null): Promise<AdminAccess> => {
     const generation = ++generationRef.current
@@ -175,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const sessionUserId = user?.id ?? probeStoredAdminUserId()
+  const sessionUserId = user?.id ?? bootUserId
   const adminQueriesEnabled = access === "ready" && Boolean(sessionUserId)
 
   const value = useMemo(

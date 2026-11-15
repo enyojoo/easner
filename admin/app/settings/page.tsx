@@ -231,11 +231,11 @@ function TeamSection() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-6">Member</TableHead>
+                <TableHead className="min-w-[220px] pl-6">Member</TableHead>
                 <TableHead className="w-[160px]">Role</TableHead>
                 <TableHead className="w-[130px]">Status</TableHead>
                 <TableHead className="w-[110px]">Added</TableHead>
-                <TableHead className="w-[120px] pr-6">
+                <TableHead className="w-[140px] pr-6">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -249,7 +249,7 @@ function TeamSection() {
                 const isSelf = isMember && row.member.user_id === user?.id
                 return (
                   <TableRow key={row.key} className="h-14 hover:bg-transparent">
-                    <TableCell className="pl-6">
+                    <TableCell className="max-w-0 pl-6">
                       <p className="truncate text-sm font-medium text-foreground">
                         {name || email}
                         {isSelf ? <span className="font-normal text-muted-foreground"> (you)</span> : null}
@@ -271,12 +271,12 @@ function TeamSection() {
                     <TableCell>
                       <StatusBadge status={isMember ? "active" : "invited"} />
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground tabular-nums">
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
                       {formatListDate(isMember ? row.member.created_at : row.invite.created_at)}
                     </TableCell>
                     <TableCell className="pr-6 text-right">
                       {canManageTeam && !isSelf ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setPendingRemoval(row)}>
+                        <Button type="button" variant="ghost" size="sm" className="whitespace-nowrap" onClick={() => setPendingRemoval(row)}>
                           {isMember ? "Remove" : "Cancel invite"}
                         </Button>
                       ) : null}

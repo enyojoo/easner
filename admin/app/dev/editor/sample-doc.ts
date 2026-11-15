@@ -1,8 +1,8 @@
 import type { DocNode } from "@easner/blog-content"
 
-const t = (text: string, marks?: Array<{ type: "bold" | "italic" | "underline" | "strike" | "code" } | { type: "link"; attrs: { href: string } }>) =>
+const t = (text: string, marks?: Array<{ type: "bold" | "italic" | "underline" | "strike" | "code" } | { type: "link"; attrs: { href: string; sponsored?: boolean } }>) =>
   marks ? { type: "text" as const, text, marks } : { type: "text" as const, text }
-const p = (...content: ReturnType<typeof t>[]) => ({ type: "paragraph" as const, content })
+const p = (...content: Array<ReturnType<typeof t> | { type: "hardBreak" }>) => ({ type: "paragraph" as const, content })
 
 /** Every node and mark in @easner/blog-content, so the editor can be checked against all of them. */
 export const EVERY_BLOCK_DOC: DocNode = {
@@ -22,6 +22,9 @@ export const EVERY_BLOCK_DOC: DocNode = {
       t(" with "),
       t("code", [{ type: "code" }]),
       t("."),
+      { type: "hardBreak" as const },
+      t("A paid placement", [{ type: "link", attrs: { href: "https://example.com/partner", sponsored: true } }]),
+      t(" after a line break."),
     ),
     { type: "heading", attrs: { level: 3 }, content: [t("What changes for you")] },
     { type: "heading", attrs: { level: 4 }, content: [t("A small heading")] },
@@ -36,7 +39,8 @@ export const EVERY_BLOCK_DOC: DocNode = {
       type: "table",
       content: [
         { type: "tableRow", content: [{ type: "tableHeader", content: [p(t("Route"))] }, { type: "tableHeader", content: [p(t("Typical time"))] }] },
-        { type: "tableRow", content: [{ type: "tableCell", content: [p(t("USD to NGN"))] }, { type: "tableCell", content: [p(t("Minutes to hours"))] }] },
+        { type: "tableRow", content: [{ type: "tableCell", content: [p(t("USD to NGN"))] }, { type: "tableCell", attrs: { align: "center" }, content: [p(t("Minutes to hours")), p(t("Same day where supported"))] }] },
+        { type: "tableRow", content: [{ type: "tableCell", attrs: { colspan: 2 }, content: [p(t("A cell that spans both columns"))] }] },
       ],
     },
     { type: "callout", attrs: { variant: "info" }, content: [p(t("Availability depends on the corridor, where supported."))] },

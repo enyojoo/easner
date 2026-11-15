@@ -113,7 +113,7 @@ function CtaBlock({ node, ctx }: { node: AnyNode; ctx: Ctx }) {
   return (
     <div className="bp-cta">
       <div>
-        {heading && <h4>{heading}</h4>}
+        {heading && <h3 className="bp-h">{heading}</h3>}
         {a.body && <p>{a.body}</p>}
       </div>
       {action}
@@ -235,7 +235,12 @@ function renderBlock(node: AnyNode, key: number, ctx: Ctx): ReactNode {
                     const attrs = (cell.attrs ?? {}) as { colspan?: number; rowspan?: number; align?: "left" | "center" | "right" }
                     return (
                       <Cell key={c} colSpan={attrs.colspan} rowSpan={attrs.rowspan} style={attrs.align ? { textAlign: attrs.align } : undefined} scope={Cell === "th" ? "col" : undefined}>
-                        <Inline nodes={cell.content?.[0]?.content} />
+                        {(cell.content ?? []).map((paragraph, n) => (
+                          <Fragment key={n}>
+                            {n > 0 && <br />}
+                            <Inline nodes={paragraph.content} />
+                          </Fragment>
+                        ))}
                       </Cell>
                     )
                   })}
@@ -267,7 +272,7 @@ function renderBlock(node: AnyNode, key: number, ctx: Ctx): ReactNode {
     case "keyTakeaways":
       return (
         <div key={key} className="bp-take">
-          <h4>Key takeaways</h4>
+          <h3 className="bp-h">Key takeaways</h3>
           <Blocks nodes={node.content} ctx={ctx} />
         </div>
       )
@@ -334,7 +339,7 @@ function renderBlock(node: AnyNode, key: number, ctx: Ctx): ReactNode {
     case "sources":
       return (
         <div key={key} className="bp-src">
-          <h4>Sources</h4>
+          <h3 className="bp-h">Sources</h3>
           <ol>
             {(node.content ?? []).map((item, i) => (
               <li key={i}>

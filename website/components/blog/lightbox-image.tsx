@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { Maximize2, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 interface LightboxImageProps {
@@ -20,22 +20,34 @@ interface LightboxImageProps {
 /** A figure with an enlarge-on-click lightbox. The static HTML is a plain figure with an `<img>` that has alt and size. */
 export function LightboxImage({ src, alt, caption, width, height, layout, optimize }: LightboxImageProps) {
   const [open, setOpen] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false)
+    const opener = trigger.current
+    // Focus moves into the dialog, stays there (it has one control), and returns to the image button on close.
+    closeButton.current?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false)
+      if (event.key === "Tab") {
+        event.preventDefault()
+        closeButton.current?.focus()
+      }
+    }
     window.addEventListener("keydown", onKey)
     const previous = document.body.style.overflow
     document.body.style.overflow = "hidden"
     return () => {
       window.removeEventListener("keydown", onKey)
       document.body.style.overflow = previous
+      opener?.focus()
     }
   }, [open])
 
   return (
     <figure className={cn("bp-fig", layout !== "column" && layout)}>
       <div className="fi">
-        <button type="button" onClick={() => setOpen(true)} aria-label={`Enlarge image: ${alt || "image"}`}>
+        <button ref={trigger} type="button" onClick={() => setOpen(true)} aria-label={`Enlarge image: ${alt || "image"}`}>
           <Image
             src={src}
             alt={alt}
@@ -52,7 +64,7 @@ export function LightboxImage({ src, alt, caption, width, height, layout, optimi
       {caption && <figcaption>{caption}</figcaption>}
       {open && (
         <div className="bp-lightbox" role="dialog" aria-modal="true" aria-label={alt || "Image"} onClick={() => setOpen(false)}>
-          <button type="button" className="x" aria-label="Close" onClick={() => setOpen(false)}>
+          <button ref={closeButton} type="button" className="x" aria-label="Close" onClick={() => setOpen(false)}>
             <X size={18} aria-hidden="true" />
           </button>
           <figure onClick={(e) => e.stopPropagation()}>

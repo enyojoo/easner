@@ -15,7 +15,7 @@ function pageList(page: number, count: number): (number | "gap")[] {
   return out
 }
 
-const ITEM = "inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium text-web-body shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink"
+const ITEM = "inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-3 text-sm font-medium text-web-body shadow-[inset_0_0_0_1px_var(--web-hairline)] transition-colors hover:text-web-ink"
 
 /** Numbered pagination: every item is a real `?page=N` link, so crawlers and no-JS readers can page. */
 export function Pagination({ base, page, pageCount }: { base: string; page: number; pageCount: number }) {
