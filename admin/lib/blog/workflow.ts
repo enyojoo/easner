@@ -7,7 +7,7 @@ export type WorkflowRole = "owner" | "editor" | "writer"
 export type WorkflowStatus = "draft" | "in_review" | "changes_requested" | "scheduled" | "published" | "archived"
 
 export type PrimaryAction = "submit" | "publish" | "update" | "approve" | "approve-publish" | null
-export type SecondaryAction = "request-changes" | "withdraw" | "unpublish" | "archive" | "unarchive"
+export type SecondaryAction = "request-changes" | "withdraw" | "unpublish" | "archive" | "unarchive" | "reschedule" | "unschedule"
 
 export interface WorkflowInput {
   role: WorkflowRole
@@ -52,7 +52,19 @@ export function workflow({ role, userId, post, review }: WorkflowInput): Workflo
     return { canEdit: false, primary: null, secondary: ["unarchive"], note: "Archived posts are read-only.", needsSecondEditor: false }
   }
 
-  const live = status === "published" || status === "scheduled"
+  // Scheduled is not live yet: the main action publishes now, and the schedule can move or go.
+  if (status === "scheduled") {
+    const flaggedScheduler = post.claims_flagged && isAuthor
+    return {
+      canEdit: true,
+      primary: flaggedScheduler ? null : "publish",
+      secondary: ["reschedule", "unschedule", "archive"],
+      note: null,
+      needsSecondEditor: false,
+    }
+  }
+
+  const live = status === "published"
   // The author counts toward the two Editors when they are one, but can never be the one who publishes a flagged post.
   const have = (review?.have ?? 0) + 1
   const needsSecondEditor = post.claims_flagged && have < REQUIRED_EDITORS

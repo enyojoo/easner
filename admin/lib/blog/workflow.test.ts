@@ -70,3 +70,13 @@ test("archived is read-only with unarchive", () => {
   assert.equal(archived.canEdit, false)
   assert.deepEqual(archived.secondary, ["unarchive"])
 })
+
+test("scheduled: not live, so publishing now stays available and the schedule can move or go", () => {
+  const scheduled = workflow(base({ post: { status: "scheduled", has_unpublished_changes: true } }))
+  assert.equal(scheduled.canEdit, true)
+  assert.equal(scheduled.primary, "publish")
+  assert.deepEqual(scheduled.secondary, ["reschedule", "unschedule", "archive"])
+  const writer = workflow(base({ role: "writer", userId: "w1", post: { status: "scheduled" } }))
+  assert.equal(writer.canEdit, false)
+  assert.equal(writer.primary, null)
+})

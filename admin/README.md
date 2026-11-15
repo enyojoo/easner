@@ -133,10 +133,23 @@ environment (never `NEXT_PUBLIC_`):
 When `WEBSITE_URL` or a secret is missing the step is skipped and the person sees a non-blocking note; a publish is
 never undone because the website is down.
 
+### Scheduled publishing (Phase 4B)
+
+`vercel.json` runs `GET /api/cron/publish-scheduled` every 5 minutes. The route needs `CRON_SECRET` (Vercel sends it as
+`Authorization: Bearer ...`) and `SUPABASE_SECRET_KEY` (server only; it bypasses RLS). It lists posts that are
+`scheduled` and due and calls `publish_post` for each with the secret key. In the database, `publish_post` with no user and
+the `service_role` claim refuses anything that is not scheduled and due, so a second run does nothing. Then it runs the
+same website revalidation and IndexNow ping as a manual publish. Both variables are listed in `admin/.env.example`. A
+call without the secret answers 401; with `CRON_SECRET` unset, 503. A scheduled post is published within 5 minutes of its
+time and dated to that time.
+
 ### Development harness
 
 `/dev/editor` mounts the real editor with an in-memory adapter and no Supabase, with a role switcher, an every-block
-sample document, simulated offline and uploads that go to memory. It exists only when `NODE_ENV=development` **and**
+sample document, simulated offline and uploads that go to memory. The harness bar also drives the lifecycle features:
+schedule from the publish dialog and "Run the scheduler" (what the cron route does), History with compare and restore,
+the edit lock ("Ada starts editing", then take over) and presence avatars. `/dev/redirects` runs the Redirects screen on
+local data. It exists only when `NODE_ENV=development` **and**
 `ADMIN_DEV_HARNESS=1` (put it in the git-ignored `admin/.env.local`); otherwise `/dev/*` answers 404, and the harness
 code is not in a production build.
 

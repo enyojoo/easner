@@ -12,7 +12,7 @@ const TABLE: Record<string, Presentation> = {
   draft: { label: "Draft", tone: "neutral", icon: null },
   in_review: { label: "In review", tone: "warning", icon: "clock" },
   changes_requested: { label: "Changes requested", tone: "warning", icon: "alert-circle" },
-  scheduled: { label: "Scheduled", tone: "warning", icon: "clock" },
+  scheduled: { label: "Scheduled", tone: "neutral", icon: "clock" },
   published: { label: "Published", tone: "success", icon: "check-circle" },
   changes_not_published: { label: "Changes not published", tone: "warning", icon: "alert-circle" },
   archived: { label: "Archived", tone: "neutral", icon: "lock" },

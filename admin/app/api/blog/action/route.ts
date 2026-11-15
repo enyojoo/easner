@@ -1,33 +1,10 @@
 import { validateDoc, type DocNode } from "@easner/blog-content"
 import { prepareSave } from "@/lib/blog/derive"
-import { pingIndexNow, revalidateWebsite, verifiedClient } from "@/lib/server/blog-server"
+import { loadSiteRow, pingIndexNow, revalidateWebsite, siteChange, verifiedClient, type SiteRow } from "@/lib/server/blog-server"
 
 export const dynamic = "force-dynamic"
 
 type Body = { action?: string; postId?: string; significant?: boolean; oldSlug?: string; oldCategorySlug?: string }
-
-const POST_FOR_SITE = "id, slug, status, category_id, blog_categories(slug), blog_post_authors(blog_authors(slug))"
-
-type SiteRow = {
-  id: string
-  slug: string
-  status: string
-  blog_categories: { slug: string } | { slug: string }[] | null
-  blog_post_authors: Array<{ blog_authors: { slug: string } | { slug: string }[] | null }> | null
-}
-
-const first = <T,>(value: T | T[] | null | undefined): T | null => (Array.isArray(value) ? (value[0] ?? null) : (value ?? null))
-
-function siteChange(row: SiteRow, extra: { oldSlug?: string; oldCategorySlug?: string; kind: "publish" | "update" | "unpublish" | "slug" | "category" | "author" }) {
-  return {
-    slug: row.slug,
-    oldSlug: extra.oldSlug && extra.oldSlug !== row.slug ? extra.oldSlug : undefined,
-    categorySlug: first(row.blog_categories)?.slug,
-    oldCategorySlug: extra.oldCategorySlug,
-    authorSlugs: (row.blog_post_authors ?? []).map((link) => first(link.blog_authors)?.slug).filter((s): s is string => Boolean(s)),
-    kind: extra.kind,
-  }
-}
 
 function failure(message: string, status = 400) {
   return Response.json({ error: message }, { status })
@@ -53,8 +30,8 @@ export async function POST(request: Request) {
   if (!postId || typeof postId !== "string") return failure("Which post?")
 
   const load = async () => {
-    const { data, error } = await client.from("blog_posts").select(POST_FOR_SITE).eq("id", postId).maybeSingle()
-    return { row: data as unknown as SiteRow | null, error }
+    const row: SiteRow | null = await loadSiteRow(client, postId)
+    return { row }
   }
 
   switch (body.action) {

@@ -21,7 +21,7 @@ export function validateSlug(slug: string): SlugCheck {
   return { ok: true }
 }
 
-/** Locked once the post has been published, for everyone but Owners. */
-export function slugLocked({ publishedAt, role }: { publishedAt: string | null | undefined; role: string | null }): boolean {
-  return Boolean(publishedAt) && role !== "owner"
+/** Locked once the post has been published or is scheduled to be, for everyone but Owners. */
+export function slugLocked({ publishedAt, role, status }: { publishedAt: string | null | undefined; role: string | null; status?: string | null }): boolean {
+  return (Boolean(publishedAt) || status === "scheduled") && role !== "owner"
 }

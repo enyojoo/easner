@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { PresenceAvatars } from "@/components/editor/presence-avatars"
+import type { PresenceViewer } from "@/components/editor/types"
 import type { AutosaveState } from "@/lib/blog/autosave"
 import { PRIMARY_LABEL, type PrimaryAction, type SecondaryAction } from "@/lib/blog/workflow"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,8 @@ const SECONDARY_LABEL: Record<SecondaryAction, string> = {
   unpublish: "Unpublish",
   archive: "Archive",
   unarchive: "Restore as draft",
+  reschedule: "Change the schedule",
+  unschedule: "Unschedule",
 }
 
 export type TopBarAction = PrimaryAction | SecondaryAction
@@ -34,6 +37,11 @@ export function TopBar({
   saveLabel,
   commentCount,
   panelOpen,
+  statusNote,
+  viewers,
+  meId,
+  primaryLabel,
+  onOpenHistory,
   primary,
   secondary,
   busy,
@@ -48,6 +56,12 @@ export function TopBar({
   saveLabel: string
   commentCount: number
   panelOpen: boolean
+  /** Next to the status: "Goes live Tue 1 Dec 2026, 09:30 GMT+1" for a scheduled post. */
+  statusNote?: string | null
+  viewers: PresenceViewer[]
+  meId: string
+  primaryLabel?: string
+  onOpenHistory: () => void
   primary: PrimaryAction
   secondary: SecondaryAction[]
   busy: boolean
@@ -69,6 +83,7 @@ export function TopBar({
         </Link>
       </Button>
       <StatusBadge status={status} />
+      {statusNote ? <p className="hidden text-sm text-muted-foreground xl:block">{statusNote}</p> : null}
       <p
         role="status"
         aria-live="polite"
@@ -79,20 +94,16 @@ export function TopBar({
       </p>
 
       <div className="ml-auto flex items-center gap-1.5">
+        <div className="mr-1">
+          <PresenceAvatars viewers={viewers} meId={meId} />
+        </div>
         <Button type="button" variant="ghost" size="sm" onClick={onOpenComments} aria-label={`Comments, ${commentCount} open`}>
           <MessageSquare aria-hidden />
           {commentCount > 0 ? <span className="tabular-nums">{commentCount}</span> : null}
         </Button>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <Button type="button" variant="ghost" size="sm" disabled aria-label="History">
-                <History aria-hidden />
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>History arrives in the next release</TooltipContent>
-        </Tooltip>
+        <Button type="button" variant="ghost" size="sm" onClick={onOpenHistory} aria-label="History" title="History">
+          <History aria-hidden />
+        </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onTogglePanel} aria-pressed={panelOpen} aria-label="Settings panel (⌘.)" title="Settings panel (⌘.)">
           <PanelRight aria-hidden />
         </Button>
@@ -125,7 +136,7 @@ export function TopBar({
         {primary ? (
           <Button type="button" variant="primary" size="sm" disabled={busy} aria-busy={busy} onClick={() => onAction(primary)}>
             {busy ? <Loader2 className="animate-spin" aria-hidden /> : null}
-            {PRIMARY_LABEL[primary]}
+            {primaryLabel ?? PRIMARY_LABEL[primary]}
           </Button>
         ) : null}
       </div>

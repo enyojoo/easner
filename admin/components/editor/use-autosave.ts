@@ -120,6 +120,12 @@ export function useAutosave({
     [enabled, postId, run],
   )
 
+  /** Drops the unsaved snapshot without saving (the lock was taken over). The device backup stays. */
+  const discard = useCallback(() => {
+    clearTimer()
+    snapshot.current = null
+  }, [])
+
   /** Saves now (⌘S, before submit and publish). Resolves when nothing is left to save. */
   const flush = useCallback(async () => {
     for (let i = 0; i < 3 && snapshot.current; i += 1) {
@@ -164,5 +170,5 @@ export function useAutosave({
   useEffect(() => () => clearTimer(), [])
 
   const label = useMemo(() => savedLabel(state, now), [state, now])
-  return { state: state as AutosaveState, label, markDirty, flush, readBackup: () => readBackup(postId), clearBackup: () => clearBackup(postId), isNewerBackup }
+  return { state: state as AutosaveState, label, markDirty, flush, discard, readBackup: () => readBackup(postId), clearBackup: () => clearBackup(postId), isNewerBackup }
 }

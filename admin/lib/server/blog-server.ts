@@ -70,3 +70,44 @@ export async function pingIndexNow(slug: string): Promise<void> {
     // Not worth failing a publish over.
   }
 }
+
+// ---- what the website needs to know about a post, shared by the manual actions and the scheduled publish ---------
+
+const POST_FOR_SITE = "id, slug, status, category_id, blog_categories(slug), blog_post_authors(blog_authors(slug))"
+
+export type SiteRow = {
+  id: string
+  slug: string
+  status: string
+  blog_categories: { slug: string } | { slug: string }[] | null
+  blog_post_authors: Array<{ blog_authors: { slug: string } | { slug: string }[] | null }> | null
+}
+
+const first = <T,>(value: T | T[] | null | undefined): T | null => (Array.isArray(value) ? (value[0] ?? null) : (value ?? null))
+
+export async function loadSiteRow(client: SupabaseClient, postId: string): Promise<SiteRow | null> {
+  const { data } = await client.from("blog_posts").select(POST_FOR_SITE).eq("id", postId).maybeSingle()
+  return (data as unknown as SiteRow | null) ?? null
+}
+
+export function siteChange(row: SiteRow, extra: { oldSlug?: string; oldCategorySlug?: string; kind: "publish" | "update" | "unpublish" | "slug" | "category" | "author" }): RevalidateChange {
+  return {
+    slug: row.slug,
+    oldSlug: extra.oldSlug && extra.oldSlug !== row.slug ? extra.oldSlug : undefined,
+    categorySlug: first(row.blog_categories)?.slug,
+    oldCategorySlug: extra.oldCategorySlug,
+    authorSlugs: (row.blog_post_authors ?? []).map((link) => first(link.blog_authors)?.slug).filter((s): s is string => Boolean(s)),
+    kind: extra.kind,
+  }
+}
+
+/** The secret key client: bypasses RLS. Only the cron route uses it; the key never leaves the server. */
+export function secretClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) return null
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { "X-Client-Info": "easner-admin-cron" } },
+  })
+}

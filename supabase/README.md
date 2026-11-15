@@ -7,6 +7,8 @@ The blog, the admin's team and the analytics rollups. Never the banking database
 - `seed.sql`: local only. Invites `owner@easner.test` as an owner.
 - `tests/rls.test.sql`: who can read and write what. Run `npm run test:db` (PGlite, no Docker) or, against the local
   stack, `psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/tests/rls.test.sql`.
+- `apply-phase4b.sql`: the `20261118*` migrations (scheduling, revisions, edit lock, redirects) in one transaction, for a
+  hosted project that already ran `apply-phase2.sql` (`node supabase/build-apply-phase4b.mjs` regenerates it).
 - `templates/otp-code.html`: the sign-in code email.
 - `apply-phase2.sql`: the `20261115*` migrations in one transaction, for a hosted project that already ran the earlier
   setup (`node supabase/build-apply-phase2.mjs` regenerates it). `hosted-setup.sql` and `fix-public-access.sql` are not
@@ -108,3 +110,23 @@ revalidates (only the body has a draft copy).
 empty). `20261115130000_member_author_profiles.sql` backfills members who signed in earlier and is safe to re-run.
 `ensure_my_author()` stays as a safety net for "My profile". Guest authors (editors insert them, `member_id` null) are
 unchanged, and the public side is unchanged: anon only reads authors with a live post, so an empty profile is invisible.
+
+## Content lifecycle (Phase 4B, `20261118120000_blog_lifecycle.sql`)
+
+- **Scheduling.** `schedule_post(post, at)` (editors and owners; also reschedules) puts a post that is not live yet into
+  `scheduled` with `scheduled_for` (UTC), `scheduled_by` and `scheduled_from` (where `unschedule_post` returns it). It runs
+  the same rules as publishing, including the second Editor for flagged posts. The slug locks for editors. The admin's
+  cron route (`/api/cron/publish-scheduled`, every 5 minutes) calls `publish_post` with the **secret key**: with no user and
+  the `service_role` claim, `publish_post` only publishes a post that is `scheduled` and due, as the Editor who scheduled
+  it, dated to its scheduled time. A second run, or a post that is not due, is refused, so the job is idempotent.
+- **Revisions.** `blog_revisions` rows: `autosave` (written by a trigger, at most one per 5 minutes per post, never the same
+  text twice, newest 40 kept), `submit`, `publish` and `restore` milestones (never pruned). Each has a `word_count`.
+  `restore_revision` copies into the draft only, keeps the draft it replaced as a checkpoint, and clears the draft when the
+  version equals what is live.
+- **Edit lock.** `claim_post_lock(post, take_over)` takes or refreshes the lock (the browser calls it every 30 seconds; a
+  lock not refreshed for 2 minutes is free). Editors and owners may take over. It writes only `locked_by` and `locked_at` and
+  does not move `updated_at`. `release_post_lock`, `touch_post_presence` and `blog_post_viewers` back the avatars in the top
+  bar. All plain polling: nothing needs Realtime.
+- **Redirects.** Add with `add_blog_redirect(from, to_post)`: the URL must be valid and not belong to any post, the target
+  must be published, and one URL redirects once. Direct inserts and updates are closed; removing is a plain delete. A
+  published post's slug change creates its redirect, and any post that takes a URL clears a redirect from it.

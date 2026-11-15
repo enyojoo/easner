@@ -124,7 +124,7 @@ export function PostTab({
   onSignificantChange: (value: boolean) => void
   onUploadCover: (file: File) => Promise<void>
 }) {
-  const locked = slugLocked({ publishedAt: post.published_at, role: viewer.role })
+  const locked = slugLocked({ publishedAt: post.published_at, role: viewer.role, status: post.status })
   const [slugDraft, setSlugDraft] = useState(post.slug)
   const [pendingSlug, setPendingSlug] = useState<string | null>(null)
   const [syncedSlug, setSyncedSlug] = useState(post.slug)
