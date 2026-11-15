@@ -235,7 +235,12 @@ function renderBlock(node: AnyNode, key: number, ctx: Ctx): ReactNode {
                     const attrs = (cell.attrs ?? {}) as { colspan?: number; rowspan?: number; align?: "left" | "center" | "right" }
                     return (
                       <Cell key={c} colSpan={attrs.colspan} rowSpan={attrs.rowspan} style={attrs.align ? { textAlign: attrs.align } : undefined} scope={Cell === "th" ? "col" : undefined}>
-                        <Inline nodes={cell.content?.[0]?.content} />
+                        {(cell.content ?? []).map((paragraph, n) => (
+                          <Fragment key={n}>
+                            {n > 0 && <br />}
+                            <Inline nodes={paragraph.content} />
+                          </Fragment>
+                        ))}
                       </Cell>
                     )
                   })}

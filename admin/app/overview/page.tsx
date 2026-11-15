@@ -228,8 +228,8 @@ function OverviewInner() {
             </h2>
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {cells.map((cell) => (
-                <Link key={cell.label} href={cell.href} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Card className="gap-1 transition-shadow hover:shadow-card">
+                <Link key={cell.label} href={cell.href} className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Card padding="sm" className="h-full gap-1 px-5 transition-shadow hover:shadow-card">
                     <p className="text-sm text-muted-foreground">{cell.label}</p>
                     <p className="text-2xl font-semibold tabular-nums text-foreground">{cell.value}</p>
                     {cell.label === "Published" ? (

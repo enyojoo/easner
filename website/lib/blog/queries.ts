@@ -18,6 +18,7 @@ import {
   postTag,
 } from "./config"
 import { FIXTURE_AUTHORS, FIXTURE_CATEGORIES, FIXTURE_POSTS } from "./fixtures/data"
+import { harnessDocumentPost } from "./fixtures/harness-doc"
 import { rest } from "./supabase"
 import type {
   AuthorWithStats,
@@ -243,7 +244,7 @@ export async function getPost(slug: string, options: { draft?: boolean } = {}): 
       post = { ...base, content, contentText: String(row.content_text ?? ""), isDraft: row.draft_content != null }
     }
   } else if (source === "fixtures") {
-    post = FIXTURE_POSTS.find((p) => p.slug === slug) ?? null
+    post = FIXTURE_POSTS.find((p) => p.slug === slug) ?? harnessDocumentPost(slug)
   } else if (source === "supabase") {
     const rows = await rest<Row[]>(
       "blog_posts",
