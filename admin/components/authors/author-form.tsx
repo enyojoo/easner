@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Camera } from "lucide-react"
 import { toast } from "sonner"
 import { AvatarCropper } from "@/components/authors/avatar-cropper"
 import { Avatar } from "@/components/ui/avatar"
@@ -134,26 +133,35 @@ export function AuthorFields({ draft, onChange, errors, editor, members = [], on
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-4">
-        <Avatar name={draft.name || "Author"} src={photoUrl} size="lg" />
-        <div className="space-y-1">
-          <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
-            <Camera aria-hidden />
-            {photoUrl ? "Replace photo" : "Add photo"}
-          </Button>
-          <p className="text-xs text-muted-foreground">Square, at least 400 × 400. JPG, PNG or WebP.</p>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/avif"
-            className="sr-only"
-            aria-label="Choose a photo"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              e.target.value = ""
-              if (file) setCropFile(file)
-            }}
-          />
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Photo</p>
+        <div className="flex items-center gap-4">
+          <Avatar name={draft.name || "Author"} src={photoUrl} size="lg" />
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Drag to position, zoom to fit. Square, at least 400 × 400.</p>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                {photoUrl ? "Replace photo" : "Add photo"}
+              </Button>
+              {photoUrl ? (
+                <Button type="button" variant="outline" size="sm" onClick={() => onChange({ avatar_path: null })}>
+                  Remove
+                </Button>
+              ) : null}
+            </div>
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/avif"
+              className="sr-only"
+              aria-label="Choose a photo"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ""
+                if (file) setCropFile(file)
+              }}
+            />
+          </div>
         </div>
       </div>
       <AvatarCropper
@@ -191,23 +199,33 @@ export function AuthorFields({ draft, onChange, errors, editor, members = [], on
       >
         <Textarea value={draft.bio} onChange={(e) => onChange({ bio: e.target.value })} rows={4} />
       </Field>
-      <Field label="X" optional error={errors.x_url}>
-        <Input value={draft.x_url} onChange={(e) => onChange({ x_url: e.target.value })} placeholder="https://x.com/…" inputMode="url" />
-      </Field>
-      <Field label="LinkedIn" optional error={errors.linkedin_url}>
-        <Input value={draft.linkedin_url} onChange={(e) => onChange({ linkedin_url: e.target.value })} placeholder="https://www.linkedin.com/in/…" inputMode="url" />
-      </Field>
-      <Field label="GitHub" optional error={errors.github_url}>
-        <Input value={draft.github_url} onChange={(e) => onChange({ github_url: e.target.value })} placeholder="https://github.com/…" inputMode="url" />
-      </Field>
-      <Field label="Website" optional error={errors.website_url}>
-        <Input value={draft.website_url} onChange={(e) => onChange({ website_url: e.target.value })} placeholder="https://…" inputMode="url" />
-      </Field>
+      <div className="space-y-3">
+        <p className="text-sm font-medium text-foreground">Social links</p>
+        {(
+          [
+            ["X", "x_url", "https://x.com/…"],
+            ["LinkedIn", "linkedin_url", "https://www.linkedin.com/in/…"],
+            ["GitHub", "github_url", "https://github.com/…"],
+            ["Website", "website_url", "https://…"],
+          ] as const
+        ).map(([label, key, placeholder]) => (
+          <div key={key} className="space-y-1">
+            <div className="flex items-center gap-3">
+              <label htmlFor={`author-${key}`} className="w-[110px] shrink-0 text-[13px] font-medium leading-[18px] text-foreground">
+                {label}
+              </label>
+              <Input id={`author-${key}`} value={draft[key]} onChange={(e) => onChange({ [key]: e.target.value })} placeholder={placeholder} inputMode="url" aria-invalid={errors[key] ? true : undefined} />
+            </div>
+            {errors[key] ? <p className="pl-[122px] text-xs text-destructive-text">{errors[key]}</p> : null}
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground">No email address is shown publicly. Readers reach us through /contact.</p>
+      </div>
 
       <Field
         label="URL"
         error={errors.slug}
-        hint={editor ? `/blog/authors/${draft.slug || "…"}` : "Only an Editor can change the author URL."}
+        hint={editor ? `/blog/authors/${draft.slug || "…"}` : `Your author URL (/blog/authors/${draft.slug}) can only be changed by an Editor.`}
       >
         <Input
           value={draft.slug}

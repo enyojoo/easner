@@ -3,8 +3,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { FileText, ImageOff, Plus } from "lucide-react"
+import { FileText, ImageOff } from "lucide-react"
 import { PostQuickView, displayStatus } from "@/components/posts/post-quick-view"
+import { Avatar } from "@/components/ui/avatar"
 import { PostsTableSkeleton } from "@/components/admin-skeletons"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -19,6 +20,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatListDate, useCategories, usePosts, type PostRow, type PostStatus } from "@/lib/queries"
 import { blogFileUrl } from "@/lib/supabase"
+import { formatCount } from "@/lib/analytics/aggregate"
+import { useTopPosts } from "@/lib/analytics/hooks"
+import { addDays, isoDay } from "@/lib/analytics/paths"
 
 type StatusFilter = "all" | "needs-you" | "drafts" | "review" | "scheduled" | "published" | "archived"
 
@@ -46,11 +50,24 @@ function needsYou(post: PostRow, role: string | null, userId: string | undefined
   return post.status === "changes_requested" && post.created_by === userId
 }
 
-const COLUMNS = ["Post", "Status", "Category", "Author", "Updated", "Published"]
+const COLUMNS = ["Post", "Status", "Category", "Author", "Views, 30 days", "Updated", "Published"]
 const ALL = "all"
 
 function parseStatus(raw: string | null): StatusFilter {
   return raw === "needs-you" || STATUS_TABS.some((tab) => tab.value === raw) ? (raw as StatusFilter) : "all"
+}
+
+/** First author as an avatar and name; more than one reads "Ada Okafor +1". */
+function AuthorCell({ authors }: { authors: Array<{ id: string; name: string }> }) {
+  const first = authors[0]
+  if (!first) return <span className="text-muted-foreground">–</span>
+  return (
+    <span className="flex min-w-0 items-center gap-3">
+      <Avatar name={first.name} size="sm" decorative />
+      <span className="truncate">{first.name}</span>
+      {authors.length > 1 ? <span className="shrink-0 text-xs text-muted-foreground">+{authors.length - 1}</span> : null}
+    </span>
+  )
 }
 
 function CoverThumb({ post }: { post: PostRow }) {
@@ -77,6 +94,14 @@ function PostsPageInner() {
   const categorySlug = searchParams.get("category") ?? ALL
   const authorId = searchParams.get("author") ?? ALL
   const urlQuery = searchParams.get("q") ?? ""
+
+  // Views, last 30 days, from the nightly rollup. A post with no row (draft, or not yet counted) shows a dash.
+  const viewsRange = useMemo(() => {
+    const to = addDays(isoDay(new Date()), -1)
+    return { from: addDays(to, -29), to }
+  }, [])
+  const topPosts = useTopPosts(viewsRange, 1000)
+  const views = useMemo(() => new Map((topPosts.data ?? []).map((row) => [row.post_id, row.views])), [topPosts.data])
 
   const [search, setSearch] = useState(urlQuery)
   const debouncedSearch = useDebouncedValue(search, 250)
@@ -157,15 +182,7 @@ function PostsPageInner() {
     <div className="space-y-6">
       <PageHeader
         title="Posts"
-        description="Every blog post: drafts, posts in review, scheduled and live."
-        actions={
-          <Button asChild variant="primary" size="sm">
-            <Link href="/posts/new">
-              <Plus aria-hidden />
-              New post
-            </Link>
-          </Button>
-        }
+        description="Write, review and publish posts for easner.com/blog."
       />
 
       <div className="space-y-3">
@@ -210,7 +227,7 @@ function PostsPageInner() {
             </SelectContent>
           </Select>
         </div>
-        <p className="text-xs text-muted-foreground" aria-live="polite">
+        <p className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
           {settled ? `${filtered.length.toLocaleString("en-US")} ${filtered.length === 1 ? "post" : "posts"}` : " "}
         </p>
       </div>
@@ -261,6 +278,7 @@ function PostsPageInner() {
                 <TableHead className="w-[170px]">Status</TableHead>
                 <TableHead className="hidden w-[160px] xl:table-cell">Category</TableHead>
                 <TableHead className="hidden w-[180px] min-[1180px]:table-cell">Author</TableHead>
+                <TableHead className="hidden w-[130px] min-[1280px]:table-cell">Views, 30 days</TableHead>
                 <TableHead className="w-[110px]">Updated</TableHead>
                 <TableHead className="hidden w-[110px] min-[1360px]:table-cell">Published</TableHead>
               </TableRow>
@@ -294,8 +312,11 @@ function PostsPageInner() {
                   <TableCell className="hidden text-sm text-foreground xl:table-cell">
                     {post.category_id ? (categoryById.get(post.category_id)?.name ?? "–") : "–"}
                   </TableCell>
-                  <TableCell className="hidden max-w-0 truncate text-sm text-foreground min-[1180px]:table-cell">
-                    {post.authors.map((author) => author.name).join(", ") || "–"}
+                  <TableCell className="hidden max-w-0 text-sm text-foreground min-[1180px]:table-cell">
+                    <AuthorCell authors={post.authors} />
+                  </TableCell>
+                  <TableCell className="hidden text-sm tabular-nums text-foreground min-[1280px]:table-cell">
+                    {views.has(post.id) ? formatCount(views.get(post.id) ?? 0) : "–"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground tabular-nums">{formatListDate(post.updated_at)}</TableCell>
                   <TableCell className="hidden text-sm text-muted-foreground tabular-nums min-[1360px]:table-cell">{formatListDate(post.published_at)}</TableCell>

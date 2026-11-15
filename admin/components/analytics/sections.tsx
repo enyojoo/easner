@@ -79,11 +79,11 @@ export function SearchSection({ range, scope, postId, title }: { range: DateRang
   const query = useSearch(range, scope, postId)
   const rows = (query.data ?? []).slice(0, 10)
   return (
-    <Section title={title ?? "Google searches"} description="From Search Console. Data trails by about three days.">
+    <Section flush title={title ?? "Google searches"} description="From Search Console. Data trails by about three days.">
       {query.isLoading ? (
-        <p className="py-4 text-sm text-muted-foreground">Loading searches.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">Loading searches.</p>
       ) : rows.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">No searches yet. Search Console data appears after it is connected.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">No searches yet. Search Console data appears after it is connected.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -121,11 +121,11 @@ export function VitalsSection({ range }: { range: DateRange }) {
   const paths = [...new Set(rows.map((r) => r.path))].sort((a, b) => (a === "*" ? -1 : b === "*" ? 1 : (rows.find((r) => r.path === b)?.samples ?? 0) - (rows.find((r) => r.path === a)?.samples ?? 0))).slice(0, 8)
   const cell = (path: string, metric: VitalMetric) => rows.find((r) => r.path === path && r.metric === metric)
   return (
-    <Section title="Site health" description="Core Web Vitals at the 75th percentile of real visits. Each has a dot and a word, so it never relies on colour.">
+    <Section flush title="Site health" description="Core Web Vitals at the 75th percentile of real visits. Each has a dot and a word, so it never relies on colour.">
       {query.isLoading ? (
-        <p className="py-4 text-sm text-muted-foreground">Loading vitals.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">Loading vitals.</p>
       ) : paths.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">No web vitals yet. They appear a day after visitors load pages.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">No web vitals yet. They appear a day after visitors load pages.</p>
       ) : (
         <Table>
           <TableHeader>
@@ -176,11 +176,11 @@ export function SharesSection({ range, path }: Scope) {
     .sort((a, b) => b.clicks - a.clicks)
   const label: Record<string, string> = { x: "X", linkedin: "LinkedIn", whatsapp: "WhatsApp", copy: "Copy link", native: "Share sheet", facebook: "Facebook" }
   return (
-    <Section title="Shares" description="Share button clicks, and the visits they brought back. X and LinkedIn don’t give public share counts, so these are ours.">
+    <Section flush title="Shares" description="Share button clicks, and the visits they brought back. X and LinkedIn don’t give public share counts, so these are ours.">
       {loading ? (
-        <p className="py-4 text-sm text-muted-foreground">Loading shares.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">Loading shares.</p>
       ) : rows.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">No shares in this period.</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">No shares in this period.</p>
       ) : (
         <Table>
           <TableHeader>

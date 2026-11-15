@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { formatListDate } from "@/lib/queries"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EditorSelect } from "@/components/editor/editor-select"
@@ -23,9 +25,8 @@ export type RedirectItem = {
 }
 export type RedirectPostOption = { id: string; slug: string; title: string; status: string }
 
-const COLUMNS = ["Old URL", "Leads to", "Added", ""]
+const COLUMNS = ["From", "To", "Why", "Added", ""]
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
 
 /**
  * The Redirects screen: old blog URLs and the posts they lead to (301). Editors and Owners add and remove. The checks
@@ -102,12 +103,12 @@ export function RedirectsView({
     <div className="space-y-6">
       <PageHeader
         title="Redirects"
-        description="Old blog URLs and the posts they lead to (301). Changing a published post’s URL adds one on its own."
+        description="Old blog addresses and where they send readers. Most are added for you when a slug changes."
         actions={
           canEdit ? (
-            <Button type="button" size="sm" variant="primary" onClick={open}>
+            <Button type="button" size="sm" variant="outline" onClick={open}>
               <Plus aria-hidden />
-              Add redirect
+              New redirect
             </Button>
           ) : null
         }
@@ -121,8 +122,8 @@ export function RedirectsView({
             message="When a published post changes its URL, the old one lands here and keeps working. You can also point an old URL at a post yourself."
             actions={
               canEdit ? (
-                <Button type="button" size="sm" variant="primary" onClick={open}>
-                  Add redirect
+                <Button type="button" size="sm" variant="outline" onClick={open}>
+                  New redirect
                 </Button>
               ) : undefined
             }
@@ -132,7 +133,7 @@ export function RedirectsView({
             <TableHeader>
               <TableRow>
                 {COLUMNS.map((column, index) => (
-                  <TableHead key={index} className={index === 3 ? "w-14" : undefined}>
+                  <TableHead key={index} className={index === 4 ? "w-14" : undefined}>
                     {column || <span className="sr-only">Actions</span>}
                   </TableHead>
                 ))}
@@ -156,9 +157,13 @@ export function RedirectsView({
                       <span className="text-sm text-muted-foreground">The post was deleted</span>
                     )}
                   </TableCell>
+                  <TableCell>
+                    <StatusBadge status="draft" showIcon={false}>
+                      {row.created_by_name ? "Manual" : "Slug changed"}
+                    </StatusBadge>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    <p>{formatDate(row.created_at)}</p>
-                    <p className="text-xs">{row.created_by_name ?? "Automatic"}</p>
+                    {formatListDate(row.created_at)} · {row.created_by_name ?? "System"}
                   </TableCell>
                   <TableCell className="text-right">
                     {canEdit ? (
@@ -173,6 +178,9 @@ export function RedirectsView({
           </Table>
         )}
       </Card>
+      <p className="text-[13px] leading-[18px] text-muted-foreground">
+        All redirects are permanent (301). A redirect can’t point to another redirect; chains are collapsed when added.
+      </p>
 
       <Dialog open={adding} onOpenChange={(next) => !pending && setAdding(next)}>
         <DialogContent className="max-w-md">

@@ -37,7 +37,7 @@ export function PageHeader({ title, description, actions, backHref, onBack, back
   ) : null
 
   return (
-    <div className={cn("flex flex-wrap items-start justify-between gap-4", className)}>
+    <div className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="flex min-w-0 items-start gap-3">
         {back}
         <div className="min-w-0">

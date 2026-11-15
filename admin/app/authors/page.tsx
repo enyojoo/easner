@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Plus, UserRoundPen } from "lucide-react"
+import { UserPlus, UserRoundPen } from "lucide-react"
 import { toast } from "sonner"
 import { SimpleTableSkeleton } from "@/components/admin-skeletons"
 import { AuthorFields, draftFromAuthor, EMPTY_AUTHOR, saveAuthor, slugifyName, validateAuthor, type AuthorDraft } from "@/components/authors/author-form"
@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { PageHeader } from "@/components/ui/page-header"
 import { SearchField } from "@/components/ui/search-field"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAuth } from "@/lib/auth-context"
 import { errorMessage } from "@/lib/queries"
@@ -27,8 +28,8 @@ const COLUMNS = ["Author", "Location", "Posts", "Profile", "Login"]
 
 function ProfileCell({ author }: { author: AuthorRow }) {
   const gap = profileGap(author)
-  if (!gap) return <span className="text-sm text-success-text">Complete</span>
-  return <span className="text-sm text-warning-text">{gap === "photo" ? "Missing photo" : "Missing bio"}</span>
+  if (!gap) return <StatusBadge status="published">Complete</StatusBadge>
+  return <StatusBadge status="in_review">{gap === "photo" ? "Missing photo" : "Missing bio"}</StatusBadge>
 }
 
 function loginLabel(author: AuthorRow): string {
@@ -100,24 +101,19 @@ function AuthorsPageInner() {
     <div className="space-y-6">
       <PageHeader
         title="Authors"
-        description="Who writes for the blog, and their public profiles."
+        description="The people behind each post. Their profile shows on posts and on easner.com/blog/authors."
         actions={
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href="/authors/me">My profile</Link>
+          canManageAuthors ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => open("new")}>
+              <UserPlus aria-hidden />
+              New author
             </Button>
-            {canManageAuthors ? (
-              <Button type="button" variant="primary" size="sm" onClick={() => open("new")}>
-                <Plus aria-hidden />
-                New author
-              </Button>
-            ) : null}
-          </div>
+          ) : null
         }
       />
       <div className="space-y-3">
         <SearchField value={search} onChange={setSearch} placeholder="Search authors" />
-        <p className="text-xs text-muted-foreground" aria-live="polite">
+        <p className="text-[13px] leading-[18px] text-muted-foreground" aria-live="polite">
           {authorsQuery.data ? `${filtered.length} ${filtered.length === 1 ? "author" : "authors"}` : " "}
         </p>
       </div>
@@ -183,7 +179,7 @@ function AuthorsPageInner() {
                       <Avatar name={author.name} src={blogFileUrl(author.avatar_path)} size="sm" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-foreground">{author.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{author.title || "No role"}</p>
+                        <p className="truncate text-xs text-muted-foreground">{author.title ?? ""}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -192,7 +188,11 @@ function AuthorsPageInner() {
                   <TableCell>
                     <ProfileCell author={author} />
                   </TableCell>
-                  <TableCell className="text-sm text-foreground">{loginLabel(author)}</TableCell>
+                  <TableCell>
+                    <StatusBadge status="draft" showIcon={false}>
+                      {loginLabel(author)}
+                    </StatusBadge>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

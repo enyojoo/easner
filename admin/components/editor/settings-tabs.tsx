@@ -37,11 +37,9 @@ const NONE = "__none"
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border px-5 py-5 last:border-b-0">
-      <div>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}
-      </div>
+      <h3 className="text-sm font-medium text-foreground">{title}</h3>
       {children}
+      {hint ? <p className="-mt-1 text-xs text-muted-foreground">{hint}</p> : null}
     </section>
   )
 }

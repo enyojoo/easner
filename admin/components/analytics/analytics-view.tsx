@@ -14,13 +14,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { SearchField } from "@/components/ui/search-field"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { FilterBar, activeDimension, hasBreakdowns, nextFilterPatch, readFilters, type SiteFilters } from "@/components/analytics/filters"
 import { HelpfulSection, LocationSection, SearchSection, SharesSection, SourcesSection, TechSection, VitalsSection } from "@/components/analytics/sections"
 import { BarList, Kpi, Section, SectionTitle, TrafficChart } from "@/components/analytics/parts"
 import {
   PERIODS, fillDays, formatCount, formatDay, formatDuration, formatPercent, formatRange, parseRange, previousRange, readDepthPercent, sumDaily,
   type Period,
 } from "@/lib/analytics/aggregate"
-import { useAnalyticsMode, useAnalyticsStatus, useDaily, useFeedback, usePages, useTopPosts } from "@/lib/analytics/hooks"
+import { useAnalyticsMode, useAnalyticsStatus, useDaily, useDailyBy, useFeedback, usePages, useTopPosts } from "@/lib/analytics/hooks"
 import type { DateRange, TopPostRow } from "@/lib/analytics/source"
 import { isoDay } from "@/lib/analytics/paths"
 import { BLOG_PATH, SITE_PATH } from "@/lib/analytics/types"
@@ -104,14 +105,15 @@ function PagesTable({ range }: { range: DateRange }) {
   const rows = useMemo(() => (query.data ?? []).filter((r) => r.path.toLowerCase().includes(find.trim().toLowerCase())), [query.data, find])
   return (
     <Section
+      flush
       title="Pages"
-      description="Every page on easner.com."
+      description={query.data ? `${query.data.length} pages · sorted by page views` : "Every page on easner.com."}
       actions={<SearchField value={find} onChange={setFind} placeholder="Find a page" aria-label="Find a page" className="w-56" />}
     >
       {query.isLoading ? (
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="mx-6 mb-6 h-40 w-auto" />
       ) : rows.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">{find ? "No page matches." : "No page views in this period."}</p>
+        <p className="px-6 pb-6 text-sm text-muted-foreground">{find ? "No page matches." : "No page views in this period."}</p>
       ) : (
         <Table>
           <TableHeader>
@@ -140,37 +142,52 @@ function PagesTable({ range }: { range: DateRange }) {
           </TableBody>
         </Table>
       )}
-      {rows.length > 15 ? <p className="text-xs text-muted-foreground">Showing the top 15 of {rows.length} pages.</p> : null}
+      {rows.length > 15 ? <p className="border-t border-border/50 px-6 py-3 text-xs text-muted-foreground">Showing the top 15 of {rows.length} pages.</p> : null}
     </Section>
   )
 }
 
-function WebsiteTab({ range }: { range: DateRange }) {
+function WebsiteTab({ range, filters, compare }: { range: DateRange; filters: SiteFilters; compare: boolean }) {
   const prev = useMemo(() => previousRange(range), [range])
-  const current = useDaily(SITE_PATH, range)
-  const before = useDaily(SITE_PATH, prev)
-  const loading = current.isLoading || before.isLoading
+  const scope = filters.page || SITE_PATH
+  // Lists (sources, places, devices) exist for the whole site, the blog and blog posts only.
+  const listScope = hasBreakdowns(scope) ? scope : SITE_PATH
+  const narrow = activeDimension(filters)
+  // Whole site or one page: the full daily rollup. Narrowed by country, device or source: that dimension's daily rows (visitors and views only).
+  const full = useDaily(scope, range, !narrow)
+  const fullBefore = useDaily(scope, prev, !narrow && compare)
+  const by = useDailyBy(scope, range, narrow?.dimension ?? "country", narrow?.value ?? "", Boolean(narrow))
+  const byBefore = useDailyBy(scope, prev, narrow?.dimension ?? "country", narrow?.value ?? "", Boolean(narrow) && compare)
+  const current = narrow ? by : full
+  const before = narrow ? byBefore : fullBefore
+  const loading = current.isLoading || (compare && before.isLoading)
   const t = useMemo(() => sumDaily(current.data ?? []), [current.data])
   const p = useMemo(() => sumDaily(before.data ?? []), [before.data])
   const points = useMemo(() => fillDays(current.data ?? [], range), [current.data, range])
-  const previous = useMemo(() => fillDays(before.data ?? [], prev), [before.data, prev])
+  const previous = useMemo(() => (compare ? fillDays(before.data ?? [], prev) : undefined), [compare, before.data, prev])
+  const cmp = (value: number | null) => (compare ? value : undefined)
+  const off = compare ? undefined : "Comparison off"
+  const unsplit = narrow ? `Not counted per ${narrow.dimension}` : undefined
+  const ratio = (x: number | null) => (x === null ? "n/a" : x.toFixed(2))
   return (
     <div className="space-y-8">
       <section aria-label="Key numbers" className="space-y-3">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-          <Kpi loading={loading} label="Visitors" value={formatCount(t.visitors)} current={t.visitors} previous={p.visitors} />
-          <Kpi loading={loading} label="Page views" value={formatCount(t.views)} current={t.views} previous={p.views} />
-          <Kpi loading={loading} label="Views per visitor" value={t.viewsPerVisit === null ? "n/a" : t.viewsPerVisit.toFixed(2)} current={t.viewsPerVisit} previous={p.viewsPerVisit} />
-          <Kpi loading={loading} label="Avg. time on page" value={formatDuration(t.avgTimeS)} current={t.avgTimeS} previous={p.avgTimeS} />
-          <Kpi loading={loading} label="Bounce rate" value={formatPercent(t.bounceRate)} current={t.bounceRate} previous={p.bounceRate} />
-          <Kpi loading={loading} label="Conversions" value={formatCount(t.conversions)} current={t.conversions} previous={p.conversions} />
+          <Kpi loading={loading} label="Visitors" value={formatCount(t.visitors)} current={t.visitors} previous={cmp(p.visitors)} hint={off} />
+          <Kpi loading={loading} label="Page views" value={formatCount(t.views)} current={t.views} previous={cmp(p.views)} hint={off} />
+          <Kpi loading={loading} label="Views per visit" value={ratio(t.viewsPerVisit)} current={t.viewsPerVisit} previous={cmp(p.viewsPerVisit)} hint={off} />
+          <Kpi loading={loading} label="Avg. time on page" value={narrow ? "n/a" : formatDuration(t.avgTimeS)} current={narrow ? undefined : t.avgTimeS} previous={narrow ? undefined : cmp(p.avgTimeS)} hint={unsplit ?? off} />
+          <Kpi loading={loading} label="Bounce rate" value={narrow ? "n/a" : formatPercent(t.bounceRate)} current={narrow ? undefined : t.bounceRate} previous={narrow ? undefined : cmp(p.bounceRate)} hint={unsplit ?? off} />
+          <Kpi loading={loading} label="Conversions" value={narrow ? "n/a" : formatCount(t.conversions)} current={narrow ? undefined : t.conversions} previous={narrow ? undefined : cmp(p.conversions)} hint={unsplit ?? off} />
         </div>
         <p className="text-xs text-muted-foreground">
           Visitors are counted per day and added up, so someone who returns on another day counts again. Visits from EU and UK people who decline cookies are counted without cookies, so returning visitor figures are lower bounds. Conversions are clicks to open an account, sign up or download the app.
+          {narrow ? " The source, location and technology lists ignore the country, device and source filter: the nightly rollups count each of those on its own." : ""}
+          {!hasBreakdowns(scope) ? " Sources, places and devices are rolled up for the whole site, the blog and each post, not for other pages, so those lists show the whole site." : ""}
         </p>
       </section>
 
-      <Section title="Traffic" description={formatRange(range)}>
+      <Section title="Traffic" description={`Visitors and page views per day, ${formatRange(range)}`}>
         {loading ? <Skeleton className="h-60 w-full" /> : <TrafficChart points={points} previous={previous} />}
       </Section>
 
@@ -178,15 +195,15 @@ function WebsiteTab({ range }: { range: DateRange }) {
 
       <section aria-labelledby="sources" className="space-y-3">
         <SectionTitle id="sources">Sources</SectionTitle>
-        <SourcesSection range={range} path={SITE_PATH} />
+        <SourcesSection range={range} path={listScope} />
       </section>
       <section aria-labelledby="location" className="space-y-3">
         <SectionTitle id="location">Location</SectionTitle>
-        <LocationSection range={range} path={SITE_PATH} />
+        <LocationSection range={range} path={listScope} />
       </section>
       <section aria-labelledby="tech" className="space-y-3">
         <SectionTitle id="tech">Technology</SectionTitle>
-        <TechSection range={range} path={SITE_PATH} />
+        <TechSection range={range} path={listScope} />
       </section>
       <section aria-labelledby="search" className="space-y-3">
         <SectionTitle id="search">Search</SectionTitle>
@@ -211,14 +228,16 @@ function sumTop(rows: TopPostRow[] | undefined) {
   }
 }
 
-function BlogTab({ range }: { range: DateRange }) {
+function BlogTab({ range, compare }: { range: DateRange; compare: boolean }) {
   const prev = useMemo(() => previousRange(range), [range])
   const now = useTopPosts(range, 200)
-  const before = useTopPosts(prev, 200)
+  const before = useTopPosts(prev, 200, compare)
   const daily = useDaily(BLOG_PATH, range)
-  const dailyBefore = useDaily(BLOG_PATH, prev)
+  const dailyBefore = useDaily(BLOG_PATH, prev, compare)
   const feedback = useFeedback()
-  const loading = now.isLoading || before.isLoading
+  const loading = now.isLoading || (compare && before.isLoading)
+  const cmp = (value: number | null) => (compare ? value : undefined)
+  const off = compare ? undefined : "Comparison off"
 
   const t = useMemo(() => sumTop(now.data), [now.data])
   const p = useMemo(() => sumTop(before.data), [before.data])
@@ -227,17 +246,17 @@ function BlogTab({ range }: { range: DateRange }) {
   const total = votes.reduce((s, v) => s + v.votes, 0)
 
   const points = useMemo(() => fillDays(daily.data ?? [], range), [daily.data, range])
-  const previous = useMemo(() => fillDays(dailyBefore.data ?? [], prev), [dailyBefore.data, prev])
+  const previous = useMemo(() => (compare ? fillDays(dailyBefore.data ?? [], prev) : undefined), [compare, dailyBefore.data, prev])
 
   return (
     <div className="space-y-8">
       <section aria-label="Key numbers" className="space-y-3">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-          <Kpi loading={loading} label="Views" value={formatCount(t.views)} current={t.views} previous={p.views} />
-          <Kpi loading={loading} label="Readers" value={formatCount(t.readers)} current={t.readers} previous={p.readers} />
-          <Kpi loading={loading} label="Avg. read depth" value={t.depth === null ? "n/a" : `${Math.round(t.depth)}%`} current={t.depth} previous={p.depth} />
-          <Kpi loading={loading} label="Sign-up clicks" value={formatCount(t.signups)} current={t.signups} previous={p.signups} />
-          <Kpi loading={loading} label="Share clicks" value={formatCount(t.shares)} current={t.shares} previous={p.shares} />
+          <Kpi loading={loading} label="Views" value={formatCount(t.views)} current={t.views} previous={cmp(p.views)} hint={off} />
+          <Kpi loading={loading} label="Readers" value={formatCount(t.readers)} current={t.readers} previous={cmp(p.readers)} hint={off} />
+          <Kpi loading={loading} label="Avg. read depth" value={t.depth === null ? "n/a" : `${Math.round(t.depth)}%`} current={t.depth} previous={cmp(p.depth)} hint={off} />
+          <Kpi loading={loading} label="Sign-up clicks" value={formatCount(t.signups)} current={t.signups} previous={cmp(p.signups)} hint={off} />
+          <Kpi loading={loading} label="Share clicks" value={formatCount(t.shares)} current={t.shares} previous={cmp(p.shares)} hint={off} />
           <Kpi loading={feedback.isLoading} label="Helpful" value={total ? formatPercent(yes / total) : "n/a"} hint={total ? `${formatCount(total)} votes, all time` : "No votes yet"} />
         </div>
       </section>
@@ -246,11 +265,11 @@ function BlogTab({ range }: { range: DateRange }) {
         {daily.isLoading ? <Skeleton className="h-60 w-full" /> : <TrafficChart points={points} previous={previous} labels={{ a: "Readers", b: "Views" }} />}
       </Section>
 
-      <Section title="Top posts" description="Click a post to open it. Its Performance tab has the same numbers for that post alone.">
+      <Section flush title="Top posts" description="Click a post to open it. Its Performance tab has the same numbers for that post alone.">
         {loading ? (
-          <Skeleton className="h-40 w-full" />
+          <Skeleton className="mx-6 mb-6 h-40 w-auto" />
         ) : (now.data ?? []).length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">No post views in this period.</p>
+          <p className="px-6 pb-6 text-sm text-muted-foreground">No post views in this period.</p>
         ) : (
           <Table>
             <TableHeader>
@@ -331,6 +350,9 @@ function AnalyticsInner() {
   const tab: Tab = params.get("tab") === "blog" ? "blog" : "website"
   const { period, range } = useMemo(() => parseRange({ period: params.get("period"), from: params.get("from"), to: params.get("to") }, today), [params, today])
 
+  const filters = useMemo(() => readFilters((key) => params.get(key)), [params])
+  const compare = params.get("compare") !== "0"
+
   const push = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params.toString())
     for (const [key, value] of Object.entries(patch)) {
@@ -388,7 +410,15 @@ function AnalyticsInner() {
       ) : (
         <>
           <FilterTabs<Tab> variant="underline" ariaLabel="Analytics section" tabs={TABS} value={tab} onChange={(value) => push({ tab: value === "website" ? null : value })} />
-          {tab === "website" ? <WebsiteTab range={range} /> : <BlogTab range={range} />}
+          <FilterBar
+            range={range}
+            filters={filters}
+            compare={compare}
+            showFilters={tab === "website"}
+            onFilter={(key, value) => push(nextFilterPatch(filters, key, value))}
+            onCompare={(on) => push({ compare: on ? null : "0" })}
+          />
+          {tab === "website" ? <WebsiteTab range={range} filters={filters} compare={compare} /> : <BlogTab range={range} compare={compare} />}
         </>
       )}
     </div>

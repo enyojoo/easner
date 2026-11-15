@@ -74,7 +74,7 @@ function writeCachedRole(userId: string, role: AdminRole | null): void {
   }
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null
   role: AdminRole | null
   access: AdminAccess
@@ -94,7 +94,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   access: "loading",

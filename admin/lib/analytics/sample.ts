@@ -168,6 +168,13 @@ export function createSampleSource(today: string, seed?: number): AnalyticsSourc
   return {
     status: () => wait({ state: "ready" as const, lastDay: addDays(today, -1), gsc: true }),
     daily: (path, range) => wait(data.site.filter((r) => r.path === path && inRange(r.date, range)).sort((a, b) => a.date.localeCompare(b.date))),
+    dailyBy: (path, range, dimension, value) =>
+      wait(
+        data.breakdowns
+          .filter((b) => b.path === path && b.dimension === dimension && b.value === value && inRange(b.date, range))
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .map((b): SiteStatsRow => ({ date: b.date, path, visitors: b.visitors, views: b.views, avg_time_s: null, bounces: 0, exits: 0, entries: 0, conversions: 0 })),
+      ),
     pages: (range) => {
       const map = new Map<string, PageRow & { timeW: number }>()
       for (const r of data.site) {

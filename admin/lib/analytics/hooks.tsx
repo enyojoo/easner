@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useAuth } from "@/lib/auth-context"
 import { createSupabaseSource } from "./supabase-source"
 import type { AnalyticsSource, DateRange } from "./source"
+import type { Dimension } from "./types.ts"
 
 /** The dashboard reads through a source: live Supabase by default, sample data in the dev harness (/dev/analytics). */
 interface Ctx {
@@ -44,6 +45,8 @@ const r = (range: DateRange) => `${range.from}:${range.to}`
 
 export const useAnalyticsStatus = () => useRollup(["status"], (s) => s.status())
 export const useDaily = (path: string, range: DateRange, enabled = true) => useRollup(["daily", path, r(range)], (s) => s.daily(path, range), enabled)
+export const useDailyBy = (path: string, range: DateRange, dimension: Dimension, value: string, enabled = true) =>
+  useRollup(["daily-by", path, dimension, value, r(range)], (s) => s.dailyBy(path, range, dimension, value), enabled && value !== "")
 export const usePages = (range: DateRange) => useRollup(["pages", r(range)], (s) => s.pages(range))
 export const useBreakdown = (range: DateRange, path: string, dimension: Parameters<AnalyticsSource["breakdown"]>[2], enabled = true) =>
   useRollup(["breakdown", path, dimension, r(range)], (s) => s.breakdown(range, path, dimension), enabled)

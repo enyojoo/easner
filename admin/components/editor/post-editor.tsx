@@ -9,7 +9,8 @@ import { EMPTY_DOC, extractSummary, type DocNode } from "@easner/blog-content"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FilterTabs } from "@/components/ui/filter-tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { PerformanceTab } from "@/components/analytics/performance-tab"
 import { Textarea } from "@/components/ui/textarea"
 import { AltTextDialog } from "@/components/editor/alt-dialog"
@@ -693,7 +694,7 @@ export function PostEditor({
 
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1 overflow-y-auto overscroll-contain [container-type:inline-size]" aria-label="Editor">
-          <div className="mx-auto w-full max-w-[720px] px-6 pb-48 pt-8">
+          <div className="mx-auto w-full max-w-[768px] px-6 pb-48 pt-8">
             <div className="grid gap-3 pb-6">
               <LockBanner lock={lock} />
               {post.status === "scheduled" && post.scheduled_for ? (
@@ -853,13 +854,20 @@ export function PostEditor({
         {panelOpen ? (
           <aside className="flex w-[400px] shrink-0 flex-col overflow-x-hidden border-l border-border bg-card" aria-label="Post settings">
             <Tabs value={tab} onValueChange={(value) => setTab(value as PanelTab)} className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="m-4 mb-0 flex h-9 justify-between gap-0.5 [&>button]:flex-1 [&>button]:px-1.5">
-                <TabsTrigger value="post">Post</TabsTrigger>
-                <TabsTrigger value="seo">SEO</TabsTrigger>
-                <TabsTrigger value="performance">Performance</TabsTrigger>
-                <TabsTrigger value="comments">Notes{openComments_ ? ` ${openComments_}` : ""}</TabsTrigger>
-                <TabsTrigger value="history">History</TabsTrigger>
-              </TabsList>
+              <FilterTabs<PanelTab>
+                variant="underline"
+                ariaLabel="Post settings"
+                className="mx-5 shrink-0"
+                value={tab}
+                onChange={setTab}
+                tabs={[
+                  { value: "post", label: "Post" },
+                  { value: "seo", label: "SEO" },
+                  { value: "performance", label: "Performance" },
+                  { value: "comments", label: openComments_ ? `Notes ${openComments_}` : "Notes" },
+                  { value: "history", label: "History" },
+                ]}
+              />
               <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
                 <TabsContent value="post" className="mt-2">
                   <PostTab

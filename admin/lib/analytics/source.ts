@@ -66,6 +66,12 @@ export interface AnalyticsSource {
   status(): Promise<AnalyticsStatus>
   /** One row per day for a scope path ('*' whole site, '/blog/*' the blog). */
   daily(path: string, range: DateRange): Promise<SiteStatsRow[]>
+  /**
+   * One row per day for one value of one dimension ('country' = 'NG', 'device' = 'mobile', 'source' = 'search'), for a
+   * scope path. The rollups hold each dimension on its own, so only visitors and views are known: the other fields are
+   * 0 or null. Filters on two dimensions at once cannot be answered.
+   */
+  dailyBy(path: string, range: DateRange, dimension: Dimension, value: string): Promise<SiteStatsRow[]>
   pages(range: DateRange): Promise<PageRow[]>
   breakdown(range: DateRange, path: string, dimension: Dimension): Promise<BreakdownValue[]>
   search(range: DateRange, scope: "site" | "blog", postId?: string): Promise<SearchQueryRow[]>
