@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase"
 
 type EmailStep = "email" | "code"
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-const FACTOR_NAME = "Easner Website Admin"
+const FACTOR_NAME = "Easner"
 
 type Enrollment = { factorId: string; qrCode: string; secret: string }
 
