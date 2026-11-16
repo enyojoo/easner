@@ -16,7 +16,7 @@ The UI layer is copied from Easner Office, not imported:
 | Source in `easnerbanking/office` | Here | Changes |
 | --- | --- | --- |
 | `components/ui/*` | `components/ui/*` | `amount`, `limit-meter`, `calendar` left out (no money, no date pickers yet). `status-badge` reads the admin's own status table (`lib/status.ts`). `copy-field` toasts directly. `input` uses `color-mix` instead of `hsl(var())`. |
-| `components/layout/office-dashboard-layout.tsx` | `components/layout/admin-shell.tsx` | Flat nav (no groups), "New post" in the header, no approvals indicator, no activity dot. |
+| `components/layout/office-dashboard-layout.tsx` | `components/layout/admin-shell.tsx` | Flat nav (no groups), no approvals indicator, no activity dot. |
 | `components/layout/office-shell-gate.tsx` | `components/layout/admin-shell-gate.tsx` | Gates on `access === "ready"` (member + MFA). |
 | `components/layout/jump-to.tsx` | `components/layout/jump-to.tsx` | Pages, posts and categories from the cached lists. `g` then `o`/`p`/`c`/`s`. |
 | `components/layout/desktop-min-viewport-gate.tsx` | same | Admin copy, one product. |

@@ -4,10 +4,8 @@ import type React from "react"
 import { useCallback, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Plus } from "lucide-react"
 import { BrandLogo } from "@easner/shared"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -160,12 +158,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <header className="flex h-16 min-h-16 shrink-0 items-center gap-4 border-b border-border/60 bg-background/80 px-8 backdrop-blur">
           <JumpToTrigger onClick={openJump} />
           <div className="flex-1" />
-          <Button asChild variant="primary" size="sm">
-            <Link href="/posts/new">
-              <Plus aria-hidden />
-              New post
-            </Link>
-          </Button>
           <AccountMenu />
         </header>
 

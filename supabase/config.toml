@@ -240,11 +240,11 @@ otp_expiry = 600
 
 # The admin signs in with a 6-digit email code, never a link.
 [auth.email.template.magic_link]
-subject = "Your Easner Website Admin sign-in code"
+subject = "Your Easner sign-in code"
 content_path = "./supabase/templates/otp-code.html"
 
 [auth.email.template.confirmation]
-subject = "Your Easner Website Admin sign-in code"
+subject = "Your Easner sign-in code"
 content_path = "./supabase/templates/otp-code.html"
 
 # Uncomment to customize notification email template
