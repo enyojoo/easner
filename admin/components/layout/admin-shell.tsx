@@ -4,9 +4,11 @@ import type React from "react"
 import { useCallback, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { ChevronDown } from "lucide-react"
 import { BrandLogo } from "@easner/shared"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,14 +62,9 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   )
 }
 
-function initialsFor(name: string): string {
-  const parts = name.split(/[\s@._-]+/).filter(Boolean)
-  const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? "").slice(0, 2)
-  return letters.toUpperCase() || "U"
-}
-
 function AccountMenu() {
   const { user, role, signOut } = useAuth()
+  const [open, setOpen] = useState(false)
   const meta = (user?.user_metadata ?? {}) as { full_name?: string; name?: string }
   const email = user?.email ?? ""
   // The signed-in person is shown as their author profile: its name and photo, then the account's name.
@@ -84,20 +81,16 @@ function AccountMenu() {
   }, [signOut])
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           aria-label="Account menu"
-          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-auto gap-2 rounded-full px-2 py-1.5 hover:bg-muted/50"
         >
-          <Avatar className="size-9">
-            {photo ? <AvatarImage src={photo} alt="" className="object-cover" /> : null}
-            <AvatarFallback className="bg-info-surface text-xs font-semibold text-primary-text">
-              {initialsFor(name)}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+          <Avatar name={name} src={photo} decorative className="size-9 border-2 border-border ring-0" />
+          <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[264px] p-0">
         <div className="space-y-1 px-4 py-3">
