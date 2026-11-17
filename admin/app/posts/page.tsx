@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { FileText, ImageOff } from "lucide-react"
+import { FileText, ImageOff, Plus } from "lucide-react"
 import { PostQuickView, displayStatus } from "@/components/posts/post-quick-view"
 import { Avatar } from "@/components/ui/avatar"
 import { PostsTableSkeleton } from "@/components/admin-skeletons"
@@ -183,6 +183,14 @@ function PostsPageInner() {
       <PageHeader
         title="Posts"
         description="Write, review and publish posts for easner.com/blog."
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/posts/new">
+              <Plus aria-hidden />
+              New post
+            </Link>
+          </Button>
+        }
       />
 
       <div className="space-y-3">
