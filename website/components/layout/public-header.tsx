@@ -2,7 +2,23 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import {
+  ArrowRight,
+  Briefcase,
+  Code2,
+  Coins,
+  CreditCard,
+  HandCoins,
+  Landmark,
+  Link2,
+  Palette,
+  ReceiptText,
+  ShoppingCart,
+  Smartphone,
+  User,
+  Users2,
+  type LucideIcon,
+} from "lucide-react"
 import { OpenAccountButton, OpenAccountDialog } from "@/components/marketing/open-account-dialog"
 import { BrandLogo } from "@easner/shared"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -324,128 +340,26 @@ function ChevronRightIcon({ className }: { className?: string }) {
   )
 }
 
+/** The same lucide icons as the homepage product grid (visual-slot.tsx), so the menu and the grid match. */
+const NAV_ICONS: Record<NavIconName, LucideIcon> = {
+  building: Landmark,
+  landmark: Landmark,
+  file: ReceiptText,
+  receipt: ReceiptText,
+  wallet: Smartphone,
+  card: CreditCard,
+  coins: Coins,
+  palette: Palette,
+  code: Code2,
+  briefcase: Briefcase,
+  user: User,
+  cart: ShoppingCart,
+  users: Users2,
+  handcoins: HandCoins,
+  link: Link2,
+}
+
 function NavIcon({ name, className }: { name: NavIconName; className?: string }) {
-  const common = {
-    className,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    "aria-hidden": "true",
-  }
-  const stroke = {
-    stroke: "currentColor",
-    strokeWidth: 2,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  }
-
-  if (name === "code") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M8 9l-4 3 4 3M16 9l4 3-4 3M14 5l-4 14" />
-      </svg>
-    )
-  }
-
-  if (name === "card") {
-    return (
-      <svg {...common}>
-        <rect {...stroke} x="3" y="6" width="18" height="12" rx="2" />
-        <path {...stroke} d="M3 10h18M7 15h3" />
-      </svg>
-    )
-  }
-
-  if (name === "receipt" || name === "file") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M7 3h8l4 4v14l-2-1-2 1-2-1-2 1-2-1-2 1V3z" />
-        <path {...stroke} d="M9 9h6M9 13h6M9 17h4" />
-      </svg>
-    )
-  }
-
-  if (name === "wallet") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M4 7h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a3 3 0 0 1 3-3h11" />
-        <path {...stroke} d="M16 13h.01" />
-      </svg>
-    )
-  }
-
-  if (name === "coins") {
-    return (
-      <svg {...common}>
-        <ellipse {...stroke} cx="12" cy="6" rx="6" ry="3" />
-        <path {...stroke} d="M6 6v6c0 1.7 2.7 3 6 3s6-1.3 6-3V6M6 12v4c0 1.7 2.7 3 6 3s6-1.3 6-3v-4" />
-      </svg>
-    )
-  }
-
-  if (name === "user") {
-    return (
-      <svg {...common}>
-        <circle {...stroke} cx="12" cy="8" r="4" />
-        <path {...stroke} d="M5 21a7 7 0 0 1 14 0" />
-      </svg>
-    )
-  }
-
-  if (name === "briefcase") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1" />
-        <rect {...stroke} x="3" y="6" width="18" height="14" rx="2" />
-        <path {...stroke} d="M3 12h18" />
-      </svg>
-    )
-  }
-
-  if (name === "cart") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20 8H6" />
-        <circle {...stroke} cx="9" cy="20" r="1" />
-        <circle {...stroke} cx="17" cy="20" r="1" />
-      </svg>
-    )
-  }
-
-  if (name === "users") {
-    return (
-      <svg {...common}>
-        <circle {...stroke} cx="9" cy="8" r="3" />
-        <path {...stroke} d="M3 20a6 6 0 0 1 12 0" />
-        <path {...stroke} d="M15 6.5a3 3 0 0 1 0 5.8M21 20a5.5 5.5 0 0 0-4.5-6.4" />
-      </svg>
-    )
-  }
-
-  if (name === "handcoins") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17" />
-        <path {...stroke} d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9" />
-        <path {...stroke} d="m2 16 6 6" />
-        <circle {...stroke} cx="16" cy="9" r="2.9" />
-        <circle {...stroke} cx="6" cy="5" r="3" />
-      </svg>
-    )
-  }
-
-  if (name === "link") {
-    return (
-      <svg {...common}>
-        <path {...stroke} d="M9 15l6-6" />
-        <path {...stroke} d="M11 6l1.5-1.5a3.54 3.54 0 0 1 5 5L16 11" />
-        <path {...stroke} d="M13 18l-1.5 1.5a3.54 3.54 0 0 1-5-5L8 13" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg {...common}>
-      <path {...stroke} d="M4 10l8-5 8 5M6 10v8M10 10v8M14 10v8M18 10v8M4 20h16" />
-    </svg>
-  )
+  const Icon = NAV_ICONS[name]
+  return <Icon className={className} strokeWidth={2} aria-hidden="true" />
 }

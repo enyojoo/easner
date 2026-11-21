@@ -12,6 +12,7 @@ export type NavIconName =
   | "cart"
   | "users"
   | "handcoins"
+  | "palette"
   | "link"
 
 export interface NavLink {
@@ -72,7 +73,7 @@ export const NAV_SECTIONS: NavSection[] = [
       cta: { label: "Talk to our team", href: "/contact" },
     },
     items: [
-      { label: "White-label", href: "/white-label", icon: "briefcase", description: "Payments under your brand" },
+      { label: "White-label", href: "/white-label", icon: "palette", description: "Payments under your brand" },
       { label: "Developers", href: "/developers", icon: "code", description: "APIs for accounts and payouts" },
       { label: "Stablecoin", href: "/stablecoin", icon: "coins", description: "Stablecoin payments, where enabled" },
     ],

@@ -1,14 +1,14 @@
 "use client"
 
 import {
-  ArrowRightLeft,
-  Briefcase,
+  Coins,
   Code2,
   CreditCard,
   HandCoins,
   Landmark,
   Link2,
   LockKeyhole,
+  Palette,
   ReceiptText,
   ShieldCheck,
   ShoppingCart,
@@ -45,8 +45,8 @@ const iconByAsset = {
   "mkt-thumb-personal": Smartphone,
   "mkt-thumb-business": Landmark,
   "mkt-thumb-apis": Code2,
-  "mkt-thumb-partners": Briefcase,
-  "mkt-thumb-stablecoin": ArrowRightLeft,
+  "mkt-thumb-partners": Palette,
+  "mkt-thumb-stablecoin": Coins,
   "mkt-thumb-invoicing": ReceiptText,
   "mkt-thumb-cards": CreditCard,
   "mkt-thumb-checkout": ShoppingCart,
