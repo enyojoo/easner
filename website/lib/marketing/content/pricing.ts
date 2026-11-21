@@ -317,7 +317,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
   },
   {
     id: "connect",
-    label: "Pay Earnings",
+    label: "Pay Earners",
     rows: [
       { label: "Availability", cells: ["No", "No", "Yes", "Yes"] },
       { label: "Connect fee", cells: ["None", "None", "$0.50 + 0.5%, capped at $15", "Contract"] },
