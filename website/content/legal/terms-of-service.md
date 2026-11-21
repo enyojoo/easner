@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: November 6, 2026
+Last updated: November 19, 2026
 
 ---
 
@@ -65,9 +65,9 @@ For businesses, the Services may include organization onboarding, team access co
 
 Identity verification, virtual accounts, fiat pay-in and pay-out, money transmission, card acceptance, sanctions screening, and related compliance processing are delivered by **licensed partners**. Easner provides the technology interface and program management.
 
-When you use partner-provided services, you must accept **partner terms and privacy notices** presented in the hosted onboarding or payment flow (or incorporated documents such as the [Lightspark Grid End User Terms](/legal/lightspark-eut) when Grid services apply). Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Current partners are listed on **[Partners and service providers](/legal/partners)**.
+When you use partner-provided services, you must accept **partner terms and privacy notices** presented in the hosted onboarding or payment flow. Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Current partners are listed on **[Partners and service providers](/legal/partners)**.
 
-When you use **Lightspark Grid** money-transmission services through Easner, the [Lightspark Grid End User Terms](/legal/lightspark-eut) (also **Section 20** below) apply. When you enable **online payments** or other card acceptance through **Stripe**, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card processing, in addition to these Terms.
+When you enable **online payments** or other card acceptance through **Stripe**, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card processing, in addition to these Terms.
 
 ### Membership and billing
 
@@ -253,7 +253,7 @@ We may modify these Terms. Material changes will receive at least **30 days’ n
 
 ## 18. General Provisions
 
-**Entire agreement:** These Terms (including **Section 20 – Lightspark Grid End User Terms** and the [Lightspark Grid End User Terms](/legal/lightspark-eut) where Grid services apply), together with the incorporated **Privacy Policy**, **KYC/KYB and AML Policy**, and **[Partners and service providers](/legal/partners)** page, constitute the entire agreement between you and Easner regarding the Services. Partner terms accepted in the flow govern your relationship with those partners for the regulated services they provide (including money transmission and card acceptance).
+**Entire agreement:** These Terms, together with the incorporated **Privacy Policy**, **KYC/KYB and AML Policy**, and **[Partners and service providers](/legal/partners)** page, constitute the entire agreement between you and Easner regarding the Services. Partner terms accepted in the flow govern your relationship with those partners for the regulated services they provide (including money transmission and card acceptance).
 
 **Severability:** If any provision is held invalid or unenforceable, the remaining provisions remain in effect.
 
@@ -272,11 +272,5 @@ San Francisco, CA 94114, United States
 **Email (legal and compliance):** legal@easner.com  
 **For Support:** Live Chat or email support@easner.com  
 **Phone:** +1 628 228 6083  
-**Website:** www.easner.com  
-
-<a id="lightspark-money-transmission"></a>
-
-## 20. Lightspark Grid End User Terms
-
-When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by **Lightspark Payments, LLC** (NMLS ID 2429193) through Easner, you also agree to the **[Lightspark Grid End User Terms](/legal/lightspark-eut)**, which are incorporated into these Terms by reference. Easner presents combined acceptance so that accepting these Terms includes accepting Lightspark’s End User Terms for those services when we record your acceptance. The current Lightspark-hosted copy is at [https://www.lightspark.com/legal/grid/enduserterms](https://www.lightspark.com/legal/grid/enduserterms). If Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and we will update the incorporated document accordingly.
+**Website:** www.easner.com
 

@@ -425,30 +425,8 @@ ${body}
 `
 }
 
-function renderLightsparkFullComponent(lightsparkMd) {
-  const parsed = parseMarkdown(lightsparkMd)
-  return renderPolicyComponent("LightsparkEutFullPage", parsed, "", "", { demoteBodyH1ToH2: true })
-}
-
 function renderTermsComponent(termsMd) {
-  const parsed = parseMarkdown(termsMd, { stopBeforeSection: "20. Lightspark" })
-
-  const s20Idx = termsMd.indexOf("## 20. Lightspark Grid End User Terms")
-  let section20 = ""
-  if (s20Idx !== -1) {
-    const block20 = termsMd.slice(s20Idx)
-    const nextH2 = block20.indexOf("\n## ", 1)
-    const s20Only = nextH2 === -1 ? block20 : block20.slice(0, nextH2)
-    const parsed20 = parseMarkdown(s20Only, { stripFirstTitle: false })
-    const sec = parsed20.sections[0]
-    const blocks = sec?.blocks ?? []
-    section20 = `      <section id="lightspark-money-transmission">
-        <h2 className="${H2}">20. Lightspark Grid End User Terms</h2>
-${renderBlocks(blocks)}
-      </section>`
-  }
-
-  return renderPolicyComponent("TermsPolicyPage", parsed, "", section20)
+  return renderPolicyComponent("TermsPolicyPage", parseMarkdown(termsMd))
 }
 
 function main() {
@@ -462,7 +440,6 @@ function main() {
   const disclosurePersonalMd = fs.readFileSync(path.join(BANKING_LEGAL, "disclosures/personal-banking.md"), "utf8")
   const disclosureBusinessMd = fs.readFileSync(path.join(BANKING_LEGAL, "disclosures/business-banking.md"), "utf8")
   const disclosureDigitalMd = fs.readFileSync(path.join(BANKING_LEGAL, "disclosures/digital-assets.md"), "utf8")
-  const lightsparkEutMd = fs.readFileSync(path.join(BANKING_LEGAL, "lightspark-eut.md"), "utf8")
 
   fs.mkdirSync(CONTENT_DIR, { recursive: true })
   fs.mkdirSync(path.join(CONTENT_DIR, "disclosures"), { recursive: true })
@@ -478,7 +455,6 @@ function main() {
   fs.writeFileSync(path.join(CONTENT_DIR, "disclosures/personal-banking.md"), disclosurePersonalMd)
   fs.writeFileSync(path.join(CONTENT_DIR, "disclosures/business-banking.md"), disclosureBusinessMd)
   fs.writeFileSync(path.join(CONTENT_DIR, "disclosures/digital-assets.md"), disclosureDigitalMd)
-  fs.writeFileSync(path.join(CONTENT_DIR, "lightspark-eut.md"), lightsparkEutMd)
 
   fs.writeFileSync(path.join(OUT_DIR, "compliance-content.tsx"), renderPolicyComponent("CompliancePolicyPage", parseMarkdown(complianceMd)))
   fs.writeFileSync(path.join(OUT_DIR, "privacy-content.tsx"), renderPolicyComponent("PrivacyPolicyPage", parseMarkdown(privacyMd)))
@@ -506,8 +482,6 @@ function main() {
     path.join(OUT_DIR, "disclosure-digital-assets-content.tsx"),
     renderPolicyComponent("DigitalAssetsDisclosurePage", parseMarkdown(disclosureDigitalMd)),
   )
-
-  fs.writeFileSync(path.join(OUT_DIR, "lightspark-eut-content.tsx"), renderLightsparkFullComponent(lightsparkEutMd))
 
   fs.writeFileSync(path.join(OUT_DIR, "terms-content.tsx"), renderTermsComponent(termsMd))
 

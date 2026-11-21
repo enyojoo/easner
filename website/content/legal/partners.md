@@ -1,6 +1,6 @@
 # Partners and service providers
 
-Last updated: November 6, 2026
+Last updated: November 19, 2026
 
 Easner works with licensed financial partners, infrastructure providers, and technology subprocessors to deliver the Services. This page is the **maintained register** of entities that typically process personal information or provide regulated services for Easner products. Your experience may include only a subset, depending on product, jurisdiction, and features enabled.
 
@@ -14,8 +14,7 @@ We may update this page when partners change. Material changes to subprocessors 
 
 | Legal name | Role | U.S. NMLS or note | Applies when (summary) |
 |------------|------|-------------------|-------------------------|
-| **Lightspark Payments, LLC** (Grid) | Licensed money transmission – KYB, virtual accounts, fund, payout, cross-border where Grid is enabled | NMLS ID 2429193 | Eligible **Easner Business Banking** USD / global banking and related flows via Grid |
-| **Bridge Building Inc.** and Bridge-group entities | Licensed money transmission and payments – KYC/KYB, virtual accounts, fiat pay-in and pay-out | U.S. NMLS ID 2450917 (Bridge Building Inc.) | Many **Easner Personal Banking** flows; eligible **Easner Business Banking** EUR and multi-currency accounts where Bridge is enabled |
+| **Bridge Building Inc.** and Bridge-group entities | Licensed money transmission and payments – virtual accounts, fiat pay-in and pay-out | U.S. NMLS ID 2450917 (Bridge Building Inc.) | Many **Easner Personal Banking** flows; eligible **Easner Business Banking** EUR and multi-currency accounts where Bridge is enabled |
 | **Noah US, Inc.** and Noah-group entities | Licensed money transmission and payments – KYC, virtual accounts, fiat pay-in and pay-out | U.S. NMLS ID 2696057 (Noah US, Inc.) | Certain **Easner Personal Banking** and corridor flows where Noah is enabled |
 | **Yellowcard** (operating entities per corridor) | Licensed payments / money movement – local and cross-border corridors | Per entity and jurisdiction | Corridor pay-in and pay-out where Yellowcard is enabled |
 | **Stripe, Inc.** and Stripe affiliates | Payment processing – card acceptance (Stripe Connect), platform billing (Easner plans, Easner Checkout) | Money transmitter / PI licenses as applicable | Online payments on invoices; card and wallet pay on hosted checkout; Easner membership and merchant subscriptions |
@@ -23,7 +22,7 @@ We may update this page when partners change. Material changes to subprocessors 
 | **Sumsub** | Identity verification technology | Service provider to partners and Easner | Certain hosted KYC/KYB flows |
 | **Relay** | Cross-chain bridging / routing | Infrastructure | Certain wallet sends where enabled |
 
-Partner privacy policies and terms are linked from hosted verification and payment flows. Easner’s [Lightspark Grid End User Terms](/legal/lightspark-eut) are incorporated into our [Terms of Service](/terms) when Grid services apply.
+Partner privacy policies and terms are linked from hosted verification and payment flows.
 
 ---
 

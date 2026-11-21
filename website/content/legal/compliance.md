@@ -1,6 +1,6 @@
 # KYC/KYB and AML Policy
 
-Last updated: November 6, 2026
+Last updated: November 19, 2026
 
 ---
 
@@ -135,7 +135,7 @@ We conduct KYC/KYB when:
 - Your profile, ownership, activity, or jurisdiction changes materially
 - A partner or regulator requires additional information
 
-You may need to accept **partner terms** presented during hosted verification or before certain services are enabled. Where **Lightspark Grid** money transmission applies, the [Lightspark Grid End User Terms](/legal/lightspark-eut) incorporated into our [Terms of Service](/terms) also apply. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
+You may need to accept **partner terms** presented during hosted verification or before certain services are enabled. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
 
 ---
 

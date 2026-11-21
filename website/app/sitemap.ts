@@ -93,7 +93,6 @@ function staticEntries(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/compliance`, lastModified: lastModified.legal, changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/legal`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/legal/partners`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
-    { url: `${baseUrl}/legal/lightspark-eut`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
     { url: `${baseUrl}/legal/law-enforcement`, lastModified: lastModified.legalBundle, changeFrequency: "yearly", priority: 0.45 },
     {
       url: `${baseUrl}/legal/disclosures`,

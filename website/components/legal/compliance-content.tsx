@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyPageShell, PolicyLink } from "@/components/le
 
 export function CompliancePolicyPage() {
   return (
-    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="November 6, 2026">
+    <PolicyPageShell title="KYC/KYB and AML Policy" lastUpdated="November 19, 2026">
       <section>
 
       </section>
@@ -593,7 +593,7 @@ export function CompliancePolicyPage() {
           <li>A partner or regulator requires additional information</li>
         </ul>
         <p className="text-web-body leading-relaxed">
-          You may need to accept <strong>partner terms</strong> presented during hosted verification or before certain services are enabled. Where <strong>Lightspark Grid</strong> money transmission applies, the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> incorporated into our <PolicyLink href="/terms">Terms of Service</PolicyLink> also apply. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
+          You may need to accept <strong>partner terms</strong> presented during hosted verification or before certain services are enabled. Easner records acceptance of applicable partner terms where required before accounts or rails can open.
         </p>
       </section>
 

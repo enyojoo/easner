@@ -3,7 +3,7 @@ import { PolicyPageShell, PolicyLink, PolicyExternalLink } from "@/components/le
 
 export function PartnersPolicyPage() {
   return (
-    <PolicyPageShell title="Partners and service providers" lastUpdated="November 6, 2026">
+    <PolicyPageShell title="Partners and service providers" lastUpdated="November 19, 2026">
       <section>
         <p className="text-web-body leading-relaxed mb-4">
           Easner works with licensed financial partners, infrastructure providers, and technology subprocessors to deliver the Services. This page is the <strong>maintained register</strong> of entities that typically process personal information or provide regulated services for Easner products. Your experience may include only a subset, depending on product, jurisdiction, and features enabled.
@@ -39,24 +39,10 @@ export function PartnersPolicyPage() {
             <tbody>
             <tr className="border-b border-web-hairline last:border-b-0">
                 <td className="px-4 py-3 align-top">
-                  <strong>Lightspark Payments, LLC</strong> (Grid)
-                </td>
-                <td className="px-4 py-3 align-top">
-                  Licensed money transmission – KYB, virtual accounts, fund, payout, cross-border where Grid is enabled
-                </td>
-                <td className="px-4 py-3 align-top">
-                  NMLS ID 2429193
-                </td>
-                <td className="px-4 py-3 align-top">
-                  Eligible <strong>Easner Business Banking</strong> USD / global banking and related flows via Grid
-                </td>
-            </tr>
-            <tr className="border-b border-web-hairline last:border-b-0">
-                <td className="px-4 py-3 align-top">
                   <strong>Bridge Building Inc.</strong> and Bridge-group entities
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Licensed money transmission and payments – KYC/KYB, virtual accounts, fiat pay-in and pay-out
+                  Licensed money transmission and payments – virtual accounts, fiat pay-in and pay-out
                 </td>
                 <td className="px-4 py-3 align-top">
                   U.S. NMLS ID 2450917 (Bridge Building Inc.)
@@ -153,7 +139,7 @@ export function PartnersPolicyPage() {
           </table>
         </div>
         <p className="text-web-body leading-relaxed">
-          Partner privacy policies and terms are linked from hosted verification and payment flows. Easner’s <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> are incorporated into our <PolicyLink href="/terms">Terms of Service</PolicyLink> when Grid services apply.
+          Partner privacy policies and terms are linked from hosted verification and payment flows.
         </p>
       </section>
 

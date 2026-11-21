@@ -1,9 +1,9 @@
-import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } from "@/components/legal/policy-page-shell"
+import { PolicyContactBlock, PolicyPageShell, PolicyLink } from "@/components/legal/policy-page-shell"
 
 
 export function TermsPolicyPage() {
   return (
-    <PolicyPageShell title="Terms of Service" lastUpdated="November 6, 2026">
+    <PolicyPageShell title="Terms of Service" lastUpdated="November 19, 2026">
       <section>
 
       </section>
@@ -85,10 +85,10 @@ export function TermsPolicyPage() {
           Identity verification, virtual accounts, fiat pay-in and pay-out, money transmission, card acceptance, sanctions screening, and related compliance processing are delivered by <strong>licensed partners</strong>. Easner provides the technology interface and program management.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          When you use partner-provided services, you must accept <strong>partner terms and privacy notices</strong> presented in the hosted onboarding or payment flow (or incorporated documents such as the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> when Grid services apply). Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Current partners are listed on <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong>.
+          When you use partner-provided services, you must accept <strong>partner terms and privacy notices</strong> presented in the hosted onboarding or payment flow. Those terms govern the regulated services the partner provides and are incorporated by reference to the extent they apply to your use through Easner. Current partners are listed on <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong>.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          When you use <strong>Lightspark Grid</strong> money-transmission services through Easner, the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> (also <strong>Section 20</strong> below) apply. When you enable <strong>online payments</strong> or other card acceptance through <strong>Stripe</strong>, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card processing, in addition to these Terms.
+          When you enable <strong>online payments</strong> or other card acceptance through <strong>Stripe</strong>, Stripe’s Connected Account Agreement, Stripe Services Agreement, and related Stripe terms apply to card processing, in addition to these Terms.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">Membership and billing</h3>
         <p className="text-web-body leading-relaxed mb-4">
@@ -318,7 +318,7 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">18. General Provisions</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Entire agreement:</strong> These Terms (including <strong>Section 20 – Lightspark Grid End User Terms</strong> and the <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink> where Grid services apply), together with the incorporated <PolicyLink href="/privacy">Privacy Policy</PolicyLink>, <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, and <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page, constitute the entire agreement between you and Easner regarding the Services. Partner terms accepted in the flow govern your relationship with those partners for the regulated services they provide (including money transmission and card acceptance).
+          <strong>Entire agreement:</strong> These Terms, together with the incorporated <PolicyLink href="/privacy">Privacy Policy</PolicyLink>, <PolicyLink href="/compliance">KYC/KYB and AML Policy</PolicyLink>, and <strong><PolicyLink href="/legal/partners">Partners and service providers</PolicyLink></strong> page, constitute the entire agreement between you and Easner regarding the Services. Partner terms accepted in the flow govern your relationship with those partners for the regulated services they provide (including money transmission and card acceptance).
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Severability:</strong> If any provision is held invalid or unenforceable, the remaining provisions remain in effect.
@@ -334,12 +334,6 @@ export function TermsPolicyPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">19. Contact</h2>
         <PolicyContactBlock />
-      </section>
-      <section id="lightspark-money-transmission">
-        <h2 className="font-display text-2xl font-bold text-web-ink mb-4">20. Lightspark Grid End User Terms</h2>
-        <p className="text-web-body leading-relaxed">
-          When you use money-transmission, payout, pay-in, currency conversion, or related Grid services provided by <strong>Lightspark Payments, LLC</strong> (NMLS ID 2429193) through Easner, you also agree to the <strong><PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink></strong>, which are incorporated into these Terms by reference. Easner presents combined acceptance so that accepting these Terms includes accepting Lightspark’s End User Terms for those services when we record your acceptance. The current Lightspark-hosted copy is at <PolicyExternalLink href="https://www.lightspark.com/legal/grid/enduserterms" analyticsLocation="legal_external_link">https://www.lightspark.com/legal/grid/enduserterms</PolicyExternalLink>. If Lightspark updates its End User Terms, the then-current version Lightspark publishes governs those regulated services, and we will update the incorporated document accordingly.
-        </p>
       </section>
     </PolicyPageShell>
   )

@@ -231,15 +231,6 @@ export const OG_CARDS: OgCard[] = [
     alt: "Easner partners and service providers register.",
   },
   {
-    slug: "lightspark-eut",
-    route: "legal/lightspark-eut",
-    headline: ["Lightspark Grid", "End User Terms"],
-    accentLine: 0,
-    line: "Incorporated into Easner Terms (Section 20) for Grid services.",
-    visual: { kind: "shield" },
-    alt: "Lightspark Grid End User Terms on Easner.",
-  },
-  {
     slug: "legal-disclosures",
     route: "legal/disclosures",
     headline: ["Product", "disclosures"],

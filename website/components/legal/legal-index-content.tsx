@@ -3,7 +3,7 @@ import { PolicyContactBlock, PolicyPageShell, PolicyLink, PolicyExternalLink } f
 
 export function LegalHubPage() {
   return (
-    <PolicyPageShell title="Legal" lastUpdated="November 14, 2026">
+    <PolicyPageShell title="Legal" lastUpdated="November 19, 2026">
       <section>
         <p className="text-web-body leading-relaxed mb-4">
           Easner Group, Inc. (“Easner”) builds financial technology for global money movement. Easner is <strong>not a bank</strong>. Banking, money transmission, payment acceptance, verification, and related regulated services are provided by <strong>licensed partners</strong> under their licenses and terms. Wallet signing for digital asset features is provided by <strong>Turnkey</strong> under the self-custody model described in our Terms and Privacy Policy.
@@ -309,25 +309,17 @@ export function LegalHubPage() {
             <tbody>
             <tr className="border-b border-web-hairline last:border-b-0">
                 <td className="px-4 py-3 align-top">
-                  <PolicyLink href="/legal/lightspark-eut">Lightspark Grid End User Terms</PolicyLink>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  Money transmission via Lightspark Grid when enabled for your account (also incorporated in <PolicyLink href="/terms">Terms of Service</PolicyLink>).
-                </td>
-            </tr>
-            <tr className="border-b border-web-hairline last:border-b-0">
-                <td className="px-4 py-3 align-top">
                   <PolicyLink href="/legal/partners">Partners and service providers</PolicyLink>
                 </td>
                 <td className="px-4 py-3 align-top">
-                  Other partners; links to partner policies where public.
+                  Current partners; links to partner policies where public.
                 </td>
             </tr>
             </tbody>
           </table>
         </div>
         <p className="text-web-body leading-relaxed">
-          Partner terms for Bridge, Noah, Yellowcard, Stripe, and others are presented <strong>in the flow</strong> when you use those services. The <PolicyLink href="/legal/partners">Partners</PolicyLink> page lists current entities and roles.
+          Partner terms for Noah, Yellowcard, Stripe, and others are presented <strong>in the flow</strong> when you use those services. The <PolicyLink href="/legal/partners">Partners</PolicyLink> page lists current entities and roles.
         </p>
       </section>
 

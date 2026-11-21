@@ -82,10 +82,9 @@ Some regulated services require **partner terms** accepted in hosted onboarding 
 
 | Document | Description |
 |----------|-------------|
-| [Lightspark Grid End User Terms](/legal/lightspark-eut) | Money transmission via Lightspark Grid when enabled for your account (also incorporated in [Terms of Service](/terms)). |
-| [Partners and service providers](/legal/partners) | Other partners; links to partner policies where public. |
+| [Partners and service providers](/legal/partners) | Current partners; links to partner policies where public. |
 
-Partner terms for Bridge, Noah, Yellowcard, Stripe, and others are presented **in the flow** when you use those services. The [Partners](/legal/partners) page lists current entities and roles.
+Partner terms for Noah, Yellowcard, Stripe, and others are presented **in the flow** when you use those services. The [Partners](/legal/partners) page lists current entities and roles.
 
 ---
 
