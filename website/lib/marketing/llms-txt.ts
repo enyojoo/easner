@@ -6,6 +6,7 @@ import { APP_STORE_URL, BUSINESS_SIGNUP_URL, CAL_LINK, CONTACT_EMAIL, PLAY_STORE
 import { businessContent } from "@/lib/marketing/content/business"
 import { cardsContent } from "@/lib/marketing/content/cards"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
+import { connectContent } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq } from "@/lib/marketing/content/ai"
@@ -33,8 +34,9 @@ const PAGE_CONTENT: Record<string, ProductPageContent> = {
   "/payroll": payrollContent,
   "/stablecoin": stablecoinContent,
   "/cards": cardsContent,
+  "/connect": connectContent,
   "/developers": developersContent,
-  "/partners": partnersContent,
+  "/white-label": partnersContent,
 }
 
 const faqLines = (items: FaqItem[]) => items.map((item) => `- **${item.question}** ${item.answer}`)

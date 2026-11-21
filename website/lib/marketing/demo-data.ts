@@ -145,3 +145,14 @@ export const DEMO_FAITH_PARTNER = {
     { name: "Accra branch support", time: "GCB Bank • 9:30 AM", amount: -1200, status: "completed" },
   ] satisfies DemoTransaction[],
 }
+
+/** The fictional platform behind the Easner Connect illustrations (ConnectSheet, AppEarnings, BizConnect*): its own accent colour, never Easner blue. */
+export const DEMO_CONNECT_PLATFORM = {
+  name: "Kora Music",
+  initial: "K",
+  color: "#B4531A",
+  tint: "#F6ECE2",
+  domain: "korasongs.com",
+  waiting: 412.5,
+  code: ["7K4M", "92XQ"],
+} as const

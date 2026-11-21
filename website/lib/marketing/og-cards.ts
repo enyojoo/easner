@@ -60,6 +60,15 @@ export const OG_CARDS: OgCard[] = [
     alt: "Easner Checkout – a hosted checkout page with Apple Pay, card, bank and stablecoin.",
   },
   {
+    slug: "connect",
+    route: "connect",
+    headline: ["Pay everyone", "you owe"],
+    accentLine: 1,
+    line: "Pay the people on your platform into their own Easner accounts.",
+    visual: { kind: "screen", slot: "mkt-hero-connect-01" },
+    alt: "Easner Connect – a platform's withdraw page with the Easner Connect sheet open beside a phone.",
+  },
+  {
     slug: "payment-links",
     route: "payment-links",
     headline: ["Get paid", "with a link"],
@@ -114,13 +123,13 @@ export const OG_CARDS: OgCard[] = [
     alt: "Easner for developers – the Workbench creating a payout through the API.",
   },
   {
-    slug: "partners",
-    route: "partners",
+    slug: "white-label",
+    route: "white-label",
     headline: ["Payments under", "your brand"],
     accentLine: 1,
     line: "Launch cross-border payments on Easner infrastructure, with our support.",
     visual: { kind: "screen", slot: "mkt-hero-partners-01" },
-    alt: "Easner for Partners – the Easner app under a partner's brand.",
+    alt: "Easner White-label – the Easner app under a partner's brand.",
   },
   {
     slug: "app",

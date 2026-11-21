@@ -93,17 +93,17 @@ export const PRODUCT_CARDS: CardItem[] = [
     icon: "mkt-thumb-checkout",
   },
   {
-    title: "Payment Links",
+    title: "Connect",
     description:
-      "Get paid with a link – one-time or recurring, no website needed.",
-    link: "/payment-links",
-    icon: "mkt-thumb-paylinks",
+      "Pay the people on your platform into their own Easner accounts, from your Easner Business balance.",
+    link: "/connect",
+    icon: "mkt-thumb-connect",
   },
   {
-    title: "Whitelabel programs",
+    title: "White-label",
     description:
       "Launch cross-border payments under your own brand on Easner infrastructure.",
-    link: "/partners",
+    link: "/white-label",
     icon: "mkt-thumb-partners",
   },
 ]

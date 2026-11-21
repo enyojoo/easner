@@ -6,7 +6,7 @@ import { breadcrumbJsonLd, faqPageJsonLd, financialServiceJsonLd, jsonLdScript, 
 
 export const metadata = marketingMetadata({
   metadata: partnersContent.metadata,
-  path: "/partners",
+  path: "/white-label",
   titleAbsolute: partnersContent.metadata.title,
 })
 
@@ -18,16 +18,16 @@ export default function PartnersPage() {
         dangerouslySetInnerHTML={jsonLdScript([
           ...(partnersContent.faq ? [faqPageJsonLd(partnersContent.faq)] : []),
           financialServiceJsonLd({
-            name: "Easner for Partners",
+            name: "Easner White-label",
             description: partnersContent.metadata.description,
-            path: "/partners",
+            path: "/white-label",
             serviceType: "Branded cross-border programs, Agency Model",
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            { name: "Partners", path: "/partners" },
+            { name: "White-label", path: "/white-label" },
           ]),
-          ...productAnswerJsonLd(partnersContent, "/partners"),
+          ...productAnswerJsonLd(partnersContent, "/white-label"),
         ])}
       />
       <ProductPageSections content={partnersContent} beforeFaq={<ProductRelatedReading product="partners" />} />

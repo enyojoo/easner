@@ -3,14 +3,14 @@ import type { AnswerDefinition, FaqItem } from "../types"
 export const contactMetadata = {
   title: "Contact | Sales, Demos & Partnerships",
   description:
-    "Book a call with Easner to discuss personal banking, business accounts, Easner for Partners, coverage, or partnership opportunities.",
+    "Book a call with Easner to discuss personal banking, business accounts, Easner White-label, coverage, or partnership opportunities.",
   keywords: ["contact Easner", "book a demo", "Easner sales", "Easner API consultation"],
 }
 
 export const contactHero = {
   headline: "Let's talk",
   subhead:
-    "Whether you're opening an account or exploring Easner for Partners or embedded money rails, get in touch with the Easner team.",
+    "Whether you're opening an account or exploring Easner White-label or embedded money rails, get in touch with the Easner team.",
   prospectPreface: "New to Easner?",
   prospectLinkLabel: "Book a consultation",
   emailPreface: "Prefer to email?",
@@ -69,7 +69,7 @@ export const contactFaq: FaqItem[] = [
     links: [
       { label: "Contact", href: "/contact" },
       { label: "Developers", href: "/developers" },
-      { label: "Partners", href: "/partners" },
+      { label: "White-label", href: "/white-label" },
     ],
   },
 ]

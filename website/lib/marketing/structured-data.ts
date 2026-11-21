@@ -36,6 +36,7 @@ export function organizationJsonLd() {
       "Business banking",
       "Payroll for international teams",
       "Online checkout and payment links",
+      "Platform payouts",
       "Invoicing",
       "USDC",
       "USDT",

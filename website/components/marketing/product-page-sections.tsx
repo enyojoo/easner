@@ -98,7 +98,8 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
       )}
       {content.commercialModels && (
         <ThreeColCards
-          headline="Choose how you partner with Easner"
+          headline={content.commercialModelsSection?.headline ?? "Choose how you partner with Easner"}
+          subhead={content.commercialModelsSection?.subhead}
           items={content.commercialModels}
           columns={content.commercialModels.length >= 3 ? 3 : 2}
           showIcons
@@ -109,7 +110,7 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
           Commercial terms are customized.{" "}
           <MarketingLink
             href={CONTACT_PATH}
-            analyticsLocation="developers_pricing_contact"
+            analyticsLocation={content.commercialModelsSection?.analyticsLocation ?? "developers_pricing_contact"}
             ctaLabel="Contact us"
             className="font-semibold text-brand-primary hover:underline"
           >

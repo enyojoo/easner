@@ -50,7 +50,7 @@ export const developersContent: ProductPageContent = {
     altText: "The Easner developer Workbench creating a payout through the API",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
-      { label: "Agency Model", href: "/partners", analyticsLocation: "developers_hero_partners" },
+      { label: "Agency Model", href: "/white-label", analyticsLocation: "developers_hero_partners" },
     ],
   },
   integrationStepsHeadline: "From first API call to live money movement",
@@ -154,6 +154,7 @@ export const developersContent: ProductPageContent = {
         "Ship accounts, verification, and cross-border pay-in and payout inside your product – compliance and webhooks built in.",
     },
   ],
+  useCaseLinks: [{ label: "Paying the people on your platform? See Connect", href: "/connect" }],
   definition: developersDefinition,
   faq: [
     {

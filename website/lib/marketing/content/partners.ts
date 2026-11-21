@@ -2,10 +2,10 @@ import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
 
 export const partnersDefinition: AnswerDefinition = {
-  term: "Easner for Partners",
-  question: "What is Easner for Partners?",
+  term: "Easner White-label",
+  question: "What is Easner White-label?",
   answer:
-    "Easner for Partners is a commercial programme with two models: the Agency Model, a full branded payments product on Easner infrastructure, and the Developer Model, API access without a branded deployment.",
+    "Easner White-label is a commercial programme with two models: the Agency Model, a full branded payments product on Easner infrastructure, and the Developer Model, API access without a branded deployment.",
   facts: [
     {
       term: "What Easner runs",
@@ -20,14 +20,14 @@ export const partnersDefinition: AnswerDefinition = {
 
 export const partnersContent: ProductPageContent = {
   metadata: {
-    title: "White-Label Payments | Easner for Partners",
+    title: "Easner White-label | Launch Payments Under Your Brand",
     description:
-      "Launch a branded global payments product with Easner for Partners. Get accounts, collections, payouts, verification workflows, and operational support.",
+      "Launch a branded global payments product with Easner White-label. Get accounts, collections, payouts, verification workflows, and operational support.",
     keywords: [
       "white-label banking app",
       "branded money transfer app",
       "agency model payments",
-      "Easner for Partners",
+      "Easner White-label",
       "white-label remittance",
       "OTC money transfer",
       "branded cross-border payments",

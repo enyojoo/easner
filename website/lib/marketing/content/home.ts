@@ -116,7 +116,7 @@ export const solutionsPersonas = [
     body: "Build a branded payment program with Easner handling the underlying infrastructure, verification flows, and supported payout connections.",
     visualSlot: "mkt-persona-otc",
     altText: "Partner operator managing branded cross-border transfers",
-    ctas: [{ label: "Explore Partners", href: "/partners", analyticsLocation: "homepage_persona_otc" }] satisfies Cta[],
+    ctas: [{ label: "Explore White-label", href: "/white-label", analyticsLocation: "homepage_persona_otc" }] satisfies Cta[],
   },
   {
     id: "dev",

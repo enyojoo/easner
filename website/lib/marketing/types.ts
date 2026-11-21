@@ -140,6 +140,8 @@ export interface ProductPageContent {
   tierNote?: string
   statusBanner?: string
   commercialModels?: CardItem[]
+  /** Overrides the partner-programme heading, sub-line and contact-link analytics on the commercial models block. */
+  commercialModelsSection?: { headline: string; subhead?: string; analyticsLocation?: string }
   capabilities?: CardItem[]
   segments?: CardItem[]
   ctaBand: CtaBandContent

@@ -4,6 +4,7 @@ import { contactDefinition, contactFaq } from "./contact"
 import { businessContent, businessDefinition } from "./business"
 import { cardsContent, cardsDefinition } from "./cards"
 import { checkoutContent, checkoutDefinition } from "./checkout"
+import { connectContent, connectDefinition } from "./connect"
 import { developersContent, developersDefinition } from "./developers"
 import { homeDefinition, homeFaq } from "./home"
 import { invoicingContent, invoicingDefinition } from "./invoicing"
@@ -214,11 +215,18 @@ export const aiSections: AiAnswerSection[] = [
   { href: "/stablecoin", label: "Stablecoin", definition: stablecoinDefinition, faq: stablecoinContent.faq },
   { href: "/cards", label: "Cards", definition: cardsDefinition, faq: cardsContent.faq },
   {
-    href: "/partners",
-    label: "Partners",
+    href: "/connect",
+    label: "Connect",
+    definition: connectDefinition,
+    faq: connectContent.faq,
+    howTo: howToFromSteps(connectContent.integrationStepsHeadline ?? "How to pay people with Easner Connect", connectContent.integrationSteps),
+  },
+  {
+    href: "/white-label",
+    label: "White-label",
     definition: partnersDefinition,
     faq: partnersContent.faq,
-    howTo: howToFromSteps(partnersContent.integrationStepsHeadline ?? "How to launch Easner for Partners", partnersContent.integrationSteps),
+    howTo: howToFromSteps(partnersContent.integrationStepsHeadline ?? "How to launch Easner White-label", partnersContent.integrationSteps),
   },
   {
     href: "/developers",

@@ -10,6 +10,7 @@ import { ScaledScreen } from "./scaled-screen"
 import { BUSINESS_SLOTS } from "./slots/business"
 import { CARDS_SLOTS } from "./slots/cards"
 import { CHECKOUT_SLOTS } from "./slots/checkout"
+import { CONNECT_SLOTS } from "./slots/connect"
 import { INVOICING_SLOTS } from "./slots/invoicing"
 import { PAYMENT_LINKS_SLOTS } from "./slots/payment-links"
 import { DEVELOPERS_SLOTS } from "./slots/developers"
@@ -23,6 +24,7 @@ const SCREEN_SLOTS: Record<string, Canvas> = {
   ...BUSINESS_SLOTS,
   ...DEVELOPERS_SLOTS,
   ...CHECKOUT_SLOTS,
+  ...CONNECT_SLOTS,
   ...PAYMENT_LINKS_SLOTS,
   ...INVOICING_SLOTS,
   ...PAYROLL_SLOTS,

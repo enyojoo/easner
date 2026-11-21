@@ -251,7 +251,7 @@ export const PRODUCT_PAGES: Record<ProductSlug, { label: string; path: string }>
   stablecoin: { label: "Stablecoin", path: "/stablecoin" },
   cards: { label: "Cards", path: "/cards" },
   developers: { label: "Developers", path: "/developers" },
-  partners: { label: "Partners", path: "/partners" },
+  partners: { label: "White-label", path: "/white-label" },
 }
 
 export const SITE_ORIGIN = "https://www.easner.com"

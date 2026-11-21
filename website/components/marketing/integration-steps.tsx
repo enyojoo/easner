@@ -15,7 +15,7 @@ interface IntegrationStepsProps {
 export function IntegrationSteps({ headline, steps, footnote, className, id }: IntegrationStepsProps) {
   // Wait until xl: to go multi-column beyond 2 – at lg: (1024–1279px) a 3-4 column grid
   // is too narrow for a single long word in bold uppercase tracked letters (e.g. "DEPLOYMENT").
-  const wideCols = steps.length >= 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
+  const wideCols = steps.length >= 5 ? "xl:grid-cols-5" : steps.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
 
   return (
     <section id={id} className={cn("scroll-mt-24 bg-white pb-16 pt-8 md:pb-24 md:pt-12", className)}>
@@ -37,7 +37,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
                 {index + 1}
               </div>
               {/* Capped below the general sub scale – this grid gets narrower than most other card contexts. */}
-              <Headline level="sub" className="mt-4 lg:text-2xl xl:text-2xl">
+              <Headline level="sub" className={cn("mt-4 lg:text-2xl xl:text-2xl", steps.length >= 5 && "xl:text-lg")}>
                 {step.title}
               </Headline>
               <p className="mt-3 flex-1 text-sm leading-7 text-web-body">{step.description}</p>

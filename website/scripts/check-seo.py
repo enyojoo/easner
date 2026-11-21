@@ -243,9 +243,10 @@ for route, path in sorted(routes.items()):
         "/payment-links",
         "/invoicing",
         "/payroll",
+        "/connect",
         "/stablecoin",
         "/cards",
-        "/partners",
+        "/white-label",
         "/developers",
         "/answers",
     }
@@ -308,7 +309,7 @@ def related_links(route, section_id):
     return [unquote(urlparse(h).path).rstrip("/") for h in re.findall(r'<a[^>]*href="([^"]+)"', match.group(0))]
 
 
-PRODUCT_ROUTES = ["/personal", "/business", "/checkout", "/payment-links", "/invoicing", "/payroll", "/stablecoin", "/cards", "/developers", "/partners"]
+PRODUCT_ROUTES = ["/personal", "/business", "/checkout", "/payment-links", "/invoicing", "/payroll", "/connect", "/stablecoin", "/cards", "/developers", "/white-label"]
 for route in PRODUCT_ROUTES:
     if route not in routes or not routes[route].exists():
         continue

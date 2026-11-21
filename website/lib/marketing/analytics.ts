@@ -22,7 +22,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/cards": "cards",
   "/invoicing": "invoicing",
   "/stablecoin": "stablecoin",
-  "/partners": "partners",
+  "/white-label": "white-label",
   "/developers": "developers",
   "/contact": "contact",
   "/app": "download",
