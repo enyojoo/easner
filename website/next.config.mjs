@@ -13,9 +13,21 @@ const blogStorageHost = (() => {
   }
 })()
 
+/** Browser events go to `/ingest`. This is the real PostHog region they are forwarded to. */
+const posthogIngestOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com").origin
+  } catch {
+    return "https://us.i.posthog.com"
+  }
+})()
+const posthogAssetsOrigin = posthogIngestOrigin.replace(".i.posthog.com", "-assets.i.posthog.com")
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: monorepoRoot,
+  // PostHog's capture endpoints use a trailing slash. Redirecting those would drop the POST body.
+  skipTrailingSlashRedirect: true,
   // Files the share-image routes read at runtime (fonts, logo, fixture covers) must ship with the serverless output.
   outputFileTracingIncludes: {
     "/blog/**/*": [
@@ -59,6 +71,8 @@ const nextConfig = {
    */
   async rewrites() {
     return [
+      { source: "/ingest/static/:path*", destination: `${posthogAssetsOrigin}/static/:path*` },
+      { source: "/ingest/:path*", destination: `${posthogIngestOrigin}/:path*` },
       { source: "/blog/:slug.md", destination: "/api/blog/markdown/:slug" },
       // IndexNow looks for the ownership key at /<key>.txt on the site root. The handler answers only for the real key.
       { source: "/:key([0-9a-fA-F-]{8,128}).txt", destination: "/api/indexnow-key/:key" },

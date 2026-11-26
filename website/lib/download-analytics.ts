@@ -1,5 +1,6 @@
 /**
  * Fire-and-forget PostHog capture from proxy (Edge-compatible).
+ * Posts to the PostHog host directly. The browser uses `/ingest`; that path is not a valid server URL.
  * Never include PII (email addresses).
  */
 export async function captureDownloadRedirect(properties: {

@@ -14,6 +14,18 @@ export type CtaDestinationType =
   | "chat"
   | "anchor"
 
+let lastClickAt = 0
+let lastFormAt = 0
+
+/** A component already reported this click, so the document listener should not report it again. */
+export function wasClickJustTracked() {
+  return typeof performance !== "undefined" && performance.now() - lastClickAt < 50
+}
+
+export function wasFormJustTracked() {
+  return typeof performance !== "undefined" && performance.now() - lastFormAt < 50
+}
+
 const PAGE_NAMES: Record<string, string> = {
   "/": "home",
   "/about": "about",
@@ -32,6 +44,14 @@ const PAGE_NAMES: Record<string, string> = {
   "/terms": "terms",
   "/access": "access",
   "/pricing": "pricing",
+  "/connect": "connect",
+  "/checkout": "checkout",
+  "/payroll": "payroll",
+  "/payment-links": "payment-links",
+  "/answers": "answers",
+  "/blog": "blog",
+  "/legal": "legal",
+  "/contact": "contact",
 }
 
 export function getMarketingPageName(pathname: string): string {
@@ -75,6 +95,7 @@ export function captureCtaClicked(properties: {
 }) {
   if (typeof window === "undefined") return
 
+  lastClickAt = performance.now()
   const pageContext = getCurrentPageContext()
   posthog.capture("cta_clicked", {
     ...pageContext,
@@ -196,10 +217,20 @@ export function captureFormSubmitted(
   properties?: Record<string, string | number | boolean | null>
 ) {
   if (typeof window === "undefined") return
+  lastFormAt = performance.now()
   posthog.capture("form_submitted", {
     form_name: formName,
     ...getCurrentPageContext(),
     ...properties,
+  })
+}
+
+/** How far down a page a visitor scrolled: 25, 50, 75 or 100. Blog posts use `blog_read_depth` instead. */
+export function captureScrollDepth(depth: 25 | 50 | 75 | 100) {
+  if (typeof window === "undefined") return
+  posthog.capture("scroll_depth", {
+    depth,
+    ...getCurrentPageContext(),
   })
 }
 

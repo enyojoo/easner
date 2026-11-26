@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { MarketingIntercom } from "@/components/marketing-intercom"
 import { PostHogProvider } from "@/components/posthog-provider"
+import { attributionBootScript } from "@/lib/marketing/attribution"
 import { homeMetadata } from "@/lib/marketing/content/home"
 import "./globals.css"
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: attributionBootScript() }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />

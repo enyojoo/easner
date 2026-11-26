@@ -97,6 +97,18 @@ async function blogResponse(request: NextRequest): Promise<NextResponse | null> 
 }
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  if (
+    pathname.length > 1 &&
+    pathname.endsWith("/") &&
+    !pathname.startsWith("/ingest") &&
+    (request.method === "GET" || request.method === "HEAD")
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname.replace(/\/+$/, "") || "/"
+    return withAnalyticsRegion(request, NextResponse.redirect(url, 308))
+  }
+
   const appPathResponse = resolveAppPathResponse(request)
   if (appPathResponse) return appPathResponse
 
@@ -110,6 +122,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|ingest(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 }

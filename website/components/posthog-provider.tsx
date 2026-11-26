@@ -1,20 +1,26 @@
 "use client"
 
-import { useEffect } from "react"
+import { useLayoutEffect } from "react"
 import { usePathname } from "next/navigation"
 import { AnalyticsConsentPrompt } from "@/components/analytics-consent-prompt"
 import { initPostHog, posthog } from "@/lib/posthog"
+import { installBehaviorTracking } from "@/lib/marketing/auto-track"
 import { captureMarketingPageViewed, getMarketingPageName } from "@/lib/marketing/analytics"
+import { registerTrafficSource } from "@/lib/marketing/traffic-source"
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     initPostHog()
+    installBehaviorTracking()
   }, [])
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !pathname) return
+  useLayoutEffect(() => {
+    if (!pathname) return
+
+    initPostHog()
+    registerTrafficSource()
 
     posthog.capture("$pageview", {
       $current_url: window.location.href,
