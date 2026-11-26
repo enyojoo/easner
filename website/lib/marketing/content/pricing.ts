@@ -44,12 +44,12 @@ export const pricingDefinition: AnswerDefinition = {
     {
       term: "Ease Gold",
       definition:
-        "Talk to us. A 0.20% Easner fee per transfer, checkout fee 2.90% + $0.30, and Connect at $0.25 + 0.25% capped at $15. Team, payouts, and pricing agreed with us.",
+        "Talk to us. Contracted rates for the Banking API, Connect, Checkout, and White-label. Team, payouts, and pricing agreed with us.",
     },
     {
       term: "Easner Connect",
       definition:
-        "The live fee for paying a payee. Ease and Ease Plus do not include it. On Ease Pro each payment costs $0.50 plus 0.50%, capped at $15. On Ease Gold each payment costs $0.25 plus 0.25%, capped at $15.",
+        "The live fee for paying a payee. Ease and Ease Plus do not include it. On Ease Pro each payment costs $0.50 plus 0.50%, capped at $15. On Ease Gold the fee is Contract.",
     },
   ],
 }
@@ -79,12 +79,12 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What is the checkout fee?",
     answer:
-      "The checkout fee is 3.50% + $1.00 on Ease and Ease Plus, 3.30% + $1.00 on Ease Pro, and 2.90% + $0.30 on Ease Gold. Customers pay the listed price. The fee comes out of what the business receives.",
+      "The checkout fee is 3.50% + $1.00 on Ease and Ease Plus, and 3.30% + $1.00 on Ease Pro. Ease Gold is Contract. Customers pay the listed price. The fee comes out of what the business receives.",
   },
   {
     question: "What does Easner Connect cost?",
     answer:
-      "Connect fee is the live fee for paying a payee. Ease and Ease Plus do not include it. On Ease Pro each payment costs $0.50 plus 0.50%, capped at $15. On Ease Gold each payment costs $0.25 plus 0.25%, capped at $15.",
+      "Connect fee is the live fee for paying a payee. Ease and Ease Plus do not include it. On Ease Pro each payment costs $0.50 plus 0.50%, capped at $15. Ease Gold is Contract.",
     links: [{ label: "Easner Connect", href: "/connect" }, { label: "Talk to us", href: "/contact" }],
   },
   {
@@ -206,15 +206,13 @@ export const pricingPlans: PricingPlan[] = [
     sentence: "A contracted plan for a business that needs its own terms.",
     features: [
       "Everything in Ease Pro",
-      "0.20% Easner fee per transfer",
-      "Checkout fee 2.90% + $0.30",
-      "Connect, $0.25 + 0.25%, capped at $15",
+      "Contracted rates for the Banking API, Connect, Checkout, and White-label",
       "Team, payouts, and pricing agreed with us",
       "Cards agreed with us",
       "API and webhooks",
     ],
     cta: {
-      label: "Talk to us",
+      label: "Book a call",
       href: CONTACT_PATH,
       analyticsLocation: "pricing_plan_ease_gold",
     },
@@ -291,7 +289,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
       { label: "Payment links a month", cells: ["10", "Unlimited", "Unlimited", "Contract"] },
       { label: "Websites", cells: ["1", "5", "Unlimited", "Unlimited"] },
       { label: "Subscriptions and customer portal", cells: ["No", "Yes", "Yes", "Yes"] },
-      { label: "Checkout fee", cells: ["3.50% + $1.00", "3.50% + $1.00", "3.30% + $1.00", "2.90% + $0.30"] },
+      { label: "Checkout fee", cells: ["3.50% + $1.00", "3.50% + $1.00", "3.30% + $1.00", "Contract"] },
     ],
   },
   {
@@ -313,7 +311,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
     rows: [
       { label: "API keys and webhooks", cells: ["Yes", "Yes", "Yes", "Yes"] },
       { label: "Account statements", cells: ["Yes", "Yes", "Yes", "Yes"] },
-      { label: "Connect fee", cells: ["No", "No", "$0.50 + 0.50%, capped at $15", "$0.25 + 0.25%, capped at $15"] },
+      { label: "Connect fee", cells: ["No", "No", "$0.50 + 0.50%, capped at $15", "Contract"] },
     ],
   },
   {
