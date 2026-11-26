@@ -99,7 +99,7 @@ export function PersonalPlans() {
         * A local currency deposit to your USD balance adds a little fee for that country.
       </p>
       <p className="mx-auto mt-1 max-w-3xl text-sm leading-5 text-web-body">
-        ** Express deposit is an instant deposit by card, Apple Pay, Google Pay, or ACH.
+        Express deposit is 4.04%, an instant deposit by card, Apple Pay, Google Pay, or ACH.
       </p>
     </section>
   )
