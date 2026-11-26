@@ -124,6 +124,10 @@ yarn-error.*
 # Marketing docs (local reference only; live source is lib/marketing/)
 website/marketing/
 
+# Local planning and database files. Not part of the website remotes.
+/docs/
+/supabase/
+
 # Claude Code session-local runtime state
 .claude/*.lock
 
