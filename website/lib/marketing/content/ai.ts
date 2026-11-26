@@ -59,7 +59,7 @@ export const aiCompanyFaq: FaqItem[] = [
   {
     question: "How much does Easner cost?",
     answer:
-      "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold starts from $1,000 a month. Each plan also carries an Easner fee per transfer, on top of the provider's cost: 1% on Ease, 0.5% on Ease Plus, 0.25% on Ease Pro (0.20% above $1 million a month), and 0.20% on Ease Gold. Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
+      "Banking services and essential business tools are always $0 a month, with more plans available as the business grows. Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed in a contract. The transfer fee is 1% on Ease, 0.5% on Ease Plus, and 0.25% on Ease Pro. The deposit fee is 0.50% on Ease, 0.40% on Ease Plus, and 0.35% on Ease Pro. Express deposit is 4.04% on every plan, an instant deposit by card, Apple Pay, Google Pay, or ACH. On Ease Gold the transfer fee and deposit fee are Contract. Fees and exchange rates are shown before a payment is confirmed, including what your recipient gets.",
     links: [{ label: "Pricing", href: "/pricing" }],
   },
   {

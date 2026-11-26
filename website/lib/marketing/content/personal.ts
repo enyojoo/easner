@@ -13,7 +13,8 @@ export const personalDefinition: AnswerDefinition = {
     },
     {
       term: "How to add money",
-      definition: "Top up by card, Apple Pay, Google Pay, or ACH, receive a bank transfer, or use a stablecoin deposit where enabled.",
+      definition:
+        "Top up by card, Apple Pay, Google Pay, or ACH. An instant top-up is an express deposit at 4.04%. You can also receive a bank transfer, or use a stablecoin deposit where enabled.",
     },
   ],
   stepsHeadline: "How to open an Easner Personal Banking account",
@@ -188,13 +189,13 @@ export const personalContent: ProductPageContent = {
     {
       question: "What does Ease Plus cost?",
       answer:
-        "Ease Plus is $4.79 a month, billed yearly at $57.48 a year, or $5.99 a month. A $57.48/year subscription is covered with an Easner Business account. You choose and manage it in the Easner app.",
+        "Ease Plus is $4.79 a month, billed yearly at $57.48 a year, or $5.99 a month. The transfer fee is 0.5% and the deposit fee is 0.40%. Ease is $0 a month, with a transfer fee of 1% and a deposit fee of 0.50%. Express deposit is 4.04%, an instant deposit by card, Apple Pay, Google Pay, or ACH. A $57.48/year subscription is covered with an Easner Business account. You choose and manage it in the Easner app.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
       question: "How do I add money to my account?",
       answer:
-        "Top up by card, Apple Pay, Google Pay or ACH, or receive a bank transfer to your account details. Stablecoin deposits are also supported where enabled.",
+        "Top up by card, Apple Pay, Google Pay or ACH, or receive a bank transfer to your account details. An instant top-up by card, Apple Pay, Google Pay, or ACH is an express deposit at 4.04%. Stablecoin deposits are also supported where enabled. A local currency deposit to your USD balance adds a little fee for that country.",
     },
     {
       question: "Where can I send money?",
