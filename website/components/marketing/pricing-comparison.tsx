@@ -2,8 +2,6 @@ import { Fragment } from "react"
 import {
   pricingAccentForName,
   pricingComparison,
-  pricingConnectFeeLine,
-  pricingFeeLine,
   pricingPlanNames,
 } from "@/lib/marketing/content/pricing"
 
@@ -70,8 +68,6 @@ export function PricingComparison() {
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-[13px] leading-5 text-web-meta">{pricingFeeLine}</p>
-        <p className="mt-3 text-[13px] leading-5 text-web-meta">{pricingConnectFeeLine}</p>
       </div>
     </>
   )

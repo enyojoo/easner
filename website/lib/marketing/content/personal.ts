@@ -28,13 +28,22 @@ const downloadCta = [
   { label: "Download", href: APP_LINK_URL, store: "download" as const, analyticsLocation: "personal_hero" },
 ]
 
+export type PersonalInterval = "annual" | "monthly"
+
+export interface PersonalPlanPrice {
+  /** Whole dollars, or cents when the amount is not a whole dollar. Null is unused. Zero is Free. */
+  amount: number | null
+  interval?: string
+}
+
 export interface PersonalPlan {
   id: string
   name: string
   sentence: string
   features: string[]
   highlighted?: boolean
-  price: { amount: number | null; interval?: string; save?: string }
+  annual: PersonalPlanPrice
+  monthly: PersonalPlanPrice
 }
 
 /** Ease / Ease Plus for personal banking. Chosen and billed in the Easner app, not on the website. */
@@ -44,29 +53,26 @@ export const personalPlans: PersonalPlan[] = [
     name: "Ease",
     sentence: "Everyday banking for your own money.",
     features: [
-      "USD and EUR, and GBP where supported",
-      "Account details in your name",
-      "EASETAG transfers and recipients",
+      "1% Easner fee per transfer",
+      "Priority support",
+      "USD, EUR, GBP, and Stablecoin",
+      "Easetag",
+      "Send and receive",
       "1 virtual card",
     ],
-    price: { amount: 0, interval: "a month" },
+    annual: { amount: 0, interval: "a month" },
+    monthly: { amount: 0, interval: "a month" },
   },
   {
     id: "personal_ease_plus",
     name: "Ease Plus",
     sentence: "For people who send more often.",
-    features: [
-      "Everything in Ease",
-      "5 cards, virtual or physical",
-      "3 Included Free withdrawals a month",
-    ],
+    features: ["Everything in Ease", "0.5% Easner fee per transfer", "5 cards, virtual or physical"],
     highlighted: true,
-    price: { amount: 4.79, interval: "a month, billed yearly ($57.48 a year)", save: "Saves $14.40 a year (20%)" },
+    annual: { amount: 4.79, interval: "a month, billed yearly" },
+    monthly: { amount: 5.99, interval: "a month" },
   },
 ]
-
-export const personalPlansFeeNote =
-  "Ease Plus is $5.99 a month, or $4.79 a month billed yearly. Covered free with an Ease Plus account or above. Chosen and billed in the Easner app."
 
 export const personalContent: ProductPageContent = {
   metadata: {
@@ -97,8 +103,8 @@ export const personalContent: ProductPageContent = {
     altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
     note: {
-      lead: "Ease Plus is $4.79 a month, billed yearly ($57.48 a year), covered with an ",
-      linkLabel: "Ease Plus account or above",
+      lead: "A $57.48/year subscription, covered with an ",
+      linkLabel: "Easner Business account",
       href: "/pricing",
       trail: ".",
     },
@@ -185,7 +191,7 @@ export const personalContent: ProductPageContent = {
     {
       question: "What does Ease Plus cost?",
       answer:
-        "Ease Plus is $5.99 a month, or $4.79 a month billed yearly ($57.48 a year), which saves $14.40 a year. It's covered free with an Ease Plus account or above. You choose and manage it in the Easner app.",
+        "Ease Plus is $4.79 a month, billed yearly at $57.48 a year, or $5.99 a month. A $57.48/year subscription is covered with an Easner Business account. You choose and manage it in the Easner app.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
