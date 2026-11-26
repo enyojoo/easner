@@ -304,7 +304,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
     label: "Team",
     rows: [
       { label: "Team", cells: ["1 person", "5 people", "Unlimited", "Contract"] },
-      { label: "Approvals", cells: ["No", "Yes", "A different approver", "Contract"] },
+      { label: "Approvals", cells: ["No", "Yes", "Yes", "Contract"] },
     ],
   },
   {
