@@ -55,6 +55,7 @@ export const personalPlans: PersonalPlan[] = [
     features: [
       "Transfer fee 1%",
       "Deposit fee 0.50%*",
+      "Express deposit 4.04%**",
       "Priority support",
       "USD, EUR, GBP, and Stablecoin",
       "Easetag",

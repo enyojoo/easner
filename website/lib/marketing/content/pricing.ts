@@ -29,7 +29,7 @@ export const pricingDefinition: AnswerDefinition = {
     {
       term: "Ease",
       definition:
-        "$0 a month. Transfer fee 1%, deposit fee 0.50%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
+        "$0 a month. Transfer fee 1%, deposit fee 0.50%, express deposit 4.04%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
     },
     {
       term: "Ease Plus",
@@ -63,7 +63,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What does Ease include?",
     answer:
-      "Transfer fee 1%, deposit fee 0.50%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
+      "Transfer fee 1%, deposit fee 0.50%, express deposit 4.04%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
   },
   {
     question: "What do Ease Plus and Ease Pro add?",
@@ -150,6 +150,7 @@ export const pricingPlans: PricingPlan[] = [
     features: [
       "Transfer fee 1%",
       "Deposit fee 0.50%*",
+      "Express deposit 4.04%**",
       "Checkout, card payments 3.50% + $1.00",
       "Checkout, bank payments 1.40% + $1.00",
       "Standard support",
@@ -281,6 +282,7 @@ export const pricingComparison: PricingComparisonGroup[] = [
       { label: "USD, EUR, GBP, and Stablecoin", cells: ["Yes", "Yes", "Yes", "Yes"] },
       { label: "Transfer fee", cells: ["1%", "0.5%", "0.25%", "Contract"] },
       { label: "Deposit fee*", cells: ["0.50%", "0.40%", "0.35%", "Contract"] },
+      { label: "Express deposit**", cells: ["4.04%", "4.04%", "4.04%", "4.04%"] },
     ],
   },
   {

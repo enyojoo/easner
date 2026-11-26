@@ -78,6 +78,7 @@ export function PricingComparison() {
           </div>
         </div>
         <p className="mt-3 text-sm leading-5 text-web-body">* A local currency deposit to your USD balance adds a little fee for that country.</p>
+        <p className="mt-1 text-sm leading-5 text-web-body">** Express deposit is an instant deposit by card, Apple Pay, Google Pay, or ACH.</p>
       </div>
     </>
   )
