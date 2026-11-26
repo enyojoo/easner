@@ -29,22 +29,22 @@ export const pricingDefinition: AnswerDefinition = {
     {
       term: "Ease",
       definition:
-        "$0 a month. 1% Easner fee per transfer, checkout fee 3.50% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
+        "$0 a month. Transfer fee 1%, deposit fee 0.50%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
     },
     {
       term: "Ease Plus",
       definition:
-        "$39 a month, billed yearly, or $49 a month. Saves $120 a year on annual billing. Everything in Ease, a 0.5% Easner fee per transfer, a team of 5 with approvals, 5 cards, and unlimited invoices.",
+        "$39 a month, billed yearly, or $49 a month. Saves $120 a year on annual billing. Transfer fee 0.5%, deposit fee 0.40%, everything in Ease, a team of 5 with approvals, 5 cards, and unlimited invoices.",
     },
     {
       term: "Ease Pro",
       definition:
-        "$159 a month, billed yearly, or $199 a month. Saves $480 a year on annual billing. A 0.25% Easner fee per transfer, checkout fee 3.30% + $1.00, Connect at $0.50 + 0.50% capped at $15, priority support, a relationship with Easner, an unlimited team, a card for each person, and unlimited payroll.",
+        "$159 a month, billed yearly, or $199 a month. Saves $480 a year on annual billing. Transfer fee 0.25%, deposit fee 0.35%, checkout card payments 3.30% + $1.00, checkout bank payments 1.20% + $0.70, Connect at $0.50 + 0.50% capped at $15, priority support, a relationship with Easner, an unlimited team, a card for each person, and unlimited payroll.",
     },
     {
       term: "Ease Gold",
       definition:
-        "Talk to us. Contracted rates for the Banking API, Connect, Checkout, and White-label. Team, payouts, and pricing agreed with us.",
+        "Talk to us. Including pricing for Banking API, Connect, Checkout, and White-label. Transfer fee and deposit fee are Contract. Higher limits for API and webhooks.",
     },
     {
       term: "Easner Connect",
@@ -63,12 +63,12 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What does Ease include?",
     answer:
-      "1% Easner fee per transfer, checkout fee 3.50% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
+      "Transfer fee 1%, deposit fee 0.50%, checkout card payments 3.50% + $1.00, checkout bank payments 1.40% + $1.00, standard support, USD, EUR, GBP, and Stablecoin, 1 virtual card, a team of 1, 10 invoices a month, and API keys and webhooks.",
   },
   {
     question: "What do Ease Plus and Ease Pro add?",
     answer:
-      "Ease Plus is for a business that invoices and pays a team: everything in Ease, a 0.5% Easner fee per transfer, a team of 5 with approvals, 5 cards, and unlimited invoices. Ease Pro is for a larger team: a 0.25% Easner fee per transfer, checkout fee 3.30% + $1.00, Connect at $0.50 + 0.50% capped at $15, priority support, a relationship with Easner, an unlimited team, a card for each person, and unlimited payroll.",
+      "Ease Plus is for a business that invoices and pays a team: transfer fee 0.5%, deposit fee 0.40%, everything in Ease, a team of 5 with approvals, 5 cards, and unlimited invoices. Ease Pro is for a larger team: transfer fee 0.25%, deposit fee 0.35%, checkout card payments 3.30% + $1.00, checkout bank payments 1.20% + $0.70, Connect at $0.50 + 0.50% capped at $15, priority support, a relationship with Easner, an unlimited team, a card for each person, and unlimited payroll.",
   },
   {
     question: "How do I choose Ease Gold?",
@@ -79,7 +79,7 @@ export const pricingFaq: FaqItem[] = [
   {
     question: "What is the checkout fee?",
     answer:
-      "The checkout fee is 3.50% + $1.00 on Ease and Ease Plus, and 3.30% + $1.00 on Ease Pro. Ease Gold is Contract. Customers pay the listed price. The fee comes out of what the business receives.",
+      "Card payments are 3.50% + $1.00 on Ease and Ease Plus, and 3.30% + $1.00 on Ease Pro. Bank payments are 1.40% + $1.00 on Ease and Ease Plus, and 1.20% + $0.70 on Ease Pro. On those plans, 0.80% of the bank rate is capped at $5. Ease Gold is Contract. Customers pay the listed price. The fee comes out of what the business receives.",
   },
   {
     question: "What does Easner Connect cost?",
@@ -148,8 +148,10 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease",
     sentence: "Accounts, payouts, and collections to get started.",
     features: [
-      "1% Easner fee per transfer",
-      "Checkout fee 3.50% + $1.00",
+      "Transfer fee 1%",
+      "Deposit fee 0.50%*",
+      "Checkout, card payments 3.50% + $1.00",
+      "Checkout, bank payments 1.40% + $1.00",
       "Standard support",
       "USD, EUR, GBP, and Stablecoin",
       "1 virtual card",
@@ -166,8 +168,9 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease Plus",
     sentence: "For a business that invoices and pays a team.",
     features: [
+      "Transfer fee 0.5%",
+      "Deposit fee 0.40%*",
       "Everything in Ease",
-      "0.5% Easner fee per transfer",
       "Team of 5, with approvals",
       "5 cards, virtual or physical",
       "Unlimited invoices",
@@ -182,9 +185,11 @@ export const pricingPlans: PricingPlan[] = [
     name: "Ease Pro",
     sentence: "For a larger team.",
     features: [
+      "Transfer fee 0.25%",
+      "Deposit fee 0.35%*",
       "Everything in Ease Plus",
-      "0.25% Easner fee per transfer",
-      "Checkout fee 3.30% + $1.00",
+      "Checkout, card payments 3.30% + $1.00",
+      "Checkout, bank payments 1.20% + $0.70",
       "Connect, $0.50 + 0.50%, capped at $15",
       "Priority support",
       "A relationship with Easner",
@@ -206,10 +211,9 @@ export const pricingPlans: PricingPlan[] = [
     sentence: "A contracted plan for a business that needs its own terms.",
     features: [
       "Everything in Ease Pro",
-      "Contracted rates for the Banking API, Connect, Checkout, and White-label",
-      "Team, payouts, and pricing agreed with us",
-      "Cards agreed with us",
-      "API and webhooks",
+      "Including pricing for Banking API, Connect, Checkout, and White-label",
+      "Transfer fee and deposit fee are Contract",
+      "Higher limits for API and webhooks",
     ],
     cta: {
       label: "Book a call",
@@ -273,7 +277,11 @@ export const pricingComparison: PricingComparisonGroup[] = [
   {
     id: "accounts",
     label: "Accounts",
-    rows: [{ label: "USD, EUR, GBP, and Stablecoin", cells: ["Yes", "Yes", "Yes", "Yes"] }],
+    rows: [
+      { label: "USD, EUR, GBP, and Stablecoin", cells: ["Yes", "Yes", "Yes", "Yes"] },
+      { label: "Transfer fee", cells: ["1%", "0.5%", "0.25%", "Contract"] },
+      { label: "Deposit fee*", cells: ["0.50%", "0.40%", "0.35%", "Contract"] },
+    ],
   },
   {
     id: "cards",
@@ -289,7 +297,8 @@ export const pricingComparison: PricingComparisonGroup[] = [
       { label: "Payment links a month", cells: ["10", "Unlimited", "Unlimited", "Contract"] },
       { label: "Websites", cells: ["1", "5", "Unlimited", "Unlimited"] },
       { label: "Subscriptions and customer portal", cells: ["No", "Yes", "Yes", "Yes"] },
-      { label: "Checkout fee", cells: ["3.50% + $1.00", "3.50% + $1.00", "3.30% + $1.00", "Contract"] },
+      { label: "Checkout, card payments", cells: ["3.50% + $1.00", "3.50% + $1.00", "3.30% + $1.00", "Contract"] },
+      { label: "Checkout, bank payments", cells: ["1.40% + $1.00", "1.40% + $1.00", "1.20% + $0.70", "Contract"] },
     ],
   },
   {

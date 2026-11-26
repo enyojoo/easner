@@ -95,6 +95,9 @@ export function PersonalPlans() {
           )
         })}
       </div>
+      <p className="mx-auto mt-4 max-w-3xl text-sm leading-5 text-web-body">
+        * A local currency deposit to your USD balance adds a little fee for that country.
+      </p>
     </section>
   )
 }

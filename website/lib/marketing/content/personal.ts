@@ -53,7 +53,8 @@ export const personalPlans: PersonalPlan[] = [
     name: "Ease",
     sentence: "Everyday banking for your own money.",
     features: [
-      "1% Easner fee per transfer",
+      "Transfer fee 1%",
+      "Deposit fee 0.50%*",
       "Priority support",
       "USD, EUR, GBP, and Stablecoin",
       "Easetag",
@@ -67,7 +68,7 @@ export const personalPlans: PersonalPlan[] = [
     id: "personal_ease_plus",
     name: "Ease Plus",
     sentence: "For people who send more often.",
-    features: ["Everything in Ease", "0.5% Easner fee per transfer", "5 cards, virtual or physical"],
+    features: ["Transfer fee 0.5%", "Deposit fee 0.40%*", "Everything in Ease", "5 cards, virtual or physical"],
     highlighted: true,
     annual: { amount: 4.79, interval: "a month, billed yearly" },
     monthly: { amount: 5.99, interval: "a month" },

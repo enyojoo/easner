@@ -77,6 +77,7 @@ export function PricingComparison() {
           </table>
           </div>
         </div>
+        <p className="mt-3 text-sm leading-5 text-web-body">* A local currency deposit to your USD balance adds a little fee for that country.</p>
       </div>
     </>
   )
