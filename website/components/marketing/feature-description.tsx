@@ -2,6 +2,7 @@
 
 import type { FeatureDescriptionPart } from "@/lib/marketing/currency-assets"
 import { CurrencyBadge } from "./currency-badge"
+import { LinkedText } from "./linked-text"
 
 interface FeatureDescriptionProps {
   parts: FeatureDescriptionPart[]
@@ -12,7 +13,7 @@ export function FeatureDescription({ parts }: FeatureDescriptionProps) {
     <>
       {parts.map((part, index) =>
         typeof part === "string" ? (
-          <span key={index}>{part}</span>
+          <LinkedText key={index} text={part} analyticsLocation="feature_inline_url" />
         ) : (
           <CurrencyBadge key={index} code={part.badge} />
         )

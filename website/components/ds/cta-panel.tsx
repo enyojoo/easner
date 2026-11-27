@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { Headline } from "@/components/ds/headline"
 import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
+import { LinkedText } from "@/components/marketing/linked-text"
 
 /** The dotted world map behind the CTA band, at 6% (design system: assets/textures/worldmap.svg). */
 const WORLD_MAP_TEXTURE = "https://seeqjiebmrnolcyydewj.supabase.co/storage/v1/object/public/brand/worldmap.svg"
@@ -34,7 +35,11 @@ export function CtaPanel({ headline, subhead, actions, texture = true, className
           <Headline level="display" className="mb-5 md:mb-6">
             {headline}
           </Headline>
-          {subhead && <p className={cn("mx-auto max-w-3xl text-web-body", MARKETING_BODY_TEXT)}>{subhead}</p>}
+          {subhead && (
+            <p className={cn("mx-auto max-w-3xl text-web-body", MARKETING_BODY_TEXT)}>
+              {typeof subhead === "string" ? <LinkedText text={subhead} analyticsLocation="cta_inline_url" /> : subhead}
+            </p>
+          )}
           {actions}
         </div>
       </div>

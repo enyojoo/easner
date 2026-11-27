@@ -178,6 +178,22 @@ export const invoicingContent: ProductPageContent = {
       answer:
         "Into your Easner Business balance, reconciled alongside your other payments in one ledger.",
     },
+    {
+      question: "How do I send an invoice and get paid by bank transfer?",
+      answer:
+        "Create an itemized invoice in Easner Business and send the hosted page. Each invoice has its own reference, and a bank transfer that uses that reference is matched to the invoice. The customer can also download a PDF.",
+    },
+    {
+      question: "Can a customer pay an invoice with USDC?",
+      answer:
+        "Yes, where enabled. A stablecoin invoice can show a USDC or EURC deposit address and a memo. The payment lands in the Easner Business balance.",
+    },
+    {
+      question: "Where do Easner invoice payments go?",
+      answer:
+        "Into the Easner Business balance, on the same ledger as Checkout and Payment Links. Ease includes 10 invoices a month. Ease Plus and above include unlimited invoices.",
+      links: [{ label: "Pricing", href: "/pricing" }],
+    },
   ],
   ctaBand: {
     headline: "Invoice from Easner today",

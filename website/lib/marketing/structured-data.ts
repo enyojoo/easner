@@ -399,6 +399,7 @@ export function productAnswerJsonLd(content: ProductPageContent, path: string) {
     name: content.metadata.title,
     description: content.metadata.description,
     path,
+    definition: content.definition,
     howTo: howToFromProduct(content),
   })
 }

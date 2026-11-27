@@ -10,12 +10,12 @@ export const homeDefinition: AnswerDefinition = {
     {
       term: "Easner Personal Banking",
       definition:
-        "A multi-currency money app for your own finances. Hold USD and EUR, and GBP where supported, get account details in your name, and send money from the Easner app.",
+        "The multi-currency account in the Easner app, on iPhone, Android, and the web at https://app.easner.com. Hold USD and EUR, and GBP where supported, with account details in your name.",
     },
     {
       term: "Easner Business Banking",
       definition:
-        "A web dashboard for company finances. Collect customer payments, send invoices, and pay suppliers in 80+ countries.",
+        "The web dashboard for a company. USD and EUR account details in the business name, collections, and payouts to suppliers in 80+ countries. Personal money stays in the Easner app.",
     },
     {
       term: "Not a bank",
@@ -155,7 +155,7 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Should I open a personal or a business account?",
     answer:
-      "Choose Easner Personal Banking for your own money – it runs in the Easner app on iPhone and Android. Choose Easner Business Banking for company accounts, customer payments, invoicing, payroll and team access on the web. Easner accepts signups from most countries; a small number are excluded for compliance and sanctions reasons.",
+      "Choose Easner Personal Banking for your own money. It runs in the Easner app on iPhone, Android, and the web at https://app.easner.com. Choose Easner Business Banking for company accounts, customer payments, invoicing, payroll and team access on the company dashboard. The app can be opened from 158 countries. A business account can be opened from 174 countries. A listed set of countries is closed.",
     links: [
       { label: "Personal Banking", href: "/personal" },
       { label: "Business Banking", href: "/business" },
@@ -179,7 +179,28 @@ export const homeFaq: FaqItem[] = [
   {
     question: "Do I need to understand crypto to use Easner?",
     answer:
-      "No. You see balances, payments and recipients, the same as any banking app – there are no wallets or networks to manage. Settlement runs on stablecoin rails behind the scenes, which is how Easner moves money across borders faster.",
+      "No. You see ordinary balances. Settlement uses USDC, USDT, and EURC where enabled. No crypto wallet is required. Wallet send and receive are optional.",
     links: [{ label: "How stablecoin payments work", href: "/stablecoin" }],
+  },
+  {
+    question: "Is Easner an app or a website?",
+    answer:
+      "Both. The Easner app runs on iPhone, Android, and the web at https://app.easner.com for a person's own money. Easner Business is a separate company dashboard on the web for accounts, invoices, Checkout, Payment Links, Payroll, and Connect.",
+  },
+  {
+    question: "Where do I manage my company?",
+    answer:
+      "In Easner Business, the company web dashboard: accounts, send, invoices, Checkout, Payment Links, Payroll, Connect, cards, Terminal, QR Pay, team access, API keys, and webhooks. Personal money stays in the Easner app.",
+    links: [{ label: "Business Banking", href: "/business" }],
+  },
+  {
+    question: "Where do I sign a W-9?",
+    answer:
+      "A person signs a W-9 in the Easner app, on iPhone, Android, or the web at https://app.easner.com. A business payee signs in Easner Business. On Connect the platform stays the filer. On Payroll the employer stays the filer. Easner does not file with the IRS.",
+  },
+  {
+    question: "Which Easner product do I need?",
+    answer:
+      "Own money, in the Easner app on iPhone, Android, and https://app.easner.com: Personal Banking at https://www.easner.com/personal. Company accounts and supplier payouts: Business at https://www.easner.com/business. Payments on the company's website: Checkout at https://www.easner.com/checkout. A shareable page: Payment Links at https://www.easner.com/payment-links. An itemized bill: Invoicing at https://www.easner.com/invoicing. Employees and contractors: Payroll at https://www.easner.com/payroll. A platform paying many people into their own Easner accounts: Connect at https://www.easner.com/connect. Cards, once available and approved: https://www.easner.com/cards. USDC, USDT, and EURC, plus Terminal and QR Pay: https://www.easner.com/stablecoin. Accounts inside another company's product: the Banking API at https://www.easner.com/developers. A branded payments product: White-label at https://www.easner.com/white-label. All business collections and payouts use one Easner Business ledger.",
   },
 ]

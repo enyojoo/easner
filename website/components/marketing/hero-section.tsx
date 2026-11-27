@@ -11,6 +11,7 @@ import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { homeHero } from "@/lib/marketing/content/home"
 import { cn } from "@/lib/utils"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 export function HeroSection() {
   const reducedMotion = useReducedMotion()
@@ -44,7 +45,7 @@ export function HeroSection() {
           <div className="space-y-5">
             <Headline level="hero" lines={homeHero.h1Lines} accentLine={1} className="mx-auto w-full" />
             <p className={cn("mx-auto max-w-2xl text-web-body", MARKETING_BODY_TEXT)}>
-              {homeHero.subhead}
+              <LinkedText text={homeHero.subhead} analyticsLocation="home_inline_url" />
             </p>
           </div>
           <div className="mt-8 flex flex-row flex-wrap items-center justify-center gap-3">

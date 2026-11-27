@@ -804,7 +804,7 @@ export function CompliancePolicyPage() {
           You may access verification status in the app or dashboard, request correction of inaccurate information (subject to regulatory limits), and contact us about the verification process. Some rights are limited by AML and recordkeeping laws.
         </p>
         <p className="text-web-body leading-relaxed">
-          For data held by a licensed partner, contact <strong>legal@easner.com</strong> and we will coordinate where appropriate.
+          For data held by a licensed partner, contact <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> and we will coordinate where appropriate.
         </p>
       </section>
 

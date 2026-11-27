@@ -3,6 +3,7 @@
 import type { IntegrationStep } from "@/lib/marketing/types"
 import { cn } from "@/lib/utils"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 interface IntegrationStepsProps {
   headline?: string
@@ -40,7 +41,9 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
               <Headline level="sub" className={cn("mt-4 lg:text-2xl xl:text-2xl", steps.length >= 5 && "xl:text-lg")}>
                 {step.title}
               </Headline>
-              <p className="mt-3 flex-1 text-sm leading-7 text-web-body">{step.description}</p>
+              <p className="mt-3 flex-1 text-sm leading-7 text-web-body">
+                <LinkedText text={step.description} analyticsLocation="steps_inline_url" />
+              </p>
               {index < steps.length - 1 && (
                 <div
                   className="absolute right-0 top-1/2 hidden h-px w-6 translate-x-full bg-brand-stone xl:block"
@@ -52,7 +55,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
         </div>
         {footnote && (
           <p className="mx-auto mt-8 max-w-3xl text-center text-sm leading-7 text-web-body lg:text-left">
-            {footnote}
+            <LinkedText text={footnote} analyticsLocation="steps_inline_url" />
           </p>
         )}
       </div>

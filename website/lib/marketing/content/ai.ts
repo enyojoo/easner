@@ -75,7 +75,7 @@ export const aiCompanyFaq: FaqItem[] = [
   {
     question: "Where does Easner pay out?",
     answer:
-      "To bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe. North America covers personal and business accounts, USD balances, and domestic and international payments. Europe covers EUR and GBP balances, business collections, invoicing and EURC settlement. Africa includes Nigeria, Ghana, Kenya, South Africa, Egypt, Rwanda, Uganda, Tanzania, Senegal and Zambia. Latin America includes Mexico, Brazil, Colombia, Peru, Guatemala, Ecuador and Jamaica. Asia-Pacific and South Asia include India, China, the Philippines, Indonesia, Vietnam, Pakistan, Bangladesh, Sri Lanka, Thailand, Malaysia, Singapore and Hong Kong. The Middle East includes the United Arab Emirates and Israel. Payout coverage and account-opening eligibility are different.",
+      "To bank accounts and mobile money in 80+ countries across Africa, Latin America, Asia, the Middle East and Europe. When a country is named, the recipient currency and the rail are the ones switched on for that country. Kenya and DR Congo can receive a payout and cannot sign up. The United Kingdom can open a business account and cannot open the app. Payout coverage and account-opening eligibility are different.",
     links: [{ label: "Check eligibility and restrictions", href: "/compliance" }],
   },
 ]
@@ -144,24 +144,8 @@ export const aiSections: AiAnswerSection[] = [
   {
     href: "/checkout",
     label: "Checkout",
-    definition: {
-      ...checkoutDefinition,
-      answer:
-        "Easner Checkout is an embeddable payment form for your website. Accept card, bank, wallet, and stablecoin payments, one-time or by subscription.",
-      facts: (checkoutDefinition.facts ?? []).map((fact) =>
-        fact.term === "Do you need a processor?"
-          ? { ...fact, definition: "No. You do not set up a separate payment account." }
-          : fact,
-      ),
-    },
-    faq: checkoutContent.faq.map((item) =>
-      item.question === "Do I need my own payment processor?"
-        ? {
-            ...item,
-            answer: "No. You don't need to set up or maintain a separate payment account.",
-          }
-        : item,
-    ),
+    definition: checkoutDefinition,
+    faq: checkoutContent.faq,
     howTo: howToFromSteps(checkoutContent.integrationStepsHeadline ?? "How to add Easner Checkout", checkoutContent.integrationSteps),
   },
   {

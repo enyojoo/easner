@@ -5,6 +5,7 @@ import { downloadHero } from "@/lib/marketing/content/download"
 import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 export function DownloadHero() {
   return (
@@ -19,7 +20,7 @@ export function DownloadHero() {
           {downloadHero.headline}
         </Headline>
         <p className={cn("mt-4 text-pretty text-web-body sm:mt-5", MARKETING_BODY_TEXT)}>
-          {downloadHero.subhead}
+          <LinkedText text={downloadHero.subhead} analyticsLocation="download_inline_url" />
         </p>
       </motion.div>
     </section>

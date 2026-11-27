@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react"
 import { Headline } from "@/components/ds/headline"
 import { aiSections, type AiAnswerSection } from "@/lib/marketing/content/ai"
 import { cn } from "@/lib/utils"
+import { LinkedText } from "./linked-text"
 import { MarketingLink } from "./marketing-link"
 
 function slug(value: string) {
@@ -323,14 +324,16 @@ export function AiAnswers() {
                   {section.definition.question}
                 </Headline>
                 <p className="aeo-answer mt-5 text-base leading-7 text-web-body sm:text-lg">
-                  {section.definition.answer}
+                  <LinkedText text={section.definition.answer} analyticsLocation="answers_inline_url" />
                 </p>
                 {section.definition.facts && section.definition.facts.length > 0 && (
                   <dl className="mt-8 grid gap-3 sm:grid-cols-2">
                     {section.definition.facts.map((fact) => (
                       <div key={fact.term} className="rounded-[16px] border border-web-hairline bg-web-plate px-5 py-4">
                         <dt className="text-sm font-semibold text-web-ink">{fact.term}</dt>
-                        <dd className="mt-1 text-sm leading-6 text-web-body">{fact.definition}</dd>
+                        <dd className="mt-1 text-sm leading-6 text-web-body">
+                          <LinkedText text={fact.definition} analyticsLocation="answers_inline_url" />
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -345,7 +348,9 @@ export function AiAnswers() {
                             {stepIndex + 1}
                           </span>
                           <h4 className="mt-3 text-sm font-semibold text-web-ink">{step.name}</h4>
-                          <p className="mt-1 text-sm leading-6 text-web-body">{step.text}</p>
+                          <p className="mt-1 text-sm leading-6 text-web-body">
+                            <LinkedText text={step.text} analyticsLocation="answers_inline_url" />
+                          </p>
                         </li>
                       ))}
                     </ol>
@@ -356,7 +361,9 @@ export function AiAnswers() {
                     {faqs.map((item) => (
                       <div key={item.question} id={`${id}--${slug(item.question)}`} className="scroll-mt-[calc(4rem+var(--answers-bar,6.75rem))] lg:scroll-mt-28">
                         <h3 className="text-sm font-semibold text-web-ink sm:text-base">{item.question}</h3>
-                        <p className="mt-2 text-sm leading-6 text-web-body sm:text-base sm:leading-7">{item.answer}</p>
+                        <p className="mt-2 text-sm leading-6 text-web-body sm:text-base sm:leading-7">
+                          <LinkedText text={item.answer} analyticsLocation="answers_inline_url" />
+                        </p>
                         {item.links && (
                           <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
                             {item.links.map((link) => (

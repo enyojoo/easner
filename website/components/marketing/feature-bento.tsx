@@ -6,6 +6,7 @@ import type { Feature } from "@/lib/marketing/types"
 import { BENTO_VISUAL_HEIGHT, MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 interface FeatureBentoProps {
   features: Feature[]
@@ -26,7 +27,11 @@ export function FeatureBento({ features, headline, subhead, className, id }: Fea
                 {headline}
               </Headline>
             )}
-            {subhead && <p className={cn("mt-4 text-web-body", MARKETING_BODY_TEXT)}>{subhead}</p>}
+            {subhead && (
+              <p className={cn("mt-4 text-web-body", MARKETING_BODY_TEXT)}>
+                <LinkedText text={subhead} analyticsLocation="feature_inline_url" />
+              </p>
+            )}
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-8">

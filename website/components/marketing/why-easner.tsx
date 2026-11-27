@@ -1,5 +1,6 @@
 import { Headline } from "@/components/ds/headline"
 import { whyEasnerHeadline, whyEasnerPillars } from "@/lib/marketing/content/home"
+import { LinkedText } from "./linked-text"
 import { PillarArt } from "./pillar-art"
 
 /** Why choose Easner: each pillar leads with a small illustration of what it means, then its sentence. */
@@ -23,7 +24,9 @@ export function WhyEasner() {
               )}
               <div className="grid gap-2 px-6 pb-6 pt-2 sm:px-7 sm:pb-7">
                 <div className="text-base font-semibold text-web-ink sm:text-lg">{pillar.title}</div>
-                <p className="text-[15px] leading-6 text-web-body">{pillar.description}</p>
+                <p className="text-[15px] leading-6 text-web-body">
+                  <LinkedText text={pillar.description} analyticsLocation="home_inline_url" />
+                </p>
               </div>
             </div>
           ))}

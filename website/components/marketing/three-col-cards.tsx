@@ -12,6 +12,7 @@ import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import type { CardItem } from "@/lib/marketing/types"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 interface ThreeColCardsProps {
   headline?: string
@@ -79,7 +80,11 @@ export function ThreeColCards({
             <Headline level="section" className={cn(headlineClassName)}>
               {headline}
             </Headline>
-            {subhead && <p className={cn("mx-auto mt-4 max-w-2xl text-web-body", MARKETING_BODY_TEXT)}>{subhead}</p>}
+            {subhead && (
+              <p className={cn("mx-auto mt-4 max-w-2xl text-web-body", MARKETING_BODY_TEXT)}>
+                <LinkedText text={subhead} analyticsLocation="cards_inline_url" />
+              </p>
+            )}
           </div>
         )}
         <div className={gridClass}>
@@ -103,7 +108,9 @@ export function ThreeColCards({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[15px] leading-6 text-web-body">{item.description}</p>
+                  <p className="text-[15px] leading-6 text-web-body">
+                    <LinkedText text={item.description} analyticsLocation="cards_inline_url" />
+                  </p>
                 </CardContent>
               </Card>
             )

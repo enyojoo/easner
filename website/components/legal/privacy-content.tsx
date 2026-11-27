@@ -14,7 +14,7 @@ export function PrivacyPolicyPage() {
           This Privacy Policy explains how <strong>Easner Group, Inc.</strong> (“<strong>Easner</strong>,” “<strong>we</strong>,” “<strong>us</strong>,” or “<strong>our</strong>”) collects, uses, shares, and protects information when you use:
         </p>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
-          <li>www.easner.com</li>
+          <li><PolicyLink href="/">www.easner.com</PolicyLink></li>
           <li><strong>Easner Personal Banking</strong> (via our mobile app)</li>
           <li><strong>Easner Business Banking</strong> (via our web dashboard)</li>
           <li>Public invoice and payment experiences we host for business users (including card checkout where enabled)</li>
@@ -239,14 +239,14 @@ export function PrivacyPolicyPage() {
           Depending on where you live, you may have rights to access, correct, delete, restrict, or port your information, or object to certain processing. Financial regulations may limit some requests.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          Contact <strong>legal@easner.com</strong>, <strong>support@easner.com</strong>, or in-app live chat. If a partner holds verification or payment data, contact us first and we will coordinate where appropriate.
+          Contact <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink>, <PolicyLink href="mailto:support@easner.com">support@easner.com</PolicyLink>, or in-app live chat. If a partner holds verification or payment data, contact us first and we will coordinate where appropriate.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">California residents (CCPA / CPRA)</h3>
         <p className="text-web-body leading-relaxed mb-4">
           We collect the categories described in Section 2 for the business purposes in Section 3. <strong>We do not sell personal information</strong> or share it for cross-context behavioral advertising. This includes data processed through product analytics tools that may be linked to your account.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          You may have rights to know, access, correct, and delete personal information, and to limit use of sensitive personal information. Submit requests to <strong>legal@easner.com</strong> or <strong>support@easner.com</strong> with “California Privacy Request” in the subject line. We will verify identity as permitted by law.
+          You may have rights to know, access, correct, and delete personal information, and to limit use of sensitive personal information. Submit requests to <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> or <PolicyLink href="mailto:support@easner.com">support@easner.com</PolicyLink> with “California Privacy Request” in the subject line. We will verify identity as permitted by law.
         </p>
         <h3 className="text-lg font-semibold text-web-ink mb-2">EEA, UK, and similar jurisdictions</h3>
         <p className="text-web-body leading-relaxed mb-4">
@@ -266,7 +266,7 @@ export function PrivacyPolicyPage() {
           We use cookies and similar technologies on our website and dashboard for authentication, preferences, security, and analytics.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Website analytics.</strong> On www.easner.com we use PostHog to measure how the site is used, such as which pages are viewed, how visitors arrived, and which links they click. We do not use it for advertising.
+          <strong>Website analytics.</strong> On <PolicyLink href="/">www.easner.com</PolicyLink> we use PostHog to measure how the site is used, such as which pages are viewed, how visitors arrived, and which links they click. We do not use it for advertising.
         </p>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
           <li><strong>European Economic Area and United Kingdom.</strong> By default we count visits without analytics cookies or similar storage. Each page load is treated as an anonymous visit and nothing is saved on your device. We only use analytics cookies and local storage if you choose Accept in the prompt on our website. You can change your choice at any time with Cookie settings in the website footer.</li>

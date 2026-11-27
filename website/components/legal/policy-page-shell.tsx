@@ -90,7 +90,10 @@ export function PolicyContactBlock() {
         <br />
         <strong className="text-web-ink">Phone:</strong> +1 628 228 6083
         <br />
-        <strong className="text-web-ink">Website:</strong> www.easner.com
+        <strong className="text-web-ink">Website:</strong>{" "}
+        <MarketingLink href="/" analyticsLocation="legal_website" ctaLabel="www.easner.com" className="font-semibold text-brand-primary hover:underline">
+          www.easner.com
+        </MarketingLink>
       </p>
     </div>
   )

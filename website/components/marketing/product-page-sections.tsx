@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import type { ProductPageContent } from "@/lib/marketing/types"
+import type { FaqItem, ProductPageContent } from "@/lib/marketing/types"
 import { CONTACT_PATH } from "@/lib/marketing/constants"
 import { MarketingLink } from "./marketing-link"
 import { SplitSection } from "./split-section"
@@ -21,7 +21,15 @@ interface ProductPageSectionsProps {
   beforeFaq?: ReactNode
 }
 
+function faqWithDefinition(content: ProductPageContent): FaqItem[] {
+  const faqs = content.faq ?? []
+  const definition = content.definition
+  if (!definition || faqs.some((item) => item.question === definition.question)) return faqs
+  return [{ question: definition.question, answer: definition.answer }, ...faqs]
+}
+
 export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsProps) {
+  const faqs = faqWithDefinition(content)
   return (
     <>
       <SplitSection
@@ -138,7 +146,7 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
         </div>
       )}
       {beforeFaq}
-      {content.faq && <FaqSection items={content.faq} />}
+      {faqs.length > 0 && <FaqSection items={faqs} />}
       <ComplianceStrip note={content.complianceNote} />
       <CtaBand content={content.ctaBand} />
     </>

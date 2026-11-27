@@ -5,7 +5,7 @@ export const partnersDefinition: AnswerDefinition = {
   term: "Easner White-label",
   question: "What is Easner White-label?",
   answer:
-    "Easner White-label is a commercial programme with two models: the Agency Model, a full branded payments product on Easner infrastructure, and the Developer Model, API access without a branded deployment.",
+    "Easner White-label is a commercial programme with two models. The Agency Model is a live payments product on Easner infrastructure, under the partner's name, logo, and colour. The Developer API Model is the Banking API, without that branded deployment.",
   facts: [
     {
       term: "What Easner runs",
@@ -51,12 +51,12 @@ export const partnersContent: ProductPageContent = {
   hero: {
     h1: "Build cross-border payments under your brand",
     subhead:
-      "Offer your customers an international payment experience under your own name. Easner provides the stablecoin infrastructure, verification workflows, payout connections, and operational support.",
+      "Launch a payments product under your name, logo, and colour. Easner runs the stablecoin infrastructure, verification, screening, payout connections, and operations. You run the brand and the customer relationship.",
     visualSlot: "mkt-hero-partners-01",
     altText: "The Easner app under a fictional partner's brand, beside the brand settings a partner chooses",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "partners_hero_contact" },
-      { label: "Developer Model", href: "/developers", analyticsLocation: "partners_hero_developers" },
+      { label: "Developer API Model", href: "/developers", analyticsLocation: "partners_hero_developers" },
     ],
   },
   integrationStepsHeadline: "From first conversation to live operations",
@@ -147,7 +147,7 @@ export const partnersContent: ProductPageContent = {
     {
       question: partnersDefinition.question,
       answer: partnersDefinition.answer,
-      links: [{ label: "Developer Model", href: "/developers" }],
+      links: [{ label: "Developer API Model", href: "/developers" }],
     },
     {
       question: "What does Easner run, and what do I run?",
@@ -172,9 +172,31 @@ export const partnersContent: ProductPageContent = {
     },
     {
       question: "How is the partner programme priced?",
-      links: [{ label: "Contact us", href: "/contact" }],
+      links: [{ label: "Pricing", href: "/pricing" }, { label: "Contact us", href: "/contact" }],
       answer:
-        "Commercial terms depend on your model, corridors and volumes. Contact our team to discuss them.",
+        "Commercial terms depend on your model, corridors and volumes. Ease Gold includes White-label pricing in the contract.",
+    },
+    {
+      question: "Can I white-label Easner?",
+      answer:
+        "Yes. The Agency Model is a live payments product on Easner infrastructure under your name, logo, and colour. Easner runs infrastructure, verification, screening, payout connections, and operations. You run the brand and the customer relationship.",
+    },
+    {
+      question: "What is the Agency Model?",
+      answer:
+        "The Agency Model is the branded deployment. Your customers use a product under your name, built on Easner. The Developer API Model is separate: it is the Banking API, without that branded product.",
+      links: [{ label: "Banking API", href: "/developers" }],
+    },
+    {
+      question: "Can the app use my logo?",
+      answer:
+        "Yes. The Agency Model carries your name, logo, and colour. Easner runs the infrastructure behind it.",
+    },
+    {
+      question: "How is White-label priced?",
+      answer:
+        "Commercial terms depend on the model, the corridors, and the volume. Ease Gold includes White-label pricing in the contract.",
+      links: [{ label: "Pricing", href: "/pricing" }],
     },
   ],
   ctaBand: {

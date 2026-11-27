@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LinkedText } from "./linked-text"
 import { MarketingLink } from "./marketing-link"
 import { OpenAccountButton } from "./open-account-dialog"
 import { PersonaCtas } from "./persona-ctas"
@@ -125,7 +126,7 @@ function CopyBlock({
             isHero && "mx-auto lg:mx-0"
           )}
         >
-          {subhead}
+          <LinkedText text={subhead} analyticsLocation="section_inline_url" />
         </p>
       )}
       {note && (
@@ -144,7 +145,7 @@ function CopyBlock({
       )}
       {body && (
         <p className={cn("max-w-2xl text-web-body", MARKETING_BODY_TEXT, subhead ? "mt-4" : "mt-5")}>
-          {body}
+          <LinkedText text={body} analyticsLocation="section_inline_url" />
         </p>
       )}
       {bullets && bullets.length > 0 && (
@@ -250,7 +251,11 @@ export function TextOnlySection({
           <Headline level="section">
             {headline}
           </Headline>
-          {body && <p className={cn("mt-5 text-web-body", MARKETING_BODY_TEXT)}>{body}</p>}
+          {body && (
+            <p className={cn("mt-5 text-web-body", MARKETING_BODY_TEXT)}>
+              <LinkedText text={body} analyticsLocation="section_inline_url" />
+            </p>
+          )}
         </div>
       </div>
     </section>

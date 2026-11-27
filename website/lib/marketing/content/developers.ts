@@ -5,7 +5,7 @@ export const developersDefinition: AnswerDefinition = {
   term: "Easner API",
   question: "What is the Easner API?",
   answer:
-    "The Easner API lets platforms embed customer verification, multi-currency accounts, collections, and cross-border payouts. Credentials and sandbox access are provided during commercial onboarding.",
+    "The Easner API, also called the Banking API, lets a platform verify its own customers, open multi-currency accounts, and send cross-border payouts. Customers see regular currencies. The API reference is at https://docs.easner.com/. Credentials are issued during commercial onboarding. This is not Connect and not White-label.",
   facts: [
     {
       term: "How to get access",
@@ -45,12 +45,12 @@ export const developersContent: ProductPageContent = {
   hero: {
     h1: "Build international payments into your product",
     subhead:
-      "Connect customer verification, accounts, collections, and payouts to your platform, built on Easner's stablecoin infrastructure. APIs and webhooks help your team build and track cross-border payment flows.",
+      "The Developer Banking API embeds accounts, verification, and payouts for your own customers. Sandbox keys come with commercial onboarding, then live in Easner Business.",
     visualSlot: "mkt-hero-apis-01",
     altText: "The Easner developer Workbench creating a payout through the API",
     ctas: [
       { label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_hero_contact" },
-      { label: "Agency Model", href: "/white-label", analyticsLocation: "developers_hero_partners" },
+      { label: "White-label Model", href: "/white-label", analyticsLocation: "developers_hero_partners" },
     ],
   },
   integrationStepsHeadline: "From first API call to live money movement",
@@ -109,7 +109,7 @@ export const developersContent: ProductPageContent = {
   extraSections: [
     {
       headline: "Built for developers who ship",
-      body: "Authenticated REST APIs, signed webhooks, and a developer workspace for keys, events, and logs – sandbox and API reference provided during commercial onboarding. After onboarding, access the in-app developer workspace in Easner Business at /developers.",
+      body: "Authenticated REST APIs, signed webhooks, and a developer workspace for keys, events, and logs – sandbox and API reference provided during commercial onboarding. After onboarding, access the in-app developer console in Easner Business.",
       bullets: [
         "Scoped API keys for server-to-server calls",
         "Sandbox for verification, pay-in, payout, and webhook flows",
@@ -161,7 +161,35 @@ export const developersContent: ProductPageContent = {
       question: "How do I get access to the Easner API?",
       links: [{ label: "Talk to our team", href: "/contact" }],
       answer:
-        "Talk to our team. API credentials and sandbox access are provided during commercial onboarding.",
+        "Talk to our team. API credentials and sandbox access are provided during commercial onboarding, not from a public signup. The API reference is at https://docs.easner.com/. After onboarding, keys, events, and logs live in Easner Business.",
+    },
+    {
+      question: "How do I get API keys?",
+      answer:
+        "Keys are issued during commercial onboarding. They are not created from a public signup. The API reference is at https://docs.easner.com/.",
+      links: [{ label: "API docs", href: "https://docs.easner.com/" }, { label: "Talk to our team", href: "/contact" }],
+    },
+    {
+      question: "Where are the Easner API docs?",
+      answer: "The API reference is at https://docs.easner.com/.",
+      links: [{ label: "API docs", href: "https://docs.easner.com/" }],
+    },
+    {
+      question: "Does Easner have a banking API?",
+      answer:
+        "Yes. The Banking API, also called the Developer API Model, is how a platform embeds accounts and payouts for its own customers. It is not Connect, which pays people who already have Easner accounts.",
+      links: [{ label: "API docs", href: "https://docs.easner.com/" }, { label: "Connect", href: "/connect" }],
+    },
+    {
+      question: "Can I embed accounts and payouts in my app?",
+      answer:
+        "Yes. The Banking API lets you embed accounts and payouts for your own customers, including verification, virtual pay-in details, stablecoin deposit addresses, payout quotes, and signed webhooks. Customers see balances in regular currencies.",
+    },
+    {
+      question: "What is the difference between the Easner API and Easner Connect?",
+      answer:
+        "The Banking API embeds accounts and payouts for the platform's own customers inside the platform's product. Connect pays people who already have Easner accounts. They are different products.",
+      links: [{ label: "Connect", href: "/connect" }],
     },
     {
       question: "What can I build with the API?",
@@ -171,7 +199,7 @@ export const developersContent: ProductPageContent = {
     {
       question: "Is there a sandbox?",
       answer:
-        "Yes. Test keys and a sandbox let you run verification, pay-in, payout and webhook flows before you go live.",
+        "Yes. Sandbox keys cover verification, pay-in, payout, and webhook flows before go-live. The API reference is at https://docs.easner.com/.",
     },
     {
       question: "How are webhooks secured?",
@@ -187,12 +215,12 @@ export const developersContent: ProductPageContent = {
       question: "How is the API priced?",
       links: [{ label: "Contact sales", href: "/contact" }],
       answer:
-        "Pricing depends on your use case and volumes. Contact our team for commercial terms.",
+        "Pricing depends on the use case and volume. Ease Gold is the contract plan that includes Banking API pricing.",
     },
   ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",
-    subhead: "Talk to Easner about the Developer Model and embedded global money movement.",
+    subhead: "Talk to Easner about the Developer API Model and the Banking API.",
     ctas: [{ label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "developers_cta_band" }],
   },
 }

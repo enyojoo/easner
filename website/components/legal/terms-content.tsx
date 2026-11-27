@@ -296,7 +296,7 @@ export function TermsPolicyPage() {
           <strong>Governing law:</strong> State of Delaware, USA, without regard to conflict-of-law rules, except where mandatory consumer protections in your country apply.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Informal resolution:</strong> Contact <strong>legal@easner.com</strong> and allow <strong>60 days</strong> to resolve disputes in good faith before arbitration or court action.
+          <strong>Informal resolution:</strong> Contact <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> and allow <strong>60 days</strong> to resolve disputes in good faith before arbitration or court action.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Arbitration:</strong> Disputes not resolved informally shall be settled by <strong>binding arbitration</strong> administered by the <strong>AAA</strong> under Consumer Arbitration Rules (individual users of Easner Personal Banking) or Commercial Arbitration Rules (Easner Business Banking and commercial use). Seat: <strong>Wilmington, Delaware</strong>, or remote by agreement. The <strong>Federal Arbitration Act</strong> applies.
@@ -305,7 +305,7 @@ export function TermsPolicyPage() {
           <strong>Class and jury waiver:</strong> Disputes proceed <strong>only on an individual basis</strong> to the extent permitted by law. You and Easner waive jury trial for covered disputes.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
-          <strong>Opt-out:</strong> Within <strong>30 days</strong> of first accepting these Terms, send written notice to <strong>legal@easner.com</strong> to opt out of arbitration.
+          <strong>Opt-out:</strong> Within <strong>30 days</strong> of first accepting these Terms, send written notice to <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> to opt out of arbitration.
         </p>
         <p className="text-web-body leading-relaxed mb-4">
           <strong>Exceptions:</strong> Either party may use <strong>small claims court</strong> for qualifying claims or seek <strong>injunctive relief</strong> for unauthorized use or intellectual property abuse.

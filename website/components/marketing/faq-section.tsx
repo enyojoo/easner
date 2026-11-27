@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react"
 import { captureFaqExpanded } from "@/lib/marketing/analytics"
 import { cn } from "@/lib/utils"
 import type { FaqItem } from "@/lib/marketing/types"
+import { LinkedText } from "./linked-text"
 import { MarketingLink } from "./marketing-link"
 import { Headline } from "@/components/ds/headline"
 
@@ -62,7 +63,7 @@ export function FaqSection({ items }: FaqSectionProps) {
                 hidden={openIndex !== index}
                 className="px-4 pb-5 leading-7 text-web-body sm:px-6"
               >
-                <p>{item.answer}</p>
+                <p><LinkedText text={item.answer} analyticsLocation="faq_inline_url" /></p>
                 {item.links && (
                   <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
                     {item.links.map((link) => (

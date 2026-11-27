@@ -138,6 +138,42 @@ export const payrollContent: ProductPageContent = {
       answer:
         "Payroll settles alongside your other payouts, invoices and card activity in Easner Business, so finance reconciles in one place.",
     },
+    {
+      question: "How do I pay contractors in another country?",
+      answer:
+        "Add them in Easner Business and pay them from the business balance in 80+ countries. In the Easner app, on iPhone, Android, or the web, each person chooses an EASETAG, a bank account, or mobile money. A second person approves the payday before money moves.",
+    },
+    {
+      question: "Does Easner payroll have approvals and pay stubs?",
+      answer:
+        "Yes. A second person approves each payday before money moves, and a pay stub is generated for every payment. Finance sees the run on the same ledger.",
+    },
+    {
+      question: "Does Easner payroll collect a W-4?",
+      answer:
+        "A US employee provides a W-4 and an I-9 before the first payday, and can update the W-4 in the Easner app. This is for the company's own employees, not for Connect payees.",
+    },
+    {
+      question: "Do contractors get a 1099-NEC?",
+      answer:
+        "When a year-end form applies, a contractor receives a 1099-NEC in the Easner app, with their pay stubs. A US contractor provides a W-9. Easner does not file with the IRS. The employer stays the filer.",
+    },
+    {
+      question: "Do employees get a W-2?",
+      answer:
+        "When a year-end form applies, an employee receives a W-2 in the Easner app, with their pay stubs. The employer stays the filer.",
+    },
+    {
+      question: "Which tax form does an international contractor sign?",
+      answer:
+        "A contractor outside the US provides a W-8BEN. A US contractor provides a W-9.",
+    },
+    {
+      question: "Easner Payroll vs Easner Connect?",
+      answer:
+        "Payroll pays the company's own employees and contractors, with approvals and pay stubs. Connect pays people who are not employees into their own Easner accounts. Unlimited payroll is on Ease Pro.",
+      links: [{ label: "Connect", href: "/connect" }],
+    },
   ],
   ctaBand: {
     headline: "Add payroll to your Easner Business account",

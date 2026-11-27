@@ -88,7 +88,7 @@ export const PRODUCT_CARDS: CardItem[] = [
   {
     title: "Checkout",
     description:
-      "Card, bank and stablecoin payments on your own site, with Easner as merchant of record.",
+      "Card, bank and stablecoin payments on your own site. Your business is the merchant of record.",
     link: "/checkout",
     icon: "mkt-thumb-checkout",
   },

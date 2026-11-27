@@ -178,9 +178,71 @@ export const connectContent: ProductPageContent = {
         "Yes. Test keys work at once with a virtual balance, and Approve as a test payee finishes a link on a laptop, so you can run every step before going live. Easner reviews your program before live access.",
     },
     {
-      question: "What does it cost?",
-      answer: "Receiving into Easner is free for the person. Talk to our team for pricing.",
-      links: [{ label: "Talk to our team", href: CONTACT_PATH }],
+      question: "How much does Easner Connect cost?",
+      answer:
+        "Receiving into Easner is free for the person. Ease and Ease Plus do not include Connect. On Ease Pro each payment costs $0.50 plus 0.50%, capped at $15. On Ease Gold the fee is Contract.",
+      links: [{ label: "Pricing", href: "/pricing" }],
+    },
+    {
+      question: "How do I pay marketplace sellers or affiliates into their own accounts?",
+      answer:
+        "Easner Connect pays marketplace sellers, affiliates, and other people who are not your employees into their own Easner accounts, in US dollars, from your Easner Business balance. They link once in the Easner app. This is not Payroll, and it is not White-label.",
+      links: [{ label: "Payroll", href: "/payroll" }],
+    },
+    {
+      question: "What is Easner Connect?",
+      answer:
+        "Easner Connect pays the people a platform owes into their own Easner accounts, in US dollars. The platform turns it on in Console, Easner reviews the program, and the person approves once in the Easner app on iPhone, Android, or the web.",
+    },
+    {
+      question: "Do payees need an Easner account?",
+      answer:
+        "Yes. They create one in the Easner app and verify their identity once. Receiving into Easner is free for them. A business can link an Easner Business account the same way, and the payout lands in that business's dollar balance.",
+    },
+    {
+      question: "Does Easner collect a W-9?",
+      answer:
+        "A US person signs a W-9 once in the Easner app. The form is prefilled from verification. The platform sees that the form is done, the form type, and the last four digits. The full tax number stays with Easner. The platform stays the filer.",
+    },
+    {
+      question: "Do foreign payees fill out a W-8BEN?",
+      answer:
+        "A person outside the US signs a W-8BEN once in the Easner app. Each platform needs its own consent. If the form is missing, the payout waits until the person signs it. It does not fail.",
+    },
+    {
+      question: "Does a company payee sign a W-8BEN-E?",
+      answer:
+        "A US business signs a W-9. A business outside the US signs a W-8BEN-E, signed by an Owner or Admin, in Easner Business. Do not call that business form a W-8BEN. The form belongs to the business.",
+    },
+    {
+      question: "Does Easner file 1099s for my platform?",
+      answer:
+        "No. Easner does not file with the IRS and does not hold tax back from a Connect payout. The platform stays the filer and the withholding agent.",
+    },
+    {
+      question: "Does Easner withhold 30%?",
+      answer:
+        "No. Easner does not hold money back. A payout can show a suggested rate, which is not tax advice: no valid form, 24% backup withholding; W-9, none; W-8BEN for services performed outside the US, none; W-8BEN for royalties, other income, or services performed in the US, the treaty rate claimed, otherwise 30%. The platform decides what to withhold.",
+    },
+    {
+      question: "What happens if a payee has no tax form?",
+      answer:
+        "The payout waits until the person signs the form. It does not fail. It goes out on its own, oldest first, once the form is signed.",
+    },
+    {
+      question: "Which Easner tax form do I sign?",
+      answer:
+        "On Connect, a US person signs a W-9. A person outside the US signs a W-8BEN. A US business signs a W-9. A business outside the US signs a W-8BEN-E. Do not use these forms for a company's own employees. Payroll uses a different set.",
+    },
+    {
+      question: "What is the difference between a W-8BEN and a W-8BEN-E?",
+      answer:
+        "A W-8BEN is for a person outside the US. A W-8BEN-E is for a business outside the US. An Owner or Admin signs the W-8BEN-E for the business.",
+    },
+    {
+      question: "Does Easner file my taxes?",
+      answer:
+        "No. Easner does not file with the IRS. On Connect, the platform stays the filer and the withholding agent. On Payroll, the employer stays the filer.",
     },
   ],
   ctaBand: {

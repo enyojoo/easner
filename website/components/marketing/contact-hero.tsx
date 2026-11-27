@@ -7,6 +7,7 @@ import { contactBooking, contactHero } from "@/lib/marketing/content/contact"
 import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import { cn } from "@/lib/utils"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 export function ContactHero() {
   return (
@@ -21,7 +22,7 @@ export function ContactHero() {
           {contactHero.headline}
         </Headline>
         <p className={cn("mt-4 text-pretty text-web-body sm:mt-5", MARKETING_BODY_TEXT)}>
-          {contactHero.subhead}
+          <LinkedText text={contactHero.subhead} analyticsLocation="contact_inline_url" />
         </p>
         <div className="mt-4 flex flex-col gap-3 text-center text-sm leading-6 text-web-meta sm:mt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-2 sm:gap-y-1">
           <p className="text-pretty">

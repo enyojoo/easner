@@ -55,7 +55,7 @@ export const OG_CARDS: OgCard[] = [
     route: "checkout",
     headline: ["Accept payments", "on your website"],
     accentLine: 1,
-    line: "Card, bank and stablecoin payments, with Easner as merchant of record.",
+    line: "Card, bank and stablecoin payments. Your business is the merchant of record.",
     visual: { kind: "screen", slot: "mkt-hero-checkout-01" },
     alt: "Easner Checkout – a hosted checkout page with Apple Pay, card, bank and stablecoin.",
   },

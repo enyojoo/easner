@@ -7,6 +7,7 @@ import {
   TIER_FOOTNOTE,
 } from "@/lib/marketing/shared-content"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 
 interface TierLadderProps {
   variant: "personal" | "business"
@@ -34,7 +35,9 @@ export function TierLadder({ variant }: TierLadderProps) {
                 <CardTitle className="text-base font-semibold text-web-ink sm:text-lg">{tier.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-7 text-web-body">{tier.description}</p>
+                <p className="text-sm leading-7 text-web-body">
+                  <LinkedText text={tier.description} analyticsLocation="tiers_inline_url" />
+                </p>
               </CardContent>
             </Card>
           ))}

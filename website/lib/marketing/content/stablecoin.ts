@@ -152,6 +152,16 @@ export const stablecoinContent: ProductPageContent = {
       answer:
         "Yes. Terminal and QR Pay let customers pay at your counter with stablecoins, where enabled, and every payment posts to your Easner Business ledger.",
     },
+    {
+      question: "What is Easner Terminal?",
+      answer:
+        "Terminal is how a business takes an in-person payment on Easner Business: a tap, a card, or a scan. The payment posts to the same business ledger and goes through the same verification and screening.",
+    },
+    {
+      question: "What is QR Pay?",
+      answer:
+        "QR Pay is a counter code the payer scans. It posts to the same Easner Business ledger as Terminal, invoices, and payouts.",
+    },
   ],
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",

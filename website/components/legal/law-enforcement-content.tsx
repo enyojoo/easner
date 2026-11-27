@@ -13,7 +13,7 @@ export function LawEnforcementPage() {
       <section>
         <h2 className="font-display text-2xl font-bold text-web-ink mb-4">How to submit a request</h2>
         <p className="text-web-body leading-relaxed mb-4">
-          Email <strong>legal@easner.com</strong> with:
+          Email <PolicyLink href="mailto:legal@easner.com">legal@easner.com</PolicyLink> with:
         </p>
         <ul className="list-disc pl-6 space-y-2 text-web-body mb-4">
           <li>Agency name and contact details</li>

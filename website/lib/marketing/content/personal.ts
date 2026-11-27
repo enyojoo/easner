@@ -1,11 +1,12 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
+import { personalCorridorFaqs } from "../corridors"
 
 export const personalDefinition: AnswerDefinition = {
   term: "Easner Personal Banking",
   question: "What is Easner Personal Banking?",
   answer:
-    "Easner Personal Banking is a multi-currency money app for your own finances. Hold USD and EUR, and GBP where supported, get account details in your name, and send money to bank accounts and mobile money in 80+ countries.",
+    "Easner Personal Banking is the multi-currency account in the Easner app, on iPhone, Android, and the web at https://app.easner.com. Hold USD and EUR, and GBP where supported, with account details in your name, and send to bank accounts and mobile money in 80+ countries.",
   facts: [
     {
       term: "Currencies",
@@ -96,7 +97,7 @@ export const personalContent: ProductPageContent = {
   hero: {
     h1: "Bank globally with Ease",
     subhead:
-      "Hold USD and EUR, and GBP where supported. Top up with card, Apple Pay, Google Pay or ACH, and send to 80+ countries.",
+      "Hold USD and EUR, and GBP where supported, in the Easner app on iPhone, Android, and the web. Top up with card, Apple Pay, Google Pay or ACH, and send to 80+ countries.",
     visualSlot: "mkt-hero-personal-01",
     altText: "The Easner app home screen beside a transfer review showing the fee, rate and amount received",
     ctas: downloadCta,
@@ -179,7 +180,7 @@ export const personalContent: ProductPageContent = {
       question: "How do I open an Easner Personal Banking account?",
       links: [{ label: "Download the app", href: "/app" }],
       answer:
-        "Download the Easner app on iPhone or Android, sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.",
+        "Open the Easner app on iPhone, Android, or the web at https://app.easner.com, sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.",
     },
     {
       question: "Which currencies can I hold?",
@@ -189,7 +190,7 @@ export const personalContent: ProductPageContent = {
     {
       question: "What does Ease Plus cost?",
       answer:
-        "Ease Plus is $4.79 a month, billed yearly at $57.48 a year, or $5.99 a month. The transfer fee is 0.5% and the deposit fee is 0.40%. Ease is $0 a month, with a transfer fee of 1% and a deposit fee of 0.50%. Express deposit is 4.04%, an instant deposit by card, Apple Pay, Google Pay, or ACH. A $57.48/year subscription is covered with an Easner Business account. You choose and manage it in the Easner app.",
+        "Ease Plus is $4.79 a month, billed yearly at $57.48 a year, or $5.99 a month. The transfer fee is 0.5% and the deposit fee is 0.40%. Ease is $0 a month, with a transfer fee of 1% and a deposit fee of 0.50%. Express deposit is 4.04%, an instant deposit by card, Apple Pay, Google Pay, or ACH. An Easner Business account on Ease Plus or above covers that personal subscription. A free Ease business account does not. You choose the plan in the app, including the web app.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
@@ -213,6 +214,27 @@ export const personalContent: ProductPageContent = {
       answer:
         "An authenticator, your PIN and Face ID protect every sign-in and every new recipient, and a first payment to someone new can be held for your review. Easner verifies every customer and screens transactions; banking services are provided by licensed partners.",
     },
+    {
+      question: "What is the Easner app?",
+      answer:
+        "The Easner app is where a person manages their own money, on iPhone, Android, and the web at https://app.easner.com. It is the same personal account, not the Easner Business dashboard. Company money stays in Easner Business.",
+    },
+    {
+      question: "How do I get USD account details in my name?",
+      answer:
+        "Open the Easner app, verify your identity, and share the USD account details in your name. You can also hold EUR, and GBP where supported.",
+    },
+    {
+      question: "How do I send money to Nigeria or Mexico?",
+      answer:
+        "From the Easner app, send from a USD balance. A recipient in Nigeria gets NGN by bank only. A recipient in Mexico gets MXN by bank. Fees and the exchange rate are shown before you confirm, including what the recipient gets.",
+    },
+    {
+      question: "What is an EASETAG?",
+      answer:
+        "An EASETAG is how you pay another Easner user. You send to their tag from the Easner app instead of typing bank details.",
+    },
+    ...personalCorridorFaqs(),
   ],
   ctaBand: {
     headline: "Wherever life takes you",

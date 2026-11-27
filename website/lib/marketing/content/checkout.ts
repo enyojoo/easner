@@ -5,11 +5,11 @@ export const checkoutDefinition: AnswerDefinition = {
   term: "Easner Checkout",
   question: "What is Easner Checkout?",
   answer:
-    "Easner Checkout is an embeddable payment form for your website. Accept card, bank, wallet, and stablecoin payments, one-time or by subscription, with Easner as merchant of record.",
+    "Easner Checkout is a payment form for a business's own website, run from Easner Business. The business is the merchant of record, and its name appears on the customer's statement. Customers can pay by card, bank, wallet, or stablecoin where enabled, once or on a subscription.",
   facts: [
     {
       term: "Do you need a processor?",
-      definition: "No. Easner is the merchant on record, so you do not set up a separate payment account.",
+      definition: "The business using Checkout is the merchant of record. The customer's statement shows that business's name.",
     },
     {
       term: "No website?",
@@ -22,7 +22,7 @@ export const checkoutContent: ProductPageContent = {
   metadata: {
     title: "Online Checkout | Accept Payments & Subscriptions",
     description:
-      "Accept card, bank, wallet and stablecoin payments on your own website, one-time or by subscription. Easner is merchant of record – no processor to set up.",
+      "Accept card, bank, wallet and stablecoin payments on your own website, one-time or by subscription. Your business is the merchant of record, and your name is on the statement.",
     keywords: [
       "accept stablecoin payments",
       "stablecoin checkout",
@@ -46,7 +46,7 @@ export const checkoutContent: ProductPageContent = {
   hero: {
     h1: "Accept payments on your website",
     subhead:
-      "Take card, bank and stablecoin payments on your site, one-time or by subscription, with Easner as merchant of record. Every payment lands in Easner Business.",
+      "Take card, bank and stablecoin payments on your site, one-time or by subscription. Your business is the merchant of record, and your name is on the statement. Every payment lands in Easner Business.",
     visualSlot: "mkt-hero-checkout-01",
     altText: "An Easner hosted checkout page with Apple Pay, card, bank and stablecoin options beside the order summary",
     ctas: [
@@ -108,15 +108,26 @@ export const checkoutContent: ProductPageContent = {
     {
       title: "Marketplaces and platforms",
       description:
-        "Collect from buyers and route funds to sellers, with Easner as the merchant on record and one ledger for platform reconciliation.",
+        "Collect from buyers and route funds to sellers, with your business as the merchant of record and one ledger for platform reconciliation.",
     },
   ],
   definition: checkoutDefinition,
   faq: [
     {
-      question: "Do I need my own payment processor?",
+      question: "Who is the merchant of record on Easner Checkout?",
       answer:
-        "No. Easner is the merchant on record for checkout – you don't need to set up or maintain a separate payment account.",
+        "The business using Checkout is the merchant of record. The customer's statement shows that business's name. Easner is not the merchant of record.",
+    },
+    {
+      question: "How do I accept card and stablecoin payments on my site?",
+      answer:
+        "Embed Easner Checkout on your website from Easner Business. It takes card, bank, and wallet payments, and stablecoins where enabled. The integration uses a publishable key, a server call to create a session, and a signed webhook. Payments settle into the Easner Business account.",
+    },
+    {
+      question: "What is the Easner checkout fee?",
+      answer:
+        "Card payments are 3.50% + $1.00 on Ease and Ease Plus, and 3.30% + $1.00 on Ease Pro. Bank payments are 1.40% + $1.00 on Ease and Ease Plus, and 1.20% + $0.70 on Ease Pro. On those plans, 0.80% of the bank rate is capped at $5. Ease Gold is Contract. The customer pays the listed price. The fee comes out of what the business receives.",
+      links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
       question: "Do I need to write code?",
@@ -140,7 +151,7 @@ export const checkoutContent: ProductPageContent = {
         "Yes, where enabled. A stablecoin option sits beside card and bank, and the payment lands in Easner Business like any other.",
     },
     {
-      question: "Can I charge subscriptions?",
+      question: "Can I bill subscriptions with Easner?",
       answer:
         "Yes. Set a billing interval and an optional free trial; customers see when they'll be charged before they pay.",
     },

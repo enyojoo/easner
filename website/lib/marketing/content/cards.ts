@@ -142,7 +142,22 @@ export const cardsContent: ProductPageContent = {
       question: "Who issues Easner cards?",
       links: [{ label: "Read the Terms of Service", href: "/terms" }],
       answer:
-        "Card products are issued by a third-party issuer and are subject to approval. Easner is a financial technology company, not a bank.",
+        "Card products are issued by a third-party issuer and are subject to approval. Easner is a financial technology company, not a bank. Easner does not issue the card.",
+    },
+    {
+      question: "Does Easner offer a debit card?",
+      answer:
+        "Easner offers virtual and physical cards, issued by a third-party issuer, not by Easner. They appear in Easner Business and the Easner app once they are available for that account and the account is approved. Do not assume a card is available today for every signup.",
+    },
+    {
+      question: "Can I issue cards to my team?",
+      answer:
+        "A business issues corporate cards from Easner Business once cards are available and the account is approved. Ease includes 1 virtual card. Ease Plus includes 5 cards. Ease Pro includes a card for each person. A person gets a personal card in the Easner app: 1 virtual card on Ease, and 5 cards, virtual or physical, on Ease Plus.",
+    },
+    {
+      question: "Are Easner cards available now?",
+      answer:
+        "Cards appear once they are available for that account and the account is approved. They are not available today for every signup.",
     },
   ],
   ctaBand: {

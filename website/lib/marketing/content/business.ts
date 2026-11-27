@@ -4,12 +4,13 @@ import {
   EASNER_DEVELOPED_MARKET_KEYWORDS,
   EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
 } from "../constants"
+import { businessCorridorFaqs } from "../corridors"
 
 export const businessDefinition: AnswerDefinition = {
   term: "Easner Business Banking",
   question: "What is Easner Business Banking?",
   answer:
-    "Easner Business Banking is a web dashboard for company finances. Get account details in your business's name, collect customer payments, send invoices, and pay suppliers and contractors in 80+ countries.",
+    "Easner Business Banking is the web dashboard for a company. Get USD and EUR account details in the business's name, and GBP where supported, collect by invoice, Payment Link, Checkout, Terminal, or QR Pay, and pay suppliers in 80+ countries. Personal money stays in the Easner app.",
   facts: [
     {
       term: "Who it's for",
@@ -138,7 +139,7 @@ export const businessContent: ProductPageContent = {
       question: "Who can open an Easner Business account?",
       links: [{ label: "Verification requirements", href: "/compliance" }],
       answer:
-        "Startups, small businesses and established companies from most countries. A small number of jurisdictions are excluded for compliance and sanctions reasons.",
+        "Startups, small businesses, and established companies. Business accounts can be opened from 174 countries. A listed set of countries is closed for compliance and sanctions. The person who opens the account verifies their own identity.",
     },
     {
       question: "What do I need to verify my business?",
@@ -158,7 +159,7 @@ export const businessContent: ProductPageContent = {
     {
       question: "Can my team use the account?",
       answer:
-        "Yes. Invite teammates and give each one the access they need, with payment history and reports for the whole team.",
+        "Yes. Invite teammates and give each one the access they need. Ease Plus adds a team of 5 with approvals. Ease Pro adds an unlimited team. Payment history and reports are for the whole team.",
     },
     {
       question: "How do customers pay my business?",
@@ -166,6 +167,33 @@ export const businessContent: ProductPageContent = {
       answer:
         "Send an invoice, share a payment link, embed Checkout on your website, or collect in person with Terminal and QR Pay. Every payment lands in the same Easner Business ledger.",
     },
+    {
+      question: "What is Easner Business?",
+      answer:
+        "Easner Business is the web dashboard for a company: accounts, send, invoices, Checkout, Payment Links, Payroll, Connect, cards, Terminal, QR Pay, team access, API keys, and webhooks. It is not the personal Easner app.",
+    },
+    {
+      question: "Is Easner a business bank account?",
+      answer:
+        "Easner Business gives a company USD and EUR account details in its own name, and GBP where supported. Easner is a financial technology company, not a bank. It is not FDIC-insured and does not hold customer deposits. Banking services are provided by licensed partners.",
+    },
+    {
+      question: "How do I get USD account details for my company?",
+      answer:
+        "Open Easner Business on the web, verify the business, and share the USD account details in the business's name. EUR account details are available too, and GBP where supported.",
+    },
+    {
+      question: "How do I pay suppliers in Nigeria, Mexico, the Philippines, or India?",
+      answer:
+        "From Easner Business, pay the supplier from the company balance. Nigeria receives NGN by bank only. Mexico receives MXN by bank. The Philippines receives PHP by bank. India receives INR by bank. Fees and the exchange rate are shown before you confirm.",
+    },
+    {
+      question: "Can my team share one business account?",
+      answer:
+        "Yes. Ease includes a team of 1. Ease Plus adds a team of 5 with approvals. Ease Pro adds an unlimited team. Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed in a contract.",
+      links: [{ label: "Pricing", href: "/pricing" }],
+    },
+    ...businessCorridorFaqs(),
   ],
   ctaBand: {
     headline: "Open your Easner Business account",

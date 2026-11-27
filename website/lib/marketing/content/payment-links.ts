@@ -145,6 +145,23 @@ export const paymentLinksContent: ProductPageContent = {
       answer:
         "Yes. Cap the number of payments, let customers choose a quantity, or close the link whenever you're done.",
     },
+    {
+      question: "How do I get paid with a link?",
+      answer:
+        "Create a Payment Link in Easner Business and share it. No website or code is required. Customers pay by card, Apple Pay or Google Pay, a US bank account, or stablecoins where enabled. Payments settle into the Easner Business account.",
+    },
+    {
+      question: "Can I charge a subscription without a website?",
+      answer:
+        "Yes. A Payment Link can be recurring, with an optional free trial and a renewal disclosure before the customer pays. Use Checkout when the payment should sit on your own website.",
+      links: [{ label: "Checkout", href: "/checkout" }],
+    },
+    {
+      question: "Easner payment link vs invoice vs checkout?",
+      answer:
+        "Payment Links are a no-code page. Invoicing is an itemized bill to a named customer. Checkout is embedded on your website. All three settle into the same Easner Business ledger.",
+      links: [{ label: "Invoicing", href: "/invoicing" }, { label: "Checkout", href: "/checkout" }],
+    },
   ],
   ctaBand: {
     headline: "Create your first payment link",
