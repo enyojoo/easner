@@ -4,8 +4,16 @@ import { contactDefinition, contactFaq } from "./contact"
 import { businessContent, businessDefinition } from "./business"
 import { cardsContent, cardsDefinition } from "./cards"
 import { checkoutContent, checkoutDefinition } from "./checkout"
-import { connectContent, connectDefinition } from "./connect"
+import { connectContent, connectDefinition, connectTaxFaqs } from "./connect"
 import { developersContent, developersDefinition } from "./developers"
+import {
+  businessCorridorFaqs,
+  connectPayeeFaqs,
+  developerPayoutFaqs,
+  payrollPayeeFaqs,
+  personalCorridorFaqs,
+  whiteLabelPayoutFaqs,
+} from "../corridors"
 import { homeDefinition, homeFaq } from "./home"
 import { invoicingContent, invoicingDefinition } from "./invoicing"
 import { partnersContent, partnersDefinition } from "./partners"
@@ -110,7 +118,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/personal",
     label: "Personal Banking",
     definition: personalDefinition,
-    faq: personalContent.faq,
+    faq: [...(personalContent.faq ?? []), ...personalCorridorFaqs()],
     howTo: personalDefinition.steps
       ? { name: personalDefinition.stepsHeadline ?? "How to open an Easner Personal Banking account", steps: personalDefinition.steps }
       : undefined,
@@ -119,7 +127,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/business",
     label: "Business Banking",
     definition: businessDefinition,
-    faq: businessContent.faq,
+    faq: [...(businessContent.faq ?? []), ...businessCorridorFaqs()],
     howTo: {
       name: "How to open an Easner Business account",
       steps: [
@@ -183,7 +191,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/payroll",
     label: "Payroll",
     definition: payrollDefinition,
-    faq: payrollContent.faq,
+    faq: [...(payrollContent.faq ?? []), ...payrollPayeeFaqs()],
     howTo: {
       name: "How to run payroll on Easner",
       steps: [
@@ -202,21 +210,21 @@ export const aiSections: AiAnswerSection[] = [
     href: "/connect",
     label: "Connect",
     definition: connectDefinition,
-    faq: connectContent.faq,
+    faq: [...(connectContent.faq ?? []), ...connectTaxFaqs, ...connectPayeeFaqs()],
     howTo: howToFromSteps(connectContent.integrationStepsHeadline ?? "How to pay people with Easner Connect", connectContent.integrationSteps),
   },
   {
     href: "/white-label",
     label: "White-label",
     definition: partnersDefinition,
-    faq: partnersContent.faq,
+    faq: [...(partnersContent.faq ?? []), ...whiteLabelPayoutFaqs()],
     howTo: howToFromSteps(partnersContent.integrationStepsHeadline ?? "How to launch Easner White-label", partnersContent.integrationSteps),
   },
   {
     href: "/developers",
     label: "Developers",
     definition: developersDefinition,
-    faq: developersContent.faq,
+    faq: [...(developersContent.faq ?? []), ...developerPayoutFaqs()],
     howTo: howToFromSteps(developersContent.integrationStepsHeadline ?? "How to get started with the Easner API", developersContent.integrationSteps),
   },
 ]

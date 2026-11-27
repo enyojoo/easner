@@ -229,6 +229,12 @@ export const developersContent: ProductPageContent = {
         "There is no separate SDK. The Developer Banking API is the integration for accounts, deposits, and payouts. The API reference is at https://docs.easner.com/.",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }],
     },
+    {
+      question: "Which countries can the API pay out to?",
+      answer:
+        "Country-by-country answers for the Easner API, including the currency and payout rail for each country, are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-api" }],
+    },
   ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",

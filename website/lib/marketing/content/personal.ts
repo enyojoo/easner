@@ -233,6 +233,12 @@ export const personalContent: ProductPageContent = {
       answer:
         "An EASETAG is how you pay another Easner user. You send to their tag from the Easner app instead of typing bank details.",
     },
+    {
+      question: "Which countries can I send money to?",
+      answer:
+        "Country-by-country answers for Personal Banking, including the currency and payout rail for each country, are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-personal-banking" }],
+    },
   ],
   ctaBand: {
     headline: "Wherever life takes you",

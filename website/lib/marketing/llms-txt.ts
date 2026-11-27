@@ -6,10 +6,10 @@ import { APP_STORE_URL, BUSINESS_SIGNUP_URL, CAL_LINK, CONTACT_EMAIL, PLAY_STORE
 import { businessContent } from "@/lib/marketing/content/business"
 import { cardsContent } from "@/lib/marketing/content/cards"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
-import { connectContent, connectTaxFaqs } from "@/lib/marketing/content/connect"
+import { connectContent } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
-import { aiCompanyFaq } from "@/lib/marketing/content/ai"
+import { aiAllFaqs, aiCompanyFaq } from "@/lib/marketing/content/ai"
 import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
 import { homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
@@ -19,16 +19,7 @@ import { payrollContent } from "@/lib/marketing/content/payroll"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { pricingDefinition, pricingFaq } from "@/lib/marketing/content/pricing"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
-import {
-  businessCorridorFaqs,
-  connectPayeeFaqs,
-  developerPayoutFaqs,
-  EUR_PAYOUT_COUNTRIES,
-  PAYOUT_COUNTRIES,
-  payrollPayeeFaqs,
-  personalCorridorFaqs,
-  whiteLabelPayoutFaqs,
-} from "@/lib/marketing/corridors"
+import { EUR_PAYOUT_COUNTRIES, PAYOUT_COUNTRIES } from "@/lib/marketing/corridors"
 import { EASNER_CANONICAL_DEFINITION } from "@/lib/marketing/positioning"
 import type { FaqItem, ProductPageContent } from "@/lib/marketing/types"
 import { NAV_SECTIONS } from "@/lib/nav-config"
@@ -58,8 +49,10 @@ function faqsFor(content: ProductPageContent): FaqItem[] {
   return [{ question: content.definition.question, answer: content.definition.answer }, ...faqs]
 }
 
-function productSections(): string[] {
-  const blocks: { title: string; path: string; faqs: FaqItem[] }[] = [
+type ProductBlock = { title: string; path: string; faqs: FaqItem[] }
+
+function productBlocks(): ProductBlock[] {
+  return [
     {
       title: "Home",
       path: "/",
@@ -80,19 +73,29 @@ function productSections(): string[] {
       path: "/pricing",
       faqs: [{ question: pricingDefinition.question, answer: pricingDefinition.answer }, ...pricingFaq],
     },
-    { title: "Personal Banking", path: "/personal", faqs: [...faqsFor(personalContent), ...personalCorridorFaqs()] },
-    { title: "Business Banking", path: "/business", faqs: [...faqsFor(businessContent), ...businessCorridorFaqs()] },
-    { title: "Connect", path: "/connect", faqs: [...faqsFor(connectContent), ...connectTaxFaqs, ...connectPayeeFaqs()] },
-    { title: "Payroll", path: "/payroll", faqs: [...faqsFor(payrollContent), ...payrollPayeeFaqs()] },
+    { title: "Personal Banking", path: "/personal", faqs: faqsFor(personalContent) },
+    { title: "Business Banking", path: "/business", faqs: faqsFor(businessContent) },
+    { title: "Connect", path: "/connect", faqs: faqsFor(connectContent) },
+    { title: "Payroll", path: "/payroll", faqs: faqsFor(payrollContent) },
     { title: "Checkout", path: "/checkout", faqs: faqsFor(checkoutContent) },
     { title: "Payment Links", path: "/payment-links", faqs: faqsFor(paymentLinksContent) },
     { title: "Invoicing", path: "/invoicing", faqs: faqsFor(invoicingContent) },
     { title: "Stablecoin", path: "/stablecoin", faqs: faqsFor(stablecoinContent) },
     { title: "Cards", path: "/cards", faqs: faqsFor(cardsContent) },
-    { title: "White-label", path: "/white-label", faqs: [...faqsFor(partnersContent), ...whiteLabelPayoutFaqs()] },
-    { title: "Developers", path: "/developers", faqs: [...faqsFor(developersContent), ...developerPayoutFaqs()] },
+    { title: "White-label", path: "/white-label", faqs: faqsFor(partnersContent) },
+    { title: "Developers", path: "/developers", faqs: faqsFor(developersContent) },
   ]
-  return blocks.flatMap((block) => [`## ${block.title}`, "", `${SITE}${block.path}`, "", ...faqLines(block.faqs), ""])
+}
+
+function productSections(): string[] {
+  return productBlocks().flatMap((block) => [`## ${block.title}`, "", `${SITE}${block.path}`, "", ...faqLines(block.faqs), ""])
+}
+
+/** Country and tax-form answers, listed once under /answers. Skips questions already shown on a product page above. */
+function answersSection(): string[] {
+  const shown = new Set(productBlocks().flatMap((block) => block.faqs.map((item) => item.question)))
+  const extra = aiAllFaqs.filter((item) => !shown.has(item.question))
+  return ["## Answers: countries and tax forms", "", `${SITE}/answers`, "", ...faqLines(extra), ""]
 }
 
 /** The site summary. `blogLines` is the "## Blog" section, inserted before the Company section. */
@@ -179,6 +182,7 @@ export function buildLlmsTxt(blogLines: string[] = []): string {
     `- **Customer support:** ${SUPPORT_EMAIL}`,
     "",
     ...productSections(),
+    ...answersSection(),
     "",
     ...blogLines,
     "## Company",

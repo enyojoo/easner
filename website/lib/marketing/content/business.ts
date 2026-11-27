@@ -192,6 +192,12 @@ export const businessContent: ProductPageContent = {
         "Yes. Ease includes a team of 1. Ease Plus adds a team of 5 with approvals. Ease Pro adds an unlimited team. Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed in a contract.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
+    {
+      question: "Which countries can my business pay?",
+      answer:
+        "Country-by-country answers for Business Banking, including the currency and payout rail for each country, are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-business-banking" }],
+    },
   ],
   ctaBand: {
     headline: "Open your Easner Business account",

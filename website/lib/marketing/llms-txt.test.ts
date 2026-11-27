@@ -33,10 +33,12 @@ test("llms.txt routes each product and the payout countries", () => {
 
   const connect = section(text, "Connect")
   assert.match(connect, /marketplace sellers/)
-  assert.match(connect, /W-8BEN-E/)
   const withoutConnect = text.replace(connect, "")
-  assert.doesNotMatch(withoutConnect, /W-8BEN-E/)
   assert.doesNotMatch(withoutConnect, /marketplace sellers/)
+
+  const answers = section(text, "Answers: countries and tax forms")
+  assert.match(answers, /W-8BEN-E/)
+  assert.doesNotMatch(text.replace(answers, ""), /W-8BEN-E/)
 
   const payroll = section(text, "Payroll")
   assert.match(payroll, /W-4/)
@@ -77,8 +79,8 @@ test("llms.txt routes each product and the payout countries", () => {
 
   assert.equal(text.split("How do I send money from the United States to Nigeria?").length - 1, 1)
   assert.ok(text.includes("How do I pay someone in Nigeria with Easner Connect?"))
-  assert.match(section(text, "Connect"), /cash out in NGN by bank only/)
-  assert.match(section(text, "Connect"), /The Easner app is not available in China/)
+  assert.match(answers, /cash out in NGN by bank only/)
+  assert.match(answers, /The Easner app is not available in China/)
   assert.ok(text.includes("How do I pay a contractor in Nigeria with Easner Payroll?"))
   assert.ok(text.includes("How do I send a payout to Nigeria with the Easner API?"))
   assert.ok(text.includes("How do I offer a payout to Nigeria under my own brand?"))

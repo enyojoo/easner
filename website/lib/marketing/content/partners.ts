@@ -202,6 +202,12 @@ export const partnersContent: ProductPageContent = {
         "Commercial terms depend on the model, the corridors, and the volume. Ease Gold includes White-label pricing in the contract.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
+    {
+      question: "Which countries can I offer payouts in?",
+      answer:
+        "Country-by-country answers for White-label, including the currency and payout rail for each country, are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-white-label" }],
+    },
   ],
   ctaBand: {
     headline: "Ready to launch under your brand?",

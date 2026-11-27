@@ -179,6 +179,12 @@ export const payrollContent: ProductPageContent = {
       answer:
         "Yes. Payroll pays the company's own contractors from the Easner Business balance in 80+ countries. Each person connects in the Easner app on iPhone, Android, or the web and chooses an EASETAG, a bank account, or mobile money.",
     },
+    {
+      question: "Which countries can I pay contractors in?",
+      answer:
+        "Country-by-country answers for Payroll, including the currency and payout rail for each country, are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-payroll" }],
+    },
   ],
   ctaBand: {
     headline: "Add payroll to your Easner Business account",

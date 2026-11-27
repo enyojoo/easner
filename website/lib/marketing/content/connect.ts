@@ -249,6 +249,12 @@ export const connectContent: ProductPageContent = {
         "Yes. Connect pays contractors and affiliates who are not employees, in US dollars, into their own Easner accounts. They link once in the Easner app. This is not Payroll.",
       links: [{ label: "Payroll", href: "/payroll" }],
     },
+    {
+      question: "Which countries and tax forms does Connect cover?",
+      answer:
+        "Country-by-country answers and tax-form details for Connect are on the Answers page.",
+      links: [{ label: "Answers", href: "/answers#easner-connect" }],
+    },
   ],
   ctaBand: {
     headline: "Try Connect in test",
