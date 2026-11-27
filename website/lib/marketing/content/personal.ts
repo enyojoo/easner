@@ -1,6 +1,5 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { APP_LINK_URL } from "../constants"
-import { personalCorridorFaqs } from "../corridors"
 
 export const personalDefinition: AnswerDefinition = {
   term: "Easner Personal Banking",
@@ -234,7 +233,6 @@ export const personalContent: ProductPageContent = {
       answer:
         "An EASETAG is how you pay another Easner user. You send to their tag from the Easner app instead of typing bank details.",
     },
-    ...personalCorridorFaqs(),
   ],
   ctaBand: {
     headline: "Wherever life takes you",

@@ -6,7 +6,7 @@ import { APP_STORE_URL, BUSINESS_SIGNUP_URL, CAL_LINK, CONTACT_EMAIL, PLAY_STORE
 import { businessContent } from "@/lib/marketing/content/business"
 import { cardsContent } from "@/lib/marketing/content/cards"
 import { checkoutContent } from "@/lib/marketing/content/checkout"
-import { connectContent } from "@/lib/marketing/content/connect"
+import { connectContent, connectTaxFaqs } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq } from "@/lib/marketing/content/ai"
@@ -19,7 +19,16 @@ import { payrollContent } from "@/lib/marketing/content/payroll"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { pricingDefinition, pricingFaq } from "@/lib/marketing/content/pricing"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
-import { EUR_PAYOUT_COUNTRIES, PAYOUT_COUNTRIES } from "@/lib/marketing/corridors"
+import {
+  businessCorridorFaqs,
+  connectPayeeFaqs,
+  developerPayoutFaqs,
+  EUR_PAYOUT_COUNTRIES,
+  PAYOUT_COUNTRIES,
+  payrollPayeeFaqs,
+  personalCorridorFaqs,
+  whiteLabelPayoutFaqs,
+} from "@/lib/marketing/corridors"
 import { EASNER_CANONICAL_DEFINITION } from "@/lib/marketing/positioning"
 import type { FaqItem, ProductPageContent } from "@/lib/marketing/types"
 import { NAV_SECTIONS } from "@/lib/nav-config"
@@ -71,17 +80,17 @@ function productSections(): string[] {
       path: "/pricing",
       faqs: [{ question: pricingDefinition.question, answer: pricingDefinition.answer }, ...pricingFaq],
     },
-    { title: "Personal Banking", path: "/personal", faqs: faqsFor(personalContent) },
-    { title: "Business Banking", path: "/business", faqs: faqsFor(businessContent) },
-    { title: "Connect", path: "/connect", faqs: faqsFor(connectContent) },
-    { title: "Payroll", path: "/payroll", faqs: faqsFor(payrollContent) },
+    { title: "Personal Banking", path: "/personal", faqs: [...faqsFor(personalContent), ...personalCorridorFaqs()] },
+    { title: "Business Banking", path: "/business", faqs: [...faqsFor(businessContent), ...businessCorridorFaqs()] },
+    { title: "Connect", path: "/connect", faqs: [...faqsFor(connectContent), ...connectTaxFaqs, ...connectPayeeFaqs()] },
+    { title: "Payroll", path: "/payroll", faqs: [...faqsFor(payrollContent), ...payrollPayeeFaqs()] },
     { title: "Checkout", path: "/checkout", faqs: faqsFor(checkoutContent) },
     { title: "Payment Links", path: "/payment-links", faqs: faqsFor(paymentLinksContent) },
     { title: "Invoicing", path: "/invoicing", faqs: faqsFor(invoicingContent) },
     { title: "Stablecoin", path: "/stablecoin", faqs: faqsFor(stablecoinContent) },
     { title: "Cards", path: "/cards", faqs: faqsFor(cardsContent) },
-    { title: "White-label", path: "/white-label", faqs: faqsFor(partnersContent) },
-    { title: "Developers", path: "/developers", faqs: faqsFor(developersContent) },
+    { title: "White-label", path: "/white-label", faqs: [...faqsFor(partnersContent), ...whiteLabelPayoutFaqs()] },
+    { title: "Developers", path: "/developers", faqs: [...faqsFor(developersContent), ...developerPayoutFaqs()] },
   ]
   return blocks.flatMap((block) => [`## ${block.title}`, "", `${SITE}${block.path}`, "", ...faqLines(block.faqs), ""])
 }

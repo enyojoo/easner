@@ -1,5 +1,4 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
-import { payrollPayeeFaqs } from "../corridors"
 import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const payrollDefinition: AnswerDefinition = {
@@ -180,7 +179,6 @@ export const payrollContent: ProductPageContent = {
       answer:
         "Yes. Payroll pays the company's own contractors from the Easner Business balance in 80+ countries. Each person connects in the Easner app on iPhone, Android, or the web and chooses an EASETAG, a bank account, or mobile money.",
     },
-    ...payrollPayeeFaqs(),
   ],
   ctaBand: {
     headline: "Add payroll to your Easner Business account",

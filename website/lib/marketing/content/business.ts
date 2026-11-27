@@ -4,7 +4,6 @@ import {
   EASNER_DEVELOPED_MARKET_KEYWORDS,
   EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
 } from "../constants"
-import { businessCorridorFaqs } from "../corridors"
 
 export const businessDefinition: AnswerDefinition = {
   term: "Easner Business Banking",
@@ -193,7 +192,6 @@ export const businessContent: ProductPageContent = {
         "Yes. Ease includes a team of 1. Ease Plus adds a team of 5 with approvals. Ease Pro adds an unlimited team. Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed in a contract.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
-    ...businessCorridorFaqs(),
   ],
   ctaBand: {
     headline: "Open your Easner Business account",

@@ -1,6 +1,5 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
-import { developerPayoutFaqs } from "../corridors"
 
 export const developersDefinition: AnswerDefinition = {
   term: "Easner API",
@@ -230,7 +229,6 @@ export const developersContent: ProductPageContent = {
         "There is no separate SDK. The Developer Banking API is the integration for accounts, deposits, and payouts. The API reference is at https://docs.easner.com/.",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }],
     },
-    ...developerPayoutFaqs(),
   ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",

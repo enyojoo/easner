@@ -1,6 +1,5 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
-import { whiteLabelPayoutFaqs } from "../corridors"
 
 export const partnersDefinition: AnswerDefinition = {
   term: "Easner White-label",
@@ -203,7 +202,6 @@ export const partnersContent: ProductPageContent = {
         "Commercial terms depend on the model, the corridors, and the volume. Ease Gold includes White-label pricing in the contract.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
-    ...whiteLabelPayoutFaqs(),
   ],
   ctaBand: {
     headline: "Ready to launch under your brand?",
