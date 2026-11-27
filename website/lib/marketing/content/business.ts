@@ -210,10 +210,14 @@ export const businessContent: ProductPageContent = {
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
-      question: "How does Easner Business compare with Wise Business?",
+      question: "How does Easner Business compare with Wise Business, Payoneer, or Airwallex?",
       answer:
-        "Easner Business gives a company USD and EUR account details, ways to collect from customers, and payouts to 80+ countries in one dashboard. The comparison page sets out the differences with Wise Business, with a source and a date for every Wise fact.",
-      links: [{ label: "Business vs Wise Business", href: "/compare/easner-business-vs-wise-business" }],
+        "Easner Business gives a company USD and EUR account details, ways to collect from customers, and payouts to 80+ countries in one dashboard. The comparison pages set out the differences with each, with a source and a date for every competitor fact.",
+      links: [
+        { label: "Business vs Wise Business", href: "/compare/easner-business-vs-wise-business" },
+        { label: "Business vs Payoneer", href: "/compare/easner-business-vs-payoneer" },
+        { label: "Business vs Airwallex", href: "/compare/easner-business-vs-airwallex" },
+      ],
     },
     {
       question: "Which countries can my business pay?",

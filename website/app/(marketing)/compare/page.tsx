@@ -6,9 +6,9 @@ import { marketingMetadata } from "@/lib/marketing/metadata"
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
 const metadata_ = {
-  title: "Compare Easner Connect and Business With Other Options",
+  title: "Compare Easner With Other Options",
   description:
-    "Side-by-side comparisons of Easner Connect and Easner Business with Stripe Connect, PayPal Payouts, and Wise Business. Every competitor fact has a source and a date.",
+    "Easner compared with Stripe, PayPal, Wise, Deel, Payoneer, Airwallex, Paddle, FreshBooks, Square, and BVNK. Every competitor fact has a source and a date.",
   keywords: ["Easner comparison", "Easner alternatives", "Easner vs Wise", "Easner vs Stripe"],
 }
 
@@ -29,8 +29,8 @@ export default function CompareIndexPage() {
       <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:py-24">
         <h1 className="text-3xl font-semibold leading-tight text-web-ink sm:text-4xl">Compare Easner</h1>
         <p className="mt-4 text-base leading-7 text-web-body sm:text-lg">
-          How Easner Connect and Easner Business differ from other ways to pay and collect internationally. Every competitor
-          fact comes from that company&apos;s own pages and carries a source and a date.
+          How Easner&apos;s products differ from other ways to pay, collect, and bank internationally. Every competitor fact comes
+          from that company&apos;s own pages and carries a source and a date.
         </p>
         <ul className="mt-10 space-y-6">
           {comparePages.map((page) => (

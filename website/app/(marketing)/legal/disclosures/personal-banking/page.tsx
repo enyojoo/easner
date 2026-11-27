@@ -1,4 +1,5 @@
 import { PersonalBankingDisclosurePage } from "@/components/legal/disclosure-personal-banking-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function PersonalBankingDisclosureRoute() {
-  return <PersonalBankingDisclosurePage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Legal", path: "/legal" }, { name: "Disclosures", path: "/legal/disclosures" }, { name: "Personal Banking disclosure", path: "/legal/disclosures/personal-banking" }]} />
+      <PersonalBankingDisclosurePage />
+    </>
+  )
 }

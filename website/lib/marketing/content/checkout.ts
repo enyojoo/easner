@@ -164,6 +164,14 @@ export const checkoutContent: ProductPageContent = {
       answer:
         "Yes. Set a billing interval and an optional free trial; customers see when they'll be charged before they pay.",
     },
+    {
+      question: "How does Easner Checkout compare with Paddle?",
+      answer:
+        "On Easner Checkout your business is the merchant of record. The comparison page sets out the differences with Paddle, which is the merchant of record on its side, with a source and a date for every Paddle fact.",
+      links: [
+        { label: "Checkout vs Paddle", href: "/compare/easner-checkout-vs-paddle" },
+      ],
+    },
   ],
   ctaBand: {
     headline: "Add checkout to your website",

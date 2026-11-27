@@ -37,10 +37,10 @@ test("llms.txt routes each product and the payout countries", () => {
   assert.match(useCases, /marketplace sellers/)
   assert.ok(useCases.includes("https://www.easner.com/connect/marketplace-seller-payouts"))
   assert.ok(useCases.includes("https://www.easner.com/business/pay-overseas-suppliers"))
-  const withoutConnect = text.replace(connect, "").replace(useCases, "")
+  const comparisons = section(text, "Comparisons")
+  const withoutConnect = text.replace(connect, "").replace(useCases, "").replace(comparisons, "")
   assert.doesNotMatch(withoutConnect, /marketplace sellers/)
 
-  const comparisons = section(text, "Comparisons")
   for (const slug of [
     "easner-connect-vs-stripe-connect",
     "easner-business-vs-wise-business",

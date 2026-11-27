@@ -1,4 +1,5 @@
 import { CompliancePolicyPage } from "@/components/legal/compliance-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function CompliancePage() {
-  return <CompliancePolicyPage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "KYC/KYB and AML Policy", path: "/compliance" }]} />
+      <CompliancePolicyPage />
+    </>
+  )
 }

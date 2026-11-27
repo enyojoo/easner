@@ -12,6 +12,7 @@ import {
 } from "./constants"
 import { NAV_SECTIONS } from "@/lib/nav-config"
 import { pricingPlans } from "./content/pricing"
+import { plainAnswer } from "./answer-text"
 
 const SITE_URL = "https://www.easner.com"
 const LOGO_URL = `${BRAND_BASE_URL}/Easner%20Logo.svg`
@@ -276,7 +277,7 @@ export function faqPageJsonLd(items: FaqItem[]) {
       name: item.question,
       acceptedAnswer: {
         "@type": "Answer",
-        text: item.answer,
+        text: plainAnswer(item.answer),
       },
     })),
   }
@@ -323,7 +324,7 @@ export function definedTermJsonLd({ name, description }: { name: string; descrip
     "@context": "https://schema.org",
     "@type": "DefinedTerm",
     name,
-    description,
+    description: plainAnswer(description),
     inDefinedTermSet: `${SITE_URL}/#glossary`,
   }
 }
@@ -337,7 +338,7 @@ export function definedTermSetJsonLd(terms: { name: string; description: string 
     hasDefinedTerm: terms.map((term) => ({
       "@type": "DefinedTerm",
       name: term.name,
-      description: term.description,
+      description: plainAnswer(term.description),
     })),
   }
 }
@@ -347,12 +348,12 @@ export function howToJsonLd({ name, description, steps }: { name: string; descri
     "@context": "https://schema.org",
     "@type": "HowTo",
     name,
-    description,
+    description: plainAnswer(description),
     step: steps.map((step, index) => ({
       "@type": "HowToStep",
       position: index + 1,
       name: step.name,
-      text: step.text,
+      text: plainAnswer(step.text),
     })),
   }
 }
@@ -361,7 +362,7 @@ function howToFromProduct(content: ProductPageContent): { name: string; descript
   if (content.integrationSteps && content.integrationSteps.length > 0) {
     return {
       name: content.integrationStepsHeadline ?? `How to get started with ${content.definition?.term ?? "Easner"}`,
-      description: content.definition?.answer ?? content.metadata.description,
+      description: plainAnswer(content.definition?.answer ?? content.metadata.description),
       steps: content.integrationSteps.map((step: IntegrationStep) => ({ name: step.title, text: step.description })),
     }
   }

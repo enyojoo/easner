@@ -90,7 +90,8 @@ class Page(HTMLParser):
 
 
 def normalize(text):
-    return " ".join(text.split())
+    # A link around a word leaves a gap before the punctuation that follows it in the extracted text.
+    return re.sub(r"\s+([.,;:!?)])", r"\1", " ".join(text.split()))
 
 
 routes = {}

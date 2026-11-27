@@ -1,4 +1,5 @@
 import { LawEnforcementPage } from "@/components/legal/law-enforcement-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function LawEnforcementRoute() {
-  return <LawEnforcementPage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Legal", path: "/legal" }, { name: "Law enforcement requests", path: "/legal/law-enforcement" }]} />
+      <LawEnforcementPage />
+    </>
+  )
 }

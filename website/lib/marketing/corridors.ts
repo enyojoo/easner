@@ -362,7 +362,7 @@ const usPartners =
 function personalTo(country: PayoutCountry): FaqItem {
   return {
     question: `How do I send money from the United States to ${spoken(country.name)}?`,
-    answer: `From the Easner app on iPhone, Android, or https://app.easner.com, you send from a USD balance. The recipient in ${spoken(country.name)} gets ${country.currency} by ${railPhrase(country)}. ${shown} ${usPartners}`,
+    answer: `From the Easner app on iPhone, Android, or the [web](https://app.easner.com), you send from a USD balance. The recipient in ${spoken(country.name)} gets ${country.currency} by ${railPhrase(country)}. ${shown} ${usPartners}`,
     links: [{ label: "Personal Banking", href: "/personal" }],
   }
 }
@@ -370,7 +370,7 @@ function personalTo(country: PayoutCountry): FaqItem {
 function personalFromApp(country: string): FaqItem {
   return {
     question: `How do I send money from ${spoken(country)} to the United States?`,
-    answer: `Someone in ${spoken(country)} can open the Easner app on iPhone, Android, or https://app.easner.com and send USD to a bank account in the United States. The app can be opened from 158 countries. Opening an account needs the person to verify their own identity. ${shown}`,
+    answer: `Someone in ${spoken(country)} can open the Easner app on iPhone, Android, or the [web](https://app.easner.com) and send USD to a bank account in the United States. The app can be opened from 158 countries. Opening an account needs the person to verify their own identity. ${shown}`,
     links: [{ label: "Personal Banking", href: "/personal" }],
   }
 }
@@ -502,7 +502,7 @@ export function connectPayeeFaqs(): FaqItem[] {
     const us = country === "United States" ? ` ${usPartners}` : ""
     return {
       question,
-      answer: `A person in ${place} opens the Easner app on iPhone, Android, or https://app.easner.com, verifies their identity, and links once. The platform pays from its Easner Business balance into that person's Easner account. Receiving into Easner is free for them. ${cashOut(country)}${us}`,
+      answer: `A person in ${place} opens the Easner app on iPhone, Android, or the [web](https://app.easner.com), verifies their identity, and links once. The platform pays from its Easner Business balance into that person's Easner account. Receiving into Easner is free for them. ${cashOut(country)}${us}`,
       links,
     }
   })
@@ -531,7 +531,7 @@ export function payrollPayeeFaqs(): FaqItem[] {
     const us = country === "United States" ? ` ${usPartners}` : ""
     return {
       question,
-      answer: `Add the contractor in Easner Business and pay from the business balance. They connect in the Easner app on iPhone, Android, or https://app.easner.com. ${rail} A second person approves the payday before money moves.${us}`,
+      answer: `Add the contractor in Easner Business and pay from the business balance. They connect in the Easner app on iPhone, Android, or the [web](https://app.easner.com). ${rail} A second person approves the payday before money moves.${us}`,
       links,
     }
   })

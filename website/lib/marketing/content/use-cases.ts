@@ -120,7 +120,7 @@ export const useCasePages: UseCasePage[] = [
     linkLabel: "Pay marketplace sellers",
     content: connectPage("marketplace-seller-payouts", {
       metadata: {
-        title: "Marketplace Seller Payouts | Pay Sellers in Their Own Accounts",
+        title: "Marketplace Seller Payouts | Pay Sellers in USD",
         description:
           "Pay marketplace sellers into their own Easner accounts, in US dollars, from your Easner Business balance. Sellers link once. Try it in test mode.",
         keywords: [
@@ -158,9 +158,9 @@ export const useCasePages: UseCasePage[] = [
     linkLabel: "Pay creators and affiliates",
     content: connectPage("creator-and-affiliate-payouts", {
       metadata: {
-        title: "Creator and Affiliate Payouts | Pay People What They Earned",
+        title: "Creator and Affiliate Payouts | Pay What They Earned",
         description:
-          "Pay creators, course authors, artists, and affiliates into their own Easner accounts, in US dollars. They link once. Pay on request or keep their balance with Easner.",
+          "Pay creators, authors, artists, and affiliates into their own Easner accounts, in US dollars. They link once. Pay on request or keep balances with Easner.",
         keywords: [
           "creator payouts",
           "affiliate payouts",
@@ -196,7 +196,7 @@ export const useCasePages: UseCasePage[] = [
     linkLabel: "Pay freelancers and gig workers",
     content: connectPage("freelance-and-gig-payouts", {
       metadata: {
-        title: "Freelancer and Gig Worker Payouts | Pay Contractors by Direct Deposit",
+        title: "Freelancer and Gig Worker Payouts | Direct Deposit",
         description:
           "Pay freelancers, drivers, and gig workers who are not employees into their own Easner accounts, in US dollars, from your Easner Business balance.",
         keywords: [
@@ -236,7 +236,7 @@ export const useCasePages: UseCasePage[] = [
       metadata: {
         title: "Pay Overseas Suppliers | International Supplier Payments",
         description:
-          "Pay suppliers and contractors abroad from one Easner Business balance, by bank transfer, mobile money, or stablecoin wallet in 80+ countries. Rates and fees shown before you confirm.",
+          "Pay suppliers and contractors abroad from one Easner Business balance, by bank, mobile money, or stablecoin wallet in 80+ countries. Fees shown first.",
         keywords: [
           "pay overseas suppliers",
           "international supplier payments",
@@ -291,7 +291,7 @@ export const useCasePages: UseCasePage[] = [
     linkLabel: "Get paid by customers abroad",
     content: businessPage("get-paid-by-international-customers", {
       metadata: {
-        title: "Get Paid by International Customers | USD and EUR Account Details",
+        title: "Get Paid by International Customers | USD and EUR",
         description:
           "Get USD and EUR account details in your business's name, and collect by invoice, Payment Link, Checkout, Terminal, or QR Pay. Every payment lands in one ledger.",
         keywords: [

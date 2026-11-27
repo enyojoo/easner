@@ -10,6 +10,7 @@ import { connectContent } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq, aiDetailByHref, aiProductPages } from "@/lib/marketing/content/ai"
+import { markdownAnswer } from "@/lib/marketing/answer-text"
 import { comparePages, comparePath } from "@/lib/marketing/content/compare"
 import { useCasePages, useCasePath } from "@/lib/marketing/content/use-cases"
 import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
@@ -42,7 +43,7 @@ const PAGE_CONTENT: Record<string, ProductPageContent> = {
   "/white-label": partnersContent,
 }
 
-const faqLines = (items: FaqItem[]) => items.map((item) => `- **${item.question}** ${item.answer}`)
+const faqLines = (items: FaqItem[]) => items.map((item) => `- **${item.question}** ${markdownAnswer(item.answer, SITE)}`)
 
 function faqsFor(content: ProductPageContent): FaqItem[] {
   const faqs = content.faq ?? []
@@ -99,7 +100,7 @@ function useCaseAndCompareSection(): string[] {
     "## Use cases",
     "",
     ...useCasePages.map(
-      (page) => `- [${page.content.hero.h1}](${SITE}${useCasePath(page)}): ${page.content.definition?.answer ?? page.content.metadata.description}`,
+      (page) => `- [${page.content.hero.h1}](${SITE}${useCasePath(page)}): ${markdownAnswer(page.content.definition?.answer ?? page.content.metadata.description, SITE)}`,
     ),
     "",
     "## Comparisons",

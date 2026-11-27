@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CtaBand } from "@/components/marketing/cta-band"
+import { LinkedText } from "@/components/marketing/linked-text"
+import { plainAnswer } from "@/lib/marketing/answer-text"
 import { aiDetailByHref, aiProductPages } from "@/lib/marketing/content/ai"
 import { homeCtaBand } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { socialImages } from "@/lib/marketing/social-images"
-import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript, webPageJsonLd } from "@/lib/marketing/structured-data"
 import type { FaqItem } from "@/lib/marketing/types"
 
 export const dynamicParams = false
@@ -33,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ product: 
   const term = section.definition.term
   const title = term.includes("Easner") ? `${term}: answers` : `Easner ${term}: answers`
   return marketingMetadata({
-    metadata: { title, description: clip(section.definition.answer) },
+    metadata: { title, description: clip(plainAnswer(section.definition.answer)) },
     path: `/answers/${product}`,
     titleAbsolute: title,
     images: [socialImages.answers],
@@ -49,7 +51,7 @@ function QuestionList({ title, items }: { title: string; items: FaqItem[] }) {
         {items.map((item) => (
           <div key={item.question} id={slug(item.question)} className="scroll-mt-28">
             <h3 className="text-base font-semibold text-web-ink">{item.question}</h3>
-            <p className="mt-2 text-sm leading-6 text-web-body sm:text-base sm:leading-7">{item.answer}</p>
+            <p className="mt-2 text-sm leading-6 text-web-body sm:text-base sm:leading-7"><LinkedText text={item.answer} analyticsLocation="answers_inline_url" /></p>
             {item.links && (
               <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
                 {item.links.map((link) =>
@@ -90,6 +92,12 @@ export default async function AnswerProductPage({ params }: { params: Promise<{ 
             { name: "Answers", path: "/answers" },
             { name: section.label, path: `/answers/${product}` },
           ]),
+          webPageJsonLd({
+            name: section.definition.question,
+            description: clip(plainAnswer(section.definition.answer)),
+            path: `/answers/${product}`,
+            speakable: true,
+          }),
           faqPageJsonLd([...common, ...detail]),
         ])}
       />
@@ -100,7 +108,7 @@ export default async function AnswerProductPage({ params }: { params: Promise<{ 
           </Link>
         </nav>
         <h1 className="mt-6 text-3xl font-semibold leading-tight text-web-ink sm:text-4xl">{section.definition.question}</h1>
-        <p className="mt-4 text-base leading-7 text-web-body sm:text-lg">{section.definition.answer}</p>
+        <p className="aeo-answer mt-4 text-base leading-7 text-web-body sm:text-lg"><LinkedText text={section.definition.answer} analyticsLocation="answers_inline_url" /></p>
         <p className="mt-6 text-sm">
           <Link href={section.href} className="font-semibold text-web-link underline underline-offset-4">
             Open {section.label}

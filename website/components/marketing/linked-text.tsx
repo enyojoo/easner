@@ -3,6 +3,7 @@
 import { Fragment, type ReactNode } from "react"
 import { isBusinessEasnerUrl } from "@/lib/marketing/business-signup-url"
 import { isPersonalEasnerUrl } from "@/lib/marketing/personal-app-url"
+import { MARKDOWN_LINK } from "@/lib/marketing/answer-text"
 import { MarketingLink } from "./marketing-link"
 import { PersonalAppLink } from "./personal-app-link"
 
@@ -28,8 +29,61 @@ function sameSitePath(href: string): string | null {
   }
 }
 
-/** Turns URLs, easner.com addresses, and email addresses in a sentence into links. */
+const wordLinkClass = "font-semibold text-web-link underline underline-offset-4"
+
+/** A link that wraps a word in the sentence: "the [web](https://app.easner.com)". Site paths stay on the site. */
+function WordLink({ label, href, analyticsLocation }: { label: string; href: string; analyticsLocation: string }) {
+  const path = href.startsWith("/") ? href : sameSitePath(href)
+  if (path) {
+    return (
+      <MarketingLink href={path} analyticsLocation={analyticsLocation} ctaLabel={label} className={wordLinkClass}>
+        {label}
+      </MarketingLink>
+    )
+  }
+  if (isPersonalEasnerUrl(href)) {
+    return (
+      <PersonalAppLink campaign={analyticsLocation} ctaLabel={label} href={href} className={wordLinkClass}>
+        {label}
+      </PersonalAppLink>
+    )
+  }
+  return (
+    <MarketingLink href={href} external analyticsLocation={analyticsLocation} ctaLabel={label} className={wordLinkClass}>
+      {label}
+    </MarketingLink>
+  )
+}
+
+/** Turns [word](link) into a link on the word, and bare URLs, easner.com addresses, and emails into links. */
 export function LinkedText({
+  text,
+  analyticsLocation = "inline_url",
+}: {
+  text: string
+  analyticsLocation?: string
+}) {
+  const parts: ReactNode[] = []
+  const pattern = new RegExp(MARKDOWN_LINK.source, "g")
+  let last = 0
+  let match: RegExpExecArray | null
+  let key = 0
+  while ((match = pattern.exec(text))) {
+    if (match.index > last) {
+      parts.push(<AutoLinked key={`t${key}`} text={text.slice(last, match.index)} analyticsLocation={analyticsLocation} />)
+    }
+    parts.push(<WordLink key={`l${key}`} label={match[1]} href={match[2]} analyticsLocation={analyticsLocation} />)
+    last = match.index + match[0].length
+    key += 1
+  }
+  if (last < text.length) {
+    parts.push(<AutoLinked key={`t${key}`} text={text.slice(last)} analyticsLocation={analyticsLocation} />)
+  }
+  return <>{parts}</>
+}
+
+/** Turns URLs, easner.com addresses, and email addresses in a sentence into links. */
+function AutoLinked({
   text,
   analyticsLocation = "inline_url",
 }: {

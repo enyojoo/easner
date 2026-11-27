@@ -1,4 +1,5 @@
 import { DeleteAccountPage } from "@/components/legal/delete-account-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function DeleteAccountRoute() {
-  return <DeleteAccountPage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Delete Account", path: "/delete-account" }]} />
+      <DeleteAccountPage />
+    </>
+  )
 }

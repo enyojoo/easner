@@ -39,7 +39,7 @@ export const contactDefinition: AnswerDefinition = {
   facts: [
     {
       term: "Sales and partnerships",
-      definition: "Book a consultation at easner.com/contact or email hello@easner.com.",
+      definition: "[Book a consultation](/contact) or email hello@easner.com.",
     },
     {
       term: "Product support",

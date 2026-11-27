@@ -3,6 +3,11 @@ import { notFound } from "next/navigation"
 import { ComplianceStrip } from "@/components/marketing/compliance-strip"
 import { CtaBand } from "@/components/marketing/cta-band"
 import { businessContent } from "@/lib/marketing/content/business"
+import { checkoutContent } from "@/lib/marketing/content/checkout"
+import { developersContent } from "@/lib/marketing/content/developers"
+import { partnersContent } from "@/lib/marketing/content/partners"
+import { payrollContent } from "@/lib/marketing/content/payroll"
+import { personalContent } from "@/lib/marketing/content/personal"
 import { comparePages, comparePath, findComparePage } from "@/lib/marketing/content/compare"
 import { connectContent } from "@/lib/marketing/content/connect"
 import { marketingMetadata } from "@/lib/marketing/metadata"
@@ -10,6 +15,17 @@ import { socialImages } from "@/lib/marketing/social-images"
 import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript, webPageJsonLd } from "@/lib/marketing/structured-data"
 
 export const dynamicParams = false
+
+/** The call to action of the Easner product each comparison is about. */
+const CTA_BANDS: Record<string, typeof connectContent.ctaBand> = {
+  "/business": businessContent.ctaBand,
+  "/checkout": checkoutContent.ctaBand,
+  "/connect": connectContent.ctaBand,
+  "/developers": developersContent.ctaBand,
+  "/payroll": payrollContent.ctaBand,
+  "/personal": personalContent.ctaBand,
+  "/white-label": partnersContent.ctaBand,
+}
 
 export function generateStaticParams() {
   return comparePages.map((page) => ({ slug: page.slug }))
@@ -39,7 +55,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   if (!page) notFound()
 
   const path = comparePath(page)
-  const ctaBand = page.easnerHref === "/business" ? businessContent.ctaBand : connectContent.ctaBand
+  const ctaBand = (CTA_BANDS[page.easnerHref] ?? connectContent.ctaBand)
 
   return (
     <>
@@ -124,24 +140,14 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
         </div>
         {page.note && <p className="mt-4 text-xs leading-5 text-web-meta">{page.note}</p>}
 
-        <div className="mt-12 grid gap-8 sm:grid-cols-2">
-          <section>
-            <h2 className="text-xl font-semibold text-web-ink">Choose {page.easnerName} when</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-web-body sm:text-base sm:leading-7">
-              {page.chooseEasner.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-web-ink">Choose {page.otherName} when</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-web-body sm:text-base sm:leading-7">
-              {page.chooseOther.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        </div>
+        <section className="mt-12">
+          <h2 className="text-xl font-semibold text-web-ink">Choose {page.easnerName} when</h2>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-web-body sm:text-base sm:leading-7">
+            {page.chooseEasner.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
 
         <section className="mt-12">
           <h2 className="text-xl font-semibold text-web-ink sm:text-2xl">Common questions</h2>

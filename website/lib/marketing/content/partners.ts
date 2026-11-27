@@ -211,6 +211,14 @@ export const partnersContent: ProductPageContent = {
       links: [{ label: "Pricing", href: "/pricing" }],
     },
     {
+      question: "How does Easner White-label compare with Wise Platform?",
+      answer:
+        "Easner White-label is a ready branded payments product that Easner operates. The comparison page sets out the differences with Wise Platform, with a source and a date for every Wise fact.",
+      links: [
+        { label: "White-label vs Wise Platform", href: "/compare/easner-white-label-vs-wise-platform" },
+      ],
+    },
+    {
       question: "Which countries can I offer payouts in?",
       answer:
         "Country-by-country answers for White-label, including the currency and payout rail for each country, are on the Answers page.",

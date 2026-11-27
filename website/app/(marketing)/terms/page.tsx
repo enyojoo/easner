@@ -1,4 +1,5 @@
 import { TermsPolicyPage } from "@/components/legal/terms-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function TermsPage() {
-  return <TermsPolicyPage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Terms of Service", path: "/terms" }]} />
+      <TermsPolicyPage />
+    </>
+  )
 }

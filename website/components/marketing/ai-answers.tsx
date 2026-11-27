@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react"
 import { Headline } from "@/components/ds/headline"
 import { aiSections, type AiAnswerSection } from "@/lib/marketing/content/ai"
 import { cn } from "@/lib/utils"
+import { plainAnswer } from "@/lib/marketing/answer-text"
 import { LinkedText } from "./linked-text"
 import { MarketingLink } from "./marketing-link"
 
@@ -32,18 +33,18 @@ function sectionMatches(section: AiAnswerSection, query: string) {
   const blob = [
     groupLabel(section),
     section.definition.question,
-    section.definition.answer,
+    plainAnswer(section.definition.answer),
     ...(section.definition.facts ?? []).flatMap((fact) => [fact.term, fact.definition]),
     section.howTo?.name ?? "",
     ...(section.howTo?.steps ?? []).flatMap((step) => [step.name, step.text]),
-    ...faqs.flatMap((item) => [item.question, item.answer]),
+    ...faqs.flatMap((item) => [item.question, plainAnswer(item.answer)]),
   ].join(" ")
   return matchesQuery(blob, query)
 }
 
 function faqMatches(question: string, answer: string, query: string) {
   if (!query) return true
-  return matchesQuery(`${question} ${answer}`, query)
+  return matchesQuery(`${question} ${plainAnswer(answer)}`, query)
 }
 
 function isSearchFocused() {
@@ -167,7 +168,7 @@ export function AiAnswers() {
     if (!first) return
     const faqs = extraFaqs(first).filter((item) => faqMatches(item.question, item.answer, needle))
     const target =
-      needle && faqs[0] && !matchesQuery(`${first.definition.question} ${first.definition.answer}`, needle)
+      needle && faqs[0] && !matchesQuery(`${first.definition.question} ${plainAnswer(first.definition.answer)}`, needle)
         ? `${slug(first.definition.term)}--${slug(faqs[0].question)}`
         : slug(first.definition.term)
     document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" })

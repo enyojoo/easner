@@ -5,7 +5,7 @@ export const personalDefinition: AnswerDefinition = {
   term: "Easner Personal Banking",
   question: "What is Easner Personal Banking?",
   answer:
-    "Easner Personal Banking is the multi-currency account in the Easner app, on iPhone, Android, and the web at https://app.easner.com. Hold USD and EUR, and GBP where supported, with account details in your name, and send to bank accounts and mobile money in 80+ countries.",
+    "Easner Personal Banking is the multi-currency account in the Easner app, on iPhone, Android, and the [web](https://app.easner.com). Hold USD and EUR, and GBP where supported, with account details in your name, and send to bank accounts and mobile money in 80+ countries.",
   facts: [
     {
       term: "Currencies",
@@ -19,7 +19,7 @@ export const personalDefinition: AnswerDefinition = {
   ],
   stepsHeadline: "How to open an Easner Personal Banking account",
   steps: [
-    { name: "Download the app", text: "Get the Easner app on iPhone or Android, or start from easner.com/app." },
+    { name: "Download the app", text: "Get the Easner app on iPhone or Android, or [start from the app page](/app)." },
     { name: "Verify your identity", text: "Sign up with your email and complete identity verification." },
     { name: "Get paid or send", text: "Share your account details, or send to bank accounts and mobile money." },
   ],
@@ -96,7 +96,7 @@ export const personalContent: ProductPageContent = {
   keyFacts: [
     { label: "What it is", value: "A multi-currency account in the Easner app" },
     { label: "Currencies", value: "USD and EUR, and GBP where supported" },
-    { label: "Where", value: "iPhone, Android, and the web at app.easner.com" },
+    { label: "Where", value: "iPhone, Android, and the [web](https://app.easner.com)" },
     { label: "Send to", value: "Bank accounts and mobile money in 80+ countries" },
     { label: "Add money", value: "Card, Apple Pay, Google Pay, ACH, bank transfer, or stablecoin deposit where enabled" },
     { label: "Pricing", value: "See plans and fees", href: "/pricing" },
@@ -194,7 +194,7 @@ export const personalContent: ProductPageContent = {
       question: "How do I open an Easner Personal Banking account?",
       links: [{ label: "Download the app", href: "/app" }],
       answer:
-        "Open the Easner app on iPhone, Android, or the web at https://app.easner.com, sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.",
+        "Open the Easner app on iPhone, Android, or the [web](https://app.easner.com), sign up with your email, and verify your identity. Once you're verified, your account details are ready to share.",
     },
     {
       question: "Which currencies can I hold?",
@@ -231,7 +231,7 @@ export const personalContent: ProductPageContent = {
     {
       question: "What is the Easner app?",
       answer:
-        "The Easner app is where a person manages their own money, on iPhone, Android, and the web at https://app.easner.com. It is the same personal account, not the Easner Business dashboard. Company money stays in Easner Business.",
+        "The Easner app is where a person manages their own money, on iPhone, Android, and the [web](https://app.easner.com). It is the same personal account, not the Easner Business dashboard. Company money stays in Easner Business.",
     },
     {
       question: "How do I get USD account details in my name?",
@@ -247,6 +247,14 @@ export const personalContent: ProductPageContent = {
       question: "What is an EASETAG?",
       answer:
         "An EASETAG is how you pay another Easner user. You send to their tag from the Easner app instead of typing bank details.",
+    },
+    {
+      question: "How does Easner Personal Banking compare with Wise?",
+      answer:
+        "Easner Personal Banking gives USD and EUR account details, and GBP where supported, and adds EASETAG payments between Easner users. The comparison page sets out the differences with Wise, with a source and a date for every Wise fact.",
+      links: [
+        { label: "Personal Banking vs Wise", href: "/compare/easner-personal-banking-vs-wise" },
+      ],
     },
     {
       question: "Which countries can I send money to?",

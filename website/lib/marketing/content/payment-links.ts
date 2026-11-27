@@ -177,6 +177,14 @@ export const paymentLinksContent: ProductPageContent = {
         "Payment Links are a no-code page. Invoicing is an itemized bill to a named customer. Checkout is embedded on your website. All three settle into the same Easner Business ledger.",
       links: [{ label: "Invoicing", href: "/invoicing" }, { label: "Checkout", href: "/checkout" }],
     },
+    {
+      question: "How do Easner Payment Links compare with Square Payment Links?",
+      answer:
+        "Easner Payment Links need no website or code and settle into Easner Business. The comparison page sets out the differences with Square Payment Links, with a source and a date for every Square fact.",
+      links: [
+        { label: "Payment Links vs Square", href: "/compare/easner-payment-links-vs-square" },
+      ],
+    },
   ],
   ctaBand: {
     headline: "Create your first payment link",

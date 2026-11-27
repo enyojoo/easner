@@ -1,5 +1,6 @@
 import type { KeyFact } from "@/lib/marketing/types"
 import { Headline } from "@/components/ds/headline"
+import { LinkedText } from "./linked-text"
 import { MarketingLink } from "./marketing-link"
 
 interface KeyFactsProps {
@@ -45,14 +46,14 @@ export function KeyFacts({ title, facts, lastReviewed }: KeyFactsProps) {
                     {fact.value}
                   </MarketingLink>
                 ) : (
-                  fact.value
+                  <LinkedText text={fact.value} analyticsLocation="key_facts_inline" />
                 )}
               </dd>
             </div>
           ))}
         </dl>
         {lastReviewed && (
-          <p className="mt-4 text-center text-xs text-web-meta lg:text-left">
+          <p className="sr-only">
             Last updated <time dateTime={lastReviewed}>{formatDate(lastReviewed)}</time>
           </p>
         )}

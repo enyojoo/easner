@@ -18,7 +18,7 @@ import { PostCard, PostGrid } from "./post-card"
 export const INDEX_TITLE = "Notes on moving money"
 export const INDEX_SUBHEAD = "Guides, product updates and ideas on banking across borders, from the people building Easner."
 export const INDEX_DESCRIPTION =
-  "Guides, product updates and ideas on banking across borders, from the people building Easner: getting paid from abroad, paying suppliers and teams, and how money moves between countries."
+  "Guides and product updates on banking across borders from the team building Easner: getting paid from abroad, paying suppliers and teams, and moving money."
 
 /** The index (page 1 and `?page=N`): hero, featured trio, category bar, latest grid, load more, CTA. */
 export async function IndexView({ page }: { page: number }) {

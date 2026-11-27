@@ -213,6 +213,14 @@ export const invoicingContent: ProductPageContent = {
         "Into the Easner Business balance, on the same ledger as Checkout and Payment Links. Ease includes 10 invoices a month. Ease Plus and above include unlimited invoices.",
       links: [{ label: "Pricing", href: "/pricing" }],
     },
+    {
+      question: "How does Easner Invoicing compare with FreshBooks?",
+      answer:
+        "Easner Invoicing sits inside Easner Business next to payouts, payroll, and collections. The comparison page sets out the differences with FreshBooks, with a source and a date for every FreshBooks fact.",
+      links: [
+        { label: "Invoicing vs FreshBooks", href: "/compare/easner-invoicing-vs-freshbooks" },
+      ],
+    },
   ],
   ctaBand: {
     headline: "Invoice from Easner today",

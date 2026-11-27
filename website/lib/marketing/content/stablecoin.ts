@@ -184,6 +184,14 @@ export const stablecoinContent: ProductPageContent = {
         "USDC, USDT, and EURC are supported where enabled. No crypto wallet is required. The invoice itself is created in Easner Invoicing.",
       links: [{ label: "Invoicing", href: "/invoicing" }],
     },
+    {
+      question: "How does Easner compare with BVNK for stablecoin payments?",
+      answer:
+        "Easner presents regular dollar and euro balances and runs stablecoin settlement behind them. The comparison page sets out the differences with BVNK, with a source and a date for every BVNK fact.",
+      links: [
+        { label: "Stablecoin payments vs BVNK", href: "/compare/easner-stablecoin-vs-bvnk" },
+      ],
+    },
   ],
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",

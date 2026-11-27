@@ -1,4 +1,5 @@
 import { DigitalAssetsDisclosurePage } from "@/components/legal/disclosure-digital-assets-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function DigitalAssetsDisclosureRoute() {
-  return <DigitalAssetsDisclosurePage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Legal", path: "/legal" }, { name: "Disclosures", path: "/legal/disclosures" }, { name: "Digital assets disclosure", path: "/legal/disclosures/digital-assets" }]} />
+      <DigitalAssetsDisclosurePage />
+    </>
+  )
 }

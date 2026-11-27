@@ -5,7 +5,7 @@ export const developersDefinition: AnswerDefinition = {
   term: "Easner API",
   question: "What is the Easner API?",
   answer:
-    "The Easner API, also called the Banking API, lets a platform verify its own customers, open multi-currency accounts, and send cross-border payouts. Customers see regular currencies. The API reference is at https://docs.easner.com/. Credentials are issued during commercial onboarding. This is not Connect and not White-label.",
+    "The Easner API, also called the Banking API, lets a platform verify its own customers, open multi-currency accounts, and send cross-border payouts. Customers see regular currencies. Read the [API reference](https://docs.easner.com/). Credentials are issued during commercial onboarding. This is not Connect and not White-label.",
   facts: [
     {
       term: "How to get access",
@@ -46,7 +46,7 @@ export const developersContent: ProductPageContent = {
     { label: "What it is", value: "The Banking API: verify customers, open multi-currency accounts, and send payouts" },
     { label: "Access", value: "Credentials and sandbox come with commercial onboarding" },
     { label: "Crypto wallet needed", value: "No. Customers see regular currencies" },
-    { label: "Reference", value: "docs.easner.com", href: "https://docs.easner.com/" },
+    { label: "Reference", value: "API reference", href: "https://docs.easner.com/" },
     { label: "Not the same as", value: "Connect or White-label" },
     { label: "Pricing", value: "Agreed in a contract", href: "/pricing" },
   ],
@@ -170,17 +170,17 @@ export const developersContent: ProductPageContent = {
       question: "How do I get access to the Easner API?",
       links: [{ label: "Talk to our team", href: "/contact" }],
       answer:
-        "Talk to our team. API credentials and sandbox access are provided during commercial onboarding, not from a public signup. The API reference is at https://docs.easner.com/. After onboarding, keys, events, and logs live in Easner Business.",
+        "Talk to our team. API credentials and sandbox access are provided during commercial onboarding, not from a public signup. Read the [API reference](https://docs.easner.com/). After onboarding, keys, events, and logs live in Easner Business.",
     },
     {
       question: "How do I get API keys?",
       answer:
-        "Keys are issued during commercial onboarding. They are not created from a public signup. The API reference is at https://docs.easner.com/.",
+        "Keys are issued during commercial onboarding. They are not created from a public signup. Read the [API reference](https://docs.easner.com/).",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }, { label: "Talk to our team", href: "/contact" }],
     },
     {
       question: "Where are the Easner API docs?",
-      answer: "The API reference is at https://docs.easner.com/.",
+      answer: "The [API reference](https://docs.easner.com/) documents the Easner API.",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }],
     },
     {
@@ -208,7 +208,7 @@ export const developersContent: ProductPageContent = {
     {
       question: "Is there a sandbox?",
       answer:
-        "Yes. Sandbox keys cover verification, pay-in, payout, and webhook flows before go-live. The API reference is at https://docs.easner.com/.",
+        "Yes. Sandbox keys cover verification, pay-in, payout, and webhook flows before go-live. Read the [API reference](https://docs.easner.com/).",
     },
     {
       question: "How are webhooks secured?",
@@ -229,14 +229,22 @@ export const developersContent: ProductPageContent = {
     {
       question: "Is there an embedded payout API?",
       answer:
-        "Yes. The Developer Banking API covers accounts, deposits, and payouts for the platform's own customers. The API reference is at https://docs.easner.com/. This is not Connect and not White-label.",
+        "Yes. The Developer Banking API covers accounts, deposits, and payouts for the platform's own customers. Read the [API reference](https://docs.easner.com/). This is not Connect and not White-label.",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }, { label: "Connect", href: "/connect" }],
     },
     {
       question: "Is there a money transfer SDK?",
       answer:
-        "There is no separate SDK. The Developer Banking API is the integration for accounts, deposits, and payouts. The API reference is at https://docs.easner.com/.",
+        "There is no separate SDK. The Developer Banking API is the integration for accounts, deposits, and payouts. Read the [API reference](https://docs.easner.com/).",
       links: [{ label: "API docs", href: "https://docs.easner.com/" }],
+    },
+    {
+      question: "How does the Easner Banking API compare with Wise Platform?",
+      answer:
+        "The Easner Banking API covers verification, accounts, and payouts for a platform's own customers. The comparison page sets out the differences with Wise Platform, with a source and a date for every Wise fact.",
+      links: [
+        { label: "Banking API vs Wise Platform", href: "/compare/easner-banking-api-vs-wise-platform" },
+      ],
     },
     {
       question: "Which countries can the API pay out to?",

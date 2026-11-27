@@ -1,4 +1,5 @@
 import { PartnersPolicyPage } from "@/components/legal/partners-content"
+import { BreadcrumbSchema } from "@/components/marketing/breadcrumb-schema"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 
 export const metadata = marketingMetadata({
@@ -11,5 +12,10 @@ export const metadata = marketingMetadata({
 })
 
 export default function LegalPartnersPage() {
-  return <PartnersPolicyPage />
+  return (
+    <>
+      <BreadcrumbSchema segments={[{ name: "Legal", path: "/legal" }, { name: "Partners register", path: "/legal/partners" }]} />
+      <PartnersPolicyPage />
+    </>
+  )
 }

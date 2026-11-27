@@ -195,6 +195,14 @@ export const payrollContent: ProductPageContent = {
         "Yes. Payroll pays the company's own contractors from the Easner Business balance in 80+ countries. Each person connects in the Easner app on iPhone, Android, or the web and chooses an EASETAG, a bank account, or mobile money.",
     },
     {
+      question: "How does Easner Payroll compare with Deel?",
+      answer:
+        "Easner Payroll pays your own employees and contractors from your Easner Business balance, with approvals and pay stubs. The comparison page sets out the differences with Deel, with a source and a date for every Deel fact.",
+      links: [
+        { label: "Payroll vs Deel", href: "/compare/easner-payroll-vs-deel" },
+      ],
+    },
+    {
       question: "Which countries can I pay contractors in?",
       answer:
         "Country-by-country answers for Payroll, including the currency and payout rail for each country, are on the Answers page.",
