@@ -362,6 +362,208 @@ const FLAGS: Record<string, ReactNode> = {
       <rect y="14.7" width="22" height="3.7" fill="#F4F5F8" />
     </>
   ),
+  CG: (
+    <>
+      <rect width="22" height="22" fill="#FBDE4A" />
+      <path d="M0 0h15L0 15z" fill="#009543" />
+      <path d="M22 22H7l15-15z" fill="#DC241F" />
+    </>
+  ),
+  AD: (
+    <>
+      <rect x="0.00" width="7.38" height="22" fill="#10069F" />
+      <rect x="7.33" width="7.38" height="22" fill="#FEDF00" />
+      <rect x="14.67" width="7.38" height="22" fill="#D50032" />
+      <rect x="9" y="8.2" width="4" height="5.6" fill="#C7B37F" stroke="#D50032" strokeWidth="0.5" />
+    </>
+  ),
+  ES: (
+    <>
+      <rect width="22" height="22" fill="#AA151B" />
+      <rect y="5.5" width="22" height="11" fill="#F1BF00" />
+    </>
+  ),
+  MD: (
+    <>
+      <rect x="0.00" width="7.38" height="22" fill="#0046AE" />
+      <rect x="7.33" width="7.38" height="22" fill="#FFD200" />
+      <rect x="14.67" width="7.38" height="22" fill="#CC092F" />
+      <circle cx="11" cy="11" r="2.2" fill="#8C5B2B" />
+    </>
+  ),
+  ME: (
+    <>
+      <rect width="22" height="22" fill="#D4AF37" />
+      <rect x="1.4" y="1.4" width="19.2" height="19.2" fill="#C40308" />
+      <circle cx="11" cy="11" r="2.6" fill="#D4AF37" />
+    </>
+  ),
+  MK: (
+    <>
+      <rect width="22" height="22" fill="#D20000" />
+      <path d="M11 11 0 0M11 11 22 0M11 11 0 22M11 11 22 22M11 11V0M11 11V22M11 11H0M11 11H22" stroke="#FFE600" strokeWidth="1.7" />
+      <circle cx="11" cy="11" r="3.2" fill="#FFE600" stroke="#D20000" strokeWidth="0.8" />
+    </>
+  ),
+  SM: (
+    <>
+      <rect width="22" height="11" fill="#FFFFFF" />
+      <rect y="11" width="22" height="11" fill="#5EB6E4" />
+      <circle cx="11" cy="11" r="2.4" fill="#C9A227" />
+    </>
+  ),
+  RS: (
+    <>
+      <rect y="0.00" width="22" height="7.38" fill="#C6363C" />
+      <rect y="7.33" width="22" height="7.38" fill="#0C4076" />
+      <rect y="14.67" width="22" height="7.38" fill="#FFFFFF" />
+      <rect x="3.5" y="5" width="4.6" height="7" rx="1" fill="#C6363C" stroke="#fff" strokeWidth="0.5" />
+    </>
+  ),
+  VA: (
+    <>
+      <rect width="11" height="22" fill="#FFE000" />
+      <rect x="11" width="11" height="22" fill="#FFFFFF" />
+      <path d="M14.2 7v8M17.8 7v8M13 9h6M13 12h6" stroke="#9A9A9A" strokeWidth="0.8" />
+    </>
+  ),
+  SE: (
+    <>
+      <rect width="22" height="22" fill="#006AA7" />
+      <rect x="6" width="4.4" height="22" fill="#FECC02" />
+      <rect y="8.8" width="22" height="4.4" fill="#FECC02" />
+    </>
+  ),
+  SI: (
+    <>
+      <rect y="0.00" width="22" height="7.38" fill="#FFFFFF" />
+      <rect y="7.33" width="22" height="7.38" fill="#005DA4" />
+      <rect y="14.67" width="22" height="7.38" fill="#ED1C24" />
+      <path d="M3.6 3.4h4.8v4.4q0 1.8-2.4 2.8-2.4-1-2.4-2.8z" fill="#005DA4" stroke="#fff" strokeWidth="0.4" />
+    </>
+  ),
+  SK: (
+    <>
+      <rect y="0.00" width="22" height="7.38" fill="#FFFFFF" />
+      <rect y="7.33" width="22" height="7.38" fill="#0B4EA2" />
+      <rect y="14.67" width="22" height="7.38" fill="#EE1C25" />
+      <path d="M3.4 4.4h5.2v4.8q0 2-2.6 3.2-2.6-1.2-2.6-3.2z" fill="#EE1C25" stroke="#fff" strokeWidth="0.5" />
+      <path d="M6 5.6v5M4.4 7.2h3.2" stroke="#fff" strokeWidth="0.9" />
+    </>
+  ),
+  AR: (
+    <>
+      <rect width="22" height="22" fill="#74ACDF" />
+      <rect y="7.3" width="22" height="7.4" fill="#FFFFFF" />
+      <circle cx="11" cy="11" r="1.8" fill="#F6B40E" />
+    </>
+  ),
+  EC: (
+    <>
+      <rect width="22" height="11" fill="#FFDD00" />
+      <rect y="11" width="22" height="5.5" fill="#034EA2" />
+      <rect y="16.5" width="22" height="5.5" fill="#ED1C24" />
+    </>
+  ),
+  SV: (
+    <>
+      <rect y="0.00" width="22" height="7.38" fill="#0F47AF" />
+      <rect y="7.33" width="22" height="7.38" fill="#FFFFFF" />
+      <rect y="14.67" width="22" height="7.38" fill="#0F47AF" />
+    </>
+  ),
+  PE: (
+    <>
+      <rect x="0.00" width="7.38" height="22" fill="#D91023" />
+      <rect x="7.33" width="7.38" height="22" fill="#FFFFFF" />
+      <rect x="14.67" width="7.38" height="22" fill="#D91023" />
+    </>
+  ),
+  KH: (
+    <>
+      <rect width="22" height="22" fill="#032EA1" />
+      <rect y="5.5" width="22" height="11" fill="#E00025" />
+      <path d="M6.5 14.2V12h1.4v-1.4h1.2V9.2h1.2V8h1.4v1.2h1.2v1.4h1.2V12h1.4v2.2z" fill="#fff" />
+    </>
+  ),
+  LK: (
+    <>
+      <rect width="22" height="22" fill="#FFBE29" />
+      <rect x="1.2" y="1.2" width="2" height="19.6" fill="#00534E" />
+      <rect x="3.6" y="1.2" width="2" height="19.6" fill="#EB7400" />
+      <rect x="6" y="1.2" width="14.8" height="19.6" fill="#8D153A" />
+    </>
+  ),
+  BJ: (
+    <>
+      <rect width="8.8" height="22" fill="#008751" />
+      <rect x="8.8" width="13.2" height="11" fill="#FCD116" />
+      <rect x="8.8" y="11" width="13.2" height="11" fill="#E8112D" />
+    </>
+  ),
+  BW: (
+    <>
+      <rect width="22" height="22" fill="#75AADB" />
+      <rect y="8" width="22" height="6" fill="#FFFFFF" />
+      <rect y="9.5" width="22" height="3" fill="#000000" />
+    </>
+  ),
+  CI: (
+    <>
+      <rect x="0.00" width="7.38" height="22" fill="#F77F00" />
+      <rect x="7.33" width="7.38" height="22" fill="#FFFFFF" />
+      <rect x="14.67" width="7.38" height="22" fill="#009E60" />
+    </>
+  ),
+  ET: (
+    <>
+      <rect y="0.00" width="22" height="7.38" fill="#078930" />
+      <rect y="7.33" width="22" height="7.38" fill="#FCDD09" />
+      <rect y="14.67" width="22" height="7.38" fill="#DA121D" />
+      <circle cx="11" cy="11" r="4.4" fill="#0F47AF" />
+      <path d="m11 7.6 1.02 3.13h3.29l-2.66 1.94 1.01 3.13L11 13.86l-2.66 1.94 1.01-3.13-2.66-1.94h3.29z" fill="#FCDD09" />
+    </>
+  ),
+  MW: (
+    <>
+      <rect width="22" height="7.4" fill="#000000" />
+      <rect y="7.3" width="22" height="7.4" fill="#CE1126" />
+      <rect y="14.6" width="22" height="7.4" fill="#339E35" />
+      <path d="M6.5 7.4a4.5 4.5 0 0 1 9 0z" fill="#CE1126" />
+    </>
+  ),
+  ML: (
+    <>
+      <rect x="0.00" width="7.38" height="22" fill="#14B53A" />
+      <rect x="7.33" width="7.38" height="22" fill="#FCD116" />
+      <rect x="14.67" width="7.38" height="22" fill="#CE1126" />
+    </>
+  ),
+  TZ: (
+    <>
+      <rect width="22" height="22" fill="#00A3DD" />
+      <path d="M0 0h22L0 22z" fill="#1EB53A" />
+      <path d="M0 22 22 0" stroke="#FCD116" strokeWidth="8" />
+      <path d="M0 22 22 0" stroke="#000000" strokeWidth="5.4" />
+    </>
+  ),
+  TG: (
+    <>
+      <rect width="22" height="22" fill="#006A4E" />
+      <rect y="4.4" width="22" height="4.4" fill="#FFCE00" />
+      <rect y="13.2" width="22" height="4.4" fill="#FFCE00" />
+      <rect width="13.2" height="13.2" fill="#D21034" />
+      <path d="m11 5.2 1.02 3.13h3.29l-2.66 1.94 1.01 3.13L11 13.86l-2.66 1.94 1.01-3.13-2.66-1.94h3.29z" fill="#fff" />
+    </>
+  ),
+  ZM: (
+    <>
+      <rect width="22" height="22" fill="#198A00" />
+      <rect x="13.4" y="11" width="3" height="11" fill="#DE2010" />
+      <rect x="16.4" y="11" width="2.8" height="11" fill="#000000" />
+      <rect x="19.2" y="11" width="2.8" height="11" fill="#EF7D00" />
+    </>
+  ),
 }
 /* eslint-enable no-restricted-syntax */
 

@@ -47,7 +47,10 @@ const cardFor = (guide: CorridorGuide): CardItem => ({
 function relatedFor(guide: CorridorGuide, all: CorridorGuide[]): CorridorGuide[] {
   const area = all.filter((other) => other.area === guide.area && other.slug !== guide.slug)
   if (guide.region) return area.filter((other) => other.country !== "United Kingdom")
-  if (guide.area !== "Europe") return area.slice(0, 8)
+  if (guide.area !== "Europe") {
+    const own = all.filter((other) => other.area === guide.area).findIndex((other) => other.slug === guide.slug)
+    return Array.from({ length: Math.min(8, area.length) }, (_, i) => area[(own + i) % area.length])
+  }
   const europe = all.find((other) => other.region)
   const countries = area.filter((other) => !other.region && other.country !== "United Kingdom")
   const start = Math.max(0, all.filter((other) => other.area === "Europe").findIndex((other) => other.slug === guide.slug))

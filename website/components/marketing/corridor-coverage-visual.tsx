@@ -1,7 +1,8 @@
 import type { ComponentType } from "react"
-import { Globe2 } from "lucide-react"
+import Link from "next/link"
+import { ArrowRight, Globe2 } from "lucide-react"
 import {
-  IconChina,
+  IconBrazil,
   IconEurope,
   IconIndia,
   IconMexico,
@@ -16,16 +17,19 @@ import { cn } from "@/lib/utils"
 
 type FlagIcon = ComponentType<IconProps>
 
-const corridorMarkets: { label: string; Flag?: FlagIcon }[] = [
-  { label: "United States", Flag: IconUnitedStates },
-  { label: "Europe", Flag: IconEurope },
-  { label: "United Kingdom", Flag: IconUnitedKingdom },
-  { label: "Nigeria", Flag: IconNigeria },
-  { label: "Mexico", Flag: IconMexico },
-  { label: "Philippines", Flag: IconPhilippines },
-  { label: "India", Flag: IconIndia },
-  { label: "China", Flag: IconChina },
-  { label: "More markets" },
+/**
+ * Each tile goes to that country's payout page; "More markets" goes to the hub that lists every country.
+ */
+const corridorMarkets: { label: string; Flag?: FlagIcon; href?: string }[] = [
+  { label: "United States", Flag: IconUnitedStates, href: "/business/pay-contractors-in-the-united-states" },
+  { label: "Europe", Flag: IconEurope, href: "/business/pay-contractors-in-europe" },
+  { label: "United Kingdom", Flag: IconUnitedKingdom, href: "/business/pay-contractors-in-the-united-kingdom" },
+  { label: "Nigeria", Flag: IconNigeria, href: "/business/pay-contractors-in-nigeria" },
+  { label: "Mexico", Flag: IconMexico, href: "/business/pay-contractors-in-mexico" },
+  { label: "Philippines", Flag: IconPhilippines, href: "/business/pay-contractors-in-the-philippines" },
+  { label: "India", Flag: IconIndia, href: "/business/pay-contractors-in-india" },
+  { label: "Brazil", Flag: IconBrazil, href: "/business/pay-contractors-in-brazil" },
+  { label: "More markets", href: "/business/pay-overseas-suppliers" },
 ]
 
 interface CorridorCoverageVisualProps {
@@ -50,26 +54,49 @@ export function CorridorCoverageVisual({ className, "aria-label": ariaLabel }: C
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-          {corridorMarkets.map((market) => (
-            <div
-              key={market.label}
-              className={cn(
-                "flex flex-col items-center gap-2 rounded-[16px] border bg-web-canvas px-2 py-3 text-center sm:px-3",
-                market.Flag ? "border-web-hairline" : "border-dashed border-brand-stone",
-              )}
-            >
-              <span className="flex size-9 items-center justify-center overflow-hidden rounded-[10px] sm:size-10">
-                {market.Flag ? (
-                  <market.Flag className="size-7 sm:size-8" aria-hidden />
-                ) : (
-                  <Globe2 className="size-5 text-brand-primary" aria-hidden />
+          {corridorMarkets.map((market) => {
+            const tile = (
+              <>
+                <span className="flex size-9 items-center justify-center overflow-hidden rounded-[10px] sm:size-10">
+                  {market.Flag ? (
+                    <market.Flag className="size-7 sm:size-8" aria-hidden />
+                  ) : (
+                    <Globe2 className="size-5 text-brand-primary" aria-hidden />
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 text-[11px] font-semibold leading-tight sm:text-xs",
+                    market.Flag ? "text-web-ink" : "text-web-meta",
+                    market.href && !market.Flag && "group-hover:text-brand-primary",
+                  )}
+                >
+                  {market.label}
+                  {market.href && !market.Flag && <ArrowRight className="size-3" aria-hidden />}
+                </span>
+              </>
+            )
+            const tileClass = cn(
+              "flex flex-col items-center gap-2 rounded-[16px] border bg-web-canvas px-2 py-3 text-center sm:px-3",
+              market.Flag ? "border-web-hairline" : "border-dashed border-brand-stone",
+            )
+            return market.href ? (
+              <Link
+                key={market.label}
+                href={market.href}
+                className={cn(
+                  tileClass,
+                  "group transition-all hover:-translate-y-0.5 hover:border-brand-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
                 )}
-              </span>
-              <span className={cn("text-[11px] font-semibold leading-tight sm:text-xs", market.Flag ? "text-web-ink" : "text-web-meta")}>
-                {market.label}
-              </span>
-            </div>
-          ))}
+              >
+                {tile}
+              </Link>
+            ) : (
+              <div key={market.label} className={tileClass}>
+                {tile}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

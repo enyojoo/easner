@@ -164,7 +164,7 @@ export const corridorContent = {
   bullets: [],
   visualSlot: "mkt-map-corridors",
   altText:
-    "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and China",
+    "Map showing payment corridors between US, EU, UK, and supported local markets including Nigeria, Mexico, Philippines, India, and Brazil",
   ctas: [{ label: "Open Account", href: "#", action: "open-account", analyticsLocation: "homepage_corridor" }] satisfies Cta[],
 }
 

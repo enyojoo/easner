@@ -23,13 +23,13 @@ export const EASNER_PRODUCT_BUSINESS = "Easner Business Banking"
 export const EASNER_PRODUCT_PARTNERS = "Easner for Partners"
 
 export const EASNER_SUPPORTED_LOCAL_MARKETS =
-  "Nigeria, Mexico, Philippines, India, China, and more as we expand"
+  "Nigeria, Mexico, Philippines, India, Brazil, and more as we expand"
 
 export const EASNER_CORRIDOR_VISUAL_ARIA_LABEL =
-  "Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Mexico, Philippines, India, China, and more to come"
+  "Supported corridor markets across the United States, Europe, United Kingdom, Nigeria, Mexico, Philippines, India, Brazil, and more to come"
 
 export const EASNER_CORRIDOR_COVERAGE_FAQ =
-  "Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and China, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details."
+  "Easner connects US, EU, and UK rails to supported payout markets across Africa, the Middle East, Latin America, and Asia-Pacific – more than 80 countries today, including Nigeria, Mexico, Philippines, India, and Brazil, with more corridors added regularly. Availability varies by jurisdiction, verification tier, and partner rules. See our KYC/KYB and AML Policy for eligibility details."
 
 export const EASNER_SIGNUP_ELIGIBILITY_FAQ =
   "Easner accepts business and personal signups from most countries worldwide. A small number of jurisdictions are excluded for compliance and sanctions reasons – see our KYC/KYB and AML Policy for the current list."

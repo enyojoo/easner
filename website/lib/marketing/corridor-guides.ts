@@ -7,7 +7,9 @@
  * The bank-detail fields are the ones the product asks for (easnerbanking: yc-recipient-schema, bridge-recipient-schema).
  * Check them against the add-recipient form before changing a country.
  */
+import { EUR_PAYOUT_COUNTRIES } from "./corridors"
 import { europeGuides } from "./corridor-guides-europe"
+import { moreGuides } from "./corridor-guides-more"
 import type { CardItem, FaqItem } from "./types"
 
 export interface CorridorGuide {
@@ -577,7 +579,7 @@ const baseGuides: CorridorGuide[] = [
     deliveryLabel: "Bank transfer (SEPA)",
     needs: "Name and IBAN",
     titleTail: "EUR Bank Payouts (SEPA)",
-    cardLine: "Euros, to 28 countries",
+    cardLine: `Euros, to ${EUR_PAYOUT_COUNTRIES.length} countries`,
     timeNote: {
       fact: "5 to 7 hours ahead of New York",
       title: "Europe is 5 to 7 hours ahead of New York",
@@ -585,7 +587,7 @@ const baseGuides: CorridorGuide[] = [
         "Ireland and Portugal are 5 hours ahead, Central Europe 6, and Finland, Greece and the Baltics 7. For a few weeks around March and late October it is an hour less, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
     },
     intro:
-      "Many businesses abroad work with developers, designers, translators and agencies across Europe. Easner pays your contractor in euros, by bank transfer to an account in one of 28 countries. You pay from your Easner Business balance in dollars.",
+      `Many businesses abroad work with developers, designers, translators and agencies across Europe. Easner pays your contractor in euros, by bank transfer to an account in one of ${EUR_PAYOUT_COUNTRIES.length} countries. You pay from your Easner Business balance in dollars.`,
     asks: {
       headline: "What to ask your contractor for",
       body: "Ask for these two things before you pay. Your contractor doesn't need an Easner account.",
@@ -605,7 +607,7 @@ const baseGuides: CorridorGuide[] = [
     },
     goodToKnow: [
       { title: "Use the IBAN", description: "An IBAN identifies the account and the bank in one number. Easner needs it to send the payment, so ask your contractor for the full IBAN." },
-      { title: "Euros, even outside the euro area", description: "Easner pays euros to 28 countries, including some that use their own currency, such as Denmark and Poland. Your contractor receives euros there, not local currency." },
+      { title: "Euros, even outside the euro area", description: `Easner pays euros to ${EUR_PAYOUT_COUNTRIES.length} countries, including some that use their own currency, such as Denmark and Poland. Your contractor receives euros there, not local currency.` },
     ],
     payees: [
       { title: "Freelance developers", description: "Engineers and technical contractors across Europe." },
@@ -739,65 +741,6 @@ const baseGuides: CorridorGuide[] = [
       "pay developers in South Africa",
       "send business payment to South Africa",
       "pay suppliers in South Africa",
-    ],
-  },
-  {
-    country: "Uganda",
-    area: "Africa",
-    slug: "pay-contractors-in-uganda",
-    code: "UG",
-    currencyName: "Ugandan shillings",
-    delivery: "by mobile money",
-    deliveryLabel: "Mobile money",
-    needs: "Name, mobile money provider and phone number",
-    titleTail: "UGX Mobile Money Payouts",
-    cardLine: "Shillings, by mobile money",
-    timeNote: {
-      fact: "7 to 8 hours ahead of New York",
-      title: "Uganda is 7 to 8 hours ahead of New York",
-      description: "Your morning is their early evening. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
-    intro:
-      "Uganda has a young, growing community of developers, writers and support staff, and mobile money is widely used there. Easner pays your contractor in Ugandan shillings, by mobile money. You pay from your Easner Business balance in dollars.",
-    asks: {
-      headline: "What to ask your contractor for",
-      body: "Ask which mobile money provider they use. Your contractor doesn't need an Easner account.",
-      bullets: [
-        "The account holder's name",
-        "Their mobile money provider, MTN or Airtel Money",
-        "The phone number their mobile money account is on",
-      ],
-    },
-    addStep: "Choose their mobile money provider and enter their phone number. They don't need an Easner account.",
-    demo: {
-      name: "Grace Nakato",
-      detail: "MTN • +256 772 123 456",
-      fields: [
-        { label: "Account holder name", value: "Grace Nakato" },
-        { label: "Provider", value: "MTN" },
-        { label: "Phone number", value: "+256 772 123 456" },
-      ],
-    },
-    goodToKnow: [
-      { title: "Mobile money goes to a phone number", description: "Enter the number with its country code, +256, and choose MTN or Airtel Money. Check every digit, because the payment goes to that number." },
-      { title: "They're paid in shillings", description: "Your contractor receives UGX. You pay from your USD balance, and the rate, the fees and what they receive are shown before you confirm." },
-    ],
-    payees: [
-      { title: "Developers and data teams", description: "Software engineers and analysts on project or monthly contracts." },
-      { title: "Writers and content creators", description: "Copywriters, editors and video creators." },
-      { title: "Virtual assistants and support", description: "Admin, research and customer support staff." },
-      { title: "Suppliers and agencies", description: "Local agencies and suppliers who invoice your business." },
-    ],
-    faq: [
-      { question: "Can I pay a Ugandan contractor by MTN or Airtel Money?", answer: "Yes. Easner pays Uganda by mobile money. Choose MTN or Airtel Money and enter the contractor's phone number with its country code, +256." },
-      { question: "What currency does a contractor in Uganda receive?", answer: "Ugandan shillings (UGX), by mobile money. You pay from your Easner Business balance in dollars. The rate, the fees and what the recipient gets are shown before you confirm." },
-    ],
-    keywords: [
-      "pay contractors in Uganda",
-      "pay Ugandan freelancers from the US",
-      "pay with MTN mobile money from the US",
-      "send business payment to Uganda",
-      "pay suppliers in Uganda",
     ],
   },
   {
@@ -1215,5 +1158,5 @@ const baseGuides: CorridorGuide[] = [
   },
 ]
 
-/** Every guide, base countries first, then the euro-payout countries. */
-export const corridorGuides: CorridorGuide[] = [...baseGuides, ...europeGuides]
+/** Every guide: the first countries, then the rest of Africa, the Americas and Asia, then the euro-payout countries. */
+export const corridorGuides: CorridorGuide[] = [...baseGuides, ...moreGuides, ...europeGuides]

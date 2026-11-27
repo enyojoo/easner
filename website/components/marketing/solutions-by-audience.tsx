@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type CSSProperties } from "react"
 import { useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { MARKETING_BODY_TEXT, SPLIT_COPY_CARD, SPLIT_GRID_GAP, PERSONA_VISUAL_CONTAINER } from "@/lib/marketing/layout-constants"
@@ -12,7 +12,7 @@ import { Headline } from "@/components/ds/headline"
 
 export function SolutionsByAudience() {
   const sectionRef = useRef<HTMLDivElement>(null)
-  const tabScrollTimeoutRef = useRef<number | null>(null)
+  const tabScrollFrameRef = useRef<number | null>(null)
   const hashJumpTimeoutRef = useRef<number | null>(null)
   const isTabScrollRef = useRef(false)
   const isHashJumpRef = useRef(false)
@@ -41,11 +41,26 @@ export function SolutionsByAudience() {
     suspendForProductsHash()
     window.addEventListener("hashchange", suspendForProductsHash)
 
+    // If the visitor takes over (wheel, touch, keys) while a tab click is still scrolling, stop holding the lock.
+    const releaseTabScroll = () => {
+      isTabScrollRef.current = false
+      if (tabScrollFrameRef.current) {
+        window.cancelAnimationFrame(tabScrollFrameRef.current)
+        tabScrollFrameRef.current = null
+      }
+    }
+    window.addEventListener("wheel", releaseTabScroll, { passive: true })
+    window.addEventListener("touchstart", releaseTabScroll, { passive: true })
+    window.addEventListener("keydown", releaseTabScroll)
+
     return () => {
       window.removeEventListener("hashchange", suspendForProductsHash)
+      window.removeEventListener("wheel", releaseTabScroll)
+      window.removeEventListener("touchstart", releaseTabScroll)
+      window.removeEventListener("keydown", releaseTabScroll)
 
-      if (tabScrollTimeoutRef.current) {
-        window.clearTimeout(tabScrollTimeoutRef.current)
+      if (tabScrollFrameRef.current) {
+        window.cancelAnimationFrame(tabScrollFrameRef.current)
       }
 
       if (hashJumpTimeoutRef.current) {
@@ -74,24 +89,42 @@ export function SolutionsByAudience() {
 
     const sectionTop = sectionRef.current.getBoundingClientRect().top + window.scrollY
     const scrollableDistance = sectionRef.current.offsetHeight - window.innerHeight
-    const segmentProgress = (index + 0.05) / solutionsPersonas.length
+    // Aim for the middle of the tab's stretch of scroll, so rounding or a small drift never lands on the tab before it.
+    const segmentProgress = (index + 0.5) / solutionsPersonas.length
+    const target = sectionTop + scrollableDistance * segmentProgress
+
+    // Hold the scroll-driven tab switching until the scroll has actually arrived. A smooth scroll can start late and
+    // take longer than any fixed delay, and letting go early made the tabs flick back through the ones in between.
     isTabScrollRef.current = true
+    if (tabScrollFrameRef.current) window.cancelAnimationFrame(tabScrollFrameRef.current)
 
-    if (tabScrollTimeoutRef.current) {
-      window.clearTimeout(tabScrollTimeoutRef.current)
-    }
+    window.scrollTo({ top: target, behavior: prefersReducedMotion ? "auto" : "smooth" })
 
-    window.scrollTo({
-      top: sectionTop + scrollableDistance * segmentProgress + 1,
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-    })
-
-    tabScrollTimeoutRef.current = window.setTimeout(
-      () => {
+    let startedAt = -1
+    let lastY = window.scrollY
+    let moved = false
+    let stableSince = 0
+    const settle = (now: number) => {
+      if (startedAt < 0) {
+        startedAt = now
+        stableSince = now
+      }
+      const y = window.scrollY
+      if (Math.abs(y - lastY) > 0.5) {
+        moved = true
+        lastY = y
+        stableSince = now
+      }
+      const arrived = Math.abs(y - target) < 2
+      const stopped = moved && now - stableSince > 140
+      if (arrived || stopped || now - startedAt > 3000) {
         isTabScrollRef.current = false
-      },
-      prefersReducedMotion ? 0 : 700
-    )
+        tabScrollFrameRef.current = null
+        return
+      }
+      tabScrollFrameRef.current = window.requestAnimationFrame(settle)
+    }
+    tabScrollFrameRef.current = window.requestAnimationFrame(settle)
   }
 
   return (
@@ -107,7 +140,11 @@ export function SolutionsByAudience() {
         </div>
       </div>
 
-      <div ref={sectionRef} className="mt-3 h-[220vh] sm:mt-4 sm:h-[260vh] lg:h-[285vh]">
+      <div
+        ref={sectionRef}
+        style={{ "--personas": solutionsPersonas.length } as CSSProperties}
+        className="mt-3 h-[calc(var(--personas)*55vh)] sm:mt-4 sm:h-[calc(var(--personas)*65vh)] lg:h-[calc(var(--personas)*71.25vh)]"
+      >
         <div className="mx-auto flex max-w-7xl sticky top-20 items-start px-4 sm:px-6 lg:px-8">
           <div className="w-full">
             <div

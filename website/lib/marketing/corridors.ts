@@ -11,6 +11,7 @@ export interface PayoutCountry {
 }
 
 const EUR = [
+  "Andorra",
   "Austria",
   "Belgium",
   "Bulgaria",
@@ -32,13 +33,23 @@ const EUR = [
   "Lithuania",
   "Luxembourg",
   "Malta",
+  "Moldova",
   "Monaco",
+  "Montenegro",
   "Netherlands",
+  "North Macedonia",
   "Norway",
   "Poland",
   "Portugal",
   "Romania",
+  "San Marino",
+  "Serbia",
+  "Slovakia",
+  "Slovenia",
+  "Spain",
+  "Sweden",
   "Switzerland",
+  "Vatican City",
 ] as const
 
 const LOCAL_BANK: { name: string; currency: string }[] = [
@@ -58,17 +69,32 @@ const LOCAL_BANK: { name: string; currency: string }[] = [
   { name: "Rwanda", currency: "RWF" },
   { name: "Congo", currency: "XAF" },
   { name: "DR Congo", currency: "CDF" },
+  { name: "Argentina", currency: "ARS" },
+  { name: "Ecuador", currency: "USD" },
+  { name: "El Salvador", currency: "USD" },
+  { name: "Peru", currency: "PEN" },
+  { name: "Cambodia", currency: "USD" },
+  { name: "Sri Lanka", currency: "LKR" },
+  { name: "Botswana", currency: "BWP" },
+  { name: "Ethiopia", currency: "USD" },
+  { name: "Tanzania", currency: "TZS" },
+  { name: "Uganda", currency: "UGX" },
+  { name: "Zambia", currency: "ZMW" },
 ]
 
-const MOBILE = new Set(["Ghana", "Kenya", "Rwanda", "Cameroon", "Senegal", "Uganda"])
-const MOBILE_ONLY = ["Cameroon", "Senegal", "Uganda"] as const
+const MOBILE = new Set(["Ghana", "Kenya", "Rwanda", "Cameroon", "Senegal", "Benin", "Côte d'Ivoire", "Mali", "Togo", "Malawi"])
+const MOBILE_ONLY = ["Benin", "Cameroon", "Côte d'Ivoire", "Malawi", "Mali", "Senegal", "Togo"] as const
 const MOBILE_CURRENCY: Record<(typeof MOBILE_ONLY)[number], string> = {
+  Benin: "XOF",
   Cameroon: "XAF",
+  "Côte d'Ivoire": "XOF",
+  Malawi: "MWK",
+  Mali: "XOF",
   Senegal: "XOF",
-  Uganda: "UGX",
+  Togo: "XOF",
 }
 
-const BOTH = new Set(["Ghana", "Kenya", "Rwanda"])
+const BOTH = new Set(["Ghana", "Kenya", "Rwanda", "Uganda", "Botswana", "Tanzania", "Zambia", "Congo"])
 
 export const RECEIVE_ONLY = ["Kenya", "DR Congo"] as const
 
