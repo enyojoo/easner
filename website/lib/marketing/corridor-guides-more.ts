@@ -31,8 +31,6 @@ interface MoreCountry {
   phoneCode?: string
   samplePhone?: string
   demoName: string
-  /** Offset from UTC in hours. None of these countries changes its clocks. */
-  utc: number
   blurb: string
   payees: CardItem[]
   /** Replaces the plain "bank and account number" details, where the product asks for more. */
@@ -57,40 +55,6 @@ function shortCurrency(name: string) {
   return capitalise(last)
 }
 
-function hourLabel(hour: number) {
-  const whole = Math.floor(hour)
-  const minutes = Math.round((hour - whole) * 60)
-  const suffix = whole % 24 >= 12 ? "p.m." : "a.m."
-  const twelve = whole % 12 === 0 ? 12 : whole % 12
-  return `${twelve}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""} ${suffix}`
-}
-
-const half = (n: number) => (Number.isInteger(n) ? String(n) : `${Math.floor(n)}½`)
-
-/** Time difference to New York for a country that does not change its clocks (New York is UTC-5, or UTC-4 in summer). */
-function timeNote(rawPlace: string, utc: number) {
-  const place = capitalise(rawPlace)
-  const winter = utc + 5
-  const summer = utc + 4
-  const ahead = winter > 0 || (winter === 0 && summer > 0)
-  const behind = !ahead && (summer < 0 || winter < 0)
-  const lo = Math.min(Math.abs(winter), Math.abs(summer))
-  const hi = Math.max(Math.abs(winter), Math.abs(summer))
-  const range = lo === hi ? half(hi) : `${half(lo)} to ${half(hi)}`
-  const direction = behind ? "behind" : "ahead of"
-  const fact = `${range} hours ${direction} New York`
-  const local = (((9 + winter) % 24) + 24) % 24
-  const sentence =
-    winter === 0
-      ? `${place} does not change its clocks, so it matches New York in US winter time and is one hour ${"behind"} in US summer time.`
-      : `${place} does not change its clocks, so it is ${half(Math.abs(winter))} hour${Math.abs(winter) === 1 ? "" : "s"} ${behind ? "behind" : "ahead of"} New York in US winter time and ${half(Math.abs(summer))} in US summer time.`
-  return {
-    fact,
-    title: `${place} is ${range} hours ${direction} New York`,
-    description: `${sentence} When it is 9 a.m. in New York in winter, it is ${hourLabel(local)} there. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.`,
-  }
-}
-
 const SUPPORT_FR: CardItem = { title: "French-speaking support teams", description: "Customer support and back-office staff who work in French." }
 const DEV: CardItem = { title: "Software developers", description: "Engineers and QA testers on project or monthly contracts." }
 const DESIGN: CardItem = { title: "Designers and creatives", description: "Graphic, UI and brand designers and video editors." }
@@ -101,63 +65,63 @@ const SUPPORT: CardItem = { title: "Support and operations teams", description: 
 const COUNTRIES: MoreCountry[] = [
   {
     country: "Uganda", code: "UG", area: "Africa", currencyName: "Ugandan shillings", rail: "both", providers: ["Airtel Money", "MTN"],
-    phoneCode: "+256", samplePhone: "+256 772 123 456", demoName: "Grace Nakato", utc: 3,
+    phoneCode: "+256", samplePhone: "+256 772 123 456", demoName: "Grace Nakato",
     blurb: "Uganda has a young, growing community of developers, writers and support staff, and mobile money is widely used alongside bank accounts.",
     payees: [DEV, WRITE, { title: "Virtual assistants and support", description: "Admin, research and customer support staff." }, SUPPLY],
   },
   {
-    country: "Benin", code: "BJ", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+229", samplePhone: "+229 12 34 56 78", demoName: "Koffi Agbodjan", utc: 1,
+    country: "Benin", code: "BJ", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+229", samplePhone: "+229 12 34 56 78", demoName: "Koffi Agbodjan",
     blurb: "Benin has a growing group of French-speaking developers, designers and support teams, and mobile money is widely used.",
     payees: [DEV, DESIGN, SUPPORT_FR, SUPPLY],
   },
   {
-    country: "Botswana", code: "BW", area: "Africa", currencyName: "Botswana pula", rail: "both", providers: ["MyZaka"], phoneCode: "+267", samplePhone: "+267 71 234 567", demoName: "Neo Kgosi", utc: 2,
+    country: "Botswana", code: "BW", area: "Africa", currencyName: "Botswana pula", rail: "both", providers: ["MyZaka"], phoneCode: "+267", samplePhone: "+267 71 234 567", demoName: "Neo Kgosi",
     blurb: "Botswana has a small, well-educated pool of developers, accountants and support staff, and mobile money sits alongside bank accounts.",
     payees: [DEV, { title: "Accountants and bookkeepers", description: "Remote finance and back-office help for small businesses." }, SUPPORT, SUPPLY],
   },
   {
     country: "Congo", place: "the Republic of the Congo", label: "Republic of the Congo", slug: "pay-contractors-in-the-republic-of-the-congo", titleTail: "Bank and Mobile Money", code: "CG", area: "Africa",
-    currencyName: "Central African CFA francs", rail: "both", phoneCode: "+242", samplePhone: "+242 06 123 4567", demoName: "Grâce Mabiala", utc: 1,
+    currencyName: "Central African CFA francs", rail: "both", phoneCode: "+242", samplePhone: "+242 06 123 4567", demoName: "Grâce Mabiala",
     blurb: "The Republic of the Congo, also called Congo-Brazzaville and separate from the Democratic Republic of the Congo, has French-speaking professionals, agencies and suppliers, and people there use both bank accounts and mobile money.",
     payees: [DEV, DESIGN, SUPPORT_FR, SUPPLY],
   },
   {
-    country: "Côte d'Ivoire", code: "CI", area: "Africa", slug: "pay-contractors-in-cote-divoire", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+225", samplePhone: "+225 07 12 34 56 78", demoName: "Aya Kouassi", utc: 0,
+    country: "Côte d'Ivoire", code: "CI", area: "Africa", slug: "pay-contractors-in-cote-divoire", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+225", samplePhone: "+225 07 12 34 56 78", demoName: "Aya Kouassi",
     blurb: "Côte d'Ivoire has a growing community of French-speaking developers, designers and customer support teams in Abidjan and beyond, and mobile money is widely used.",
     payees: [DEV, DESIGN, SUPPORT_FR, SUPPLY],
   },
   {
-    country: "Ethiopia", code: "ET", area: "Africa", currencyName: "US dollars", rail: "bank", demoName: "Abel Tesfaye", utc: 3,
+    country: "Ethiopia", code: "ET", area: "Africa", currencyName: "US dollars", rail: "bank", demoName: "Abel Tesfaye",
     blurb: "Ethiopia has a large, young population and a growing number of developers, designers and freelancers.",
     payees: [DEV, DESIGN, WRITE, SUPPLY],
   },
   {
-    country: "Malawi", code: "MW", area: "Africa", currencyName: "Malawian kwacha", rail: "mobile", providers: ["Airtel Money", "TNM"], phoneCode: "+265", samplePhone: "+265 99 123 4567", demoName: "Chikondi Banda", utc: 2,
+    country: "Malawi", code: "MW", area: "Africa", currencyName: "Malawian kwacha", rail: "mobile", providers: ["Airtel Money", "TNM"], phoneCode: "+265", samplePhone: "+265 99 123 4567", demoName: "Chikondi Banda",
     blurb: "Malawi has a small but growing group of developers, writers and support staff, and mobile money is widely used.",
     payees: [DEV, WRITE, SUPPORT, SUPPLY],
   },
   {
-    country: "Mali", code: "ML", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+223", samplePhone: "+223 12 34 56 78", demoName: "Mamadou Traoré", utc: 0,
+    country: "Mali", code: "ML", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+223", samplePhone: "+223 12 34 56 78", demoName: "Mamadou Traoré",
     blurb: "Mali has French-speaking professionals, agencies and suppliers, and mobile money is widely used.",
     payees: [DEV, DESIGN, SUPPORT_FR, SUPPLY],
   },
   {
-    country: "Tanzania", code: "TZ", area: "Africa", currencyName: "Tanzanian shillings", rail: "both", providers: ["Airtel Money", "TigoPesa"], phoneCode: "+255", samplePhone: "+255 712 345 678", demoName: "Amani Mwakyusa", utc: 3,
+    country: "Tanzania", code: "TZ", area: "Africa", currencyName: "Tanzanian shillings", rail: "both", providers: ["Airtel Money", "TigoPesa"], phoneCode: "+255", samplePhone: "+255 712 345 678", demoName: "Amani Mwakyusa",
     blurb: "Tanzania has a growing community of developers, writers and customer support teams, and mobile money is widely used alongside bank accounts.",
     payees: [DEV, WRITE, SUPPORT, SUPPLY],
   },
   {
-    country: "Togo", code: "TG", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+228", samplePhone: "+228 12 34 56 78", demoName: "Kodjo Amegah", utc: 0,
+    country: "Togo", code: "TG", area: "Africa", currencyName: "West African CFA francs", rail: "mobile", phoneCode: "+228", samplePhone: "+228 12 34 56 78", demoName: "Kodjo Amegah",
     blurb: "Togo has a growing group of French-speaking developers, designers and support teams, and mobile money is widely used.",
     payees: [DEV, DESIGN, SUPPORT_FR, SUPPLY],
   },
   {
-    country: "Zambia", code: "ZM", area: "Africa", currencyName: "Zambian kwacha", rail: "both", providers: ["Airtel Money", "MTN"], phoneCode: "+260", samplePhone: "+260 97 123 4567", demoName: "Mutale Phiri", utc: 2,
+    country: "Zambia", code: "ZM", area: "Africa", currencyName: "Zambian kwacha", rail: "both", providers: ["Airtel Money", "MTN"], phoneCode: "+260", samplePhone: "+260 97 123 4567", demoName: "Mutale Phiri",
     blurb: "Zambia has a growing community of developers, writers and support staff, and mobile money is widely used alongside bank accounts.",
     payees: [DEV, WRITE, SUPPORT, SUPPLY],
   },
   {
-    country: "Argentina", code: "AR", area: "Americas", currencyName: "Argentine pesos", rail: "bank", demoName: "Martín Fernández", utc: -3,
+    country: "Argentina", code: "AR", area: "Americas", currencyName: "Argentine pesos", rail: "bank", demoName: "Martín Fernández",
     blurb: "Argentina has a deep pool of developers, designers and marketers, and many already work with companies abroad.",
     payees: [DEV, DESIGN, { title: "Marketers and content creators", description: "Social media, paid media and content freelancers." }, { title: "Bilingual support teams", description: "Spanish and English customer support and operations staff." }],
     bank: {
@@ -184,27 +148,27 @@ const COUNTRIES: MoreCountry[] = [
     },
   },
   {
-    country: "Ecuador", code: "EC", area: "Americas", currencyName: "US dollars", rail: "bank", demoName: "Diego Andrade", utc: -5,
+    country: "Ecuador", code: "EC", area: "Americas", currencyName: "US dollars", rail: "bank", demoName: "Diego Andrade",
     blurb: "Ecuador uses the US dollar, and it has a growing group of developers, designers and support teams.",
     payees: [DEV, DESIGN, { title: "Bilingual support teams", description: "Spanish and English customer support and operations staff." }, SUPPLY],
   },
   {
-    country: "El Salvador", code: "SV", area: "Americas", currencyName: "US dollars", rail: "bank", demoName: "Valeria Hernández", utc: -6,
+    country: "El Salvador", code: "SV", area: "Americas", currencyName: "US dollars", rail: "bank", demoName: "Valeria Hernández",
     blurb: "El Salvador uses the US dollar, and it has a growing group of developers, designers and bilingual support teams.",
     payees: [DEV, DESIGN, { title: "Bilingual support teams", description: "Spanish and English customer support and operations staff." }, SUPPLY],
   },
   {
-    country: "Peru", code: "PE", area: "Americas", currencyName: "Peruvian soles", rail: "bank", demoName: "Camila Quispe", utc: -5,
+    country: "Peru", code: "PE", area: "Americas", currencyName: "Peruvian soles", rail: "bank", demoName: "Camila Quispe",
     blurb: "Peru has a growing community of developers, designers and bilingual support teams who work with companies abroad.",
     payees: [DEV, DESIGN, { title: "Bilingual support teams", description: "Spanish and English customer support and operations staff." }, SUPPLY],
   },
   {
-    country: "Cambodia", code: "KH", area: "Asia", currencyName: "US dollars", rail: "bank", demoName: "Sokha Chan", utc: 7,
+    country: "Cambodia", code: "KH", area: "Asia", currencyName: "US dollars", rail: "bank", demoName: "Sokha Chan",
     blurb: "Cambodia uses the US dollar widely alongside its own riel, and it has a growing group of developers, designers and support teams.",
     payees: [DEV, DESIGN, WRITE, SUPPORT],
   },
   {
-    country: "Sri Lanka", code: "LK", area: "Asia", currencyName: "Sri Lankan rupees", rail: "bank", demoName: "Nimali Perera", utc: 5.5,
+    country: "Sri Lanka", code: "LK", area: "Asia", currencyName: "Sri Lankan rupees", rail: "bank", demoName: "Nimali Perera",
     blurb: "Sri Lanka has an established base of developers, designers and accountants, many of them working with clients abroad.",
     payees: [DEV, DESIGN, { title: "Accountants and bookkeepers", description: "Remote finance and back-office help for small businesses." }, SUPPORT],
   },
@@ -331,7 +295,6 @@ function guideFor(entry: MoreCountry): CorridorGuide {
     needs,
     titleTail: entry.titleTail ?? (entry.rail === "bank" ? `${cur} Bank Payouts` : entry.rail === "mobile" ? `${cur} Mobile Money Payouts` : `${cur} Bank and Mobile Money`),
     cardLine: `${shortCurrency(entry.currencyName)}, ${short}`,
-    timeNote: timeNote(place, entry.utc),
     intro: `${entry.blurb} Easner pays your contractor in ${entry.currencyName} ${delivery}. You pay from your Easner Business balance${cur === "USD" ? "" : " in dollars"}.`,
     asks: {
       headline: "What to ask your contractor for",

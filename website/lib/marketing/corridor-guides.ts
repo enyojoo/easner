@@ -38,7 +38,6 @@ export interface CorridorGuide {
   /** Short line on the card that links here. */
   cardLine: string
   /** The one fact about time that matters when paying here. */
-  timeNote: { fact: string; title: string; description: string }
   intro: string
   /** What to ask the contractor for. */
   asks: { headline: string; body: string; bullets: string[] }
@@ -68,12 +67,6 @@ const baseGuides: CorridorGuide[] = [
     delivery: "in their own bank account",
     titleTail: "INR Bank Payouts",
     cardLine: "Rupees, to a bank account",
-    timeNote: {
-      fact: "About 10 hours ahead of New York",
-      title: "India is about 10 hours ahead of New York",
-      description:
-        "Your morning is their evening, and your afternoon is their night. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "India has a large pool of remote developers, designers, accountants and support staff, and many small businesses abroad work with them. Paying them is simple once you have the right bank details. Your contractor receives rupees in their own bank account, and you pay from your Easner Business balance in dollars.",
     asks: {
@@ -111,7 +104,7 @@ const baseGuides: CorridorGuide[] = [
       { title: "Software developers", description: "Engineers, QA testers and data teams, hired by the project or by the month." },
       { title: "Designers and video editors", description: "UI designers, illustrators, motion designers and editors." },
       { title: "Accountants and bookkeepers", description: "Remote finance and back-office help for small businesses." },
-      { title: "Support and operations teams", description: "Customer support, research and admin staff who work your hours." },
+      { title: "Support and operations teams", description: "Customer support, research and admin staff." },
     ],
     faq: [
       {
@@ -144,12 +137,6 @@ const baseGuides: CorridorGuide[] = [
     delivery: "in their own bank account",
     titleTail: "PHP Bank Payouts",
     cardLine: "Pesos, to a bank account",
-    timeNote: {
-      fact: "12 to 13 hours ahead of New York",
-      title: "The Philippines is 12 to 13 hours ahead of New York",
-      description:
-        "Your morning is their late evening. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "The Philippines is a long-standing home for virtual assistants, customer support teams, designers and editors, and many businesses abroad rely on them. Easner pays your contractor in Philippine pesos, into a bank account. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -219,12 +206,6 @@ const baseGuides: CorridorGuide[] = [
     delivery: "in their own bank account",
     titleTail: "NGN Bank Payouts",
     cardLine: "Naira, to a bank account",
-    timeNote: {
-      fact: "5 to 6 hours ahead of New York",
-      title: "Nigeria is 5 to 6 hours ahead of New York",
-      description:
-        "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Nigeria has a large tech and creative workforce, and many companies abroad work with its developers, designers and writers. Easner pays your contractor in naira, into a Nigerian bank account. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -295,14 +276,8 @@ const baseGuides: CorridorGuide[] = [
     delivery: "by bank transfer",
     titleTail: "MXN Bank Payouts",
     cardLine: "Pesos, by bank transfer",
-    timeNote: {
-      fact: "1 to 2 hours behind New York",
-      title: "Same working day as the US",
-      description:
-        "Mexico City is one to two hours behind New York, so you and your contractor share most of the working day. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
-      "Mexico is a popular choice for US businesses that want contractors and teams in a similar time zone. Easner pays your contractor in Mexican pesos, by bank transfer to their CLABE. You pay from your Easner Business balance in dollars.",
+      "Mexico is a popular choice for US businesses that want contractors and teams close to home. Easner pays your contractor in Mexican pesos, by bank transfer to their CLABE. You pay from your Easner Business balance in dollars.",
     asks: {
       headline: "What to ask your contractor for",
       body: "The CLABE is the number Mexican banks use to receive transfers. Your contractor doesn't need an Easner account.",
@@ -330,7 +305,7 @@ const baseGuides: CorridorGuide[] = [
       },
     ],
     payees: [
-      { title: "Nearshore developers", description: "Engineers and QA teams who work your hours." },
+      { title: "Nearshore developers", description: "Engineers and QA teams." },
       { title: "Designers and marketers", description: "Brand, UI and performance marketing freelancers." },
       { title: "Customer support teams", description: "Bilingual support and operations staff." },
       { title: "Suppliers and manufacturers", description: "Companies you buy parts and goods from." },
@@ -366,12 +341,6 @@ const baseGuides: CorridorGuide[] = [
     delivery: "through Pix",
     titleTail: "BRL Payouts Through Pix",
     cardLine: "Reais, through Pix",
-    timeNote: {
-      fact: "1 to 2 hours ahead of New York",
-      title: "Brazil is one to two hours ahead of New York",
-      description:
-        "You share most of the working day. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
       "Brazil has a deep pool of developers, designers and marketers, and Pix is the instant payment system most Brazilians use every day. Easner pays your contractor in Brazilian reais through Pix. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -442,12 +411,6 @@ const baseGuides: CorridorGuide[] = [
     delivery: "by bank or mobile money",
     titleTail: "KES Bank and Mobile Money",
     cardLine: "Shillings, bank or mobile money",
-    timeNote: {
-      fact: "7 to 8 hours ahead of New York",
-      title: "Kenya is 7 to 8 hours ahead of New York",
-      description:
-        "Your morning is their early evening. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Kenya has a strong community of developers, writers and virtual assistants, and mobile money is how many people there receive money day to day. Easner pays your contractor in Kenyan shillings, by bank transfer or mobile money. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -518,11 +481,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, 6-digit sort code and account number",
     titleTail: "GBP Bank Payouts",
     cardLine: "Pounds, to a bank account",
-    timeNote: {
-      fact: "About 5 hours ahead of New York",
-      title: "The UK is about 5 hours ahead of New York",
-      description: "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "The UK has a deep pool of freelancers, agencies and specialist contractors, and many US businesses pay them every month. Easner pays your contractor in pounds, by bank transfer to a UK bank account. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -580,12 +538,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name and IBAN",
     titleTail: "EUR Bank Payouts (SEPA)",
     cardLine: `Euros, to ${EUR_PAYOUT_COUNTRIES.length} countries`,
-    timeNote: {
-      fact: "5 to 7 hours ahead of New York",
-      title: "Europe is 5 to 7 hours ahead of New York",
-      description:
-        "Ireland and Portugal are 5 hours ahead, Central Europe 6, and Finland, Greece and the Baltics 7. For a few weeks around March and late October it is an hour less, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
       `Many businesses abroad work with developers, designers, translators and agencies across Europe. Easner pays your contractor in euros, by bank transfer to an account in one of ${EUR_PAYOUT_COUNTRIES.length} countries. You pay from your Easner Business balance in dollars.`,
     asks: {
@@ -638,11 +590,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, then a bank and account number, or a phone number and provider",
     titleTail: "GHS Bank and Mobile Money",
     cardLine: "Cedis, bank or mobile money",
-    timeNote: {
-      fact: "4 to 5 hours ahead of New York",
-      title: "Ghana is 4 to 5 hours ahead of New York",
-      description: "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Ghana has a growing community of developers, designers and customer support teams, and mobile money is widely used alongside bank accounts. Easner pays your contractor in Ghanaian cedis, by bank transfer or mobile money. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -696,13 +643,8 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, bank and account number",
     titleTail: "ZAR Bank Payouts",
     cardLine: "Rand, to a bank account",
-    timeNote: {
-      fact: "6 to 7 hours ahead of New York",
-      title: "South Africa is 6 to 7 hours ahead of New York",
-      description: "Its working day overlaps with the US morning. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
-      "South Africa has an established market of developers, designers, writers and support teams, and its time zone overlaps with the start of the US working day. Easner pays your contractor in rand, into a South African bank account. You pay from your Easner Business balance in dollars.",
+      "South Africa has an established market of developers, designers, writers and support teams. Easner pays your contractor in rand, into a South African bank account. You pay from your Easner Business balance in dollars.",
     asks: {
       headline: "What to ask your contractor for",
       body: "Ask for these three things before you pay. Your contractor doesn't need an Easner account.",
@@ -754,11 +696,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, then a bank and account number, or a phone number and provider",
     titleTail: "RWF Bank and Mobile Money",
     cardLine: "Francs, bank or mobile money",
-    timeNote: {
-      fact: "6 to 7 hours ahead of New York",
-      title: "Rwanda is 6 to 7 hours ahead of New York",
-      description: "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Rwanda has a fast-growing tech scene centred on Kigali, and many companies abroad work with its developers and designers. Easner pays your contractor in Rwandan francs, by bank transfer or mobile money. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -813,11 +750,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, mobile money provider and phone number",
     titleTail: "XAF Mobile Money Payouts",
     cardLine: "CFA francs, by mobile money",
-    timeNote: {
-      fact: "5 to 6 hours ahead of New York",
-      title: "Cameroon is 5 to 6 hours ahead of New York",
-      description: "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Cameroon has a growing community of developers, designers and bilingual French and English support teams, and mobile money is widely used. Easner pays your contractor in Central African CFA francs, by mobile money. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -872,11 +804,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, mobile money provider and phone number",
     titleTail: "XOF Mobile Money Payouts",
     cardLine: "CFA francs, by mobile money",
-    timeNote: {
-      fact: "4 to 5 hours ahead of New York",
-      title: "Senegal is 4 to 5 hours ahead of New York",
-      description: "Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
-    },
     intro:
       "Senegal has a growing community of developers, designers and French-speaking support teams, and mobile money is widely used. Easner pays your contractor in West African CFA francs, by mobile money. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -927,18 +854,13 @@ const baseGuides: CorridorGuide[] = [
     code: "US",
     noCountryFaq: true,
     currencyName: "US dollars",
-    delivery: "by ACH bank transfer",
-    deliveryLabel: "Bank transfer (ACH)",
+    delivery: "by RTP, FedNow or ACH",
+    deliveryLabel: "RTP, FedNow or ACH",
     needs: "Name, routing number, account number, account type and address",
-    titleTail: "USD Bank Payouts (ACH)",
-    cardLine: "Dollars, by ACH bank transfer",
-    timeNote: {
-      fact: "Four time zones on the mainland",
-      title: "US contractors work in four main time zones",
-      description: "Eastern, Central, Mountain and Pacific time run across the mainland, three hours apart end to end. Check your contractor's time zone before you send. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
+    titleTail: "USD Instant and ACH Payouts",
+    cardLine: "Dollars, instant or ACH",
     intro:
-      "Businesses outside the US pay US contractors, agencies and suppliers all the time. Easner pays your contractor in US dollars, by ACH bank transfer to a US bank account. You pay from your Easner Business balance, and your company can be based in any of 174 countries.",
+      "Businesses outside the US pay US contractors, agencies and suppliers all the time. Easner pays your contractor in US dollars, to a US bank account over the instant networks RTP and FedNow, or by ACH. You pay from your Easner Business balance, and your company can be based in any of 174 countries.",
     asks: {
       headline: "What to ask your contractor for",
       body: "Ask for these details before you pay. Your contractor doesn't need an Easner account.",
@@ -963,7 +885,7 @@ const baseGuides: CorridorGuide[] = [
     },
     goodToKnow: [
       { title: "Routing number and account number", description: "A US bank account is identified by a 9-digit routing number and an account number. They are two different numbers, so ask your contractor for both." },
-      { title: "They're paid in dollars", description: "Your contractor receives USD by ACH bank transfer. The rate, the fees and what they receive are shown before you confirm." },
+      { title: "They're paid in dollars", description: "Your contractor receives USD over RTP, FedNow or ACH. The rate, the fees and what they receive are shown before you confirm." },
     ],
     payees: [
       { title: "Freelance developers", description: "Engineers and technical contractors on project or monthly contracts." },
@@ -974,6 +896,7 @@ const baseGuides: CorridorGuide[] = [
     faq: [
       { question: "What bank details do I need to pay a contractor in the United States?", answer: "The account holder's name, the 9-digit routing number, the account number, whether the account is checking or savings, and the contractor's address. The contractor does not need an Easner account." },
       { question: "Can a business outside the US pay a contractor in the US?", answer: "Yes. A company can open Easner Business from 174 countries, subject to verification, and pay a US contractor in US dollars by bank. Opening an account needs each owner to verify their identity. The rate, the fees and what the recipient gets are shown before you confirm." },
+      { question: "Can I pay a US contractor instantly?", answer: "Easner pays US bank accounts over the instant networks RTP and FedNow, as well as by ACH. Instant payments depend on the contractor's bank taking part in those networks. The rate, the fees and what the recipient gets are shown before you confirm." },
     ],
     keywords: [
       "pay contractors in the United States",
@@ -981,6 +904,7 @@ const baseGuides: CorridorGuide[] = [
       "pay US suppliers in dollars",
       "send business payment to the US",
       "pay US contractors by ACH",
+      "pay US contractors instantly with RTP or FedNow",
     ],
   },
   {
@@ -994,13 +918,8 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name and Bre-B key",
     titleTail: "COP Payouts Through Bre-B",
     cardLine: "Pesos, through Bre-B",
-    timeNote: {
-      fact: "0 to 1 hours behind New York",
-      title: "Colombia is 0 to 1 hours behind New York",
-      description: "Colombia does not change its clocks, so it matches New York in US winter time and is one hour behind in US summer time. You share almost the whole working day. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
-      "Colombia has a growing community of developers, designers and bilingual support teams, and it shares New York's time zone for much of the year. Bre-B is Colombia's instant payment system, and Easner pays your contractor in Colombian pesos through it. You pay from your Easner Business balance in dollars.",
+      "Colombia has a growing community of developers, designers and bilingual support teams. Bre-B is Colombia's instant payment system, and Easner pays your contractor in Colombian pesos through it. You pay from your Easner Business balance in dollars.",
     asks: {
       headline: "What to ask your contractor for",
       body: "Ask for these two things before you pay. Your contractor doesn't need an Easner account.",
@@ -1051,11 +970,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, bank and account number",
     titleTail: "IDR Bank Payouts",
     cardLine: "Rupiah, to a bank account",
-    timeNote: {
-      fact: "11 to 12 hours ahead of New York",
-      title: "Indonesia is 11 to 12 hours ahead of New York",
-      description: "Jakarta does not change its clocks, so it is 12 hours ahead of New York in US winter time and 11 hours ahead in US summer time. Bali is one hour further ahead. Your morning is their late evening. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
       "Indonesia has a large community of developers, designers, digital marketers and virtual assistants, and many remote workers are based in places like Bali. Easner pays your contractor in Indonesian rupiah, into a bank account. You pay from your Easner Business balance in dollars.",
     asks: {
@@ -1109,11 +1023,6 @@ const baseGuides: CorridorGuide[] = [
     needs: "Name, bank and account number",
     titleTail: "THB Bank Payouts",
     cardLine: "Baht, to a bank account",
-    timeNote: {
-      fact: "11 to 12 hours ahead of New York",
-      title: "Thailand is 11 to 12 hours ahead of New York",
-      description: "Thailand does not change its clocks, so it is 12 hours ahead of New York in US winter time and 11 hours ahead in US summer time. Your morning is their late evening. Payouts typically arrive in minutes to hours, same-day where supported.",
-    },
     intro:
       "Thailand has a growing base of developers, designers and content creators, and many remote workers base themselves there. Easner pays your contractor in Thai baht, into a bank account. You pay from your Easner Business balance in dollars.",
     asks: {

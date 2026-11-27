@@ -9,14 +9,12 @@
 import type { CorridorGuide } from "./corridor-guides"
 import type { CardItem, FaqItem } from "./types"
 
-type Zone = "west" | "central" | "east" | "iceland"
 type Kind = "nearshore" | "baltic" | "agencies" | "specialist" | "southern"
 
 interface EuroCountry {
   country: string
   code: string
   iban: number
-  zone: Zone
   /** Set when the country has its own currency, so Easner pays euros into an account that may be held in it. */
   local?: { name: string; adjective: string }
   kind: Kind
@@ -25,80 +23,53 @@ interface EuroCountry {
 }
 
 const COUNTRIES: EuroCountry[] = [
-  { country: "Austria", code: "AT", iban: 20, zone: "central", kind: "agencies", demoName: "Anna Gruber", blurb: "Austria has a strong base of engineers, designers and consultants, many of them working with German-speaking clients across Europe." },
-  { country: "Belgium", code: "BE", iban: 16, zone: "central", kind: "agencies", demoName: "Emma Peeters", blurb: "Belgium is home to translators, designers and consultants, with Dutch, French and German spoken across its regions." },
-  { country: "Bulgaria", code: "BG", iban: 22, zone: "east", kind: "nearshore", demoName: "Georgi Petrov", blurb: "Bulgaria has an established software and outsourcing sector, and many companies abroad hire its developers and support teams." },
-  { country: "Croatia", code: "HR", iban: 21, zone: "central", kind: "southern", demoName: "Ivana Horvat", blurb: "Croatia has a growing number of developers, designers and remote workers, and it has used the euro since 2023." },
-  { country: "Cyprus", code: "CY", iban: 28, zone: "east", kind: "southern", demoName: "Andreas Georgiou", blurb: "Cyprus is home to remote professionals, agencies and service companies, and it uses the euro." },
-  { country: "Czechia", code: "CZ", iban: 24, zone: "central", kind: "nearshore", local: { name: "koruna", adjective: "Czech" }, demoName: "Tomáš Novák", blurb: "Czechia has a deep pool of engineers and QA specialists, and many companies abroad build their teams there." },
-  { country: "Denmark", code: "DK", iban: 18, zone: "central", kind: "specialist", local: { name: "krone", adjective: "Danish" }, demoName: "Mads Jensen", blurb: "Denmark has highly skilled consultants, designers and developers, and many work as independent specialists." },
-  { country: "Estonia", code: "EE", iban: 20, zone: "east", kind: "baltic", demoName: "Karl Tamm", blurb: "Estonia is known for its digital economy, and for developers and product teams who work with companies abroad." },
-  { country: "Finland", code: "FI", iban: 18, zone: "east", kind: "specialist", demoName: "Aino Virtanen", blurb: "Finland has strong engineers, designers and game and software specialists who take on contracts from abroad." },
-  { country: "France", code: "FR", iban: 27, zone: "central", kind: "agencies", demoName: "Camille Martin", blurb: "France has a large community of freelance developers, designers, writers and consultants across many cities." },
-  { country: "Germany", code: "DE", iban: 22, zone: "central", kind: "agencies", demoName: "Lena Fischer", blurb: "Germany has many freelance developers, designers and consultants, and they invoice clients in several countries." },
-  { country: "Greece", code: "GR", iban: 27, zone: "east", kind: "southern", demoName: "Nikos Papadakis", blurb: "Greece has a growing group of remote developers, designers and support teams, and it uses the euro." },
-  { country: "Hungary", code: "HU", iban: 28, zone: "central", kind: "nearshore", local: { name: "forint", adjective: "Hungarian" }, demoName: "Bence Kovács", blurb: "Hungary has an established engineering and design talent pool, and many companies hire there for software work." },
-  { country: "Iceland", code: "IS", iban: 26, zone: "iceland", kind: "specialist", local: { name: "króna", adjective: "Icelandic" }, demoName: "Sigrún Jónsdóttir", blurb: "Iceland has a small but specialised group of developers, designers and creatives who work with clients abroad." },
-  { country: "Ireland", code: "IE", iban: 22, zone: "west", kind: "agencies", demoName: "Aoife Murphy", blurb: "Ireland has many consultants, developers and marketers, and it shares part of the US working day." },
-  { country: "Italy", code: "IT", iban: 27, zone: "central", kind: "agencies", demoName: "Giulia Rossi", blurb: "Italy has talented designers, developers, translators and consultants, from Milan to Rome." },
-  { country: "Latvia", code: "LV", iban: 21, zone: "east", kind: "baltic", demoName: "Jānis Bērziņš", blurb: "Latvia has developers, designers and product people in Riga and beyond who work with teams abroad." },
-  { country: "Liechtenstein", code: "LI", iban: 21, zone: "central", kind: "specialist", local: { name: "franc", adjective: "Swiss" }, demoName: "Hans Meier", blurb: "Liechtenstein is small, with specialist consultants and companies that invoice clients abroad." },
-  { country: "Lithuania", code: "LT", iban: 20, zone: "east", kind: "baltic", demoName: "Jonas Kazlauskas", blurb: "Lithuania has a strong fintech and software scene, and developers and product teams there take on contracts from abroad." },
-  { country: "Luxembourg", code: "LU", iban: 20, zone: "central", kind: "specialist", demoName: "Marie Weber", blurb: "Luxembourg is home to finance, legal and tech specialists who consult for clients across Europe and beyond." },
-  { country: "Malta", code: "MT", iban: 31, zone: "central", kind: "southern", demoName: "Mario Borg", blurb: "Malta has specialists in gaming, fintech and online services, and many of them work with companies abroad." },
-  { country: "Monaco", code: "MC", iban: 27, zone: "central", kind: "specialist", demoName: "Louis Rossi", blurb: "Monaco is a small jurisdiction with consultants, agencies and service providers who invoice clients abroad." },
-  { country: "Netherlands", code: "NL", iban: 18, zone: "central", kind: "agencies", demoName: "Sanne de Vries", blurb: "The Netherlands has many independent developers, designers and consultants, and Dutch freelancers often work across borders." },
-  { country: "Norway", code: "NO", iban: 15, zone: "central", kind: "specialist", local: { name: "krone", adjective: "Norwegian" }, demoName: "Ola Hansen", blurb: "Norway has highly specialised engineers, consultants and designers, and many work independently." },
-  { country: "Poland", code: "PL", iban: 28, zone: "central", kind: "nearshore", local: { name: "złoty", adjective: "Polish" }, demoName: "Katarzyna Nowak", blurb: "Poland has a large community of software developers, and many companies abroad build engineering teams there." },
-  { country: "Portugal", code: "PT", iban: 25, zone: "west", kind: "southern", demoName: "Inês Silva", blurb: "Portugal has a growing group of remote developers, designers and support teams, and many work with clients abroad." },
-  { country: "Romania", code: "RO", iban: 24, zone: "east", kind: "nearshore", local: { name: "leu", adjective: "Romanian" }, demoName: "Andrei Popescu", blurb: "Romania has a large technology workforce, and many companies abroad hire its developers and engineers." },
-  { country: "Switzerland", code: "CH", iban: 21, zone: "central", kind: "specialist", local: { name: "franc", adjective: "Swiss" }, demoName: "Luca Keller", blurb: "Switzerland has specialist consultants, engineers and designers, and its accounts use IBANs even though it uses the Swiss franc." },
-  { country: "Andorra", code: "AD", iban: 24, zone: "central", kind: "specialist", demoName: "Marc Ribas", blurb: "Andorra is a small jurisdiction with consultants, agencies and service providers who invoice clients abroad." },
-  { country: "Moldova", code: "MD", iban: 24, zone: "east", kind: "nearshore", local: { name: "leu", adjective: "Moldovan" }, demoName: "Ion Rusu", blurb: "Moldova has a growing technology and outsourcing sector, and many companies abroad hire its developers." },
-  { country: "Montenegro", code: "ME", iban: 22, zone: "central", kind: "southern", demoName: "Marko Petrović", blurb: "Montenegro uses the euro and has a growing group of remote developers, designers and service providers." },
-  { country: "North Macedonia", code: "MK", iban: 19, zone: "central", kind: "nearshore", local: { name: "denar", adjective: "Macedonian" }, demoName: "Elena Stojanovska", blurb: "North Macedonia has a growing software and outsourcing sector, and many companies abroad hire its developers and support teams." },
-  { country: "San Marino", code: "SM", iban: 27, zone: "central", kind: "specialist", demoName: "Luca Berti", blurb: "San Marino is a very small country with specialist consultants and companies that invoice clients abroad." },
-  { country: "Serbia", code: "RS", iban: 22, zone: "central", kind: "nearshore", local: { name: "dinar", adjective: "Serbian" }, demoName: "Milan Jovanović", blurb: "Serbia has a strong software and game development scene, and many companies abroad hire its engineers." },
-  { country: "Slovakia", code: "SK", iban: 24, zone: "central", kind: "nearshore", demoName: "Peter Horváth", blurb: "Slovakia has a solid base of engineers and software specialists, and many companies abroad work with them." },
-  { country: "Slovenia", code: "SI", iban: 19, zone: "central", kind: "southern", demoName: "Maja Novak", blurb: "Slovenia has developers, designers and engineers who work with companies abroad, and it uses the euro." },
-  { country: "Spain", code: "ES", iban: 24, zone: "central", kind: "agencies", demoName: "Lucía García", blurb: "Spain has a large community of freelance developers, designers, translators and marketers across many cities." },
-  { country: "Sweden", code: "SE", iban: 24, zone: "central", kind: "specialist", local: { name: "krona", adjective: "Swedish" }, demoName: "Emma Lindberg", blurb: "Sweden has strong engineers, designers and product specialists, and many work as independent consultants." },
-  { country: "Vatican City", code: "VA", iban: 22, zone: "central", kind: "specialist", demoName: "Paolo Bianchi", blurb: "Vatican City is the smallest country in the world, so contractors there are few and specialised." },
+  { country: "Austria", code: "AT", iban: 20, kind: "agencies", demoName: "Anna Gruber", blurb: "Austria has a strong base of engineers, designers and consultants, many of them working with German-speaking clients across Europe." },
+  { country: "Belgium", code: "BE", iban: 16, kind: "agencies", demoName: "Emma Peeters", blurb: "Belgium is home to translators, designers and consultants, with Dutch, French and German spoken across its regions." },
+  { country: "Bulgaria", code: "BG", iban: 22, kind: "nearshore", demoName: "Georgi Petrov", blurb: "Bulgaria has an established software and outsourcing sector, and many companies abroad hire its developers and support teams." },
+  { country: "Croatia", code: "HR", iban: 21, kind: "southern", demoName: "Ivana Horvat", blurb: "Croatia has a growing number of developers, designers and remote workers, and it has used the euro since 2023." },
+  { country: "Cyprus", code: "CY", iban: 28, kind: "southern", demoName: "Andreas Georgiou", blurb: "Cyprus is home to remote professionals, agencies and service companies, and it uses the euro." },
+  { country: "Czechia", code: "CZ", iban: 24, kind: "nearshore", local: { name: "koruna", adjective: "Czech" }, demoName: "Tomáš Novák", blurb: "Czechia has a deep pool of engineers and QA specialists, and many companies abroad build their teams there." },
+  { country: "Denmark", code: "DK", iban: 18, kind: "specialist", local: { name: "krone", adjective: "Danish" }, demoName: "Mads Jensen", blurb: "Denmark has highly skilled consultants, designers and developers, and many work as independent specialists." },
+  { country: "Estonia", code: "EE", iban: 20, kind: "baltic", demoName: "Karl Tamm", blurb: "Estonia is known for its digital economy, and for developers and product teams who work with companies abroad." },
+  { country: "Finland", code: "FI", iban: 18, kind: "specialist", demoName: "Aino Virtanen", blurb: "Finland has strong engineers, designers and game and software specialists who take on contracts from abroad." },
+  { country: "France", code: "FR", iban: 27, kind: "agencies", demoName: "Camille Martin", blurb: "France has a large community of freelance developers, designers, writers and consultants across many cities." },
+  { country: "Germany", code: "DE", iban: 22, kind: "agencies", demoName: "Lena Fischer", blurb: "Germany has many freelance developers, designers and consultants, and they invoice clients in several countries." },
+  { country: "Greece", code: "GR", iban: 27, kind: "southern", demoName: "Nikos Papadakis", blurb: "Greece has a growing group of remote developers, designers and support teams, and it uses the euro." },
+  { country: "Hungary", code: "HU", iban: 28, kind: "nearshore", local: { name: "forint", adjective: "Hungarian" }, demoName: "Bence Kovács", blurb: "Hungary has an established engineering and design talent pool, and many companies hire there for software work." },
+  { country: "Iceland", code: "IS", iban: 26, kind: "specialist", local: { name: "króna", adjective: "Icelandic" }, demoName: "Sigrún Jónsdóttir", blurb: "Iceland has a small but specialised group of developers, designers and creatives who work with clients abroad." },
+  { country: "Ireland", code: "IE", iban: 22, kind: "agencies", demoName: "Aoife Murphy", blurb: "Ireland has many consultants, developers and marketers who work with clients abroad." },
+  { country: "Italy", code: "IT", iban: 27, kind: "agencies", demoName: "Giulia Rossi", blurb: "Italy has talented designers, developers, translators and consultants, from Milan to Rome." },
+  { country: "Latvia", code: "LV", iban: 21, kind: "baltic", demoName: "Jānis Bērziņš", blurb: "Latvia has developers, designers and product people in Riga and beyond who work with teams abroad." },
+  { country: "Liechtenstein", code: "LI", iban: 21, kind: "specialist", local: { name: "franc", adjective: "Swiss" }, demoName: "Hans Meier", blurb: "Liechtenstein is small, with specialist consultants and companies that invoice clients abroad." },
+  { country: "Lithuania", code: "LT", iban: 20, kind: "baltic", demoName: "Jonas Kazlauskas", blurb: "Lithuania has a strong fintech and software scene, and developers and product teams there take on contracts from abroad." },
+  { country: "Luxembourg", code: "LU", iban: 20, kind: "specialist", demoName: "Marie Weber", blurb: "Luxembourg is home to finance, legal and tech specialists who consult for clients across Europe and beyond." },
+  { country: "Malta", code: "MT", iban: 31, kind: "southern", demoName: "Mario Borg", blurb: "Malta has specialists in gaming, fintech and online services, and many of them work with companies abroad." },
+  { country: "Monaco", code: "MC", iban: 27, kind: "specialist", demoName: "Louis Rossi", blurb: "Monaco is a small jurisdiction with consultants, agencies and service providers who invoice clients abroad." },
+  { country: "Netherlands", code: "NL", iban: 18, kind: "agencies", demoName: "Sanne de Vries", blurb: "The Netherlands has many independent developers, designers and consultants, and Dutch freelancers often work across borders." },
+  { country: "Norway", code: "NO", iban: 15, kind: "specialist", local: { name: "krone", adjective: "Norwegian" }, demoName: "Ola Hansen", blurb: "Norway has highly specialised engineers, consultants and designers, and many work independently." },
+  { country: "Poland", code: "PL", iban: 28, kind: "nearshore", local: { name: "złoty", adjective: "Polish" }, demoName: "Katarzyna Nowak", blurb: "Poland has a large community of software developers, and many companies abroad build engineering teams there." },
+  { country: "Portugal", code: "PT", iban: 25, kind: "southern", demoName: "Inês Silva", blurb: "Portugal has a growing group of remote developers, designers and support teams, and many work with clients abroad." },
+  { country: "Romania", code: "RO", iban: 24, kind: "nearshore", local: { name: "leu", adjective: "Romanian" }, demoName: "Andrei Popescu", blurb: "Romania has a large technology workforce, and many companies abroad hire its developers and engineers." },
+  { country: "Switzerland", code: "CH", iban: 21, kind: "specialist", local: { name: "franc", adjective: "Swiss" }, demoName: "Luca Keller", blurb: "Switzerland has specialist consultants, engineers and designers, and its accounts use IBANs even though it uses the Swiss franc." },
+  { country: "Andorra", code: "AD", iban: 24, kind: "specialist", demoName: "Marc Ribas", blurb: "Andorra is a small jurisdiction with consultants, agencies and service providers who invoice clients abroad." },
+  { country: "Moldova", code: "MD", iban: 24, kind: "nearshore", local: { name: "leu", adjective: "Moldovan" }, demoName: "Ion Rusu", blurb: "Moldova has a growing technology and outsourcing sector, and many companies abroad hire its developers." },
+  { country: "Montenegro", code: "ME", iban: 22, kind: "southern", demoName: "Marko Petrović", blurb: "Montenegro uses the euro and has a growing group of remote developers, designers and service providers." },
+  { country: "North Macedonia", code: "MK", iban: 19, kind: "nearshore", local: { name: "denar", adjective: "Macedonian" }, demoName: "Elena Stojanovska", blurb: "North Macedonia has a growing software and outsourcing sector, and many companies abroad hire its developers and support teams." },
+  { country: "San Marino", code: "SM", iban: 27, kind: "specialist", demoName: "Luca Berti", blurb: "San Marino is a very small country with specialist consultants and companies that invoice clients abroad." },
+  { country: "Serbia", code: "RS", iban: 22, kind: "nearshore", local: { name: "dinar", adjective: "Serbian" }, demoName: "Milan Jovanović", blurb: "Serbia has a strong software and game development scene, and many companies abroad hire its engineers." },
+  { country: "Slovakia", code: "SK", iban: 24, kind: "nearshore", demoName: "Peter Horváth", blurb: "Slovakia has a solid base of engineers and software specialists, and many companies abroad work with them." },
+  { country: "Slovenia", code: "SI", iban: 19, kind: "southern", demoName: "Maja Novak", blurb: "Slovenia has developers, designers and engineers who work with companies abroad, and it uses the euro." },
+  { country: "Spain", code: "ES", iban: 24, kind: "agencies", demoName: "Lucía García", blurb: "Spain has a large community of freelance developers, designers, translators and marketers across many cities." },
+  { country: "Sweden", code: "SE", iban: 24, kind: "specialist", local: { name: "krona", adjective: "Swedish" }, demoName: "Emma Lindberg", blurb: "Sweden has strong engineers, designers and product specialists, and many work as independent consultants." },
+  { country: "Vatican City", code: "VA", iban: 22, kind: "specialist", demoName: "Paolo Bianchi", blurb: "Vatican City is the smallest country in the world, so contractors there are few and specialised." },
 ]
-
-const ZONES: Record<Zone, { fact: string; title: (place: string) => string; description: string }> = {
-  west: {
-    fact: "5 hours ahead of New York",
-    title: (p) => `${p} is 5 hours ahead of New York`,
-    description:
-      "Your morning is their early afternoon. For a few weeks around March and late October it is 4 hours, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
-  },
-  central: {
-    fact: "6 hours ahead of New York",
-    title: (p) => `${p} is 6 hours ahead of New York`,
-    description:
-      "Your morning is their afternoon. For a few weeks around March and late October it is 5 hours, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
-  },
-  east: {
-    fact: "7 hours ahead of New York",
-    title: (p) => `${p} is 7 hours ahead of New York`,
-    description:
-      "Your morning is their late afternoon. For a few weeks around March and late October it is 6 hours, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
-  },
-  iceland: {
-    fact: "4 to 5 hours ahead of New York",
-    title: (p) => `${p} is 4 to 5 hours ahead of New York`,
-    description:
-      "Iceland does not change its clocks, so it is 5 hours ahead in US winter time and 4 hours ahead in US summer time. Your morning is their afternoon. Payouts typically arrive in minutes to hours, same-day where supported.",
-  },
-}
 
 const PAYEES: Record<Kind, CardItem[]> = {
   nearshore: [
     { title: "Software developers", description: "Engineers and QA specialists on project or monthly contracts." },
     { title: "DevOps and data engineers", description: "Infrastructure, data and security engineers." },
     { title: "Designers and creatives", description: "UI and brand designers, illustrators and video editors." },
-    { title: "Support and back-office teams", description: "Customer support and operations staff who work your hours." },
+    { title: "Support and back-office teams", description: "Customer support and operations staff." },
   ],
   baltic: [
     { title: "Software developers", description: "Engineers on project or monthly contracts." },
@@ -138,7 +109,6 @@ function demoIban(code: string, length: number) {
 
 function guideFor(entry: EuroCountry): CorridorGuide {
   const place = placeName(entry.country)
-  const zone = ZONES[entry.zone]
   const euro = !entry.local
   const slug = `pay-contractors-in-${place.toLowerCase().replace(/\s+/g, "-")}`
 
@@ -185,7 +155,6 @@ function guideFor(entry: EuroCountry): CorridorGuide {
     delivery: "by bank transfer",
     titleTail: "EUR Bank Payouts (SEPA)",
     cardLine: euro ? "Euros, by bank transfer" : `Euros, for ${entry.local!.adjective} accounts`,
-    timeNote: { fact: zone.fact, title: zone.title(place), description: zone.description },
     intro: `${entry.blurb} Easner pays your contractor in euros, by bank transfer to an account in ${place}. You pay from your Easner Business balance in dollars.`,
     asks: {
       headline: "What to ask your contractor for",

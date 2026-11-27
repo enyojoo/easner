@@ -58,6 +58,76 @@ function relatedFor(guide: CorridorGuide, all: CorridorGuide[]): CorridorGuide[]
   return [...(europe && europe.slug !== guide.slug ? [europe] : []), ...window]
 }
 
+/** One closing line per page, picked from a few true ones, so the pages do not all end on the same sentence. */
+const CLOSERS = [
+  "It works the same way in every country, from one dashboard.",
+  "Each payment carries its own status, so you can follow it from your dashboard.",
+  "The rate and fees are shown before you send.",
+]
+const closerFor = (slug: string) => CLOSERS[[...slug].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % CLOSERS.length]
+
+/**
+ * The value prop on every page, in place of the old time-zone note: what is good about the way the money reaches this
+ * country. Each one is about the rail the contractor is paid through, and only says what is true of that rail and of how
+ * Easner works (the contractor needs no Easner account, you pay from one balance, the payee gets local currency).
+ */
+function valueCard(guide: CorridorGuide, place: string, currency: string): CardItem {
+  const closer = closerFor(guide.slug)
+  const local = currency === "USD" ? "US dollars" : guide.currencyName
+  switch (guide.deliveryLabel) {
+    case "Bank transfer (SEPA)":
+      return {
+        title: "Paid by SEPA, straight to their IBAN",
+        description: guide.region
+          ? `Easner sends euros by SEPA bank transfer to an IBAN in any of ${EUR_PAYOUT_COUNTRIES.length} countries. You send from your dollar balance and there is no international wire to arrange. ${closer}`
+          : `Easner sends euros by SEPA bank transfer straight to your contractor's IBAN in ${place}. You send from your dollar balance and there is no international wire to arrange. ${closer}`,
+      }
+    case "Bank transfer (Faster Payments)":
+      return {
+        title: "Paid over the UK's own network",
+        description: `Your contractor in ${place} is paid over Faster Payments, the network UK banks use for bank transfers, straight to their sort code and account number. ${closer}`,
+      }
+    case "RTP, FedNow or ACH":
+      return {
+        title: "Paid instantly or by ACH, in dollars",
+        description: `Your contractor's US bank account can be paid over RTP or FedNow, the instant networks, or by ACH, depending on what their bank supports. They are paid in dollars with no foreign account to set up. ${closer}`,
+      }
+    case "Bank transfer (SPEI)":
+      return {
+        title: "Paid over SPEI, Mexico's own network",
+        description: `Your contractor receives pesos over SPEI, the network Mexican banks use for transfers, straight to their CLABE. They need no foreign account and no Easner account. ${closer}`,
+      }
+    case "Pix":
+      return {
+        title: "Paid through Pix, like any local payment",
+        description: `Your contractor receives reais through Pix, Brazil's instant payment system, so the money arrives the way a payment from a Brazilian customer would. They need no foreign account. ${closer}`,
+      }
+    case "Bre-B":
+      return {
+        title: "Paid through Colombia's instant system",
+        description: `Your contractor receives pesos through Bre-B, Colombia's instant payment system, using a key linked to their own bank account. They need no foreign account. ${closer}`,
+      }
+    case "Mobile money":
+      return {
+        title: "Paid straight to their phone",
+        description: `Your contractor receives ${local} in their mobile money wallet, so they do not need a bank account to be paid, and they do not need an Easner account either. ${closer}`,
+      }
+    case "Bank or mobile money":
+      return {
+        title: "Paid the way your contractor prefers",
+        description: `Your contractor in ${place} chooses what suits them, a bank account or a mobile money wallet. ${closer}`,
+      }
+    default:
+      return {
+        title: "Paid locally, with no foreign account",
+        description:
+          currency === "USD"
+            ? `Your contractor receives US dollars in their own bank account in ${place}, and they do not need an Easner account to be paid. ${closer}`
+            : `Your contractor receives ${local} in their own bank account in ${place}. They do not need an Easner account or a dollar account to be paid. ${closer}`,
+      }
+  }
+}
+
 function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
   const country = payoutCountry(guide.country)
   if (!country) throw new Error(`Corridor guide for "${guide.country}" has no payout country in corridors.ts`)
@@ -79,7 +149,7 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
       { label: "They need to give you", value: guide.needs },
       { label: "Their Easner account", value: "Not needed" },
       { label: "Typically arrives", value: "In minutes to hours, same-day where supported" },
-      { label: "Time difference", value: guide.timeNote.fact },
+      { label: "Track it", value: "Each payment carries its own status in your dashboard" },
       { label: "Before you confirm", value: "The rate, the fees and what they receive are shown first" },
       { label: "Pricing", value: "See plans and fees", href: "/pricing" },
     ],
@@ -121,7 +191,7 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
     useCasesHeadline: `Good to know when paying in ${place}`,
     useCases: [
       ...guide.goodToKnow,
-      { title: guide.timeNote.title, description: guide.timeNote.description },
+      valueCard(guide, place, country.currency),
     ],
     relatedCards: {
       headline: guide.region ? "Pay contractors in a European country" : "Pay contractors in other countries",
@@ -153,13 +223,13 @@ export const corridorPages: UseCasePage[] = corridorGuides.map((guide) => buildP
 /** The hub: every country, grouped by region. */
 const AREAS: { area: CorridorGuide["area"]; headline: string; subhead?: string }[] = [
   {
-    area: "Africa",
-    headline: "Pay contractors in Africa",
+    area: "Americas",
+    headline: "Pay contractors in the Americas",
     subhead: "What your contractor needs to give you, and what is good to know, country by country.",
   },
-  { area: "Americas", headline: "Pay contractors in the Americas" },
-  { area: "Asia", headline: "Pay contractors in Asia" },
+  { area: "Africa", headline: "Pay contractors in Africa" },
   { area: "Europe", headline: "Pay contractors in Europe and the UK" },
+  { area: "Asia", headline: "Pay contractors in Asia" },
 ]
 
 export const corridorGroups = AREAS.map(({ area, headline, subhead }) => ({
