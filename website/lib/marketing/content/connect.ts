@@ -1,5 +1,6 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { BUSINESS_SIGNUP_URL, CONTACT_PATH } from "../constants"
+import { connectPayeeFaqs } from "../corridors"
 
 export const connectDefinition: AnswerDefinition = {
   term: "Easner Connect",
@@ -244,6 +245,7 @@ export const connectContent: ProductPageContent = {
       answer:
         "No. Easner does not file with the IRS. On Connect, the platform stays the filer and the withholding agent. On Payroll, the employer stays the filer.",
     },
+    ...connectPayeeFaqs(),
   ],
   ctaBand: {
     headline: "Try Connect in test",

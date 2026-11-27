@@ -1,4 +1,5 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
+import { payrollPayeeFaqs } from "../corridors"
 import { BUSINESS_SIGNUP_URL } from "../constants"
 
 export const payrollDefinition: AnswerDefinition = {
@@ -174,6 +175,7 @@ export const payrollContent: ProductPageContent = {
         "Payroll pays the company's own employees and contractors, with approvals and pay stubs. Connect pays people who are not employees into their own Easner accounts. Unlimited payroll is on Ease Pro.",
       links: [{ label: "Connect", href: "/connect" }],
     },
+    ...payrollPayeeFaqs(),
   ],
   ctaBand: {
     headline: "Add payroll to your Easner Business account",

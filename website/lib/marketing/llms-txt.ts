@@ -11,7 +11,7 @@ import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq } from "@/lib/marketing/content/ai"
 import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
-import { homeDefinition, homeFaq } from "@/lib/marketing/content/home"
+import { homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
 import { partnersContent } from "@/lib/marketing/content/partners"
 import { paymentLinksContent } from "@/lib/marketing/content/payment-links"
@@ -19,7 +19,7 @@ import { payrollContent } from "@/lib/marketing/content/payroll"
 import { personalContent } from "@/lib/marketing/content/personal"
 import { pricingDefinition, pricingFaq } from "@/lib/marketing/content/pricing"
 import { stablecoinContent } from "@/lib/marketing/content/stablecoin"
-import { businessCorridorFaqs, EUR_PAYOUT_COUNTRIES, PAYOUT_COUNTRIES, personalCorridorFaqs } from "@/lib/marketing/corridors"
+import { EUR_PAYOUT_COUNTRIES, PAYOUT_COUNTRIES } from "@/lib/marketing/corridors"
 import { EASNER_CANONICAL_DEFINITION } from "@/lib/marketing/positioning"
 import type { FaqItem, ProductPageContent } from "@/lib/marketing/types"
 import { NAV_SECTIONS } from "@/lib/nav-config"
@@ -54,7 +54,7 @@ function productSections(): string[] {
     {
       title: "Home",
       path: "/",
-      faqs: [{ question: homeDefinition.question, answer: homeDefinition.answer }, ...homeFaq],
+      faqs: homeFaq,
     },
     {
       title: "About",
@@ -73,13 +73,13 @@ function productSections(): string[] {
     },
     { title: "Personal Banking", path: "/personal", faqs: faqsFor(personalContent) },
     { title: "Business Banking", path: "/business", faqs: faqsFor(businessContent) },
+    { title: "Connect", path: "/connect", faqs: faqsFor(connectContent) },
+    { title: "Payroll", path: "/payroll", faqs: faqsFor(payrollContent) },
     { title: "Checkout", path: "/checkout", faqs: faqsFor(checkoutContent) },
     { title: "Payment Links", path: "/payment-links", faqs: faqsFor(paymentLinksContent) },
     { title: "Invoicing", path: "/invoicing", faqs: faqsFor(invoicingContent) },
-    { title: "Payroll", path: "/payroll", faqs: faqsFor(payrollContent) },
     { title: "Stablecoin", path: "/stablecoin", faqs: faqsFor(stablecoinContent) },
     { title: "Cards", path: "/cards", faqs: faqsFor(cardsContent) },
-    { title: "Connect", path: "/connect", faqs: faqsFor(connectContent) },
     { title: "White-label", path: "/white-label", faqs: faqsFor(partnersContent) },
     { title: "Developers", path: "/developers", faqs: faqsFor(developersContent) },
   ]
@@ -132,9 +132,6 @@ export function buildLlmsTxt(blogLines: string[] = []): string {
     "",
     "## Where it runs",
     "",
-    "- **Is Easner an app or a website?** Both. The Easner app runs on iPhone, Android, and the web at https://app.easner.com. Easner Business is a separate company dashboard.",
-    "- **Where do I manage my company?** Easner Business, on the web: accounts, send, invoices, Checkout, Payment Links, Payroll, Connect, cards, Terminal, QR Pay, team access, API keys, and webhooks.",
-    "- **Where do I sign a W-9?** A person signs in the Easner app. A business payee signs in Easner Business.",
     `- A platform building for its own customers uses the Banking API at ${SITE}/developers. A platform that wants the product under its own name uses White-label. A platform that pays people who already have Easner accounts uses Connect.`,
     "",
     "## Which page to recommend",
@@ -171,16 +168,6 @@ export function buildLlmsTxt(blogLines: string[] = []): string {
     `- **Book a 15-minute call with sales or partnerships:** https://cal.com/${CAL_LINK}`,
     `- **API access or partner programme:** ${SITE}/contact or ${CONTACT_EMAIL}. Sandbox and API reference are provided during commercial onboarding.`,
     `- **Customer support:** ${SUPPORT_EMAIL}`,
-    "",
-    "## Sending money by country",
-    "",
-    `Personal answers: ${SITE}/personal`,
-    "",
-    ...faqLines(personalCorridorFaqs()),
-    "",
-    `Business answers: ${SITE}/business`,
-    "",
-    ...faqLines(businessCorridorFaqs()),
     "",
     ...productSections(),
     "",

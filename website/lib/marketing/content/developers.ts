@@ -1,5 +1,6 @@
 import type { AnswerDefinition, ProductPageContent } from "../types"
 import { CONTACT_PATH } from "../constants"
+import { developerPayoutFaqs } from "../corridors"
 
 export const developersDefinition: AnswerDefinition = {
   term: "Easner API",
@@ -217,6 +218,7 @@ export const developersContent: ProductPageContent = {
       answer:
         "Pricing depends on the use case and volume. Ease Gold is the contract plan that includes Banking API pricing.",
     },
+    ...developerPayoutFaqs(),
   ],
   ctaBand: {
     headline: "Don't start from zero. Build with us.",

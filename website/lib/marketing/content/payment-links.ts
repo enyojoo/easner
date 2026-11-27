@@ -131,7 +131,7 @@ export const paymentLinksContent: ProductPageContent = {
         "Yes. Set a billing interval and an optional free trial – customers see a renewal disclosure before they pay.",
     },
     {
-      question: "How do payouts work?",
+      question: "How do Payment Link payouts work?",
       answer:
         "Payments settle into your Easner Business account and reconcile alongside your other activity in one ledger.",
     },

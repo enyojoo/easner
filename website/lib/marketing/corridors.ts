@@ -451,3 +451,105 @@ export function businessCorridorFaqs(): FaqItem[] {
 export function payoutCountriesNamed() {
   return PAYOUT_COUNTRIES.map((country) => country.name)
 }
+
+function payoutFor(name: string): PayoutCountry | undefined {
+  const direct = payoutByName.get(name)
+  if (direct) return direct
+  const alias = Object.entries(SIGNUP_ALIAS).find(([, signup]) => signup === name)?.[0]
+  return alias ? payoutByName.get(alias) : undefined
+}
+
+/** Signup countries, then countries closed for both. Each name appears once. */
+function accountCountries() {
+  return [...BUSINESS_SIGNUP, ...CLOSED_FOR_BOTH]
+}
+
+function cashOut(country: string) {
+  const payout = payoutFor(country)
+  const place = spoken(country)
+  if (!payout) return `Easner does not pay out local currency in ${place}.`
+  return `They can keep dollars, or cash out in ${payout.currency} by ${railPhrase(payout)}.`
+}
+
+export function connectPayeeFaqs(): FaqItem[] {
+  return accountCountries().map((country) => {
+    const place = spoken(country)
+    const question = `How do I pay someone in ${place} with Easner Connect?`
+    const links = [{ label: "Connect", href: "/connect" }]
+    const payout = payoutFor(country)
+    if (RECEIVE_ONLY.includes(country as (typeof RECEIVE_ONLY)[number]) && payout) {
+      return {
+        question,
+        answer: `A payout to ${place} can be received in ${payout.currency} by ${railPhrase(payout)}. People and companies in ${place} cannot open an Easner account, so Easner Connect cannot pay them.`,
+        links,
+      }
+    }
+    if (!businessCanSignUp(country)) {
+      return {
+        question,
+        answer: `People and companies in ${place} cannot open an Easner account, so Easner Connect cannot pay them.`,
+        links,
+      }
+    }
+    if (!appCanSignUp(country)) {
+      return {
+        question,
+        answer: `The Easner app is not available in ${place}. A company there can open Easner Business, link once, and receive US dollars into that business account. A person there cannot open the app, so Connect cannot pay them into a personal Easner account. ${cashOut(country)}`,
+        links,
+      }
+    }
+    const us = country === "United States" ? ` ${usPartners}` : ""
+    return {
+      question,
+      answer: `A person in ${place} opens the Easner app on iPhone, Android, or https://app.easner.com, verifies their identity, and links once. The platform pays from its Easner Business balance into that person's Easner account. Receiving into Easner is free for them. ${cashOut(country)}${us}`,
+      links,
+    }
+  })
+}
+
+export function payrollPayeeFaqs(): FaqItem[] {
+  return accountCountries().map((country) => {
+    const place = spoken(country)
+    const question = `How do I pay a contractor in ${place} with Easner Payroll?`
+    const links = [{ label: "Payroll", href: "/payroll" }]
+    if (!appCanSignUp(country)) {
+      const reason = businessCanSignUp(country)
+        ? `The Easner app is not available in ${place}, so a contractor there cannot connect to payroll in the app.`
+        : `People in ${place} cannot open an Easner account, so they cannot connect to payroll in the app.`
+      return {
+        question,
+        answer: `${reason} Payroll pays the company's own employees and contractors from Easner Business.`,
+        links,
+      }
+    }
+    const payout = payoutFor(country)
+    const rail = payout
+      ? `The local payout in ${place} is ${payout.currency} by ${railPhrase(payout)}.`
+      : `Easner does not pay out local currency in ${place}. They can be paid to an EASETAG in US dollars.`
+    const us = country === "United States" ? ` ${usPartners}` : ""
+    return {
+      question,
+      answer: `Add the contractor in Easner Business and pay from the business balance. They connect in the Easner app on iPhone, Android, or https://app.easner.com. ${rail} A second person approves the payday before money moves.${us}`,
+      links,
+    }
+  })
+}
+
+export function developerPayoutFaqs(): FaqItem[] {
+  return PAYOUT_COUNTRIES.map((country) => ({
+    question: `How do I send a payout to ${spoken(country.name)} with the Easner API?`,
+    answer: `The Developer Banking API sends a payout to ${spoken(country.name)}. The recipient gets ${country.currency} by ${railPhrase(country)}. Customers see balances in regular currencies. This is not Connect and not White-label.`,
+    links: [
+      { label: "Developers", href: "/developers" },
+      { label: "API docs", href: "https://docs.easner.com/" },
+    ],
+  }))
+}
+
+export function whiteLabelPayoutFaqs(): FaqItem[] {
+  return PAYOUT_COUNTRIES.map((country) => ({
+    question: `How do I offer a payout to ${spoken(country.name)} under my own brand?`,
+    answer: `White-label runs that payout under your name, logo, and colour. The recipient in ${spoken(country.name)} gets ${country.currency} by ${railPhrase(country)}. Easner runs the infrastructure. You run the brand.`,
+    links: [{ label: "White-label", href: "/white-label" }],
+  }))
+}

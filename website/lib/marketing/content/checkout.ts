@@ -141,7 +141,7 @@ export const checkoutContent: ProductPageContent = {
         "Card, bank payment methods, and digital wallets, with stablecoin settlement available where enabled. Fees are shown before your customer confirms.",
     },
     {
-      question: "How do payouts work?",
+      question: "How do Checkout payouts work?",
       answer:
         "Checkout and subscription payments settle into your Easner Business account and reconcile alongside your other activity in one ledger.",
     },

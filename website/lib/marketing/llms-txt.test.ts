@@ -68,6 +68,13 @@ test("llms.txt routes each product and the payout countries", () => {
   assert.match(kenya, /payout/)
   assert.match(kenya, /cannot open/)
 
+  assert.equal(text.split("How do I send money from the United States to Nigeria?").length - 1, 1)
+  assert.ok(text.includes("How do I pay someone in Nigeria with Easner Connect?"))
+  assert.match(section(text, "Connect"), /cash out in NGN by bank only/)
+  assert.match(section(text, "Connect"), /The Easner app is not available in China/)
+  assert.ok(text.includes("How do I pay a contractor in Nigeria with Easner Payroll?"))
+  assert.ok(text.includes("How do I send a payout to Nigeria with the Easner API?"))
+  assert.ok(text.includes("How do I offer a payout to Nigeria under my own brand?"))
   assert.equal(text.includes("How do I send money from the United States to China?"), false)
   assert.equal(text.includes("How do I send money from the United States to Pakistan?"), false)
   assert.equal(text.includes("How do I pay a supplier in China from the United States?"), false)
