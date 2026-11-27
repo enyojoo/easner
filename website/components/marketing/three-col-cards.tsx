@@ -12,6 +12,7 @@ import { captureCtaClicked } from "@/lib/marketing/analytics"
 import { MARKETING_BODY_TEXT } from "@/lib/marketing/layout-constants"
 import type { CardItem } from "@/lib/marketing/types"
 import { Headline } from "@/components/ds/headline"
+import { CurrencyFlag } from "@/components/ds/currency-flag"
 import { LinkedText } from "./linked-text"
 
 interface ThreeColCardsProps {
@@ -94,6 +95,11 @@ export function ThreeColCards({
                 {showIcons && item.icon && (
                   <div className="px-5 pt-5 sm:px-6 sm:pt-6">
                     <VisualSlot assetId={item.icon} alt={item.title} aspect="square" className="h-14 w-14 !aspect-square rounded-[16px] shadow-none sm:h-16 sm:w-16" />
+                  </div>
+                )}
+                {item.flag && (
+                  <div className="px-5 pt-5 sm:px-6 sm:pt-6">
+                    <CurrencyFlag code={item.flag} size={40} />
                   </div>
                 )}
                 <CardHeader>

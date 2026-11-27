@@ -109,9 +109,20 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
           headline={content.useCasesHeadline ?? "Use cases"}
           subhead={content.useCasesSubhead}
           items={content.useCases}
+          columns={content.useCasesColumns}
           footerLinks={content.useCaseLinks}
         />
       )}
+      {content.cardGroups?.map((group, index) => (
+        <ThreeColCards
+          key={group.headline}
+          headline={group.headline}
+          subhead={group.subhead}
+          items={group.items}
+          columns={group.columns}
+          className={index % 2 === 1 ? "bg-white" : undefined}
+        />
+      ))}
       {content.commercialModels && (
         <ThreeColCards
           headline={content.commercialModelsSection?.headline ?? "Choose how you partner with Easner"}
@@ -137,6 +148,16 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
       )}
       {content.segments && (
         <ThreeColCards headline={content.segmentsHeadline ?? "Who it's for"} items={content.segments} columns={4} />
+      )}
+      {content.relatedCards && (
+        <ThreeColCards
+          headline={content.relatedCards.headline}
+          subhead={content.relatedCards.subhead}
+          items={content.relatedCards.items}
+          columns={4}
+          footerLinks={content.relatedCards.footerLinks}
+          className="bg-white"
+        />
       )}
       {content.tiers && <TierLadder variant={content.tiers} />}
       {content.tierNote && (

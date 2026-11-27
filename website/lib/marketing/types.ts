@@ -63,6 +63,8 @@ export interface CardItem {
   title: string
   description: string
   icon?: string
+  /** Country code for a round flag above the title (see CurrencyFlag). */
+  flag?: string
   link?: string
 }
 
@@ -146,6 +148,12 @@ export interface ProductPageContent {
   useCases?: CardItem[]
   useCasesHeadline?: string
   useCasesSubhead?: string
+  /** Columns for the use-case cards. Defaults to 3. */
+  useCasesColumns?: 2 | 3 | 4
+  /** Several labelled grids of cards, one after another (the country hub, grouped by region). */
+  cardGroups?: { headline: string; subhead?: string; items: CardItem[]; columns?: 2 | 3 | 4 }[]
+  /** A second grid of cards, for pages that point to their siblings (other countries). */
+  relatedCards?: { headline: string; subhead?: string; items: CardItem[]; footerLinks?: { label: string; href: string }[] }
   /** Jobs that have their own page, shown as links under the use cases ("Run payroll →"). */
   useCaseLinks?: { label: string; href: string }[]
   tierNote?: string

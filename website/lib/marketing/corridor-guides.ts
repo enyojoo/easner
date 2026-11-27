@@ -7,6 +7,7 @@
  * The bank-detail fields are the ones the product asks for (easnerbanking: yc-recipient-schema, bridge-recipient-schema).
  * Check them against the add-recipient form before changing a country.
  */
+import { europeGuides } from "./corridor-guides-europe"
 import type { CardItem, FaqItem } from "./types"
 
 export interface CorridorGuide {
@@ -16,6 +17,10 @@ export interface CorridorGuide {
   slug: string
   /** ISO 3166-1 alpha-2, for the flag. */
   code: string
+  /** Where the hub groups it. */
+  area: "Africa" | "Americas" | "Asia" | "Europe"
+  /** Skip the standard "supplier in X from the United States" answer, when it would not make sense for this page. */
+  noCountryFaq?: boolean
   /** Name used in sentences when it is not the country ("Europe"). Its currency and rail come from `country`. */
   place?: string
   /** Name on the card that links here, when it is not the country. */
@@ -49,9 +54,10 @@ export interface CorridorGuide {
   keywords: string[]
 }
 
-export const corridorGuides: CorridorGuide[] = [
+const baseGuides: CorridorGuide[] = [
   {
     country: "India",
+    area: "Asia",
     deliveryLabel: "Bank transfer",
     needs: "Name, bank account number and IFSC code",
     slug: "pay-contractors-in-india",
@@ -127,6 +133,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Philippines",
+    area: "Asia",
     deliveryLabel: "Bank transfer",
     needs: "Name, bank and account number",
     slug: "pay-contractors-in-the-philippines",
@@ -201,6 +208,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Nigeria",
+    area: "Africa",
     deliveryLabel: "Bank transfer",
     needs: "Name, bank and 10-digit account number (NUBAN)",
     slug: "pay-contractors-in-nigeria",
@@ -276,6 +284,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Mexico",
+    area: "Americas",
     deliveryLabel: "Bank transfer (SPEI)",
     needs: "Name and 18-digit CLABE",
     slug: "pay-contractors-in-mexico",
@@ -346,6 +355,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Brazil",
+    area: "Americas",
     deliveryLabel: "Pix",
     needs: "Name, Pix key and key type, plus CPF or CNPJ if the key isn't one",
     slug: "pay-contractors-in-brazil",
@@ -421,6 +431,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Kenya",
+    area: "Africa",
     deliveryLabel: "Bank or mobile money",
     needs: "Name, then a phone number and provider, or a bank and account number",
     slug: "pay-contractors-in-kenya",
@@ -496,6 +507,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "United Kingdom",
+    area: "Europe",
     slug: "pay-contractors-in-the-united-kingdom",
     code: "GB",
     currencyName: "pounds",
@@ -554,6 +566,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Germany",
+    area: "Europe",
     slug: "pay-contractors-in-europe",
     code: "EU",
     place: "Europe",
@@ -564,11 +577,12 @@ export const corridorGuides: CorridorGuide[] = [
     deliveryLabel: "Bank transfer (SEPA)",
     needs: "Name and IBAN",
     titleTail: "EUR Bank Payouts (SEPA)",
-    cardLine: "Euros, by bank transfer",
+    cardLine: "Euros, to 28 countries",
     timeNote: {
       fact: "5 to 7 hours ahead of New York",
       title: "Europe is 5 to 7 hours ahead of New York",
-      description: "In US winter time, Ireland, Portugal and Iceland are 5 hours ahead, Central Europe 6, and Finland, Greece and Cyprus 7. It is an hour less in US summer time. Payouts typically arrive in minutes to hours, same-day where supported. When timing matters, send earlier in your day.",
+      description:
+        "Ireland and Portugal are 5 hours ahead, Central Europe 6, and Finland, Greece and the Baltics 7. For a few weeks around March and late October it is an hour less, because US and European clocks change on different dates. Payouts typically arrive in minutes to hours, same-day where supported.",
     },
     intro:
       "Many businesses abroad work with developers, designers, translators and agencies across Europe. Easner pays your contractor in euros, by bank transfer to an account in one of 28 countries. You pay from your Easner Business balance in dollars.",
@@ -613,6 +627,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Ghana",
+    area: "Africa",
     slug: "pay-contractors-in-ghana",
     code: "GH",
     currencyName: "Ghanaian cedis",
@@ -670,6 +685,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "South Africa",
+    area: "Africa",
     slug: "pay-contractors-in-south-africa",
     code: "ZA",
     currencyName: "rand",
@@ -727,6 +743,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Uganda",
+    area: "Africa",
     slug: "pay-contractors-in-uganda",
     code: "UG",
     currencyName: "Ugandan shillings",
@@ -785,6 +802,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Rwanda",
+    area: "Africa",
     slug: "pay-contractors-in-rwanda",
     code: "RW",
     currencyName: "Rwandan francs",
@@ -843,6 +861,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Cameroon",
+    area: "Africa",
     slug: "pay-contractors-in-cameroon",
     code: "CM",
     currencyName: "Central African CFA francs",
@@ -901,6 +920,7 @@ export const corridorGuides: CorridorGuide[] = [
   },
   {
     country: "Senegal",
+    area: "Africa",
     slug: "pay-contractors-in-senegal",
     code: "SN",
     currencyName: "West African CFA francs",
@@ -957,4 +977,243 @@ export const corridorGuides: CorridorGuide[] = [
       "pay suppliers in Senegal",
     ],
   },
+  {
+    country: "United States",
+    area: "Americas",
+    slug: "pay-contractors-in-the-united-states",
+    code: "US",
+    noCountryFaq: true,
+    currencyName: "US dollars",
+    delivery: "by ACH bank transfer",
+    deliveryLabel: "Bank transfer (ACH)",
+    needs: "Name, routing number, account number, account type and address",
+    titleTail: "USD Bank Payouts (ACH)",
+    cardLine: "Dollars, by ACH bank transfer",
+    timeNote: {
+      fact: "Four time zones on the mainland",
+      title: "US contractors work in four main time zones",
+      description: "Eastern, Central, Mountain and Pacific time run across the mainland, three hours apart end to end. Check your contractor's time zone before you send. Payouts typically arrive in minutes to hours, same-day where supported.",
+    },
+    intro:
+      "Businesses outside the US pay US contractors, agencies and suppliers all the time. Easner pays your contractor in US dollars, by ACH bank transfer to a US bank account. You pay from your Easner Business balance, and your company can be based in any of 174 countries.",
+    asks: {
+      headline: "What to ask your contractor for",
+      body: "Ask for these details before you pay. Your contractor doesn't need an Easner account.",
+      bullets: [
+        "The account holder's name, as it appears at the bank",
+        "Their 9-digit ABA routing number",
+        "Their bank account number",
+        "Whether the account is checking or savings",
+        "Their address",
+      ],
+    },
+    addStep: "Enter their name, routing number, account number, account type and address. They don't need an Easner account.",
+    demo: {
+      name: "Jordan Lee",
+      detail: "Bank account • USD",
+      fields: [
+        { label: "Account holder name", value: "Jordan Lee" },
+        { label: "Routing number", value: "123456789" },
+        { label: "Account number", value: "000123456789" },
+        { label: "Account type", value: "Checking" },
+      ],
+    },
+    goodToKnow: [
+      { title: "Routing number and account number", description: "A US bank account is identified by a 9-digit routing number and an account number. They are two different numbers, so ask your contractor for both." },
+      { title: "They're paid in dollars", description: "Your contractor receives USD by ACH bank transfer. The rate, the fees and what they receive are shown before you confirm." },
+    ],
+    payees: [
+      { title: "Freelance developers", description: "Engineers and technical contractors on project or monthly contracts." },
+      { title: "Designers and creatives", description: "Brand and UI designers, illustrators, photographers and video editors." },
+      { title: "Agencies and consultants", description: "Agencies and independent consultants who invoice your business." },
+      { title: "Suppliers and manufacturers", description: "Companies you buy goods and services from." },
+    ],
+    faq: [
+      { question: "What bank details do I need to pay a contractor in the United States?", answer: "The account holder's name, the 9-digit routing number, the account number, whether the account is checking or savings, and the contractor's address. The contractor does not need an Easner account." },
+      { question: "Can a business outside the US pay a contractor in the US?", answer: "Yes. A company can open Easner Business from 174 countries, subject to verification, and pay a US contractor in US dollars by bank. Opening an account needs each owner to verify their identity. The rate, the fees and what the recipient gets are shown before you confirm." },
+    ],
+    keywords: [
+      "pay contractors in the United States",
+      "pay US freelancers from abroad",
+      "pay US suppliers in dollars",
+      "send business payment to the US",
+      "pay US contractors by ACH",
+    ],
+  },
+  {
+    country: "Colombia",
+    area: "Americas",
+    slug: "pay-contractors-in-colombia",
+    code: "CO",
+    currencyName: "Colombian pesos",
+    delivery: "through Bre-B",
+    deliveryLabel: "Bre-B",
+    needs: "Name and Bre-B key",
+    titleTail: "COP Payouts Through Bre-B",
+    cardLine: "Pesos, through Bre-B",
+    timeNote: {
+      fact: "0 to 1 hours behind New York",
+      title: "Colombia is 0 to 1 hours behind New York",
+      description: "Colombia does not change its clocks, so it matches New York in US winter time and is one hour behind in US summer time. You share almost the whole working day. Payouts typically arrive in minutes to hours, same-day where supported.",
+    },
+    intro:
+      "Colombia has a growing community of developers, designers and bilingual support teams, and it shares New York's time zone for much of the year. Bre-B is Colombia's instant payment system, and Easner pays your contractor in Colombian pesos through it. You pay from your Easner Business balance in dollars.",
+    asks: {
+      headline: "What to ask your contractor for",
+      body: "Ask for these two things before you pay. Your contractor doesn't need an Easner account.",
+      bullets: [
+        "The account holder's name",
+        "Their Bre-B key, the key linked to their bank account",
+      ],
+    },
+    addStep: "Enter their name and Bre-B key. They don't need an Easner account.",
+    demo: {
+      name: "Camila Rojas",
+      detail: "Bre-B key • COP",
+      fields: [
+        { label: "Account holder name", value: "Camila Rojas" },
+        { label: "Bre-B key", value: "camila@example.com" },
+      ],
+    },
+    goodToKnow: [
+      { title: "Ask for the Bre-B key", description: "A Bre-B key is the identifier a person links to their bank account, such as a phone number or an email address. Ask your contractor which key they use, and enter it exactly." },
+      { title: "Paid in pesos, through an instant system", description: "Your contractor receives COP through Bre-B, Colombia's instant payment system. You pay from your USD balance, and the rate, the fees and what they receive are shown before you confirm." },
+    ],
+    payees: [
+      { title: "Software developers", description: "Engineers and QA testers on project or monthly contracts." },
+      { title: "Designers and creatives", description: "Brand and UI designers, illustrators and video editors." },
+      { title: "Bilingual support teams", description: "Spanish and English customer support and operations staff." },
+      { title: "Marketers and content creators", description: "Social media, paid media and content freelancers." },
+    ],
+    faq: [
+      { question: "What is a Bre-B key?", answer: "Bre-B is Colombia's instant payment system. A Bre-B key is the identifier a person links to their bank account, such as a phone number or an email address. Ask your contractor which key they use." },
+      { question: "What currency does a contractor in Colombia receive?", answer: "Colombian pesos (COP), through Bre-B. You pay from your Easner Business balance in dollars. The rate, the fees and what the recipient gets are shown before you confirm." },
+    ],
+    keywords: [
+      "pay contractors in Colombia",
+      "pay Colombian freelancers from the US",
+      "pay developers in Colombia",
+      "send business payment to Colombia",
+      "pay suppliers in Colombia",
+    ],
+  },
+  {
+    country: "Indonesia",
+    area: "Asia",
+    slug: "pay-contractors-in-indonesia",
+    code: "ID",
+    currencyName: "Indonesian rupiah",
+    delivery: "in their own bank account",
+    deliveryLabel: "Bank transfer",
+    needs: "Name, bank and account number",
+    titleTail: "IDR Bank Payouts",
+    cardLine: "Rupiah, to a bank account",
+    timeNote: {
+      fact: "11 to 12 hours ahead of New York",
+      title: "Indonesia is 11 to 12 hours ahead of New York",
+      description: "Jakarta does not change its clocks, so it is 12 hours ahead of New York in US winter time and 11 hours ahead in US summer time. Bali is one hour further ahead. Your morning is their late evening. Payouts typically arrive in minutes to hours, same-day where supported.",
+    },
+    intro:
+      "Indonesia has a large community of developers, designers, digital marketers and virtual assistants, and many remote workers are based in places like Bali. Easner pays your contractor in Indonesian rupiah, into a bank account. You pay from your Easner Business balance in dollars.",
+    asks: {
+      headline: "What to ask your contractor for",
+      body: "Ask for these three things before you pay. Your contractor doesn't need an Easner account.",
+      bullets: [
+        "The account holder's name, as it appears at the bank",
+        "The name of their bank",
+        "Their bank account number",
+      ],
+    },
+    addStep: "Enter their name, bank and account number. They don't need an Easner account.",
+    demo: {
+      name: "Putri Wijaya",
+      detail: "Bank account • IDR",
+      fields: [
+        { label: "Account holder name", value: "Putri Wijaya" },
+        { label: "Account number", value: "0123456789" },
+      ],
+    },
+    goodToKnow: [
+      { title: "Bank accounts, in rupiah", description: "Easner pays Indonesian contractors into bank accounts in IDR. Ask for the name of their bank and the full account number." },
+      { title: "Check the bank name", description: "Indonesia has many banks, and the payment is matched to the account at the bank you enter, so make sure the bank name is right." },
+    ],
+    payees: [
+      { title: "Software developers", description: "Engineers and QA testers on project or monthly contracts." },
+      { title: "Designers and video editors", description: "UI designers, illustrators, motion designers and editors." },
+      { title: "Digital marketers", description: "Social media, SEO and paid media freelancers." },
+      { title: "Virtual assistants and support", description: "Admin, research and customer support staff." },
+    ],
+    faq: [
+      { question: "What bank details do I need to pay a contractor in Indonesia?", answer: "The account holder's name, the name of their bank and their bank account number. The contractor does not need an Easner account." },
+      { question: "What currency does a contractor in Indonesia receive?", answer: "Indonesian rupiah (IDR), by bank transfer. You pay from your Easner Business balance in dollars. The rate, the fees and what the recipient gets are shown before you confirm." },
+    ],
+    keywords: [
+      "pay contractors in Indonesia",
+      "pay Indonesian freelancers from the US",
+      "pay developers in Indonesia",
+      "send business payment to Indonesia",
+      "pay suppliers in Indonesia",
+    ],
+  },
+  {
+    country: "Thailand",
+    area: "Asia",
+    slug: "pay-contractors-in-thailand",
+    code: "TH",
+    currencyName: "Thai baht",
+    delivery: "in their own bank account",
+    deliveryLabel: "Bank transfer",
+    needs: "Name, bank and account number",
+    titleTail: "THB Bank Payouts",
+    cardLine: "Baht, to a bank account",
+    timeNote: {
+      fact: "11 to 12 hours ahead of New York",
+      title: "Thailand is 11 to 12 hours ahead of New York",
+      description: "Thailand does not change its clocks, so it is 12 hours ahead of New York in US winter time and 11 hours ahead in US summer time. Your morning is their late evening. Payouts typically arrive in minutes to hours, same-day where supported.",
+    },
+    intro:
+      "Thailand has a growing base of developers, designers and content creators, and many remote workers base themselves there. Easner pays your contractor in Thai baht, into a bank account. You pay from your Easner Business balance in dollars.",
+    asks: {
+      headline: "What to ask your contractor for",
+      body: "Ask for these three things before you pay. Your contractor doesn't need an Easner account.",
+      bullets: [
+        "The account holder's name, as it appears at the bank",
+        "The name of their bank",
+        "Their bank account number",
+      ],
+    },
+    addStep: "Enter their name, bank and account number. They don't need an Easner account.",
+    demo: {
+      name: "Napat Chaiyasit",
+      detail: "Bank account • THB",
+      fields: [
+        { label: "Account holder name", value: "Napat Chaiyasit" },
+        { label: "Account number", value: "123 4 56789 0" },
+      ],
+    },
+    goodToKnow: [
+      { title: "Bank accounts, in baht", description: "Easner pays Thai contractors into bank accounts in THB. Ask for the name of their bank and the full account number." },
+      { title: "They're paid in baht", description: "Your contractor receives THB. You pay from your USD balance, and the rate, the fees and what they receive are shown before you confirm." },
+    ],
+    payees: [
+      { title: "Software developers", description: "Engineers and QA testers on project or monthly contracts." },
+      { title: "Designers and creatives", description: "Graphic and UI designers, illustrators and video editors." },
+      { title: "Content creators and writers", description: "Writers, translators and social media creators." },
+      { title: "Virtual assistants and support", description: "Admin, research and customer support staff." },
+    ],
+    faq: [
+      { question: "What bank details do I need to pay a contractor in Thailand?", answer: "The account holder's name, the name of their bank and their bank account number. The contractor does not need an Easner account." },
+      { question: "What currency does a contractor in Thailand receive?", answer: "Thai baht (THB), by bank transfer. You pay from your Easner Business balance in dollars. The rate, the fees and what the recipient gets are shown before you confirm." },
+    ],
+    keywords: [
+      "pay contractors in Thailand",
+      "pay Thai freelancers from the US",
+      "pay developers in Thailand",
+      "send business payment to Thailand",
+      "pay suppliers in Thailand",
+    ],
+  },
 ]
+
+/** Every guide, base countries first, then the euro-payout countries. */
+export const corridorGuides: CorridorGuide[] = [...baseGuides, ...europeGuides]

@@ -6,7 +6,7 @@
 import type { FaqItem, ProductPageContent } from "../types"
 import { businessContent } from "./business"
 import { connectContent, connectTaxFaqs } from "./connect"
-import { corridorCards, corridorLinks, corridorPages } from "./corridor-pages"
+import { corridorGroups, corridorPages } from "./corridor-pages"
 import { invoicingContent } from "./invoicing"
 
 export type UseCaseParent = "connect" | "business"
@@ -94,7 +94,7 @@ const businessPage = (
     h1: string
     subhead: string
     /** Cards and links under the steps, for a page that lists other pages. */
-    more?: Pick<ProductPageContent, "useCases" | "useCasesHeadline" | "useCasesSubhead" | "useCaseLinks">
+    more?: Pick<ProductPageContent, "cardGroups">
   },
 ): ProductPageContent => ({
   metadata: content.metadata,
@@ -288,10 +288,7 @@ export const useCasePages: UseCasePage[] = [
         pick(businessFaqs, "Can my team use the account?"),
       ],
       more: {
-        useCasesHeadline: "Pay contractors in a specific country",
-        useCasesSubhead: "What your contractor needs to give you, and what is good to know, country by country.",
-        useCases: corridorCards,
-        useCaseLinks: [...corridorLinks, { label: "All Business Banking use cases", href: "/business" }],
+        cardGroups: corridorGroups,
       },
     }),
   },

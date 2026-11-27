@@ -31,14 +31,38 @@ const europeFaq: FaqItem = {
   links: [{ label: "Business Banking", href: "/business" }],
 }
 
+
+const cardFor = (guide: CorridorGuide): CardItem => ({
+  title: guide.label ?? guide.country,
+  description: guide.cardLine,
+  flag: guide.code,
+  link: pathFor(guide),
+})
+
+/**
+ * The pages a country page points to. Every page links to the same few neighbours it would have anyway, but each
+ * page gets a different window of its region, so links spread across the set instead of piling onto the first few.
+ * The Europe page lists every euro-payout country, and each euro country links back to it.
+ */
+function relatedFor(guide: CorridorGuide, all: CorridorGuide[]): CorridorGuide[] {
+  const area = all.filter((other) => other.area === guide.area && other.slug !== guide.slug)
+  if (guide.region) return area.filter((other) => other.country !== "United Kingdom")
+  if (guide.area !== "Europe") return area.slice(0, 8)
+  const europe = all.find((other) => other.region)
+  const countries = area.filter((other) => !other.region && other.country !== "United Kingdom")
+  const start = Math.max(0, all.filter((other) => other.area === "Europe").findIndex((other) => other.slug === guide.slug))
+  const window = Array.from({ length: Math.min(7, countries.length) }, (_, i) => countries[(start + i) % countries.length])
+  return [...(europe && europe.slug !== guide.slug ? [europe] : []), ...window]
+}
+
 function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
   const country = payoutCountry(guide.country)
   if (!country) throw new Error(`Corridor guide for "${guide.country}" has no payout country in corridors.ts`)
   const place = placeOf(guide)
   const slot = `mkt-corridor-${guide.code.toLowerCase()}`
   const received = `${guide.currencyName} ${guide.delivery}`
-  const others = all.filter((other) => other.slug !== guide.slug)
   const hubPath = "/business/pay-overseas-suppliers"
+  const related = relatedFor(guide, all)
 
   const content: ProductPageContent = {
     metadata: {
@@ -96,10 +120,11 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
       ...guide.goodToKnow,
       { title: guide.timeNote.title, description: guide.timeNote.description },
     ],
-    useCaseLinks: [
-      ...others.map((other) => ({ label: `Pay contractors in ${placeOf(other)}`, href: pathFor(other) })),
-      { label: "Pay suppliers abroad", href: hubPath },
-    ],
+    relatedCards: {
+      headline: guide.region ? "Pay contractors in a European country" : "Pay contractors in other countries",
+      items: related.map(cardFor),
+      footerLinks: [{ label: "See every payout country", href: hubPath }],
+    },
     segmentsHeadline: `Who businesses typically pay in ${place}`,
     segments: guide.payees,
     definition: {
@@ -109,7 +134,7 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
     },
     faq: [
       ...guide.faq,
-      guide.region ? europeFaq : businessPayFaq(guide.country),
+      ...(guide.region ? [europeFaq] : guide.noCountryFaq ? [] : [businessPayFaq(guide.country)]),
       pick("What do I need to verify my business?"),
       pick("Who can open an Easner Business account?"),
     ],
@@ -122,14 +147,21 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
 
 export const corridorPages: UseCasePage[] = corridorGuides.map((guide) => buildPage(guide, corridorGuides))
 
-/** One card per country, for the "pay suppliers abroad" page that lists them. */
-export const corridorCards: CardItem[] = corridorGuides.map((guide) => ({
-  title: guide.label ?? guide.country,
-  description: guide.cardLine,
-  link: pathFor(guide),
-}))
+/** The hub: every country, grouped by region. */
+const AREAS: { area: CorridorGuide["area"]; headline: string; subhead?: string }[] = [
+  {
+    area: "Africa",
+    headline: "Pay contractors in Africa",
+    subhead: "What your contractor needs to give you, and what is good to know, country by country.",
+  },
+  { area: "Americas", headline: "Pay contractors in the Americas" },
+  { area: "Asia", headline: "Pay contractors in Asia" },
+  { area: "Europe", headline: "Pay contractors in Europe and the UK" },
+]
 
-export const corridorLinks = corridorGuides.map((guide) => ({
-  label: `Pay contractors in ${placeOf(guide)}`,
-  href: pathFor(guide),
+export const corridorGroups = AREAS.map(({ area, headline, subhead }) => ({
+  headline,
+  subhead,
+  columns: 4 as const,
+  items: corridorGuides.filter((guide) => guide.area === area).map(cardFor),
 }))

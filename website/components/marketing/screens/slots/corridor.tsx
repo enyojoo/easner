@@ -71,7 +71,7 @@ function RecipientCard({ guide }: { guide: CorridorGuide }) {
   )
 }
 
-const payoutSlot = (guide: CorridorGuide): Canvas => panel(600, 420, surface(<PayoutCard guide={guide} />))
+const payoutSlot = (guide: CorridorGuide): Canvas => panel(600, 480, surface(<PayoutCard guide={guide} />))
 const recipientSlot = (guide: CorridorGuide): Canvas =>
   panel(600, 200 + guide.demo.fields.length * 78, surface(<RecipientCard guide={guide} />))
 
