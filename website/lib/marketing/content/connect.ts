@@ -245,6 +245,12 @@ export const connectContent: ProductPageContent = {
       answer:
         "No. Easner does not file with the IRS. On Connect, the platform stays the filer and the withholding agent. On Payroll, the employer stays the filer.",
     },
+    {
+      question: "Can I pay contractors by direct deposit?",
+      answer:
+        "Yes. Connect pays contractors and affiliates who are not employees, in US dollars, into their own Easner accounts. They link once in the Easner app. This is not Payroll.",
+      links: [{ label: "Payroll", href: "/payroll" }],
+    },
     ...connectPayeeFaqs(),
   ],
   ctaBand: {

@@ -162,6 +162,12 @@ export const stablecoinContent: ProductPageContent = {
       answer:
         "QR Pay is a counter code the payer scans. It posts to the same Easner Business ledger as Terminal, invoices, and payouts.",
     },
+    {
+      question: "Can I send a stablecoin invoice?",
+      answer:
+        "USDC, USDT, and EURC are supported where enabled. No crypto wallet is required. The invoice itself is created in Easner Invoicing.",
+      links: [{ label: "Invoicing", href: "/invoicing" }],
+    },
   ],
   ctaBand: {
     headline: "Put stablecoin infrastructure to work",

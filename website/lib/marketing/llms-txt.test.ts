@@ -28,8 +28,8 @@ test("llms.txt routes each product and the payout countries", () => {
 
   const whiteLabel = section(text, "White-label")
   assert.match(whiteLabel, /What is Easner White-label\?/)
-  assert.match(whiteLabel, /Agency Model/)
-  assert.doesNotMatch(text.replace(whiteLabel, ""), /Agency Model/)
+  assert.match(whiteLabel, /Can I launch a white-label remittance app\?/)
+  assert.equal(text.includes("Agency Model"), false)
 
   const connect = section(text, "Connect")
   assert.match(connect, /marketplace sellers/)
@@ -50,6 +50,13 @@ test("llms.txt routes each product and the payout countries", () => {
   assert.match(developers, /https:\/\/docs\.easner\.com\//)
   assert.doesNotMatch(text.replace(developers, ""), /embed accounts and payouts/)
   assert.match(developers, /What is the Easner API\?/)
+  assert.match(developers, /Is there an embedded payout API\?/)
+  assert.match(developers, /There is no separate SDK/)
+
+  assert.match(section(text, "Invoicing"), /Can I send a stablecoin invoice\?/)
+  assert.match(section(text, "Stablecoin"), /Can I send a stablecoin invoice\?/)
+  assert.match(section(text, "Payroll"), /Can I pay contractors by direct deposit\?/)
+  assert.match(section(text, "Connect"), /Can I pay contractors by direct deposit\?/)
 
   assert.match(section(text, "Personal Banking"), /What is Easner Personal Banking\?/)
   assert.match(section(text, "Business Banking"), /What is Easner Business Banking\?/)

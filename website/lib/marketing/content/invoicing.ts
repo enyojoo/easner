@@ -189,6 +189,11 @@ export const invoicingContent: ProductPageContent = {
         "Yes, where enabled. A stablecoin invoice can show a USDC or EURC deposit address and a memo. The payment lands in the Easner Business balance.",
     },
     {
+      question: "Can I send a stablecoin invoice?",
+      answer:
+        "Yes, where enabled. The invoice can show a USDC or EURC deposit address and a memo. The payment lands in the Easner Business balance.",
+    },
+    {
       question: "Where do Easner invoice payments go?",
       answer:
         "Into the Easner Business balance, on the same ledger as Checkout and Payment Links. Ease includes 10 invoices a month. Ease Plus and above include unlimited invoices.",

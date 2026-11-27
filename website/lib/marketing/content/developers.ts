@@ -218,6 +218,18 @@ export const developersContent: ProductPageContent = {
       answer:
         "Pricing depends on the use case and volume. Ease Gold is the contract plan that includes Banking API pricing.",
     },
+    {
+      question: "Is there an embedded payout API?",
+      answer:
+        "Yes. The Developer Banking API covers accounts, deposits, and payouts for the platform's own customers. The API reference is at https://docs.easner.com/. This is not Connect and not White-label.",
+      links: [{ label: "API docs", href: "https://docs.easner.com/" }, { label: "Connect", href: "/connect" }],
+    },
+    {
+      question: "Is there a money transfer SDK?",
+      answer:
+        "There is no separate SDK. The Developer Banking API is the integration for accounts, deposits, and payouts. The API reference is at https://docs.easner.com/.",
+      links: [{ label: "API docs", href: "https://docs.easner.com/" }],
+    },
     ...developerPayoutFaqs(),
   ],
   ctaBand: {

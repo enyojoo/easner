@@ -6,7 +6,7 @@ export const partnersDefinition: AnswerDefinition = {
   term: "Easner White-label",
   question: "What is Easner White-label?",
   answer:
-    "Easner White-label is a commercial programme with two models. The Agency Model is a live payments product on Easner infrastructure, under the partner's name, logo, and colour. The Developer API Model is the Banking API, without that branded deployment.",
+    "Easner White-label is a live payments product on Easner infrastructure, under the partner's name, logo, and colour. The Developer API Model is the Banking API, without that branded deployment.",
   facts: [
     {
       term: "What Easner runs",
@@ -27,7 +27,6 @@ export const partnersContent: ProductPageContent = {
     keywords: [
       "white-label banking app",
       "branded money transfer app",
-      "agency model payments",
       "Easner White-label",
       "white-label remittance",
       "OTC money transfer",
@@ -112,13 +111,13 @@ export const partnersContent: ProductPageContent = {
   extraSections: [
     {
       headline: "Full-stack branded deployment",
-      body: "The Agency Model is a live, branded money-movement product on Easner – not a DIY integration. Easner runs backend infrastructure, orchestration, provider connectivity, and compliance; you operate under your brand.",
+      body: "White-label is a live, branded money-movement product on Easner – not a DIY integration. Easner runs backend infrastructure, orchestration, provider connectivity, and compliance; you operate under your brand.",
       visualSlot: "mkt-ui-partners-agency",
       altText: "A partner's branded app on top of the accounts, payouts, verification and rails Easner runs",
     },
     {
       headline: "Branded programs for faith & mission",
-      body: "Large churches and nonprofits often move money across borders for diaspora giving, branch support, and field missions. The Agency Model lets you run that program on Easner without building a banking stack from scratch.",
+      body: "Large churches and nonprofits often move money across borders for diaspora giving, branch support, and field missions. White-label lets you run that program on Easner without building a banking stack from scratch.",
       visualSlot: "mkt-ui-partners-faith",
       altText: "A faith organisation's branded app showing diaspora giving and branch support",
     },
@@ -180,18 +179,23 @@ export const partnersContent: ProductPageContent = {
     {
       question: "Can I white-label Easner?",
       answer:
-        "Yes. The Agency Model is a live payments product on Easner infrastructure under your name, logo, and colour. Easner runs infrastructure, verification, screening, payout connections, and operations. You run the brand and the customer relationship.",
+        "Yes. Easner White-label is a live payments product on Easner infrastructure under your name, logo, and colour. Easner runs infrastructure, verification, screening, payout connections, and operations. You run the brand and the customer relationship.",
     },
     {
-      question: "What is the Agency Model?",
+      question: "Can I launch a white-label remittance app?",
       answer:
-        "The Agency Model is the branded deployment. Your customers use a product under your name, built on Easner. The Developer API Model is separate: it is the Banking API, without that branded product.",
+        "Yes. Easner White-label is a live payments product under your name, logo, and colour, including for an aggregator. Easner runs the infrastructure. You run the brand.",
+    },
+    {
+      question: "How is White-label different from the Developer API Model?",
+      answer:
+        "White-label is the branded deployment. Your customers use a product under your name, built on Easner. The Developer API Model is separate: it is the Banking API, without that branded product.",
       links: [{ label: "Banking API", href: "/developers" }],
     },
     {
       question: "Can the app use my logo?",
       answer:
-        "Yes. The Agency Model carries your name, logo, and colour. Easner runs the infrastructure behind it.",
+        "Yes. White-label carries your name, logo, and colour. Easner runs the infrastructure behind it.",
     },
     {
       question: "How is White-label priced?",
@@ -204,7 +208,7 @@ export const partnersContent: ProductPageContent = {
   ctaBand: {
     headline: "Ready to launch under your brand?",
     subhead:
-      "Talk to Easner about the Agency Model, KYB/KYC, and getting set up in your customized name.",
+      "Talk to Easner about White-label, KYB/KYC, and getting set up in your customized name.",
     ctas: [{ label: "Talk to our team", href: CONTACT_PATH, analyticsLocation: "partners_cta_band" }],
   },
 }

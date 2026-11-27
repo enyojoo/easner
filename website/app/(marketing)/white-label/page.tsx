@@ -21,7 +21,7 @@ export default function PartnersPage() {
             name: "Easner White-label",
             description: partnersContent.metadata.description,
             path: "/white-label",
-            serviceType: "Branded cross-border programs, Agency Model",
+            serviceType: "Branded cross-border programs, White-label",
           }),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },

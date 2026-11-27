@@ -175,6 +175,11 @@ export const payrollContent: ProductPageContent = {
         "Payroll pays the company's own employees and contractors, with approvals and pay stubs. Connect pays people who are not employees into their own Easner accounts. Unlimited payroll is on Ease Pro.",
       links: [{ label: "Connect", href: "/connect" }],
     },
+    {
+      question: "Can I pay contractors by direct deposit?",
+      answer:
+        "Yes. Payroll pays the company's own contractors from the Easner Business balance in 80+ countries. Each person connects in the Easner app on iPhone, Android, or the web and chooses an EASETAG, a bank account, or mobile money.",
+    },
     ...payrollPayeeFaqs(),
   ],
   ctaBand: {
