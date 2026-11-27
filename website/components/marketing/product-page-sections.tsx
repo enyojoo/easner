@@ -136,7 +136,7 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
         </div>
       )}
       {content.segments && (
-        <ThreeColCards headline="Who it's for" items={content.segments} columns={4} />
+        <ThreeColCards headline={content.segmentsHeadline ?? "Who it's for"} items={content.segments} columns={4} />
       )}
       {content.tiers && <TierLadder variant={content.tiers} />}
       {content.tierNote && (

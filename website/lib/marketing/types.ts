@@ -155,6 +155,8 @@ export interface ProductPageContent {
   commercialModelsSection?: { headline: string; subhead?: string; analyticsLocation?: string }
   capabilities?: CardItem[]
   segments?: CardItem[]
+  /** Overrides the "Who it's for" heading above the segments. */
+  segmentsHeadline?: string
   ctaBand: CtaBandContent
   /** Always-visible definition used for answer engines and FAQ schema. */
   definition?: AnswerDefinition

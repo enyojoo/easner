@@ -271,6 +271,168 @@ export const comparePages: ComparePage[] = [
     note: "PayPal's own fee pages were not available to read, so exact fee percentages and caps are not compared. PayPal also lists two products, standard Payouts and Enterprise Payouts. The rows say which one each fact belongs to.",
   },
   {
+    slug: "easner-connect-vs-tipalti",
+    otherName: "Tipalti",
+    easnerName: "Easner Connect",
+    easnerHref: "/connect",
+    metadata: {
+      title: "Easner Connect vs Tipalti | Platform Payouts",
+      description:
+        "Easner Connect and Tipalti compared for platforms that pay many people: what the person needs, countries, tax forms, access and pricing. Sourced and dated.",
+      keywords: [
+        "Easner Connect vs Tipalti",
+        "Tipalti alternative",
+        "Tipalti alternative for startups",
+        "Tipalti alternative for small platforms",
+      ],
+    },
+    h1: "Easner Connect vs Tipalti",
+    answer:
+      "Easner Connect pays people into their own Easner accounts in US dollars and collects each person's tax form once for every platform they work with. Tipalti is a payables platform that pays people by the method they choose, in 200+ countries, and access starts with a demo or quote request. Easner Connect lets a smaller platform build in test mode first.",
+    lastChecked: CHECKED,
+    rows: [
+      {
+        dimension: "What the person needs",
+        easner: "An Easner account. They link once in the Easner app and verify their identity.",
+        other: "A payee account in Tipalti's portal. They enter contact, tax and payment details, choose a payment method and currency, and submit tax forms.",
+        sourceUrl: "https://tipalti.com/mass-payments/self-service-onboarding/",
+      },
+      {
+        dimension: "How the person is paid",
+        easner: "In US dollars, from your Easner Business balance into the person's own Easner account. They can keep dollars or cash out where Easner supports it.",
+        other: "By the method they pick in the portal, including local bank transfer, wire transfer, PayPal and paper check, in the currency they choose.",
+        sourceUrl: "https://tipalti.com/mass-payments/",
+      },
+      {
+        dimension: "Countries",
+        easner: "People in 158 countries can open the Easner app. Cash-out follows Easner's payout countries.",
+        other: "Tipalti says payouts reach 200+ countries and territories, in 120 currencies.",
+        sourceUrl: "https://tipalti.com/mass-payments/payout-api/",
+        easnerHref: "/answers/connect",
+      },
+      {
+        dimension: "Tax forms",
+        easner: "The person signs a W-9 or W-8BEN once in the Easner app and shares it with each platform. The platform stays the filer.",
+        other: "Collects W-9 and the W-8 series, and prepares 1099 and 1042-S reports with withholding calculated. Whether it files with the IRS is not stated on that page.",
+        sourceUrl: "https://tipalti.com/mass-payments/automated-tax-compliance/",
+      },
+      {
+        dimension: "Payout timing",
+        easner: "Typically within seconds, into the person's Easner account.",
+        other: "No payout time is stated on the pages read.",
+        sourceUrl: "https://tipalti.com/mass-payments/",
+      },
+      {
+        dimension: "Getting started",
+        easner: "Test mode first. Easner reviews your program before live access.",
+        other: "Access starts with a demo or quote request. A sandbox is described in its developer hub.",
+        sourceUrl: "https://tipalti.com/mass-payments/payout-api/",
+      },
+      {
+        dimension: "Platform pricing",
+        easner: "Needs Ease Pro or Ease Gold. On Ease Pro each payment costs $0.50 plus 0.5%, capped at $15, and receiving is free for the person. See Pricing.",
+        other: "Mass Payments plans start at $249 a month, plus transaction fees. Per-payment rates are not published, and there is no free tier.",
+        sourceUrl: "https://tipalti.com/pricing/",
+        easnerHref: "/pricing",
+      },
+    ],
+    chooseEasner: [
+      "You are a smaller platform that wants to build and test first, then go live after a program review.",
+      "Your people are happy to receive US dollars in an Easner account, and can keep them or cash out.",
+      "You want each person's tax form collected once and shared with every platform they work with.",
+    ],
+    faq: [
+      {
+        question: "Is Easner Connect an alternative to Tipalti?",
+        answer:
+          "For paying the people on a platform, yes, with a different model. Easner Connect pays into each person's own Easner account in US dollars and is built for smaller platforms. Tipalti pays by the method each payee chooses, in 200+ countries, and also handles accounts payable.",
+        links: [{ label: "Connect", href: "/connect" }],
+      },
+    ],
+    note: "Tipalti's pricing page shows \"starting at\" figures only. Tipalti's own comparison table was not used as a source. Tipalti's pages were read on the date above.",
+  },
+  {
+    slug: "easner-connect-vs-trolley",
+    otherName: "Trolley",
+    easnerName: "Easner Connect",
+    easnerHref: "/connect",
+    metadata: {
+      title: "Easner Connect vs Trolley | Platform Payouts",
+      description:
+        "Easner Connect and Trolley compared for marketplaces that pay many people: what the person needs, countries, tax forms, access and pricing. Sourced and dated.",
+      keywords: [
+        "Easner Connect vs Trolley",
+        "Trolley alternative",
+        "Trolley alternative for startups",
+        "Trolley alternative for marketplaces",
+      ],
+    },
+    h1: "Easner Connect vs Trolley",
+    answer:
+      "Easner Connect pays people into their own Easner accounts in US dollars and collects each person's tax form once for every platform they work with. Trolley is a payout and compliance platform for marketplaces that pays recipients by the method they choose, in 210+ countries. Easner Connect lets a smaller platform build in test mode first.",
+    lastChecked: CHECKED,
+    rows: [
+      {
+        dimension: "What the person needs",
+        easner: "An Easner account. They link once in the Easner app and verify their identity.",
+        other: "A Trolley recipient profile. They register through an invite, pick a payout method, and complete identity or business verification and tax forms.",
+        sourceUrl: "https://trolley.com/use-cases/marketplaces/",
+      },
+      {
+        dimension: "How the person is paid",
+        easner: "In US dollars, from your Easner Business balance into the person's own Easner account. They can keep dollars or cash out where Easner supports it.",
+        other: "By the method they choose, depending on country: local bank transfer, wire, PayPal, Venmo, mobile wallet, check or debit card.",
+        sourceUrl: "https://trolley.com/pay/",
+      },
+      {
+        dimension: "Countries",
+        easner: "People in 158 countries can open the Easner app. Cash-out follows Easner's payout countries.",
+        other: "Trolley states 210+ countries and territories and 135+ currencies. Routes depend on where you send from.",
+        sourceUrl: "https://trolley.com/platform/global-payout-network/",
+        easnerHref: "/answers/connect",
+      },
+      {
+        dimension: "Tax forms",
+        easner: "The person signs a W-9 or W-8BEN once in the Easner app and shares it with each platform. The platform stays the filer.",
+        other: "Collects W-9 and W-8 forms before the first payout, with automated withholding and 1099 and 1042 e-filing.",
+        sourceUrl: "https://trolley.com/tax/",
+      },
+      {
+        dimension: "Payout timing",
+        easner: "Typically within seconds, into the person's Easner account.",
+        other: "No delivery time is stated for its own payout rails on the pages read.",
+        sourceUrl: "https://trolley.com/pay/",
+      },
+      {
+        dimension: "Getting started",
+        easner: "Test mode first. Easner reviews your program before live access.",
+        other: "A free self-serve sandbox and a free trial sign-up, and a demo or sales route. How production access is granted is not stated.",
+        sourceUrl: "https://trolley.com/developers/",
+      },
+      {
+        dimension: "Platform pricing",
+        easner: "Needs Ease Pro or Ease Gold. On Ease Pro each payment costs $0.50 plus 0.5%, capped at $15, and receiving is free for the person. See Pricing.",
+        other: "Published on its pricing page: for example $1.00 per US ACH payout, $4.00 per SEPA payout and 2.00% for currency conversion, plus annual plan and module fees.",
+        sourceUrl: "https://trolley.com/pricing",
+        easnerHref: "/pricing",
+      },
+    ],
+    chooseEasner: [
+      "You are a smaller platform that wants to build and test first, then go live after a program review.",
+      "Your people are happy to receive US dollars in an Easner account, and can keep them or cash out.",
+      "You want each person's tax form collected once and shared with every platform they work with.",
+    ],
+    faq: [
+      {
+        question: "Is Easner Connect an alternative to Trolley?",
+        answer:
+          "For paying the people on a platform, yes, with a different model. Easner Connect pays into each person's own Easner account in US dollars and is built for smaller platforms. Trolley pays by the method each recipient chooses, in 210+ countries, and files tax forms for US-sourced payouts.",
+        links: [{ label: "Connect", href: "/connect" }],
+      },
+    ],
+    note: "Trolley's pricing page shows several plans and modules, and a separate fee table for each sending country. The per-payment figures here are from its US dollar table. Trolley's pages were read on the date above.",
+  },
+  {
     slug: "easner-payroll-vs-deel",
     otherName: "Deel",
     easnerName: "Easner Payroll",

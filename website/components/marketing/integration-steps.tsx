@@ -11,12 +11,15 @@ interface IntegrationStepsProps {
   footnote?: string
   className?: string
   id?: string
+  /** Three short steps sit side by side from lg: and stack below it, instead of two columns with one left over. */
+  threeUpFromLg?: boolean
 }
 
-export function IntegrationSteps({ headline, steps, footnote, className, id }: IntegrationStepsProps) {
+export function IntegrationSteps({ headline, steps, footnote, className, id, threeUpFromLg }: IntegrationStepsProps) {
   // Wait until xl: to go multi-column beyond 2 – at lg: (1024–1279px) a 3-4 column grid
   // is too narrow for a single long word in bold uppercase tracked letters (e.g. "DEPLOYMENT").
   const wideCols = steps.length >= 5 ? "xl:grid-cols-5" : steps.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"
+  const threeUp = threeUpFromLg && steps.length === 3
 
   return (
     <section id={id} className={cn("scroll-mt-24 bg-white pb-16 pt-8 md:pb-24 md:pt-12", className)}>
@@ -28,7 +31,12 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
             </Headline>
           </div>
         )}
-        <div className={cn("grid grid-cols-1 gap-5 sm:grid-cols-2 xl:gap-6", wideCols)}>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-5 xl:gap-6",
+            threeUp ? "lg:grid-cols-3" : cn("sm:grid-cols-2", wideCols),
+          )}
+        >
           {steps.map((step, index) => (
             <article
               key={step.title}
@@ -46,7 +54,10 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
               </p>
               {index < steps.length - 1 && (
                 <div
-                  className="absolute right-0 top-1/2 hidden h-px w-6 translate-x-full bg-brand-stone xl:block"
+                  className={cn(
+                    "absolute right-0 top-1/2 hidden h-px w-6 translate-x-full bg-brand-stone",
+                    threeUp ? "lg:block" : "xl:block",
+                  )}
                   aria-hidden
                 />
               )}
@@ -54,7 +65,7 @@ export function IntegrationSteps({ headline, steps, footnote, className, id }: I
           ))}
         </div>
         {footnote && (
-          <p className="mx-auto mt-8 max-w-3xl text-center text-sm leading-7 text-web-body lg:text-left">
+          <p className="mx-auto mt-8 max-w-3xl text-center text-sm leading-7 text-web-body lg:mx-0 lg:max-w-none lg:text-left">
             <LinkedText text={footnote} analyticsLocation="steps_inline_url" />
           </p>
         )}

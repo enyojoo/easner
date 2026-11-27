@@ -33,7 +33,7 @@ export const homeDefinition: AnswerDefinition = {
 export const homeMetadata = {
   title: "Easner | Stablecoin-Native Banking & Payment Infrastructure",
   description:
-    "Stablecoin-native banking and payment infrastructure with account details in your name, multi-currency balances, and payouts to 80+ countries.",
+    "Stablecoin-native banking and payment infrastructure for individuals and businesses. Get paid, hold dollars, and pay people in 80+ countries.",
   keywords: [
     "stablecoin-native banking infrastructure",
     "personal banking app",
@@ -52,7 +52,7 @@ export const homeMetadata = {
 export const homeHero = {
   h1Lines: ["Your Money.", "Moved with Ease."],
   subhead:
-    "Stablecoin-native banking and payment infrastructure that lets you bank, spend, and send money to people and businesses in 80+ countries.",
+    "Stablecoin-native banking and payment infrastructure. Get paid, hold dollars, and pay people and businesses in 80+ countries, in minutes.",
   visualSlot: "mkt-hero-home-01",
   altText: "Easner Business home showing a total balance, money in and out, and recent payments with their status",
   ctas: [
@@ -92,26 +92,35 @@ export const whyEasnerPillars: CardItem[] = [
 
 export const solutionsPersonas = [
   {
+    id: "sme",
+    label: "Business Banking",
+    headline: "Get paid. Pay your people. Keep track.",
+    body: "Collect customer payments, pay suppliers and contractors in 80+ countries, and give your team the access they need. Run your business finances from one dashboard, whether you work locally or globally.",
+    visualSlot: "mkt-persona-sme",
+    altText: "A café owner at the counter taking a payment from a customer on a card terminal",
+    ctas: [{ label: "Explore Business Banking", href: "/business", analyticsLocation: "homepage_persona_sme" }] satisfies Cta[],
+  },
+  {
+    id: "connect",
+    label: "Easner Connect",
+    headline: "Pay the people who earn on your app.",
+    body: "Add Easner to your withdraw page. Creators, sellers and freelancers link once, you pay them from your balance, and the money lands in their own Easner account in dollars, typically within seconds.",
+    visualSlot: "mkt-persona-connect",
+    altText: "A creator filming a cooking video in her kitchen, with a phone on a tripod in front of her",
+    ctas: [{ label: "Explore Connect", href: "/connect", analyticsLocation: "homepage_persona_connect" }] satisfies Cta[],
+  },
+  {
     id: "diaspora",
     label: "Personal Banking",
     headline: "Get paid in dollars. Pay anyone, anywhere.",
-    body: "Hold USD and EUR, get paid to account details in your name, and send to bank accounts and mobile money in 80+ countries – all from the Easner app.",
+    body: "Hold USD and EUR, get paid by clients and the apps you work with to account details in your name, and send to bank accounts and mobile money in 80+ countries – all from the Easner app.",
     visualSlot: "mkt-persona-diaspora",
     altText: "Remote professional using Easner on mobile",
     ctas: [{ label: "Explore Personal Banking", href: "/personal", analyticsLocation: "homepage_persona_diaspora" }] satisfies Cta[],
   },
   {
-    id: "sme",
-    label: "Business Banking",
-    headline: "Get paid. Pay your people. Keep track.",
-    body: "Collect customer payments, pay suppliers and contractors, and give your team the access they need. Run your business finances from one dashboard, whether you work locally or globally.",
-    visualSlot: "mkt-persona-sme",
-    altText: "Small business owner managing international payments",
-    ctas: [{ label: "Explore Business Banking", href: "/business", analyticsLocation: "homepage_persona_sme" }] satisfies Cta[],
-  },
-  {
     id: "otc",
-    label: "Deploy Easner",
+    label: "White-label",
     headline: "Cross-border payments under your brand",
     body: "Build a branded payment program with Easner handling the underlying infrastructure, verification flows, and supported payout connections.",
     visualSlot: "mkt-persona-otc",
@@ -120,7 +129,7 @@ export const solutionsPersonas = [
   },
   {
     id: "dev",
-    label: "Easner API",
+    label: "Banking API",
     headline: "Build payments into your product",
     body: "Connect verification, accounts, collections, and international payouts to your platform through Easner APIs and webhooks.",
     visualSlot: "mkt-persona-dev",
@@ -128,6 +137,26 @@ export const solutionsPersonas = [
     ctas: [{ label: "Explore Developers", href: "/developers", analyticsLocation: "homepage_persona_dev" }] satisfies Cta[],
   },
 ]
+
+/** The infrastructure story, in three steps. This is where stablecoins are named and explained. */
+export const homeHowItWorks = {
+  headline: "How it works",
+  steps: [
+    {
+      title: "Money comes in",
+      description: "Get account details in your name, take payments with Checkout and Payment Links, and send invoices.",
+    },
+    {
+      title: "Stablecoins move it",
+      description: "Payments settle on stablecoin rails, so money moves all day, every day, without the chain of banks that slows transfers down.",
+    },
+    {
+      title: "Money goes out",
+      description: "Pay bank accounts and mobile money in 80+ countries, in minutes to hours, same-day where supported.",
+    },
+  ],
+  footnote: "You see dollars and normal accounts. Stablecoins do the moving underneath.",
+}
 
 export const corridorContent = {
   headline: "At home. Around the world.",

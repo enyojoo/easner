@@ -102,7 +102,7 @@ export function SolutionsByAudience() {
             Built for how you move money
           </Headline>
           <p className={cn("mx-auto mt-3 max-w-3xl text-web-body sm:mt-4", MARKETING_BODY_TEXT)}>
-            For your everyday money, your business payments, or the next product you build. Choose the Easner account or integration that fits.
+            Run your business, pay the people on your app, manage your own money, or build on Easner. Choose the account or integration that fits.
           </p>
         </div>
       </div>

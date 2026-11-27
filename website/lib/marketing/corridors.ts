@@ -338,7 +338,7 @@ const payoutByName = new Map(PAYOUT_COUNTRIES.map((country) => [country.name, co
 
 export const EUR_PAYOUT_COUNTRIES = EUR
 
-function spoken(name: string) {
+export function spoken(name: string) {
   if (name === "Philippines") return "the Philippines"
   if (name === "United Kingdom") return "the United Kingdom"
   if (name === "Netherlands") return "the Netherlands"
@@ -346,7 +346,7 @@ function spoken(name: string) {
   return name
 }
 
-function railPhrase(country: PayoutCountry) {
+export function railPhrase(country: PayoutCountry) {
   if (country.name === "Nigeria") return "bank only"
   if (country.rail === "both") return "bank or mobile money"
   if (country.rail === "mobile") return "mobile money"
@@ -432,6 +432,18 @@ function businessFrom(country: string): FaqItem {
     answer: `A business in ${spoken(country)} can open Easner Business and pay a supplier in the United States in USD by bank. Business accounts can be opened from 174 countries. Opening an account needs the person to verify their own identity. ${shown}`,
     links: [{ label: "Business Banking", href: "/business" }],
   }
+}
+
+/** A named payout country, or undefined. Corridor pages read their currency and rail from here, so they cannot drift. */
+export function payoutCountry(name: string): PayoutCountry | undefined {
+  return payoutByName.get(name)
+}
+
+/** The business answer for one payout country, as it appears on /answers. */
+export function businessPayFaq(name: string): FaqItem {
+  const country = payoutByName.get(name)
+  if (!country) throw new Error(`No payout country named "${name}"`)
+  return businessTo(country)
 }
 
 export function businessCorridorFaqs(): FaqItem[] {

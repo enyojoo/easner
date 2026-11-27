@@ -6,6 +6,7 @@
 import type { FaqItem, ProductPageContent } from "../types"
 import { businessContent } from "./business"
 import { connectContent, connectTaxFaqs } from "./connect"
+import { corridorCards, corridorLinks, corridorPages } from "./corridor-pages"
 import { invoicingContent } from "./invoicing"
 
 export type UseCaseParent = "connect" | "business"
@@ -92,6 +93,8 @@ const businessPage = (
   content: Pick<ProductPageContent, "metadata" | "definition" | "keyFacts" | "integrationSteps" | "faq"> & {
     h1: string
     subhead: string
+    /** Cards and links under the steps, for a page that lists other pages. */
+    more?: Pick<ProductPageContent, "useCases" | "useCasesHeadline" | "useCasesSubhead" | "useCaseLinks">
   },
 ): ProductPageContent => ({
   metadata: content.metadata,
@@ -107,6 +110,7 @@ const businessPage = (
   integrationStepsHeadline: "How it works",
   integrationSteps: content.integrationSteps,
   useCaseLinks: [{ label: "All Business Banking use cases", href: "/business" }],
+  ...content.more,
   definition: content.definition,
   faq: content.faq,
   ctaBand: businessContent.ctaBand,
@@ -283,6 +287,12 @@ export const useCasePages: UseCasePage[] = [
         pick(businessFaqs, "Who can open an Easner Business account?"),
         pick(businessFaqs, "Can my team use the account?"),
       ],
+      more: {
+        useCasesHeadline: "Pay contractors in a specific country",
+        useCasesSubhead: "What your contractor needs to give you, and what is good to know, country by country.",
+        useCases: corridorCards,
+        useCaseLinks: [...corridorLinks, { label: "All Business Banking use cases", href: "/business" }],
+      },
     }),
   },
   {
@@ -347,6 +357,8 @@ export const useCasePages: UseCasePage[] = [
     }),
   },
 ]
+
+useCasePages.push(...corridorPages)
 
 export function useCasesFor(parent: UseCaseParent) {
   return useCasePages.filter((page) => page.parent === parent)

@@ -67,9 +67,9 @@ export const businessContent: ProductPageContent = {
     { title: "Get paid or pay out", description: "Get account details in your business's name, collect customer payments, send invoices, and pay suppliers and contractors in 80+ countries." },
   ],
   hero: {
-    h1: "Global banking for business",
+    h1: "Pay suppliers and contractors in 80+ countries",
     subhead:
-      "Account details in your business's name, customer payments, invoices and payouts to 80+ countries – in one dashboard, on stablecoin-native rails.",
+      "Business banking for companies that pay people abroad: account details in your business's name, customer payments, invoices and payouts to 80+ countries, in one dashboard on stablecoin-native rails.",
     visualSlot: "mkt-hero-business-01",
     altText: "Easner Business total balance with recent activity: an invoice paid, a local transfer and a payroll run",
     ctas: [
@@ -143,7 +143,7 @@ export const businessContent: ProductPageContent = {
     },
   ],
   useCaseLinks: [
-    { label: "Pay suppliers abroad", href: "/business/pay-overseas-suppliers" },
+    { label: "Pay suppliers and contractors abroad, by country", href: "/business/pay-overseas-suppliers" },
     { label: "Get paid by customers abroad", href: "/business/get-paid-by-international-customers" },
     { label: "Run payroll", href: "/payroll" },
     { label: "Sell on your website", href: "/checkout" },

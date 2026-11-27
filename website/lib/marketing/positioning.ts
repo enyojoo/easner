@@ -1,10 +1,10 @@
 /** Canonical messaging – import for copy, FAQ, llms.txt, and JSON-LD. */
 
 export const EASNER_CANONICAL_DEFINITION =
-  "Easner is stablecoin-native banking and payment infrastructure for individuals and businesses. Manage everyday finances, hold multiple currencies, receive payments, and pay people and businesses in the US and around the world. Settlement runs on stablecoin rails behind banking-simple screens. Banking and payment services are provided by licensed partners."
+  "Easner is stablecoin-native banking and payment infrastructure for individuals and businesses. Businesses use it to run their money and pay people abroad, apps and websites use it to pay their users, and individuals use it to get paid in dollars and send money. Settlement runs on stablecoin rails behind banking-simple screens. Banking and payment services are provided by licensed partners."
 
 export const EASNER_CANONICAL_DEFINITION_SHORT =
-  "Stablecoin-native banking for individuals and businesses. Manage accounts, receive payments, and pay people and businesses in one place."
+  "Stablecoin-native banking and payment infrastructure for individuals and businesses. Get paid, hold dollars, and pay people in 80+ countries."
 
 export const EASNER_ONE_LINE_THESIS =
   "Stablecoin-native banking and payment infrastructure for individuals and businesses."

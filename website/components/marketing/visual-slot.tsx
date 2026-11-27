@@ -16,6 +16,7 @@ import {
   Users2,
 } from "lucide-react"
 import Image, { type StaticImageData } from "next/image"
+import connectPhoto from "@/assets/Connect.jpg"
 import developerPhoto from "@/assets/Developer.jpg"
 import freelancerPhoto from "@/assets/Freelancer.jpg"
 import otcAgentPhoto from "@/assets/otcagent.jpg"
@@ -35,8 +36,9 @@ interface VisualSlotProps {
 
 /** People photos for the homepage audience tabs: they keep a human feel beside the product screens elsewhere. */
 const PERSONA_PHOTOS: Record<string, { src: StaticImageData; position: string }> = {
+  "mkt-persona-connect": { src: connectPhoto, position: "50% 40%" },
   "mkt-persona-diaspora": { src: freelancerPhoto, position: "50% 38%" },
-  "mkt-persona-sme": { src: smePhoto, position: "50% 22%" },
+  "mkt-persona-sme": { src: smePhoto, position: "70% 50%" },
   "mkt-persona-dev": { src: developerPhoto, position: "50% 42%" },
   "mkt-persona-otc": { src: otcAgentPhoto, position: "50% 35%" },
 }

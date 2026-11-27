@@ -104,7 +104,7 @@ export const connectContent: ProductPageContent = {
   hero: {
     h1: "Pay everyone you owe",
     subhead:
-      "Add Easner to your withdraw page. The people on your platform link once, you pay them from your Easner Business balance, and the money lands in their own Easner account, typically within seconds.",
+      "For apps and websites that pay creators, sellers and freelancers. Add Easner to your withdraw page. The people you pay link once, you pay them from your Easner Business balance, and the money lands in their own Easner account, typically within seconds.",
     visualSlot: "mkt-hero-connect-01",
     altText:
       "A platform's withdraw page with the Easner Connect sheet open, and a phone beside it showing the same connection to approve",
@@ -265,12 +265,14 @@ export const connectContent: ProductPageContent = {
       links: [{ label: "Payroll", href: "/payroll" }],
     },
     {
-      question: "How does Easner Connect compare with Stripe Connect or PayPal Payouts?",
+      question: "How does Easner Connect compare with Stripe Connect, PayPal Payouts, Tipalti or Trolley?",
       answer:
         "Easner Connect pays people into their own Easner accounts in US dollars and collects each person's tax form once. The comparison pages set out the differences with Stripe Connect and PayPal Payouts, with a source and a date for every competitor fact.",
       links: [
         { label: "Connect vs Stripe Connect", href: "/compare/easner-connect-vs-stripe-connect" },
         { label: "Connect vs PayPal Payouts", href: "/compare/easner-connect-vs-paypal-payouts" },
+        { label: "Connect vs Tipalti", href: "/compare/easner-connect-vs-tipalti" },
+        { label: "Connect vs Trolley", href: "/compare/easner-connect-vs-trolley" },
       ],
     },
     {

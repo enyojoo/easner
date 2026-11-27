@@ -3,13 +3,14 @@ import Script from "next/script"
 import { TrustedBy } from "@/components/trusted-by"
 import { HeroSection } from "@/components/marketing/hero-section"
 import { WhyEasner } from "@/components/marketing/why-easner"
+import { IntegrationSteps } from "@/components/marketing/integration-steps"
 import { ProductGrid } from "@/components/marketing/product-grid"
 import { SolutionsByAudience } from "@/components/marketing/solutions-by-audience"
 import { CorridorStory } from "@/components/marketing/corridor-story"
 import { ComplianceStrip } from "@/components/marketing/compliance-strip"
 import { FaqSection } from "@/components/marketing/faq-section"
 import { CtaBand } from "@/components/marketing/cta-band"
-import { homeMetadata, homeCtaBand, homeFaq } from "@/lib/marketing/content/home"
+import { homeMetadata, homeCtaBand, homeFaq, homeHowItWorks } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
 import { answerEngineJsonLd, CORRIDOR_AREA_SERVED, faqPageJsonLd, financialServiceJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 
@@ -80,6 +81,13 @@ export default function HomePage() {
       </div>
       <SolutionsByAudience />
       <ProductGrid />
+      <IntegrationSteps
+        id="how-it-works"
+        headline={homeHowItWorks.headline}
+        steps={homeHowItWorks.steps}
+        threeUpFromLg
+        footnote={homeHowItWorks.footnote}
+      />
       <WhyEasner />
       <CorridorStory />
       <ComplianceStrip />
