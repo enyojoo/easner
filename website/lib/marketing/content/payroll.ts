@@ -183,7 +183,7 @@ export const payrollContent: ProductPageContent = {
       question: "Which countries can I pay contractors in?",
       answer:
         "Country-by-country answers for Payroll, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-payroll" }],
+      links: [{ label: "Answers", href: "/answers/payroll" }],
     },
   ],
   ctaBand: {

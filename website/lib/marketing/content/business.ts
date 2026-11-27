@@ -196,7 +196,7 @@ export const businessContent: ProductPageContent = {
       question: "Which countries can my business pay?",
       answer:
         "Country-by-country answers for Business Banking, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-business-banking" }],
+      links: [{ label: "Answers", href: "/answers/business" }],
     },
   ],
   ctaBand: {

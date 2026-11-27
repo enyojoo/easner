@@ -118,7 +118,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/personal",
     label: "Personal Banking",
     definition: personalDefinition,
-    faq: [...(personalContent.faq ?? []), ...personalCorridorFaqs()],
+    faq: personalContent.faq,
     howTo: personalDefinition.steps
       ? { name: personalDefinition.stepsHeadline ?? "How to open an Easner Personal Banking account", steps: personalDefinition.steps }
       : undefined,
@@ -127,7 +127,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/business",
     label: "Business Banking",
     definition: businessDefinition,
-    faq: [...(businessContent.faq ?? []), ...businessCorridorFaqs()],
+    faq: businessContent.faq,
     howTo: {
       name: "How to open an Easner Business account",
       steps: [
@@ -191,7 +191,7 @@ export const aiSections: AiAnswerSection[] = [
     href: "/payroll",
     label: "Payroll",
     definition: payrollDefinition,
-    faq: [...(payrollContent.faq ?? []), ...payrollPayeeFaqs()],
+    faq: payrollContent.faq,
     howTo: {
       name: "How to run payroll on Easner",
       steps: [
@@ -210,24 +210,40 @@ export const aiSections: AiAnswerSection[] = [
     href: "/connect",
     label: "Connect",
     definition: connectDefinition,
-    faq: [...(connectContent.faq ?? []), ...connectTaxFaqs, ...connectPayeeFaqs()],
+    faq: connectContent.faq,
     howTo: howToFromSteps(connectContent.integrationStepsHeadline ?? "How to pay people with Easner Connect", connectContent.integrationSteps),
   },
   {
     href: "/white-label",
     label: "White-label",
     definition: partnersDefinition,
-    faq: [...(partnersContent.faq ?? []), ...whiteLabelPayoutFaqs()],
+    faq: partnersContent.faq,
     howTo: howToFromSteps(partnersContent.integrationStepsHeadline ?? "How to launch Easner White-label", partnersContent.integrationSteps),
   },
   {
     href: "/developers",
     label: "Developers",
     definition: developersDefinition,
-    faq: [...(developersContent.faq ?? []), ...developerPayoutFaqs()],
+    faq: developersContent.faq,
     howTo: howToFromSteps(developersContent.integrationStepsHeadline ?? "How to get started with the Easner API", developersContent.integrationSteps),
   },
 ]
+
+/**
+ * Country and tax-form detail, one list per product. Each one lives on its own page at /answers/<slug>,
+ * so no single page carries every country.
+ */
+export const aiDetailByHref: Record<string, FaqItem[]> = {
+  "/personal": personalCorridorFaqs(),
+  "/business": businessCorridorFaqs(),
+  "/connect": [...connectTaxFaqs, ...connectPayeeFaqs()],
+  "/payroll": payrollPayeeFaqs(),
+  "/white-label": whiteLabelPayoutFaqs(),
+  "/developers": developerPayoutFaqs(),
+}
+
+/** Product pages under /answers/<slug>. Home stays on /answers itself. */
+export const aiProductPages = aiSections.filter((section) => section.href !== "/")
 
 export const aiAllFaqs: FaqItem[] = [
   ...new Map(

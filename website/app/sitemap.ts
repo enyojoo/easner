@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next"
 import { getAllPosts, getAuthors, getCategories, isThinArchive } from "@/lib/blog/queries"
+import { aiProductPages } from "@/lib/marketing/content/ai"
 import { authorPath, authorsPath, categoryPath, cropImageUrl, postPath } from "@/lib/blog/urls"
 
 export const revalidate = 3600
@@ -136,6 +137,12 @@ function staticEntries(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/white-label`, lastModified: lastModified.whiteLabel, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/developers`, lastModified: lastModified.developers, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/answers`, lastModified: lastModified.answers, changeFrequency: "weekly", priority: 0.7 },
+    ...aiProductPages.map((section) => ({
+      url: `${baseUrl}/answers${section.href}`,
+      lastModified: lastModified.answers,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
     { url: `${baseUrl}/pricing`, lastModified: lastModified.pricing, changeFrequency: "monthly", priority: 0.9 },
   ]
 }

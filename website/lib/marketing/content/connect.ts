@@ -253,7 +253,7 @@ export const connectContent: ProductPageContent = {
       question: "Which countries and tax forms does Connect cover?",
       answer:
         "Country-by-country answers and tax-form details for Connect are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-connect" }],
+      links: [{ label: "Answers", href: "/answers/connect" }],
     },
   ],
   ctaBand: {

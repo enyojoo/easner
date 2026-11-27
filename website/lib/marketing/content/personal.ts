@@ -237,7 +237,7 @@ export const personalContent: ProductPageContent = {
       question: "Which countries can I send money to?",
       answer:
         "Country-by-country answers for Personal Banking, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-personal-banking" }],
+      links: [{ label: "Answers", href: "/answers/personal" }],
     },
   ],
   ctaBand: {

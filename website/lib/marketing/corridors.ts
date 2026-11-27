@@ -471,8 +471,9 @@ function cashOut(country: string) {
   return `They can keep dollars, or cash out in ${payout.currency} by ${railPhrase(payout)}.`
 }
 
+/** A country earns its own Connect answer only if Connect can pay there, or a person there can open an account. */
 export function connectPayeeFaqs(): FaqItem[] {
-  return accountCountries().map((country) => {
+  return accountCountries().filter((country) => businessCanSignUp(country) || payoutFor(country)).map((country) => {
     const place = spoken(country)
     const question = `How do I pay someone in ${place} with Easner Connect?`
     const links = [{ label: "Connect", href: "/connect" }]
@@ -507,8 +508,9 @@ export function connectPayeeFaqs(): FaqItem[] {
   })
 }
 
+/** A country earns its own Payroll answer only if someone there can connect in the app, or gets a local payout. */
 export function payrollPayeeFaqs(): FaqItem[] {
-  return accountCountries().map((country) => {
+  return accountCountries().filter((country) => appCanSignUp(country) || payoutFor(country)).map((country) => {
     const place = spoken(country)
     const question = `How do I pay a contractor in ${place} with Easner Payroll?`
     const links = [{ label: "Payroll", href: "/payroll" }]

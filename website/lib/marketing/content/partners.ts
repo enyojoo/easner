@@ -206,7 +206,7 @@ export const partnersContent: ProductPageContent = {
       question: "Which countries can I offer payouts in?",
       answer:
         "Country-by-country answers for White-label, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-white-label" }],
+      links: [{ label: "Answers", href: "/answers/white-label" }],
     },
   ],
   ctaBand: {

@@ -9,7 +9,7 @@ import { checkoutContent } from "@/lib/marketing/content/checkout"
 import { connectContent } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
-import { aiAllFaqs, aiCompanyFaq } from "@/lib/marketing/content/ai"
+import { aiCompanyFaq, aiDetailByHref, aiProductPages } from "@/lib/marketing/content/ai"
 import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
 import { homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
@@ -91,11 +91,15 @@ function productSections(): string[] {
   return productBlocks().flatMap((block) => [`## ${block.title}`, "", `${SITE}${block.path}`, "", ...faqLines(block.faqs), ""])
 }
 
-/** Country and tax-form answers, listed once under /answers. Skips questions already shown on a product page above. */
+/** Country and tax-form answers, one page per product under /answers/<slug>. */
 function answersSection(): string[] {
-  const shown = new Set(productBlocks().flatMap((block) => block.faqs.map((item) => item.question)))
-  const extra = aiAllFaqs.filter((item) => !shown.has(item.question))
-  return ["## Answers: countries and tax forms", "", `${SITE}/answers`, "", ...faqLines(extra), ""]
+  const lines: string[] = ["## Answers: countries and tax forms", "", `${SITE}/answers`, ""]
+  for (const section of aiProductPages) {
+    const detail = aiDetailByHref[section.href] ?? []
+    if (detail.length === 0) continue
+    lines.push(`### ${section.label}`, "", `${SITE}/answers${section.href}`, "", ...faqLines(detail), "")
+  }
+  return lines
 }
 
 /** The site summary. `blogLines` is the "## Blog" section, inserted before the Company section. */

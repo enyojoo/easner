@@ -233,7 +233,7 @@ export const developersContent: ProductPageContent = {
       question: "Which countries can the API pay out to?",
       answer:
         "Country-by-country answers for the Easner API, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers#easner-api" }],
+      links: [{ label: "Answers", href: "/answers/developers" }],
     },
   ],
   ctaBand: {
