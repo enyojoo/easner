@@ -42,6 +42,20 @@ export const invoicingContent: ProductPageContent = {
       "invoice software for exporters",
     ],
   },
+  keyFacts: [
+    { label: "What it is", value: "An itemized invoice to a named customer" },
+    { label: "How customers pay", value: "Card, Apple Pay or Google Pay, bank transfer, or stablecoin where enabled" },
+    { label: "Customer page", value: "A hosted invoice page where they can pay or download a PDF" },
+    { label: "Settles to", value: "Your Easner Business ledger" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Create the invoice", description: "Create an itemized invoice in Easner Business, with line items for a named customer." },
+    { title: "Share the page", description: "Send the hosted invoice page so your customer can pay or download a PDF." },
+    { title: "Get paid", description: "Customers pay by card, Apple Pay or Google Pay, bank transfer, or stablecoins where enabled. Every payment lands in the same Easner Business ledger." },
+  ],
   hero: {
     h1: "Send an invoice. Get back to business.",
     subhead:

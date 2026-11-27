@@ -42,6 +42,15 @@ export const developersContent: ProductPageContent = {
       "payments API Southeast Asia",
     ],
   },
+  keyFacts: [
+    { label: "What it is", value: "The Banking API: verify customers, open multi-currency accounts, and send payouts" },
+    { label: "Access", value: "Credentials and sandbox come with commercial onboarding" },
+    { label: "Crypto wallet needed", value: "No. Customers see regular currencies" },
+    { label: "Reference", value: "docs.easner.com", href: "https://docs.easner.com/" },
+    { label: "Not the same as", value: "Connect or White-label" },
+    { label: "Pricing", value: "Agreed in a contract", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
   hero: {
     h1: "Build international payments into your product",
     subhead:

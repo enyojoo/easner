@@ -41,6 +41,21 @@ export const paymentLinksContent: ProductPageContent = {
       "payment link for consultants",
     ],
   },
+  keyFacts: [
+    { label: "Website or code needed", value: "No" },
+    { label: "Payment methods", value: "Card, Apple Pay or Google Pay, a US bank account, or stablecoin where enabled" },
+    { label: "Billing", value: "One-time or recurring" },
+    { label: "Settles to", value: "Your Easner Business account" },
+    { label: "Have a website?", value: "Use Checkout", href: "/checkout" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Open Easner Business", description: "Payment Links run on an eligible Easner Business account." },
+    { title: "Create a link", description: "Create a one-time or recurring payment page, with an optional free trial and a renewal disclosure before customers pay." },
+    { title: "Share it", description: "Send the link by email, chat, or social media. Payments settle into your Easner Business account." },
+  ],
   hero: {
     h1: "Get paid with a link",
     subhead:

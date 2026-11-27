@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next"
 import { getAllPosts, getAuthors, getCategories, isThinArchive } from "@/lib/blog/queries"
 import { aiProductPages } from "@/lib/marketing/content/ai"
+import { comparePages, comparePath } from "@/lib/marketing/content/compare"
+import { useCasePages, useCasePath } from "@/lib/marketing/content/use-cases"
 import { authorPath, authorsPath, categoryPath, cropImageUrl, postPath } from "@/lib/blog/urls"
 
 export const revalidate = 3600
@@ -137,6 +139,19 @@ function staticEntries(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/white-label`, lastModified: lastModified.whiteLabel, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/developers`, lastModified: lastModified.developers, changeFrequency: "monthly", priority: 0.8 },
     { url: `${baseUrl}/answers`, lastModified: lastModified.answers, changeFrequency: "weekly", priority: 0.7 },
+    ...useCasePages.map((page) => ({
+      url: `${baseUrl}${useCasePath(page)}`,
+      lastModified: lastModified.answers,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
+    { url: `${baseUrl}/compare`, lastModified: lastModified.answers, changeFrequency: "monthly", priority: 0.7 },
+    ...comparePages.map((page) => ({
+      url: `${baseUrl}${comparePath(page)}`,
+      lastModified: new Date(`${page.lastChecked}T00:00:00Z`),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     ...aiProductPages.map((section) => ({
       url: `${baseUrl}/answers${section.href}`,
       lastModified: lastModified.answers,

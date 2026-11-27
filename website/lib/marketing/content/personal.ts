@@ -93,6 +93,21 @@ export const personalContent: ProductPageContent = {
       "international money transfer app",
     ],
   },
+  keyFacts: [
+    { label: "What it is", value: "A multi-currency account in the Easner app" },
+    { label: "Currencies", value: "USD and EUR, and GBP where supported" },
+    { label: "Where", value: "iPhone, Android, and the web at app.easner.com" },
+    { label: "Send to", value: "Bank accounts and mobile money in 80+ countries" },
+    { label: "Add money", value: "Card, Apple Pay, Google Pay, ACH, bank transfer, or stablecoin deposit where enabled" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Download the app", description: "Get the Easner app on iPhone or Android, or open it on the web." },
+    { title: "Verify your identity", description: "Sign up with your email and complete identity verification." },
+    { title: "Get paid or send", description: "Share your account details, or send to bank accounts and mobile money." },
+  ],
   hero: {
     h1: "Bank globally with Ease",
     subhead:

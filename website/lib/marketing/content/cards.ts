@@ -37,6 +37,14 @@ export const cardsContent: ProductPageContent = {
       "spend management for remote teams",
     ],
   },
+  keyFacts: [
+    { label: "Types", value: "Virtual and physical cards for personal and business spending" },
+    { label: "Controls", value: "Spending limits, merchant rules, and cardholder controls" },
+    { label: "Availability", value: "Once cards are available for your account and you are approved" },
+    { label: "Issuer", value: "A third-party issuer. Easner is a financial technology company, not a bank" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
   hero: {
     h1: "Manage spending with Easner cards",
     subhead:

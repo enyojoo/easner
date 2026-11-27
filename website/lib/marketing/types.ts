@@ -118,8 +118,19 @@ export interface IntegrationStep {
   description: string
 }
 
+/** One line of the "at a glance" box. Plain facts only; fees stay on /pricing. */
+export interface KeyFact {
+  label: string
+  value: string
+  href?: string
+}
+
 export interface ProductPageContent {
   metadata: PageMetadata
+  /** Plain-text facts shown under the hero for readers and answer engines. */
+  keyFacts?: KeyFact[]
+  /** ISO date (YYYY-MM-DD) the key facts and steps were last checked. Shown on the page and sent as dateModified. */
+  lastReviewed?: string
   hero: HeroContent
   problem?: ProblemContent
   solution?: SolutionContent

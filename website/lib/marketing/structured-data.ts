@@ -287,11 +287,14 @@ export function webPageJsonLd({
   description,
   path,
   speakable = false,
+  dateModified,
 }: {
   name: string
   description: string
   path: string
   speakable?: boolean
+  /** ISO date the page's facts were last checked. */
+  dateModified?: string
 }) {
   return {
     "@context": "https://schema.org",
@@ -301,6 +304,7 @@ export function webPageJsonLd({
     name,
     description,
     inLanguage: "en-US",
+    ...(dateModified ? { dateModified } : {}),
     isPartOf: { "@id": `${SITE_URL}/#website` },
     about: { "@id": `${SITE_URL}/#organization` },
     ...(speakable
@@ -373,6 +377,7 @@ export function answerEngineJsonLd({
   glossary,
   howTo,
   speakable = false,
+  dateModified,
 }: {
   name: string
   description: string
@@ -381,8 +386,9 @@ export function answerEngineJsonLd({
   glossary?: { name: string; description: string }[]
   howTo?: { name: string; description: string; steps: HowToStep[] }
   speakable?: boolean
+  dateModified?: string
 }) {
-  const schemas: Record<string, unknown>[] = [webPageJsonLd({ name, description, path, speakable })]
+  const schemas: Record<string, unknown>[] = [webPageJsonLd({ name, description, path, speakable, dateModified })]
   if (glossary?.length) {
     schemas.push(definedTermSetJsonLd(glossary))
   } else if (definition) {
@@ -401,6 +407,7 @@ export function productAnswerJsonLd(content: ProductPageContent, path: string) {
     path,
     definition: content.definition,
     howTo: howToFromProduct(content),
+    dateModified: content.lastReviewed,
   })
 }
 

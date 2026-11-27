@@ -11,6 +11,7 @@ import { FeatureBento } from "./feature-bento"
 import { TierLadder } from "./tier-ladder"
 import { ThreeColCards } from "./three-col-cards"
 import { IntegrationSteps } from "./integration-steps"
+import { KeyFacts } from "./key-facts"
 import { ComplianceStrip } from "./compliance-strip"
 import { CtaBand } from "./cta-band"
 import { FaqSection } from "./faq-section"
@@ -44,6 +45,13 @@ export function ProductPageSections({ content, beforeFaq }: ProductPageSectionsP
         ctaDescription={content.hero.ctaDescription}
         note={content.hero.note}
       />
+      {content.keyFacts && content.keyFacts.length > 0 && (
+        <KeyFacts
+          title={content.definition?.term ?? content.metadata.title}
+          facts={content.keyFacts}
+          lastReviewed={content.lastReviewed}
+        />
+      )}
       {content.problem && (
         <CenteredBlock
           headline={content.problem.headline}

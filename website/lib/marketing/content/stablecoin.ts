@@ -46,6 +46,22 @@ export const stablecoinContent: ProductPageContent = {
       ...EASNER_EMERGING_MARKET_KEYWORDS,
     ],
   },
+  keyFacts: [
+    { label: "Assets", value: "USDC, USDT, and EURC on supported networks, where enabled" },
+    { label: "Crypto wallet needed", value: "No" },
+    { label: "You work in", value: "Dollars and euros" },
+    { label: "In person", value: "Terminal and QR Pay" },
+    { label: "Settles to", value: "Your Easner Business ledger" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Open Easner Business", description: "Create a company account on the web and verify the business." },
+    { title: "Pick how you use it", description: "Receive USDC, USDT, or EURC to a deposit address, collect in person with Terminal or QR Pay, or send to supported wallets, where enabled." },
+    { title: "Check the network details", description: "Deposit addresses and network details are shown in your Easner Business account before you send or receive." },
+    { title: "See it on one ledger", description: "Every payment posts to the same Easner Business ledger as invoices and payouts. Everyday accounts, invoices, and payouts work in regular currencies." },
+  ],
   hero: {
     h1: "Stablecoin speed. Banking simplicity.",
     subhead:

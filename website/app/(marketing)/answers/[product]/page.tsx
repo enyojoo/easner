@@ -4,6 +4,7 @@ import { CtaBand } from "@/components/marketing/cta-band"
 import { aiDetailByHref, aiProductPages } from "@/lib/marketing/content/ai"
 import { homeCtaBand } from "@/lib/marketing/content/home"
 import { marketingMetadata } from "@/lib/marketing/metadata"
+import { socialImages } from "@/lib/marketing/social-images"
 import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript } from "@/lib/marketing/structured-data"
 import type { FaqItem } from "@/lib/marketing/types"
 
@@ -29,12 +30,13 @@ export async function generateMetadata({ params }: { params: Promise<{ product: 
   const { product } = await params
   const section = findSection(product)
   if (!section) notFound()
+  const term = section.definition.term
+  const title = term.includes("Easner") ? `${term}: answers` : `Easner ${term}: answers`
   return marketingMetadata({
-    metadata: {
-      title: `${section.definition.term}: answers`,
-      description: clip(section.definition.answer),
-    },
+    metadata: { title, description: clip(section.definition.answer) },
     path: `/answers/${product}`,
+    titleAbsolute: title,
+    images: [socialImages.answers],
   })
 }
 

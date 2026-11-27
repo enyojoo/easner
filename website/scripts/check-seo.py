@@ -101,6 +101,17 @@ for source in (ROOT / "app/(marketing)").rglob("page.tsx"):
         continue  # dynamic: found below from the prerendered output
     routes[route] = OUTPUT / ("index.html" if route == "/" else route[1:] + ".html")
 
+# Other dynamic pages (answers/<product>, compare/<slug>, <product>/<use-case>): from the prerendered HTML, one level
+# below the static parent route.
+for source in (ROOT / "app/(marketing)").rglob("page.tsx"):
+    dynamic = "/" + source.parent.relative_to(ROOT / "app/(marketing)").as_posix()
+    if "[" not in dynamic or dynamic.startswith("/blog"):
+        continue
+    parent = dynamic.split("[")[0].rstrip("/")
+    folder = OUTPUT / parent.lstrip("/")
+    for html_file in sorted(folder.glob("*.html")) if folder.exists() else []:
+        routes[f"{parent}/{html_file.stem}"] = html_file
+
 # Blog pages: posts, categories, authors and ?page=N archives, from the prerendered HTML.
 PAGE_ROUTE = re.compile(r"^(.*)/page/(\d+)$")
 for html_file in sorted((OUTPUT / "blog").rglob("*.html")) if (OUTPUT / "blog").exists() else []:
@@ -229,7 +240,8 @@ for route, path in sorted(routes.items()):
             url = urlparse(image)
             check(url.scheme == "https" and url.netloc == "www.easner.com", f"{route}: invalid {key} URL")
             body = OUTPUT / (unquote(url.path).lstrip("/") + ".body")
-            check(body.exists() and body.stat().st_size > 0, f"{route}: missing generated social image: {url.path}")
+            public_file = ROOT / "public" / unquote(url.path).lstrip("/")
+            check((body.exists() and body.stat().st_size > 0) or public_file.is_file(), f"{route}: missing generated social image: {url.path}")
     types = [schema.get("@type") for schema in page.schemas]
     check("Organization" in types and "WebSite" in types, f"{route}: missing company/site schema")
     if route in BLOG:

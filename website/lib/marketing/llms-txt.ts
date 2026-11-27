@@ -10,6 +10,8 @@ import { connectContent } from "@/lib/marketing/content/connect"
 import { developersContent } from "@/lib/marketing/content/developers"
 import { aboutDefinition } from "@/lib/marketing/content/about"
 import { aiCompanyFaq, aiDetailByHref, aiProductPages } from "@/lib/marketing/content/ai"
+import { comparePages, comparePath } from "@/lib/marketing/content/compare"
+import { useCasePages, useCasePath } from "@/lib/marketing/content/use-cases"
 import { contactDefinition, contactFaq } from "@/lib/marketing/content/contact"
 import { homeFaq } from "@/lib/marketing/content/home"
 import { invoicingContent } from "@/lib/marketing/content/invoicing"
@@ -89,6 +91,24 @@ function productBlocks(): ProductBlock[] {
 
 function productSections(): string[] {
   return productBlocks().flatMap((block) => [`## ${block.title}`, "", `${SITE}${block.path}`, "", ...faqLines(block.faqs), ""])
+}
+
+/** Use-case pages and comparison pages, each with the one-line answer the page leads with. */
+function useCaseAndCompareSection(): string[] {
+  return [
+    "## Use cases",
+    "",
+    ...useCasePages.map(
+      (page) => `- [${page.content.hero.h1}](${SITE}${useCasePath(page)}): ${page.content.definition?.answer ?? page.content.metadata.description}`,
+    ),
+    "",
+    "## Comparisons",
+    "",
+    `${SITE}/compare`,
+    "",
+    ...comparePages.map((page) => `- [${page.h1}](${SITE}${comparePath(page)}): ${page.answer}`),
+    "",
+  ]
 }
 
 /** Country and tax-form answers, one page per product under /answers/<slug>. */
@@ -188,6 +208,7 @@ export function buildLlmsTxt(blogLines: string[] = []): string {
     ...productSections(),
     ...answersSection(),
     "",
+    ...useCaseAndCompareSection(),
     ...blogLines,
     "## Company",
     "",

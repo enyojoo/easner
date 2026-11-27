@@ -91,6 +91,16 @@ export const connectContent: ProductPageContent = {
       "tax form collection W-9 W-8BEN",
     ],
   },
+  keyFacts: [
+    { label: "Who it's for", value: "Platforms with many people to pay, not a company paying its own team" },
+    { label: "Paid in", value: "US dollars, from your Easner Business balance" },
+    { label: "The person paid", value: "Links once in the Easner app and verifies their identity" },
+    { label: "Arrives", value: "Typically within seconds, into the person's own Easner account" },
+    { label: "Tax forms", value: "Signed once by the person and shared with each platform. The platform stays the filer" },
+    { label: "Getting started", value: "Test mode first. Easner reviews your program before live access" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
   hero: {
     h1: "Pay everyone you owe",
     subhead:
@@ -188,7 +198,12 @@ export const connectContent: ProductPageContent = {
       description: "Pay sellers what they have earned on your marketplace.",
     },
   ],
-  useCaseLinks: [{ label: "Paying your own team? See Payroll", href: "/payroll" }],
+  useCaseLinks: [
+    { label: "Pay marketplace sellers", href: "/connect/marketplace-seller-payouts" },
+    { label: "Pay creators and affiliates", href: "/connect/creator-and-affiliate-payouts" },
+    { label: "Pay freelancers and gig workers", href: "/connect/freelance-and-gig-payouts" },
+    { label: "Paying your own team? See Payroll", href: "/payroll" },
+  ],
   definition: connectDefinition,
   faq: [
     {
@@ -248,6 +263,15 @@ export const connectContent: ProductPageContent = {
       answer:
         "Yes. Connect pays contractors and affiliates who are not employees, in US dollars, into their own Easner accounts. They link once in the Easner app. This is not Payroll.",
       links: [{ label: "Payroll", href: "/payroll" }],
+    },
+    {
+      question: "How does Easner Connect compare with Stripe Connect or PayPal Payouts?",
+      answer:
+        "Easner Connect pays people into their own Easner accounts in US dollars and collects each person's tax form once. The comparison pages set out the differences with Stripe Connect and PayPal Payouts, with a source and a date for every competitor fact.",
+      links: [
+        { label: "Connect vs Stripe Connect", href: "/compare/easner-connect-vs-stripe-connect" },
+        { label: "Connect vs PayPal Payouts", href: "/compare/easner-connect-vs-paypal-payouts" },
+      ],
     },
     {
       question: "Which countries and tax forms does Connect cover?",

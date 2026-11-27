@@ -43,6 +43,15 @@ export const checkoutContent: ProductPageContent = {
       "global SaaS payment infrastructure",
     ],
   },
+  keyFacts: [
+    { label: "Merchant of record", value: "The business using Checkout, with its name on the customer's statement" },
+    { label: "Payment methods", value: "Card, bank, wallet, or stablecoin where enabled" },
+    { label: "Billing", value: "One-time or subscription" },
+    { label: "Settles to", value: "Your Easner Business ledger" },
+    { label: "No website?", value: "Use Payment Links", href: "/payment-links" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
   hero: {
     h1: "Accept payments on your website",
     subhead:

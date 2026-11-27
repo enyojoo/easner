@@ -48,6 +48,21 @@ export const payrollContent: ProductPageContent = {
       "payroll for nearshore teams",
     ],
   },
+  keyFacts: [
+    { label: "Who you can pay", value: "Employees and contractors in 80+ countries" },
+    { label: "Paid from", value: "Your Easner Business balance" },
+    { label: "Approvals", value: "Each payday is reviewed before money moves, and the drafter is not the only signer" },
+    { label: "Records", value: "A pay stub for every payment, on the same ledger" },
+    { label: "Paying platform users?", value: "Use Connect", href: "/connect" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Add your people", description: "Open an Easner Business account and add employees or contractors in 80+ countries." },
+    { title: "Approve the payday", description: "Review and approve each run before any money moves. Maker-checker means the drafter is not the only signer." },
+    { title: "Pay and record", description: "Payees choose how they get paid in the Easner app. A pay stub is generated for every payment, and finance sees the run on the same ledger." },
+  ],
   hero: {
     h1: "Your team. Your payroll. Together.",
     subhead:

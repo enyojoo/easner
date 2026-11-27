@@ -33,8 +33,21 @@ test("llms.txt routes each product and the payout countries", () => {
 
   const connect = section(text, "Connect")
   assert.match(connect, /marketplace sellers/)
-  const withoutConnect = text.replace(connect, "")
+  const useCases = section(text, "Use cases")
+  assert.match(useCases, /marketplace sellers/)
+  assert.ok(useCases.includes("https://www.easner.com/connect/marketplace-seller-payouts"))
+  assert.ok(useCases.includes("https://www.easner.com/business/pay-overseas-suppliers"))
+  const withoutConnect = text.replace(connect, "").replace(useCases, "")
   assert.doesNotMatch(withoutConnect, /marketplace sellers/)
+
+  const comparisons = section(text, "Comparisons")
+  for (const slug of [
+    "easner-connect-vs-stripe-connect",
+    "easner-business-vs-wise-business",
+    "easner-connect-vs-paypal-payouts",
+  ]) {
+    assert.ok(comparisons.includes(`https://www.easner.com/compare/${slug}`), slug)
+  }
 
   const answers = section(text, "Answers: countries and tax forms")
   assert.match(answers, /W-8BEN-E/)

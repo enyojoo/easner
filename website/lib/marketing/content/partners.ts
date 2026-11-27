@@ -47,6 +47,14 @@ export const partnersContent: ProductPageContent = {
       "white-label payments Southeast Asia",
     ],
   },
+  keyFacts: [
+    { label: "What Easner runs", value: "Infrastructure, verification, screening, payout connections, and operations" },
+    { label: "What you run", value: "Your brand and your customer relationship, under your name, logo, and colour" },
+    { label: "Payout reach", value: "Bank accounts and mobile money in 80+ countries" },
+    { label: "Get started", value: "Talk to the Easner team", href: "/contact" },
+    { label: "Pricing", value: "Agreed in a contract", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
   hero: {
     h1: "Build cross-border payments under your brand",
     subhead:

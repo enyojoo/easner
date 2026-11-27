@@ -51,6 +51,21 @@ export const businessContent: ProductPageContent = {
       ...EASNER_TRADE_AND_OUTSOURCING_KEYWORDS,
     ],
   },
+  keyFacts: [
+    { label: "What it is", value: "The web dashboard for a company (Easner Business)" },
+    { label: "Account details", value: "USD and EUR in the business's name, and GBP where supported" },
+    { label: "Who can open", value: "Companies from 174 countries, subject to verification" },
+    { label: "Collect", value: "Invoices, Payment Links, Checkout, Terminal, and QR Pay" },
+    { label: "Pay suppliers", value: "Bank accounts, mobile money, and stablecoin wallets in 80+ countries" },
+    { label: "Pricing", value: "See plans and fees", href: "/pricing" },
+  ],
+  lastReviewed: "2026-11-27",
+  integrationStepsHeadline: "How it works",
+  integrationSteps: [
+    { title: "Open Easner Business", description: "Start on the web and create a company account." },
+    { title: "Verify your business", description: "Provide your business registration details, the people who own and control it, and identity verification for each owner. You can track every step from your dashboard." },
+    { title: "Get paid or pay out", description: "Get account details in your business's name, collect customer payments, send invoices, and pay suppliers and contractors in 80+ countries." },
+  ],
   hero: {
     h1: "Global banking for business",
     subhead:
@@ -128,6 +143,8 @@ export const businessContent: ProductPageContent = {
     },
   ],
   useCaseLinks: [
+    { label: "Pay suppliers abroad", href: "/business/pay-overseas-suppliers" },
+    { label: "Get paid by customers abroad", href: "/business/get-paid-by-international-customers" },
     { label: "Run payroll", href: "/payroll" },
     { label: "Sell on your website", href: "/checkout" },
     { label: "Get paid with a link", href: "/payment-links" },
@@ -191,6 +208,12 @@ export const businessContent: ProductPageContent = {
       answer:
         "Yes. Ease includes a team of 1. Ease Plus adds a team of 5 with approvals. Ease Pro adds an unlimited team. Ease is $0 a month. Ease Plus is $39 a month billed yearly, or $49 a month. Ease Pro is $159 a month billed yearly, or $199 a month. Ease Gold is agreed in a contract.",
       links: [{ label: "Pricing", href: "/pricing" }],
+    },
+    {
+      question: "How does Easner Business compare with Wise Business?",
+      answer:
+        "Easner Business gives a company USD and EUR account details, ways to collect from customers, and payouts to 80+ countries in one dashboard. The comparison page sets out the differences with Wise Business, with a source and a date for every Wise fact.",
+      links: [{ label: "Business vs Wise Business", href: "/compare/easner-business-vs-wise-business" }],
     },
     {
       question: "Which countries can my business pay?",
