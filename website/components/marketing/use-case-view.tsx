@@ -1,7 +1,7 @@
 import { ProductPageSections } from "@/components/marketing/product-page-sections"
 import type { UseCasePage } from "@/lib/marketing/content/use-cases"
 import { useCasePath } from "@/lib/marketing/content/use-cases"
-import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript, productAnswerJsonLd } from "@/lib/marketing/structured-data"
+import { breadcrumbJsonLd, faqPageJsonLd, jsonLdScript, payoutServiceJsonLd, productAnswerJsonLd } from "@/lib/marketing/structured-data"
 
 const PARENT: Record<UseCasePage["parent"], { name: string; path: string }> = {
   connect: { name: "Connect", path: "/connect" },
@@ -23,6 +23,17 @@ export function UseCaseView({ page }: { page: UseCasePage }) {
             { name: parent.name, path: parent.path },
             { name: page.linkLabel, path },
           ]),
+          ...(page.serves?.length
+            ? [
+                payoutServiceJsonLd({
+                  name: content.definition?.term ?? content.metadata.title,
+                  description: content.metadata.description,
+                  path,
+                  serviceType: "International payouts to contractors and suppliers",
+                  countries: page.serves,
+                }),
+              ]
+            : []),
           ...(content.faq ? [faqPageJsonLd(content.faq)] : []),
           ...productAnswerJsonLd(content, path),
         ])}

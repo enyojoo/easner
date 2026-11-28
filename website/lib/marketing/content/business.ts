@@ -202,6 +202,12 @@ export const businessContent: ProductPageContent = {
       question: "How do I pay suppliers in Nigeria, Mexico, the Philippines, or India?",
       answer:
         "From Easner Business, pay the supplier from the company balance. Nigeria receives NGN by bank only. Mexico receives MXN by bank. The Philippines receives PHP by bank. India receives INR by bank. Fees and the exchange rate are shown before you confirm.",
+      links: [
+        { label: "Pay contractors in Nigeria", href: "/business/pay-contractors-in-nigeria" },
+        { label: "Pay contractors in Mexico", href: "/business/pay-contractors-in-mexico" },
+        { label: "Pay contractors in the Philippines", href: "/business/pay-contractors-in-the-philippines" },
+        { label: "Pay contractors in India", href: "/business/pay-contractors-in-india" },
+      ],
     },
     {
       question: "Can my team share one business account?",
@@ -223,7 +229,10 @@ export const businessContent: ProductPageContent = {
       question: "Which countries can my business pay?",
       answer:
         "Country-by-country answers for Business Banking, including the currency and payout rail for each country, are on the Answers page.",
-      links: [{ label: "Answers", href: "/answers/business" }],
+      links: [
+        { label: "Every payout country", href: "/business/pay-overseas-suppliers" },
+        { label: "Answers", href: "/answers/business" },
+      ],
     },
   ],
   ctaBand: {

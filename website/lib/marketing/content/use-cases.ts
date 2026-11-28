@@ -16,6 +16,8 @@ export interface UseCasePage {
   slug: string
   /** Label for the link on the parent product page. */
   linkLabel: string
+  /** The countries a payout page is for, for its structured data. Set on the country pages. */
+  serves?: { name: string; code: string }[]
   content: ProductPageContent
 }
 

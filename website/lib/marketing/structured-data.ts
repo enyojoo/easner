@@ -153,11 +153,11 @@ export const CORRIDOR_AREA_SERVED = [
   // Europe / EEA
   "AD", "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IS",
   "IE", "IT", "LV", "LI", "LT", "LU", "MT", "MC", "NL", "NO", "PL", "PT", "RO", "SM", "SK",
-  "SI", "ES", "SE", "CH", "VA",
+  "SI", "ES", "SE", "CH", "VA", "MD", "ME", "MK", "RS",
   // North America
   "CA",
   // Africa
-  "BW", "CM", "CG", "CI", "CD", "EG", "ET", "GA", "GH", "KE", "MW", "NG", "RW", "SN", "ZA",
+  "BJ", "BW", "CM", "CG", "CI", "CD", "EG", "ET", "GA", "GH", "KE", "ML", "MW", "NG", "RW", "SN", "TG", "ZA",
   "TZ", "UG", "ZM",
   // Middle East
   "IL", "AE",
@@ -215,8 +215,50 @@ export function financialServiceJsonLd({ name, description, path, serviceType, a
     // Describe the markets featured in visible copy. Payment coverage is not
     // unconditional eligibility for every account or product.
     areaServed: areaServed
-      .filter((name) => ["US", "GB", "EU", "NG", "MX", "PH", "IN", "CN"].includes(name))
+      .filter((name) => ["US", "GB", "EU", "NG", "MX", "PH", "IN", "BR"].includes(name))
       .map((name) => ({ "@type": name === "EU" ? "AdministrativeArea" : "Country", name: name === "EU" ? "European Union" : name })),
+    provider: {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Easner",
+      url: SITE_URL,
+    },
+  }
+}
+
+export interface ServedCountry {
+  name: string
+  /** ISO 3166-1 alpha-2 code, or the code the site uses for it. */
+  code: string
+}
+
+/**
+ * The service on a payout page, with the country it pays into. The country is in the copy already; this puts it in the
+ * data too, so a crawler or an answer engine can tell which market the page is about. Unlike financialServiceJsonLd,
+ * which lists only a few featured markets, this names exactly the countries the page is for.
+ */
+export function payoutServiceJsonLd({
+  name,
+  description,
+  path,
+  serviceType,
+  countries,
+}: {
+  name: string
+  description: string
+  path: string
+  serviceType: string
+  countries: ServedCountry[]
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${SITE_URL}${path}#service`,
+    name,
+    description,
+    url: `${SITE_URL}${path}`,
+    serviceType,
+    areaServed: countries.map((country) => ({ "@type": "Country", name: country.name, identifier: country.code })),
     provider: {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,

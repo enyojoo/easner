@@ -14,6 +14,7 @@ import {
   personalCorridorFaqs,
   whiteLabelPayoutFaqs,
 } from "../corridors"
+import { corridorPathForPlace } from "./corridor-pages"
 import { homeDefinition, homeFaq } from "./home"
 import { invoicingContent, invoicingDefinition } from "./invoicing"
 import { partnersContent, partnersDefinition } from "./partners"
@@ -233,9 +234,24 @@ export const aiSections: AiAnswerSection[] = [
  * Country and tax-form detail, one list per product. Each one lives on its own page at /answers/<slug>,
  * so no single page carries every country.
  */
+/**
+ * Business answers about paying in a country (or from one to the US) point to that country's page, so the Answers
+ * and the country pages link both ways. Personal and other answers are left as they are.
+ */
+function withCorridorLinks(faqs: FaqItem[]): FaqItem[] {
+  return faqs.map((item) => {
+    const to = item.question.match(/^How do I pay a supplier in (.+) from the United States\?$/)
+    const from = item.question.match(/^How do I pay a supplier in the United States from .+\?$/)
+    const place = to ? to[1] : from ? "the United States" : undefined
+    const path = place ? corridorPathForPlace(place) : undefined
+    if (!place || !path) return item
+    return { ...item, links: [...(item.links ?? []), { label: `Pay contractors in ${place}`, href: path }] }
+  })
+}
+
 export const aiDetailByHref: Record<string, FaqItem[]> = {
   "/personal": personalCorridorFaqs(),
-  "/business": businessCorridorFaqs(),
+  "/business": withCorridorLinks(businessCorridorFaqs()),
   "/connect": [...connectTaxFaqs, ...connectPayeeFaqs()],
   "/payroll": payrollPayeeFaqs(),
   "/white-label": whiteLabelPayoutFaqs(),

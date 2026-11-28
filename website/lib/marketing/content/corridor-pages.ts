@@ -128,6 +128,8 @@ function valueCard(guide: CorridorGuide, place: string, currency: string): CardI
   }
 }
 
+const countryOf = (guide: CorridorGuide) => ({ name: guide.label ?? guide.country, code: guide.code })
+
 function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
   const country = payoutCountry(guide.country)
   if (!country) throw new Error(`Corridor guide for "${guide.country}" has no payout country in corridors.ts`)
@@ -215,7 +217,12 @@ function buildPage(guide: CorridorGuide, all: CorridorGuide[]): UseCasePage {
     complianceNote: businessContent.complianceNote,
   }
 
-  return { parent: "business", slug: guide.slug, linkLabel: `Pay contractors in ${place}`, content }
+  // The Europe page covers every euro-payout country; every other page covers its own country.
+  const serves = guide.region
+    ? all.filter((other) => other.area === "Europe" && !other.region && other.country !== "United Kingdom").map(countryOf)
+    : [countryOf(guide)]
+
+  return { parent: "business", slug: guide.slug, linkLabel: `Pay contractors in ${place}`, serves, content }
 }
 
 export const corridorPages: UseCasePage[] = corridorGuides.map((guide) => buildPage(guide, corridorGuides))
@@ -238,3 +245,8 @@ export const corridorGroups = AREAS.map(({ area, headline, subhead }) => ({
   columns: 4 as const,
   items: corridorGuides.filter((guide) => guide.area === area).map(cardFor),
 }))
+
+const pathByPlace = new Map(corridorGuides.filter((guide) => !guide.region).map((guide) => [spoken(guide.country), pathFor(guide)]))
+
+/** The page for a country as it is named in a sentence ("the Philippines"), or undefined if it has none. */
+export const corridorPathForPlace = (place: string) => pathByPlace.get(place)
